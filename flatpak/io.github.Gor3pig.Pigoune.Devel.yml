@@ -1,0 +1,35 @@
+id: io.github.Gor3pig.Pigoune.Devel
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: pigoune
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+
+modules:
+  - name: pigoune
+    buildsystem: simple
+    build-options:
+      no-debuginfo: true
+      append-path: /usr/lib/sdk/rust-stable/bin
+      env:
+        CARGO_HOME: /run/build/pigoune/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - cargo build --release --locked --offline --package pigoune-app
+      - install -Dm755 target/release/pigoune /app/bin/pigoune
+    sources:
+      - type: file
+        path: ../Cargo.toml
+      - type: file
+        path: ../Cargo.lock
+      - type: dir
+        path: ../crates
+        dest: crates
+      - cargo-sources.json
