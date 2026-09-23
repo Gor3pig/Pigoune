@@ -1,0 +1,37 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Build directories
+/build/
+/builddir/
+/_build/
+
+# Flatpak
+/.flatpak-builder/
+/flatpak-build/
+/repo/
+
+# Coverage and profiling
+/coverage/
+*.profraw
+*.profdata
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Editors
+*.swp
+*.swo
+*~
+.idea/
+
+# OS metadata
+.DS_Store
+Thumbs.db
