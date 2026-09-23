@@ -1,0 +1,13 @@
+[package]
+name = "pigoune-app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "pigoune"
+path = "src/main.rs"
+
+[dependencies]
+pigoune-core = { path = "../pigoune-core" }
