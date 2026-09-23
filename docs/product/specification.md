@@ -2,6 +2,8 @@
 
 > Français — version de référence · [English](specification.en.md)
 
+**P**lateforme d’**I**cônes et **G**raphismes — **O**rganisée, **U**nifiée, **N**ative et **É**légante.
+
 **Version :** 0.1  
 **Statut :** Base produit initiale
 

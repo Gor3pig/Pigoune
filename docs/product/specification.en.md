@@ -2,6 +2,8 @@
 
 > [Français — reference version](specification.md) · English
 
+**P**latform for **I**cons and **G**raphics — **O**rganized, **U**nified, **N**ative and **E**legant.
+
 **Version:** 0.1  
 **Status:** Initial product baseline
 

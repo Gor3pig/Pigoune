@@ -2,7 +2,7 @@
 
 > [Français](README.md) · English
 
-**P**lateforme d’**I**cônes et **G**raphismes **O**rganisée, **U**nifiée, **N**ative et **É**légante.
+**P**latform for **I**cons and **G**raphics — **O**rganized, **U**nified, **N**ative and **E**legant.
 
 Pigoune is a native GNOME application for building and managing a personal library of graphical assets.
 
