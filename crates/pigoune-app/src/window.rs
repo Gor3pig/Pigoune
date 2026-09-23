@@ -1,4 +1,5 @@
 use adw::prelude::*;
+use std::{cell::Cell, rc::Rc};
 
 const INSPECTOR_BREAKPOINT: f64 = 1100.0;
 const NAVIGATION_BREAKPOINT: f64 = 750.0;
@@ -12,8 +13,14 @@ pub(crate) fn build(application: &adw::Application) {
         .sidebar_width_unit(adw::LengthUnit::Sp)
         .build();
 
+    let navigation_breakpoint_bin = adw::BreakpointBin::builder()
+        .child(&navigation_split)
+        .width_request(360)
+        .height_request(360)
+        .build();
+
     let inspector_split = adw::OverlaySplitView::builder()
-        .content(&navigation_split)
+        .content(&navigation_breakpoint_bin)
         .sidebar_position(gtk::PackType::End)
         .min_sidebar_width(260.0)
         .max_sidebar_width(360.0)
@@ -35,8 +42,9 @@ pub(crate) fn build(application: &adw::Application) {
         .content(&inspector_split)
         .build();
 
-    add_overlay_breakpoint(&window, &inspector_split, INSPECTOR_BREAKPOINT);
-    add_overlay_breakpoint(&window, &navigation_split, NAVIGATION_BREAKPOINT);
+    window.add_breakpoint(overlay_breakpoint(&inspector_split, INSPECTOR_BREAKPOINT));
+    navigation_breakpoint_bin
+        .add_breakpoint(overlay_breakpoint(&navigation_split, NAVIGATION_BREAKPOINT));
 
     window.present();
 }
@@ -172,7 +180,6 @@ fn build_inspector(inspector_split: &adw::OverlaySplitView) -> adw::ToolbarView 
     let header = adw::HeaderBar::builder()
         .title_widget(&adw::WindowTitle::new("Inspecteur", ""))
         .show_start_title_buttons(false)
-        .show_end_title_buttons(false)
         .build();
     header.pack_end(&sidebar_toggle(
         inspector_split,
@@ -283,18 +290,27 @@ fn sidebar_toggle(
     button
 }
 
-fn add_overlay_breakpoint(
-    window: &adw::ApplicationWindow,
-    split_view: &adw::OverlaySplitView,
-    max_width: f64,
-) {
+fn overlay_breakpoint(split_view: &adw::OverlaySplitView, max_width: f64) -> adw::Breakpoint {
     let condition = adw::BreakpointCondition::new_length(
         adw::BreakpointConditionLengthType::MaxWidth,
         max_width,
         adw::LengthUnit::Sp,
     );
     let breakpoint = adw::Breakpoint::new(condition);
-    breakpoint.add_setter(split_view, "collapsed", Some(&true.to_value()));
-    breakpoint.add_setter(split_view, "show-sidebar", Some(&false.to_value()));
-    window.add_breakpoint(breakpoint);
+    let was_visible = Rc::new(Cell::new(false));
+
+    let apply_split_view = split_view.clone();
+    let apply_was_visible = was_visible.clone();
+    breakpoint.connect_apply(move |_| {
+        apply_was_visible.set(apply_split_view.shows_sidebar());
+        apply_split_view.set_collapsed(true);
+    });
+
+    let unapply_split_view = split_view.clone();
+    breakpoint.connect_unapply(move |_| {
+        unapply_split_view.set_collapsed(false);
+        unapply_split_view.set_show_sidebar(was_visible.get());
+    });
+
+    breakpoint
 }
