@@ -84,6 +84,22 @@ Pigoune is not an image editor.
 
 A Pigoune library is a self-contained directory.
 
+The version 1.0 experience is based on a single active primary library.
+
+In normal use, an already configured library opens directly.
+
+On first launch, or when no library is available, a welcome view allows the user to:
+
+- create a library;
+- open an existing library;
+- restore a backup.
+
+The application automatically manages a default location.
+
+A library may nevertheless be created, moved or opened from a location chosen by the user. Its directory remains fully self-contained.
+
+The architecture must not prevent support for multiple libraries in the future, but actual multiple-library management remains post-1.0.
+
 Essential library data lives inside it, including:
 
 - metadata database;
@@ -97,7 +113,7 @@ Essential library data lives inside it, including:
 
 Disposable data such as thumbnails and previews lives outside the library and can be rebuilt.
 
-Copying the library directory must be sufficient to move or back up the library.
+Copying the library directory while it is in a coherent state must be sufficient to move or back up the library.
 
 ## 7. Reliability
 
@@ -119,6 +135,8 @@ Physical binary content is identified independently by SHA-256.
 Multiple logical assets may reference the same immutable physical object when their contents are identical.
 
 This provides transparent physical deduplication while preserving independent metadata.
+
+Physical deduplication is limited to a single library. No physical reference is shared between two libraries.
 
 ## 9. Organization
 
@@ -225,7 +243,7 @@ Large imports run in the background and remain cancellable.
 
 ## 15. Supported formats
 
-Primary formats include:
+Fully supported formats are:
 
 - PNG
 - JPEG
@@ -235,9 +253,14 @@ Primary formats include:
 - WebP
 - AVIF
 
-Additional graphical formats may be accepted when supported by the decoding stack.
+Additional graphical formats may be accepted when they are correctly supported by the decoding stack, for example:
 
-The library stores graphical assets only.
+- GIF
+- BMP
+- TIFF
+- XPM
+
+The library accepts graphical files only.
 
 ## 16. Deletion and undo
 
@@ -247,11 +270,35 @@ Restoring an asset restores its organization and metadata.
 
 The application supports session-level undo and redo for relevant library operations.
 
+Logically deleting an asset does not immediately destroy a physical object that has become unreferenced.
+
+A physical object with no references becomes orphaned. Orphaned objects are removed only during a safe maintenance operation.
+
 ## 17. Export and external editing
 
 Export returns the preserved asset content.
 
 Opening an asset in an external editor uses a working copy rather than exposing the internal immutable object for modification.
+
+Replacing content preserves the asset's logical UUID and its organizational metadata.
+
+The new content produces a new immutable physical object identified by its SHA-256. The original filename stored for the asset becomes that of the new content.
+
+The former physical object may then become orphaned. Pigoune does not retain a permanent history of content versions.
+
+After replacement, file-derived properties are recalculated automatically:
+
+- format;
+- dimensions;
+- file size;
+- SHA-256;
+- thumbnail;
+- previews;
+- dominant colors;
+- embedded metadata;
+- indexes.
+
+If the new SHA-256 already exists in the library, physical deduplication remains transparent.
 
 Pigoune does not register itself as the system's general image viewer.
 
@@ -263,9 +310,30 @@ Pigoune provides integrity verification and recovery mechanisms.
 
 SQLite is the metadata source of truth.
 
-A separate recovery manifest provides an additional path for rebuilding critical library metadata if necessary.
+An independent recovery manifest is generated periodically. It contains enough essential information to allow a reasonable reconstruction of the library in case of severe SQLite corruption.
+
+The manifest is not used as a second active database. Its exact serialization format and atomicity strategy are deferred to later technical design.
 
 Crash recovery must return the library to its last coherent state.
+
+The “Optimize Library” action checks references before removing orphaned objects. It may also:
+
+- check database consistency;
+- clean obsolete caches;
+- optimize SQLite;
+- rebuild indexes when necessary;
+- update the recovery manifest.
+
+A full integrity check remains separate from library optimization.
+
+Integrated backups are triggered manually only and offer two modes:
+
+- portable archive;
+- mirror backup.
+
+A backup always represents a coherent library state. A coherent hot backup is preferred. If coherence cannot be guaranteed, Pigoune briefly locks writes rather than producing an inconsistent backup.
+
+A backup may be restored as a new library or explicitly replace the current library. Replacement first requires verification of the backup and creation of a safety point for the current state.
 
 ## 19. Technical architecture
 
@@ -293,7 +361,7 @@ Background work is coordinated by a central job manager.
 
 Version 1.0 should provide a complete, reliable daily-use experience around:
 
-- autonomous libraries;
+- one autonomous primary library;
 - content-addressed storage;
 - physical deduplication;
 - robust imports;

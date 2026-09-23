@@ -84,6 +84,22 @@ Pigoune n’est pas un éditeur d’images.
 
 Une bibliothèque Pigoune est un répertoire autonome.
 
+L’expérience de la version 1.0 repose sur une seule bibliothèque principale active.
+
+Dans l’usage normal, une bibliothèque déjà configurée est ouverte directement.
+
+Au premier lancement ou lorsqu’aucune bibliothèque n’est disponible, une vue d’accueil permet de :
+
+- créer une bibliothèque ;
+- ouvrir une bibliothèque existante ;
+- restaurer une sauvegarde.
+
+L’application gère automatiquement un emplacement par défaut.
+
+Une bibliothèque peut néanmoins être créée, déplacée ou ouverte depuis un emplacement choisi par l’utilisateur. Son dossier reste totalement autonome.
+
+L’architecture ne doit pas empêcher la gestion de plusieurs bibliothèques à l’avenir, mais leur gestion effective reste postérieure à la version 1.0.
+
 Les données essentielles de la bibliothèque y sont conservées, notamment :
 
 - base de métadonnées ;
@@ -97,7 +113,7 @@ Les données essentielles de la bibliothèque y sont conservées, notamment :
 
 Les données jetables comme les miniatures et aperçus restent en dehors de la bibliothèque et peuvent être reconstruites.
 
-Copier le répertoire d’une bibliothèque doit suffire pour la déplacer ou la sauvegarder.
+Copier le répertoire d’une bibliothèque dans un état cohérent doit suffire pour la déplacer ou la sauvegarder.
 
 ## 7. Fiabilité
 
@@ -119,6 +135,8 @@ Le contenu binaire physique est identifié séparément par son SHA-256.
 Plusieurs assets logiques peuvent référencer le même objet physique immuable lorsque leurs contenus sont identiques.
 
 Cela permet une déduplication physique transparente tout en conservant des métadonnées indépendantes.
+
+La déduplication physique est limitée à une bibliothèque. Il n’existe aucune référence physique partagée entre deux bibliothèques.
 
 ## 9. Organisation
 
@@ -225,7 +243,7 @@ Les imports importants s’exécutent en arrière-plan et restent annulables.
 
 ## 15. Formats pris en charge
 
-Les formats principaux incluent :
+Les formats pleinement pris en charge sont :
 
 - PNG
 - JPEG
@@ -235,9 +253,14 @@ Les formats principaux incluent :
 - WebP
 - AVIF
 
-D’autres formats graphiques peuvent être acceptés lorsqu’ils sont pris en charge par la pile de décodage.
+D’autres formats graphiques peuvent être acceptés lorsqu’ils sont correctement pris en charge par la pile de décodage, par exemple :
 
-La bibliothèque stocke uniquement des assets graphiques.
+- GIF
+- BMP
+- TIFF
+- XPM
+
+La bibliothèque accepte uniquement des fichiers graphiques.
 
 ## 16. Suppression et annulation
 
@@ -247,11 +270,35 @@ La restauration d’un asset rétablit son organisation et ses métadonnées.
 
 L’application prend en charge l’annulation et le rétablissement des opérations pertinentes pendant la session.
 
+La suppression logique d’un asset ne provoque pas immédiatement la destruction physique d’un objet devenu sans référence.
+
+Un objet physique sans aucune référence devient orphelin. Les objets orphelins sont supprimés uniquement lors d’une opération de maintenance sûre.
+
 ## 17. Export et édition externe
 
 L’export restitue le contenu préservé de l’asset.
 
 L’ouverture d’un asset dans un éditeur externe utilise une copie de travail plutôt que d’exposer l’objet interne immuable aux modifications.
+
+Le remplacement du contenu conserve l’UUID logique de l’asset ainsi que ses métadonnées d’organisation.
+
+Le nouveau contenu produit un nouvel objet physique immuable identifié par son SHA-256. Le nom de fichier d’origine enregistré pour l’asset devient celui du nouveau contenu.
+
+L’ancien objet physique peut alors devenir orphelin. Pigoune ne conserve pas d’historique permanent des versions du contenu.
+
+Après le remplacement, les propriétés dérivées du fichier sont automatiquement recalculées :
+
+- format ;
+- dimensions ;
+- poids ;
+- SHA-256 ;
+- miniature ;
+- aperçus ;
+- couleurs dominantes ;
+- métadonnées intégrées ;
+- index.
+
+Si le nouveau SHA-256 existe déjà dans la bibliothèque, la déduplication physique reste transparente.
 
 Pigoune ne s’enregistre pas comme visionneuse d’images généraliste du système.
 
@@ -263,9 +310,30 @@ Pigoune fournit des mécanismes de vérification d’intégrité et de récupér
 
 SQLite constitue la source de vérité des métadonnées.
 
-Un manifest de récupération séparé offre une voie supplémentaire pour reconstruire les métadonnées essentielles de la bibliothèque lorsque cela est nécessaire.
+Un manifest de récupération indépendant est généré périodiquement. Il contient suffisamment d’informations essentielles pour permettre une reconstruction raisonnable de la bibliothèque en cas de corruption grave de SQLite.
+
+Le manifest n’est pas utilisé comme seconde base active. Son format de sérialisation exact et sa stratégie d’atomicité relèvent de la conception technique ultérieure.
 
 Après un crash, la bibliothèque doit revenir à son dernier état cohérent.
+
+L’action « Optimiser la bibliothèque » vérifie les références avant de supprimer les objets orphelins. Elle peut également :
+
+- vérifier la cohérence de la base ;
+- nettoyer les caches obsolètes ;
+- optimiser SQLite ;
+- reconstruire les index si nécessaire ;
+- mettre à jour le manifest de récupération.
+
+Le contrôle complet d’intégrité reste une opération distincte de l’optimisation de la bibliothèque.
+
+Les sauvegardes intégrées sont uniquement déclenchées manuellement et proposent deux modes :
+
+- archive portable ;
+- sauvegarde miroir.
+
+Une sauvegarde correspond toujours à un état cohérent de la bibliothèque. Une sauvegarde à chaud cohérente est privilégiée. Si cette cohérence ne peut pas être garantie, Pigoune verrouille brièvement les écritures plutôt que de produire une sauvegarde incohérente.
+
+Une sauvegarde peut être restaurée comme nouvelle bibliothèque ou remplacer explicitement la bibliothèque actuelle. Un remplacement exige d’abord la vérification de la sauvegarde et la création d’un point de sécurité de l’état actuel.
 
 ## 19. Architecture technique
 
@@ -293,7 +361,7 @@ Les traitements en arrière-plan sont coordonnés par un gestionnaire central de
 
 La version 1.0 doit fournir une expérience complète et fiable pour un usage quotidien autour de :
 
-- bibliothèques autonomes ;
+- une bibliothèque principale autonome ;
 - stockage adressé par contenu ;
 - déduplication physique ;
 - imports robustes ;
