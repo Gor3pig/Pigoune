@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.Gor3pig.Pigoune.Devel</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Pigoune (Devel)</name>
+  <name xml:lang="fr">Pigoune (Développement)</name>
+  <summary>Personal graphical asset library for GNOME</summary>
+  <summary xml:lang="fr">Bibliothèque personnelle d’assets graphiques pour GNOME</summary>
+
+  <description>
+    <p>
+      Pigoune is a native GNOME application in development for building and managing a
+      personal library of graphical assets. It is designed to work locally and offline.
+    </p>
+    <p xml:lang="fr">
+      Pigoune est une application GNOME native en développement destinée à créer et gérer
+      une bibliothèque personnelle d’assets graphiques. Elle est conçue pour fonctionner
+      localement et hors ligne.
+    </p>
+  </description>
+
+  <categories>
+    <category>Graphics</category>
+  </categories>
+
+  <launchable type="desktop-id">io.github.Gor3pig.Pigoune.Devel.desktop</launchable>
+  <provides>
+    <binary>pigoune</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/Gor3pig/Pigoune</url>
+  <url type="bugtracker">https://github.com/Gor3pig/Pigoune/issues</url>
+  <content_rating type="oars-1.1" />
+</component>

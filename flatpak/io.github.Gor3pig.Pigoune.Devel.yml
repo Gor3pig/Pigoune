@@ -24,6 +24,18 @@ modules:
     build-commands:
       - cargo build --release --locked --offline --package pigoune-app
       - install -Dm755 target/release/pigoune /app/bin/pigoune
+      - install -Dm644 data/io.github.Gor3pig.Pigoune.Devel.desktop /app/share/applications/io.github.Gor3pig.Pigoune.Devel.desktop
+      - install -Dm644 data/io.github.Gor3pig.Pigoune.Devel.metainfo.xml /app/share/metainfo/io.github.Gor3pig.Pigoune.Devel.metainfo.xml
+      - install -Dm644 data/icons/pigoune.svg /app/share/icons/hicolor/scalable/apps/io.github.Gor3pig.Pigoune.Devel.svg
+      - install -Dm644 data/icons/pigoune-16.png /app/share/icons/hicolor/16x16/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-22.png /app/share/icons/hicolor/22x22/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-24.png /app/share/icons/hicolor/24x24/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-32.png /app/share/icons/hicolor/32x32/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-48.png /app/share/icons/hicolor/48x48/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-64.png /app/share/icons/hicolor/64x64/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-128.png /app/share/icons/hicolor/128x128/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-256.png /app/share/icons/hicolor/256x256/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-512.png /app/share/icons/hicolor/512x512/apps/io.github.Gor3pig.Pigoune.Devel.png
     sources:
       - type: file
         path: ../Cargo.toml
@@ -32,4 +44,13 @@ modules:
       - type: dir
         path: ../crates
         dest: crates
+      - type: file
+        path: ../data/io.github.Gor3pig.Pigoune.Devel.desktop
+        dest: data
+      - type: file
+        path: ../data/io.github.Gor3pig.Pigoune.Devel.metainfo.xml
+        dest: data
+      - type: dir
+        path: ../data/icons
+        dest: data/icons
       - cargo-sources.json
