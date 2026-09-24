@@ -11,6 +11,15 @@ app_instance=""
 window_id=""
 test_display=""
 existing_instances=()
+locale_args=()
+
+if [[ -n "${PIGOUNE_VISUAL_LOCALE:-}" ]]; then
+    locale_args=(
+        "--env=LANG=$PIGOUNE_VISUAL_LOCALE"
+        "--env=LC_ALL=$PIGOUNE_VISUAL_LOCALE"
+        "--unset-env=LANGUAGE"
+    )
+fi
 
 cleanup() {
     set +e
@@ -233,7 +242,7 @@ setsid env \
     GDK_BACKEND=x11 \
     WAYLAND_DISPLAY=wayland-pigoune-headless-none \
     dbus-run-session -- \
-    flatpak run --no-documents-portal --env=GDK_BACKEND=x11 "$APP_ID" \
+    flatpak run --no-documents-portal --env=GDK_BACKEND=x11 "${locale_args[@]}" "$APP_ID" \
     >"$OUTPUT_DIR/pigoune.log" 2>&1 &
 app_session_pid="$!"
 

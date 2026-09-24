@@ -1,3 +1,4 @@
+use crate::i18n::gettext;
 use adw::prelude::*;
 use std::{cell::Cell, rc::Rc};
 
@@ -54,35 +55,35 @@ fn build_navigation() -> adw::ToolbarView {
     sidebar.set_mode(adw::SidebarMode::Sidebar);
 
     sidebar.append(sidebar_section(
-        "Bibliothèque",
+        &gettext("Library"),
         &[
-            ("Tous les assets", Some("view-grid-symbolic")),
-            ("Récents", Some("document-open-recent-symbolic")),
-            ("Favoris", Some("starred-symbolic")),
-            ("Sans collection", Some("folder-symbolic")),
+            (&gettext("All assets"), Some("view-grid-symbolic")),
+            (&gettext("Recent"), Some("document-open-recent-symbolic")),
+            (&gettext("Favorites"), Some("starred-symbolic")),
+            (&gettext("Uncategorized"), Some("folder-symbolic")),
         ],
     ));
     sidebar.append(sidebar_section(
-        "Collections",
+        &gettext("Collections"),
         &[
-            ("Infrastructure", Some("folder-symbolic")),
-            ("Logos", Some("folder-symbolic")),
-            ("Systèmes", Some("folder-symbolic")),
+            (&gettext("Infrastructure"), Some("folder-symbolic")),
+            (&gettext("Logos"), Some("folder-symbolic")),
+            (&gettext("Systems"), Some("folder-symbolic")),
         ],
     ));
     sidebar.append(sidebar_section(
-        "Tags",
+        &gettext("Tags"),
         &[
-            ("linux", None),
-            ("réseau", None),
-            ("serveur", None),
-            ("Tous les tags…", None),
+            (&gettext("linux"), None),
+            (&gettext("network"), None),
+            (&gettext("server"), None),
+            (&gettext("All tags…"), None),
         ],
     ));
     sidebar.set_selected(0);
 
     let header = adw::HeaderBar::builder()
-        .title_widget(&adw::WindowTitle::new("Pigoune", "Bibliothèque"))
+        .title_widget(&adw::WindowTitle::new("Pigoune", &gettext("Library")))
         .show_end_title_buttons(false)
         .build();
 
@@ -116,7 +117,7 @@ fn build_library_view(
     let header = adw::HeaderBar::builder()
         .title_widget(
             &gtk::SearchEntry::builder()
-                .placeholder_text("Rechercher dans la bibliothèque…")
+                .placeholder_text(&gettext("Search the library…"))
                 .hexpand(true)
                 .width_chars(22)
                 .max_width_chars(38)
@@ -128,12 +129,12 @@ fn build_library_view(
     header.pack_start(&sidebar_toggle(
         navigation_split,
         "sidebar-show-symbolic",
-        "Afficher ou masquer la navigation",
+        &gettext("Show or hide navigation"),
     ));
 
     let import_button = gtk::Button::builder()
-        .label("Importer")
-        .tooltip_text("L’import sera disponible dans une prochaine étape")
+        .label(&gettext("Import"))
+        .tooltip_text(&gettext("Import will be available in a future step"))
         .sensitive(false)
         .build();
     import_button.add_css_class("suggested-action");
@@ -143,13 +144,13 @@ fn build_library_view(
     header.pack_end(&sidebar_toggle(
         inspector_split,
         "sidebar-show-right-symbolic",
-        "Afficher ou masquer l’inspecteur",
+        &gettext("Show or hide inspector"),
     ));
 
     let empty_state = adw::StatusPage::builder()
         .icon_name("image-x-generic-symbolic")
-        .title("Aucun asset pour le moment")
-        .description("Les assets importés apparaîtront ici.")
+        .title(&gettext("No assets yet"))
+        .description(&gettext("Imported assets will appear here."))
         .build();
 
     let view = adw::ToolbarView::builder().content(&empty_state).build();
@@ -160,12 +161,12 @@ fn build_library_view(
 fn build_view_switcher() -> gtk::Box {
     let grid_button = gtk::ToggleButton::builder()
         .icon_name("view-grid-symbolic")
-        .tooltip_text("Vue en grille")
+        .tooltip_text(&gettext("Grid view"))
         .active(true)
         .build();
     let list_button = gtk::ToggleButton::builder()
         .icon_name("view-list-symbolic")
-        .tooltip_text("Vue en liste")
+        .tooltip_text(&gettext("List view"))
         .group(&grid_button)
         .build();
 
@@ -178,13 +179,13 @@ fn build_view_switcher() -> gtk::Box {
 
 fn build_inspector(inspector_split: &adw::OverlaySplitView) -> adw::ToolbarView {
     let header = adw::HeaderBar::builder()
-        .title_widget(&adw::WindowTitle::new("Inspecteur", ""))
+        .title_widget(&adw::WindowTitle::new(&gettext("Inspector"), ""))
         .show_start_title_buttons(false)
         .build();
     header.pack_end(&sidebar_toggle(
         inspector_split,
         "sidebar-show-right-symbolic",
-        "Masquer l’inspecteur",
+        &gettext("Hide inspector"),
     ));
 
     let preview = gtk::Box::builder()
@@ -202,7 +203,7 @@ fn build_inspector(inspector_split: &adw::OverlaySplitView) -> adw::ToolbarView 
     );
 
     let title = gtk::Label::builder()
-        .label("Aucun asset sélectionné")
+        .label(&gettext("No asset selected"))
         .halign(gtk::Align::Center)
         .justify(gtk::Justification::Center)
         .wrap(true)
@@ -211,23 +212,23 @@ fn build_inspector(inspector_split: &adw::OverlaySplitView) -> adw::ToolbarView 
 
     let details = adw::PreferencesGroup::new();
     details.add(&inspector_section(
-        "Informations",
-        "Aucune information disponible",
+        &gettext("Information"),
+        &gettext("No information available"),
         true,
     ));
     details.add(&inspector_section(
-        "Organisation",
-        "Aucune collection ou aucun tag",
+        &gettext("Organization"),
+        &gettext("No collection or tags"),
         false,
     ));
     details.add(&inspector_section(
-        "Technique",
-        "Aucune donnée technique",
+        &gettext("Technical"),
+        &gettext("No technical data"),
         false,
     ));
     details.add(&inspector_section(
-        "Source et droits",
-        "Aucune information de source ou de droits",
+        &gettext("Source and licensing"),
+        &gettext("No source or licensing information"),
         false,
     ));
 

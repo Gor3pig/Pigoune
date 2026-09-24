@@ -1,0 +1,154 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Pigoune contributors
+# This file is distributed under the same license as the Pigoune package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Pigoune 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Gor3pig/Pigoune/issues\n"
+"POT-Creation-Date: 2026-09-24 06:15+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: crates/pigoune-app/src/window.rs:58 crates/pigoune-app/src/window.rs:86
+msgid "Library"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:60
+msgid "All assets"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:61
+msgid "Recent"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:62
+msgid "Favorites"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:63
+msgid "Uncategorized"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:67
+msgid "Collections"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:69
+msgid "Infrastructure"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:70
+msgid "Logos"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:71
+msgid "Systems"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:75
+msgid "Tags"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:77
+msgid "linux"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:78
+msgid "network"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:79
+msgid "server"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:80
+msgid "All tags…"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:120
+msgid "Search the library…"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:132
+msgid "Show or hide navigation"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:136
+msgid "Import"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:137
+msgid "Import will be available in a future step"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:147
+msgid "Show or hide inspector"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:152
+msgid "No assets yet"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:153
+msgid "Imported assets will appear here."
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:164
+msgid "Grid view"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:169
+msgid "List view"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:182
+msgid "Inspector"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:188
+msgid "Hide inspector"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:206
+msgid "No asset selected"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:215
+msgid "Information"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:216
+msgid "No information available"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:220
+msgid "Organization"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:221
+msgid "No collection or tags"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:225
+msgid "Technical"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:226
+msgid "No technical data"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:230
+msgid "Source and licensing"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:231
+msgid "No source or licensing information"
+msgstr ""

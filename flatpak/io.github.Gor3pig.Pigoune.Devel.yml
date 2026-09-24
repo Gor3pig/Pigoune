@@ -21,9 +21,12 @@ modules:
       env:
         CARGO_HOME: /run/build/pigoune/cargo
         CARGO_NET_OFFLINE: 'true'
+        PIGOUNE_LOCALEDIR: /app/share/locale
     build-commands:
       - cargo build --release --locked --offline --package pigoune-app
       - install -Dm755 target/release/pigoune /app/bin/pigoune
+      - msgfmt --check --output-file=pigoune.mo po/fr.po
+      - install -Dm644 pigoune.mo /app/share/locale/fr/LC_MESSAGES/pigoune.mo
       - install -Dm644 data/io.github.Gor3pig.Pigoune.Devel.desktop /app/share/applications/io.github.Gor3pig.Pigoune.Devel.desktop
       - install -Dm644 data/io.github.Gor3pig.Pigoune.Devel.metainfo.xml /app/share/metainfo/io.github.Gor3pig.Pigoune.Devel.metainfo.xml
       - install -Dm644 data/icons/pigoune.svg /app/share/icons/hicolor/scalable/apps/io.github.Gor3pig.Pigoune.Devel.svg
@@ -44,6 +47,9 @@ modules:
       - type: dir
         path: ../crates
         dest: crates
+      - type: dir
+        path: ../po
+        dest: po
       - type: file
         path: ../data/io.github.Gor3pig.Pigoune.Devel.desktop
         dest: data

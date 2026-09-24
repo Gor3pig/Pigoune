@@ -1,0 +1,154 @@
+# French translations for Pigoune package.
+# Copyright (C) 2026 Pigoune contributors
+# This file is distributed under the same license as the Pigoune package.
+# Pigoune contributors, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Pigoune 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Gor3pig/Pigoune/issues\n"
+"POT-Creation-Date: 2026-09-24 06:15+0000\n"
+"PO-Revision-Date: 2026-09-24 06:15+0000\n"
+"Last-Translator: Pigoune contributors\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: crates/pigoune-app/src/window.rs:58 crates/pigoune-app/src/window.rs:86
+msgid "Library"
+msgstr "Bibliothèque"
+
+#: crates/pigoune-app/src/window.rs:60
+msgid "All assets"
+msgstr "Tous les assets"
+
+#: crates/pigoune-app/src/window.rs:61
+msgid "Recent"
+msgstr "Récents"
+
+#: crates/pigoune-app/src/window.rs:62
+msgid "Favorites"
+msgstr "Favoris"
+
+#: crates/pigoune-app/src/window.rs:63
+msgid "Uncategorized"
+msgstr "Sans collection"
+
+#: crates/pigoune-app/src/window.rs:67
+msgid "Collections"
+msgstr "Collections"
+
+#: crates/pigoune-app/src/window.rs:69
+msgid "Infrastructure"
+msgstr "Infrastructure"
+
+#: crates/pigoune-app/src/window.rs:70
+msgid "Logos"
+msgstr "Logos"
+
+#: crates/pigoune-app/src/window.rs:71
+msgid "Systems"
+msgstr "Systèmes"
+
+#: crates/pigoune-app/src/window.rs:75
+msgid "Tags"
+msgstr "Tags"
+
+#: crates/pigoune-app/src/window.rs:77
+msgid "linux"
+msgstr "linux"
+
+#: crates/pigoune-app/src/window.rs:78
+msgid "network"
+msgstr "réseau"
+
+#: crates/pigoune-app/src/window.rs:79
+msgid "server"
+msgstr "serveur"
+
+#: crates/pigoune-app/src/window.rs:80
+msgid "All tags…"
+msgstr "Tous les tags…"
+
+#: crates/pigoune-app/src/window.rs:120
+msgid "Search the library…"
+msgstr "Rechercher dans la bibliothèque…"
+
+#: crates/pigoune-app/src/window.rs:132
+msgid "Show or hide navigation"
+msgstr "Afficher ou masquer la navigation"
+
+#: crates/pigoune-app/src/window.rs:136
+msgid "Import"
+msgstr "Importer"
+
+#: crates/pigoune-app/src/window.rs:137
+msgid "Import will be available in a future step"
+msgstr "L’import sera disponible dans une prochaine étape"
+
+#: crates/pigoune-app/src/window.rs:147
+msgid "Show or hide inspector"
+msgstr "Afficher ou masquer l’inspecteur"
+
+#: crates/pigoune-app/src/window.rs:152
+msgid "No assets yet"
+msgstr "Aucun asset pour le moment"
+
+#: crates/pigoune-app/src/window.rs:153
+msgid "Imported assets will appear here."
+msgstr "Les assets importés apparaîtront ici."
+
+#: crates/pigoune-app/src/window.rs:164
+msgid "Grid view"
+msgstr "Vue en grille"
+
+#: crates/pigoune-app/src/window.rs:169
+msgid "List view"
+msgstr "Vue en liste"
+
+#: crates/pigoune-app/src/window.rs:182
+msgid "Inspector"
+msgstr "Inspecteur"
+
+#: crates/pigoune-app/src/window.rs:188
+msgid "Hide inspector"
+msgstr "Masquer l’inspecteur"
+
+#: crates/pigoune-app/src/window.rs:206
+msgid "No asset selected"
+msgstr "Aucun asset sélectionné"
+
+#: crates/pigoune-app/src/window.rs:215
+msgid "Information"
+msgstr "Informations"
+
+#: crates/pigoune-app/src/window.rs:216
+msgid "No information available"
+msgstr "Aucune information disponible"
+
+#: crates/pigoune-app/src/window.rs:220
+msgid "Organization"
+msgstr "Organisation"
+
+#: crates/pigoune-app/src/window.rs:221
+msgid "No collection or tags"
+msgstr "Aucune collection ou aucun tag"
+
+#: crates/pigoune-app/src/window.rs:225
+msgid "Technical"
+msgstr "Technique"
+
+#: crates/pigoune-app/src/window.rs:226
+msgid "No technical data"
+msgstr "Aucune donnée technique"
+
+#: crates/pigoune-app/src/window.rs:230
+msgid "Source and licensing"
+msgstr "Source et droits"
+
+#: crates/pigoune-app/src/window.rs:231
+msgid "No source or licensing information"
+msgstr "Aucune information de source ou de droits"
