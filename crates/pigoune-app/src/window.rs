@@ -117,7 +117,7 @@ fn build_library_view(
     let header = adw::HeaderBar::builder()
         .title_widget(
             &gtk::SearchEntry::builder()
-                .placeholder_text(&gettext("Search the library…"))
+                .placeholder_text(gettext("Search the library…"))
                 .hexpand(true)
                 .width_chars(22)
                 .max_width_chars(38)
@@ -133,8 +133,8 @@ fn build_library_view(
     ));
 
     let import_button = gtk::Button::builder()
-        .label(&gettext("Import"))
-        .tooltip_text(&gettext("Import will be available in a future step"))
+        .label(gettext("Import"))
+        .tooltip_text(gettext("Import will be available in a future step"))
         .sensitive(false)
         .build();
     import_button.add_css_class("suggested-action");
@@ -149,8 +149,8 @@ fn build_library_view(
 
     let empty_state = adw::StatusPage::builder()
         .icon_name("image-x-generic-symbolic")
-        .title(&gettext("No assets yet"))
-        .description(&gettext("Imported assets will appear here."))
+        .title(gettext("No assets yet"))
+        .description(gettext("Imported assets will appear here."))
         .build();
 
     let view = adw::ToolbarView::builder().content(&empty_state).build();
@@ -161,12 +161,12 @@ fn build_library_view(
 fn build_view_switcher() -> gtk::Box {
     let grid_button = gtk::ToggleButton::builder()
         .icon_name("view-grid-symbolic")
-        .tooltip_text(&gettext("Grid view"))
+        .tooltip_text(gettext("Grid view"))
         .active(true)
         .build();
     let list_button = gtk::ToggleButton::builder()
         .icon_name("view-list-symbolic")
-        .tooltip_text(&gettext("List view"))
+        .tooltip_text(gettext("List view"))
         .group(&grid_button)
         .build();
 
@@ -203,7 +203,7 @@ fn build_inspector(inspector_split: &adw::OverlaySplitView) -> adw::ToolbarView 
     );
 
     let title = gtk::Label::builder()
-        .label(&gettext("No asset selected"))
+        .label(gettext("No asset selected"))
         .halign(gtk::Align::Center)
         .justify(gtk::Justification::Center)
         .wrap(true)
