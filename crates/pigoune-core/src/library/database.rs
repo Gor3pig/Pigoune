@@ -48,6 +48,10 @@ pub struct LibraryDatabase {
 }
 
 impl LibraryDatabase {
+    pub(crate) fn close(self) -> Result<(), DatabaseError> {
+        self.connection.close().map_err(|(_, error)| error.into())
+    }
+
     pub fn create(root: &Path, library_id: LibraryId) -> Result<Self, DatabaseError> {
         let path = root.join("library.db");
         OpenOptions::new()

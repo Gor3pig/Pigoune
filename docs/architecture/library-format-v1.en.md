@@ -17,6 +17,10 @@ The application version (Cargo), library format version (`LIBRARY_FORMAT_VERSION
 
 Caches live outside this directory. In WAL mode, `library.db-wal` and `library.db-shm` may appear at its root; a copy or backup must represent a consistent SQLite state.
 
+## Creation
+
+The final destination must not exist. Pigoune builds the complete library in a temporary sibling directory on the same filesystem, then publishes it with an atomic `RENAME_NOREPLACE` rename without replacing a destination that appeared meanwhile. `library.json` is complete and synchronized before publication. An error before publication leaves no partial library at the final path. A crash may leave a `.pigoune-create-*` sibling; another creation never automatically removes these remnants.
+
 ## Identity and metadata
 
 `library.json` contains only `type: "pigoune-library"`, `library_id` (a canonical lowercase hyphenated UUID v4), and `format_version: 1`. The `library_metadata` table stores the same `LibraryId` as a 16-byte BLOB in a single `singleton = 1` row. Opening for writing compares these identities and fails if they differ. An invalid manifest is never silently repaired.

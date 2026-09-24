@@ -1,10 +1,16 @@
 use pigoune_core::{
     AssetId, AssetRecord, DATABASE_SCHEMA_VERSION, DatabaseError, ImageFormat, ImageMetadata,
-    LIBRARY_FORMAT_VERSION, Library, LibraryDatabase, LibraryId, LibraryManifest, ManifestError,
-    ObjectHash, ObjectRecord, OriginalFilename, StoredObject,
+    LIBRARY_FORMAT_VERSION, Library, LibraryDatabase, LibraryError, LibraryId, LibraryManifest,
+    ManifestError, ObjectHash, ObjectRecord, OriginalFilename, StoredObject,
 };
 use rusqlite::{Connection, OptionalExtension, params};
-use std::{fs, path::Path, path::PathBuf};
+use std::{
+    fs,
+    path::Path,
+    path::PathBuf,
+    sync::{Arc, Barrier},
+    thread,
+};
 use tempfile::tempdir;
 
 fn object(bytes: &[u8]) -> ObjectRecord {
@@ -35,6 +41,213 @@ fn raw_db(root: &Path) -> Connection {
     let db = Connection::open(root.join("library.db")).unwrap();
     db.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
     db
+}
+
+fn creation_siblings(parent: &Path) -> Vec<PathBuf> {
+    fs::read_dir(parent)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with(".pigoune-create-")
+        })
+        .collect()
+}
+
+#[test]
+fn creation_publishes_complete_library_and_reopens() {
+    let parent = tempdir().unwrap();
+    let destination = parent.path().join("library");
+    assert!(!destination.exists());
+    let library = Library::create(&destination).unwrap();
+    assert_eq!(
+        library.id,
+        LibraryManifest::read(&destination).unwrap().library_id
+    );
+    assert_eq!(library.id, library.database.library_id().unwrap());
+    assert_eq!(library.database.schema_version().unwrap(), 2);
+    for entry in ["library.db", "library.json", "objects/.lock"] {
+        assert!(destination.join(entry).is_file(), "missing {entry}");
+    }
+    for entry in ["objects/.tmp", "recovery"] {
+        assert!(destination.join(entry).is_dir(), "missing {entry}");
+    }
+    assert!(creation_siblings(parent.path()).is_empty());
+    let id = library.id;
+    drop(library);
+    assert_eq!(Library::open(&destination).unwrap().id, id);
+}
+
+#[test]
+fn existing_empty_directory_is_preserved() {
+    let parent = tempdir().unwrap();
+    let destination = parent.path().join("library");
+    fs::create_dir(&destination).unwrap();
+    assert!(matches!(
+        Library::create(&destination),
+        Err(LibraryError::DestinationExists)
+    ));
+    assert_eq!(fs::read_dir(&destination).unwrap().count(), 0);
+    assert!(creation_siblings(parent.path()).is_empty());
+}
+
+#[test]
+fn existing_nonempty_directory_is_preserved() {
+    let parent = tempdir().unwrap();
+    let destination = parent.path().join("library");
+    fs::create_dir(&destination).unwrap();
+    fs::write(destination.join("personal.txt"), b"keep").unwrap();
+    assert!(matches!(
+        Library::create(&destination),
+        Err(LibraryError::DestinationExists)
+    ));
+    assert_eq!(fs::read(destination.join("personal.txt")).unwrap(), b"keep");
+    assert_eq!(fs::read_dir(&destination).unwrap().count(), 1);
+}
+
+#[test]
+fn existing_file_is_preserved() {
+    let parent = tempdir().unwrap();
+    let destination = parent.path().join("library");
+    fs::write(&destination, b"keep").unwrap();
+    assert!(matches!(
+        Library::create(&destination),
+        Err(LibraryError::DestinationExists)
+    ));
+    assert_eq!(fs::read(&destination).unwrap(), b"keep");
+}
+
+#[test]
+fn existing_symlink_and_target_are_preserved() {
+    let parent = tempdir().unwrap();
+    let target = parent.path().join("target");
+    fs::create_dir(&target).unwrap();
+    fs::write(target.join("personal.txt"), b"keep").unwrap();
+    let destination = parent.path().join("library");
+    std::os::unix::fs::symlink(&target, &destination).unwrap();
+    assert!(matches!(
+        Library::create(&destination),
+        Err(LibraryError::DestinationExists)
+    ));
+    assert!(
+        fs::symlink_metadata(&destination)
+            .unwrap()
+            .file_type()
+            .is_symlink()
+    );
+    assert_eq!(fs::read(target.join("personal.txt")).unwrap(), b"keep");
+}
+
+#[test]
+fn invalid_destination_and_missing_parent_are_rejected() {
+    let parent = tempdir().unwrap();
+    for destination in [
+        Path::new("/"),
+        Path::new("."),
+        Path::new(".."),
+        Path::new("library"),
+    ] {
+        assert!(matches!(
+            Library::create(destination),
+            Err(LibraryError::InvalidDestination(_))
+        ));
+    }
+    assert!(matches!(
+        Library::create(&parent.path().join("missing/library")),
+        Err(LibraryError::InvalidParent(_))
+    ));
+    assert!(!parent.path().join("missing").exists());
+}
+
+#[test]
+fn concurrent_creation_never_replaces_the_winner() {
+    let parent = tempdir().unwrap();
+    let destination = parent.path().join("library");
+    let barrier = Arc::new(Barrier::new(2));
+    let handles: Vec<_> = (0..2)
+        .map(|_| {
+            let barrier = Arc::clone(&barrier);
+            let destination = destination.clone();
+            thread::spawn(move || {
+                barrier.wait();
+                Library::create(&destination).map(|library| library.id)
+            })
+        })
+        .collect();
+    let results: Vec<_> = handles
+        .into_iter()
+        .map(|handle| handle.join().unwrap())
+        .collect();
+    assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+    assert_eq!(
+        results
+            .iter()
+            .filter(|result| matches!(result, Err(LibraryError::DestinationExists)))
+            .count(),
+        1
+    );
+    let winner = results.into_iter().find_map(Result::ok).unwrap();
+    assert_eq!(Library::open(&destination).unwrap().id, winner);
+    assert!(creation_siblings(parent.path()).is_empty());
+}
+
+#[test]
+fn unrelated_creation_workspace_is_untouched() {
+    let parent = tempdir().unwrap();
+    let old = parent
+        .path()
+        .join(format!(".pigoune-create-{}", uuid::Uuid::new_v4()));
+    fs::create_dir(&old).unwrap();
+    fs::write(old.join("personal.txt"), b"keep").unwrap();
+    Library::create(&parent.path().join("library")).unwrap();
+    assert_eq!(fs::read(old.join("personal.txt")).unwrap(), b"keep");
+    assert_eq!(creation_siblings(parent.path()), vec![old]);
+}
+
+#[test]
+fn returned_store_and_database_write_under_final_destination() {
+    struct Accept;
+    impl pigoune_core::StagedValidator for Accept {
+        type Output = ();
+        type Error = std::io::Error;
+
+        fn validate(&self, staged: &pigoune_core::StagedObject<'_>) -> Result<(), Self::Error> {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            staged.open_read()?.read_to_end(&mut bytes)?;
+            assert_eq!(bytes, b"<svg/>");
+            Ok(())
+        }
+    }
+
+    let parent = tempdir().unwrap();
+    let destination = parent.path().join("library");
+    let mut library = Library::create(&destination).unwrap();
+    let stored = library
+        .object_store
+        .stage_reader(&b"<svg/>"[..], Some(std::ffi::OsStr::new("image.svg")))
+        .unwrap()
+        .validate_with(&Accept)
+        .unwrap()
+        .publish()
+        .unwrap()
+        .stored
+        .object;
+    assert_eq!(
+        fs::read(destination.join(&stored.relative_path)).unwrap(),
+        b"<svg/>"
+    );
+    let asset = asset(&stored, b"image.svg".to_vec());
+    library
+        .database
+        .import_published_asset(&stored, image_metadata(), &asset)
+        .unwrap();
+    drop(library);
+    let reopened = Library::open(&destination).unwrap();
+    assert_eq!(reopened.database.get_asset(asset.id).unwrap(), Some(asset));
+    assert!(creation_siblings(parent.path()).is_empty());
 }
 
 #[test]
@@ -140,9 +353,10 @@ fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
 
 #[test]
 fn sql_image_metadata_is_all_or_none() {
-    let directory = tempdir().unwrap();
-    let _library = Library::create(directory.path()).unwrap();
-    let db = raw_db(directory.path());
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let _library = Library::create(directory.as_path()).unwrap();
+    let db = raw_db(directory.as_path());
     let record = object(b"sql constraints");
     let hash = record.hash.digest_bytes();
     let path = record.relative_path.to_str().unwrap();
@@ -193,7 +407,7 @@ fn sql_image_metadata_is_all_or_none() {
     assert!(db.execute("UPDATE objects SET format = 'future', width = 3, height = 2, animated = 1 WHERE hash = ?1",
         [hash.as_slice()]).is_ok());
     drop(db);
-    let library = Library::open(directory.path()).unwrap();
+    let library = Library::open(directory.as_path()).unwrap();
     assert!(matches!(
         library.database.get_object(record.hash),
         Err(DatabaseError::InvalidStoredValue("image format"))
@@ -265,8 +479,9 @@ fn manifest_round_trip_and_explicit_errors() {
 
 #[test]
 fn new_database_uses_wal_foreign_keys_and_matching_metadata() {
-    let directory = tempdir().unwrap();
-    let library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let library = Library::create(directory.as_path()).unwrap();
     assert_eq!(
         library.database.schema_version().unwrap(),
         DATABASE_SCHEMA_VERSION
@@ -274,22 +489,23 @@ fn new_database_uses_wal_foreign_keys_and_matching_metadata() {
     assert_eq!(library.database.journal_mode().unwrap(), "wal");
     assert!(library.database.foreign_keys_enabled().unwrap());
     assert_eq!(library.database.library_id().unwrap(), library.id);
-    assert!(directory.path().join("recovery").is_dir());
-    assert!(directory.path().join("objects/.tmp").is_dir());
-    assert!(directory.path().join("objects/.lock").is_file());
-    assert_eq!(Library::open(directory.path()).unwrap().id, library.id);
+    assert!(directory.as_path().join("recovery").is_dir());
+    assert!(directory.as_path().join("objects/.tmp").is_dir());
+    assert!(directory.as_path().join("objects/.lock").is_file());
+    assert_eq!(Library::open(directory.as_path()).unwrap().id, library.id);
 }
 
 #[test]
 fn mismatched_library_id_and_newer_schema_are_rejected() {
-    let directory = tempdir().unwrap();
-    let library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let library = Library::create(directory.as_path()).unwrap();
     assert!(matches!(
-        LibraryDatabase::open(directory.path(), LibraryId::new()),
+        LibraryDatabase::open(directory.as_path(), LibraryId::new()),
         Err(DatabaseError::LibraryIdMismatch { .. })
     ));
     fs::write(
-        directory.path().join("library.json"),
+        directory.as_path().join("library.json"),
         format!(
             "{{\"type\":\"pigoune-library\",\"library_id\":\"{}\",\"format_version\":1}}",
             LibraryId::new()
@@ -297,15 +513,15 @@ fn mismatched_library_id_and_newer_schema_are_rejected() {
     )
     .unwrap();
     assert!(matches!(
-        Library::open(directory.path()),
+        Library::open(directory.as_path()),
         Err(pigoune_core::LibraryError::Database(
             DatabaseError::LibraryIdMismatch { .. }
         ))
     ));
-    let db = raw_db(directory.path());
+    let db = raw_db(directory.as_path());
     db.pragma_update(None, "user_version", 99).unwrap();
     assert!(matches!(
-        LibraryDatabase::open(directory.path(), library.id),
+        LibraryDatabase::open(directory.as_path(), library.id),
         Err(DatabaseError::SchemaTooNew(99))
     ));
 }
@@ -332,9 +548,10 @@ fn empty_replacement_database_is_not_claimed_by_manifest() {
 
 #[test]
 fn strict_schema_rejects_invalid_fields() {
-    let directory = tempdir().unwrap();
-    let _library = Library::create(directory.path()).unwrap();
-    let db = raw_db(directory.path());
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let _library = Library::create(directory.as_path()).unwrap();
+    let db = raw_db(directory.as_path());
     let object = object(b"bytes");
     let path = object.relative_path.to_str().unwrap();
     assert!(
@@ -442,8 +659,9 @@ fn exact_posix_names_round_trip() {
     assert!(OriginalFilename::from_bytes(b"a/b".to_vec()).is_err());
     assert!(OriginalFilename::from_bytes(b"a\0b".to_vec()).is_err());
 
-    let directory = tempdir().unwrap();
-    let mut library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let mut library = Library::create(directory.as_path()).unwrap();
     let record = object(b"non-utf8 name");
     let named_asset = asset(&record, b"non-utf8-\xff.svg".to_vec());
     library
@@ -456,11 +674,12 @@ fn exact_posix_names_round_trip() {
 
 #[test]
 fn foreign_key_deduplication_and_object_reconciliation() {
-    let directory = tempdir().unwrap();
-    let mut library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let mut library = Library::create(directory.as_path()).unwrap();
     let object = object(b"same bytes");
     let missing = asset(&object, b"missing.svg".to_vec());
-    let db = raw_db(directory.path());
+    let db = raw_db(directory.as_path());
     assert!(db.execute("INSERT INTO assets (id, object_hash, original_filename, display_name, imported_at_utc_us) VALUES (?1, ?2, ?3, ?4, ?5)",
         params![missing.id.to_bytes().as_slice(), object.hash.digest_bytes().as_slice(),
             missing.original_filename.as_bytes(), missing.display_name, missing.imported_at_utc_us]).is_err());
@@ -508,10 +727,11 @@ fn foreign_key_deduplication_and_object_reconciliation() {
 
 #[test]
 fn object_row_without_assets_is_not_a_logical_duplicate() {
-    let directory = tempdir().unwrap();
-    let mut library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let mut library = Library::create(directory.as_path()).unwrap();
     let record = object(b"orphan row");
-    let db = raw_db(directory.path());
+    let db = raw_db(directory.as_path());
     db.execute(
         "INSERT INTO objects (hash, size_bytes, relative_path, format, width, height, animated) \
          VALUES (?1, ?2, ?3, 'svg', 3, 2, 0)",
@@ -542,8 +762,9 @@ fn object_row_without_assets_is_not_a_logical_duplicate() {
 
 #[test]
 fn transaction_rolls_back_new_object_when_asset_insert_fails() {
-    let directory = tempdir().unwrap();
-    let mut library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let mut library = Library::create(directory.as_path()).unwrap();
     let first_object = object(b"first");
     let first_asset = asset(&first_object, b"first.svg".to_vec());
     library
@@ -575,8 +796,9 @@ fn transaction_rolls_back_new_object_when_asset_insert_fails() {
 
 #[test]
 fn unsafe_object_paths_are_rejected_on_write_and_read() {
-    let directory = tempdir().unwrap();
-    let mut library = Library::create(directory.path()).unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
+    let mut library = Library::create(directory.as_path()).unwrap();
     let mut record = object(b"path test");
     for path in [
         "/objects/x",
@@ -603,7 +825,7 @@ fn unsafe_object_paths_are_rejected_on_write_and_read() {
             &asset(&record, b"path.svg".to_vec()),
         )
         .unwrap();
-    let db = raw_db(directory.path());
+    let db = raw_db(directory.as_path());
     db.execute(
         "UPDATE objects SET relative_path = '/outside' WHERE hash = ?1",
         [record.hash.digest_bytes().as_slice()],
@@ -619,11 +841,12 @@ fn unsafe_object_paths_are_rejected_on_write_and_read() {
 fn published_object_and_database_survive_source_removal() {
     use std::os::unix::ffi::OsStrExt;
 
-    let directory = tempdir().unwrap();
+    let parent = tempdir().unwrap();
+    let directory = parent.path().join("library");
     let source_dir = tempdir().unwrap();
     let source = source_dir.path().join("source-graphic.svg");
     fs::write(&source, b"<svg/>").unwrap();
-    let mut library = Library::create(directory.path()).unwrap();
+    let mut library = Library::create(directory.as_path()).unwrap();
     struct AcceptStagedBytes;
     impl pigoune_core::StagedValidator for AcceptStagedBytes {
         type Output = ();
@@ -660,7 +883,7 @@ fn published_object_and_database_survive_source_removal() {
         .unwrap();
     fs::remove_file(&source).unwrap();
     assert_eq!(
-        fs::read(directory.path().join(&stored.relative_path)).unwrap(),
+        fs::read(directory.as_path().join(&stored.relative_path)).unwrap(),
         b"<svg/>"
     );
     assert_eq!(
@@ -682,7 +905,7 @@ fn published_object_and_database_survive_source_removal() {
             .as_bytes(),
         b"source-graphic.svg"
     );
-    let db = raw_db(directory.path());
+    let db = raw_db(directory.as_path());
     let persisted: Vec<u8> = db
         .query_row(
             "SELECT original_filename FROM assets WHERE id = ?1",

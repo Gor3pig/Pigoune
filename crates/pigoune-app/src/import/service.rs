@@ -207,7 +207,6 @@ mod tests {
     fn normal_png_import_preserves_bytes_and_survives_source_removal() {
         let root = tempdir().unwrap();
         let source = source(root.path(), "sample.png", PNG);
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let (asset, object, metadata, warnings) =
             imported(import(&mut library, &source, DuplicatePolicy::Detect));
@@ -246,7 +245,6 @@ mod tests {
     #[test]
     fn misleading_extension_and_non_utf8_names_round_trip() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let source = source(root.path(), "picture.jpg", PNG);
         let (asset, _, metadata, _) =
@@ -275,7 +273,6 @@ mod tests {
     #[test]
     fn external_svg_warning_and_exact_bytes_are_returned() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let source = source(root.path(), "external.svg", SVG_EXTERNAL);
         let (asset, object, metadata, warnings) =
@@ -304,7 +301,6 @@ mod tests {
     #[test]
     fn invalid_content_and_empty_name_leave_no_staging_or_database_rows() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let fake = source(root.path(), "fake.png", b"not an image");
         assert!(matches!(
@@ -350,7 +346,6 @@ mod tests {
     #[test]
     fn detect_stops_before_publication_and_import_anyway_reuses_physical_bytes() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let source = source(root.path(), "first.png", PNG);
         let (first, first_object, _, _) =
@@ -396,7 +391,6 @@ mod tests {
     #[test]
     fn orphan_physical_object_is_not_a_logical_duplicate() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let source = source(root.path(), "orphan.png", PNG);
         let orphan = library
@@ -430,7 +424,6 @@ mod tests {
     #[test]
     fn source_without_filename_and_invalid_name_fail_before_staging() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         assert!(matches!(
             ImportService::import_file(
@@ -452,7 +445,6 @@ mod tests {
     #[test]
     fn injected_clock_sets_exact_microseconds_and_rejects_invalid_instants() {
         let root = tempdir().unwrap();
-        fs::create_dir(root.path().join("library")).unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
         let source = source(root.path(), "clock.png", PNG);
         let instant =

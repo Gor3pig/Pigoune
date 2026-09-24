@@ -17,6 +17,10 @@ La version de l'application (Cargo), la version du format de bibliothèque (`LIB
 
 Les caches sont hors de ce dossier. En mode WAL, `library.db-wal` et `library.db-shm` peuvent apparaître à sa racine ; une copie ou sauvegarde doit représenter un état SQLite cohérent.
 
+## Création
+
+La destination finale doit être inexistante. Pigoune construit la bibliothèque complète dans un dossier temporaire frère, sur le même système de fichiers, puis la publie par renommage atomique `RENAME_NOREPLACE` sans remplacer une destination apparue entre-temps. `library.json` est complet et synchronisé avant la publication. Une erreur avant celle-ci ne laisse aucune bibliothèque partielle au chemin final. Un crash peut laisser un dossier frère `.pigoune-create-*` ; une autre création ne supprime jamais automatiquement ces restes.
+
 ## Identité et métadonnées
 
 `library.json` contient uniquement `type: "pigoune-library"`, `library_id` (UUID v4 canonique, minuscule avec tirets) et `format_version: 1`. La table `library_metadata` contient le même `LibraryId` en BLOB de 16 octets dans une unique ligne `singleton = 1`. L'ouverture en écriture compare ces identités et échoue si elles divergent. Un manifest invalide n'est jamais réparé silencieusement.

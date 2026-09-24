@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn staged_glycin_image_persists_with_asset() {
         let directory = tempdir().unwrap();
-        let mut library = Library::create(directory.path()).unwrap();
+        let mut library = Library::create(&directory.path().join("library")).unwrap();
         let validated = library
             .object_store
             .stage_reader(PNG, Some(OsStr::new("original.jpg")))
@@ -204,7 +204,7 @@ mod tests {
         let stored = library.database.get_object(object.hash).unwrap().unwrap();
         assert_eq!(object.hash, ObjectHash::from_bytes(PNG));
         assert_eq!(
-            fs::read(directory.path().join(&object.relative_path)).unwrap(),
+            fs::read(directory.path().join("library").join(&object.relative_path)).unwrap(),
             PNG
         );
         assert_eq!(stored.object.size, PNG.len() as u64);
