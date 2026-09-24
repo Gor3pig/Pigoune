@@ -7,7 +7,8 @@ use std::{
 };
 
 use crate::{
-    ContainerCodec, ContainerMetadata, ContainerRepresentation, ICO_MAX_DIMENSION, ICO_MAX_ENTRIES,
+    ContainerCodec, ContainerMetadata, ContainerRepresentation, ICON_CONTAINER_MAX_DIMENSION,
+    ICON_CONTAINER_MAX_REPRESENTATIONS,
 };
 
 const PNG_SIGNATURE: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -112,7 +113,7 @@ pub fn parse_ico<R: Read + Seek>(reader: &mut R) -> Result<IcoContainer, IcoErro
         return Err(IcoError::InvalidHeader);
     }
     let count = usize::from(le16(&header[4..6]));
-    if count == 0 || count > ICO_MAX_ENTRIES {
+    if count == 0 || count > ICON_CONTAINER_MAX_REPRESENTATIONS {
         return Err(IcoError::InvalidCount);
     }
     let directory_end = count
@@ -431,9 +432,9 @@ fn check_dimensions(width: u32, height: u32, ordinal: u16) -> Result<(), IcoErro
         .ok_or(IcoError::Overflow)?;
     if width == 0
         || height == 0
-        || width > ICO_MAX_DIMENSION
-        || height > ICO_MAX_DIMENSION
-        || bytes > crate::ICO_MAX_DECODED_BYTES
+        || width > ICON_CONTAINER_MAX_DIMENSION
+        || height > ICON_CONTAINER_MAX_DIMENSION
+        || bytes > crate::ICON_CONTAINER_MAX_DECODED_BYTES
     {
         return Err(IcoError::LimitExceeded(ordinal));
     }
@@ -590,19 +591,19 @@ mod tests {
         let mut bytes = ico(&[(16, 16, dib(16, 16, 32))]);
         let entry = bytes[6..22].to_vec();
         let payload = bytes.split_off(22);
-        bytes[4..6].copy_from_slice(&(ICO_MAX_ENTRIES as u16).to_le_bytes());
-        for _ in 1..ICO_MAX_ENTRIES {
+        bytes[4..6].copy_from_slice(&(ICON_CONTAINER_MAX_REPRESENTATIONS as u16).to_le_bytes());
+        for _ in 1..ICON_CONTAINER_MAX_REPRESENTATIONS {
             bytes.extend_from_slice(&entry);
         }
         let offset = bytes.len() as u32;
-        for index in 0..ICO_MAX_ENTRIES {
+        for index in 0..ICON_CONTAINER_MAX_REPRESENTATIONS {
             let position = 6 + 16 * index + 12;
             bytes[position..position + 4].copy_from_slice(&offset.to_le_bytes());
         }
         bytes.extend_from_slice(&payload);
         assert_eq!(
             parse(&bytes).unwrap().metadata().representations().len(),
-            ICO_MAX_ENTRIES
+            ICON_CONTAINER_MAX_REPRESENTATIONS
         );
     }
 

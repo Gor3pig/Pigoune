@@ -9,7 +9,8 @@ mod storage;
 pub use asset::AssetId;
 pub use container::{
     ContainerCodec, ContainerMetadata, ContainerMetadataError, ContainerRepresentation,
-    ICO_MAX_DECODED_BYTES, ICO_MAX_DIMENSION, ICO_MAX_ENTRIES,
+    ICON_CONTAINER_MAX_DECODED_BYTES, ICON_CONTAINER_MAX_DIMENSION,
+    ICON_CONTAINER_MAX_REPRESENTATIONS,
 };
 pub use image::{ImageFormat, ImageMetadata, InvalidImageDimensions, ParseImageFormatError};
 pub use library::{

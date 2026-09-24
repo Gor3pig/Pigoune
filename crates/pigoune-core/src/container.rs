@@ -1,8 +1,8 @@
 use std::{error::Error, fmt};
 
-pub const ICO_MAX_ENTRIES: usize = 1_024;
-pub const ICO_MAX_DIMENSION: u32 = 4_096;
-pub const ICO_MAX_DECODED_BYTES: u64 = 64 * 1024 * 1024;
+pub const ICON_CONTAINER_MAX_REPRESENTATIONS: usize = 1_024;
+pub const ICON_CONTAINER_MAX_DIMENSION: u32 = 4_096;
+pub const ICON_CONTAINER_MAX_DECODED_BYTES: u64 = 64 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ContainerCodec {
@@ -53,9 +53,9 @@ impl ContainerRepresentation {
             .and_then(|area| area.checked_mul(4));
         if width == 0
             || height == 0
-            || width > ICO_MAX_DIMENSION
-            || height > ICO_MAX_DIMENSION
-            || decoded_bytes.is_none_or(|bytes| bytes > ICO_MAX_DECODED_BYTES)
+            || width > ICON_CONTAINER_MAX_DIMENSION
+            || height > ICON_CONTAINER_MAX_DIMENSION
+            || decoded_bytes.is_none_or(|bytes| bytes > ICON_CONTAINER_MAX_DECODED_BYTES)
             || encoded_size == 0
             || bit_depth == Some(0)
             || scale == Some(0)
@@ -110,7 +110,7 @@ impl ContainerMetadata {
         if representations.is_empty() {
             return Err(ContainerMetadataError::Empty);
         }
-        if representations.len() > ICO_MAX_ENTRIES {
+        if representations.len() > ICON_CONTAINER_MAX_REPRESENTATIONS {
             return Err(ContainerMetadataError::TooManyRepresentations);
         }
         for (index, item) in representations.iter().enumerate() {
@@ -177,7 +177,7 @@ mod tests {
             ContainerRepresentation::new(0, 4096, 4096, None, ContainerCodec::Png, 12, None)
                 .is_ok()
         );
-        assert_eq!(4096_u64 * 4096 * 4, ICO_MAX_DECODED_BYTES);
+        assert_eq!(4096_u64 * 4096 * 4, ICON_CONTAINER_MAX_DECODED_BYTES);
         assert!(
             ContainerRepresentation::new(0, 0, 1, None, ContainerCodec::Png, 12, None).is_err()
         );
