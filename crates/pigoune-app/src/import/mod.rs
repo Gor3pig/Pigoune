@@ -1,7 +1,9 @@
 mod glycin_validator;
+mod service;
 mod svg;
 
 pub use glycin_validator::{GlycinValidator, ImportValidationError};
+pub use service::{DuplicatePolicy, ImportError, ImportOutcome, ImportService};
 
 use pigoune_core::ImageMetadata;
 

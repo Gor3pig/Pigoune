@@ -179,6 +179,22 @@ impl LibraryDatabase {
         })
         .transpose()
     }
+
+    /// Returns logical assets referencing this hash, ordered by their UUID bytes.
+    /// An object without assets is not a logical duplicate.
+    pub fn asset_ids_for_object(&self, hash: ObjectHash) -> Result<Vec<AssetId>, DatabaseError> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT id FROM assets WHERE object_hash = ?1 ORDER BY id")?;
+        let rows = statement.query_map([hash.digest_bytes().as_slice()], |row| {
+            row.get::<_, Vec<u8>>(0)
+        })?;
+        rows.map(|row| {
+            let bytes = array16(row?, "asset ID")?;
+            Ok(AssetId::from_bytes(bytes))
+        })
+        .collect()
+    }
 }
 
 fn validate_object(object: &ObjectRecord) -> Result<(), DatabaseError> {

@@ -474,6 +474,12 @@ fn foreign_key_deduplication_and_object_reconciliation() {
         .database
         .import_published_asset(&object, image_metadata(), &second)
         .unwrap();
+    let mut expected_ids = vec![first.id, second.id];
+    expected_ids.sort_by_key(|id| id.to_bytes());
+    assert_eq!(
+        library.database.asset_ids_for_object(object.hash).unwrap(),
+        expected_ids
+    );
     assert_ne!(first.id, second.id);
     assert_eq!(library.database.get_asset(first.id).unwrap(), Some(first));
     assert_eq!(library.database.get_asset(second.id).unwrap(), Some(second));
@@ -498,6 +504,40 @@ fn foreign_key_deduplication_and_object_reconciliation() {
         ),
         Err(DatabaseError::ObjectConflict(_))
     ));
+}
+
+#[test]
+fn object_row_without_assets_is_not_a_logical_duplicate() {
+    let directory = tempdir().unwrap();
+    let mut library = Library::create(directory.path()).unwrap();
+    let record = object(b"orphan row");
+    let db = raw_db(directory.path());
+    db.execute(
+        "INSERT INTO objects (hash, size_bytes, relative_path, format, width, height, animated) \
+         VALUES (?1, ?2, ?3, 'svg', 3, 2, 0)",
+        params![
+            record.hash.digest_bytes().as_slice(),
+            record.size as i64,
+            record.relative_path.to_str().unwrap()
+        ],
+    )
+    .unwrap();
+    assert!(
+        library
+            .database
+            .asset_ids_for_object(record.hash)
+            .unwrap()
+            .is_empty()
+    );
+    let first = asset(&record, b"first.svg".to_vec());
+    library
+        .database
+        .import_published_asset(&record, image_metadata(), &first)
+        .unwrap();
+    assert_eq!(
+        library.database.asset_ids_for_object(record.hash).unwrap(),
+        vec![first.id]
+    );
 }
 
 #[test]
