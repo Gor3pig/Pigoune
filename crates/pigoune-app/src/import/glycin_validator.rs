@@ -4,6 +4,8 @@ use gio::ReadInputStream;
 use glycin::{Error as GlycinError, ErrorCtx, Loader, SandboxMechanism};
 use pigoune_core::{ImageFormat, ImageMetadata, StagedObject, StagedValidator};
 
+use super::{ImportWarning, ValidatedImport, svg};
+
 #[derive(Debug)]
 pub enum ImportValidationError {
     StagingAccess(io::Error),
@@ -12,6 +14,7 @@ pub enum ImportValidationError {
     Frame(Box<ErrorCtx>),
     InvalidDimensions { width: u32, height: u32 },
     MimeNotAccepted(String),
+    SvgAnalysis(svg::SvgAnalysisError),
 }
 
 impl fmt::Display for ImportValidationError {
@@ -25,6 +28,7 @@ impl fmt::Display for ImportValidationError {
                 write!(f, "invalid image dimensions: {width} × {height}")
             }
             Self::MimeNotAccepted(mime) => write!(f, "image MIME type is not accepted: {mime}"),
+            Self::SvgAnalysis(error) => write!(f, "cannot analyze staged SVG: {error}"),
         }
     }
 }
@@ -35,6 +39,7 @@ impl Error for ImportValidationError {
             Self::StagingAccess(error) => Some(error),
             Self::UnsupportedFormat(error) | Self::Load(error) | Self::Frame(error) => Some(error),
             Self::InvalidDimensions { .. } | Self::MimeNotAccepted(_) => None,
+            Self::SvgAnalysis(error) => Some(error),
         }
     }
 }
@@ -43,11 +48,11 @@ impl Error for ImportValidationError {
 pub struct GlycinValidator;
 
 impl StagedValidator for GlycinValidator {
-    type Output = ImageMetadata;
+    type Output = ValidatedImport;
     type Error = ImportValidationError;
 
     /// Call only from a background worker: this waits for Glycin and blocks its caller.
-    fn validate(&self, staged: &StagedObject<'_>) -> Result<ImageMetadata, Self::Error> {
+    fn validate(&self, staged: &StagedObject<'_>) -> Result<ValidatedImport, Self::Error> {
         let (validated, _) = validate_staged(staged)?;
         Ok(validated)
     }
@@ -55,14 +60,14 @@ impl StagedValidator for GlycinValidator {
 
 fn validate_staged(
     staged: &StagedObject<'_>,
-) -> Result<(ImageMetadata, SandboxMechanism), ImportValidationError> {
+) -> Result<(ValidatedImport, SandboxMechanism), ImportValidationError> {
     let file = staged
         .open_read()
         .map_err(ImportValidationError::StagingAccess)?;
     let loader = loader_from_staged_file(file);
 
     // Glycin's default async-io backend uses the same executor for its own blocking work.
-    async_io::block_on(async move {
+    let (metadata, mechanism) = async_io::block_on(async move {
         let image = loader.load().await.map_err(|error| {
             if is_unsupported(&error) {
                 ImportValidationError::UnsupportedFormat(Box::new(error))
@@ -87,7 +92,17 @@ fn validate_staged(
         let metadata = ImageMetadata::new(format, width, height, frame.delay().is_some())
             .map_err(|_| ImportValidationError::InvalidDimensions { width, height })?;
         Ok((metadata, image.active_sandbox_mechanism()))
-    })
+    })?;
+    let warnings = if metadata.format() == ImageFormat::Svg {
+        if svg::has_external_references(staged).map_err(ImportValidationError::SvgAnalysis)? {
+            vec![ImportWarning::SvgExternalReferences]
+        } else {
+            Vec::new()
+        }
+    } else {
+        Vec::new()
+    };
+    Ok((ValidatedImport { metadata, warnings }, mechanism))
 }
 
 fn loader_from_staged_file(file: std::fs::File) -> Loader {
@@ -136,6 +151,7 @@ mod tests {
     const GIF: &[u8] = include_bytes!("../../tests/fixtures/animated.gif");
     const APNG: &[u8] = include_bytes!("../../tests/fixtures/animated.apng");
     const SVG: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"><rect width="3" height="2" fill="#315b8f"/></svg>"##;
+    const SVG_EXTERNAL: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"><rect width="3" height="2" fill="#315b8f"/><image href="missing.png" width="1" height="1"/></svg>"##;
 
     #[test]
     fn accepted_mime_aliases_have_explicit_domain_formats() {
@@ -170,7 +186,8 @@ mod tests {
             .unwrap()
             .validate_with(&GlycinValidator)
             .unwrap();
-        let metadata = *validated.validation();
+        let metadata = validated.validation().metadata;
+        assert!(validated.validation().warnings.is_empty());
         let published = validated.publish().unwrap();
         let object = published.stored.object;
         let asset = AssetRecord {
@@ -220,11 +237,12 @@ mod tests {
         let validated = staged
             .validate_with(&GlycinValidator)
             .expect("decode staged image");
-        assert_eq!(validated.validation().format(), format);
+        assert_eq!(validated.validation().metadata.format(), format);
+        assert!(validated.validation().warnings.is_empty());
         assert_eq!(
             (
-                validated.validation().width(),
-                validated.validation().height()
+                validated.validation().metadata.width(),
+                validated.validation().metadata.height()
             ),
             size
         );
@@ -301,9 +319,63 @@ mod tests {
             let validated = staged
                 .validate_with(&GlycinValidator)
                 .expect("decode animation");
-            assert_eq!(validated.validation().format(), format);
-            assert!(validated.validation().animated());
+            assert_eq!(validated.validation().metadata.format(), format);
+            assert!(validated.validation().metadata.animated());
+            assert!(validated.validation().warnings.is_empty());
         }
+    }
+
+    #[test]
+    fn decodable_svg_with_external_resource_warns_and_preserves_bytes() {
+        let library = tempdir().unwrap();
+        let store = ObjectStore::new(library.path()).unwrap();
+        let staged = store
+            .stage_reader(SVG_EXTERNAL, Some(OsStr::new("external.svg")))
+            .unwrap();
+        let validated = staged.validate_with(&GlycinValidator).unwrap();
+        assert_eq!(validated.validation().metadata.format(), ImageFormat::Svg);
+        assert_eq!(
+            (
+                validated.validation().metadata.width(),
+                validated.validation().metadata.height()
+            ),
+            (3, 2)
+        );
+        assert_eq!(
+            validated.validation().warnings,
+            vec![ImportWarning::SvgExternalReferences]
+        );
+        let published = validated.publish().unwrap();
+        assert_eq!(
+            published.stored.object.hash,
+            ObjectHash::from_bytes(SVG_EXTERNAL)
+        );
+        assert_eq!(
+            fs::read(library.path().join(published.stored.object.relative_path)).unwrap(),
+            SVG_EXTERNAL
+        );
+    }
+
+    #[test]
+    fn invalid_svg_is_rejected_without_publication() {
+        let bytes = b"<svg xmlns='http://www.w3.org/2000/svg' width='3' height='2'><rect width='3' height='2' fill='#315b8f' style='@import'/></svg>";
+        let library = tempdir().unwrap();
+        let store = ObjectStore::new(library.path()).unwrap();
+        let staged = store
+            .stage_reader(bytes.as_slice(), Some(OsStr::new("invalid.svg")))
+            .unwrap();
+        assert!(svg::has_external_references(&staged).is_err());
+        assert!(matches!(
+            staged.validate_with(&GlycinValidator),
+            Err(ImportValidationError::SvgAnalysis(_))
+        ));
+        assert_eq!(
+            fs::read_dir(library.path().join("objects/.tmp"))
+                .unwrap()
+                .count(),
+            0
+        );
+        assert!(!store.contains(ObjectHash::from_bytes(bytes)).unwrap());
     }
 
     #[test]
