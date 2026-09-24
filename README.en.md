@@ -4,9 +4,11 @@
 
 <h1 align="center">Pigoune</h1>
 
-<p align="center">
-  <strong>Platform for Icons and Graphics — Organized, Unified, Native and Elegant.</strong>
-</p>
+<div align="center">
+
+**P**latform for **I**cons and **G**raphics **O**rganized, **U**nified, **N**ative and **E**legant.
+
+</div>
 
 <p align="center">
   <a href="README.md">Français</a> · English
