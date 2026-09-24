@@ -11,6 +11,12 @@ path = "src/main.rs"
 
 [dependencies]
 adw = { package = "libadwaita", version = "0.9", features = ["gtk_v4_22", "v1_9"] }
+async-io = "2.6"
+gio = "0.22"
+glycin = "=3.1.0"
 gettext-rs = { version = "0.8", features = ["gettext-system"] }
 gtk = { package = "gtk4", version = "0.11", features = ["v4_22"] }
 pigoune-core = { path = "../pigoune-core" }
+
+[dev-dependencies]
+tempfile = "3"
