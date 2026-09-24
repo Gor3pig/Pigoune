@@ -1,3 +1,3 @@
 mod glycin_validator;
 
-pub use glycin_validator::{GlycinValidator, ImportValidationError, ValidatedImage};
+pub use glycin_validator::{GlycinValidator, ImportValidationError};

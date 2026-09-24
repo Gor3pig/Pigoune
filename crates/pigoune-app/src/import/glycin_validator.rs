@@ -2,15 +2,7 @@ use std::{error::Error, fmt, io};
 
 use gio::ReadInputStream;
 use glycin::{Error as GlycinError, ErrorCtx, Loader, SandboxMechanism};
-use pigoune_core::{StagedObject, StagedValidator};
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ValidatedImage {
-    pub mime_type: String,
-    pub width: u32,
-    pub height: u32,
-    pub animated: bool,
-}
+use pigoune_core::{ImageFormat, ImageMetadata, StagedObject, StagedValidator};
 
 #[derive(Debug)]
 pub enum ImportValidationError {
@@ -51,11 +43,11 @@ impl Error for ImportValidationError {
 pub struct GlycinValidator;
 
 impl StagedValidator for GlycinValidator {
-    type Output = ValidatedImage;
+    type Output = ImageMetadata;
     type Error = ImportValidationError;
 
     /// Call only from a background worker: this waits for Glycin and blocks its caller.
-    fn validate(&self, staged: &StagedObject<'_>) -> Result<ValidatedImage, Self::Error> {
+    fn validate(&self, staged: &StagedObject<'_>) -> Result<ImageMetadata, Self::Error> {
         let (validated, _) = validate_staged(staged)?;
         Ok(validated)
     }
@@ -63,7 +55,7 @@ impl StagedValidator for GlycinValidator {
 
 fn validate_staged(
     staged: &StagedObject<'_>,
-) -> Result<(ValidatedImage, SandboxMechanism), ImportValidationError> {
+) -> Result<(ImageMetadata, SandboxMechanism), ImportValidationError> {
     let file = staged
         .open_read()
         .map_err(ImportValidationError::StagingAccess)?;
@@ -79,9 +71,8 @@ fn validate_staged(
             }
         })?;
         let mime_type = image.mime_type().as_str().to_owned();
-        if !accepted_mime(&mime_type) {
-            return Err(ImportValidationError::MimeNotAccepted(mime_type));
-        }
+        let format = format_from_mime(&mime_type)
+            .ok_or(ImportValidationError::MimeNotAccepted(mime_type))?;
 
         let frame = image
             .next_frame()
@@ -93,15 +84,9 @@ fn validate_staged(
             return Err(ImportValidationError::InvalidDimensions { width, height });
         }
 
-        Ok((
-            ValidatedImage {
-                mime_type,
-                width,
-                height,
-                animated: frame.delay().is_some(),
-            },
-            image.active_sandbox_mechanism(),
-        ))
+        let metadata = ImageMetadata::new(format, width, height, frame.delay().is_some())
+            .map_err(|_| ImportValidationError::InvalidDimensions { width, height })?;
+        Ok((metadata, image.active_sandbox_mechanism()))
     })
 }
 
@@ -117,29 +102,26 @@ fn is_unsupported(error: &ErrorCtx) -> bool {
         || matches!(error.error(), GlycinError::UnknownContentType(_))
 }
 
-fn accepted_mime(mime: &str) -> bool {
-    matches!(
-        mime,
-        "image/png"
-            | "image/apng"
-            | "image/jpeg"
-            | "image/svg+xml"
-            | "image/svg+xml-compressed"
-            | "image/vnd.microsoft.icon"
-            | "image/x-win-bitmap"
-            | "image/webp"
-            | "image/avif"
-            | "image/gif"
-            | "image/bmp"
-            | "image/tiff"
-            | "image/x-xpixmap"
-    )
+fn format_from_mime(mime: &str) -> Option<ImageFormat> {
+    match mime {
+        "image/png" | "image/apng" => Some(ImageFormat::Png),
+        "image/jpeg" => Some(ImageFormat::Jpeg),
+        "image/svg+xml" | "image/svg+xml-compressed" => Some(ImageFormat::Svg),
+        "image/vnd.microsoft.icon" | "image/x-win-bitmap" => Some(ImageFormat::Ico),
+        "image/webp" => Some(ImageFormat::WebP),
+        "image/avif" => Some(ImageFormat::Avif),
+        "image/gif" => Some(ImageFormat::Gif),
+        "image/bmp" => Some(ImageFormat::Bmp),
+        "image/tiff" => Some(ImageFormat::Tiff),
+        "image/x-xpixmap" => Some(ImageFormat::Xpm),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pigoune_core::{ObjectHash, ObjectStore};
+    use pigoune_core::{AssetId, AssetRecord, Library, ObjectHash, ObjectStore, OriginalFilename};
     use std::{ffi::OsStr, fs};
     use tempfile::tempdir;
 
@@ -155,7 +137,81 @@ mod tests {
     const APNG: &[u8] = include_bytes!("../../tests/fixtures/animated.apng");
     const SVG: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"><rect width="3" height="2" fill="#315b8f"/></svg>"##;
 
-    fn validate_and_publish(bytes: &[u8], name: Option<&str>, mime: &str, size: (u32, u32)) {
+    #[test]
+    fn accepted_mime_aliases_have_explicit_domain_formats() {
+        for (mime, format) in [
+            ("image/png", ImageFormat::Png),
+            ("image/apng", ImageFormat::Png),
+            ("image/jpeg", ImageFormat::Jpeg),
+            ("image/svg+xml", ImageFormat::Svg),
+            ("image/svg+xml-compressed", ImageFormat::Svg),
+            ("image/vnd.microsoft.icon", ImageFormat::Ico),
+            ("image/x-win-bitmap", ImageFormat::Ico),
+            ("image/webp", ImageFormat::WebP),
+            ("image/avif", ImageFormat::Avif),
+            ("image/gif", ImageFormat::Gif),
+            ("image/bmp", ImageFormat::Bmp),
+            ("image/tiff", ImageFormat::Tiff),
+            ("image/x-xpixmap", ImageFormat::Xpm),
+        ] {
+            assert_eq!(format_from_mime(mime), Some(format));
+        }
+        assert_eq!(format_from_mime("image/icns"), None);
+        assert_eq!(format_from_mime("image/unknown"), None);
+    }
+
+    #[test]
+    fn staged_glycin_image_persists_with_asset() {
+        let directory = tempdir().unwrap();
+        let mut library = Library::create(directory.path()).unwrap();
+        let validated = library
+            .object_store
+            .stage_reader(PNG, Some(OsStr::new("original.jpg")))
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        let metadata = *validated.validation();
+        let published = validated.publish().unwrap();
+        let object = published.stored.object;
+        let asset = AssetRecord {
+            id: AssetId::new(),
+            object_hash: object.hash,
+            original_filename: OriginalFilename::from_bytes(b"original.jpg".to_vec()).unwrap(),
+            display_name: "Original".into(),
+            imported_at_utc_us: 1_700_000_000_000_000,
+        };
+        library
+            .database
+            .import_published_asset(&object, metadata, &asset)
+            .unwrap();
+        let stored = library.database.get_object(object.hash).unwrap().unwrap();
+        assert_eq!(object.hash, ObjectHash::from_bytes(PNG));
+        assert_eq!(
+            fs::read(directory.path().join(&object.relative_path)).unwrap(),
+            PNG
+        );
+        assert_eq!(stored.object.size, PNG.len() as u64);
+        assert_eq!(stored.metadata.unwrap().format(), ImageFormat::Png);
+        assert_eq!(
+            (
+                stored.metadata.unwrap().width(),
+                stored.metadata.unwrap().height()
+            ),
+            (3, 2)
+        );
+        assert!(!stored.metadata.unwrap().animated());
+        let read_asset = library.database.get_asset(asset.id).unwrap().unwrap();
+        assert_eq!(read_asset.id, asset.id);
+        assert_eq!(read_asset.original_filename.as_bytes(), b"original.jpg");
+        assert_eq!(read_asset, asset);
+    }
+
+    fn validate_and_publish(
+        bytes: &[u8],
+        name: Option<&str>,
+        format: ImageFormat,
+        size: (u32, u32),
+    ) {
         let library = tempdir().expect("temporary library");
         let store = ObjectStore::new(library.path()).expect("object store");
         let staged = store
@@ -164,9 +220,12 @@ mod tests {
         let validated = staged
             .validate_with(&GlycinValidator)
             .expect("decode staged image");
-        assert_eq!(validated.validation().mime_type, mime);
+        assert_eq!(validated.validation().format(), format);
         assert_eq!(
-            (validated.validation().width, validated.validation().height),
+            (
+                validated.validation().width(),
+                validated.validation().height()
+            ),
             size
         );
         let published = validated.publish().expect("publish image");
@@ -180,15 +239,15 @@ mod tests {
 
     #[test]
     fn png_and_jpeg_decode_and_publish_exact_bytes() {
-        validate_and_publish(PNG, Some("sample.png"), "image/png", (3, 2));
-        validate_and_publish(JPEG, Some("sample.jpg"), "image/jpeg", (3, 2));
+        validate_and_publish(PNG, Some("sample.png"), ImageFormat::Png, (3, 2));
+        validate_and_publish(JPEG, Some("sample.jpg"), ImageFormat::Jpeg, (3, 2));
     }
 
     #[test]
     fn filename_does_not_determine_format() {
-        validate_and_publish(PNG, Some("misnamed.jpg"), "image/png", (3, 2));
-        validate_and_publish(PNG, None, "image/png", (3, 2));
-        validate_and_publish(PNG, Some("sample.unknown"), "image/png", (3, 2));
+        validate_and_publish(PNG, Some("misnamed.jpg"), ImageFormat::Png, (3, 2));
+        validate_and_publish(PNG, None, ImageFormat::Png, (3, 2));
+        validate_and_publish(PNG, Some("sample.unknown"), ImageFormat::Png, (3, 2));
     }
 
     #[test]
@@ -219,25 +278,20 @@ mod tests {
 
     #[test]
     fn additional_local_loaders_decode() {
-        validate_and_publish(WEBP, Some("sample.webp"), "image/webp", (3, 2));
-        validate_and_publish(AVIF, Some("sample.avif"), "image/avif", (4, 4));
-        validate_and_publish(BMP, Some("sample.bmp"), "image/bmp", (3, 2));
-        validate_and_publish(TIFF, Some("sample.tiff"), "image/tiff", (3, 2));
-        validate_and_publish(XPM, Some("sample.xpm"), "image/x-xpixmap", (3, 2));
-        validate_and_publish(
-            ICO,
-            Some("sample.ico"),
-            "image/vnd.microsoft.icon",
-            (16, 16),
-        );
-        validate_and_publish(SVG, Some("sample.svg"), "image/svg+xml", (3, 2));
+        validate_and_publish(WEBP, Some("sample.webp"), ImageFormat::WebP, (3, 2));
+        validate_and_publish(AVIF, Some("sample.avif"), ImageFormat::Avif, (4, 4));
+        validate_and_publish(BMP, Some("sample.bmp"), ImageFormat::Bmp, (3, 2));
+        validate_and_publish(TIFF, Some("sample.tiff"), ImageFormat::Tiff, (3, 2));
+        validate_and_publish(XPM, Some("sample.xpm"), ImageFormat::Xpm, (3, 2));
+        validate_and_publish(ICO, Some("sample.ico"), ImageFormat::Ico, (16, 16));
+        validate_and_publish(SVG, Some("sample.svg"), ImageFormat::Svg, (3, 2));
     }
 
     #[test]
     fn first_frame_reports_animation() {
-        for (bytes, name, mime) in [
-            (GIF, "animated.gif", "image/gif"),
-            (APNG, "animated.apng", "image/apng"),
+        for (bytes, name, format) in [
+            (GIF, "animated.gif", ImageFormat::Gif),
+            (APNG, "animated.apng", ImageFormat::Png),
         ] {
             let library = tempdir().expect("temporary library");
             let store = ObjectStore::new(library.path()).expect("object store");
@@ -247,8 +301,8 @@ mod tests {
             let validated = staged
                 .validate_with(&GlycinValidator)
                 .expect("decode animation");
-            assert_eq!(validated.validation().mime_type, mime);
-            assert!(validated.validation().animated);
+            assert_eq!(validated.validation().format(), format);
+            assert!(validated.validation().animated());
         }
     }
 

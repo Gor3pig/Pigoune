@@ -4,7 +4,7 @@ mod migration;
 pub use error::DatabaseError;
 
 use super::{DATABASE_SCHEMA_VERSION, LibraryId, OriginalFilename, path::valid_object_path};
-use crate::{AssetId, ObjectHash, ObjectRecord};
+use crate::{AssetId, ImageFormat, ImageMetadata, ObjectHash, ObjectRecord};
 use migration::{
     check_sqlite_version, configure_writer, migrate, read_library_id, schema_version,
     verify_library_id,
@@ -18,6 +18,21 @@ use std::{
 };
 
 type AssetRow = (Vec<u8>, Vec<u8>, Vec<u8>, String, i64);
+type ObjectRow = (
+    Vec<u8>,
+    i64,
+    String,
+    Option<String>,
+    Option<i64>,
+    Option<i64>,
+    Option<i64>,
+);
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StoredObject {
+    pub object: ObjectRecord,
+    pub metadata: Option<ImageMetadata>,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AssetRecord {
@@ -85,43 +100,34 @@ impl LibraryDatabase {
         read_library_id(&self.connection)
     }
 
-    pub fn get_object(&self, hash: ObjectHash) -> Result<Option<ObjectRecord>, DatabaseError> {
-        let row: Option<(Vec<u8>, i64, String)> = self
+    pub fn get_object(&self, hash: ObjectHash) -> Result<Option<StoredObject>, DatabaseError> {
+        let row: Option<ObjectRow> = self
             .connection
             .query_row(
-                "SELECT hash, size_bytes, relative_path FROM objects WHERE hash = ?1",
+                "SELECT hash, size_bytes, relative_path, format, width, height, animated \
+                 FROM objects WHERE hash = ?1",
                 [hash.digest_bytes().as_slice()],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                        row.get(5)?,
+                        row.get(6)?,
+                    ))
+                },
             )
             .optional()?;
-        row.map(|(hash_bytes, size, path)| object_from_row(hash_bytes, size, path))
-            .transpose()
+        row.map(stored_object_from_row).transpose()
     }
 
-    pub fn register_object(&mut self, object: &ObjectRecord) -> Result<(), DatabaseError> {
-        validate_object(object)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        reconcile_object(&transaction, object)?;
-        transaction.commit()?;
-        Ok(())
-    }
-
-    pub fn create_asset(&mut self, asset: &AssetRecord) -> Result<(), DatabaseError> {
-        validate_asset(asset)?;
-        let transaction = self
-            .connection
-            .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        insert_asset(&transaction, asset)?;
-        transaction.commit()?;
-        Ok(())
-    }
-
-    /// Record metadata only after `ObjectStore` has published the object.
+    /// Records a published object and its validated intrinsic metadata with an asset.
     pub fn import_published_asset(
         &mut self,
         object: &ObjectRecord,
+        metadata: ImageMetadata,
         asset: &AssetRecord,
     ) -> Result<(), DatabaseError> {
         validate_object(object)?;
@@ -132,7 +138,7 @@ impl LibraryDatabase {
         let transaction = self
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        reconcile_object(&transaction, object)?;
+        reconcile_object(&transaction, object, metadata)?;
         insert_asset(&transaction, asset)?;
         transaction.commit()?;
         Ok(())
@@ -197,21 +203,80 @@ fn object_from_row(hash: Vec<u8>, size: i64, path: String) -> Result<ObjectRecor
     Ok(object)
 }
 
+fn stored_object_from_row(row: ObjectRow) -> Result<StoredObject, DatabaseError> {
+    let (hash, size, path, format, width, height, animated) = row;
+    let object = object_from_row(hash, size, path)?;
+    let metadata = match (format, width, height, animated) {
+        (None, None, None, None) => None,
+        (Some(format), Some(width), Some(height), Some(animated)) => {
+            let format = format
+                .parse::<ImageFormat>()
+                .map_err(|_| DatabaseError::InvalidStoredValue("image format"))?;
+            let width = u32::try_from(width)
+                .map_err(|_| DatabaseError::InvalidStoredValue("image width"))?;
+            let height = u32::try_from(height)
+                .map_err(|_| DatabaseError::InvalidStoredValue("image height"))?;
+            let animated = match animated {
+                0 => false,
+                1 => true,
+                _ => return Err(DatabaseError::InvalidStoredValue("image animation")),
+            };
+            Some(
+                ImageMetadata::new(format, width, height, animated)
+                    .map_err(|_| DatabaseError::InvalidStoredValue("image dimensions"))?,
+            )
+        }
+        _ => return Err(DatabaseError::InvalidStoredValue("partial image metadata")),
+    };
+    Ok(StoredObject { object, metadata })
+}
+
 fn reconcile_object(
     transaction: &Transaction<'_>,
     object: &ObjectRecord,
+    metadata: ImageMetadata,
 ) -> Result<(), DatabaseError> {
-    let row: Option<(i64, String)> = transaction
+    let row: Option<ObjectRow> = transaction
         .query_row(
-            "SELECT size_bytes, relative_path FROM objects WHERE hash = ?1",
+            "SELECT hash, size_bytes, relative_path, format, width, height, animated \
+             FROM objects WHERE hash = ?1",
             [object.hash.digest_bytes().as_slice()],
-            |row| Ok((row.get(0)?, row.get(1)?)),
+            |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                    row.get(6)?,
+                ))
+            },
         )
         .optional()?;
-    if let Some((size, path)) = row {
-        let existing = object_from_row(object.hash.digest_bytes().to_vec(), size, path)?;
-        if &existing != object {
+    if let Some(row) = row {
+        let existing = stored_object_from_row(row)?;
+        if &existing.object != object {
             return Err(DatabaseError::ObjectConflict(object.hash));
+        }
+        match existing.metadata {
+            Some(found) if found != metadata => {
+                return Err(DatabaseError::ImageMetadataConflict(object.hash));
+            }
+            Some(_) => {}
+            None => {
+                transaction.execute(
+                    "UPDATE objects SET format = ?2, width = ?3, height = ?4, animated = ?5 \
+                     WHERE hash = ?1",
+                    params![
+                        object.hash.digest_bytes().as_slice(),
+                        metadata.format().as_str(),
+                        i64::from(metadata.width()),
+                        i64::from(metadata.height()),
+                        i64::from(metadata.animated())
+                    ],
+                )?;
+            }
         }
     } else {
         let size =
@@ -221,8 +286,11 @@ fn reconcile_object(
             .to_str()
             .ok_or_else(|| DatabaseError::InvalidObjectPath(object.relative_path.clone()))?;
         transaction.execute(
-            "INSERT INTO objects (hash, size_bytes, relative_path) VALUES (?1, ?2, ?3)",
-            params![object.hash.digest_bytes().as_slice(), size, path],
+            "INSERT INTO objects (hash, size_bytes, relative_path, format, width, height, animated) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![object.hash.digest_bytes().as_slice(), size, path,
+                metadata.format().as_str(), i64::from(metadata.width()),
+                i64::from(metadata.height()), i64::from(metadata.animated())],
         )?;
     }
     Ok(())
@@ -296,5 +364,31 @@ mod tests {
             .unwrap();
         assert_eq!(synchronous, 2);
         assert_eq!(busy_timeout_ms, 5_000);
+    }
+
+    #[test]
+    fn migrated_writer_keeps_full_sync() {
+        let root = tempdir().unwrap();
+        let id = LibraryId::new();
+        let connection = rusqlite::Connection::open(root.path().join("library.db")).unwrap();
+        connection
+            .execute_batch(include_str!("../migrations/0001_initial.sql"))
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO library_metadata VALUES (1, ?1)",
+                [id.to_bytes().as_slice()],
+            )
+            .unwrap();
+        connection.pragma_update(None, "user_version", 1).unwrap();
+        drop(connection);
+
+        let database = LibraryDatabase::open(root.path(), id).unwrap();
+        let synchronous: i32 = database
+            .connection
+            .query_row("PRAGMA synchronous", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(synchronous, 2);
+        assert_eq!(database.schema_version().unwrap(), 2);
     }
 }

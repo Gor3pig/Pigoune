@@ -4,7 +4,7 @@ mod id;
 mod manifest;
 mod path;
 
-pub use database::{AssetRecord, DatabaseError, LibraryDatabase};
+pub use database::{AssetRecord, DatabaseError, LibraryDatabase, StoredObject};
 pub use filename::{OriginalFilename, OriginalFilenameError};
 pub use id::{LibraryId, ParseLibraryIdError};
 pub use manifest::{LibraryManifest, ManifestError};
@@ -13,7 +13,7 @@ use crate::{ObjectStore, StoreError};
 use std::{error::Error, fmt, fs, io, path::Path};
 
 pub const LIBRARY_FORMAT_VERSION: u32 = 1;
-pub const DATABASE_SCHEMA_VERSION: i32 = 1;
+pub const DATABASE_SCHEMA_VERSION: i32 = 2;
 
 pub struct Library {
     pub id: LibraryId,

@@ -17,6 +17,7 @@ pub enum DatabaseError {
     },
     InvalidObjectPath(PathBuf),
     ObjectConflict(ObjectHash),
+    ImageMetadataConflict(ObjectHash),
     SizeOutOfRange(u64),
     InvalidStoredValue(&'static str),
     InvalidOriginalFilename(OriginalFilenameError),
@@ -46,6 +47,7 @@ impl fmt::Display for DatabaseError {
             }
             Self::InvalidObjectPath(path) => write!(f, "invalid object path: {}", path.display()),
             Self::ObjectConflict(hash) => write!(f, "conflicting object metadata for {hash}"),
+            Self::ImageMetadataConflict(hash) => write!(f, "conflicting image metadata for {hash}"),
             Self::SizeOutOfRange(size) => {
                 write!(f, "object size {size} exceeds SQLite INTEGER range")
             }

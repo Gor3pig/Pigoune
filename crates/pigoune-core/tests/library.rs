@@ -1,9 +1,9 @@
 use pigoune_core::{
-    AssetId, AssetRecord, DATABASE_SCHEMA_VERSION, DatabaseError, LIBRARY_FORMAT_VERSION, Library,
-    LibraryDatabase, LibraryId, LibraryManifest, ManifestError, ObjectHash, ObjectRecord,
-    OriginalFilename,
+    AssetId, AssetRecord, DATABASE_SCHEMA_VERSION, DatabaseError, ImageFormat, ImageMetadata,
+    LIBRARY_FORMAT_VERSION, Library, LibraryDatabase, LibraryId, LibraryManifest, ManifestError,
+    ObjectHash, ObjectRecord, OriginalFilename, StoredObject,
 };
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, OptionalExtension, params};
 use std::{fs, path::Path, path::PathBuf};
 use tempfile::tempdir;
 
@@ -27,10 +27,177 @@ fn asset(object: &ObjectRecord, filename: Vec<u8>) -> AssetRecord {
     }
 }
 
+fn image_metadata() -> ImageMetadata {
+    ImageMetadata::new(ImageFormat::Svg, 3, 2, false).unwrap()
+}
+
 fn raw_db(root: &Path) -> Connection {
     let db = Connection::open(root.join("library.db")).unwrap();
     db.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
     db
+}
+
+#[test]
+fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
+    let directory = tempdir().unwrap();
+    let id = LibraryId::new();
+    let object = object(b"legacy content");
+    let legacy_asset = asset(&object, b"legacy.svg".to_vec());
+    let db = raw_db(directory.path());
+    db.execute_batch(include_str!("../src/migrations/0001_initial.sql"))
+        .unwrap();
+    db.execute(
+        "INSERT INTO library_metadata VALUES (1, ?1)",
+        [id.to_bytes().as_slice()],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO objects VALUES (?1, ?2, ?3)",
+        params![
+            object.hash.digest_bytes().as_slice(),
+            object.size as i64,
+            object.relative_path.to_str().unwrap()
+        ],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO assets VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            legacy_asset.id.to_bytes().as_slice(),
+            object.hash.digest_bytes().as_slice(),
+            legacy_asset.original_filename.as_bytes(),
+            legacy_asset.display_name,
+            legacy_asset.imported_at_utc_us
+        ],
+    )
+    .unwrap();
+    db.pragma_update(None, "user_version", 1).unwrap();
+    drop(db);
+
+    let mut database = LibraryDatabase::open(directory.path(), id).unwrap();
+    assert_eq!(database.schema_version().unwrap(), 2);
+    assert_eq!(database.journal_mode().unwrap(), "wal");
+    assert!(database.foreign_keys_enabled().unwrap());
+    assert_eq!(
+        database.get_object(object.hash).unwrap(),
+        Some(StoredObject {
+            object: object.clone(),
+            metadata: None,
+        })
+    );
+    assert_eq!(
+        database.get_asset(legacy_asset.id).unwrap(),
+        Some(legacy_asset.clone())
+    );
+    let db = raw_db(directory.path());
+    assert_eq!(
+        db.query_row("PRAGMA foreign_key_check", [], |_| Ok(()))
+            .optional()
+            .unwrap(),
+        None
+    );
+    assert!(
+        db.execute(
+            "DELETE FROM objects WHERE hash = ?1",
+            [object.hash.digest_bytes().as_slice()]
+        )
+        .is_err()
+    );
+    drop(db);
+
+    let mut failed = asset(&object, b"failed.svg".to_vec());
+    failed.id = legacy_asset.id;
+    assert!(
+        database
+            .import_published_asset(&object, image_metadata(), &failed)
+            .is_err()
+    );
+    assert_eq!(
+        database.get_object(object.hash).unwrap().unwrap().metadata,
+        None
+    );
+
+    let another = asset(&object, b"reimport.svg".to_vec());
+    database
+        .import_published_asset(&object, image_metadata(), &another)
+        .unwrap();
+    assert_eq!(
+        database.get_object(object.hash).unwrap().unwrap().metadata,
+        Some(image_metadata())
+    );
+    let mismatch = ImageMetadata::new(ImageFormat::Png, 3, 2, false).unwrap();
+    let conflicting = asset(&object, b"conflict.svg".to_vec());
+    assert!(matches!(
+        database.import_published_asset(&object, mismatch, &conflicting),
+        Err(DatabaseError::ImageMetadataConflict(_))
+    ));
+    assert_eq!(
+        database.get_object(object.hash).unwrap().unwrap().metadata,
+        Some(image_metadata())
+    );
+    assert!(database.get_asset(conflicting.id).unwrap().is_none());
+}
+
+#[test]
+fn sql_image_metadata_is_all_or_none() {
+    let directory = tempdir().unwrap();
+    let _library = Library::create(directory.path()).unwrap();
+    let db = raw_db(directory.path());
+    let record = object(b"sql constraints");
+    let hash = record.hash.digest_bytes();
+    let path = record.relative_path.to_str().unwrap();
+    let insert = "INSERT INTO objects (hash, size_bytes, relative_path, format, width, height, animated) \
+                  VALUES (?1, 15, ?2, ?3, ?4, ?5, ?6)";
+    for (format, width, height, animated) in [
+        (Some("png"), None, None, None),
+        (None, Some(1), None, None),
+        (Some("png"), Some(0), Some(2), Some(0)),
+        (Some("png"), Some(3), Some(0), Some(0)),
+        (Some("png"), Some(3), Some(2), Some(-1)),
+        (Some("png"), Some(3), Some(2), Some(2)),
+        (Some(""), Some(3), Some(2), Some(0)),
+    ] {
+        assert!(
+            db.execute(
+                insert,
+                params![hash.as_slice(), path, format, width, height, animated]
+            )
+            .is_err(),
+            "accepted invalid metadata: {format:?} {width:?} {height:?} {animated:?}"
+        );
+    }
+    db.execute(
+        insert,
+        params![
+            hash.as_slice(),
+            path,
+            None::<&str>,
+            None::<i64>,
+            None::<i64>,
+            None::<i64>
+        ],
+    )
+    .unwrap();
+    db.execute(
+        "UPDATE objects SET format = 'png', width = 3, height = 2, animated = 0 WHERE hash = ?1",
+        [hash.as_slice()],
+    )
+    .unwrap();
+    assert!(
+        db.execute(
+            "UPDATE objects SET width = NULL WHERE hash = ?1",
+            [hash.as_slice()]
+        )
+        .is_err()
+    );
+    assert!(db.execute("UPDATE objects SET format = 'future', width = 3, height = 2, animated = 1 WHERE hash = ?1",
+        [hash.as_slice()]).is_ok());
+    drop(db);
+    let library = Library::open(directory.path()).unwrap();
+    assert!(matches!(
+        library.database.get_object(record.hash),
+        Err(DatabaseError::InvalidStoredValue("image format"))
+    ));
 }
 
 #[test]
@@ -172,20 +339,20 @@ fn strict_schema_rejects_invalid_fields() {
     let path = object.relative_path.to_str().unwrap();
     assert!(
         db.execute(
-            "INSERT INTO objects VALUES (?1, 5, ?2)",
+            "INSERT INTO objects (hash, size_bytes, relative_path) VALUES (?1, 5, ?2)",
             params![b"short".as_slice(), path]
         )
         .is_err()
     );
     assert!(
         db.execute(
-            "INSERT INTO objects VALUES (?1, -1, ?2)",
+            "INSERT INTO objects (hash, size_bytes, relative_path) VALUES (?1, -1, ?2)",
             params![object.hash.digest_bytes().as_slice(), path]
         )
         .is_err()
     );
     db.execute(
-        "INSERT INTO objects VALUES (?1, 5, ?2)",
+        "INSERT INTO objects (hash, size_bytes, relative_path) VALUES (?1, 5, ?2)",
         params![object.hash.digest_bytes().as_slice(), path],
     )
     .unwrap();
@@ -281,7 +448,7 @@ fn exact_posix_names_round_trip() {
     let named_asset = asset(&record, b"non-utf8-\xff.svg".to_vec());
     library
         .database
-        .import_published_asset(&record, &named_asset)
+        .import_published_asset(&record, image_metadata(), &named_asset)
         .unwrap();
     let restored = library.database.get_asset(named_asset.id).unwrap().unwrap();
     assert_eq!(restored.original_filename.as_bytes(), b"non-utf8-\xff.svg");
@@ -293,16 +460,20 @@ fn foreign_key_deduplication_and_object_reconciliation() {
     let mut library = Library::create(directory.path()).unwrap();
     let object = object(b"same bytes");
     let missing = asset(&object, b"missing.svg".to_vec());
-    assert!(matches!(
-        library.database.create_asset(&missing),
-        Err(DatabaseError::MissingObject(_))
-    ));
-    library.database.register_object(&object).unwrap();
-    library.database.register_object(&object).unwrap();
+    let db = raw_db(directory.path());
+    assert!(db.execute("INSERT INTO assets (id, object_hash, original_filename, display_name, imported_at_utc_us) VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![missing.id.to_bytes().as_slice(), object.hash.digest_bytes().as_slice(),
+            missing.original_filename.as_bytes(), missing.display_name, missing.imported_at_utc_us]).is_err());
     let first = asset(&object, b"first.svg".to_vec());
     let second = asset(&object, b"second.svg".to_vec());
-    library.database.create_asset(&first).unwrap();
-    library.database.create_asset(&second).unwrap();
+    library
+        .database
+        .import_published_asset(&object, image_metadata(), &first)
+        .unwrap();
+    library
+        .database
+        .import_published_asset(&object, image_metadata(), &second)
+        .unwrap();
     assert_ne!(first.id, second.id);
     assert_eq!(library.database.get_asset(first.id).unwrap(), Some(first));
     assert_eq!(library.database.get_asset(second.id).unwrap(), Some(second));
@@ -310,13 +481,21 @@ fn foreign_key_deduplication_and_object_reconciliation() {
     let mut changed = object.clone();
     changed.size += 1;
     assert!(matches!(
-        library.database.register_object(&changed),
+        library.database.import_published_asset(
+            &changed,
+            image_metadata(),
+            &asset(&changed, b"changed.svg".to_vec())
+        ),
         Err(DatabaseError::ObjectConflict(_))
     ));
     changed = object.clone();
     changed.relative_path.set_extension("png");
     assert!(matches!(
-        library.database.register_object(&changed),
+        library.database.import_published_asset(
+            &changed,
+            image_metadata(),
+            &asset(&changed, b"changed.svg".to_vec())
+        ),
         Err(DatabaseError::ObjectConflict(_))
     ));
 }
@@ -329,7 +508,7 @@ fn transaction_rolls_back_new_object_when_asset_insert_fails() {
     let first_asset = asset(&first_object, b"first.svg".to_vec());
     library
         .database
-        .import_published_asset(&first_object, &first_asset)
+        .import_published_asset(&first_object, image_metadata(), &first_asset)
         .unwrap();
 
     let second_object = object(b"second");
@@ -338,7 +517,7 @@ fn transaction_rolls_back_new_object_when_asset_insert_fails() {
     assert!(
         library
             .database
-            .import_published_asset(&second_object, &conflicting_asset)
+            .import_published_asset(&second_object, image_metadata(), &conflicting_asset)
             .is_err()
     );
     assert!(
@@ -367,12 +546,23 @@ fn unsafe_object_paths_are_rejected_on_write_and_read() {
     ] {
         record.relative_path = PathBuf::from(path);
         assert!(matches!(
-            library.database.register_object(&record),
+            library.database.import_published_asset(
+                &record,
+                image_metadata(),
+                &asset(&record, b"path.svg".to_vec())
+            ),
             Err(DatabaseError::InvalidObjectPath(_))
         ));
     }
     record = object(b"path test");
-    library.database.register_object(&record).unwrap();
+    library
+        .database
+        .import_published_asset(
+            &record,
+            image_metadata(),
+            &asset(&record, b"path.svg".to_vec()),
+        )
+        .unwrap();
     let db = raw_db(directory.path());
     db.execute(
         "UPDATE objects SET relative_path = '/outside' WHERE hash = ?1",
@@ -426,7 +616,7 @@ fn published_object_and_database_survive_source_removal() {
     };
     library
         .database
-        .import_published_asset(&stored, &asset)
+        .import_published_asset(&stored, image_metadata(), &asset)
         .unwrap();
     fs::remove_file(&source).unwrap();
     assert_eq!(
@@ -439,7 +629,10 @@ fn published_object_and_database_survive_source_removal() {
     );
     assert_eq!(
         library.database.get_object(stored.hash).unwrap(),
-        Some(stored)
+        Some(StoredObject {
+            object: stored,
+            metadata: Some(image_metadata())
+        })
     );
     assert_eq!(
         asset
