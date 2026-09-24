@@ -6,8 +6,8 @@ use std::{
 };
 
 use pigoune_core::{
-    AssetId, AssetRecord, DatabaseError, ImageMetadata, Library, ObjectHash, OriginalFilename,
-    OriginalFilenameError, StoreError, StoreResult,
+    AssetId, AssetRecord, ContainerMetadata, DatabaseError, ImageMetadata, Library, ObjectHash,
+    OriginalFilename, OriginalFilenameError, StoreError, StoreResult,
 };
 
 use super::{GlycinValidator, ImportValidationError, ImportWarning};
@@ -25,12 +25,14 @@ pub enum ImportOutcome {
         object: StoreResult,
         metadata: ImageMetadata,
         warnings: Vec<ImportWarning>,
+        container: Option<ContainerMetadata>,
     },
     /// Validation warnings are returned even though no asset was created.
     Duplicate {
         hash: ObjectHash,
         existing_asset_ids: Vec<AssetId>,
         warnings: Vec<ImportWarning>,
+        container: Option<ContainerMetadata>,
     },
 }
 
@@ -126,6 +128,7 @@ impl ImportService {
                     hash,
                     existing_asset_ids,
                     warnings: validated.validation().warnings.clone(),
+                    container: validated.validation().container.clone(),
                 });
             }
         }
@@ -154,6 +157,7 @@ impl ImportService {
             object: published.stored,
             metadata: published.validation.metadata,
             warnings: published.validation.warnings,
+            container: published.validation.container,
         })
     }
 }
@@ -173,6 +177,7 @@ mod tests {
     use tempfile::tempdir;
 
     const PNG: &[u8] = include_bytes!("../../tests/fixtures/sample.png");
+    const ICO: &[u8] = include_bytes!("../../tests/fixtures/sample.ico");
     const SVG_EXTERNAL: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"><rect width="3" height="2" fill="#315b8f"/><image href="missing.png" width="1" height="1"/></svg>"##;
 
     fn source(root: &Path, name: &str, bytes: &[u8]) -> PathBuf {
@@ -194,6 +199,7 @@ mod tests {
                 object,
                 metadata,
                 warnings,
+                ..
             } => (asset, object, metadata, warnings),
             other => panic!("expected Imported, got {other:?}"),
         }
@@ -240,6 +246,57 @@ mod tests {
         );
         assert_eq!(library.database.get_asset(asset.id).unwrap(), Some(asset));
         assert_eq!(tmp_count(&root.path().join("library")), 0);
+    }
+
+    #[test]
+    fn ico_inventory_is_returned_without_database_persistence() {
+        let root = tempdir().unwrap();
+        let source = source(root.path(), "sample.ico", ICO);
+        let mut library = Library::create(&root.path().join("library")).unwrap();
+        let imported = import(&mut library, &source, DuplicatePolicy::Detect);
+        let (asset_id, object_path) = match imported {
+            ImportOutcome::Imported {
+                asset,
+                object,
+                metadata,
+                container: Some(container),
+                ..
+            } => {
+                assert_eq!(metadata.format(), ImageFormat::Ico);
+                assert_eq!(container.representations().len(), 1);
+                (asset.id, object.object.relative_path)
+            }
+            other => panic!("expected ICO inventory, got {other:?}"),
+        };
+        assert_eq!(
+            fs::read(root.path().join("library").join(object_path)).unwrap(),
+            ICO
+        );
+        assert_eq!(
+            import(&mut library, &source, DuplicatePolicy::Detect),
+            ImportOutcome::Duplicate {
+                hash: ObjectHash::from_bytes(ICO),
+                existing_asset_ids: vec![asset_id],
+                warnings: vec![],
+                container: Some(
+                    pigoune_core::ico::parse_ico(&mut std::io::Cursor::new(ICO))
+                        .unwrap()
+                        .metadata()
+                        .clone()
+                ),
+            }
+        );
+        assert_eq!(
+            library
+                .database
+                .get_object(ObjectHash::from_bytes(ICO))
+                .unwrap()
+                .unwrap()
+                .metadata
+                .unwrap()
+                .format(),
+            ImageFormat::Ico
+        );
     }
 
     #[test]
@@ -294,6 +351,7 @@ mod tests {
                 hash: ObjectHash::from_bytes(SVG_EXTERNAL),
                 existing_asset_ids: vec![asset.id],
                 warnings: vec![ImportWarning::SvgExternalReferences],
+                container: None,
             }
         );
     }
@@ -356,7 +414,8 @@ mod tests {
             ImportOutcome::Duplicate {
                 hash: first.object_hash,
                 existing_asset_ids: vec![first.id],
-                warnings: vec![]
+                warnings: vec![],
+                container: None
             }
         );
         assert_eq!(tmp_count(&root.path().join("library")), 0);

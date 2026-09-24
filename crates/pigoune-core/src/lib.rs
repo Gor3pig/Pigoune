@@ -1,10 +1,16 @@
 mod asset;
+mod container;
+pub mod ico;
 mod image;
 mod library;
 mod object;
 mod storage;
 
 pub use asset::AssetId;
+pub use container::{
+    ContainerCodec, ContainerMetadata, ContainerMetadataError, ContainerRepresentation,
+    ICO_MAX_DECODED_BYTES, ICO_MAX_DIMENSION, ICO_MAX_ENTRIES,
+};
 pub use image::{ImageFormat, ImageMetadata, InvalidImageDimensions, ParseImageFormatError};
 pub use library::{
     AssetRecord, DATABASE_SCHEMA_VERSION, DatabaseError, LIBRARY_FORMAT_VERSION, Library,

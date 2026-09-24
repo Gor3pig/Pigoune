@@ -1,8 +1,15 @@
-use std::{error::Error, fmt, io};
+use std::{
+    error::Error,
+    fmt,
+    io::{self, Read, Seek, SeekFrom},
+};
 
 use gio::ReadInputStream;
 use glycin::{Error as GlycinError, ErrorCtx, Loader, SandboxMechanism};
-use pigoune_core::{ImageFormat, ImageMetadata, StagedObject, StagedValidator};
+use pigoune_core::{
+    ImageFormat, ImageMetadata, StagedObject, StagedValidator,
+    ico::{self, IcoPrimary},
+};
 
 use super::{ImportWarning, ValidatedImport, svg};
 
@@ -12,9 +19,17 @@ pub enum ImportValidationError {
     UnsupportedFormat(Box<ErrorCtx>),
     Load(Box<ErrorCtx>),
     Frame(Box<ErrorCtx>),
-    InvalidDimensions { width: u32, height: u32 },
+    InvalidDimensions {
+        width: u32,
+        height: u32,
+    },
     MimeNotAccepted(String),
     SvgAnalysis(svg::SvgAnalysisError),
+    Ico(ico::IcoError),
+    DecodedDimensionsMismatch {
+        expected: (u32, u32),
+        actual: (u32, u32),
+    },
 }
 
 impl fmt::Display for ImportValidationError {
@@ -29,6 +44,12 @@ impl fmt::Display for ImportValidationError {
             }
             Self::MimeNotAccepted(mime) => write!(f, "image MIME type is not accepted: {mime}"),
             Self::SvgAnalysis(error) => write!(f, "cannot analyze staged SVG: {error}"),
+            Self::Ico(error) => write!(f, "invalid ICO container: {error}"),
+            Self::DecodedDimensionsMismatch { expected, actual } => write!(
+                f,
+                "ICO primary decoded as {} × {}, expected {} × {}",
+                actual.0, actual.1, expected.0, expected.1
+            ),
         }
     }
 }
@@ -40,6 +61,8 @@ impl Error for ImportValidationError {
             Self::UnsupportedFormat(error) | Self::Load(error) | Self::Frame(error) => Some(error),
             Self::InvalidDimensions { .. } | Self::MimeNotAccepted(_) => None,
             Self::SvgAnalysis(error) => Some(error),
+            Self::Ico(error) => Some(error),
+            Self::DecodedDimensionsMismatch { .. } => None,
         }
     }
 }
@@ -67,7 +90,7 @@ fn validate_staged(
     let loader = loader_from_staged_file(file);
 
     // Glycin's default async-io backend uses the same executor for its own blocking work.
-    let (metadata, mechanism) = async_io::block_on(async move {
+    let (metadata, mechanism, container) = async_io::block_on(async move {
         let image = loader.load().await.map_err(|error| {
             if is_unsupported(&error) {
                 ImportValidationError::UnsupportedFormat(Box::new(error))
@@ -78,6 +101,40 @@ fn validate_staged(
         let mime_type = image.mime_type().as_str().to_owned();
         let format = format_from_mime(&mime_type)
             .ok_or(ImportValidationError::MimeNotAccepted(mime_type))?;
+
+        if format == ImageFormat::Ico {
+            let mut staged_file = staged
+                .open_read()
+                .map_err(ImportValidationError::StagingAccess)?;
+            let parsed = ico::parse_ico(&mut staged_file).map_err(ImportValidationError::Ico)?;
+            let primary = parsed.metadata().primary();
+            let expected = (primary.width(), primary.height());
+            let stream =
+                ReadInputStream::new_seekable(SingleEntryIco::new(staged_file, parsed.primary()));
+            // SAFETY: Glycin takes exclusive ownership of the synthetic stream.
+            let selected = unsafe { Loader::new_stream(stream) }
+                .load()
+                .await
+                .map_err(|error| ImportValidationError::Load(Box::new(error)))?;
+            let frame = selected
+                .next_frame()
+                .await
+                .map_err(|error| ImportValidationError::Frame(Box::new(error)))?;
+            let actual = (selected.details().width(), selected.details().height());
+            if actual != expected || (frame.width(), frame.height()) != expected {
+                return Err(ImportValidationError::DecodedDimensionsMismatch { expected, actual });
+            }
+            let metadata = ImageMetadata::new(ImageFormat::Ico, expected.0, expected.1, false)
+                .map_err(|_| ImportValidationError::InvalidDimensions {
+                    width: expected.0,
+                    height: expected.1,
+                })?;
+            return Ok((
+                metadata,
+                selected.active_sandbox_mechanism(),
+                Some(parsed.metadata().clone()),
+            ));
+        }
 
         let frame = image
             .next_frame()
@@ -91,7 +148,7 @@ fn validate_staged(
 
         let metadata = ImageMetadata::new(format, width, height, frame.delay().is_some())
             .map_err(|_| ImportValidationError::InvalidDimensions { width, height })?;
-        Ok((metadata, image.active_sandbox_mechanism()))
+        Ok((metadata, image.active_sandbox_mechanism(), None))
     })?;
     let warnings = if metadata.format() == ImageFormat::Svg {
         if svg::has_external_references(staged).map_err(ImportValidationError::SvgAnalysis)? {
@@ -102,7 +159,80 @@ fn validate_staged(
     } else {
         Vec::new()
     };
-    Ok((ValidatedImport { metadata, warnings }, mechanism))
+    Ok((
+        ValidatedImport {
+            metadata,
+            warnings,
+            container,
+        },
+        mechanism,
+    ))
+}
+
+struct SingleEntryIco {
+    staged: std::fs::File,
+    header: [u8; 22],
+    payload_offset: u64,
+    payload_size: u64,
+    position: u64,
+}
+
+impl SingleEntryIco {
+    fn new(staged: std::fs::File, primary: IcoPrimary) -> Self {
+        let mut header = [0_u8; 22];
+        header[..6].copy_from_slice(&[0, 0, 1, 0, 1, 0]);
+        header[6..].copy_from_slice(&primary.directory_entry);
+        Self {
+            staged,
+            header,
+            payload_offset: primary.payload_offset,
+            payload_size: primary.payload_size,
+            position: 0,
+        }
+    }
+
+    fn len(&self) -> u64 {
+        22 + self.payload_size
+    }
+}
+
+impl Read for SingleEntryIco {
+    fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
+        if output.is_empty() || self.position >= self.len() {
+            return Ok(0);
+        }
+        if self.position < 22 {
+            let start = self.position as usize;
+            let count = output.len().min(22 - start);
+            output[..count].copy_from_slice(&self.header[start..start + count]);
+            self.position += count as u64;
+            return Ok(count);
+        }
+        let inside = self.position - 22;
+        let count = output
+            .len()
+            .min(usize::try_from(self.payload_size - inside).unwrap_or(usize::MAX));
+        let offset = self.payload_offset.checked_add(inside).ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "ICO payload offset overflow")
+        })?;
+        self.staged.seek(SeekFrom::Start(offset))?;
+        let count = self.staged.read(&mut output[..count])?;
+        self.position += count as u64;
+        Ok(count)
+    }
+}
+
+impl Seek for SingleEntryIco {
+    fn seek(&mut self, from: SeekFrom) -> io::Result<u64> {
+        let base = match from {
+            SeekFrom::Start(position) => i128::from(position),
+            SeekFrom::Current(delta) => i128::from(self.position) + i128::from(delta),
+            SeekFrom::End(delta) => i128::from(self.len()) + i128::from(delta),
+        };
+        self.position = u64::try_from(base)
+            .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid ICO seek"))?;
+        Ok(self.position)
+    }
 }
 
 fn loader_from_staged_file(file: std::fs::File) -> Loader {
@@ -152,6 +282,95 @@ mod tests {
     const APNG: &[u8] = include_bytes!("../../tests/fixtures/animated.apng");
     const SVG: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"><rect width="3" height="2" fill="#315b8f"/></svg>"##;
     const SVG_EXTERNAL: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="3" height="2"><rect width="3" height="2" fill="#315b8f"/><image href="missing.png" width="1" height="1"/></svg>"##;
+
+    fn dib(width: u32, height: u32) -> Vec<u8> {
+        let mut bytes =
+            vec![0; (40 + width * height * 4 + (width.div_ceil(32) * 4) * height) as usize];
+        bytes[..4].copy_from_slice(&40_u32.to_le_bytes());
+        bytes[4..8].copy_from_slice(&(width as i32).to_le_bytes());
+        bytes[8..12].copy_from_slice(&((height * 2) as i32).to_le_bytes());
+        bytes[12..14].copy_from_slice(&1_u16.to_le_bytes());
+        bytes[14..16].copy_from_slice(&32_u16.to_le_bytes());
+        for pixel in bytes[40..(40 + width * height * 4) as usize]
+            .as_chunks_mut::<4>()
+            .0
+        {
+            pixel.copy_from_slice(&[49, 91, 143, 255]);
+        }
+        bytes
+    }
+
+    fn multi_ico(items: &[(u8, u8, &[u8])]) -> Vec<u8> {
+        let mut bytes = vec![0; 6 + 16 * items.len()];
+        bytes[2..4].copy_from_slice(&1_u16.to_le_bytes());
+        bytes[4..6].copy_from_slice(&(items.len() as u16).to_le_bytes());
+        for (index, &(width, height, payload)) in items.iter().enumerate() {
+            let position = 6 + 16 * index;
+            bytes[position] = width;
+            bytes[position + 1] = height;
+            bytes[position + 4..position + 6].copy_from_slice(&1_u16.to_le_bytes());
+            bytes[position + 6..position + 8].copy_from_slice(&32_u16.to_le_bytes());
+            bytes[position + 8..position + 12]
+                .copy_from_slice(&(payload.len() as u32).to_le_bytes());
+            let offset = bytes.len() as u32;
+            bytes[position + 12..position + 16].copy_from_slice(&offset.to_le_bytes());
+            bytes.extend_from_slice(payload);
+        }
+        bytes
+    }
+
+    fn rgba_png(width: u32, height: u32) -> Vec<u8> {
+        fn crc32(bytes: &[u8]) -> u32 {
+            let mut crc = !0_u32;
+            for &byte in bytes {
+                crc ^= u32::from(byte);
+                for _ in 0..8 {
+                    crc = if crc & 1 != 0 {
+                        (crc >> 1) ^ 0xedb8_8320
+                    } else {
+                        crc >> 1
+                    };
+                }
+            }
+            !crc
+        }
+        fn chunk(kind: &[u8; 4], data: &[u8], output: &mut Vec<u8>) {
+            output.extend_from_slice(&(data.len() as u32).to_be_bytes());
+            let start = output.len();
+            output.extend_from_slice(kind);
+            output.extend_from_slice(data);
+            output.extend_from_slice(&crc32(&output[start..]).to_be_bytes());
+        }
+        let mut raw = Vec::new();
+        for _ in 0..height {
+            raw.extend_from_slice(&[0]);
+            for _ in 0..width {
+                raw.extend_from_slice(&[49, 91, 143, 255]);
+            }
+        }
+        let len = u16::try_from(raw.len()).unwrap();
+        let mut zlib = vec![0x78, 0x01, 0x01];
+        zlib.extend_from_slice(&len.to_le_bytes());
+        zlib.extend_from_slice(&(!len).to_le_bytes());
+        zlib.extend_from_slice(&raw);
+        let mut s1 = 1_u32;
+        let mut s2 = 0_u32;
+        for byte in raw {
+            s1 = (s1 + u32::from(byte)) % 65_521;
+            s2 = (s2 + s1) % 65_521;
+        }
+        zlib.extend_from_slice(&((s2 << 16) | s1).to_be_bytes());
+        let mut png = vec![137, 80, 78, 71, 13, 10, 26, 10];
+        let mut ihdr = [0_u8; 13];
+        ihdr[..4].copy_from_slice(&width.to_be_bytes());
+        ihdr[4..8].copy_from_slice(&height.to_be_bytes());
+        ihdr[8] = 8;
+        ihdr[9] = 6;
+        chunk(b"IHDR", &ihdr, &mut png);
+        chunk(b"IDAT", &zlib, &mut png);
+        chunk(b"IEND", &[], &mut png);
+        png
+    }
 
     #[test]
     fn accepted_mime_aliases_have_explicit_domain_formats() {
@@ -303,6 +522,98 @@ mod tests {
         validate_and_publish(XPM, Some("sample.xpm"), ImageFormat::Xpm, (3, 2));
         validate_and_publish(ICO, Some("sample.ico"), ImageFormat::Ico, (16, 16));
         validate_and_publish(SVG, Some("sample.svg"), ImageFormat::Svg, (3, 2));
+    }
+
+    #[test]
+    fn selected_png_is_decoded_even_when_second() {
+        let smaller = dib(2, 2);
+        let png = rgba_png(3, 2);
+        let bytes = multi_ico(&[(2, 2, &smaller), (3, 2, &png)]);
+        let library = tempdir().unwrap();
+        let store = ObjectStore::new(library.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), Some(OsStr::new("multi.ico")))
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(
+            (
+                validated.validation().metadata.width(),
+                validated.validation().metadata.height()
+            ),
+            (3, 2)
+        );
+        assert_eq!(
+            validated
+                .validation()
+                .container
+                .as_ref()
+                .unwrap()
+                .primary_ordinal(),
+            1
+        );
+        let published = validated.publish().unwrap();
+        assert_eq!(
+            fs::read(library.path().join(published.stored.object.relative_path)).unwrap(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn selected_dib_is_decoded_even_when_second() {
+        let larger = dib(16, 16);
+        let bytes = multi_ico(&[(3, 2, PNG), (16, 16, &larger)]);
+        let library = tempdir().unwrap();
+        let store = ObjectStore::new(library.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), Some(OsStr::new("multi.ico")))
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(
+            (
+                validated.validation().metadata.width(),
+                validated.validation().metadata.height()
+            ),
+            (16, 16)
+        );
+        assert_eq!(
+            validated
+                .validation()
+                .container
+                .as_ref()
+                .unwrap()
+                .primary_ordinal(),
+            1
+        );
+        let published = validated.publish().unwrap();
+        assert_eq!(
+            fs::read(library.path().join(published.stored.object.relative_path)).unwrap(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn invalid_secondary_entry_blocks_publication() {
+        let mut broken = dib(2, 2);
+        broken.truncate(broken.len() - 8);
+        let bytes = multi_ico(&[(3, 2, PNG), (2, 2, &broken)]);
+        let library = tempdir().unwrap();
+        let store = ObjectStore::new(library.path()).unwrap();
+        let staged = store
+            .stage_reader(bytes.as_slice(), Some(OsStr::new("bad.ico")))
+            .unwrap();
+        assert!(matches!(
+            staged.validate_with(&GlycinValidator),
+            Err(ImportValidationError::Ico(_))
+        ));
+        assert_eq!(
+            fs::read_dir(library.path().join("objects/.tmp"))
+                .unwrap()
+                .count(),
+            0
+        );
+        assert!(!store.contains(ObjectHash::from_bytes(&bytes)).unwrap());
     }
 
     #[test]

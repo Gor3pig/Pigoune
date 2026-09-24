@@ -5,7 +5,7 @@ mod svg;
 pub use glycin_validator::{GlycinValidator, ImportValidationError};
 pub use service::{DuplicatePolicy, ImportError, ImportOutcome, ImportService};
 
-use pigoune_core::ImageMetadata;
+use pigoune_core::{ContainerMetadata, ImageMetadata};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ImportWarning {
@@ -16,4 +16,5 @@ pub enum ImportWarning {
 pub struct ValidatedImport {
     pub metadata: ImageMetadata,
     pub warnings: Vec<ImportWarning>,
+    pub container: Option<ContainerMetadata>,
 }
