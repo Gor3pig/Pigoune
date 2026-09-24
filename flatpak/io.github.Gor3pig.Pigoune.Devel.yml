@@ -29,16 +29,13 @@ modules:
       - install -Dm644 pigoune.mo /app/share/locale/fr/LC_MESSAGES/pigoune.mo
       - install -Dm644 data/io.github.Gor3pig.Pigoune.Devel.desktop /app/share/applications/io.github.Gor3pig.Pigoune.Devel.desktop
       - install -Dm644 data/io.github.Gor3pig.Pigoune.Devel.metainfo.xml /app/share/metainfo/io.github.Gor3pig.Pigoune.Devel.metainfo.xml
-      - install -Dm644 data/icons/pigoune.svg /app/share/icons/hicolor/scalable/apps/io.github.Gor3pig.Pigoune.Devel.svg
-      - install -Dm644 data/icons/pigoune-16.png /app/share/icons/hicolor/16x16/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-22.png /app/share/icons/hicolor/22x22/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-24.png /app/share/icons/hicolor/24x24/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-32.png /app/share/icons/hicolor/32x32/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-48.png /app/share/icons/hicolor/48x48/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-64.png /app/share/icons/hicolor/64x64/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-128.png /app/share/icons/hicolor/128x128/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-256.png /app/share/icons/hicolor/256x256/apps/io.github.Gor3pig.Pigoune.Devel.png
-      - install -Dm644 data/icons/pigoune-512.png /app/share/icons/hicolor/512x512/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-16x16.png /app/share/icons/hicolor/16x16/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-32x32.png /app/share/icons/hicolor/32x32/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-48x48.png /app/share/icons/hicolor/48x48/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-64x64.png /app/share/icons/hicolor/64x64/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-128x128.png /app/share/icons/hicolor/128x128/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-256x256.png /app/share/icons/hicolor/256x256/apps/io.github.Gor3pig.Pigoune.Devel.png
+      - install -Dm644 data/icons/pigoune-512x512.png /app/share/icons/hicolor/512x512/apps/io.github.Gor3pig.Pigoune.Devel.png
     sources:
       - type: file
         path: ../Cargo.toml

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="data/icons/pigoune-256.png" alt="Icône Pigoune" width="160" height="160">
+  <img src="data/icons/pigoune-256x256.png" alt="Icône Pigoune" width="160" height="160">
 </p>
 
 <h1 align="center">Pigoune</h1>
