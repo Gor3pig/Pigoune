@@ -1,5 +1,6 @@
 mod asset;
 mod container;
+pub mod icns;
 pub mod ico;
 mod image;
 mod library;

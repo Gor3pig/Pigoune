@@ -177,7 +177,7 @@ pub fn parse_ico<R: Read + Seek>(reader: &mut R) -> Result<IcoContainer, IcoErro
         }
         read_exact(reader, &mut prefix, "payload")?;
         let (codec, width, height, depth) = if prefix == PNG_SIGNATURE {
-            let (width, height, depth) = parse_png(reader, entry, ordinal)?;
+            let (width, height, depth) = parse_png(reader, entry.end, ordinal)?;
             (ContainerCodec::Png, width, height, Some(depth))
         } else {
             let (width, height, depth) = parse_dib(reader, entry, ordinal)?;
@@ -218,12 +218,11 @@ fn choose_primary(items: &[ContainerRepresentation]) -> u16 {
         .ordinal()
 }
 
-fn parse_png<R: Read + Seek>(
+pub(crate) fn parse_png<R: Read + Seek>(
     reader: &mut R,
-    entry: &Entry,
+    end: u64,
     ordinal: u16,
 ) -> Result<(u32, u32, u16), IcoError> {
-    let end = entry.end;
     let mut first = true;
     let mut dimensions = None;
     let mut saw_idat = false;

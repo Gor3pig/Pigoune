@@ -10,6 +10,7 @@ use pigoune_core::{ContainerMetadata, ImageMetadata};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ImportWarning {
     SvgExternalReferences,
+    IcnsUnknownElements { count: u16 },
 }
 
 #[derive(Debug, Eq, PartialEq)]

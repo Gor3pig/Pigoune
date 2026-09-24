@@ -8,6 +8,9 @@ pub const ICON_CONTAINER_MAX_DECODED_BYTES: u64 = 64 * 1024 * 1024;
 pub enum ContainerCodec {
     Png,
     Dib,
+    Jpeg2000,
+    IcnsRgb,
+    IcnsArgb,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -73,6 +76,7 @@ impl ContainerRepresentation {
         })
     }
 
+    /// Physical element ordinal in the complete icon container.
     pub const fn ordinal(&self) -> u16 {
         self.ordinal
     }
@@ -113,8 +117,8 @@ impl ContainerMetadata {
         if representations.len() > ICON_CONTAINER_MAX_REPRESENTATIONS {
             return Err(ContainerMetadataError::TooManyRepresentations);
         }
-        for (index, item) in representations.iter().enumerate() {
-            if usize::from(item.ordinal) != index {
+        for pair in representations.windows(2) {
+            if pair[0].ordinal >= pair[1].ordinal {
                 return Err(ContainerMetadataError::InvalidOrdinal);
             }
         }
@@ -137,7 +141,10 @@ impl ContainerMetadata {
         self.primary_ordinal
     }
     pub fn primary(&self) -> &ContainerRepresentation {
-        &self.representations[usize::from(self.primary_ordinal)]
+        self.representations
+            .iter()
+            .find(|item| item.ordinal == self.primary_ordinal)
+            .expect("primary ordinal checked by constructor")
     }
 }
 
@@ -164,11 +171,25 @@ mod tests {
             ContainerMetadata::new(vec![item.clone()], 1),
             Err(ContainerMetadataError::MissingPrimary)
         );
-        let wrong = ContainerRepresentation::new(2, 16, 16, None, ContainerCodec::Png, 12, Some(2))
+        let second =
+            ContainerRepresentation::new(2, 16, 16, None, ContainerCodec::Png, 12, Some(2))
+                .unwrap();
+        let third = ContainerRepresentation::new(5, 32, 32, None, ContainerCodec::Png, 12, Some(1))
             .unwrap();
+        let sparse =
+            ContainerMetadata::new(vec![item.clone(), second.clone(), third.clone()], 2).unwrap();
+        assert_eq!(sparse.primary(), &second);
         assert_eq!(
-            ContainerMetadata::new(vec![wrong], 2),
+            ContainerMetadata::new(vec![second.clone(), second.clone()], 2),
             Err(ContainerMetadataError::InvalidOrdinal)
+        );
+        assert_eq!(
+            ContainerMetadata::new(vec![second.clone(), item.clone()], 2),
+            Err(ContainerMetadataError::InvalidOrdinal)
+        );
+        assert_eq!(
+            ContainerMetadata::new(vec![item, second, third], 1),
+            Err(ContainerMetadataError::MissingPrimary)
         );
         assert!(
             ContainerRepresentation::new(0, 4097, 1, None, ContainerCodec::Png, 12, None).is_err()

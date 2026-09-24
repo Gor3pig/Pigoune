@@ -8,7 +8,8 @@ use std::{
 use gio::ReadInputStream;
 use glycin::{Error as GlycinError, ErrorCtx, Loader, SandboxMechanism};
 use pigoune_core::{
-    ContainerCodec, ImageFormat, ImageMetadata, StagedObject, StagedValidator, ico,
+    ContainerCodec, ImageFormat, ImageMetadata, StagedObject, StagedValidator, icns as icns_core,
+    ico,
 };
 
 use super::{ImportWarning, ValidatedImport, svg};
@@ -26,6 +27,8 @@ pub enum ImportValidationError {
     MimeNotAccepted(String),
     SvgAnalysis(svg::SvgAnalysisError),
     Ico(ico::IcoError),
+    Icns(icns_core::IcnsError),
+    LegacyDecode(io::Error),
     PrimaryLoad {
         codec: ContainerCodec,
         error: Box<ErrorCtx>,
@@ -57,18 +60,20 @@ impl fmt::Display for ImportValidationError {
             Self::MimeNotAccepted(mime) => write!(f, "image MIME type is not accepted: {mime}"),
             Self::SvgAnalysis(error) => write!(f, "cannot analyze staged SVG: {error}"),
             Self::Ico(error) => write!(f, "invalid ICO container: {error}"),
+            Self::Icns(error) => write!(f, "invalid ICNS container: {error}"),
+            Self::LegacyDecode(error) => write!(f, "cannot decode ICNS legacy primary: {error}"),
             Self::PrimaryLoad { codec, error } => {
-                write!(f, "cannot load ICO {codec:?} primary: {error}")
+                write!(f, "cannot load {codec:?} primary: {error}")
             }
             Self::PrimaryFrame { codec, error } => {
-                write!(f, "cannot decode ICO {codec:?} primary: {error}")
+                write!(f, "cannot decode {codec:?} primary: {error}")
             }
             Self::PrimaryMimeMismatch { codec, mime } => {
-                write!(f, "ICO {codec:?} primary has unexpected MIME type: {mime}")
+                write!(f, "{codec:?} primary has unexpected MIME type: {mime}")
             }
             Self::DecodedDimensionsMismatch { expected, actual } => write!(
                 f,
-                "ICO primary decoded as {} × {}, expected {} × {}",
+                "icon primary decoded as {} × {}, expected {} × {}",
                 actual.0, actual.1, expected.0, expected.1
             ),
         }
@@ -83,6 +88,8 @@ impl Error for ImportValidationError {
             Self::InvalidDimensions { .. } | Self::MimeNotAccepted(_) => None,
             Self::SvgAnalysis(error) => Some(error),
             Self::Ico(error) => Some(error),
+            Self::Icns(error) => Some(error),
+            Self::LegacyDecode(error) => Some(error),
             Self::PrimaryLoad { error, .. } | Self::PrimaryFrame { error, .. } => Some(error),
             Self::PrimaryMimeMismatch { .. } => None,
             Self::DecodedDimensionsMismatch { .. } => None,
@@ -107,6 +114,18 @@ impl StagedValidator for GlycinValidator {
 fn validate_staged(
     staged: &StagedObject<'_>,
 ) -> Result<(ValidatedImport, SandboxMechanism), ImportValidationError> {
+    let mut probe = staged
+        .open_read()
+        .map_err(ImportValidationError::StagingAccess)?;
+    let mut magic = [0; 4];
+    if probe
+        .read(&mut magic)
+        .map_err(ImportValidationError::StagingAccess)?
+        == 4
+        && &magic == b"icns"
+    {
+        return validate_icns(staged);
+    }
     let file = staged
         .open_read()
         .map_err(ImportValidationError::StagingAccess)?;
@@ -142,6 +161,7 @@ fn validate_staged(
                     SingleEntryIco::new(payload, chosen.directory_entry)
                         .map_err(ImportValidationError::StagingAccess)?,
                 ),
+                _ => unreachable!("ICO parser returns only PNG or DIB"),
             };
             drop(image);
             let selected = selected_loader.load().await.map_err(|error| {
@@ -153,6 +173,7 @@ fn validate_staged(
             let expected_format = match codec {
                 ContainerCodec::Png => ImageFormat::Png,
                 ContainerCodec::Dib => ImageFormat::Ico,
+                _ => unreachable!("ICO parser returns only PNG or DIB"),
             };
             let mime_type = selected.mime_type();
             let selected_mime = mime_type.as_str();
@@ -212,6 +233,133 @@ fn validate_staged(
             metadata,
             warnings,
             container,
+        },
+        mechanism,
+    ))
+}
+
+fn validate_icns(
+    staged: &StagedObject<'_>,
+) -> Result<(ValidatedImport, SandboxMechanism), ImportValidationError> {
+    let mut file = staged
+        .open_read()
+        .map_err(ImportValidationError::StagingAccess)?;
+    let parsed = icns_core::parse_icns(&mut file).map_err(ImportValidationError::Icns)?;
+    let primary = parsed.metadata().primary();
+    let expected = (primary.width(), primary.height());
+    let chosen = parsed.primary();
+    let codec = primary.codec();
+    let mechanism = match codec {
+        ContainerCodec::Png | ContainerCodec::Jpeg2000 => {
+            let payload = StagedSlice::new(file, chosen.color.offset, chosen.color.size)
+                .map_err(ImportValidationError::StagingAccess)?;
+            async_io::block_on(async move {
+                let selected = loader_from_reader(payload).load().await.map_err(|error| {
+                    ImportValidationError::PrimaryLoad {
+                        codec,
+                        error: Box::new(error),
+                    }
+                })?;
+                let mime = selected.mime_type();
+                let expected_mime = match (codec, chosen.jpeg2000_kind) {
+                    (ContainerCodec::Png, _) => "image/png",
+                    (ContainerCodec::Jpeg2000, Some(icns_core::Jpeg2000Kind::Jp2)) => "image/jp2",
+                    (ContainerCodec::Jpeg2000, Some(icns_core::Jpeg2000Kind::Codestream)) => {
+                        "image/x-jp2-codestream"
+                    }
+                    _ => unreachable!("parser provides JPEG 2000 kind"),
+                };
+                if mime.as_str() != expected_mime {
+                    return Err(ImportValidationError::PrimaryMimeMismatch {
+                        codec,
+                        mime: mime.as_str().to_owned(),
+                    });
+                }
+                let frame = selected.next_frame().await.map_err(|error| {
+                    ImportValidationError::PrimaryFrame {
+                        codec,
+                        error: Box::new(error),
+                    }
+                })?;
+                let actual = (selected.details().width(), selected.details().height());
+                if actual != expected || (frame.width(), frame.height()) != expected {
+                    return Err(ImportValidationError::DecodedDimensionsMismatch {
+                        expected,
+                        actual,
+                    });
+                }
+                Ok(selected.active_sandbox_mechanism())
+            })?
+        }
+        ContainerCodec::IcnsRgb | ContainerCodec::IcnsArgb => {
+            let mut color = StagedSlice::new(file, chosen.color.offset, chosen.color.size)
+                .map_err(ImportValidationError::StagingAccess)?;
+            let mut data = Vec::new();
+            color
+                .read_to_end(&mut data)
+                .map_err(ImportValidationError::StagingAccess)?;
+            if chosen.add_rle_prefix {
+                let mut prefixed =
+                    Vec::with_capacity(data.len().checked_add(4).ok_or_else(|| {
+                        ImportValidationError::StagingAccess(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "RLE prefix size overflow",
+                        ))
+                    })?);
+                prefixed.extend_from_slice(&[0; 4]);
+                prefixed.extend_from_slice(&data);
+                data = prefixed;
+            }
+            let color_element = icns::IconElement::new(icns::OSType(chosen.color.kind), data);
+            let image = if let Some(mask) = chosen.mask {
+                let mut mask_slice = StagedSlice::new(
+                    staged
+                        .open_read()
+                        .map_err(ImportValidationError::StagingAccess)?,
+                    mask.offset,
+                    mask.size,
+                )
+                .map_err(ImportValidationError::StagingAccess)?;
+                let mut mask_data = Vec::new();
+                mask_slice
+                    .read_to_end(&mut mask_data)
+                    .map_err(ImportValidationError::StagingAccess)?;
+                let mask_element = icns::IconElement::new(icns::OSType(mask.kind), mask_data);
+                color_element
+                    .decode_image_with_mask(&mask_element)
+                    .map_err(ImportValidationError::LegacyDecode)?
+            } else {
+                color_element
+                    .decode_image()
+                    .map_err(ImportValidationError::LegacyDecode)?
+            };
+            let actual = (image.width(), image.height());
+            if actual != expected {
+                return Err(ImportValidationError::DecodedDimensionsMismatch { expected, actual });
+            }
+            SandboxMechanism::NotSandboxed
+        }
+        ContainerCodec::Dib => unreachable!("ICNS parser never returns DIB"),
+    };
+    let metadata =
+        ImageMetadata::new(ImageFormat::Icns, expected.0, expected.1, false).map_err(|_| {
+            ImportValidationError::InvalidDimensions {
+                width: expected.0,
+                height: expected.1,
+            }
+        })?;
+    let warnings = if parsed.unknown_count() > 0 {
+        vec![ImportWarning::IcnsUnknownElements {
+            count: parsed.unknown_count(),
+        }]
+    } else {
+        Vec::new()
+    };
+    Ok((
+        ValidatedImport {
+            metadata,
+            warnings,
+            container: Some(parsed.metadata().clone()),
         },
         mechanism,
     ))
@@ -868,5 +1016,277 @@ mod tests {
         let staged = store.stage_reader(PNG, None).expect("stage png");
         let (_, mechanism) = validate_staged(&staged).expect("decode png");
         assert_eq!(mechanism, SandboxMechanism::FlatpakSpawn);
+    }
+
+    fn icns_file(elements: &[([u8; 4], &[u8])]) -> Vec<u8> {
+        let mut bytes = b"icns\0\0\0\0".to_vec();
+        for (kind, payload) in elements {
+            bytes.extend_from_slice(kind);
+            bytes.extend_from_slice(&(payload.len() as u32 + 8).to_be_bytes());
+            bytes.extend_from_slice(payload);
+        }
+        let length = bytes.len() as u32;
+        bytes[4..8].copy_from_slice(&length.to_be_bytes());
+        bytes
+    }
+
+    fn legacy_rle(dimension: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        for value in [12, 34, 56] {
+            let mut remaining = dimension * dimension;
+            while remaining > 0 {
+                let run = remaining.min(130);
+                bytes.extend_from_slice(&[(run + 125) as u8, value]);
+                remaining -= run;
+            }
+        }
+        bytes
+    }
+
+    #[test]
+    fn icns_png_payload_is_decoded_and_original_container_published() {
+        let png = include_bytes!("../../tests/fixtures/icns-16.png");
+        let bytes = icns_file(&[(*b"icp4", png), (*b"zzzz", b"ignored")]);
+        assert!(
+            async_io::block_on(loader_from_reader(io::Cursor::new(bytes.clone())).load()).is_err()
+        );
+        let directory = tempdir().unwrap();
+        let store = ObjectStore::new(directory.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), None)
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(validated.validation().metadata.format(), ImageFormat::Icns);
+        assert_eq!(
+            validated.validation().warnings,
+            vec![ImportWarning::IcnsUnknownElements { count: 1 }]
+        );
+        assert_eq!(
+            validated
+                .validation()
+                .container
+                .as_ref()
+                .unwrap()
+                .primary()
+                .codec(),
+            ContainerCodec::Png
+        );
+        let published = validated.publish().unwrap();
+        assert_eq!(
+            fs::read(directory.path().join(published.stored.object.relative_path)).unwrap(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn icns_jpeg2000_payloads_decode_directly() {
+        for payload in [
+            include_bytes!("../../tests/fixtures/icns-16.jp2").as_slice(),
+            include_bytes!("../../tests/fixtures/icns-16.j2k").as_slice(),
+        ] {
+            let bytes = icns_file(&[(*b"icp4", payload)]);
+            let directory = tempdir().unwrap();
+            let store = ObjectStore::new(directory.path()).unwrap();
+            let validated = store
+                .stage_reader(bytes.as_slice(), None)
+                .unwrap()
+                .validate_with(&GlycinValidator)
+                .unwrap();
+            assert_eq!(validated.validation().metadata.format(), ImageFormat::Icns);
+            assert_eq!(
+                (
+                    validated.validation().metadata.width(),
+                    validated.validation().metadata.height()
+                ),
+                (16, 16)
+            );
+            assert_eq!(
+                validated
+                    .validation()
+                    .container
+                    .as_ref()
+                    .unwrap()
+                    .primary()
+                    .codec(),
+                ContainerCodec::Jpeg2000
+            );
+            let published = validated.publish().unwrap();
+            assert_eq!(
+                fs::read(directory.path().join(published.stored.object.relative_path)).unwrap(),
+                bytes
+            );
+        }
+    }
+
+    #[test]
+    fn icns_legacy_rgb_uses_validated_mask_alpha() {
+        let color = legacy_rle(16);
+        let mask = vec![128; 256];
+        let direct = icns::IconElement::new(icns::OSType(*b"is32"), color.clone())
+            .decode_image_with_mask(&icns::IconElement::new(
+                icns::OSType(*b"s8mk"),
+                mask.clone(),
+            ))
+            .unwrap();
+        assert_eq!(&direct.data()[..4], &[12, 34, 56, 128]);
+        let bytes = icns_file(&[(*b"is32", &color), (*b"s8mk", &mask)]);
+        let directory = tempdir().unwrap();
+        let store = ObjectStore::new(directory.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), None)
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(validated.validation().metadata.format(), ImageFormat::Icns);
+        assert_eq!(
+            validated
+                .validation()
+                .container
+                .as_ref()
+                .unwrap()
+                .primary()
+                .codec(),
+            ContainerCodec::IcnsRgb
+        );
+        let published = validated.publish().unwrap();
+        assert_eq!(
+            fs::read(directory.path().join(published.stored.object.relative_path)).unwrap(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn icns_all_legacy_rgb_sizes_decode_with_their_masks() {
+        for (color_kind, mask_kind, dimension) in [
+            (*b"is32", *b"s8mk", 16),
+            (*b"il32", *b"l8mk", 32),
+            (*b"ih32", *b"h8mk", 48),
+            (*b"it32", *b"t8mk", 128),
+        ] {
+            let mut color = legacy_rle(dimension);
+            if dimension == 128 {
+                color.splice(..0, [0; 4]);
+            }
+            let mask = vec![128; (dimension * dimension) as usize];
+            let direct = icns::IconElement::new(icns::OSType(color_kind), color.clone())
+                .decode_image_with_mask(&icns::IconElement::new(
+                    icns::OSType(mask_kind),
+                    mask.clone(),
+                ))
+                .unwrap();
+            assert_eq!((direct.width(), direct.height()), (dimension, dimension));
+            assert_eq!(&direct.data()[..4], &[12, 34, 56, 128]);
+            let bytes = icns_file(&[(color_kind, &color), (mask_kind, &mask)]);
+            let directory = tempdir().unwrap();
+            let store = ObjectStore::new(directory.path()).unwrap();
+            let validated = store
+                .stage_reader(bytes.as_slice(), None)
+                .unwrap()
+                .validate_with(&GlycinValidator)
+                .unwrap();
+            assert_eq!(
+                (
+                    validated.validation().metadata.width(),
+                    validated.validation().metadata.height()
+                ),
+                (dimension, dimension)
+            );
+            assert_eq!(
+                validated
+                    .validation()
+                    .container
+                    .as_ref()
+                    .unwrap()
+                    .primary()
+                    .codec(),
+                ContainerCodec::IcnsRgb
+            );
+        }
+    }
+
+    #[test]
+    fn icns_argb_primary_decodes_without_glycin() {
+        let mut payload = b"ARGB".to_vec();
+        for value in [128, 12, 34, 56] {
+            let mut remaining = 16 * 16;
+            while remaining > 0 {
+                let run = remaining.min(130);
+                payload.extend_from_slice(&[(run + 125) as u8, value]);
+                remaining -= run;
+            }
+        }
+        let bytes = icns_file(&[(*b"ic04", &payload)]);
+        let directory = tempdir().unwrap();
+        let store = ObjectStore::new(directory.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), None)
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(validated.validation().metadata.format(), ImageFormat::Icns);
+        assert_eq!(
+            validated
+                .validation()
+                .container
+                .as_ref()
+                .unwrap()
+                .primary()
+                .codec(),
+            ContainerCodec::IcnsArgb
+        );
+    }
+
+    #[test]
+    fn icns_unprefixed_zero_start_uses_exact_legacy_stream() {
+        let mut color = vec![0, 0, 0, 0];
+        let mut append = |pixels: u32, value: u8| {
+            let mut remaining = pixels;
+            while remaining > 0 {
+                let run = remaining.min(130);
+                if run >= 3 {
+                    color.extend_from_slice(&[(run + 125) as u8, value]);
+                } else {
+                    color.push((run - 1) as u8);
+                    color.extend(std::iter::repeat_n(value, run as usize));
+                }
+                remaining -= run;
+            }
+        };
+        append(254, 12);
+        append(256, 34);
+        append(256, 56);
+        let mask = vec![128; 256];
+        let bytes = icns_file(&[(*b"is32", &color), (*b"s8mk", &mask)]);
+        let directory = tempdir().unwrap();
+        let store = ObjectStore::new(directory.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), None)
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(validated.validation().metadata.format(), ImageFormat::Icns);
+    }
+
+    #[test]
+    fn icns_primary_prefers_scale_one_at_equal_physical_size() {
+        let png = include_bytes!("../../tests/fixtures/icns-32.png");
+        let bytes = icns_file(&[(*b"ic11", png), (*b"icp5", png)]);
+        let directory = tempdir().unwrap();
+        let store = ObjectStore::new(directory.path()).unwrap();
+        let validated = store
+            .stage_reader(bytes.as_slice(), None)
+            .unwrap()
+            .validate_with(&GlycinValidator)
+            .unwrap();
+        assert_eq!(
+            validated
+                .validation()
+                .container
+                .as_ref()
+                .unwrap()
+                .primary_ordinal(),
+            1
+        );
     }
 }

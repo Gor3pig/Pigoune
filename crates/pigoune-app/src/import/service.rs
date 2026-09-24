@@ -481,6 +481,43 @@ mod tests {
     }
 
     #[test]
+    fn icns_duplicate_returns_inventory_and_unknown_warning() {
+        let png = include_bytes!("../../tests/fixtures/icns-16.png");
+        let mut bytes = b"icns\0\0\0\0".to_vec();
+        for (kind, payload) in [(*b"icp4", png.as_slice()), (*b"zzzz", b"extra".as_slice())] {
+            bytes.extend_from_slice(&kind);
+            bytes.extend_from_slice(&(payload.len() as u32 + 8).to_be_bytes());
+            bytes.extend_from_slice(payload);
+        }
+        let length = bytes.len() as u32;
+        bytes[4..8].copy_from_slice(&length.to_be_bytes());
+        let root = tempdir().unwrap();
+        let source = source(root.path(), "example.icns", &bytes);
+        let mut library = Library::create(&root.path().join("library")).unwrap();
+        let imported = import(&mut library, &source, DuplicatePolicy::Detect);
+        assert!(
+            matches!(imported, ImportOutcome::Imported { metadata, .. } if metadata.format() == ImageFormat::Icns)
+        );
+        let duplicate = import(&mut library, &source, DuplicatePolicy::Detect);
+        match duplicate {
+            ImportOutcome::Duplicate {
+                container,
+                warnings,
+                existing_asset_ids,
+                ..
+            } => {
+                assert_eq!(container.unwrap().primary_ordinal(), 0);
+                assert_eq!(
+                    warnings,
+                    vec![ImportWarning::IcnsUnknownElements { count: 1 }]
+                );
+                assert_eq!(existing_asset_ids.len(), 1);
+            }
+            other => panic!("expected ICNS duplicate, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn source_without_filename_and_invalid_name_fail_before_staging() {
         let root = tempdir().unwrap();
         let mut library = Library::create(&root.path().join("library")).unwrap();
