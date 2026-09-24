@@ -9,6 +9,14 @@ impl AssetId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
+
+    pub fn from_bytes(bytes: [u8; 16]) -> Self {
+        Self(Uuid::from_bytes(bytes))
+    }
+
+    pub fn to_bytes(self) -> [u8; 16] {
+        *self.0.as_bytes()
+    }
 }
 
 impl Default for AssetId {

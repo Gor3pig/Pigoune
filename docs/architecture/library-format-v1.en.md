@@ -1,0 +1,30 @@
+# Library format v1
+
+The application version (Cargo), library format version (`LIBRARY_FORMAT_VERSION = 1`), and SQLite schema version (`DATABASE_SCHEMA_VERSION = 1`) evolve independently. `library.json` stores the format version; `PRAGMA user_version` stores the schema version. A SQL migration does not automatically change the overall format.
+
+## Directory
+
+```text
+<library-root>/
+├── library.json
+├── library.db
+├── objects/
+│   ├── .tmp/
+│   ├── .lock
+│   └── <shards...>
+└── recovery/
+```
+
+Caches live outside this directory. In WAL mode, `library.db-wal` and `library.db-shm` may appear at its root; a copy or backup must represent a consistent SQLite state.
+
+## Identity and metadata
+
+`library.json` contains only `type: "pigoune-library"`, `library_id` (a canonical lowercase hyphenated UUID v4), and `format_version: 1`. The `library_metadata` table stores the same `LibraryId` as a 16-byte BLOB in a single `singleton = 1` row. Opening for writing compares these identities and fails if they differ. An invalid manifest is never silently repaired.
+
+SQL migration `0001_initial.sql` creates only `library_metadata`, `objects`, `assets`, and the `assets_object_hash_idx` index. The tables use `STRICT`; SQLite 3.37 is the minimum version. Pigoune uses `rusqlite` linked to system SQLite, without bundled SQLite. The GNOME 50 SDK/runtime is the reference environment.
+
+Asset UUIDs are 16-byte BLOBs; object SHA-256 hashes are 32-byte BLOBs. `objects` stores size and a relative path under `objects/`. `assets` references an object through a foreign key and stores the original filename as exact POSIX bytes in a BLOB, a UTF-8 display name in TEXT, and `imported_at_utc_us` as a nonnegative signed integer representing a UTC instant in microseconds since the Unix epoch. No external source path is stored.
+
+Each write connection enables foreign keys, a five-second busy timeout, and `synchronous = FULL`, then verifies `journal_mode = WAL`. Embedded SQL migrations are ascending, sequential, and transactional; `user_version` changes in the corresponding transaction. A database with a newer schema version is refused for writing.
+
+`ObjectStore` durably publishes the physical object before the SQLite transaction records or reconciles `objects`, creates `assets`, and commits. If SQLite fails, the transaction creates no partial asset; the physical file may remain orphaned until safe maintenance. The foreign key prevents an asset from referencing an object absent from the database. Full byte verification is a separate integrity operation rather than part of ordinary lookups.

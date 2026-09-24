@@ -21,6 +21,14 @@ impl fmt::Display for ParseObjectHashError {
 impl std::error::Error for ParseObjectHashError {}
 
 impl ObjectHash {
+    pub fn from_digest_bytes(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+
+    pub fn digest_bytes(self) -> [u8; 32] {
+        self.0
+    }
+
     pub fn from_bytes(bytes: &[u8]) -> Self {
         Self(Sha256::digest(bytes).into())
     }
