@@ -548,6 +548,16 @@ mod tests {
     }
 
     #[test]
+    fn inventories_each_supported_bi_rgb_depth() {
+        for depth in [1, 4, 8, 24, 32] {
+            let bytes = ico(&[(16, 16, dib(16, 16, depth))]);
+            let parsed = parse(&bytes).unwrap();
+            assert_eq!(parsed.metadata().primary().codec(), ContainerCodec::Dib);
+            assert_eq!(parsed.metadata().primary().bit_depth(), Some(depth));
+        }
+    }
+
+    #[test]
     fn primary_uses_each_tie_break_in_order() {
         let sizes = ico(&[
             (16, 16, png(16, 16, 8)),
