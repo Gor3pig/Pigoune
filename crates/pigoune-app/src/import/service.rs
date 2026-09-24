@@ -149,6 +149,7 @@ impl ImportService {
             .import_published_asset(
                 &published.stored.object,
                 published.validation.metadata,
+                published.validation.container.as_ref(),
                 &asset,
             )
             .map_err(ImportError::Database)?;
@@ -249,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn ico_inventory_is_returned_without_database_persistence() {
+    fn ico_inventory_is_returned_and_persisted() {
         let root = tempdir().unwrap();
         let source = source(root.path(), "sample.ico", ICO);
         let mut library = Library::create(&root.path().join("library")).unwrap();
@@ -286,17 +287,184 @@ mod tests {
                 ),
             }
         );
+        let stored = library
+            .database
+            .get_object(ObjectHash::from_bytes(ICO))
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.metadata.unwrap().format(), ImageFormat::Ico);
         assert_eq!(
-            library
-                .database
-                .get_object(ObjectHash::from_bytes(ICO))
-                .unwrap()
-                .unwrap()
-                .metadata
-                .unwrap()
-                .format(),
-            ImageFormat::Ico
+            stored.container,
+            Some(
+                pigoune_core::ico::parse_ico(&mut std::io::Cursor::new(ICO))
+                    .unwrap()
+                    .metadata()
+                    .clone()
+            )
         );
+    }
+
+    #[test]
+    fn ico_multientry_inventory_survives_reopen() {
+        use pigoune_core::ContainerCodec;
+        let png = include_bytes!("../../tests/fixtures/icns-16.png");
+        let dib = &ICO[22..];
+        let mut bytes = vec![0; 38];
+        bytes[2..4].copy_from_slice(&1_u16.to_le_bytes());
+        bytes[4..6].copy_from_slice(&2_u16.to_le_bytes());
+        for (ordinal, (payload, depth)) in
+            [(png.as_slice(), 32_u16), (dib, 32_u16)].iter().enumerate()
+        {
+            let position = 6 + 16 * ordinal;
+            bytes[position..position + 2].copy_from_slice(&[16, 16]);
+            bytes[position + 4..position + 6].copy_from_slice(&1_u16.to_le_bytes());
+            bytes[position + 6..position + 8].copy_from_slice(&depth.to_le_bytes());
+            bytes[position + 8..position + 12]
+                .copy_from_slice(&(payload.len() as u32).to_le_bytes());
+            let offset = bytes.len() as u32;
+            bytes[position + 12..position + 16].copy_from_slice(&offset.to_le_bytes());
+            bytes.extend_from_slice(payload);
+        }
+        let root = tempdir().unwrap();
+        let path = root.path().join("library");
+        let source = source(root.path(), "multi.ico", &bytes);
+        let mut library = Library::create(&path).unwrap();
+        let outcome = import(&mut library, &source, DuplicatePolicy::Detect);
+        let (hash, expected) = match outcome {
+            ImportOutcome::Imported {
+                asset,
+                metadata,
+                container: Some(container),
+                ..
+            } => {
+                assert_eq!(metadata.format(), ImageFormat::Ico);
+                assert_eq!(container.primary_ordinal(), 0);
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.ordinal())
+                        .collect::<Vec<_>>(),
+                    vec![0, 1]
+                );
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.codec())
+                        .collect::<Vec<_>>(),
+                    vec![ContainerCodec::Png, ContainerCodec::Dib]
+                );
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.encoded_size())
+                        .collect::<Vec<_>>(),
+                    vec![png.len() as u64, dib.len() as u64]
+                );
+                assert!(
+                    container
+                        .representations()
+                        .iter()
+                        .all(|r| r.scale().is_none() && r.bit_depth().is_some())
+                );
+                assert_eq!(container.representations()[1].bit_depth(), Some(32));
+                (asset.object_hash, container)
+            }
+            other => panic!("expected imported ICO inventory: {other:?}"),
+        };
+        drop(library);
+        let reopened = Library::open(&path).unwrap();
+        let stored = reopened.database.get_object(hash).unwrap().unwrap();
+        assert_eq!(stored.metadata.unwrap().format(), ImageFormat::Ico);
+        assert_eq!(stored.container, Some(expected));
+    }
+
+    #[test]
+    fn icns_sparse_inventory_and_warning_survive_as_intended() {
+        use pigoune_core::ContainerCodec;
+        let png16 = include_bytes!("../../tests/fixtures/icns-16.png");
+        let png32 = include_bytes!("../../tests/fixtures/icns-32.png");
+        let j2k = include_bytes!("../../tests/fixtures/icns-16.j2k");
+        let mut bytes = b"icns\0\0\0\0".to_vec();
+        for (kind, payload) in [
+            (*b"icp4", png16.as_slice()),
+            (*b"TOC ", b"metadata".as_slice()),
+            (*b"zzzz", b"unknown".as_slice()),
+            (*b"ic11", png32.as_slice()),
+            (*b"icp4", j2k.as_slice()),
+        ] {
+            bytes.extend_from_slice(&kind);
+            bytes.extend_from_slice(&(payload.len() as u32 + 8).to_be_bytes());
+            bytes.extend_from_slice(payload);
+        }
+        let length = bytes.len() as u32;
+        bytes[4..8].copy_from_slice(&length.to_be_bytes());
+        let root = tempdir().unwrap();
+        let path = root.path().join("library");
+        let source = source(root.path(), "sparse.icns", &bytes);
+        let mut library = Library::create(&path).unwrap();
+        let outcome = import(&mut library, &source, DuplicatePolicy::Detect);
+        let (hash, expected) = match outcome {
+            ImportOutcome::Imported {
+                asset,
+                metadata,
+                warnings,
+                container: Some(container),
+                ..
+            } => {
+                assert_eq!(metadata.format(), ImageFormat::Icns);
+                assert_eq!(
+                    warnings,
+                    vec![ImportWarning::IcnsUnknownElements { count: 1 }]
+                );
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.ordinal())
+                        .collect::<Vec<_>>(),
+                    vec![0, 3, 4]
+                );
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.scale())
+                        .collect::<Vec<_>>(),
+                    vec![Some(1), Some(2), Some(1)]
+                );
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.codec())
+                        .collect::<Vec<_>>(),
+                    vec![
+                        ContainerCodec::Png,
+                        ContainerCodec::Png,
+                        ContainerCodec::Jpeg2000
+                    ]
+                );
+                assert_eq!(
+                    container
+                        .representations()
+                        .iter()
+                        .map(|r| r.encoded_size())
+                        .collect::<Vec<_>>(),
+                    vec![png16.len() as u64, png32.len() as u64, j2k.len() as u64]
+                );
+                assert_eq!(container.primary_ordinal(), 3);
+                (asset.object_hash, container)
+            }
+            other => panic!("expected imported ICNS inventory: {other:?}"),
+        };
+        drop(library);
+        let reopened = Library::open(&path).unwrap();
+        let stored = reopened.database.get_object(hash).unwrap().unwrap();
+        assert_eq!(stored.metadata.unwrap().format(), ImageFormat::Icns);
+        assert_eq!(stored.container, Some(expected));
     }
 
     #[test]

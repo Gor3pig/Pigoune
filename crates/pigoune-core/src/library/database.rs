@@ -4,7 +4,10 @@ mod migration;
 pub use error::DatabaseError;
 
 use super::{DATABASE_SCHEMA_VERSION, LibraryId, OriginalFilename, path::valid_object_path};
-use crate::{AssetId, ImageFormat, ImageMetadata, ObjectHash, ObjectRecord};
+use crate::{
+    AssetId, ContainerCodec, ContainerMetadata, ContainerRepresentation, ImageFormat,
+    ImageMetadata, ObjectHash, ObjectRecord,
+};
 use migration::{
     check_sqlite_version, configure_writer, migrate, read_library_id, schema_version,
     verify_library_id,
@@ -32,6 +35,7 @@ type ObjectRow = (
 pub struct StoredObject {
     pub object: ObjectRecord,
     pub metadata: Option<ImageMetadata>,
+    pub container: Option<ContainerMetadata>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -105,8 +109,8 @@ impl LibraryDatabase {
     }
 
     pub fn get_object(&self, hash: ObjectHash) -> Result<Option<StoredObject>, DatabaseError> {
-        let row: Option<ObjectRow> = self
-            .connection
+        let transaction = self.connection.unchecked_transaction()?;
+        let row: Option<ObjectRow> = transaction
             .query_row(
                 "SELECT hash, size_bytes, relative_path, format, width, height, animated \
                  FROM objects WHERE hash = ?1",
@@ -124,7 +128,15 @@ impl LibraryDatabase {
                 },
             )
             .optional()?;
-        row.map(stored_object_from_row).transpose()
+        let stored = row
+            .map(|row| {
+                let mut stored = stored_object_from_row(row)?;
+                stored.container = read_container(&transaction, hash, stored.metadata)?;
+                Ok::<StoredObject, DatabaseError>(stored)
+            })
+            .transpose()?;
+        transaction.commit()?;
+        Ok(stored)
     }
 
     /// Records a published object and its validated intrinsic metadata with an asset.
@@ -132,6 +144,7 @@ impl LibraryDatabase {
         &mut self,
         object: &ObjectRecord,
         metadata: ImageMetadata,
+        container: Option<&ContainerMetadata>,
         asset: &AssetRecord,
     ) -> Result<(), DatabaseError> {
         validate_object(object)?;
@@ -139,10 +152,11 @@ impl LibraryDatabase {
         if object.hash != asset.object_hash {
             return Err(DatabaseError::AssetObjectMismatch);
         }
+        validate_container(metadata.format(), container, true)?;
         let transaction = self
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        reconcile_object(&transaction, object, metadata)?;
+        reconcile_object(&transaction, object, metadata, container)?;
         insert_asset(&transaction, asset)?;
         transaction.commit()?;
         Ok(())
@@ -248,13 +262,170 @@ fn stored_object_from_row(row: ObjectRow) -> Result<StoredObject, DatabaseError>
         }
         _ => return Err(DatabaseError::InvalidStoredValue("partial image metadata")),
     };
-    Ok(StoredObject { object, metadata })
+    Ok(StoredObject {
+        object,
+        metadata,
+        container: None,
+    })
+}
+
+fn validate_container(
+    format: ImageFormat,
+    container: Option<&ContainerMetadata>,
+    normal_import: bool,
+) -> Result<(), DatabaseError> {
+    match (format, container) {
+        (ImageFormat::Ico | ImageFormat::Icns, None) if normal_import => Err(
+            DatabaseError::InvalidContainerMetadata("missing inventory for icon container"),
+        ),
+        (ImageFormat::Ico | ImageFormat::Icns, None) => Ok(()),
+        (ImageFormat::Ico, Some(inventory)) => {
+            if inventory.representations().iter().any(|item| {
+                !matches!(item.codec(), ContainerCodec::Png | ContainerCodec::Dib)
+                    || item.scale().is_some()
+            }) {
+                return Err(DatabaseError::InvalidContainerMetadata(
+                    "ICO codec or scale",
+                ));
+            }
+            Ok(())
+        }
+        (ImageFormat::Icns, Some(inventory)) => {
+            if inventory.representations().iter().any(|item| {
+                !matches!(
+                    item.codec(),
+                    ContainerCodec::Png
+                        | ContainerCodec::Jpeg2000
+                        | ContainerCodec::IcnsRgb
+                        | ContainerCodec::IcnsArgb
+                ) || item.scale().is_none()
+            }) {
+                return Err(DatabaseError::InvalidContainerMetadata(
+                    "ICNS codec or scale",
+                ));
+            }
+            Ok(())
+        }
+        (_, Some(_)) => Err(DatabaseError::InvalidContainerMetadata(
+            "inventory on simple image",
+        )),
+        (_, None) => Ok(()),
+    }
+}
+
+fn read_container(
+    connection: &Connection,
+    hash: ObjectHash,
+    metadata: Option<ImageMetadata>,
+) -> Result<Option<ContainerMetadata>, DatabaseError> {
+    let mut statement = connection.prepare(
+        "SELECT ordinal, width, height, scale, bit_depth, codec, encoded_size, is_primary \
+         FROM object_representations WHERE object_hash = ?1 ORDER BY ordinal",
+    )?;
+    let mut rows = statement.query([hash.digest_bytes().as_slice()])?;
+    let mut representations = Vec::new();
+    let mut primary = None;
+    while let Some(row) = rows.next()? {
+        let ordinal = u16::try_from(row.get::<_, i64>(0)?)
+            .map_err(|_| DatabaseError::InvalidStoredValue("representation ordinal"))?;
+        let width = u32::try_from(row.get::<_, i64>(1)?)
+            .map_err(|_| DatabaseError::InvalidStoredValue("representation width"))?;
+        let height = u32::try_from(row.get::<_, i64>(2)?)
+            .map_err(|_| DatabaseError::InvalidStoredValue("representation height"))?;
+        let scale = row
+            .get::<_, Option<i64>>(3)?
+            .map(|value| {
+                u8::try_from(value)
+                    .map_err(|_| DatabaseError::InvalidStoredValue("representation scale"))
+            })
+            .transpose()?;
+        let bit_depth = row
+            .get::<_, Option<i64>>(4)?
+            .map(|value| {
+                u16::try_from(value)
+                    .map_err(|_| DatabaseError::InvalidStoredValue("representation bit depth"))
+            })
+            .transpose()?;
+        let codec = row
+            .get::<_, String>(5)?
+            .parse::<ContainerCodec>()
+            .map_err(|_| DatabaseError::InvalidStoredValue("container codec"))?;
+        let encoded_size = u64::try_from(row.get::<_, i64>(6)?)
+            .map_err(|_| DatabaseError::InvalidStoredValue("representation encoded size"))?;
+        let is_primary: i64 = row.get(7)?;
+        let item = ContainerRepresentation::new(
+            ordinal,
+            width,
+            height,
+            bit_depth,
+            codec,
+            encoded_size,
+            scale,
+        )
+        .map_err(|_| DatabaseError::InvalidStoredValue("container representation"))?;
+        if representations
+            .last()
+            .is_some_and(|previous: &ContainerRepresentation| previous.ordinal() >= ordinal)
+        {
+            return Err(DatabaseError::InvalidStoredValue(
+                "representation ordinal order",
+            ));
+        }
+        match is_primary {
+            0 => {}
+            1 if primary.is_none() => primary = Some(ordinal),
+            1 => {
+                return Err(DatabaseError::InvalidStoredValue(
+                    "multiple primary representations",
+                ));
+            }
+            _ => return Err(DatabaseError::InvalidStoredValue("primary flag")),
+        }
+        representations.push(item);
+    }
+    if representations.is_empty() {
+        return Ok(None);
+    }
+    let primary = primary.ok_or(DatabaseError::InvalidStoredValue(
+        "missing primary representation",
+    ))?;
+    let container = ContainerMetadata::new(representations, primary)
+        .map_err(|_| DatabaseError::InvalidStoredValue("container inventory"))?;
+    let format = metadata
+        .ok_or(DatabaseError::InvalidStoredValue(
+            "inventory without image metadata",
+        ))?
+        .format();
+    validate_container(format, Some(&container), false)
+        .map_err(|_| DatabaseError::InvalidStoredValue("container format mismatch"))?;
+    Ok(Some(container))
+}
+
+fn insert_container(
+    transaction: &Transaction<'_>,
+    hash: ObjectHash,
+    container: &ContainerMetadata,
+) -> Result<(), DatabaseError> {
+    for item in container.representations() {
+        let encoded_size = i64::try_from(item.encoded_size()).map_err(|_| {
+            DatabaseError::InvalidContainerMetadata("encoded size exceeds SQLite INTEGER")
+        })?;
+        transaction.execute(
+            "INSERT INTO object_representations (object_hash, ordinal, width, height, scale, bit_depth, codec, encoded_size, is_primary) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![hash.digest_bytes().as_slice(), i64::from(item.ordinal()), i64::from(item.width()),
+                i64::from(item.height()), item.scale().map(i64::from), item.bit_depth().map(i64::from),
+                item.codec().as_str(), encoded_size, i64::from(item.ordinal() == container.primary_ordinal())],
+        )?;
+    }
+    Ok(())
 }
 
 fn reconcile_object(
     transaction: &Transaction<'_>,
     object: &ObjectRecord,
     metadata: ImageMetadata,
+    container: Option<&ContainerMetadata>,
 ) -> Result<(), DatabaseError> {
     let row: Option<ObjectRow> = transaction
         .query_row(
@@ -275,7 +446,8 @@ fn reconcile_object(
         )
         .optional()?;
     if let Some(row) = row {
-        let existing = stored_object_from_row(row)?;
+        let mut existing = stored_object_from_row(row)?;
+        existing.container = read_container(transaction, object.hash, existing.metadata)?;
         if &existing.object != object {
             return Err(DatabaseError::ObjectConflict(object.hash));
         }
@@ -298,6 +470,13 @@ fn reconcile_object(
                 )?;
             }
         }
+        match (existing.container.as_ref(), container) {
+            (Some(found), Some(incoming)) if found != incoming => {
+                return Err(DatabaseError::ContainerMetadataConflict(object.hash));
+            }
+            (None, Some(incoming)) => insert_container(transaction, object.hash, incoming)?,
+            _ => {}
+        }
     } else {
         let size =
             i64::try_from(object.size).map_err(|_| DatabaseError::SizeOutOfRange(object.size))?;
@@ -312,6 +491,9 @@ fn reconcile_object(
                 metadata.format().as_str(), i64::from(metadata.width()),
                 i64::from(metadata.height()), i64::from(metadata.animated())],
         )?;
+        if let Some(inventory) = container {
+            insert_container(transaction, object.hash, inventory)?;
+        }
     }
     Ok(())
 }
@@ -400,7 +582,10 @@ mod tests {
                 [id.to_bytes().as_slice()],
             )
             .unwrap();
-        connection.pragma_update(None, "user_version", 1).unwrap();
+        connection
+            .execute_batch(include_str!("../migrations/0002_image_metadata.sql"))
+            .unwrap();
+        connection.pragma_update(None, "user_version", 2).unwrap();
         drop(connection);
 
         let database = LibraryDatabase::open(root.path(), id).unwrap();
@@ -409,6 +594,6 @@ mod tests {
             .query_row("PRAGMA synchronous", [], |row| row.get(0))
             .unwrap();
         assert_eq!(synchronous, 2);
-        assert_eq!(database.schema_version().unwrap(), 2);
+        assert_eq!(database.schema_version().unwrap(), 3);
     }
 }

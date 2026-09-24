@@ -11,7 +11,7 @@ pub use asset::AssetId;
 pub use container::{
     ContainerCodec, ContainerMetadata, ContainerMetadataError, ContainerRepresentation,
     ICON_CONTAINER_MAX_DECODED_BYTES, ICON_CONTAINER_MAX_DIMENSION,
-    ICON_CONTAINER_MAX_REPRESENTATIONS,
+    ICON_CONTAINER_MAX_REPRESENTATIONS, ParseContainerCodecError,
 };
 pub use image::{ImageFormat, ImageMetadata, InvalidImageDimensions, ParseImageFormatError};
 pub use library::{

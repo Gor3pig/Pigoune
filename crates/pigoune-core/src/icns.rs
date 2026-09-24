@@ -316,13 +316,18 @@ pub fn parse_icns<R: Read + Seek>(reader: &mut R) -> Result<IcnsContainer, IcnsE
         if decoded_total > ICNS_MAX_TOTAL_DECODED_BYTES {
             return Err(IcnsError::LimitExceeded("total decoded size"));
         }
+        let encoded_size = mask
+            .map_or(Some(span.size), |mask| span.size.checked_add(mask.size))
+            .ok_or(IcnsError::LimitExceeded(
+                "representation encoded size overflow",
+            ))?;
         let rep = ContainerRepresentation::new(
             span.ordinal,
             dimension,
             dimension,
             depth,
             codec,
-            span.size,
+            encoded_size,
             Some(scale),
         )
         .map_err(|_| IcnsError::LimitExceeded("representation"))?;
@@ -897,6 +902,15 @@ mod tests {
             assert_eq!(parsed.metadata().primary().codec(), ContainerCodec::IcnsRgb);
             assert_eq!(parsed.metadata().primary().width(), dimension);
             assert_eq!(parsed.primary().mask.unwrap().kind, mask);
+            assert_eq!(
+                parsed.metadata().primary().encoded_size(),
+                parsed
+                    .primary()
+                    .color
+                    .size
+                    .checked_add(parsed.primary().mask.unwrap().size)
+                    .unwrap()
+            );
         }
         let color = rle(16, false);
         let mask = vec![255; 256];

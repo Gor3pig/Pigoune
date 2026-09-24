@@ -5,6 +5,8 @@ use rusqlite::{Connection, TransactionBehavior};
 const MIN_SQLITE_VERSION: i32 = 3_037_000;
 const INITIAL_SCHEMA: &str = include_str!("../../migrations/0001_initial.sql");
 const IMAGE_METADATA_SCHEMA: &str = include_str!("../../migrations/0002_image_metadata.sql");
+const CONTAINER_REPRESENTATIONS_SCHEMA: &str =
+    include_str!("../../migrations/0003_container_representations.sql");
 
 pub(super) fn check_sqlite_version() -> Result<(), DatabaseError> {
     let version = rusqlite::version_number();
@@ -53,6 +55,12 @@ pub(super) fn migrate(
         let transaction = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
         transaction.execute_batch(IMAGE_METADATA_SCHEMA)?;
         transaction.pragma_update(None, "user_version", 2)?;
+        transaction.commit()?;
+    }
+    if version < 3 {
+        let transaction = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        transaction.execute_batch(CONTAINER_REPRESENTATIONS_SCHEMA)?;
+        transaction.pragma_update(None, "user_version", 3)?;
         transaction.commit()?;
     }
     Ok(())

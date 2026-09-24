@@ -709,7 +709,7 @@ mod tests {
         };
         library
             .database
-            .import_published_asset(&object, metadata, &asset)
+            .import_published_asset(&object, metadata, None, &asset)
             .unwrap();
         let stored = library.database.get_object(object.hash).unwrap().unwrap();
         assert_eq!(object.hash, ObjectHash::from_bytes(PNG));

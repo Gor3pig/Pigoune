@@ -67,7 +67,7 @@ fn creation_publishes_complete_library_and_reopens() {
         LibraryManifest::read(&destination).unwrap().library_id
     );
     assert_eq!(library.id, library.database.library_id().unwrap());
-    assert_eq!(library.database.schema_version().unwrap(), 2);
+    assert_eq!(library.database.schema_version().unwrap(), 3);
     for entry in ["library.db", "library.json", "objects/.lock"] {
         assert!(destination.join(entry).is_file(), "missing {entry}");
     }
@@ -242,7 +242,7 @@ fn returned_store_and_database_write_under_final_destination() {
     let asset = asset(&stored, b"image.svg".to_vec());
     library
         .database
-        .import_published_asset(&stored, image_metadata(), &asset)
+        .import_published_asset(&stored, image_metadata(), None, &asset)
         .unwrap();
     drop(library);
     let reopened = Library::open(&destination).unwrap();
@@ -288,7 +288,7 @@ fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
     drop(db);
 
     let mut database = LibraryDatabase::open(directory.path(), id).unwrap();
-    assert_eq!(database.schema_version().unwrap(), 2);
+    assert_eq!(database.schema_version().unwrap(), 3);
     assert_eq!(database.journal_mode().unwrap(), "wal");
     assert!(database.foreign_keys_enabled().unwrap());
     assert_eq!(
@@ -296,6 +296,7 @@ fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
         Some(StoredObject {
             object: object.clone(),
             metadata: None,
+            container: None,
         })
     );
     assert_eq!(
@@ -322,7 +323,7 @@ fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
     failed.id = legacy_asset.id;
     assert!(
         database
-            .import_published_asset(&object, image_metadata(), &failed)
+            .import_published_asset(&object, image_metadata(), None, &failed)
             .is_err()
     );
     assert_eq!(
@@ -332,7 +333,7 @@ fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
 
     let another = asset(&object, b"reimport.svg".to_vec());
     database
-        .import_published_asset(&object, image_metadata(), &another)
+        .import_published_asset(&object, image_metadata(), None, &another)
         .unwrap();
     assert_eq!(
         database.get_object(object.hash).unwrap().unwrap().metadata,
@@ -341,7 +342,7 @@ fn schema_v1_migrates_existing_object_and_asset_without_guessing_metadata() {
     let mismatch = ImageMetadata::new(ImageFormat::Png, 3, 2, false).unwrap();
     let conflicting = asset(&object, b"conflict.svg".to_vec());
     assert!(matches!(
-        database.import_published_asset(&object, mismatch, &conflicting),
+        database.import_published_asset(&object, mismatch, None, &conflicting),
         Err(DatabaseError::ImageMetadataConflict(_))
     ));
     assert_eq!(
@@ -666,7 +667,7 @@ fn exact_posix_names_round_trip() {
     let named_asset = asset(&record, b"non-utf8-\xff.svg".to_vec());
     library
         .database
-        .import_published_asset(&record, image_metadata(), &named_asset)
+        .import_published_asset(&record, image_metadata(), None, &named_asset)
         .unwrap();
     let restored = library.database.get_asset(named_asset.id).unwrap().unwrap();
     assert_eq!(restored.original_filename.as_bytes(), b"non-utf8-\xff.svg");
@@ -687,11 +688,11 @@ fn foreign_key_deduplication_and_object_reconciliation() {
     let second = asset(&object, b"second.svg".to_vec());
     library
         .database
-        .import_published_asset(&object, image_metadata(), &first)
+        .import_published_asset(&object, image_metadata(), None, &first)
         .unwrap();
     library
         .database
-        .import_published_asset(&object, image_metadata(), &second)
+        .import_published_asset(&object, image_metadata(), None, &second)
         .unwrap();
     let mut expected_ids = vec![first.id, second.id];
     expected_ids.sort_by_key(|id| id.to_bytes());
@@ -709,6 +710,7 @@ fn foreign_key_deduplication_and_object_reconciliation() {
         library.database.import_published_asset(
             &changed,
             image_metadata(),
+            None,
             &asset(&changed, b"changed.svg".to_vec())
         ),
         Err(DatabaseError::ObjectConflict(_))
@@ -719,6 +721,7 @@ fn foreign_key_deduplication_and_object_reconciliation() {
         library.database.import_published_asset(
             &changed,
             image_metadata(),
+            None,
             &asset(&changed, b"changed.svg".to_vec())
         ),
         Err(DatabaseError::ObjectConflict(_))
@@ -752,7 +755,7 @@ fn object_row_without_assets_is_not_a_logical_duplicate() {
     let first = asset(&record, b"first.svg".to_vec());
     library
         .database
-        .import_published_asset(&record, image_metadata(), &first)
+        .import_published_asset(&record, image_metadata(), None, &first)
         .unwrap();
     assert_eq!(
         library.database.asset_ids_for_object(record.hash).unwrap(),
@@ -769,7 +772,7 @@ fn transaction_rolls_back_new_object_when_asset_insert_fails() {
     let first_asset = asset(&first_object, b"first.svg".to_vec());
     library
         .database
-        .import_published_asset(&first_object, image_metadata(), &first_asset)
+        .import_published_asset(&first_object, image_metadata(), None, &first_asset)
         .unwrap();
 
     let second_object = object(b"second");
@@ -778,7 +781,7 @@ fn transaction_rolls_back_new_object_when_asset_insert_fails() {
     assert!(
         library
             .database
-            .import_published_asset(&second_object, image_metadata(), &conflicting_asset)
+            .import_published_asset(&second_object, image_metadata(), None, &conflicting_asset)
             .is_err()
     );
     assert!(
@@ -811,6 +814,7 @@ fn unsafe_object_paths_are_rejected_on_write_and_read() {
             library.database.import_published_asset(
                 &record,
                 image_metadata(),
+                None,
                 &asset(&record, b"path.svg".to_vec())
             ),
             Err(DatabaseError::InvalidObjectPath(_))
@@ -822,6 +826,7 @@ fn unsafe_object_paths_are_rejected_on_write_and_read() {
         .import_published_asset(
             &record,
             image_metadata(),
+            None,
             &asset(&record, b"path.svg".to_vec()),
         )
         .unwrap();
@@ -879,7 +884,7 @@ fn published_object_and_database_survive_source_removal() {
     };
     library
         .database
-        .import_published_asset(&stored, image_metadata(), &asset)
+        .import_published_asset(&stored, image_metadata(), None, &asset)
         .unwrap();
     fs::remove_file(&source).unwrap();
     assert_eq!(
@@ -894,7 +899,8 @@ fn published_object_and_database_survive_source_removal() {
         library.database.get_object(stored.hash).unwrap(),
         Some(StoredObject {
             object: stored,
-            metadata: Some(image_metadata())
+            metadata: Some(image_metadata()),
+            container: None,
         })
     );
     assert_eq!(

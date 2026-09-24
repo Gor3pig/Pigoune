@@ -1,4 +1,4 @@
-use std::{error::Error, fmt};
+use std::{error::Error, fmt, str::FromStr};
 
 pub const ICON_CONTAINER_MAX_REPRESENTATIONS: usize = 1_024;
 pub const ICON_CONTAINER_MAX_DIMENSION: u32 = 4_096;
@@ -11,6 +11,50 @@ pub enum ContainerCodec {
     Jpeg2000,
     IcnsRgb,
     IcnsArgb,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ParseContainerCodecError;
+
+impl fmt::Display for ParseContainerCodecError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("unknown canonical container codec")
+    }
+}
+
+impl Error for ParseContainerCodecError {}
+
+impl ContainerCodec {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Png => "png",
+            Self::Dib => "dib",
+            Self::Jpeg2000 => "jpeg2000",
+            Self::IcnsRgb => "icns-rgb",
+            Self::IcnsArgb => "icns-argb",
+        }
+    }
+}
+
+impl fmt::Display for ContainerCodec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for ContainerCodec {
+    type Err = ParseContainerCodecError;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "png" => Ok(Self::Png),
+            "dib" => Ok(Self::Dib),
+            "jpeg2000" => Ok(Self::Jpeg2000),
+            "icns-rgb" => Ok(Self::IcnsRgb),
+            "icns-argb" => Ok(Self::IcnsArgb),
+            _ => Err(ParseContainerCodecError),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -92,6 +136,8 @@ impl ContainerRepresentation {
     pub const fn codec(&self) -> ContainerCodec {
         self.codec
     }
+    /// Total encoded payload bytes required by this logical representation.
+    /// Legacy ICNS RGB includes its separate required mask payload.
     pub const fn encoded_size(&self) -> u64 {
         self.encoded_size
     }
@@ -151,6 +197,23 @@ impl ContainerMetadata {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn canonical_codec_codes_round_trip() {
+        for codec in [
+            ContainerCodec::Png,
+            ContainerCodec::Dib,
+            ContainerCodec::Jpeg2000,
+            ContainerCodec::IcnsRgb,
+            ContainerCodec::IcnsArgb,
+        ] {
+            assert_eq!(codec.as_str().parse::<ContainerCodec>(), Ok(codec));
+            assert_eq!(codec.to_string(), codec.as_str());
+        }
+        assert!("PNG".parse::<ContainerCodec>().is_err());
+        assert!("image/png".parse::<ContainerCodec>().is_err());
+        assert!("future".parse::<ContainerCodec>().is_err());
+    }
 
     #[test]
     fn validates_inventory_and_budget() {

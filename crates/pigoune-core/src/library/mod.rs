@@ -23,7 +23,7 @@ use std::{
 use uuid::Uuid;
 
 pub const LIBRARY_FORMAT_VERSION: u32 = 1;
-pub const DATABASE_SCHEMA_VERSION: i32 = 2;
+pub const DATABASE_SCHEMA_VERSION: i32 = 3;
 
 pub struct Library {
     pub id: LibraryId,
