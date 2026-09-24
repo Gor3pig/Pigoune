@@ -1,3 +1,6 @@
 mod object_store;
 
-pub use object_store::{ObjectRecord, ObjectStore, StoreError, StoreResult};
+pub use object_store::{
+    ObjectRecord, ObjectStore, PublishedObject, StagedObject, StagedValidator, StoreError,
+    StoreResult, ValidatedStagedObject,
+};

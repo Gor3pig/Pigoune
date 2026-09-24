@@ -394,7 +394,29 @@ fn published_object_and_database_survive_source_removal() {
     let source = source_dir.path().join("source-graphic.svg");
     fs::write(&source, b"<svg/>").unwrap();
     let mut library = Library::create(directory.path()).unwrap();
-    let stored = library.object_store.store_file(&source).unwrap().object;
+    struct AcceptStagedBytes;
+    impl pigoune_core::StagedValidator for AcceptStagedBytes {
+        type Output = ();
+        type Error = std::io::Error;
+
+        fn validate(&self, staged: &pigoune_core::StagedObject<'_>) -> Result<(), Self::Error> {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            staged.open_read()?.read_to_end(&mut bytes)?;
+            assert_eq!(bytes, b"<svg/>");
+            Ok(())
+        }
+    }
+    let stored = library
+        .object_store
+        .stage_file(&source)
+        .unwrap()
+        .validate_with(&AcceptStagedBytes)
+        .unwrap()
+        .publish()
+        .unwrap()
+        .stored
+        .object;
     let asset = AssetRecord {
         id: AssetId::new(),
         object_hash: stored.hash,

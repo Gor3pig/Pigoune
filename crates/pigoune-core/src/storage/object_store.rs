@@ -2,6 +2,7 @@ use crate::ObjectHash;
 use sha2::{Digest, Sha256};
 use std::{
     error::Error,
+    ffi::OsStr,
     fmt, fs,
     fs::{File, OpenOptions},
     io::{self, Read, Write},
@@ -12,6 +13,12 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub enum StoreError {
     Io(io::Error),
+    SourceIo(io::Error),
+    PublicationIo(io::Error),
+    StagingModified {
+        expected: ObjectHash,
+        found: ObjectHash,
+    },
     InvalidInternalPath(PathBuf),
     InconsistentStore(&'static str),
 }
@@ -20,6 +27,14 @@ impl fmt::Display for StoreError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(error) => write!(f, "object store I/O error: {error}"),
+            Self::SourceIo(error) => write!(f, "source read error: {error}"),
+            Self::PublicationIo(error) => write!(f, "object publication I/O error: {error}"),
+            Self::StagingModified { expected, found } => {
+                write!(
+                    f,
+                    "staged object changed: expected {expected}, found {found}"
+                )
+            }
             Self::InvalidInternalPath(path) => {
                 write!(f, "invalid object store path: {}", path.display())
             }
@@ -31,7 +46,7 @@ impl fmt::Display for StoreError {
 impl Error for StoreError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::Io(error) => Some(error),
+            Self::Io(error) | Self::SourceIo(error) | Self::PublicationIo(error) => Some(error),
             _ => None,
         }
     }
@@ -58,8 +73,87 @@ pub struct StoreResult {
     pub reused: bool,
 }
 
+/// Validation is supplied by the caller. A successful result is a trust
+/// boundary, not proof that the validator inspected the bytes correctly.
+pub trait StagedValidator {
+    type Output;
+    type Error;
+
+    fn validate(&self, staged: &StagedObject<'_>) -> Result<Self::Output, Self::Error>;
+}
+
+/// A complete, synchronized copy in `objects/.tmp`; dropping it removes the copy.
+/// This type has no publication operation.
+pub struct StagedObject<'store> {
+    store: &'store ObjectStore,
+    temporary: TemporaryFile,
+    hash: ObjectHash,
+    size: u64,
+    extension: Option<String>,
+}
+
+impl<'store> StagedObject<'store> {
+    pub fn hash(&self) -> ObjectHash {
+        self.hash
+    }
+
+    pub fn size(&self) -> u64 {
+        self.size
+    }
+
+    /// Opens the internal staged bytes for reading, independently of the source.
+    pub fn open_read(&self) -> io::Result<File> {
+        File::open(&self.temporary.0)
+    }
+
+    pub fn validate_with<V: StagedValidator>(
+        self,
+        validator: &V,
+    ) -> Result<ValidatedStagedObject<'store, V::Output>, V::Error> {
+        let validation = validator.validate(&self)?;
+        Ok(ValidatedStagedObject {
+            staged: self,
+            validation,
+        })
+    }
+
+    fn publish(mut self) -> Result<StoreResult, StoreError> {
+        let result = self.store.publish_staged(&mut self)?;
+        Ok(result)
+    }
+}
+
+/// A staged object whose caller-provided validator has succeeded.
+/// Only this type can publish its bytes.
+pub struct ValidatedStagedObject<'store, T> {
+    staged: StagedObject<'store>,
+    validation: T,
+}
+
+impl<T> ValidatedStagedObject<'_, T> {
+    pub fn validation(&self) -> &T {
+        &self.validation
+    }
+
+    pub fn publish(self) -> Result<PublishedObject<T>, StoreError> {
+        let stored = self.staged.publish()?;
+        Ok(PublishedObject {
+            stored,
+            validation: self.validation,
+        })
+    }
+}
+
+/// The durable physical object and the validator's result.
+pub struct PublishedObject<T> {
+    pub stored: StoreResult,
+    pub validation: T,
+}
+
 /// Content-addressed physical storage within one library.
 ///
+/// Incoming bytes remain in `objects/.tmp` until a caller-provided validator
+/// succeeds. Publication rechecks their SHA-256 and does not read the source.
 /// Identical bytes reuse the first physical representation, even when later
 /// source names have different extensions. Published objects are never edited.
 pub struct ObjectStore {
@@ -92,10 +186,20 @@ impl ObjectStore {
         Ok(Self { root })
     }
 
-    pub fn store_file(&self, source: impl AsRef<Path>) -> Result<StoreResult, StoreError> {
+    pub fn stage_file(&self, source: impl AsRef<Path>) -> Result<StagedObject<'_>, StoreError> {
         let source = source.as_ref();
-        let mut input = File::open(source)?;
-        let extension = safe_extension(source);
+        let input = File::open(source).map_err(StoreError::SourceIo)?;
+        self.stage_reader(input, source.file_name())
+    }
+
+    /// Copies a reader into the store without publishing it. Only a simple
+    /// filename hint is used; no external source path is retained.
+    pub fn stage_reader(
+        &self,
+        mut reader: impl Read,
+        name_hint: Option<&OsStr>,
+    ) -> Result<StagedObject<'_>, StoreError> {
+        let extension = safe_extension(name_hint);
         let temporary_directory = self.root.join("objects/.tmp");
         validate_directory(&temporary_directory)?;
         let temporary_path = temporary_directory.join(Uuid::new_v4().to_string());
@@ -103,13 +207,13 @@ impl ObjectStore {
             .write(true)
             .create_new(true)
             .open(&temporary_path)?;
-        let mut cleanup = TemporaryFile::new(temporary_path.clone());
+        let cleanup = TemporaryFile::new(temporary_path.clone());
 
         let mut hasher = Sha256::new();
         let mut size = 0_u64;
         let mut buffer = [0_u8; 64 * 1024];
         loop {
-            let count = input.read(&mut buffer)?;
+            let count = reader.read(&mut buffer).map_err(StoreError::SourceIo)?;
             if count == 0 {
                 break;
             }
@@ -121,12 +225,33 @@ impl ObjectStore {
         temporary.sync_all()?;
         drop(temporary);
 
-        let hash = ObjectHash::from_digest(hasher);
-        let lock = self.lock()?;
-        if let Some(object) = self.find_locked(hash)? {
-            sync_directory(&self.root.join("objects").join(&hash.to_string()[..2]))?;
-            cleanup.remove()?;
-            sync_directory(&temporary_directory)?;
+        Ok(StagedObject {
+            store: self,
+            temporary: cleanup,
+            hash: ObjectHash::from_digest(hasher),
+            size,
+            extension,
+        })
+    }
+
+    fn publish_staged(&self, staged: &mut StagedObject<'_>) -> Result<StoreResult, StoreError> {
+        let hash = staged.hash;
+        let temporary_directory = self.root.join("objects/.tmp");
+        validate_directory(&temporary_directory).map_err(publication_error)?;
+        let lock = self.lock().map_err(publication_error)?;
+        let found = ObjectHash::from_reader(staged.open_read().map_err(StoreError::PublicationIo)?)
+            .map_err(StoreError::PublicationIo)?;
+        if found != hash {
+            return Err(StoreError::StagingModified {
+                expected: hash,
+                found,
+            });
+        }
+        if let Some(object) = self.find_locked(hash).map_err(publication_error)? {
+            sync_directory(&self.root.join("objects").join(&hash.to_string()[..2]))
+                .map_err(publication_error)?;
+            staged.temporary.remove().map_err(publication_error)?;
+            sync_directory(&temporary_directory).map_err(publication_error)?;
             return Ok(StoreResult {
                 object,
                 reused: true,
@@ -135,8 +260,8 @@ impl ObjectStore {
 
         let hash_text = hash.to_string();
         let shard = self.root.join("objects").join(&hash_text[..2]);
-        ensure_directory(&shard)?;
-        let filename = match extension {
+        ensure_directory(&shard).map_err(publication_error)?;
+        let filename = match &staged.extension {
             Some(extension) => format!("{hash_text}.{extension}"),
             None => hash_text.clone(),
         };
@@ -146,33 +271,31 @@ impl ObjectStore {
         let destination = self.root.join(&relative_path);
 
         // hard_link publishes atomically without the replacement behavior of rename.
-        match fs::hard_link(&temporary_path, &destination) {
+        match fs::hard_link(&staged.temporary.0, &destination) {
             Ok(()) => {}
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
-                let object = self
-                    .find_locked(hash)?
-                    .ok_or(StoreError::InconsistentStore(
-                        "destination exists but cannot be found by hash",
-                    ))?;
-                sync_directory(&shard)?;
-                cleanup.remove()?;
-                sync_directory(&temporary_directory)?;
+                let object = self.find_locked(hash).map_err(publication_error)?.ok_or(
+                    StoreError::InconsistentStore("destination exists but cannot be found by hash"),
+                )?;
+                sync_directory(&shard).map_err(publication_error)?;
+                staged.temporary.remove().map_err(publication_error)?;
+                sync_directory(&temporary_directory).map_err(publication_error)?;
                 return Ok(StoreResult {
                     object,
                     reused: true,
                 });
             }
-            Err(error) => return Err(error.into()),
+            Err(error) => return Err(StoreError::PublicationIo(error)),
         }
-        sync_directory(&shard)?;
-        cleanup.remove()?;
-        sync_directory(&temporary_directory)?;
+        sync_directory(&shard).map_err(publication_error)?;
+        staged.temporary.remove().map_err(publication_error)?;
+        sync_directory(&temporary_directory).map_err(publication_error)?;
         drop(lock);
 
         Ok(StoreResult {
             object: ObjectRecord {
                 hash,
-                size,
+                size: staged.size,
                 relative_path,
             },
             reused: false,
@@ -255,9 +378,21 @@ impl ObjectStore {
     }
 }
 
-fn safe_extension(source: &Path) -> Option<String> {
-    let extension = source.extension()?.to_str()?;
+fn safe_extension(name_hint: Option<&OsStr>) -> Option<String> {
+    let name = name_hint?;
+    let path = Path::new(name);
+    if path.file_name() != Some(name) {
+        return None;
+    }
+    let extension = path.extension()?.to_str()?;
     is_safe_extension(extension).then(|| extension.to_ascii_lowercase())
+}
+
+fn publication_error(error: StoreError) -> StoreError {
+    match error {
+        StoreError::Io(error) => StoreError::PublicationIo(error),
+        other => other,
+    }
 }
 
 fn is_safe_extension(extension: &str) -> bool {
@@ -316,5 +451,61 @@ impl Drop for TemporaryFile {
         if !self.0.as_os_str().is_empty() {
             let _ = fs::remove_file(&self.0);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ObjectStore, StagedObject, StagedValidator, StoreError};
+    use std::{fs, io, io::Read, os::unix::fs::PermissionsExt};
+    use tempfile::tempdir;
+
+    struct AcceptStagedBytes;
+
+    impl StagedValidator for AcceptStagedBytes {
+        type Output = Vec<u8>;
+        type Error = io::Error;
+
+        fn validate(&self, staged: &StagedObject<'_>) -> Result<Self::Output, Self::Error> {
+            let mut bytes = Vec::new();
+            staged.open_read()?.read_to_end(&mut bytes)?;
+            Ok(bytes)
+        }
+    }
+
+    #[test]
+    fn changed_staging_is_rejected_before_publication() {
+        let library = tempdir().unwrap();
+        let store = ObjectStore::new(library.path()).unwrap();
+        let validated = store
+            .stage_reader(&b"original"[..], None)
+            .unwrap()
+            .validate_with(&AcceptStagedBytes)
+            .unwrap();
+        let path = &validated.staged.temporary.0;
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o600);
+        fs::set_permissions(path, permissions).unwrap();
+        fs::write(path, b"tampered").unwrap();
+        assert!(matches!(
+            validated.publish(),
+            Err(StoreError::StagingModified { .. })
+        ));
+        assert_eq!(
+            fs::read_dir(library.path().join("objects/.tmp"))
+                .unwrap()
+                .count(),
+            0
+        );
+        assert!(
+            !store
+                .contains(crate::ObjectHash::from_bytes(b"original"))
+                .unwrap()
+        );
+        assert!(
+            !store
+                .contains(crate::ObjectHash::from_bytes(b"tampered"))
+                .unwrap()
+        );
     }
 }

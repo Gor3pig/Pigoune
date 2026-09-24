@@ -10,4 +10,7 @@ pub use library::{
     OriginalFilenameError, ParseLibraryIdError,
 };
 pub use object::{ObjectHash, ParseObjectHashError};
-pub use storage::{ObjectRecord, ObjectStore, StoreError, StoreResult};
+pub use storage::{
+    ObjectRecord, ObjectStore, PublishedObject, StagedObject, StagedValidator, StoreError,
+    StoreResult, ValidatedStagedObject,
+};
