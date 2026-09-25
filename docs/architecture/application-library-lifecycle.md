@@ -1,0 +1,15 @@
+# Cycle de vie applicatif de la bibliothèque
+
+Pigoune V1 utilise une bibliothèque principale. L'emplacement géré est calculé à chaque lancement avec `user_data_dir()/APPLICATION_ID/library`. L'application peut créer son parent ; seul `Library::create` crée la destination finale.
+
+Le fichier `user_config_dir()/APPLICATION_ID/config.json` conserve un locator typé : `managed-default` sans chemin, ou `file-uri` avec l'URI du `gio::File` accordé par le sélecteur. Le format JSON a `type: "pigoune-app-config"` et `version: 1`. Le chargement refuse les types, versions et locators inconnus. Une URI externe doit être `file:` et fournir un chemin local par GIO. Aucun chemin hôte supposé n'est reconstruit.
+
+L'enregistrement crée au besoin le dossier de configuration et synchronise ses dossiers parents, écrit un fichier temporaire frère, synchronise son contenu, remplace atomiquement `config.json`, puis synchronise son dossier. La config est écrite uniquement après une création achevée et rouverte ou une ouverture réussie. En cas d'échec de persistance, la session reste ouverte avec un avertissement et une action de nouvel essai ; l'ancienne config n'est pas effacée au préalable. Si la synchronisation échoue après le remplacement, l'application indique que la durabilité du changement n'a pas pu être confirmée.
+
+Un worker unique possède la `LibrarySession`, son `Library`, son locator et son identité. L'interface reçoit seulement les états `Welcome`, `Opening`, `Open` et `OpenError` par une source du `MainContext`. Au démarrage, une config absente mène à l'accueil, une config valide tente l'ouverture, et un échec ne crée rien automatiquement. `Forget this library location` supprime uniquement `config.json`, synchronise son parent et revient à l'accueil après confirmation ; aucune bibliothèque n'est supprimée. Si la synchronisation échoue après la suppression, l'interface signale que la durabilité reste incertaine et propose de réessayer. Ce nouvel essai synchronise le dossier même si `config.json` est déjà absent.
+
+Les bibliothèques externes sont choisies par `GtkFileDialog`. Le parent d'une création est sélectionné avant que GIO ne forme le dossier enfant. Le portail Flatpak fournit l'accès choisi sans permission globale supplémentaire. La persistance de l'URI, l'ouverture après relance, SQLite WAL, l'ObjectStore et la publication atomique doivent être vérifiés dans une vraie session GNOME ; les tests unitaires ne démontrent pas ces garanties.
+
+Un essai GNOME 50 sur un dossier accordé par le portail a renvoyé une erreur d'E/S SQLite pendant la création, avec un chemin de document sur FUSE ; la destination finale n'a pas été publiée. Ce résultat ne valide pas le stockage externe via ce portail. Il ne justifie ni une permission Flatpak globale ni un affaiblissement des garanties SQLite ou de publication.
+
+L'identifiant applicatif sépare les espaces XDG Devel et Stable. Le format autonome de la bibliothèque reste compatible entre éditions lorsque leurs versions le permettent.

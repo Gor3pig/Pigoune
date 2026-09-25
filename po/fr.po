@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Pigoune 0.1.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Gor3pig/Pigoune/issues\n"
-"POT-Creation-Date: 2026-09-24 06:15+0000\n"
+"POT-Creation-Date: 2026-09-25 11:35+0000\n"
 "PO-Revision-Date: 2026-09-24 06:15+0000\n"
 "Last-Translator: Pigoune contributors\n"
 "Language-Team: French\n"
@@ -17,138 +17,187 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: crates/pigoune-app/src/window.rs:58 crates/pigoune-app/src/window.rs:86
+#: crates/pigoune-app/src/window.rs:104 crates/pigoune-app/src/window.rs:313
+msgid "Create Library"
+msgstr "Créer une bibliothèque"
+
+#: crates/pigoune-app/src/window.rs:111 crates/pigoune-app/src/window.rs:176
+msgid "Create Elsewhere…"
+msgstr "Créer ailleurs…"
+
+#: crates/pigoune-app/src/window.rs:114 crates/pigoune-app/src/window.rs:172
+msgid "Open Library…"
+msgstr "Ouvrir une bibliothèque…"
+
+#: crates/pigoune-app/src/window.rs:119
+msgid "Welcome to Pigoune"
+msgstr "Bienvenue dans Pigoune"
+
+#: crates/pigoune-app/src/window.rs:120
+msgid "Create a library or open an existing one."
+msgstr "Créez une bibliothèque ou ouvrez-en une existante."
+
+#: crates/pigoune-app/src/window.rs:132
+msgid "Opening library…"
+msgstr "Ouverture de la bibliothèque…"
+
+#: crates/pigoune-app/src/window.rs:145
 msgid "Library"
 msgstr "Bibliothèque"
 
-#: crates/pigoune-app/src/window.rs:60
-msgid "All assets"
-msgstr "Tous les assets"
+#: crates/pigoune-app/src/window.rs:151
+msgid "Library is open"
+msgstr "Bibliothèque ouverte"
 
-#: crates/pigoune-app/src/window.rs:61
-msgid "Recent"
-msgstr "Récents"
+#: crates/pigoune-app/src/window.rs:162
+msgid ""
+"The library is open, but Pigoune could not confirm that its location was "
+"saved."
+msgstr ""
+"La bibliothèque est ouverte, mais Pigoune n’a pas pu confirmer "
+"l’enregistrement de son emplacement."
 
-#: crates/pigoune-app/src/window.rs:62
-msgid "Favorites"
-msgstr "Favoris"
+#: crates/pigoune-app/src/window.rs:167
+msgid "Retry saving location"
+msgstr "Réessayer d’enregistrer l’emplacement"
 
-#: crates/pigoune-app/src/window.rs:63
-msgid "Uncategorized"
-msgstr "Sans collection"
+#: crates/pigoune-app/src/window.rs:195
+msgid "Library location unavailable"
+msgstr "Emplacement de bibliothèque indisponible"
 
-#: crates/pigoune-app/src/window.rs:67
-msgid "Collections"
-msgstr "Collections"
+#: crates/pigoune-app/src/window.rs:196
+msgid "The library location cannot be accessed."
+msgstr "Impossible d’accéder à l’emplacement de la bibliothèque."
 
-#: crates/pigoune-app/src/window.rs:69
-msgid "Infrastructure"
-msgstr "Infrastructure"
+#: crates/pigoune-app/src/window.rs:199
+msgid "Library storage unavailable"
+msgstr "Stockage de la bibliothèque indisponible"
 
-#: crates/pigoune-app/src/window.rs:70
-msgid "Logos"
-msgstr "Logos"
+#: crates/pigoune-app/src/window.rs:200
+msgid ""
+"This location cannot complete the file operations required by a library."
+msgstr ""
+"Cet emplacement ne permet pas les opérations de fichiers nécessaires à une "
+"bibliothèque."
 
-#: crates/pigoune-app/src/window.rs:71
-msgid "Systems"
-msgstr "Systèmes"
+#: crates/pigoune-app/src/window.rs:203
+msgid "Not a Pigoune library"
+msgstr "Ce dossier n’est pas une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:75
-msgid "Tags"
-msgstr "Tags"
+#: crates/pigoune-app/src/window.rs:204
+msgid "The selected folder does not contain a complete Pigoune library."
+msgstr "Le dossier choisi ne contient pas de bibliothèque Pigoune complète."
 
-#: crates/pigoune-app/src/window.rs:77
-msgid "linux"
-msgstr "linux"
+#: crates/pigoune-app/src/window.rs:207
+msgid "Invalid library"
+msgstr "Bibliothèque invalide"
 
-#: crates/pigoune-app/src/window.rs:78
-msgid "network"
-msgstr "réseau"
+#: crates/pigoune-app/src/window.rs:208
+msgid "The library contains invalid data and could not be opened."
+msgstr ""
+"La bibliothèque contient des données invalides et ne peut pas être ouverte."
 
-#: crates/pigoune-app/src/window.rs:79
-msgid "server"
-msgstr "serveur"
+#: crates/pigoune-app/src/window.rs:211
+msgid "Incompatible library version"
+msgstr "Version de bibliothèque incompatible"
 
-#: crates/pigoune-app/src/window.rs:80
-msgid "All tags…"
-msgstr "Tous les tags…"
-
-#: crates/pigoune-app/src/window.rs:120
-msgid "Search the library…"
-msgstr "Rechercher dans la bibliothèque…"
-
-#: crates/pigoune-app/src/window.rs:132
-msgid "Show or hide navigation"
-msgstr "Afficher ou masquer la navigation"
-
-#: crates/pigoune-app/src/window.rs:136
-msgid "Import"
-msgstr "Importer"
-
-#: crates/pigoune-app/src/window.rs:137
-msgid "Import will be available in a future step"
-msgstr "L’import sera disponible dans une prochaine étape"
-
-#: crates/pigoune-app/src/window.rs:147
-msgid "Show or hide inspector"
-msgstr "Afficher ou masquer l’inspecteur"
-
-#: crates/pigoune-app/src/window.rs:152
-msgid "No assets yet"
-msgstr "Aucun asset pour le moment"
-
-#: crates/pigoune-app/src/window.rs:153
-msgid "Imported assets will appear here."
-msgstr "Les assets importés apparaîtront ici."
-
-#: crates/pigoune-app/src/window.rs:164
-msgid "Grid view"
-msgstr "Vue en grille"
-
-#: crates/pigoune-app/src/window.rs:169
-msgid "List view"
-msgstr "Vue en liste"
-
-#: crates/pigoune-app/src/window.rs:182
-msgid "Inspector"
-msgstr "Inspecteur"
-
-#: crates/pigoune-app/src/window.rs:188
-msgid "Hide inspector"
-msgstr "Masquer l’inspecteur"
-
-#: crates/pigoune-app/src/window.rs:206
-msgid "No asset selected"
-msgstr "Aucun asset sélectionné"
+#: crates/pigoune-app/src/window.rs:212
+msgid "This version of Pigoune cannot open this library."
+msgstr "Cette version de Pigoune ne peut pas ouvrir cette bibliothèque."
 
 #: crates/pigoune-app/src/window.rs:215
-msgid "Information"
-msgstr "Informations"
+msgid "Invalid application configuration"
+msgstr "Configuration de l’application invalide"
 
 #: crates/pigoune-app/src/window.rs:216
-msgid "No information available"
-msgstr "Aucune information disponible"
+msgid "The saved library location is invalid."
+msgstr "L’emplacement de bibliothèque enregistré est invalide."
+
+#: crates/pigoune-app/src/window.rs:219
+msgid "Could not update configuration"
+msgstr "Impossible de modifier la configuration"
 
 #: crates/pigoune-app/src/window.rs:220
-msgid "Organization"
-msgstr "Organisation"
+msgid "The library location could not be forgotten."
+msgstr "Impossible d’oublier l’emplacement de la bibliothèque."
 
-#: crates/pigoune-app/src/window.rs:221
-msgid "No collection or tags"
-msgstr "Aucune collection ou aucun tag"
+#: crates/pigoune-app/src/window.rs:223
+msgid "Could not confirm the configuration change"
+msgstr "Modification de la configuration non confirmée"
 
 #: crates/pigoune-app/src/window.rs:225
-msgid "Technical"
-msgstr "Technique"
+msgid ""
+"The library location was removed, but the change could not be confirmed on "
+"disk. Retry before closing Pigoune."
+msgstr ""
+"L’emplacement de la bibliothèque a été supprimé de la configuration, mais "
+"Pigoune n’a pas pu confirmer l’enregistrement sur le disque. Réessayez avant "
+"de fermer Pigoune."
 
-#: crates/pigoune-app/src/window.rs:226
-msgid "No technical data"
-msgstr "Aucune donnée technique"
+#: crates/pigoune-app/src/window.rs:229
+msgid "Library already exists"
+msgstr "Une bibliothèque existe déjà"
 
 #: crates/pigoune-app/src/window.rs:230
-msgid "Source and licensing"
-msgstr "Source et droits"
+msgid "The destination already contains a folder. It was not replaced."
+msgstr "La destination contient déjà un dossier. Il n’a pas été remplacé."
 
-#: crates/pigoune-app/src/window.rs:231
-msgid "No source or licensing information"
-msgstr "Aucune information de source ou de droits"
+#: crates/pigoune-app/src/window.rs:233
+msgid "Open Another Library…"
+msgstr "Ouvrir une autre bibliothèque…"
+
+#: crates/pigoune-app/src/window.rs:238
+msgid "Back to Library"
+msgstr "Retour à la bibliothèque"
+
+#: crates/pigoune-app/src/window.rs:244
+msgid "Retry"
+msgstr "Réessayer"
+
+#: crates/pigoune-app/src/window.rs:254
+msgid "Open Existing Library"
+msgstr "Ouvrir la bibliothèque existante"
+
+#: crates/pigoune-app/src/window.rs:264
+msgid "Retry saving change"
+msgstr "Réessayer d’enregistrer la modification"
+
+#: crates/pigoune-app/src/window.rs:266
+msgid "Forget this library location"
+msgstr "Oublier cet emplacement de bibliothèque"
+
+#: crates/pigoune-app/src/window.rs:284
+msgid "Choose a parent folder"
+msgstr "Choisir un dossier parent"
+
+#: crates/pigoune-app/src/window.rs:286
+msgid "Open Library"
+msgstr "Ouvrir une bibliothèque"
+
+#: crates/pigoune-app/src/window.rs:310
+msgid "New library folder"
+msgstr "Nouveau dossier de bibliothèque"
+
+#: crates/pigoune-app/src/window.rs:312
+msgid "Cancel"
+msgstr "Annuler"
+
+#: crates/pigoune-app/src/window.rs:316
+msgid "Folder name"
+msgstr "Nom du dossier"
+
+#: crates/pigoune-app/src/window.rs:329
+msgid "Enter a single folder name without a slash."
+msgstr "Saisissez un seul nom de dossier, sans barre oblique."
+
+#: crates/pigoune-app/src/window.rs:348
+msgid "Location unavailable"
+msgstr "Emplacement indisponible"
+
+#: crates/pigoune-app/src/window.rs:349
+msgid "Choose a local folder that Pigoune can access."
+msgstr "Choisissez un dossier local auquel Pigoune peut accéder."
+
+#: crates/pigoune-app/src/window.rs:351
+msgid "Close"
+msgstr "Fermer"

@@ -1,317 +1,354 @@
-use crate::i18n::gettext;
+use crate::{
+    APPLICATION_ID,
+    application::{
+        config::{ConfigStore, LibraryLocator},
+        controller::{
+            ApplicationState, Command, ErrorKind, LibraryController, OpenError, OpenInfo,
+            validate_folder_name,
+        },
+    },
+    i18n::gettext,
+};
 use adw::prelude::*;
-use std::{cell::Cell, rc::Rc};
+use std::{rc::Rc, sync::mpsc::Sender, time::Duration};
 
-const INSPECTOR_BREAKPOINT: f64 = 1100.0;
-const NAVIGATION_BREAKPOINT: f64 = 750.0;
+struct WindowUi {
+    window: adw::ApplicationWindow,
+    stack: gtk::Stack,
+    commands: Sender<Command>,
+}
 
 pub(crate) fn build(application: &adw::Application) {
-    let navigation_split = adw::OverlaySplitView::builder()
-        .sidebar(&build_navigation())
-        .min_sidebar_width(190.0)
-        .max_sidebar_width(280.0)
-        .sidebar_width_fraction(0.22)
-        .sidebar_width_unit(adw::LengthUnit::Sp)
-        .build();
-
-    let navigation_breakpoint_bin = adw::BreakpointBin::builder()
-        .child(&navigation_split)
-        .width_request(360)
-        .height_request(360)
-        .build();
-
-    let inspector_split = adw::OverlaySplitView::builder()
-        .content(&navigation_breakpoint_bin)
-        .sidebar_position(gtk::PackType::End)
-        .min_sidebar_width(260.0)
-        .max_sidebar_width(360.0)
-        .sidebar_width_fraction(0.27)
-        .sidebar_width_unit(adw::LengthUnit::Sp)
-        .build();
-
-    inspector_split.set_sidebar(Some(&build_inspector(&inspector_split)));
-    navigation_split.set_content(Some(&build_library_view(
-        &navigation_split,
-        &inspector_split,
-    )));
-
+    if let Some(window) = application.windows().first() {
+        window.present();
+        return;
+    }
+    let store = ConfigStore::new(
+        &gtk::glib::user_config_dir(),
+        &gtk::glib::user_data_dir(),
+        APPLICATION_ID,
+    );
+    let (commands, states) = LibraryController::start(store);
+    let stack = gtk::Stack::builder().hexpand(true).vexpand(true).build();
     let window = adw::ApplicationWindow::builder()
         .application(application)
         .title("Pigoune")
-        .default_width(1280)
-        .default_height(800)
-        .content(&inspector_split)
+        .default_width(900)
+        .default_height(620)
+        .content(&stack)
         .build();
-
-    window.add_breakpoint(overlay_breakpoint(&inspector_split, INSPECTOR_BREAKPOINT));
-    navigation_breakpoint_bin
-        .add_breakpoint(overlay_breakpoint(&navigation_split, NAVIGATION_BREAKPOINT));
-
-    window.present();
-}
-
-fn build_navigation() -> adw::ToolbarView {
-    let sidebar = adw::Sidebar::new();
-    sidebar.set_mode(adw::SidebarMode::Sidebar);
-
-    sidebar.append(sidebar_section(
-        &gettext("Library"),
-        &[
-            (&gettext("All assets"), Some("view-grid-symbolic")),
-            (&gettext("Recent"), Some("document-open-recent-symbolic")),
-            (&gettext("Favorites"), Some("starred-symbolic")),
-            (&gettext("Uncategorized"), Some("folder-symbolic")),
-        ],
-    ));
-    sidebar.append(sidebar_section(
-        &gettext("Collections"),
-        &[
-            (&gettext("Infrastructure"), Some("folder-symbolic")),
-            (&gettext("Logos"), Some("folder-symbolic")),
-            (&gettext("Systems"), Some("folder-symbolic")),
-        ],
-    ));
-    sidebar.append(sidebar_section(
-        &gettext("Tags"),
-        &[
-            (&gettext("linux"), None),
-            (&gettext("network"), None),
-            (&gettext("server"), None),
-            (&gettext("All tags…"), None),
-        ],
-    ));
-    sidebar.set_selected(0);
-
-    let header = adw::HeaderBar::builder()
-        .title_widget(&adw::WindowTitle::new("Pigoune", &gettext("Library")))
-        .show_end_title_buttons(false)
-        .build();
-
-    let view = adw::ToolbarView::builder()
-        .top_bar_style(adw::ToolbarStyle::Raised)
-        .content(&sidebar)
-        .build();
-    view.add_top_bar(&header);
-    view
-}
-
-fn sidebar_section(title: &str, items: &[(&str, Option<&str>)]) -> adw::SidebarSection {
-    let section = adw::SidebarSection::new();
-    section.set_title(Some(title));
-
-    for (title, icon_name) in items {
-        let mut builder = adw::SidebarItem::builder().title(*title);
-        if let Some(icon_name) = icon_name {
-            builder = builder.icon_name(*icon_name);
+    let ui = Rc::new(WindowUi {
+        window,
+        stack,
+        commands,
+    });
+    ui.show(ApplicationState::Opening);
+    let receiver_ui = ui.clone();
+    gtk::glib::timeout_add_local(Duration::from_millis(30), move || {
+        while let Ok(state) = states.try_recv() {
+            receiver_ui.show(state);
         }
-        section.append(builder.build());
+        gtk::glib::ControlFlow::Continue
+    });
+    ui.send(Command::Startup);
+    ui.window.present();
+}
+
+impl WindowUi {
+    fn send(&self, command: Command) {
+        if self.commands.send(command).is_err() {
+            eprintln!("Library worker stopped unexpectedly");
+        }
     }
 
-    section
-}
+    fn show(self: &Rc<Self>, state: ApplicationState) {
+        let (name, view) = match state {
+            ApplicationState::Welcome => ("welcome", self.welcome()),
+            ApplicationState::Opening => ("opening", self.opening()),
+            ApplicationState::Open(info) => ("open", self.open(info)),
+            ApplicationState::OpenError(error) => ("error", self.error(error)),
+        };
+        if let Some(child) = self.stack.child_by_name(name) {
+            self.stack.remove(&child);
+        }
+        self.stack.add_named(&view, Some(name));
+        self.stack.set_visible_child_name(name);
+    }
 
-fn build_library_view(
-    navigation_split: &adw::OverlaySplitView,
-    inspector_split: &adw::OverlaySplitView,
-) -> adw::ToolbarView {
-    let header = adw::HeaderBar::builder()
-        .title_widget(
-            &gtk::SearchEntry::builder()
-                .placeholder_text(gettext("Search the library…"))
-                .hexpand(true)
-                .width_chars(22)
-                .max_width_chars(38)
-                .build(),
-        )
-        .show_start_title_buttons(false)
-        .build();
+    fn page(&self, content: &impl IsA<gtk::Widget>) -> adw::ToolbarView {
+        let view = adw::ToolbarView::builder().content(content).build();
+        view.add_top_bar(&adw::HeaderBar::new());
+        view
+    }
 
-    header.pack_start(&sidebar_toggle(
-        navigation_split,
-        "sidebar-show-symbolic",
-        &gettext("Show or hide navigation"),
-    ));
+    fn action(label: &str) -> gtk::Button {
+        gtk::Button::builder()
+            .label(label)
+            .halign(gtk::Align::Center)
+            .build()
+    }
 
-    let import_button = gtk::Button::builder()
-        .label(gettext("Import"))
-        .tooltip_text(gettext("Import will be available in a future step"))
-        .sensitive(false)
-        .build();
-    import_button.add_css_class("suggested-action");
-    header.pack_end(&import_button);
+    fn buttons(buttons: &[gtk::Button]) -> gtk::Box {
+        let box_ = gtk::Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(12)
+            .halign(gtk::Align::Center)
+            .build();
+        for button in buttons {
+            box_.append(button);
+        }
+        box_
+    }
 
-    header.pack_end(&build_view_switcher());
-    header.pack_end(&sidebar_toggle(
-        inspector_split,
-        "sidebar-show-right-symbolic",
-        &gettext("Show or hide inspector"),
-    ));
+    fn welcome(self: &Rc<Self>) -> adw::ToolbarView {
+        let create = Self::action(&gettext("Create Library"));
+        create.add_css_class("suggested-action");
+        let ui = self.clone();
+        create.connect_clicked(move |_| {
+            ui.show(ApplicationState::Opening);
+            ui.send(Command::CreateManagedDefault);
+        });
+        let elsewhere = Self::action(&gettext("Create Elsewhere…"));
+        let ui = self.clone();
+        elsewhere.connect_clicked(move |_| ui.select_folder(true));
+        let open = Self::action(&gettext("Open Library…"));
+        let ui = self.clone();
+        open.connect_clicked(move |_| ui.select_folder(false));
+        let status = adw::StatusPage::builder()
+            .icon_name("folder-pictures-symbolic")
+            .title(gettext("Welcome to Pigoune"))
+            .description(gettext("Create a library or open an existing one."))
+            .child(&Self::buttons(&[create, elsewhere, open]))
+            .build();
+        self.page(&status)
+    }
 
-    let empty_state = adw::StatusPage::builder()
-        .icon_name("image-x-generic-symbolic")
-        .title(gettext("No assets yet"))
-        .description(gettext("Imported assets will appear here."))
-        .build();
+    fn opening(&self) -> adw::ToolbarView {
+        let spinner = gtk::Spinner::builder()
+            .spinning(true)
+            .halign(gtk::Align::Center)
+            .build();
+        let status = adw::StatusPage::builder()
+            .title(gettext("Opening library…"))
+            .child(&spinner)
+            .build();
+        self.page(&status)
+    }
 
-    let view = adw::ToolbarView::builder().content(&empty_state).build();
-    view.add_top_bar(&header);
-    view
-}
-
-fn build_view_switcher() -> gtk::Box {
-    let grid_button = gtk::ToggleButton::builder()
-        .icon_name("view-grid-symbolic")
-        .tooltip_text(gettext("Grid view"))
-        .active(true)
-        .build();
-    let list_button = gtk::ToggleButton::builder()
-        .icon_name("view-list-symbolic")
-        .tooltip_text(gettext("List view"))
-        .group(&grid_button)
-        .build();
-
-    let switcher = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-    switcher.add_css_class("linked");
-    switcher.append(&grid_button);
-    switcher.append(&list_button);
-    switcher
-}
-
-fn build_inspector(inspector_split: &adw::OverlaySplitView) -> adw::ToolbarView {
-    let header = adw::HeaderBar::builder()
-        .title_widget(&adw::WindowTitle::new(&gettext("Inspector"), ""))
-        .show_start_title_buttons(false)
-        .build();
-    header.pack_end(&sidebar_toggle(
-        inspector_split,
-        "sidebar-show-right-symbolic",
-        &gettext("Hide inspector"),
-    ));
-
-    let preview = gtk::Box::builder()
-        .width_request(220)
-        .height_request(160)
-        .halign(gtk::Align::Center)
-        .valign(gtk::Align::Center)
-        .build();
-    preview.add_css_class("card");
-    preview.append(
-        &gtk::Image::builder()
+    fn open(self: &Rc<Self>, info: OpenInfo) -> adw::ToolbarView {
+        let location_kind = match info.locator {
+            LibraryLocator::ManagedDefault => "managed",
+            LibraryLocator::FileUri { .. } => "external",
+        };
+        eprintln!("Opened library {} ({location_kind})", info.id);
+        let title = if info.display_name.is_empty() {
+            gettext("Library")
+        } else {
+            info.display_name
+        };
+        let status = adw::StatusPage::builder()
             .icon_name("image-x-generic-symbolic")
-            .pixel_size(64)
-            .build(),
-    );
+            .title(gettext("Library is open"))
+            .build();
+        let box_ = gtk::Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(12)
+            .halign(gtk::Align::Center)
+            .build();
+        if let Some(diagnostic) = info.persistence_warning {
+            eprintln!("Configuration persistence failed: {diagnostic}");
+            let warning = gtk::Label::builder()
+                .label(gettext(
+                    "The library is open, but Pigoune could not confirm that its location was saved.",
+                ))
+                .wrap(true)
+                .build();
+            box_.append(&warning);
+            let retry = Self::action(&gettext("Retry saving location"));
+            let ui = self.clone();
+            retry.connect_clicked(move |_| ui.send(Command::RetryPersistConfiguration));
+            box_.append(&retry);
+        }
+        let open = Self::action(&gettext("Open Library…"));
+        let ui = self.clone();
+        open.connect_clicked(move |_| ui.select_folder(false));
+        box_.append(&open);
+        let create = Self::action(&gettext("Create Elsewhere…"));
+        let ui = self.clone();
+        create.connect_clicked(move |_| ui.select_folder(true));
+        box_.append(&create);
+        status.set_child(Some(&box_));
+        let header = adw::HeaderBar::builder()
+            .title_widget(&adw::WindowTitle::new("Pigoune", &title))
+            .build();
+        let view = adw::ToolbarView::builder().content(&status).build();
+        view.add_top_bar(&header);
+        view
+    }
 
-    let title = gtk::Label::builder()
-        .label(gettext("No asset selected"))
-        .halign(gtk::Align::Center)
-        .justify(gtk::Justification::Center)
-        .wrap(true)
-        .build();
-    title.add_css_class("title-3");
+    fn error(self: &Rc<Self>, error: OpenError) -> adw::ToolbarView {
+        eprintln!("Library error: {}", error.diagnostic);
+        let forget_durability_uncertain =
+            matches!(error.kind, ErrorKind::ForgetDurabilityUncertain);
+        let (title, description) = match error.kind {
+            ErrorKind::LocationUnavailable => (
+                gettext("Library location unavailable"),
+                gettext("The library location cannot be accessed."),
+            ),
+            ErrorKind::StorageUnavailable => (
+                gettext("Library storage unavailable"),
+                gettext("This location cannot complete the file operations required by a library."),
+            ),
+            ErrorKind::NotALibrary => (
+                gettext("Not a Pigoune library"),
+                gettext("The selected folder does not contain a complete Pigoune library."),
+            ),
+            ErrorKind::InvalidLibrary => (
+                gettext("Invalid library"),
+                gettext("The library contains invalid data and could not be opened."),
+            ),
+            ErrorKind::IncompatibleVersion => (
+                gettext("Incompatible library version"),
+                gettext("This version of Pigoune cannot open this library."),
+            ),
+            ErrorKind::InvalidConfiguration => (
+                gettext("Invalid application configuration"),
+                gettext("The saved library location is invalid."),
+            ),
+            ErrorKind::PersistenceFailed => (
+                gettext("Could not update configuration"),
+                gettext("The library location could not be forgotten."),
+            ),
+            ErrorKind::ForgetDurabilityUncertain => (
+                gettext("Could not confirm the configuration change"),
+                gettext(
+                    "The library location was removed, but the change could not be confirmed on disk. Retry before closing Pigoune.",
+                ),
+            ),
+            ErrorKind::DestinationExists => (
+                gettext("Library already exists"),
+                gettext("The destination already contains a folder. It was not replaced."),
+            ),
+        };
+        let other = Self::action(&gettext("Open Another Library…"));
+        let ui = self.clone();
+        other.connect_clicked(move |_| ui.select_folder(false));
+        let mut buttons = Vec::new();
+        if error.has_session {
+            let back = Self::action(&gettext("Back to Library"));
+            let ui = self.clone();
+            back.connect_clicked(move |_| ui.send(Command::ReturnToOpen));
+            buttons.push(back);
+        }
+        if error.can_retry && !error.can_open_managed {
+            let retry = Self::action(&gettext("Retry"));
+            let ui = self.clone();
+            retry.connect_clicked(move |_| {
+                ui.show(ApplicationState::Opening);
+                ui.send(Command::RetryOpen);
+            });
+            buttons.push(retry);
+        }
+        buttons.push(other);
+        if error.can_open_managed {
+            let existing = Self::action(&gettext("Open Existing Library"));
+            let ui = self.clone();
+            existing.connect_clicked(move |_| {
+                ui.show(ApplicationState::Opening);
+                ui.send(Command::OpenManagedDefault);
+            });
+            buttons.push(existing);
+        }
+        if error.configured {
+            let label = if forget_durability_uncertain {
+                gettext("Retry saving change")
+            } else {
+                gettext("Forget this library location")
+            };
+            let forget = Self::action(&label);
+            let ui = self.clone();
+            forget.connect_clicked(move |_| ui.send(Command::ForgetConfigured));
+            buttons.push(forget);
+        }
+        let status = adw::StatusPage::builder()
+            .icon_name("dialog-warning-symbolic")
+            .title(title)
+            .description(description)
+            .child(&Self::buttons(&buttons))
+            .build();
+        self.page(&status)
+    }
 
-    let details = adw::PreferencesGroup::new();
-    details.add(&inspector_section(
-        &gettext("Information"),
-        &gettext("No information available"),
-        true,
-    ));
-    details.add(&inspector_section(
-        &gettext("Organization"),
-        &gettext("No collection or tags"),
-        false,
-    ));
-    details.add(&inspector_section(
-        &gettext("Technical"),
-        &gettext("No technical data"),
-        false,
-    ));
-    details.add(&inspector_section(
-        &gettext("Source and licensing"),
-        &gettext("No source or licensing information"),
-        false,
-    ));
+    fn select_folder(self: &Rc<Self>, create: bool) {
+        let title = if create {
+            gettext("Choose a parent folder")
+        } else {
+            gettext("Open Library")
+        };
+        let dialog = gtk::FileDialog::builder().title(title).build();
+        let ui = self.clone();
+        dialog.select_folder(
+            Some(&self.window),
+            None::<&gio::Cancellable>,
+            move |result| match result {
+                Ok(file) if create => ui.ask_folder_name(file),
+                Ok(file) => match LibraryLocator::from_file(&file) {
+                    Ok((locator, path)) => {
+                        ui.show(ApplicationState::Opening);
+                        ui.send(Command::OpenExternal { locator, path });
+                    }
+                    Err(error) => ui.selection_error(&error.to_string()),
+                },
+                Err(error) if error.matches(gtk::DialogError::Dismissed) => {}
+                Err(error) => ui.selection_error(&error.to_string()),
+            },
+        );
+    }
 
-    let content = gtk::Box::builder()
-        .orientation(gtk::Orientation::Vertical)
-        .spacing(18)
-        .margin_top(18)
-        .margin_bottom(18)
-        .margin_start(18)
-        .margin_end(18)
-        .build();
-    content.append(&preview);
-    content.append(&title);
-    content.append(&details);
+    fn ask_folder_name(self: &Rc<Self>, parent: gio::File) {
+        let dialog = adw::AlertDialog::builder()
+            .heading(gettext("New library folder"))
+            .build();
+        dialog.add_response("cancel", &gettext("Cancel"));
+        dialog.add_response("create", &gettext("Create Library"));
+        dialog.set_default_response(Some("create"));
+        let entry = gtk::Entry::builder()
+            .placeholder_text(gettext("Folder name"))
+            .activates_default(true)
+            .margin_top(18)
+            .margin_bottom(18)
+            .margin_start(18)
+            .margin_end(18)
+            .build();
+        dialog.set_extra_child(Some(&entry));
+        let ui = self.clone();
+        dialog.connect_response(None, move |_, response| {
+            if response == "create" {
+                let name = entry.text().to_string();
+                if !validate_folder_name(&name) {
+                    ui.selection_error(&gettext("Enter a single folder name without a slash."));
+                } else {
+                    let child = parent.child(&name);
+                    match LibraryLocator::from_file(&child) {
+                        Ok((locator, path)) => {
+                            ui.show(ApplicationState::Opening);
+                            ui.send(Command::CreateExternal { locator, path });
+                        }
+                        Err(error) => ui.selection_error(&error.to_string()),
+                    }
+                }
+            }
+        });
+        dialog.present(Some(&self.window));
+    }
 
-    let scrolled = gtk::ScrolledWindow::builder()
-        .hscrollbar_policy(gtk::PolicyType::Never)
-        .child(&content)
-        .build();
-
-    let view = adw::ToolbarView::builder()
-        .top_bar_style(adw::ToolbarStyle::Raised)
-        .content(&scrolled)
-        .build();
-    view.add_top_bar(&header);
-    view
-}
-
-fn inspector_section(title: &str, placeholder: &str, expanded: bool) -> adw::ExpanderRow {
-    let section = adw::ExpanderRow::builder()
-        .title(title)
-        .expanded(expanded)
-        .build();
-    section.add_row(
-        &adw::ActionRow::builder()
-            .title(placeholder)
-            .sensitive(false)
-            .build(),
-    );
-    section
-}
-
-fn sidebar_toggle(
-    split_view: &adw::OverlaySplitView,
-    icon_name: &str,
-    tooltip: &str,
-) -> gtk::ToggleButton {
-    let button = gtk::ToggleButton::builder()
-        .icon_name(icon_name)
-        .tooltip_text(tooltip)
-        .active(true)
-        .build();
-
-    button
-        .bind_property("active", split_view, "show-sidebar")
-        .bidirectional()
-        .sync_create()
-        .build();
-
-    button
-}
-
-fn overlay_breakpoint(split_view: &adw::OverlaySplitView, max_width: f64) -> adw::Breakpoint {
-    let condition = adw::BreakpointCondition::new_length(
-        adw::BreakpointConditionLengthType::MaxWidth,
-        max_width,
-        adw::LengthUnit::Sp,
-    );
-    let breakpoint = adw::Breakpoint::new(condition);
-    let was_visible = Rc::new(Cell::new(false));
-
-    let apply_split_view = split_view.clone();
-    let apply_was_visible = was_visible.clone();
-    breakpoint.connect_apply(move |_| {
-        apply_was_visible.set(apply_split_view.shows_sidebar());
-        apply_split_view.set_collapsed(true);
-    });
-
-    let unapply_split_view = split_view.clone();
-    breakpoint.connect_unapply(move |_| {
-        unapply_split_view.set_collapsed(false);
-        unapply_split_view.set_show_sidebar(was_visible.get());
-    });
-
-    breakpoint
+    fn selection_error(&self, diagnostic: &str) {
+        eprintln!("Selected location error: {diagnostic}");
+        let dialog = adw::AlertDialog::builder()
+            .heading(gettext("Location unavailable"))
+            .body(gettext("Choose a local folder that Pigoune can access."))
+            .build();
+        dialog.add_response("close", &gettext("Close"));
+        dialog.present(Some(&self.window));
+    }
 }

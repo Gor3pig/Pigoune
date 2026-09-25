@@ -1,5 +1,6 @@
 use adw::prelude::*;
 
+mod application;
 mod i18n;
 mod window;
 
