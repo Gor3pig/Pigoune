@@ -1,0 +1,55 @@
+{
+  "id": "io.github.gor3pig.Pigoune",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "51",
+  "sdk": "org.gnome.Sdk",
+  "sdk-extensions": [
+    "org.freedesktop.Sdk.Extension.rust-stable"
+  ],
+  "command": "pigoune",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri"
+  ],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/rust-stable/bin",
+    "env": {
+      "CARGO_HOME": "/run/build/pigoune/cargo",
+      "CARGO_NET_OFFLINE": "true"
+    }
+  },
+  "cleanup": [
+    "/include",
+    "/lib/pkgconfig",
+    "/share/doc",
+    "/share/man",
+    "*.a",
+    "*.la"
+  ],
+  "modules": [
+    {
+      "name": "pigoune",
+      "buildsystem": "meson",
+      "config-opts": [
+        "--buildtype=release"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "..",
+          "skip": [
+            "target",
+            "_build",
+            "build-dir",
+            "repo",
+            ".flatpak-builder",
+            ".git"
+          ]
+        },
+        "cargo-sources.json"
+      ]
+    }
+  ]
+}

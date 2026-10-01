@@ -30,6 +30,8 @@ step "Formatage (rustfmt)" cargo fmt --all --check
 step "Relecture stricte (clippy)" cargo clippy --workspace --all-targets --quiet -- -D warnings
 step "Tests" cargo test --workspace --quiet
 step "Aucun commentaire dans le code" no_comments_in_sources
+step "Lanceur GNOME (.desktop)" desktop-file-validate data/io.github.gor3pig.Pigoune.desktop
+step "Fiche de l'application (metainfo)" appstreamcli validate --no-net --explain data/io.github.gor3pig.Pigoune.metainfo.xml
 
 printf '\n'
 if [ ${#failures[@]} -eq 0 ]; then

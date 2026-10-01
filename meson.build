@@ -35,3 +35,5 @@ custom_target(
     'cp', cargo_target_dir / cargo_profile_dir / meson.project_name(), '@OUTPUT@',
   ],
 )
+
+subdir('data')

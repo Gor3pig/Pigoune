@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.gor3pig.Pigoune</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Pigoune</name>
+  <summary>Organize, find and reuse your graphic assets</summary>
+  <description>
+    <p>
+      Pigoune is a cozy box for your icons, logos and illustrations. Drop your graphic
+      assets in, and Pigoune keeps a safe copy, helps you organize them and gives them
+      back with a simple drag and drop.
+    </p>
+    <ul>
+      <li>Import SVG, PNG, JPG, WebP, GIF and ICO files</li>
+      <li>Organize with nested collections, tags and favorites</li>
+      <li>Find anything instantly with search and filters</li>
+      <li>Reuse assets with drag and drop or the clipboard</li>
+      <li>Portable libraries, fully local, original files never touched</li>
+    </ul>
+  </description>
+
+  <developer id="io.github.gor3pig">
+    <name>Gor3pig</name>
+  </developer>
+
+  <launchable type="desktop-id">io.github.gor3pig.Pigoune.desktop</launchable>
+  <provides>
+    <binary>pigoune</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/Gor3pig/Pigoune</url>
+  <url type="bugtracker">https://github.com/Gor3pig/Pigoune/issues</url>
+  <url type="vcs-browser">https://github.com/Gor3pig/Pigoune</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#a6d4f2</color>
+    <color type="primary" scheme_preference="dark">#1d4f7a</color>
+  </branding>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </supports>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.1.0" date="2026-10-01">
+      <description>
+        <p>First development snapshot.</p>
+      </description>
+    </release>
+  </releases>
+</component>
