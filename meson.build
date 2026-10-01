@@ -5,6 +5,8 @@ project(
   meson_version: '>= 1.5.0',
 )
 
+i18n = import('i18n')
+
 cargo = find_program('cargo')
 
 if get_option('buildtype') == 'release'
@@ -25,6 +27,9 @@ custom_target(
   output: meson.project_name(),
   install: true,
   install_dir: get_option('bindir'),
+  env: {
+    'PIGOUNE_LOCALEDIR': get_option('prefix') / get_option('localedir'),
+  },
   command: [
     cargo, 'build',
     '--manifest-path', meson.project_source_root() / 'Cargo.toml',
@@ -37,3 +42,4 @@ custom_target(
 )
 
 subdir('data')
+subdir('po')

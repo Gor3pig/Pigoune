@@ -5,6 +5,8 @@ use std::process::Command;
 
 const UI_SOURCE_DIR: &str = "ui";
 const ICONS_SOURCE_DIR: &str = "../../data/icons";
+const PO_SOURCE_DIR: &str = "../../po";
+const GETTEXT_PACKAGE: &str = "pigoune";
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR is set by cargo"));
@@ -12,6 +14,7 @@ fn main() {
 
     compile_blueprints(&staging_dir.join("ui"));
     stage_application_icons(&staging_dir.join("icons"));
+    compile_development_translations(&out_dir.join("locale"));
 
     glib_build_tools::compile_resources(
         &[staging_dir.as_path()],
@@ -21,6 +24,7 @@ fn main() {
 
     println!("cargo::rerun-if-changed={UI_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={ICONS_SOURCE_DIR}");
+    println!("cargo::rerun-if-changed={PO_SOURCE_DIR}");
 }
 
 fn compile_blueprints(output_dir: &Path) {
@@ -51,5 +55,24 @@ fn stage_application_icons(output_dir: &Path) {
             target_dir.join("io.github.gor3pig.Pigoune.png"),
         )
         .expect("official icon exists");
+    }
+}
+
+fn compile_development_translations(locale_dir: &Path) {
+    let languages =
+        fs::read_to_string(Path::new(PO_SOURCE_DIR).join("LINGUAS")).expect("po/LINGUAS exists");
+
+    for language in languages.split_whitespace() {
+        let messages_dir = locale_dir.join(language).join("LC_MESSAGES");
+        fs::create_dir_all(&messages_dir).expect("locale directory can be created");
+
+        let status = Command::new("msgfmt")
+            .arg("--output-file")
+            .arg(messages_dir.join(format!("{GETTEXT_PACKAGE}.mo")))
+            .arg(Path::new(PO_SOURCE_DIR).join(format!("{language}.po")))
+            .status()
+            .expect("msgfmt is installed");
+
+        assert!(status.success(), "msgfmt failed for {language}");
     }
 }
