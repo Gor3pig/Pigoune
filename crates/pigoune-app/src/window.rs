@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
@@ -13,6 +13,16 @@ use crate::settings;
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
+
+const CLOSE_RESPONSE: &str = "close";
+const OPEN_ANOTHER_RESPONSE: &str = "open-another";
+const RETRY_RESPONSE: &str = "retry";
+
+enum ReopeningChoice {
+    Retry,
+    OpenAnother,
+    Dismiss,
+}
 
 mod imp {
     use std::cell::{OnceCell, RefCell};
@@ -102,8 +112,55 @@ impl PigouneWindow {
 
     pub fn reopen_last_library(&self) {
         let last_library_path = self.settings().string(settings::LAST_LIBRARY_PATH);
-        if !last_library_path.is_empty() {
-            self.open_library_at(Path::new(last_library_path.as_str()));
+        if last_library_path.is_empty() {
+            return;
+        }
+        let window = self.clone();
+        glib::spawn_future_local(async move {
+            window
+                .reopen_library_at(PathBuf::from(last_library_path.as_str()))
+                .await;
+        });
+    }
+
+    async fn reopen_library_at(&self, root: PathBuf) {
+        loop {
+            let error = match Library::open(&root) {
+                Ok(library) => {
+                    self.show_library(library);
+                    return;
+                }
+                Err(error) => error,
+            };
+            match self.ask_after_reopening_failure(&root, &error).await {
+                ReopeningChoice::Retry => {}
+                ReopeningChoice::OpenAnother => {
+                    self.choose_library_to_open().await;
+                    return;
+                }
+                ReopeningChoice::Dismiss => return,
+            }
+        }
+    }
+
+    async fn ask_after_reopening_failure(
+        &self,
+        root: &Path,
+        error: &LibraryError,
+    ) -> ReopeningChoice {
+        let alert = opening_error_alert(root, error);
+        alert.add_responses(&[
+            (OPEN_ANOTHER_RESPONSE, &gettext("_Open Another Library…")),
+            (RETRY_RESPONSE, &gettext("_Try Again")),
+        ]);
+        alert.set_response_appearance(RETRY_RESPONSE, adw::ResponseAppearance::Suggested);
+        alert.set_default_response(Some(RETRY_RESPONSE));
+        alert.set_close_response(CLOSE_RESPONSE);
+
+        match alert.choose_future(Some(self)).await.as_str() {
+            RETRY_RESPONSE => ReopeningChoice::Retry,
+            OPEN_ANOTHER_RESPONSE => ReopeningChoice::OpenAnother,
+            _ => ReopeningChoice::Dismiss,
         }
     }
 
@@ -178,11 +235,7 @@ impl PigouneWindow {
     }
 
     fn show_opening_error(&self, root: &Path, error: &LibraryError) {
-        let heading =
-            gettext("Unable to Open “{name}”").replace("{name}", &library_display_name(root));
-        let alert = adw::AlertDialog::new(Some(&heading), Some(&error_messages::describe(error)));
-        alert.add_response("close", &gettext("_Close"));
-        alert.present(Some(self));
+        opening_error_alert(root, error).present(Some(self));
     }
 
     fn restore_window_state(&self, settings: &gio::Settings) {
@@ -202,4 +255,11 @@ impl PigouneWindow {
         settings::store_int(settings, settings::WINDOW_HEIGHT, height);
         settings::store_bool(settings, settings::WINDOW_MAXIMIZED, self.is_maximized());
     }
+}
+
+fn opening_error_alert(root: &Path, error: &LibraryError) -> adw::AlertDialog {
+    let heading = gettext("Unable to Open “{name}”").replace("{name}", &library_display_name(root));
+    let alert = adw::AlertDialog::new(Some(&heading), Some(&error_messages::describe(error)));
+    alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+    alert
 }

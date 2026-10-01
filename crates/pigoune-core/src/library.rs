@@ -63,7 +63,9 @@ impl Library {
         if !schema::ensure_is_pigoune_database(&connection)? {
             return Err(LibraryError::NotALibrary(root.to_path_buf()));
         }
+        schema::ensure_is_writable(&connection)?;
         schema::configure_connection(&connection)?;
+        schema::ensure_is_intact(&connection)?;
         schema::migrate_to_current_version(&mut connection)?;
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;

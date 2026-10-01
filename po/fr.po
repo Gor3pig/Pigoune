@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 21:41+0200\n"
+"POT-Creation-Date: 2026-10-01 21:53+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -170,10 +170,11 @@ msgstr "Un fichier ou un dossier portant ce nom existe déjà ici."
 
 #: crates/pigoune-app/src/error_messages.rs:13
 msgid ""
-"The folder could not be found. It may have been moved, renamed or "
-"disconnected."
+"The library folder could not be found. It may have been moved, renamed or "
+"deleted, or it may be on a disk that is no longer connected."
 msgstr ""
-"Le dossier est introuvable. Il a peut-être été déplacé, renommé ou débranché."
+"Le dossier de la bibliothèque est introuvable. Il a peut-être été déplacé, "
+"renommé ou supprimé, ou se trouve sur un disque qui n'est plus connecté."
 
 #: crates/pigoune-app/src/error_messages.rs:15
 msgid "This folder is not a Pigoune library."
@@ -192,6 +193,27 @@ msgid "This library is already open in another Pigoune window."
 msgstr "Cette bibliothèque est déjà ouverte dans une autre fenêtre de Pigoune."
 
 #: crates/pigoune-app/src/error_messages.rs:21
+msgid ""
+"There is not enough free space on the disk. Free up some space and try again."
+msgstr ""
+"Il n'y a plus assez d'espace sur le disque. Libérez de la place puis "
+"réessayez."
+
+#: crates/pigoune-app/src/error_messages.rs:24
+msgid ""
+"Pigoune is not allowed to write to this location. Choose another folder."
+msgstr ""
+"Pigoune n'a pas l'autorisation d'écrire à cet emplacement. Choisissez un "
+"autre dossier."
+
+#: crates/pigoune-app/src/error_messages.rs:27
+msgid ""
+"This library seems to be damaged. Your files are still in its “files” folder."
+msgstr ""
+"Cette bibliothèque semble endommagée. Vos fichiers sont toujours dans son "
+"dossier « files »."
+
+#: crates/pigoune-app/src/error_messages.rs:30
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr "Une erreur inattendue s'est produite : {error}"
@@ -200,15 +222,23 @@ msgstr "Une erreur inattendue s'est produite : {error}"
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:129
+#: crates/pigoune-app/src/window.rs:153
+msgid "_Open Another Library…"
+msgstr "_Ouvrir une autre bibliothèque…"
+
+#: crates/pigoune-app/src/window.rs:154
+msgid "_Try Again"
+msgstr "_Réessayer"
+
+#: crates/pigoune-app/src/window.rs:186
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:182
+#: crates/pigoune-app/src/window.rs:261
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
-#: crates/pigoune-app/src/window.rs:184
+#: crates/pigoune-app/src/window.rs:263
 msgid "_Close"
 msgstr "_Fermer"

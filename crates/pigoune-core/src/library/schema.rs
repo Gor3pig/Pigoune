@@ -28,6 +28,23 @@ pub fn ensure_is_pigoune_database(connection: &Connection) -> Result<bool, Libra
     }
 }
 
+pub fn ensure_is_intact(connection: &Connection) -> Result<(), LibraryError> {
+    let verdict: String = connection.pragma_query_value(None, "quick_check", |row| row.get(0))?;
+    if verdict == "ok" {
+        Ok(())
+    } else {
+        Err(LibraryError::Damaged)
+    }
+}
+
+pub fn ensure_is_writable(connection: &Connection) -> Result<(), LibraryError> {
+    if connection.is_readonly(rusqlite::MAIN_DB)? {
+        Err(LibraryError::PermissionDenied)
+    } else {
+        Ok(())
+    }
+}
+
 pub fn read_format_version(connection: &Connection) -> Result<u32, LibraryError> {
     Ok(connection.pragma_query_value(None, "user_version", |row| row.get(0))?)
 }

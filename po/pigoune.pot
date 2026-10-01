@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 21:41+0200\n"
+"POT-Creation-Date: 2026-10-01 21:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,8 +167,8 @@ msgstr ""
 
 #: crates/pigoune-app/src/error_messages.rs:13
 msgid ""
-"The folder could not be found. It may have been moved, renamed or "
-"disconnected."
+"The library folder could not be found. It may have been moved, renamed or "
+"deleted, or it may be on a disk that is no longer connected."
 msgstr ""
 
 #: crates/pigoune-app/src/error_messages.rs:15
@@ -186,6 +186,21 @@ msgid "This library is already open in another Pigoune window."
 msgstr ""
 
 #: crates/pigoune-app/src/error_messages.rs:21
+msgid ""
+"There is not enough free space on the disk. Free up some space and try again."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:24
+msgid ""
+"Pigoune is not allowed to write to this location. Choose another folder."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:27
+msgid ""
+"This library seems to be damaged. Your files are still in its “files” folder."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:30
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr ""
@@ -194,15 +209,23 @@ msgstr ""
 msgid "Choose a Location"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:129
+#: crates/pigoune-app/src/window.rs:153
+msgid "_Open Another Library…"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:154
+msgid "_Try Again"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:186
 msgid "Open a Pigoune Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:182
+#: crates/pigoune-app/src/window.rs:261
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:184
+#: crates/pigoune-app/src/window.rs:263
 msgid "_Close"
 msgstr ""

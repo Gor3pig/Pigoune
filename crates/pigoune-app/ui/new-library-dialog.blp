@@ -32,8 +32,21 @@ template $PigouneNewLibraryDialog: Adw.Dialog {
       }
     }
 
-    content: Adw.PreferencesPage {
-      Adw.PreferencesGroup {
+    content: Box {
+      orientation: vertical;
+      spacing: 18;
+      margin-top: 12;
+      margin-bottom: 24;
+      margin-start: 12;
+      margin-end: 12;
+
+      ListBox {
+        selection-mode: none;
+
+        styles [
+          "boxed-list",
+        ]
+
         Adw.EntryRow name_row {
           title: _("Name");
           text: _("My Library");
@@ -56,16 +69,16 @@ template $PigouneNewLibraryDialog: Adw.Dialog {
         }
       }
 
-      Adw.PreferencesGroup {
-        Label error_label {
-          visible: false;
-          wrap: true;
-          xalign: 0;
+      Label error_label {
+        visible: false;
+        wrap: true;
+        xalign: 0;
+        margin-start: 6;
+        margin-end: 6;
 
-          styles [
-            "error",
-          ]
-        }
+        styles [
+          "error",
+        ]
       }
     };
   };

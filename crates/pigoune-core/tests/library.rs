@@ -160,7 +160,7 @@ fn a_failed_creation_leaves_no_partial_folder_behind() {
 
     fs::set_permissions(&read_only_parent, fs::Permissions::from_mode(0o755))
         .expect("permissions restored");
-    assert!(matches!(result, Err(LibraryError::Io(_))));
+    assert!(matches!(result, Err(LibraryError::PermissionDenied)));
     assert!(entries_of(&read_only_parent).is_empty());
 }
 
@@ -296,4 +296,44 @@ fn a_deleted_cache_folder_is_recreated_on_opening() {
     let reopened = Library::open(&root).expect("library reopens");
 
     assert!(reopened.root().join(CACHE_DIR_NAME).is_dir());
+}
+
+#[test]
+fn a_read_only_library_is_refused_with_a_permission_error() {
+    let workspace = workspace();
+    let root = Library::create(workspace.path(), "Mes logos")
+        .expect("library is created")
+        .root()
+        .to_path_buf();
+    let database_path = root.join(DATABASE_FILE_NAME);
+    fs::set_permissions(&database_path, fs::Permissions::from_mode(0o444))
+        .expect("permissions set");
+
+    let result = Library::open(&root);
+
+    fs::set_permissions(&database_path, fs::Permissions::from_mode(0o644))
+        .expect("permissions restored");
+    assert!(matches!(result, Err(LibraryError::PermissionDenied)));
+}
+
+#[test]
+fn a_library_with_a_damaged_database_is_reported_as_damaged() {
+    let workspace = workspace();
+    let root = Library::create(workspace.path(), "Mes logos")
+        .expect("library is created")
+        .root()
+        .to_path_buf();
+    let database_path = root.join(DATABASE_FILE_NAME);
+    let mut bytes = fs::read(&database_path).expect("database readable");
+    let page_size = usize::from(u16::from_be_bytes([bytes[16], bytes[17]]));
+    assert!(
+        bytes.len() >= 3 * page_size,
+        "the database has several pages"
+    );
+    bytes[page_size..2 * page_size].fill(0xA5);
+    fs::write(&database_path, bytes).expect("database damaged");
+
+    let result = Library::open(&root);
+
+    assert!(matches!(result, Err(LibraryError::Damaged)));
 }
