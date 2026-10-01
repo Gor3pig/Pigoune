@@ -8,13 +8,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 21:15+0200\n"
+"POT-Creation-Date: 2026-10-01 21:41+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: data/io.github.gor3pig.Pigoune.desktop.in:3
@@ -62,4 +62,147 @@ msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:56
 msgid "First development snapshot."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:6
+msgid "Last opened library"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:7
+msgid ""
+"Path of the library reopened at startup. Empty when no library was left open."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:11
+msgid "Window width"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:15
+msgid "Window height"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:19
+msgid "Window maximized"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:20
+msgid "Main Menu"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:33
+msgid "Welcome to Pigoune"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:34
+msgid "The cozy box for your icons, logos and illustrations."
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:46
+msgid "_Create a Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:57
+msgid "_Open a Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:74
+msgid "Your Library Is Empty"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:75
+msgid "Imported icons, logos and illustrations will appear here."
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:85
+msgid "_Close Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:92
+msgid "_About Pigoune"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:5
+msgid "New Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:17
+msgid "_Cancel"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:24
+msgid "C_reate"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:38
+msgid "Name"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:39
+msgid "My Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:45
+msgid "Location"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:46
+msgid "No folder chosen"
+msgstr ""
+
+#: crates/pigoune-app/ui/new-library-dialog.blp:51
+msgid "_Choose…"
+msgstr ""
+
+#: crates/pigoune-app/src/application.rs:55
+msgid "translator-credits"
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:7
+msgid "This name cannot be used. Avoid “/” and names starting with a dot."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:10
+msgid "A file or folder with this name already exists here."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:13
+msgid ""
+"The folder could not be found. It may have been moved, renamed or "
+"disconnected."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:15
+msgid "This folder is not a Pigoune library."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:17
+msgid ""
+"This library was created by a newer version of Pigoune. Update Pigoune to "
+"open it."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:19
+msgid "This library is already open in another Pigoune window."
+msgstr ""
+
+#: crates/pigoune-app/src/error_messages.rs:21
+#, rust-format
+msgid "An unexpected error occurred: {error}"
+msgstr ""
+
+#: crates/pigoune-app/src/new_library_dialog.rs:101
+msgid "Choose a Location"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:129
+msgid "Open a Pigoune Library"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:182
+#, rust-format
+msgid "Unable to Open “{name}”"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:184
+msgid "_Close"
 msgstr ""

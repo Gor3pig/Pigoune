@@ -1,3 +1,9 @@
 data/io.github.gor3pig.Pigoune.desktop.in
 data/io.github.gor3pig.Pigoune.metainfo.xml.in
+data/io.github.gor3pig.Pigoune.gschema.xml
 crates/pigoune-app/ui/window.blp
+crates/pigoune-app/ui/new-library-dialog.blp
+crates/pigoune-app/src/application.rs
+crates/pigoune-app/src/error_messages.rs
+crates/pigoune-app/src/new_library_dialog.rs
+crates/pigoune-app/src/window.rs

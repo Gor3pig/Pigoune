@@ -7,6 +7,7 @@ const UI_SOURCE_DIR: &str = "ui";
 const ICONS_SOURCE_DIR: &str = "../../data/icons";
 const PO_SOURCE_DIR: &str = "../../po";
 const GETTEXT_PACKAGE: &str = "pigoune";
+const DATA_SOURCE_DIR: &str = "../../data";
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR is set by cargo"));
@@ -15,6 +16,7 @@ fn main() {
     compile_blueprints(&staging_dir.join("ui"));
     stage_application_icons(&staging_dir.join("icons"));
     compile_development_translations(&out_dir.join("locale"));
+    compile_development_settings_schema(&out_dir.join("schemas"));
 
     glib_build_tools::compile_resources(
         &[staging_dir.as_path()],
@@ -25,6 +27,7 @@ fn main() {
     println!("cargo::rerun-if-changed={UI_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={ICONS_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={PO_SOURCE_DIR}");
+    println!("cargo::rerun-if-changed={DATA_SOURCE_DIR}/io.github.gor3pig.Pigoune.gschema.xml");
 }
 
 fn compile_blueprints(output_dir: &Path) {
@@ -75,4 +78,18 @@ fn compile_development_translations(locale_dir: &Path) {
 
         assert!(status.success(), "msgfmt failed for {language}");
     }
+}
+
+fn compile_development_settings_schema(schemas_dir: &Path) {
+    fs::create_dir_all(schemas_dir).expect("schemas directory can be created");
+
+    let status = Command::new("glib-compile-schemas")
+        .arg("--strict")
+        .arg("--targetdir")
+        .arg(schemas_dir)
+        .arg(DATA_SOURCE_DIR)
+        .status()
+        .expect("glib-compile-schemas is installed");
+
+    assert!(status.success(), "glib-compile-schemas failed");
 }

@@ -1,0 +1,72 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneNewLibraryDialog: Adw.Dialog {
+  title: _("New Library");
+  content-width: 460;
+  default-widget: create_button;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      show-start-title-buttons: false;
+      show-end-title-buttons: false;
+
+      [start]
+      Button {
+        label: _("_Cancel");
+        use-underline: true;
+        clicked => $on_cancel_clicked() swapped;
+      }
+
+      [end]
+      Button create_button {
+        label: _("C_reate");
+        use-underline: true;
+        sensitive: false;
+        clicked => $on_create_clicked() swapped;
+
+        styles [
+          "suggested-action",
+        ]
+      }
+    }
+
+    content: Adw.PreferencesPage {
+      Adw.PreferencesGroup {
+        Adw.EntryRow name_row {
+          title: _("Name");
+          text: _("My Library");
+          activates-default: true;
+          changed => $on_inputs_changed() swapped;
+        }
+
+        Adw.ActionRow location_row {
+          title: _("Location");
+          subtitle: _("No folder chosen");
+          activatable-widget: choose_button;
+
+          [suffix]
+          Button choose_button {
+            label: _("_Choose…");
+            use-underline: true;
+            valign: center;
+            clicked => $on_choose_location_clicked() swapped;
+          }
+        }
+      }
+
+      Adw.PreferencesGroup {
+        Label error_label {
+          visible: false;
+          wrap: true;
+          xalign: 0;
+
+          styles [
+            "error",
+          ]
+        }
+      }
+    };
+  };
+}

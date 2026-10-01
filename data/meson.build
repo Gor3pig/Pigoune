@@ -24,3 +24,8 @@ foreach size : ['16', '32', '48', '64', '128', '256', '512']
     rename: app_id + '.png',
   )
 endforeach
+
+install_data(
+  app_id + '.gschema.xml',
+  install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
+)

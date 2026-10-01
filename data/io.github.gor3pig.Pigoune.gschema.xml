@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="pigoune">
+  <schema id="io.github.gor3pig.Pigoune" path="/io/github/gor3pig/Pigoune/">
+    <key name="last-library-path" type="s">
+      <default>""</default>
+      <summary>Last opened library</summary>
+      <description>Path of the library reopened at startup. Empty when no library was left open.</description>
+    </key>
+    <key name="window-width" type="i">
+      <default>1100</default>
+      <summary>Window width</summary>
+    </key>
+    <key name="window-height" type="i">
+      <default>720</default>
+      <summary>Window height</summary>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>Window maximized</summary>
+    </key>
+  </schema>
+</schemalist>

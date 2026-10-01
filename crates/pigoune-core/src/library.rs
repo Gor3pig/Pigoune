@@ -12,7 +12,9 @@ use uuid::Uuid;
 use staging::StagingDir;
 
 pub use error::LibraryError;
-pub use layout::{CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION};
+pub use layout::{
+    CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
+};
 pub use schema::CURRENT_FORMAT_VERSION;
 
 #[derive(Debug)]

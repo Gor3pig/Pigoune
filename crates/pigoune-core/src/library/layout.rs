@@ -26,6 +26,7 @@ pub fn library_folder_name(requested_name: &str) -> Result<String, LibraryError>
     Ok(format!("{name}.{LIBRARY_EXTENSION}"))
 }
 
+#[must_use]
 pub fn library_display_name(root: &Path) -> String {
     root.file_name()
         .map(|folder_name| strip_library_extension(&folder_name.to_string_lossy()).to_owned())

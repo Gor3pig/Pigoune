@@ -43,3 +43,6 @@ custom_target(
 
 subdir('data')
 subdir('po')
+
+gnome = import('gnome')
+gnome.post_install(glib_compile_schemas: true)
