@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/gor3pig/Pigoune">
+    <file compressed="true" preprocess="xml-stripblanks">ui/window.ui</file>
+    <file>icons/16x16/apps/io.github.gor3pig.Pigoune.png</file>
+    <file>icons/32x32/apps/io.github.gor3pig.Pigoune.png</file>
+    <file>icons/48x48/apps/io.github.gor3pig.Pigoune.png</file>
+    <file>icons/64x64/apps/io.github.gor3pig.Pigoune.png</file>
+    <file>icons/128x128/apps/io.github.gor3pig.Pigoune.png</file>
+    <file>icons/256x256/apps/io.github.gor3pig.Pigoune.png</file>
+    <file>icons/512x512/apps/io.github.gor3pig.Pigoune.png</file>
+  </gresource>
+</gresources>

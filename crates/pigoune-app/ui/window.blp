@@ -1,0 +1,20 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneWindow: Adw.ApplicationWindow {
+  title: "Pigoune";
+  default-width: 1100;
+  default-height: 720;
+  width-request: 360;
+  height-request: 294;
+
+  content: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {}
+
+    content: Adw.StatusPage {
+      icon-name: "io.github.gor3pig.Pigoune";
+      title: "Pigoune";
+    };
+  };
+}
