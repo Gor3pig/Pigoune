@@ -1,11 +1,6 @@
-pub const LIBRARY_FORMAT_VERSION: u32 = 1;
+pub mod library;
 
-#[cfg(test)]
-mod tests {
-    use super::LIBRARY_FORMAT_VERSION;
-
-    #[test]
-    fn library_format_starts_at_version_one() {
-        assert_eq!(LIBRARY_FORMAT_VERSION, 1);
-    }
-}
+pub use library::{
+    CACHE_DIR_NAME, CURRENT_FORMAT_VERSION, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION,
+    Library, LibraryError,
+};

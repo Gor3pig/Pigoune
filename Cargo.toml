@@ -18,6 +18,8 @@ unwrap_used = "warn"
 dbg_macro = "warn"
 todo = "warn"
 print_stdout = "warn"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
 
 [profile.release]
 lto = "thin"
