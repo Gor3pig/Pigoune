@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use adw::subclass::prelude::*;
 use gtk::prelude::*;
-use gtk::{gdk, glib};
+use gtk::{gdk, gio, glib};
 
 use pigoune_core::AssetId;
 
@@ -34,6 +34,10 @@ mod imp {
         #[template_child]
         pub grid_view: TemplateChild<gtk::GridView>,
         #[template_child]
+        pub top_bar: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub context_menu: TemplateChild<gtk::PopoverMenu>,
+        #[template_child]
         pub size_adjustment: TemplateChild<gtk::Adjustment>,
         #[property(get, set = Self::set_tile_size, minimum = SMALLEST_TILE_SIZE, maximum = LARGEST_TILE_SIZE, default = DEFAULT_TILE_SIZE)]
         pub tile_size: Cell<i32>,
@@ -52,6 +56,8 @@ mod imp {
             Self {
                 scrolled_window: TemplateChild::default(),
                 grid_view: TemplateChild::default(),
+                top_bar: TemplateChild::default(),
+                context_menu: TemplateChild::default(),
                 size_adjustment: TemplateChild::default(),
                 tile_size: Cell::new(DEFAULT_TILE_SIZE),
                 sort_criterion: RefCell::default(),
@@ -374,7 +380,7 @@ impl PigouneAssetGrid {
                     .current_event_state()
                     .intersects(gdk::ModifierType::CONTROL_MASK | gdk::ModifierType::SHIFT_MASK);
                 if !extending
-                    && !grid.has_tile_at(x, y)
+                    && grid.asset_at(x, y).is_none()
                     && let Some(selection) = grid.selection()
                 {
                     selection.unselect_all();
@@ -384,14 +390,79 @@ impl PigouneAssetGrid {
         self.imp().grid_view.add_controller(click);
     }
 
-    fn has_tile_at(&self, x: f64, y: f64) -> bool {
-        self.imp()
-            .grid_view
-            .pick(x, y, gtk::PickFlags::DEFAULT)
-            .is_some_and(|widget| {
-                widget.is::<PigouneAssetTile>()
-                    || widget.ancestor(PigouneAssetTile::static_type()).is_some()
-            })
+    fn asset_at(&self, x: f64, y: f64) -> Option<PigouneAssetObject> {
+        let widget = self.imp().grid_view.pick(x, y, gtk::PickFlags::DEFAULT)?;
+        let tile = match widget.downcast::<PigouneAssetTile>() {
+            Ok(tile) => tile,
+            Err(widget) => widget
+                .ancestor(PigouneAssetTile::static_type())
+                .and_downcast::<PigouneAssetTile>()?,
+        };
+        tile.asset()
+    }
+
+    pub fn connect_context_menu_requested(&self, callback: impl Fn() -> gio::MenuModel + 'static) {
+        let callback = Rc::new(callback);
+        let click = gtk::GestureClick::builder()
+            .button(gdk::BUTTON_SECONDARY)
+            .build();
+        let on_click = Rc::clone(&callback);
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |gesture, _, x, y| {
+                if grid.show_context_menu(x, y, &*on_click) {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                }
+            }
+        ));
+        self.imp().grid_view.add_controller(click);
+
+        let long_press = gtk::GestureLongPress::new();
+        long_press.connect_pressed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |gesture, x, y| {
+                if grid.show_context_menu(x, y, &*callback) {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                }
+            }
+        ));
+        self.imp().grid_view.add_controller(long_press);
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "pointer coordinates inside the grid fit in an i32"
+    )]
+    fn show_context_menu(&self, x: f64, y: f64, menu_model: &dyn Fn() -> gio::MenuModel) -> bool {
+        let imp = self.imp();
+        let Some(asset) = self.asset_at(x, y) else {
+            return false;
+        };
+        let is_selected = self
+            .selected_assets()
+            .iter()
+            .any(|selected| selected.id() == asset.id());
+        if !is_selected {
+            self.select_asset(asset.id());
+        }
+        let Some(point) = imp.grid_view.compute_point(
+            &*imp.top_bar,
+            &gtk::graphene::Point::new(x as f32, y as f32),
+        ) else {
+            return false;
+        };
+        let menu = &imp.context_menu;
+        menu.set_menu_model(Some(&menu_model()));
+        menu.set_pointing_to(Some(&gdk::Rectangle::new(
+            point.x() as i32,
+            point.y() as i32,
+            1,
+            1,
+        )));
+        menu.popup();
+        true
     }
 
     fn make_draggable(&self, tile: &PigouneAssetTile) {

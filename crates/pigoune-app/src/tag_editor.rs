@@ -76,6 +76,10 @@ impl PigouneTagEditor {
         self.imp().on_removed.replace(Some(Box::new(callback)));
     }
 
+    pub fn focus_entry(&self) {
+        part(&self.imp().entry).grab_focus();
+    }
+
     pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
         let imp = self.imp();
         let chips = part(&imp.chips);

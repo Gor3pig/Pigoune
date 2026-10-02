@@ -13,7 +13,7 @@ template $PigouneAssetGrid: Adw.Bin {
     };
 
     [top]
-    Box {
+    Box top_bar {
       halign: end;
       spacing: 6;
       margin-start: 12;
@@ -61,6 +61,11 @@ template $PigouneAssetGrid: Adw.Bin {
         styles [
           "dim-label",
         ]
+      }
+
+      PopoverMenu context_menu {
+        has-arrow: false;
+        halign: start;
       }
     }
   };

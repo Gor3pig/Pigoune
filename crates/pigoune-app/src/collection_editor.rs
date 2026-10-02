@@ -71,6 +71,10 @@ impl PigouneCollectionEditor {
         self.imp().on_removed.replace(Some(Box::new(callback)));
     }
 
+    pub fn open_chooser(&self) {
+        part(&self.imp().add_button).popup();
+    }
+
     pub fn show_collections(&self, current: &[SharedCollection], all: Vec<CollectionPath>) {
         let imp = self.imp();
         let rows = part(&imp.rows);

@@ -264,9 +264,31 @@ impl PigouneAssetDetails {
         [imp.tag_editor.get(), imp.group_tag_editor.get()]
     }
 
+    pub fn focus_tag_entry(&self) {
+        let imp = self.imp();
+        if self.is_showing_group() {
+            imp.group_tag_editor.focus_entry();
+        } else {
+            imp.tag_editor.focus_entry();
+        }
+    }
+
+    pub fn open_collection_chooser(&self) {
+        let imp = self.imp();
+        if self.is_showing_group() {
+            imp.group_collection_editor.open_chooser();
+        } else {
+            imp.collection_editor.open_chooser();
+        }
+    }
+
+    fn is_showing_group(&self) -> bool {
+        self.imp().stack.visible_child_name().as_deref() == Some(GROUP_PAGE)
+    }
+
     pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
         let imp = self.imp();
-        if imp.stack.visible_child_name().as_deref() == Some(GROUP_PAGE) {
+        if self.is_showing_group() {
             imp.group_tag_editor.show_tags(current, all);
         } else {
             imp.tag_editor.show_tags(current, all);
@@ -283,7 +305,7 @@ impl PigouneAssetDetails {
 
     pub fn show_collections(&self, current: &[SharedCollection], all: Vec<CollectionPath>) {
         let imp = self.imp();
-        if imp.stack.visible_child_name().as_deref() == Some(GROUP_PAGE) {
+        if self.is_showing_group() {
             imp.group_collection_editor.show_collections(current, all);
         } else {
             imp.collection_editor.show_collections(current, all);

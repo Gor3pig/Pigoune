@@ -43,6 +43,11 @@ const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
 const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
 const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
+const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
+const RENAME_ASSET_ACTION: &str = "win.rename-asset";
+const ADD_TAG_ACTION: &str = "win.add-tag";
+const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
+const REMOVE_FROM_COLLECTION_ACTION: &str = "win.remove-from-collection";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const OPEN_LIBRARY_ACTIONS: [&str; 11] = [
     CLOSE_LIBRARY_ACTION,
@@ -94,11 +99,14 @@ mod imp {
     use crate::sidebar::PigouneSidebar;
 
     use super::{
-        CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, DELETE_TAG_ACTION, ENLARGE_THUMBNAILS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_FAVORITE_ACTION, collection_parameter, tag_parameter,
+        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION,
+        DELETE_TAG_ACTION, ENLARGE_THUMBNAILS_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
+        NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
+        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
+        RENAME_TAG_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, collection_parameter,
+        tag_parameter,
     };
+    use pigoune_core::CollectionCommand;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/window.ui")]
@@ -191,6 +199,35 @@ mod imp {
             class.install_action(TOGGLE_FAVORITE_ACTION, None, |window, _, _| {
                 window.toggle_favorite();
             });
+            class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
+                window.after_menu_closes(|window| window.open_preview(None));
+            });
+            class.install_action(RENAME_ASSET_ACTION, None, |window, _, _| {
+                window.after_menu_closes(super::PigouneWindow::start_renaming_selected);
+            });
+            class.install_action(ADD_TAG_ACTION, None, |window, _, _| {
+                window.after_menu_closes(|window| {
+                    window.imp().details_button.set_active(true);
+                    window.imp().asset_details.focus_tag_entry();
+                });
+            });
+            class.install_action(ADD_TO_COLLECTION_ACTION, None, |window, _, _| {
+                window.after_menu_closes(|window| {
+                    window.imp().details_button.set_active(true);
+                    window.imp().asset_details.open_collection_chooser();
+                });
+            });
+            class.install_action(
+                REMOVE_FROM_COLLECTION_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(collection) = collection_parameter(parameter) {
+                        window.change_selected_collections(|assets| {
+                            CollectionCommand::RemoveAssets { collection, assets }
+                        });
+                    }
+                },
+            );
             class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
                 window.ask_new_collection(None);
             });
@@ -537,16 +574,17 @@ impl PigouneWindow {
             self,
             move |asset, field, value| window.change_asset_text(asset, field, &value)
         ));
+        imp.asset_grid.connect_context_menu_requested(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or_else]
+            || gio::Menu::new().upcast(),
+            move || window.asset_menu()
+        ));
         imp.asset_grid.connect_rename_requested(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move || {
-                let imp = window.imp();
-                if imp.asset_grid.selected_asset().is_some() {
-                    imp.details_button.set_active(true);
-                    imp.asset_details.start_renaming();
-                }
-            }
+            move || window.start_renaming_selected()
         ));
         for editor in imp.asset_details.tag_editors() {
             editor.connect_added(glib::clone!(
@@ -576,6 +614,68 @@ impl PigouneWindow {
                 })
             ));
         }
+    }
+
+    fn start_renaming_selected(&self) {
+        let imp = self.imp();
+        if imp.asset_grid.selected_asset().is_some() {
+            imp.details_button.set_active(true);
+            imp.asset_details.start_renaming();
+        }
+    }
+
+    fn after_menu_closes(&self, action: impl FnOnce(&Self) + 'static) {
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || action(&window)
+        ));
+    }
+
+    fn asset_menu(&self) -> gio::MenuModel {
+        let imp = self.imp();
+        let selected = imp.asset_grid.selected_assets();
+        let viewing = gio::Menu::new();
+        viewing.append_item(&menu_item(
+            &gettext("Open Preview"),
+            OPEN_PREVIEW_ACTION,
+            Some("space"),
+        ));
+        if selected.len() == 1 {
+            viewing.append_item(&menu_item(
+                &gettext("Rename…"),
+                RENAME_ASSET_ACTION,
+                Some("F2"),
+            ));
+        }
+        let organizing = gio::Menu::new();
+        let favorite_label = if selected.iter().all(PigouneAssetObject::favorite) {
+            gettext("Remove from Favorites")
+        } else {
+            gettext("Add to Favorites")
+        };
+        organizing.append(Some(&favorite_label), Some(TOGGLE_FAVORITE_ACTION));
+        organizing.append(Some(&gettext("Add a Tag…")), Some(ADD_TAG_ACTION));
+        organizing.append(
+            Some(&gettext("Add to a Collection…")),
+            Some(ADD_TO_COLLECTION_ACTION),
+        );
+        if let AssetView::Collection(id) = imp.current_view.get() {
+            let name = self.collection_name(id).unwrap_or_default();
+            let item = gio::MenuItem::new(
+                Some(&gettext("Remove from the Collection “{name}”").replace("{name}", &name)),
+                None,
+            );
+            item.set_action_and_target_value(
+                Some(REMOVE_FROM_COLLECTION_ACTION),
+                Some(&id.to_string().to_variant()),
+            );
+            organizing.append_item(&item);
+        }
+        let menu = gio::Menu::new();
+        menu.append_section(None, &viewing);
+        menu.append_section(None, &organizing);
+        menu.upcast()
     }
 
     fn show_selection(&self, selected: &[PigouneAssetObject]) {
@@ -1678,6 +1778,14 @@ enum ImportTarget {
 
 fn collection_parameter(parameter: Option<&glib::Variant>) -> Option<CollectionId> {
     CollectionId::parse(&parameter?.get::<String>()?)
+}
+
+fn menu_item(label: &str, action: &str, accel: Option<&str>) -> gio::MenuItem {
+    let item = gio::MenuItem::new(Some(label), Some(action));
+    if let Some(accel) = accel {
+        item.set_attribute_value("accel", Some(&accel.to_variant()));
+    }
+    item
 }
 
 fn ancestors(library: &Library, parent: Option<CollectionId>) -> Vec<CollectionId> {
