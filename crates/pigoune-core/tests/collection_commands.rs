@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetId, CollectionCommand, CollectionError, CollectionId, DATABASE_FILE_NAME, ImportOutcome,
-    Library,
+    AssetId, AssetView, CollectionCommand, CollectionError, CollectionId, DATABASE_FILE_NAME,
+    ImportOutcome, Library,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -96,6 +96,18 @@ impl Fixture {
             .collect();
         ids.sort();
         ids
+    }
+
+    fn collections_of(&self, asset: AssetId) -> Vec<CollectionId> {
+        self.library
+            .collections_of(asset)
+            .expect("collections are read")
+    }
+
+    fn shows(&self, view: AssetView, asset: AssetId) -> bool {
+        self.library
+            .view_contains(view, asset)
+            .expect("view is read")
     }
 
     fn is_trashed(&self, asset: AssetId) -> bool {
@@ -449,4 +461,164 @@ fn a_refused_batch_changes_nothing() {
     ]));
 
     assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn resources_can_be_added_to_a_collection_and_the_addition_undone() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech", None);
+    let already_there = fixture.asset_in("red-dot.png", Some(tech));
+    let newcomer = fixture.asset_in("github-mark.svg", None);
+    let before = fixture.snapshot();
+
+    let undo = fixture.apply(&CollectionCommand::AddAssets {
+        collection: tech,
+        assets: vec![already_there, newcomer],
+    });
+
+    assert_eq!(fixture.collections_of(newcomer), [tech]);
+    assert_eq!(
+        undo,
+        CollectionCommand::RemoveAssets {
+            collection: tech,
+            assets: vec![newcomer],
+        }
+    );
+    fixture.apply(&undo);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn resources_can_be_removed_from_a_collection_and_the_removal_undone() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech", None);
+    let kept = fixture.collection("Gardée", None);
+    let inside = fixture.asset_in("red-dot.png", Some(tech));
+    fixture.also_in(inside, kept, "red-dot.png");
+    let outside = fixture.asset_in("github-mark.svg", None);
+    let before = fixture.snapshot();
+
+    let undo = fixture.apply(&CollectionCommand::RemoveAssets {
+        collection: tech,
+        assets: vec![inside, outside],
+    });
+
+    assert_eq!(fixture.collections_of(inside), [kept]);
+    assert!(!fixture.is_trashed(inside));
+    assert_eq!(
+        undo,
+        CollectionCommand::AddAssets {
+            collection: tech,
+            assets: vec![inside],
+        }
+    );
+    fixture.apply(&undo);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn a_trashed_collection_or_resource_cannot_be_linked() {
+    let mut fixture = Fixture::new();
+    let gone = fixture.collection("Partie", None);
+    let tech = fixture.collection("Tech", None);
+    let asset = fixture.asset_in("red-dot.png", None);
+    let trashed = fixture.asset_in("github-mark.svg", None);
+    fixture.apply(&CollectionCommand::Trash { id: gone });
+    fixture.apply(&CollectionCommand::SetTrashed {
+        collections: vec![],
+        assets: vec![trashed],
+        trashed: true,
+    });
+    let before = fixture.snapshot();
+
+    for command in [
+        CollectionCommand::AddAssets {
+            collection: gone,
+            assets: vec![asset],
+        },
+        CollectionCommand::RemoveAssets {
+            collection: gone,
+            assets: vec![asset],
+        },
+    ] {
+        let refused = fixture.refused(&command);
+        assert!(
+            matches!(refused, CollectionError::NotFound(id) if id == gone),
+            "{refused:?}"
+        );
+    }
+    let refused = fixture.refused(&CollectionCommand::AddAssets {
+        collection: tech,
+        assets: vec![asset, trashed],
+    });
+    assert!(
+        matches!(refused, CollectionError::AssetNotFound(id) if id == trashed),
+        "{refused:?}"
+    );
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn the_collections_of_a_resource_leave_out_trashed_ones() {
+    let mut fixture = Fixture::new();
+    let gone = fixture.collection("Partie", None);
+    let kept = fixture.collection("Gardée", None);
+    let asset = fixture.asset_in("red-dot.png", Some(gone));
+    fixture.also_in(asset, kept, "red-dot.png");
+
+    fixture.apply(&CollectionCommand::Trash { id: gone });
+
+    assert_eq!(fixture.collections_of(asset), [kept]);
+}
+
+#[test]
+fn collection_paths_start_from_the_root_and_follow_alphabetical_order() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Marques", None);
+    let tech = fixture.collection("tech", Some(brands));
+    let audio = fixture.collection("Audio", Some(brands));
+    let icons = fixture.collection("Icônes", None);
+    let gone = fixture.collection("Partie", None);
+    fixture.apply(&CollectionCommand::Trash { id: gone });
+
+    let paths: Vec<(CollectionId, Vec<String>)> = fixture
+        .library
+        .collection_paths()
+        .expect("paths are read")
+        .into_iter()
+        .map(|path| (path.id, path.names))
+        .collect();
+
+    let names = |list: &[&str]| list.iter().map(|name| (*name).to_owned()).collect();
+    assert_eq!(
+        paths,
+        [
+            (icons, names(&["Icônes"])),
+            (brands, names(&["Marques"])),
+            (audio, names(&["Marques", "Audio"])),
+            (tech, names(&["Marques", "tech"])),
+        ]
+    );
+}
+
+#[test]
+fn a_view_tells_whether_it_still_shows_a_resource() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Marques", None);
+    let tech = fixture.collection("Tech", Some(brands));
+    let asset = fixture.asset_in("red-dot.png", None);
+
+    assert!(fixture.shows(AssetView::Unclassified, asset));
+    assert!(!fixture.shows(AssetView::Collection(brands), asset));
+
+    fixture.apply(&CollectionCommand::AddAssets {
+        collection: tech,
+        assets: vec![asset],
+    });
+
+    assert!(!fixture.shows(AssetView::Unclassified, asset));
+    assert!(fixture.shows(AssetView::Collection(brands), asset));
+    assert!(fixture.shows(AssetView::Collection(tech), asset));
+    assert!(fixture.shows(AssetView::All, asset));
+    assert!(!fixture.shows(AssetView::Favorites, asset));
 }

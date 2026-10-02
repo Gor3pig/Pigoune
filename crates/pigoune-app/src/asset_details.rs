@@ -4,11 +4,12 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, glib};
-use pigoune_core::{Tag, TextField};
+use pigoune_core::{CollectionPath, Tag, TextField};
 
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::collection_editor::{PigouneCollectionEditor, SharedCollection};
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -44,6 +45,7 @@ mod imp {
 
     use super::{RenamedCallback, TextChangedCallback};
     use crate::asset_object::PigouneAssetObject;
+    use crate::collection_editor::PigouneCollectionEditor;
     use crate::tag_editor::PigouneTagEditor;
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -80,6 +82,10 @@ mod imp {
         pub group_favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub group_tag_editor: TemplateChild<PigouneTagEditor>,
+        #[template_child]
+        pub collection_editor: TemplateChild<PigouneCollectionEditor>,
+        #[template_child]
+        pub group_collection_editor: TemplateChild<PigouneCollectionEditor>,
         pub favorite_bindings: RefCell<Vec<glib::Binding>>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
@@ -106,6 +112,7 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             PigouneTagEditor::ensure_type();
+            PigouneCollectionEditor::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
         }
@@ -263,6 +270,23 @@ impl PigouneAssetDetails {
             imp.group_tag_editor.show_tags(current, all);
         } else {
             imp.tag_editor.show_tags(current, all);
+        }
+    }
+
+    pub fn collection_editors(&self) -> [PigouneCollectionEditor; 2] {
+        let imp = self.imp();
+        [
+            imp.collection_editor.get(),
+            imp.group_collection_editor.get(),
+        ]
+    }
+
+    pub fn show_collections(&self, current: &[SharedCollection], all: Vec<CollectionPath>) {
+        let imp = self.imp();
+        if imp.stack.visible_child_name().as_deref() == Some(GROUP_PAGE) {
+            imp.group_collection_editor.show_collections(current, all);
+        } else {
+            imp.collection_editor.show_collections(current, all);
         }
     }
 

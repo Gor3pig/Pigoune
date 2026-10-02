@@ -4,7 +4,7 @@ use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
 use crate::media::{AssetFormat, Dimensions};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
-use rusqlite::{OptionalExtension, Row};
+use rusqlite::{OptionalExtension, Row, params};
 
 const EMBEDDED_SIZES_SEPARATOR: char = ',';
 const ASSET_COLUMNS: &str =
@@ -60,6 +60,22 @@ impl Library {
             .query_map([collection], asset_from_row)?
             .collect::<Result<_, _>>()?;
         Ok(assets)
+    }
+
+    pub fn view_contains(&self, view: AssetView, asset: AssetId) -> Result<bool, LibraryError> {
+        let (condition, collection) = view::condition(view);
+        Ok(self
+            .connection
+            .query_row(
+                &format!(
+                    "{SUBTREE} SELECT 1 FROM assets
+                     WHERE id = ?2 AND trashed_at_unix_ms IS NULL AND ({condition})"
+                ),
+                params![collection, asset],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some())
     }
 
     #[must_use]

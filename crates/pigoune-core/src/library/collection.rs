@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::{AssetId, CollectionError, CollectionId, Library, LibraryError, clock};
@@ -9,6 +11,12 @@ pub struct Collection {
     pub parent: Option<CollectionId>,
     pub position: i64,
     pub created_at_unix_ms: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CollectionPath {
+    pub id: CollectionId,
+    pub names: Vec<String>,
 }
 
 const COLLECTION_COLUMNS: &str = "id, name, parent_id, position, created_at_unix_ms";
@@ -55,14 +63,52 @@ impl Library {
 
     pub fn collections_of(&self, asset: AssetId) -> Result<Vec<CollectionId>, LibraryError> {
         let mut statement = self.connection.prepare(
-            "SELECT collection_id FROM asset_collections
-             WHERE asset_id = ?1 ORDER BY collection_id",
+            "SELECT asset_collections.collection_id FROM asset_collections
+             JOIN collections ON collections.id = asset_collections.collection_id
+             WHERE asset_collections.asset_id = ?1 AND collections.trashed_at_unix_ms IS NULL
+             ORDER BY asset_collections.collection_id",
         )?;
         let ids = statement
             .query_map([asset], |row| row.get(0))?
             .collect::<Result<_, _>>()?;
         Ok(ids)
     }
+
+    pub fn collection_paths(&self) -> Result<Vec<CollectionPath>, LibraryError> {
+        let collections = self.visible_collections()?;
+        let by_id: HashMap<CollectionId, &Collection> = collections
+            .iter()
+            .map(|collection| (collection.id, collection))
+            .collect();
+        let mut paths: Vec<CollectionPath> = collections
+            .iter()
+            .map(|collection| CollectionPath {
+                id: collection.id,
+                names: names_from_root(collection, &by_id),
+            })
+            .collect();
+        paths.sort_by_cached_key(|path| {
+            path.names
+                .iter()
+                .map(|name| comparable_name(name))
+                .collect::<Vec<_>>()
+        });
+        Ok(paths)
+    }
+}
+
+fn names_from_root(
+    collection: &Collection,
+    by_id: &HashMap<CollectionId, &Collection>,
+) -> Vec<String> {
+    let mut names = vec![collection.name.clone()];
+    let mut parent = collection.parent;
+    while let Some(ancestor) = parent.and_then(|id| by_id.get(&id)) {
+        names.push(ancestor.name.clone());
+        parent = ancestor.parent;
+    }
+    names.reverse();
+    names
 }
 
 pub fn is_usable_collection(

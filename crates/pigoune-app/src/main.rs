@@ -8,6 +8,8 @@ mod asset_preview;
 mod asset_sort;
 mod asset_tile;
 mod background_import;
+mod collection_choice;
+mod collection_editor;
 mod collection_name_dialog;
 mod collection_sort;
 mod config;

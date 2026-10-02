@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, OptionalExtension, params};
 
 use super::collection::{self, ensure_name_is_free, is_usable_collection, valid_name};
 use super::{AssetId, CollectionError, CollectionId, Library, LibraryError, clock};
@@ -26,6 +26,14 @@ pub enum CollectionCommand {
         collections: Vec<CollectionId>,
         assets: Vec<AssetId>,
         trashed: bool,
+    },
+    AddAssets {
+        collection: CollectionId,
+        assets: Vec<AssetId>,
+    },
+    RemoveAssets {
+        collection: CollectionId,
+        assets: Vec<AssetId>,
     },
     Batch(Vec<CollectionCommand>),
 }
@@ -63,6 +71,12 @@ fn apply(
             assets,
             trashed,
         } => set_trashed(connection, collections, assets, *trashed),
+        CollectionCommand::AddAssets { collection, assets } => {
+            add_assets(connection, *collection, assets)
+        }
+        CollectionCommand::RemoveAssets { collection, assets } => {
+            remove_assets(connection, *collection, assets)
+        }
         CollectionCommand::Batch(commands) => {
             let mut inverses = commands
                 .iter()
@@ -176,6 +190,62 @@ fn set_trashed(
         assets: assets.to_vec(),
         trashed: !trashed,
     })
+}
+
+fn add_assets(
+    connection: &Connection,
+    collection: CollectionId,
+    assets: &[AssetId],
+) -> Result<CollectionCommand, CollectionError> {
+    usable(connection, collection)?;
+    let mut added = Vec::new();
+    for asset in assets {
+        ensure_asset_is_visible(connection, *asset)?;
+        let changed = connection.execute(
+            "INSERT OR IGNORE INTO asset_collections (asset_id, collection_id) VALUES (?1, ?2)",
+            params![asset, collection],
+        )?;
+        if changed > 0 {
+            added.push(*asset);
+        }
+    }
+    Ok(CollectionCommand::RemoveAssets {
+        collection,
+        assets: added,
+    })
+}
+
+fn remove_assets(
+    connection: &Connection,
+    collection: CollectionId,
+    assets: &[AssetId],
+) -> Result<CollectionCommand, CollectionError> {
+    usable(connection, collection)?;
+    let mut removed = Vec::new();
+    for asset in assets {
+        let changed = connection.execute(
+            "DELETE FROM asset_collections WHERE asset_id = ?1 AND collection_id = ?2",
+            params![asset, collection],
+        )?;
+        if changed > 0 {
+            removed.push(*asset);
+        }
+    }
+    Ok(CollectionCommand::AddAssets {
+        collection,
+        assets: removed,
+    })
+}
+
+fn ensure_asset_is_visible(connection: &Connection, asset: AssetId) -> Result<(), CollectionError> {
+    connection
+        .query_row(
+            "SELECT 1 FROM assets WHERE id = ?1 AND trashed_at_unix_ms IS NULL",
+            [asset],
+            |_| Ok(()),
+        )
+        .optional()?
+        .ok_or(CollectionError::AssetNotFound(asset))
 }
 
 fn usable(

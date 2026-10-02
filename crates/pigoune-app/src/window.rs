@@ -11,6 +11,7 @@ use pigoune_core::{
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::collection_editor::SharedCollection;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::error_messages;
@@ -548,6 +549,22 @@ impl PigouneWindow {
                 move |tag| window.remove_tag_from_selected(tag)
             ));
         }
+        for editor in imp.asset_details.collection_editors() {
+            editor.connect_added(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |collection| window.change_selected_collections(|assets| {
+                    CollectionCommand::AddAssets { collection, assets }
+                })
+            ));
+            editor.connect_removed(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |collection| window.change_selected_collections(|assets| {
+                    CollectionCommand::RemoveAssets { collection, assets }
+                })
+            ));
+        }
     }
 
     fn show_selection(&self, selected: &[PigouneAssetObject]) {
@@ -559,6 +576,7 @@ impl PigouneWindow {
             several => imp.asset_details.show_group(several),
         }
         self.refresh_selected_tags();
+        self.refresh_selected_collections();
     }
 
     fn selected_ids(&self) -> Vec<AssetId> {
@@ -688,6 +706,101 @@ impl PigouneWindow {
             if imp.asset_grid.is_empty() {
                 self.refresh_grid();
             }
+        }
+    }
+
+    fn refresh_selected_collections(&self) {
+        let imp = self.imp();
+        let selected = self.selected_ids();
+        if selected.is_empty() {
+            return;
+        }
+        let read = imp.library.borrow().as_ref().map(|library| {
+            let mut held: Vec<(CollectionId, usize)> = Vec::new();
+            for asset in &selected {
+                for collection in library.collections_of(*asset)? {
+                    match held.iter_mut().find(|(known, _)| *known == collection) {
+                        Some((_, count)) => *count += 1,
+                        None => held.push((collection, 1)),
+                    }
+                }
+            }
+            Ok::<_, LibraryError>((held, library.collection_paths()?))
+        });
+        if let Some(Ok((held, mut all))) = read {
+            all.sort_by_cached_key(|path| {
+                path.names
+                    .iter()
+                    .map(|name| glib::FilenameCollationKey::from(name.as_str()))
+                    .collect::<Vec<_>>()
+            });
+            let shared: Vec<SharedCollection> = all
+                .iter()
+                .filter_map(|path| {
+                    let (_, held_by) = held.iter().find(|(id, _)| *id == path.id)?;
+                    Some(SharedCollection {
+                        path: path.clone(),
+                        held_by: *held_by,
+                        out_of: selected.len(),
+                    })
+                })
+                .collect();
+            imp.asset_details.show_collections(&shared, all);
+        }
+    }
+
+    fn change_selected_collections(&self, command: impl FnOnce(Vec<AssetId>) -> CollectionCommand) {
+        let imp = self.imp();
+        let selected = self.selected_ids();
+        if selected.is_empty() {
+            return;
+        }
+        let command = command(selected.clone());
+        let applied = imp
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.apply_collection_command(&command));
+        match applied {
+            Some(Ok(_)) => {}
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Change the Collections")),
+                    Some(&error_messages::describe_collection(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+                return;
+            }
+            None => return,
+        }
+        self.refresh_sidebar();
+        self.drop_assets_leaving_view(&selected);
+    }
+
+    fn drop_assets_leaving_view(&self, assets: &[AssetId]) {
+        let imp = self.imp();
+        let view = imp.current_view.get();
+        let leaving: Vec<AssetId> = imp
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| {
+                assets
+                    .iter()
+                    .copied()
+                    .filter(|asset| !library.view_contains(view, *asset).unwrap_or(true))
+                    .collect()
+            })
+            .unwrap_or_default();
+        if leaving.is_empty() {
+            return;
+        }
+        for asset in leaving {
+            imp.asset_grid.remove_asset(asset);
+        }
+        if imp.asset_grid.is_empty() {
+            self.refresh_grid();
         }
     }
 
@@ -968,6 +1081,7 @@ impl PigouneWindow {
             reveal,
             tags,
         });
+        self.refresh_selected_collections();
     }
 
     fn ask_new_collection(&self, parent: Option<CollectionId>) {

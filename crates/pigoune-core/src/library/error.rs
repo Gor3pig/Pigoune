@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use rusqlite::ErrorCode;
 
-use super::CollectionId;
+use super::{AssetId, CollectionId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum LibraryError {
@@ -57,6 +57,8 @@ pub enum CollectionError {
     WouldContainItself,
     #[error("the collections to arrange no longer match the library")]
     OutdatedOrder,
+    #[error("the resource {0} does not exist")]
+    AssetNotFound(AssetId),
     #[error(transparent)]
     Library(#[from] LibraryError),
 }

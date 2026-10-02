@@ -45,6 +45,7 @@ pub fn describe_collection(error: &CollectionError) -> String {
         CollectionError::OutdatedOrder => {
             gettext("The collections changed in the meantime. Please try again.")
         }
+        CollectionError::AssetNotFound(_) => gettext("This resource no longer exists."),
         CollectionError::Library(error) => describe(error),
     }
 }
