@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 08:23+0200\n"
+"POT-Creation-Date: 2026-10-02 08:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -219,7 +219,7 @@ msgid ""
 msgstr ""
 
 #: crates/pigoune-app/src/error_messages.rs:30
-#: crates/pigoune-app/src/import_report.rs:148
+#: crates/pigoune-app/src/import_report.rs:157
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr ""
@@ -263,9 +263,9 @@ msgid "Unable to Open “{name}”"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:428
-#: crates/pigoune-app/src/import_report.rs:39
-#: crates/pigoune-app/src/import_report.rs:51
-#: crates/pigoune-app/src/import_report.rs:62
+#: crates/pigoune-app/src/import_report.rs:40
+#: crates/pigoune-app/src/import_report.rs:52
+#: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr ""
 
@@ -296,55 +296,55 @@ msgstr[1] ""
 msgid "Cancelling…"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:21
+#: crates/pigoune-app/src/import_report.rs:22
 msgid "No images to import were found"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:31
+#: crates/pigoune-app/src/import_report.rs:32
 msgid "Nothing was imported."
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:48
+#: crates/pigoune-app/src/import_report.rs:49
 msgid "Unable to Import"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:57
+#: crates/pigoune-app/src/import_report.rs:58
 msgid "Import Stopped Unexpectedly"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:59
+#: crates/pigoune-app/src/import_report.rs:60
 msgid ""
 "The library was closed as a precaution. Open it again: everything imported "
 "so far is safe."
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:68
+#: crates/pigoune-app/src/import_report.rs:69
 msgid "Import Finished"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:69
+#: crates/pigoune-app/src/import_report.rs:70
 msgid "Import Cancelled"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:70
+#: crates/pigoune-app/src/import_report.rs:71
 msgid "Import Interrupted"
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:79
+#: crates/pigoune-app/src/import_report.rs:80
 #, rust-format
 msgid "{count} resource imported"
 msgid_plural "{count} resources imported"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/import_report.rs:87
+#: crates/pigoune-app/src/import_report.rs:88
 #, rust-format
 msgid "{count} resource already in the library"
 msgid_plural "{count} resources already in the library"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/import_report.rs:95
+#: crates/pigoune-app/src/import_report.rs:96
 #, rust-format
 msgid "{count} resource already in the library, added to its collection"
 msgid_plural ""
@@ -352,31 +352,42 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/import_report.rs:103
+#: crates/pigoune-app/src/import_report.rs:104
 #, rust-format
 msgid "{count} resource restored from the trash"
 msgid_plural "{count} resources restored from the trash"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/import_report.rs:121
+#: crates/pigoune-app/src/import_report.rs:122
+#, rust-format
+msgid ""
+"{count} large resource imported (over 50 MB): it takes up more disk space "
+"and its preview may take longer to appear"
+msgid_plural ""
+"{count} large resources imported (over 50 MB): they take up more disk space "
+"and their previews may take longer to appear"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:130
 #, rust-format
 msgid "{count} file ignored: not a supported image format"
 msgid_plural "{count} files ignored: not a supported image format"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/import_report.rs:129
+#: crates/pigoune-app/src/import_report.rs:138
 #, rust-format
 msgid "{count} file ignored: damaged or unreadable image"
 msgid_plural "{count} files ignored: damaged or unreadable images"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/import_report.rs:145
+#: crates/pigoune-app/src/import_report.rs:154
 msgid "The destination collection no longer exists."
 msgstr ""
 
-#: crates/pigoune-app/src/import_report.rs:172
+#: crates/pigoune-app/src/import_report.rs:181
 msgid "Show Unreadable Files"
 msgstr ""

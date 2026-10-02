@@ -11,6 +11,7 @@ const UNREADABLE_LIST_HEIGHT: i32 = 160;
 
 pub fn needs_attention(summary: &ImportSummary) -> bool {
     summary.unsupported > 0
+        || summary.large_imported > 0
         || !summary.unreadable.is_empty()
         || !matches!(summary.ending, ImportEnding::Completed)
 }
@@ -115,6 +116,14 @@ fn outcome_lines(summary: &ImportSummary) -> Vec<String> {
 fn problem_lines(summary: &ImportSummary) -> Vec<String> {
     let unreadable = summary.unreadable.len();
     [
+        (
+            summary.large_imported,
+            ngettext(
+                "{count} large resource imported (over 50 MB): it takes up more disk space and its preview may take longer to appear",
+                "{count} large resources imported (over 50 MB): they take up more disk space and their previews may take longer to appear",
+                count_for_plural(summary.large_imported),
+            ),
+        ),
         (
             summary.unsupported,
             ngettext(

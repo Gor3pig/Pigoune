@@ -7,6 +7,8 @@ use super::import::{self, ImportOutcome};
 use super::import_plan::{ImportPlan, PlannedFile};
 use super::{AssetId, CollectionId, ImportError, Library, LibraryError, collection};
 
+pub const LARGE_FILE_BYTES: u64 = 50_000_000;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ImportProgress {
     pub done: usize,
@@ -30,6 +32,7 @@ pub enum ImportEnding {
 #[derive(Debug, Default)]
 pub struct ImportSummary {
     pub imported: Vec<AssetId>,
+    pub large_imported: usize,
     pub already_present: usize,
     pub added_to_collection: usize,
     pub restored_from_trash: usize,
@@ -39,12 +42,17 @@ pub struct ImportSummary {
 }
 
 impl ImportSummary {
-    fn record(&mut self, result: Result<ImportOutcome, ImportError>) -> Option<ImportError> {
+    fn record(&mut self, result: Result<(ImportOutcome, u64), ImportError>) -> Option<ImportError> {
         match result {
-            Ok(ImportOutcome::Imported(id)) => self.imported.push(id),
-            Ok(ImportOutcome::AlreadyPresent(_)) => self.already_present += 1,
-            Ok(ImportOutcome::AddedToCollection(_)) => self.added_to_collection += 1,
-            Ok(ImportOutcome::RestoredFromTrash(_)) => self.restored_from_trash += 1,
+            Ok((ImportOutcome::Imported(id), byte_size)) => {
+                self.imported.push(id);
+                if byte_size > LARGE_FILE_BYTES {
+                    self.large_imported += 1;
+                }
+            }
+            Ok((ImportOutcome::AlreadyPresent(_), _)) => self.already_present += 1,
+            Ok((ImportOutcome::AddedToCollection(_), _)) => self.added_to_collection += 1,
+            Ok((ImportOutcome::RestoredFromTrash(_), _)) => self.restored_from_trash += 1,
             Err(ImportError::UnsupportedFormat(_)) => self.unsupported += 1,
             Err(ImportError::Unreadable(path)) => self.unreadable.push(path),
             Err(serious) => return Some(serious),
@@ -96,11 +104,12 @@ impl Library {
         &mut self,
         file: &PlannedFile,
         folders: &mut FolderCollections,
-    ) -> Result<ImportOutcome, ImportError> {
+    ) -> Result<(ImportOutcome, u64), ImportError> {
         let prepared = import::prepare(&file.source)?;
-        self.store_prepared(&prepared, |connection| {
+        let outcome = self.store_prepared(&prepared, |connection| {
             folders.resolve(connection, &file.folders)
-        })
+        })?;
+        Ok((outcome, prepared.byte_size()))
     }
 }
 

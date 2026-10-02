@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 08:23+0200\n"
+"POT-Creation-Date: 2026-10-02 08:31+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -96,7 +96,9 @@ msgstr "Importer"
 
 #: crates/pigoune-app/ui/window.blp:39
 msgid "Images are copied into the library. The originals are not modified."
-msgstr "Les images sont copiées dans la bibliothèque. Les originaux ne sont pas modifiés."
+msgstr ""
+"Les images sont copiées dans la bibliothèque. Les originaux ne sont pas "
+"modifiés."
 
 #: crates/pigoune-app/ui/window.blp:55
 msgid "Welcome to Pigoune"
@@ -231,7 +233,7 @@ msgstr ""
 "dossier « files »."
 
 #: crates/pigoune-app/src/error_messages.rs:30
-#: crates/pigoune-app/src/import_report.rs:148
+#: crates/pigoune-app/src/import_report.rs:157
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr "Une erreur inattendue s'est produite : {error}"
@@ -275,9 +277,9 @@ msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
 #: crates/pigoune-app/src/window.rs:428
-#: crates/pigoune-app/src/import_report.rs:39
-#: crates/pigoune-app/src/import_report.rs:51
-#: crates/pigoune-app/src/import_report.rs:62
+#: crates/pigoune-app/src/import_report.rs:40
+#: crates/pigoune-app/src/import_report.rs:52
+#: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr "_Fermer"
 
@@ -308,23 +310,23 @@ msgstr[1] "{done} fichiers traités sur {total}"
 msgid "Cancelling…"
 msgstr "Annulation…"
 
-#: crates/pigoune-app/src/import_report.rs:21
+#: crates/pigoune-app/src/import_report.rs:22
 msgid "No images to import were found"
 msgstr "Aucune image à importer n’a été trouvée"
 
-#: crates/pigoune-app/src/import_report.rs:31
+#: crates/pigoune-app/src/import_report.rs:32
 msgid "Nothing was imported."
 msgstr "Rien n’a été importé."
 
-#: crates/pigoune-app/src/import_report.rs:48
+#: crates/pigoune-app/src/import_report.rs:49
 msgid "Unable to Import"
 msgstr "Impossible d’importer"
 
-#: crates/pigoune-app/src/import_report.rs:57
+#: crates/pigoune-app/src/import_report.rs:58
 msgid "Import Stopped Unexpectedly"
 msgstr "L’import s’est arrêté de façon inattendue"
 
-#: crates/pigoune-app/src/import_report.rs:59
+#: crates/pigoune-app/src/import_report.rs:60
 msgid ""
 "The library was closed as a precaution. Open it again: everything imported "
 "so far is safe."
@@ -332,33 +334,33 @@ msgstr ""
 "La bibliothèque a été fermée par précaution. Rouvrez-la : tout ce qui a déjà "
 "été importé est en sécurité."
 
-#: crates/pigoune-app/src/import_report.rs:68
+#: crates/pigoune-app/src/import_report.rs:69
 msgid "Import Finished"
 msgstr "Import terminé"
 
-#: crates/pigoune-app/src/import_report.rs:69
+#: crates/pigoune-app/src/import_report.rs:70
 msgid "Import Cancelled"
 msgstr "Import annulé"
 
-#: crates/pigoune-app/src/import_report.rs:70
+#: crates/pigoune-app/src/import_report.rs:71
 msgid "Import Interrupted"
 msgstr "Import interrompu"
 
-#: crates/pigoune-app/src/import_report.rs:79
+#: crates/pigoune-app/src/import_report.rs:80
 #, rust-format
 msgid "{count} resource imported"
 msgid_plural "{count} resources imported"
 msgstr[0] "{count} ressource importée"
 msgstr[1] "{count} ressources importées"
 
-#: crates/pigoune-app/src/import_report.rs:87
+#: crates/pigoune-app/src/import_report.rs:88
 #, rust-format
 msgid "{count} resource already in the library"
 msgid_plural "{count} resources already in the library"
 msgstr[0] "{count} ressource déjà présente dans la bibliothèque"
 msgstr[1] "{count} ressources déjà présentes dans la bibliothèque"
 
-#: crates/pigoune-app/src/import_report.rs:95
+#: crates/pigoune-app/src/import_report.rs:96
 #, rust-format
 msgid "{count} resource already in the library, added to its collection"
 msgid_plural ""
@@ -369,14 +371,31 @@ msgstr[1] ""
 "{count} ressources déjà présentes dans la bibliothèque, ajoutées à leurs "
 "collections"
 
-#: crates/pigoune-app/src/import_report.rs:103
+#: crates/pigoune-app/src/import_report.rs:104
 #, rust-format
 msgid "{count} resource restored from the trash"
 msgid_plural "{count} resources restored from the trash"
 msgstr[0] "{count} ressource sortie de la corbeille"
 msgstr[1] "{count} ressources sorties de la corbeille"
 
-#: crates/pigoune-app/src/import_report.rs:121
+#: crates/pigoune-app/src/import_report.rs:122
+#, rust-format
+msgid ""
+"{count} large resource imported (over 50 MB): it takes up more disk space "
+"and its preview may take longer to appear"
+msgid_plural ""
+"{count} large resources imported (over 50 MB): they take up more disk space "
+"and their previews may take longer to appear"
+msgstr[0] ""
+"{count} ressource volumineuse importée (plus de 50 Mo) : elle occupe "
+"davantage de place sur le disque et son aperçu pourra mettre plus de temps "
+"à s’afficher"
+msgstr[1] ""
+"{count} ressources volumineuses importées (plus de 50 Mo) : elles occupent "
+"davantage de place sur le disque et leurs aperçus pourront mettre plus de "
+"temps à s’afficher"
+
+#: crates/pigoune-app/src/import_report.rs:130
 #, rust-format
 msgid "{count} file ignored: not a supported image format"
 msgid_plural "{count} files ignored: not a supported image format"
@@ -385,17 +404,17 @@ msgstr[0] ""
 msgstr[1] ""
 "{count} fichiers ignorés : ce n’est pas un format d’image pris en charge"
 
-#: crates/pigoune-app/src/import_report.rs:129
+#: crates/pigoune-app/src/import_report.rs:138
 #, rust-format
 msgid "{count} file ignored: damaged or unreadable image"
 msgid_plural "{count} files ignored: damaged or unreadable images"
 msgstr[0] "{count} fichier ignoré : image abîmée ou illisible"
 msgstr[1] "{count} fichiers ignorés : images abîmées ou illisibles"
 
-#: crates/pigoune-app/src/import_report.rs:145
+#: crates/pigoune-app/src/import_report.rs:154
 msgid "The destination collection no longer exists."
 msgstr "La collection de destination n’existe plus."
 
-#: crates/pigoune-app/src/import_report.rs:172
+#: crates/pigoune-app/src/import_report.rs:181
 msgid "Show Unreadable Files"
 msgstr "Afficher les fichiers illisibles"

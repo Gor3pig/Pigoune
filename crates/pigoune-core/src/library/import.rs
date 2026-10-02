@@ -24,6 +24,12 @@ pub(super) struct PreparedFile {
     digest: ContentDigest,
 }
 
+impl PreparedFile {
+    pub(super) fn byte_size(&self) -> u64 {
+        self.digest.byte_size
+    }
+}
+
 impl Library {
     pub fn import_file(
         &mut self,

@@ -20,7 +20,9 @@ use uuid::Uuid;
 use staging::StagingDir;
 
 pub use asset::Asset;
-pub use batch_import::{ImportControl, ImportEnding, ImportProgress, ImportSummary};
+pub use batch_import::{
+    ImportControl, ImportEnding, ImportProgress, ImportSummary, LARGE_FILE_BYTES,
+};
 pub use collection::Collection;
 pub use error::{CollectionError, ImportError, LibraryError};
 pub use id::{AssetId, CollectionId};

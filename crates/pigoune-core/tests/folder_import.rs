@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use pigoune_core::{
     CollectionId, DATABASE_FILE_NAME, FILES_DIR_NAME, ImportControl, ImportEnding, ImportError,
-    ImportProgress, ImportSummary, Library, LibraryError,
+    ImportProgress, ImportSummary, LARGE_FILE_BYTES, Library, LibraryError,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -380,4 +380,30 @@ fn importing_into_a_missing_collection_is_refused_before_starting() {
         "{result:?}"
     );
     assert!(fixture.placements().is_empty());
+}
+
+#[test]
+fn only_newly_copied_files_over_50_mb_are_reported_as_large() {
+    let mut fixture = Fixture::new();
+    let padded_png = |name: &str, length: u64| {
+        let path = fixture.sample(name, "red-dot.png");
+        let file = fs::OpenOptions::new()
+            .write(true)
+            .open(&path)
+            .expect("sample opens");
+        file.set_len(length).expect("sample padded");
+        path
+    };
+    let at_limit = padded_png("Lourds/at-limit.png", LARGE_FILE_BYTES);
+    let over_limit = padded_png("Lourds/over-limit.png", LARGE_FILE_BYTES + 1);
+    fixture.sample("Lourds/small.gif", "spinner.gif");
+
+    let first = fixture.import(&[fixture.sources.join("Lourds")], None);
+    let again = fixture.import(&[at_limit, over_limit], None);
+
+    assert_completed(&first);
+    assert_eq!(first.imported.len(), 3);
+    assert_eq!(first.large_imported, 1);
+    assert_eq!(again.already_present, 2);
+    assert_eq!(again.large_imported, 0);
 }
