@@ -23,7 +23,6 @@ mod imp {
     use super::{DEFAULT_TILE_SIZE, LARGEST_TILE_SIZE, SMALLEST_TILE_SIZE};
     use crate::asset_object::PigouneAssetObject;
     use crate::asset_sort::{SortCriterion, SortOrder};
-    use crate::settings::BAR_AT_BOTTOM;
     use crate::thumbnails::ThumbnailCache;
 
     #[derive(gtk::CompositeTemplate, glib::Properties)]
@@ -35,21 +34,19 @@ mod imp {
         #[template_child]
         pub grid_view: TemplateChild<gtk::GridView>,
         #[template_child]
-        pub toolbar_view: TemplateChild<adw::ToolbarView>,
+        pub grid_box: TemplateChild<gtk::Box>,
         #[template_child]
-        pub display_bar: TemplateChild<gtk::Box>,
+        pub content_stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub nothing_page: TemplateChild<adw::StatusPage>,
         #[template_child]
         pub context_menu: TemplateChild<gtk::PopoverMenu>,
-        #[template_child]
-        pub size_adjustment: TemplateChild<gtk::Adjustment>,
         #[property(get, set = Self::set_tile_size, minimum = SMALLEST_TILE_SIZE, maximum = LARGEST_TILE_SIZE, default = DEFAULT_TILE_SIZE)]
         pub tile_size: Cell<i32>,
         #[property(get, set = Self::set_sort_criterion)]
         pub sort_criterion: RefCell<String>,
         #[property(get, set = Self::set_sort_reversed)]
         pub sort_reversed: Cell<bool>,
-        #[property(get, set = Self::set_bar_position)]
-        pub bar_position: RefCell<String>,
         pub sort_order: Rc<Cell<SortOrder>>,
         pub sorter: RefCell<Option<gtk::CustomSorter>>,
         pub assets: gio::ListStore,
@@ -61,14 +58,13 @@ mod imp {
             Self {
                 scrolled_window: TemplateChild::default(),
                 grid_view: TemplateChild::default(),
-                toolbar_view: TemplateChild::default(),
-                display_bar: TemplateChild::default(),
+                grid_box: TemplateChild::default(),
+                content_stack: TemplateChild::default(),
+                nothing_page: TemplateChild::default(),
                 context_menu: TemplateChild::default(),
-                size_adjustment: TemplateChild::default(),
                 tile_size: Cell::new(DEFAULT_TILE_SIZE),
                 sort_criterion: RefCell::default(),
                 sort_reversed: Cell::default(),
-                bar_position: RefCell::default(),
                 sort_order: Rc::default(),
                 sorter: RefCell::default(),
                 assets: gio::ListStore::new::<PigouneAssetObject>(),
@@ -103,20 +99,6 @@ mod imp {
             self.obj().resort();
         }
 
-        fn set_bar_position(&self, position: String) {
-            if *self.bar_position.borrow() == position {
-                return;
-            }
-            let bar = self.display_bar.get();
-            self.toolbar_view.remove(&bar);
-            if position == BAR_AT_BOTTOM {
-                self.toolbar_view.add_bottom_bar(&bar);
-            } else {
-                self.toolbar_view.add_top_bar(&bar);
-            }
-            self.bar_position.replace(position);
-        }
-
         fn set_tile_size(&self, size: i32) {
             if self.tile_size.replace(size) != size {
                 self.obj().notify_tile_size();
@@ -145,7 +127,6 @@ mod imp {
             self.parent_constructed();
             let grid = self.obj();
             grid.set_up_grid();
-            grid.link_size_scale();
             grid.resize_with_control_scroll();
             grid.unselect_on_empty_click();
         }
@@ -161,6 +142,8 @@ glib::wrapper! {
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
+const ASSETS_PAGE: &str = "assets";
+const NOTHING_PAGE: &str = "nothing";
 const SMALLEST_TILE_SIZE: i32 = 64;
 const LARGEST_TILE_SIZE: i32 = 256;
 const DEFAULT_TILE_SIZE: i32 = 128;
@@ -168,6 +151,18 @@ const TILE_SIZE_STEP: i32 = 32;
 const PIXELS_PER_SCROLL_STEP: f64 = 16.0;
 
 impl PigouneAssetGrid {
+    pub fn nothing_page(&self) -> adw::StatusPage {
+        self.imp().nothing_page.get()
+    }
+
+    pub fn show_nothing(&self, nothing: bool) {
+        self.imp().content_stack.set_visible_child_name(if nothing {
+            NOTHING_PAGE
+        } else {
+            ASSETS_PAGE
+        });
+    }
+
     pub fn enlarge_tiles(&self) {
         self.resize_tiles(next_larger_step(self.tile_size()));
     }
@@ -397,6 +392,17 @@ impl PigouneAssetGrid {
         self.follow_selection();
     }
 
+    pub fn focus_selected_later(&self) {
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move || {
+                grid.imp().grid_view.grab_focus();
+                grid.follow_selection();
+            }
+        ));
+    }
+
     pub fn forget_thumbnails(&self) {
         self.imp().thumbnails.forget_all();
     }
@@ -482,7 +488,7 @@ impl PigouneAssetGrid {
             self.select_asset(asset.id());
         }
         let Some(point) = imp.grid_view.compute_point(
-            &*imp.display_bar,
+            &*imp.grid_box,
             &gtk::graphene::Point::new(x as f32, y as f32),
         ) else {
             return false;
@@ -608,8 +614,8 @@ impl PigouneAssetGrid {
 }
 
 impl PigouneAssetGrid {
-    fn link_size_scale(&self) {
-        self.bind_property("tile-size", &*self.imp().size_adjustment, "value")
+    pub fn link_size_adjustment(&self, adjustment: &gtk::Adjustment) {
+        self.bind_property("tile-size", adjustment, "value")
             .transform_to(|_, size: i32| Some(f64::from(size)))
             .transform_from(|_, value: f64| Some(whole_pixels(value)))
             .bidirectional()

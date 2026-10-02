@@ -1,0 +1,130 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneGridHeader: Adw.Bin {
+  child: Adw.HeaderBar {
+    title-widget: SearchEntry search_entry {
+      max-width-chars: 40;
+      placeholder-text: _("Search…");
+
+      accessibility {
+        label: _("Search Resources");
+      }
+    };
+
+    [start]
+    Label result_count {
+      visible: false;
+      margin-start: 6;
+
+      styles [
+        "dim-label",
+        "numeric",
+      ]
+    }
+
+    [end]
+    ToggleButton details_button {
+      visible: false;
+      active: true;
+      icon-name: "sidebar-show-right-symbolic";
+      tooltip-text: _("Show Details");
+    }
+
+    [end]
+    Button {
+      icon-name: "zoom-in-symbolic";
+      tooltip-text: _("Larger Thumbnails");
+      action-name: "win.enlarge-thumbnails";
+
+      styles [
+        "flat",
+        "circular",
+      ]
+    }
+
+    [end]
+    Scale {
+      width-request: 120;
+      draw-value: false;
+      tooltip-text: _("Thumbnail Size");
+
+      adjustment: Adjustment size_adjustment {
+        lower: 64;
+        upper: 256;
+        step-increment: 32;
+        page-increment: 32;
+      };
+
+      accessibility {
+        label: _("Thumbnail Size");
+      }
+    }
+
+    [end]
+    Button {
+      icon-name: "zoom-out-symbolic";
+      tooltip-text: _("Smaller Thumbnails");
+      action-name: "win.shrink-thumbnails";
+
+      styles [
+        "flat",
+        "circular",
+      ]
+    }
+
+    [end]
+    MenuButton sort_button {
+      always-show-arrow: true;
+      tooltip-text: _("Sort");
+      menu-model: sort_menu;
+
+      styles [
+        "flat",
+      ]
+    }
+  };
+}
+
+menu sort_menu {
+  section {
+    label: _("Sort By");
+
+    item {
+      label: _("Date Added");
+      action: "win.sort-criterion";
+      target: "added";
+    }
+
+    item {
+      label: _("Name");
+      action: "win.sort-criterion";
+      target: "name";
+    }
+
+    item {
+      label: _("Type");
+      action: "win.sort-criterion";
+      target: "type";
+    }
+
+    item {
+      label: _("Dimensions");
+      action: "win.sort-criterion";
+      target: "dimensions";
+    }
+
+    item {
+      label: _("Size");
+      action: "win.sort-criterion";
+      target: "size";
+    }
+  }
+
+  section {
+    item {
+      label: _("Reverse Order");
+      action: "win.sort-reversed";
+    }
+  }
+}

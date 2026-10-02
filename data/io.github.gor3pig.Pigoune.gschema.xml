@@ -87,15 +87,6 @@
       <summary>Empty the trash automatically</summary>
       <description>Whether resources that have been in the trash for more than 30 days are deleted for good.</description>
     </key>
-    <key name="bar-position" type="s">
-      <choices>
-        <choice value="top"/>
-        <choice value="bottom"/>
-      </choices>
-      <default>"top"</default>
-      <summary>Position of the sort and size bar</summary>
-      <description>Whether the bar holding the sort button and the thumbnail size is above or below the grid.</description>
-    </key>
     <key name="last-view" type="s">
       <default>""</default>
       <summary>Last sidebar entry</summary>

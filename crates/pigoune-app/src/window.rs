@@ -31,7 +31,6 @@ const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
 const EMPTY_PAGE: &str = "empty";
 const ASSETS_PAGE: &str = "assets";
-const NOTHING_PAGE: &str = "nothing";
 const MAIN_PAGE: &str = "main";
 const PREVIEW_PAGE: &str = "preview";
 const CREATE_LIBRARY_ACTION: &str = "win.create-library";
@@ -59,8 +58,10 @@ const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const PREFERENCES_ACTION: &str = "win.preferences";
+const SEARCH_ACTION: &str = "win.search";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
-const OPEN_LIBRARY_ACTIONS: [&str; 13] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 14] = [
+    SEARCH_ACTION,
     UNDO_ACTION,
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
@@ -109,6 +110,7 @@ mod imp {
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
     use crate::asset_preview::PigouneAssetPreview;
+    use crate::grid_header::PigouneGridHeader;
     use crate::sidebar::PigouneSidebar;
 
     use super::{
@@ -117,7 +119,7 @@ mod imp {
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, PREFERENCES_ACTION,
         REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SHRINK_THUMBNAILS_ACTION,
+        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SHRINK_THUMBNAILS_ACTION,
         TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
         tag_parameter,
     };
@@ -147,20 +149,21 @@ mod imp {
         #[template_child]
         pub asset_details: TemplateChild<PigouneAssetDetails>,
         #[template_child]
-        pub details_button: TemplateChild<gtk::ToggleButton>,
-        #[template_child]
         pub window_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_preview: TemplateChild<PigouneAssetPreview>,
         #[template_child]
         pub sidebar: TemplateChild<PigouneSidebar>,
         #[template_child]
-        pub nothing_page: TemplateChild<adw::StatusPage>,
+        pub details_split: TemplateChild<adw::OverlaySplitView>,
+        #[template_child]
+        pub grid_header: TemplateChild<PigouneGridHeader>,
         pub current_view: Cell<AssetView>,
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
+        pub search_query: RefCell<String>,
         pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
     }
 
@@ -188,13 +191,13 @@ mod imp {
         });
         class.install_action(ADD_TAG_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| {
-                window.imp().details_button.set_active(true);
+                window.imp().grid_header.details_button().set_active(true);
                 window.imp().asset_details.focus_tag_entry();
             });
         });
         class.install_action(ADD_TO_COLLECTION_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| {
-                window.imp().details_button.set_active(true);
+                window.imp().grid_header.details_button().set_active(true);
                 window.imp().asset_details.open_collection_chooser();
             });
         });
@@ -223,12 +226,16 @@ mod imp {
             PigouneAssetDetails::ensure_type();
             PigouneAssetPreview::ensure_type();
             PigouneSidebar::ensure_type();
+            PigouneGridHeader::ensure_type();
             class.bind_template();
             class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
             });
             class.install_action_async(OPEN_LIBRARY_ACTION, None, |window, _, _| async move {
                 window.choose_library_to_open().await;
+            });
+            class.install_action(SEARCH_ACTION, None, |window, _, _| {
+                window.imp().grid_header.search_entry().grab_focus();
             });
             class.install_action(PREFERENCES_ACTION, None, |window, _, _| {
                 window.show_preferences();
@@ -345,18 +352,15 @@ impl PigouneWindow {
                 "tile-size",
             )
             .build();
-        settings
-            .bind(
-                settings::BAR_POSITION,
-                &*window.imp().asset_grid,
-                "bar-position",
-            )
-            .get()
-            .build();
+        window
+            .imp()
+            .asset_grid
+            .link_size_adjustment(&window.imp().grid_header.size_adjustment());
+        window.follow_sort_label(&settings);
         settings
             .bind(
                 settings::SHOW_DETAILS,
-                &*window.imp().details_button,
+                &window.imp().grid_header.details_button(),
                 "active",
             )
             .build();
@@ -381,12 +385,147 @@ impl PigouneWindow {
         window.connect_preview();
         window.follow_sidebar(&settings);
         window.follow_trash_confirmation(&settings);
+        window.follow_search();
+        window.follow_details_panel();
+        window.type_to_search();
         window
             .imp()
             .settings
             .set(settings)
             .expect("settings are set only once, at construction");
         window
+    }
+
+    fn follow_sort_label(&self, settings: &gio::Settings) {
+        self.label_sort_button(settings);
+        settings.connect_changed(
+            Some(settings::SORT_CRITERION),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |settings, _| window.label_sort_button(settings)
+            ),
+        );
+    }
+
+    fn label_sort_button(&self, settings: &gio::Settings) {
+        let label = match settings.string(settings::SORT_CRITERION).as_str() {
+            "name" => gettext("Name"),
+            "type" => gettext("Type"),
+            "dimensions" => gettext("Dimensions"),
+            "size" => gettext("Size"),
+            _ => gettext("Date Added"),
+        };
+        self.imp().grid_header.show_sort_label(&label);
+    }
+
+    fn follow_details_panel(&self) {
+        let imp = self.imp();
+        imp.grid_header
+            .details_button()
+            .connect_active_notify(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_| window.update_details_panel()
+            ));
+        imp.details_split.connect_show_sidebar_notify(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |split| {
+                let button = &window.imp().grid_header.details_button();
+                if button.is_visible() && button.is_active() != split.shows_sidebar() {
+                    button.set_active(split.shows_sidebar());
+                }
+            }
+        ));
+    }
+
+    fn update_details_panel(&self) {
+        let imp = self.imp();
+        let button = &imp.grid_header.details_button();
+        imp.details_split
+            .set_show_sidebar(button.is_visible() && button.is_active());
+    }
+
+    fn type_to_search(&self) {
+        let keys = gtk::EventControllerKey::new();
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, modifiers| window.start_search_with(key, modifiers)
+        ));
+        self.add_controller(keys);
+    }
+
+    fn start_search_with(&self, key: gdk::Key, modifiers: gdk::ModifierType) -> glib::Propagation {
+        let shortcut_modifiers = gdk::ModifierType::CONTROL_MASK
+            | gdk::ModifierType::ALT_MASK
+            | gdk::ModifierType::SUPER_MASK;
+        let typed = key
+            .to_unicode()
+            .filter(|character| !character.is_control() && !character.is_whitespace());
+        let Some(typed) = typed else {
+            return glib::Propagation::Proceed;
+        };
+        if modifiers.intersects(shortcut_modifiers) || !self.can_start_search() {
+            return glib::Propagation::Proceed;
+        }
+        let entry = self.imp().grid_header.search_entry();
+        let text = format!("{}{typed}", entry.text());
+        entry.grab_focus();
+        entry.set_text(&text);
+        entry.set_position(-1);
+        glib::Propagation::Stop
+    }
+
+    fn can_start_search(&self) -> bool {
+        let imp = self.imp();
+        let library_shown = imp.library.borrow().is_some()
+            && imp.stack.visible_child_name().as_deref() == Some(LIBRARY_PAGE)
+            && imp.window_stack.visible_child_name().as_deref() == Some(MAIN_PAGE)
+            && imp.library_stack.visible_child_name().as_deref() == Some(ASSETS_PAGE);
+        let typing_elsewhere = GtkWindowExt::focus(self).is_some_and(|focus| {
+            focus.is::<gtk::Text>()
+                || focus.is::<gtk::TextView>()
+                || focus.ancestor(adw::Dialog::static_type()).is_some()
+                || focus.ancestor(gtk::Popover::static_type()).is_some()
+        });
+        library_shown && !typing_elsewhere
+    }
+
+    fn follow_search(&self) {
+        let entry = self.imp().grid_header.search_entry();
+        entry.connect_search_changed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |entry| window.search(&entry.text())
+        ));
+        entry.connect_stop_search(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |entry| {
+                entry.set_text("");
+                window.search("");
+                window.imp().asset_grid.grab_focus();
+            }
+        ));
+    }
+
+    fn search(&self, query: &str) {
+        let imp = self.imp();
+        if *imp.search_query.borrow() == query {
+            return;
+        }
+        imp.search_query.replace(query.to_owned());
+        self.refresh_grid();
+    }
+
+    fn reset_search(&self) {
+        let imp = self.imp();
+        imp.search_query.replace(String::new());
+        imp.grid_header.search_entry().set_text("");
     }
 
     fn follow_trash_confirmation(&self, settings: &gio::Settings) {
@@ -629,6 +768,7 @@ impl PigouneWindow {
         );
         imp.asset_grid.forget_thumbnails();
         self.forget_undo_toast();
+        self.reset_search();
         imp.library.replace(Some(library));
         imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
@@ -641,6 +781,7 @@ impl PigouneWindow {
     fn close_library(&self) {
         let imp = self.imp();
         self.forget_undo_toast();
+        self.reset_search();
         imp.library.replace(None);
         imp.asset_grid.show_assets(&[]);
         imp.asset_grid.forget_thumbnails();
@@ -648,7 +789,7 @@ impl PigouneWindow {
         imp.window_title.set_title("Pigoune");
         imp.stack.set_visible_child_name(WELCOME_PAGE);
         imp.import_button.set_visible(false);
-        imp.details_button.set_visible(false);
+        imp.grid_header.details_button().set_visible(false);
         self.set_library_actions_enabled(false);
     }
 
@@ -720,7 +861,7 @@ impl PigouneWindow {
     fn start_renaming_selected(&self) {
         let imp = self.imp();
         if !self.is_showing_trash() && imp.asset_grid.selected_asset().is_some() {
-            imp.details_button.set_active(true);
+            imp.grid_header.details_button().set_active(true);
             imp.asset_details.start_renaming();
         }
     }
@@ -1621,6 +1762,7 @@ impl PigouneWindow {
             Some(last) => imp.asset_grid.select_asset(last.id()),
             None => imp.asset_grid.reveal_selected(),
         }
+        imp.asset_grid.focus_selected_later();
     }
 
     fn refresh_assets(&self) {
@@ -1834,9 +1976,10 @@ impl PigouneWindow {
         let imp = self.imp();
         let view = imp.current_view.get();
         let previously_selected = self.selected_ids();
+        let query = imp.search_query.borrow().clone();
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
-                asset_objects(library, view)?,
+                asset_objects(library, view, &query)?,
                 library.view_counts()?.all,
                 view_name(library, view),
             ))
@@ -1845,24 +1988,33 @@ impl PigouneWindow {
             Some(Ok((assets, library_total, view_name))) => {
                 let page = if library_total == 0 && view != AssetView::Trash {
                     EMPTY_PAGE
-                } else if assets.is_empty() {
-                    self.describe_empty_view(view, &view_name);
-                    NOTHING_PAGE
                 } else {
                     ASSETS_PAGE
                 };
+                let searching = !query.trim().is_empty();
+                if assets.is_empty() && searching {
+                    self.describe_missing_results(view, &view_name, query.trim());
+                } else if assets.is_empty() {
+                    self.describe_empty_view(view, &view_name);
+                }
+                imp.asset_grid.show_nothing(assets.is_empty());
+                imp.grid_header
+                    .show_result_count(searching.then_some(assets.len()));
                 imp.asset_grid.show_assets(&assets);
                 if !previously_selected.is_empty() {
                     imp.asset_grid.select_assets(&previously_selected);
                 }
                 imp.library_stack.set_visible_child_name(page);
-                imp.details_button.set_visible(!assets.is_empty());
+                imp.grid_header
+                    .details_button()
+                    .set_visible(!assets.is_empty());
+                self.update_details_panel();
                 imp.trash_banner.set_revealed(view == AssetView::Trash);
             }
             Some(Err(error)) => {
                 imp.asset_grid.show_assets(&[]);
                 imp.library_stack.set_visible_child_name(EMPTY_PAGE);
-                imp.details_button.set_visible(false);
+                imp.grid_header.details_button().set_visible(false);
                 self.show_library_error(&error);
             }
             None => {}
@@ -1911,8 +2063,29 @@ impl PigouneWindow {
         }
     }
 
+    fn describe_missing_results(&self, view: AssetView, view_name: &str, query: &str) {
+        let scope = match view {
+            AssetView::All => None,
+            AssetView::Favorites => Some(gettext("Favorites")),
+            AssetView::Unclassified => Some(gettext("Unclassified")),
+            AssetView::Trash => Some(gettext("Trash")),
+            AssetView::Collection(_) | AssetView::Tag(_) => Some(view_name.to_owned()),
+        };
+        let description = match scope {
+            Some(scope) => gettext(
+                "No resource in “{name}” matches this search. Select “All” to search everywhere.",
+            )
+            .replace("{name}", &scope),
+            None => gettext("No resource in the library matches this search."),
+        };
+        let page = self.imp().asset_grid.nothing_page();
+        page.set_icon_name(Some("system-search-symbolic"));
+        page.set_title(&gettext("No Results for “{query}”").replace("{query}", query));
+        page.set_description(Some(&description));
+    }
+
     fn describe_empty_view(&self, view: AssetView, view_name: &str) {
-        let page = &self.imp().nothing_page;
+        let page = self.imp().asset_grid.nothing_page();
         page.set_icon_name(Some(if view == AssetView::Trash {
             "user-trash-symbolic"
         } else {
@@ -2268,9 +2441,10 @@ fn view_name(library: &Library, view: AssetView) -> String {
 fn asset_objects(
     library: &Library,
     view: AssetView,
+    query: &str,
 ) -> Result<Vec<PigouneAssetObject>, LibraryError> {
     Ok(library
-        .visible_assets_in(view)?
+        .search_assets_in(view, query)?
         .iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {

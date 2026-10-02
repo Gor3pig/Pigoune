@@ -2,114 +2,37 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneAssetGrid: Adw.Bin {
-  child: Adw.ToolbarView toolbar_view {
-    content: ScrolledWindow scrolled_window {
-      hscrollbar-policy: never;
+  child: Box grid_box {
+    orientation: vertical;
 
-      child: GridView grid_view {
-        min-columns: 1;
-        max-columns: 100;
-      };
-    };
+    Stack content_stack {
+      vexpand: true;
 
-    [top]
-    Box display_bar {
-      halign: end;
-      spacing: 6;
-      margin-start: 12;
-      margin-end: 12;
+      StackPage {
+        name: "assets";
 
-      MenuButton sort_button {
-        icon-name: "view-sort-descending-symbolic";
-        tooltip-text: _("Sort");
-        menu-model: sort_menu;
-        margin-end: 6;
+        child: ScrolledWindow scrolled_window {
+          hscrollbar-policy: never;
 
-        styles [
-          "flat",
-        ]
-      }
-
-      Image {
-        icon-name: "zoom-out-symbolic";
-
-        styles [
-          "dim-label",
-        ]
-      }
-
-      Scale size_scale {
-        width-request: 160;
-        draw-value: false;
-        tooltip-text: _("Thumbnail Size");
-
-        adjustment: Adjustment size_adjustment {
-          lower: 64;
-          upper: 256;
-          step-increment: 32;
-          page-increment: 32;
+          child: GridView grid_view {
+            min-columns: 1;
+            max-columns: 100;
+          };
         };
-
-        accessibility {
-          label: _("Thumbnail Size");
-        }
       }
 
-      Image {
-        icon-name: "zoom-in-symbolic";
+      StackPage {
+        name: "nothing";
 
-        styles [
-          "dim-label",
-        ]
+        child: Adw.StatusPage nothing_page {
+          icon-name: "folder-symbolic";
+        };
       }
+    }
 
-      PopoverMenu context_menu {
-        has-arrow: false;
-        halign: start;
-      }
+    PopoverMenu context_menu {
+      has-arrow: false;
+      halign: start;
     }
   };
-}
-
-menu sort_menu {
-  section {
-    label: _("Sort By");
-
-    item {
-      label: _("Date Added");
-      action: "win.sort-criterion";
-      target: "added";
-    }
-
-    item {
-      label: _("Name");
-      action: "win.sort-criterion";
-      target: "name";
-    }
-
-    item {
-      label: _("Type");
-      action: "win.sort-criterion";
-      target: "type";
-    }
-
-    item {
-      label: _("Dimensions");
-      action: "win.sort-criterion";
-      target: "dimensions";
-    }
-
-    item {
-      label: _("Size");
-      action: "win.sort-criterion";
-      target: "size";
-    }
-  }
-
-  section {
-    item {
-      label: _("Reverse Order");
-      action: "win.sort-reversed";
-    }
-  }
 }

@@ -12,92 +12,105 @@ template $PigouneWindow: Adw.ApplicationWindow {
     StackPage {
       name: "main";
 
-      child: Adw.ToolbarView {
-        [top]
-        Adw.HeaderBar {
-          title-widget: Adw.WindowTitle window_title {
-            title: "Pigoune";
-          };
+      child: Adw.ToastOverlay toast_overlay {
+        child: Gtk.Stack stack {
+          transition-type: crossfade;
 
-          [end]
-          MenuButton {
-            primary: true;
-            icon-name: "open-menu-symbolic";
-            tooltip-text: _("Main Menu");
-            menu-model: primary_menu;
-          }
+          StackPage {
+            name: "welcome";
 
-          [end]
-          ToggleButton details_button {
-            visible: false;
-            active: true;
-            icon-name: "sidebar-show-right-symbolic";
-            tooltip-text: _("Show Details");
-          }
-
-          [end]
-          MenuButton import_button {
-            visible: false;
-            icon-name: "list-add-symbolic";
-            tooltip-text: _("Import");
-            menu-model: import_menu;
-          }
-        }
-
-        content: Overlay {
-          child: Adw.ToastOverlay toast_overlay {
-            child: Gtk.Stack stack {
-              transition-type: crossfade;
-
-              StackPage {
-                name: "welcome";
-
-                child: Adw.StatusPage {
-                  icon-name: "io.github.gor3pig.Pigoune";
-                  title: _("Welcome to Pigoune");
-                  description: _("The cozy box for your icons, logos and illustrations.");
-
-                  styles [
-                    "icon-dropshadow",
-                  ]
-
-                  child: Box {
-                    orientation: vertical;
-                    spacing: 12;
-                    halign: center;
-
-                    Button {
-                      label: _("_Create a Library");
-                      use-underline: true;
-                      action-name: "win.create-library";
-
-                      styles [
-                        "pill",
-                        "suggested-action",
-                      ]
-                    }
-
-                    Button {
-                      label: _("_Open a Library");
-                      use-underline: true;
-                      action-name: "win.open-library";
-
-                      styles [
-                        "pill",
-                      ]
-                    }
-                  };
-                };
+            child: Adw.ToolbarView {
+              [top]
+              Adw.HeaderBar {
+                [end]
+                MenuButton {
+                  primary: true;
+                  icon-name: "open-menu-symbolic";
+                  tooltip-text: _("Main Menu");
+                  menu-model: primary_menu;
+                }
               }
 
-              StackPage {
-                name: "library";
+              content: Adw.StatusPage {
+                icon-name: "io.github.gor3pig.Pigoune";
+                title: _("Welcome to Pigoune");
+                description: _("The cozy box for your icons, logos and illustrations.");
 
-                child: Adw.OverlaySplitView sidebar_split {
-                  min-sidebar-width: 200;
-                  max-sidebar-width: 280;
+                styles [
+                  "icon-dropshadow",
+                ]
 
-                  sidebar: $PigouneSidebar sidebar {};
+                child: Box {
+                  orientation: vertical;
+                  spacing: 12;
+                  halign: center;
+
+                  Button {
+                    label: _("_Create a Library");
+                    use-underline: true;
+                    action-name: "win.create-library";
+
+                    styles [
+                      "pill",
+                      "suggested-action",
+                    ]
+                  }
+
+                  Button {
+                    label: _("_Open a Library");
+                    use-underline: true;
+                    action-name: "win.open-library";
+
+                    styles [
+                      "pill",
+                    ]
+                  }
+                };
+              };
+            };
+          }
+
+          StackPage {
+            name: "library";
+
+            child: Adw.OverlaySplitView sidebar_split {
+              min-sidebar-width: 200;
+              max-sidebar-width: 280;
+
+              sidebar: Adw.ToolbarView {
+                [top]
+                Adw.HeaderBar {
+                  title-widget: Adw.WindowTitle window_title {
+                    title: "Pigoune";
+                  };
+
+                  [start]
+                  MenuButton import_button {
+                    icon-name: "list-add-symbolic";
+                    tooltip-text: _("Import");
+                    menu-model: import_menu;
+                  }
+
+                  [end]
+                  MenuButton {
+                    primary: true;
+                    icon-name: "open-menu-symbolic";
+                    tooltip-text: _("Main Menu");
+                    menu-model: primary_menu;
+                  }
+                }
+
+                content: $PigouneSidebar sidebar {};
+              };
+
+              content: Adw.OverlaySplitView details_split {
+                sidebar-position: end;
+                min-sidebar-width: 280;
+                max-sidebar-width: 360;
+
+                content: Adw.ToolbarView {
+                  [top]
+                  $PigouneGridHeader grid_header {}
 
                   content: Overlay drop_area {
                     [overlay]
@@ -153,43 +166,37 @@ template $PigouneWindow: Adw.ApplicationWindow {
                       StackPage {
                         name: "assets";
 
-                        child: Adw.OverlaySplitView details_split {
-                          sidebar-position: end;
-                          min-sidebar-width: 280;
-                          max-sidebar-width: 360;
-                          show-sidebar: bind details_button.active bidirectional;
+                        child: Box {
+                          orientation: vertical;
 
-                          content: Box {
-                            orientation: vertical;
+                          Adw.Banner trash_banner {
+                            title: _("Resources in the trash are deleted for good only when it is emptied.");
+                            button-label: _("_Empty Trash…");
+                            action-name: "win.empty-trash";
+                          }
 
-                            Adw.Banner trash_banner {
-                              title: _("Resources in the trash are deleted for good only when it is emptied.");
-                              button-label: _("_Empty Trash…");
-                              action-name: "win.empty-trash";
-                            }
-
-                            $PigouneAssetGrid asset_grid {
-                              vexpand: true;
-                            }
-                          };
-
-                          sidebar: $PigouneAssetDetails asset_details {};
-                        };
-                      }
-
-                      StackPage {
-                        name: "nothing";
-
-                        child: Adw.StatusPage nothing_page {
-                          icon-name: "folder-symbolic";
+                          $PigouneAssetGrid asset_grid {
+                            vexpand: true;
+                          }
                         };
                       }
                     };
                   };
                 };
-              }
+
+                sidebar: Adw.ToolbarView {
+                  [top]
+                  Adw.HeaderBar {
+                    title-widget: Adw.WindowTitle {
+                      title: _("Details");
+                    };
+                  }
+
+                  content: $PigouneAssetDetails asset_details {};
+                };
+              };
             };
-          };
+          }
         };
       };
     }
