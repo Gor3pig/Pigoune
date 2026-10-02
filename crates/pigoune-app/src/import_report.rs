@@ -16,8 +16,8 @@ pub fn needs_attention(summary: &ImportSummary) -> bool {
         || !matches!(summary.ending, ImportEnding::Completed)
 }
 
-pub fn toast_text(summary: &ImportSummary) -> String {
-    let lines = outcome_lines(summary);
+pub fn toast_text(summary: &ImportSummary, destination: Option<&str>) -> String {
+    let lines = outcome_lines(summary, destination);
     if lines.is_empty() {
         gettext("No images to import were found")
     } else {
@@ -25,8 +25,12 @@ pub fn toast_text(summary: &ImportSummary) -> String {
     }
 }
 
-pub fn summary_dialog(summary: &ImportSummary, chosen: &[PathBuf]) -> adw::AlertDialog {
-    let mut lines = outcome_lines(summary);
+pub fn summary_dialog(
+    summary: &ImportSummary,
+    chosen: &[PathBuf],
+    destination: Option<&str>,
+) -> adw::AlertDialog {
+    let mut lines = outcome_lines(summary, destination);
     lines.extend(problem_lines(summary));
     if lines.is_empty() {
         lines.push(gettext("Nothing was imported."));
@@ -72,16 +76,23 @@ fn heading(ending: &ImportEnding) -> String {
     }
 }
 
-fn outcome_lines(summary: &ImportSummary) -> Vec<String> {
-    [
-        (
-            summary.imported.len(),
-            ngettext(
-                "{count} resource imported",
-                "{count} resources imported",
-                count_for_plural(summary.imported.len()),
-            ),
+fn outcome_lines(summary: &ImportSummary, destination: Option<&str>) -> Vec<String> {
+    let imported = count_for_plural(summary.imported.len());
+    let imported_text = match destination {
+        Some(collection) => ngettext(
+            "{count} resource imported into “{collection}”",
+            "{count} resources imported into “{collection}”",
+            imported,
+        )
+        .replace("{collection}", collection),
+        None => ngettext(
+            "{count} resource imported",
+            "{count} resources imported",
+            imported,
         ),
+    };
+    [
+        (summary.imported.len(), imported_text),
         (
             summary.already_present,
             ngettext(

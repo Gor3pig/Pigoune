@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::path::PathBuf;
 
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
@@ -15,6 +16,7 @@ const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const COLLECTION_ICON: &str = "folder-symbolic";
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
+type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
 
 pub struct SidebarContent {
     pub tree: CollectionTree,
@@ -30,7 +32,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
 
-    use super::ViewChangedCallback;
+    use super::{FilesDroppedCallback, ViewChangedCallback};
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/sidebar.ui")]
@@ -39,6 +41,7 @@ mod imp {
         pub list_view: TemplateChild<gtk::ListView>,
         pub rebuilding: Cell<bool>,
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
+        pub on_files_dropped: RefCell<Option<FilesDroppedCallback>>,
     }
 
     #[glib::object_subclass]
@@ -78,6 +81,18 @@ glib::wrapper! {
 impl PigouneSidebar {
     pub fn connect_view_changed(&self, callback: impl Fn(AssetView) + 'static) {
         self.imp().on_view_changed.replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_files_dropped(&self, callback: impl Fn(AssetView, Vec<PathBuf>) + 'static) {
+        self.imp()
+            .on_files_dropped
+            .replace(Some(Box::new(callback)));
+    }
+
+    pub fn files_dropped(&self, view: AssetView, paths: Vec<PathBuf>) {
+        if let Some(on_files_dropped) = self.imp().on_files_dropped.borrow().as_ref() {
+            on_files_dropped(view, paths);
+        }
     }
 
     pub fn show_content(&self, content: &SidebarContent) {

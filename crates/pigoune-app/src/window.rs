@@ -103,6 +103,8 @@ mod imp {
         #[template_child]
         pub drop_hint: TemplateChild<adw::StatusPage>,
         #[template_child]
+        pub drop_area: TemplateChild<gtk::Overlay>,
+        #[template_child]
         pub library_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
@@ -285,6 +287,19 @@ impl PigouneWindow {
             #[weak(rename_to = window)]
             self,
             move |view| window.show_view(view)
+        ));
+        self.imp().sidebar.connect_files_dropped(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |view, paths| {
+                let target = match view {
+                    AssetView::Collection(id) => Some(id),
+                    AssetView::All | AssetView::Unclassified => None,
+                };
+                glib::spawn_future_local(async move {
+                    window.import_paths_into(paths, target).await;
+                });
+            }
         ));
     }
 
@@ -750,7 +765,7 @@ impl PigouneWindow {
                 true
             }
         ));
-        self.add_controller(drop_target);
+        self.imp().drop_area.add_controller(drop_target);
     }
 
     fn show_drop_hint(&self) {
@@ -791,37 +806,59 @@ impl PigouneWindow {
     }
 
     async fn import_paths(&self, paths: Vec<PathBuf>) {
+        self.import_paths_into(paths, self.target_collection())
+            .await;
+    }
+
+    async fn import_paths_into(&self, paths: Vec<PathBuf>, target: Option<CollectionId>) {
         if paths.is_empty() {
             return;
         }
+        let destination = target.and_then(|id| {
+            self.imp()
+                .library
+                .borrow()
+                .as_ref()?
+                .collection(id)
+                .ok()
+                .flatten()
+                .map(|collection| collection.name)
+        });
         let Some(library) = self.imp().library.take() else {
             return;
         };
 
         self.set_importing(true);
-        let target = self.target_collection();
         let finished = background_import::run(self, library, paths.clone(), target).await;
         self.set_importing(false);
 
         if let Some(FinishedImport { library, result }) = finished {
             self.imp().library.replace(Some(library));
             self.refresh_assets();
-            self.report_import(result, &paths);
+            self.report_import(result, &paths, destination.as_deref());
         } else {
             self.close_library();
             import_report::unexpected_stop_dialog().present(Some(self));
         }
     }
 
-    fn report_import(&self, result: Result<ImportSummary, ImportError>, chosen: &[PathBuf]) {
+    fn report_import(
+        &self,
+        result: Result<ImportSummary, ImportError>,
+        chosen: &[PathBuf],
+        destination: Option<&str>,
+    ) {
         match result {
             Ok(summary) if import_report::needs_attention(&summary) => {
-                import_report::summary_dialog(&summary, chosen).present(Some(self));
+                import_report::summary_dialog(&summary, chosen, destination).present(Some(self));
             }
             Ok(summary) => {
                 self.imp()
                     .toast_overlay
-                    .add_toast(adw::Toast::new(&import_report::toast_text(&summary)));
+                    .add_toast(adw::Toast::new(&import_report::toast_text(
+                        &summary,
+                        destination,
+                    )));
             }
             Err(error) => import_report::failure_dialog(&error).present(Some(self)),
         }

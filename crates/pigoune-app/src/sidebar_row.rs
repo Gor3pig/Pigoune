@@ -1,10 +1,16 @@
+use std::path::PathBuf;
+
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetView, CollectionId};
 
+use crate::sidebar::PigouneSidebar;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
+
+const DROP_HIGHLIGHT: &str = "drop-highlight";
+const SIDEBAR_ROW: &str = "sidebar-row";
 
 mod imp {
     use std::cell::{OnceCell, RefCell};
@@ -125,6 +131,75 @@ impl PigouneSidebarRow {
         set_part(&imp.header_buttons, header_buttons);
         set_part(&imp.menu, menu);
         self.open_menu_on_secondary_click();
+        self.accept_dropped_files();
+    }
+
+    fn accept_dropped_files(&self) {
+        self.add_css_class(SIDEBAR_ROW);
+        let drop_target = gtk::DropTarget::new(gdk::FileList::static_type(), gdk::DragAction::COPY);
+        drop_target.connect_enter(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            gdk::DragAction::empty(),
+            move |_, _, _| {
+                row.highlight_list_row(true);
+                gdk::DragAction::COPY
+            }
+        ));
+        drop_target.connect_leave(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            move |_| row.highlight_list_row(false)
+        ));
+        drop_target.connect_accept(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            false,
+            move |_, _| row.view().is_some()
+        ));
+        drop_target.connect_drop(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            false,
+            move |_, value, _, _| {
+                row.highlight_list_row(false);
+                let (Some(view), Ok(files)) = (row.view(), value.get::<gdk::FileList>()) else {
+                    return false;
+                };
+                let paths: Vec<PathBuf> =
+                    files.files().iter().filter_map(gio::File::path).collect();
+                let Some(sidebar) = row
+                    .ancestor(PigouneSidebar::static_type())
+                    .and_downcast::<PigouneSidebar>()
+                else {
+                    return false;
+                };
+                sidebar.files_dropped(view, paths);
+                true
+            }
+        ));
+        self.add_controller(drop_target);
+    }
+
+    fn highlight_list_row(&self, highlighted: bool) {
+        let Some(list_row) = self
+            .ancestor(gtk::TreeExpander::static_type())
+            .and_then(|expander| expander.parent())
+        else {
+            return;
+        };
+        if highlighted {
+            list_row.add_css_class(DROP_HIGHLIGHT);
+        } else {
+            list_row.remove_css_class(DROP_HIGHLIGHT);
+        }
+    }
+
+    fn view(&self) -> Option<AssetView> {
+        self.imp().item.borrow().as_ref()?.view()
     }
 
     fn open_menu_on_secondary_click(&self) {

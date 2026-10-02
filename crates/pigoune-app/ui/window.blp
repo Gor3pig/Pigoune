@@ -45,18 +45,6 @@ template $PigouneWindow: Adw.ApplicationWindow {
         }
 
         content: Overlay {
-          [overlay]
-          Adw.StatusPage drop_hint {
-            visible: false;
-            can-target: false;
-            icon-name: "insert-image-symbolic";
-            description: _("Images are copied into the library. The originals are not modified.");
-
-            styles [
-              "drop-hint",
-            ]
-          }
-
           child: Adw.ToastOverlay toast_overlay {
             child: Gtk.Stack stack {
               transition-type: crossfade;
@@ -111,66 +99,80 @@ template $PigouneWindow: Adw.ApplicationWindow {
 
                   sidebar: $PigouneSidebar sidebar {};
 
-                  content: Gtk.Stack library_stack {
-                    StackPage {
-                      name: "empty";
+                  content: Overlay drop_area {
+                    [overlay]
+                    Adw.StatusPage drop_hint {
+                      visible: false;
+                      can-target: false;
+                      icon-name: "insert-image-symbolic";
+                      description: _("Images are copied into the library. The originals are not modified.");
 
-                      child: Adw.StatusPage {
-                        icon-name: "folder-pictures-symbolic";
-                        title: _("Your Library Is Empty");
-                        description: _("Imported icons, logos and illustrations will appear here.");
+                      styles [
+                        "drop-hint",
+                      ]
+                    }
 
-                        child: Box {
-                          orientation: vertical;
-                          spacing: 12;
-                          halign: center;
+                    child: Gtk.Stack library_stack {
+                      StackPage {
+                        name: "empty";
 
-                          Button {
-                            label: _("Import _Files…");
-                            use-underline: true;
-                            action-name: "win.import-files";
+                        child: Adw.StatusPage {
+                          icon-name: "folder-pictures-symbolic";
+                          title: _("Your Library Is Empty");
+                          description: _("Imported icons, logos and illustrations will appear here.");
 
-                            styles [
-                              "pill",
-                              "suggested-action",
-                            ]
-                          }
+                          child: Box {
+                            orientation: vertical;
+                            spacing: 12;
+                            halign: center;
 
-                          Button {
-                            label: _("Import a F_older…");
-                            use-underline: true;
-                            action-name: "win.import-folder";
+                            Button {
+                              label: _("Import _Files…");
+                              use-underline: true;
+                              action-name: "win.import-files";
 
-                            styles [
-                              "pill",
-                            ]
-                          }
+                              styles [
+                                "pill",
+                                "suggested-action",
+                              ]
+                            }
+
+                            Button {
+                              label: _("Import a F_older…");
+                              use-underline: true;
+                              action-name: "win.import-folder";
+
+                              styles [
+                                "pill",
+                              ]
+                            }
+                          };
                         };
-                      };
-                    }
+                      }
 
-                    StackPage {
-                      name: "assets";
+                      StackPage {
+                        name: "assets";
 
-                      child: Adw.OverlaySplitView details_split {
-                        sidebar-position: end;
-                        min-sidebar-width: 280;
-                        max-sidebar-width: 360;
-                        show-sidebar: bind details_button.active bidirectional;
+                        child: Adw.OverlaySplitView details_split {
+                          sidebar-position: end;
+                          min-sidebar-width: 280;
+                          max-sidebar-width: 360;
+                          show-sidebar: bind details_button.active bidirectional;
 
-                        content: $PigouneAssetGrid asset_grid {};
+                          content: $PigouneAssetGrid asset_grid {};
 
-                        sidebar: $PigouneAssetDetails asset_details {};
-                      };
-                    }
+                          sidebar: $PigouneAssetDetails asset_details {};
+                        };
+                      }
 
-                    StackPage {
-                      name: "nothing";
+                      StackPage {
+                        name: "nothing";
 
-                      child: Adw.StatusPage nothing_page {
-                        icon-name: "folder-symbolic";
-                      };
-                    }
+                        child: Adw.StatusPage nothing_page {
+                          icon-name: "folder-symbolic";
+                        };
+                      }
+                    };
                   };
                 };
               }
