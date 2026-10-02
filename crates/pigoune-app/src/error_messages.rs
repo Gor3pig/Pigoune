@@ -52,6 +52,7 @@ pub fn describe_collection(error: &CollectionError) -> String {
 pub fn describe_asset(error: &AssetError) -> String {
     match error {
         AssetError::NotFound(_) => gettext("This resource no longer exists."),
+        AssetError::InvalidName => gettext("Enter a name for the resource."),
         AssetError::Library(error) => describe(error),
     }
 }

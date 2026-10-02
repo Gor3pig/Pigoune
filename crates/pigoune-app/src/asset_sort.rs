@@ -100,6 +100,10 @@ mod tests {
             added_at_unix_ms: added,
             trashed_at_unix_ms: None,
             is_favorite: false,
+            note: String::new(),
+            source_url: String::new(),
+            license: String::new(),
+            author: String::new(),
         }
     }
 

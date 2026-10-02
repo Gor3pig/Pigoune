@@ -6,6 +6,6 @@ pub use library::{
     Collection, CollectionCommand, CollectionError, CollectionId, DATABASE_FILE_NAME,
     FILES_DIR_NAME, ImportControl, ImportEnding, ImportError, ImportOutcome, ImportProgress,
     ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError, Tag, TagCommand,
-    TagError, TagId, ViewCounts, library_display_name,
+    TagError, TagId, TextField, ViewCounts, library_display_name,
 };
 pub use media::{AssetFormat, Dimensions};

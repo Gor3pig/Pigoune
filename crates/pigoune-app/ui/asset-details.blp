@@ -43,11 +43,9 @@ template $PigouneAssetDetails: Adw.Bin {
             spacing: 6;
             halign: center;
 
-            Label name_label {
-              wrap: true;
-              wrap-mode: word_char;
-              justify: center;
-              selectable: true;
+            EditableLabel name_label {
+              xalign: 0.5;
+              tooltip-text: _("Rename (F2)");
 
               styles [
                 "title-3",
@@ -137,6 +135,76 @@ template $PigouneAssetDetails: Adw.Bin {
               styles [
                 "property",
               ]
+            }
+          }
+
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ExpanderRow credits_row {
+              title: _("Notes and Credits");
+
+              ListBoxRow {
+                activatable: false;
+
+                child: Box {
+                  orientation: vertical;
+                  spacing: 6;
+                  margin-top: 8;
+                  margin-bottom: 8;
+                  margin-start: 12;
+                  margin-end: 12;
+
+                  Label {
+                    label: _("Note");
+                    xalign: 0;
+
+                    styles [
+                      "caption",
+                      "dim-label",
+                    ]
+                  }
+
+                  TextView note_view {
+                    wrap-mode: word_char;
+                    accepts-tab: false;
+                    height-request: 72;
+
+                    styles [
+                      "note-view",
+                    ]
+                  }
+                };
+              }
+
+              Adw.EntryRow source_row {
+                title: _("Source");
+
+                [suffix]
+                Button open_source_button {
+                  icon-name: "web-browser-symbolic";
+                  tooltip-text: _("Open the Link");
+                  valign: center;
+                  visible: false;
+                  clicked => $on_open_source_clicked() swapped;
+
+                  styles [
+                    "flat",
+                  ]
+                }
+              }
+
+              Adw.EntryRow license_row {
+                title: _("License");
+              }
+
+              Adw.EntryRow author_row {
+                title: _("Author");
+              }
             }
           }
         };

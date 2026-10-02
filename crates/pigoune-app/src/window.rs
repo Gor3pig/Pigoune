@@ -6,7 +6,7 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
     AssetCommand, AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary, Library,
-    LibraryError, TagCommand, TagError, TagId, library_display_name,
+    LibraryError, TagCommand, TagError, TagId, TextField, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -518,6 +518,27 @@ impl PigouneWindow {
                 window.refresh_selected_tags();
             }
         ));
+        imp.asset_details.connect_renamed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |asset, name| window.rename_asset(asset, &name)
+        ));
+        imp.asset_details.connect_text_changed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |asset, field, value| window.change_asset_text(asset, field, &value)
+        ));
+        imp.asset_grid.connect_rename_requested(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || {
+                let imp = window.imp();
+                if imp.asset_grid.selected_asset().is_some() {
+                    imp.details_button.set_active(true);
+                    imp.asset_details.start_renaming();
+                }
+            }
+        ));
         let editor = imp.asset_details.tag_editor();
         editor.connect_added(glib::clone!(
             #[weak(rename_to = window)]
@@ -529,6 +550,52 @@ impl PigouneWindow {
             self,
             move |tag| window.remove_tag_from_selected(tag)
         ));
+    }
+
+    fn rename_asset(&self, asset: &PigouneAssetObject, name: &str) {
+        let command = AssetCommand::Rename {
+            asset: asset.id(),
+            name: name.to_owned(),
+        };
+        if self.apply_asset_command(&command) {
+            asset.set_display_name(name.trim());
+            self.imp().asset_grid.resort();
+        } else {
+            asset.notify_display_name();
+        }
+    }
+
+    fn change_asset_text(&self, asset: &PigouneAssetObject, field: TextField, value: &str) {
+        let command = AssetCommand::SetText {
+            asset: asset.id(),
+            field,
+            value: value.to_owned(),
+        };
+        if self.apply_asset_command(&command) {
+            asset.set_text(field, value.trim());
+        }
+    }
+
+    fn apply_asset_command(&self, command: &AssetCommand) -> bool {
+        let applied = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.apply_asset_command(command));
+        match applied {
+            Some(Ok(_)) => true,
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Change the Resource")),
+                    Some(&error_messages::describe_asset(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+                false
+            }
+            None => false,
+        }
     }
 
     fn refresh_selected_tags(&self) {

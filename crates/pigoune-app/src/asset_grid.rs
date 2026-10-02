@@ -177,6 +177,12 @@ impl PigouneAssetGrid {
         }
     }
 
+    pub fn resort(&self) {
+        if let Some(sorter) = self.imp().sorter.borrow().as_ref() {
+            sorter.changed(gtk::SorterChange::Different);
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.imp().assets.n_items() == 0
     }
@@ -229,6 +235,19 @@ impl PigouneAssetGrid {
             }
         });
         grid_view.add_controller(space);
+    }
+
+    pub fn connect_rename_requested(&self, callback: impl Fn() + 'static) {
+        let keys = gtk::EventControllerKey::new();
+        keys.connect_key_pressed(move |_, key, _, modifiers| {
+            if key == gdk::Key::F2 && modifiers.is_empty() {
+                callback();
+                glib::Propagation::Stop
+            } else {
+                glib::Propagation::Proceed
+            }
+        });
+        self.imp().grid_view.add_controller(keys);
     }
 
     pub fn reveal_selected(&self) {
@@ -285,9 +304,19 @@ impl PigouneAssetGrid {
             ) else {
                 return gtk::Ordering::Equal;
             };
+            let (first_key, second_key) = (first.name_key(), second.name_key());
             sort_order
                 .get()
-                .compare(&sorted(first), &sorted(second))
+                .compare(
+                    &SortedAsset {
+                        asset: first.asset(),
+                        name_key: &*first_key,
+                    },
+                    &SortedAsset {
+                        asset: second.asset(),
+                        name_key: &*second_key,
+                    },
+                )
                 .into()
         });
         imp.sorter.replace(Some(sorter.clone()));
@@ -352,13 +381,6 @@ fn next_smaller_step(size: i32) -> i32 {
 )]
 fn whole_pixels(value: f64) -> i32 {
     value.round() as i32
-}
-
-fn sorted(object: &PigouneAssetObject) -> SortedAsset<'_, glib::FilenameCollationKey> {
-    SortedAsset {
-        asset: object.asset(),
-        name_key: object.name_key(),
-    }
 }
 
 fn tile_and_asset(item: &glib::Object) -> Option<(PigouneAssetTile, PigouneAssetObject)> {

@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use adw::subclass::prelude::*;
 use gtk::glib;
-use pigoune_core::{Asset, AssetId};
+use gtk::prelude::*;
+use pigoune_core::{Asset, AssetId, TextField};
 
 pub struct AssetEntry {
     pub asset: Asset,
@@ -11,7 +13,8 @@ pub struct AssetEntry {
 }
 
 mod imp {
-    use std::cell::{Cell, OnceCell};
+    use std::cell::{Cell, OnceCell, RefCell};
+    use std::rc::Rc;
 
     use adw::prelude::*;
     use adw::subclass::prelude::*;
@@ -23,9 +26,27 @@ mod imp {
     #[properties(wrapper_type = super::PigouneAssetObject)]
     pub struct PigouneAssetObject {
         pub entry: OnceCell<AssetEntry>,
-        pub name_key: OnceCell<glib::FilenameCollationKey>,
+        pub name_key: RefCell<Option<Rc<glib::FilenameCollationKey>>>,
         #[property(get, set)]
         pub favorite: Cell<bool>,
+        #[property(get, set = Self::set_display_name)]
+        pub display_name: RefCell<String>,
+        #[property(get, set)]
+        pub note: RefCell<String>,
+        #[property(get, set)]
+        pub source_url: RefCell<String>,
+        #[property(get, set)]
+        pub license: RefCell<String>,
+        #[property(get, set)]
+        pub author: RefCell<String>,
+    }
+
+    impl PigouneAssetObject {
+        fn set_display_name(&self, name: String) {
+            self.name_key.replace(None);
+            self.display_name.replace(name);
+            self.obj().notify_display_name();
+        }
     }
 
     #[glib::object_subclass]
@@ -44,8 +65,14 @@ glib::wrapper! {
 
 impl PigouneAssetObject {
     pub fn new(entry: AssetEntry) -> Self {
+        let asset = &entry.asset;
         let object: Self = glib::Object::builder()
-            .property("favorite", entry.asset.is_favorite)
+            .property("favorite", asset.is_favorite)
+            .property("display-name", &asset.display_name)
+            .property("note", &asset.note)
+            .property("source-url", &asset.source_url)
+            .property("license", &asset.license)
+            .property("author", &asset.author)
             .build();
         if object.imp().entry.set(entry).is_err() {
             unreachable!("a new asset object has no entry yet");
@@ -68,14 +95,32 @@ impl PigouneAssetObject {
         self.asset().id
     }
 
-    pub fn display_name(&self) -> &str {
-        &self.asset().display_name
+    pub fn name_key(&self) -> Rc<glib::FilenameCollationKey> {
+        let mut key = self.imp().name_key.borrow_mut();
+        Rc::clone(
+            key.get_or_insert_with(|| {
+                Rc::new(glib::FilenameCollationKey::from(self.display_name()))
+            }),
+        )
     }
 
-    pub fn name_key(&self) -> &glib::FilenameCollationKey {
-        self.imp()
-            .name_key
-            .get_or_init(|| glib::FilenameCollationKey::from(self.display_name()))
+    pub fn text(&self, field: TextField) -> String {
+        match field {
+            TextField::Note => self.note(),
+            TextField::SourceUrl => self.source_url(),
+            TextField::License => self.license(),
+            TextField::Author => self.author(),
+        }
+    }
+
+    pub fn set_text(&self, field: TextField, value: &str) {
+        let property = match field {
+            TextField::Note => "note",
+            TextField::SourceUrl => "source-url",
+            TextField::License => "license",
+            TextField::Author => "author",
+        };
+        self.set_property(property, value);
     }
 
     pub fn file(&self) -> &Path {

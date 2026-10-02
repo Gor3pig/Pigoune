@@ -4,12 +4,31 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib};
+use pigoune_core::TextField;
 
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::tag_editor::PigouneTagEditor;
 use crate::thumbnails::{self, ThumbnailCache};
+
+type RenamedCallback = Box<dyn Fn(&PigouneAssetObject, String)>;
+type TextChangedCallback = Box<dyn Fn(&PigouneAssetObject, TextField, String)>;
+
+fn watch_focus_leave(widget: &gtk::Widget, details: &PigouneAssetDetails) {
+    let focus = gtk::EventControllerFocus::new();
+    focus.connect_leave(glib::clone!(
+        #[weak]
+        details,
+        move |_| details.save_texts()
+    ));
+    widget.add_controller(focus);
+}
+
+fn is_web_link(text: &str) -> bool {
+    let text = text.trim();
+    text.starts_with("https://") || text.starts_with("http://")
+}
 
 const NOTHING_PAGE: &str = "nothing";
 const ASSET_PAGE: &str = "asset";
@@ -22,6 +41,8 @@ mod imp {
     use gtk::glib;
     use gtk::prelude::*;
 
+    use super::{RenamedCallback, TextChangedCallback};
+    use crate::asset_object::PigouneAssetObject;
     use crate::tag_editor::PigouneTagEditor;
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -32,7 +53,22 @@ mod imp {
         #[template_child]
         pub preview: TemplateChild<gtk::Picture>,
         #[template_child]
-        pub name_label: TemplateChild<gtk::Label>,
+        pub name_label: TemplateChild<gtk::EditableLabel>,
+        #[template_child]
+        pub credits_row: TemplateChild<adw::ExpanderRow>,
+        #[template_child]
+        pub note_view: TemplateChild<gtk::TextView>,
+        #[template_child]
+        pub source_row: TemplateChild<adw::EntryRow>,
+        #[template_child]
+        pub open_source_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub license_row: TemplateChild<adw::EntryRow>,
+        #[template_child]
+        pub author_row: TemplateChild<adw::EntryRow>,
+        pub showing: RefCell<Option<PigouneAssetObject>>,
+        pub on_renamed: RefCell<Option<RenamedCallback>>,
+        pub on_text_changed: RefCell<Option<TextChangedCallback>>,
         #[template_child]
         pub favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
@@ -64,6 +100,7 @@ mod imp {
         fn class_init(class: &mut Self::Class) {
             PigouneTagEditor::ensure_type();
             class.bind_template();
+            class.bind_template_instance_callbacks();
         }
 
         fn instance_init(object: &glib::subclass::InitializingObject<Self>) {
@@ -71,7 +108,12 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for PigouneAssetDetails {}
+    impl ObjectImpl for PigouneAssetDetails {
+        fn constructed(&self) {
+            self.parent_constructed();
+            self.obj().save_edits_when_done();
+        }
+    }
     impl WidgetImpl for PigouneAssetDetails {}
     impl BinImpl for PigouneAssetDetails {}
 }
@@ -82,7 +124,127 @@ glib::wrapper! {
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
+#[gtk::template_callbacks]
 impl PigouneAssetDetails {
+    pub fn connect_renamed(&self, callback: impl Fn(&PigouneAssetObject, String) + 'static) {
+        self.imp().on_renamed.replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_text_changed(
+        &self,
+        callback: impl Fn(&PigouneAssetObject, TextField, String) + 'static,
+    ) {
+        self.imp().on_text_changed.replace(Some(Box::new(callback)));
+    }
+
+    pub fn start_renaming(&self) {
+        let name_label = &self.imp().name_label;
+        name_label.start_editing();
+        name_label.grab_focus();
+    }
+
+    #[template_callback]
+    fn on_open_source_clicked(&self) {
+        let url = self.imp().source_row.text();
+        let window = self.root().and_downcast::<gtk::Window>();
+        gtk::UriLauncher::new(&url).launch(window.as_ref(), None::<&gtk::gio::Cancellable>, |_| {});
+    }
+
+    fn save_edits_when_done(&self) {
+        let imp = self.imp();
+        imp.name_label.connect_editing_notify(glib::clone!(
+            #[weak(rename_to = details)]
+            self,
+            move |name_label| {
+                if !name_label.is_editing() {
+                    details.save_name();
+                }
+            }
+        ));
+        for row in [&*imp.source_row, &*imp.license_row, &*imp.author_row] {
+            row.connect_entry_activated(glib::clone!(
+                #[weak(rename_to = details)]
+                self,
+                move |_| details.save_texts()
+            ));
+            watch_focus_leave(row.upcast_ref(), self);
+        }
+        watch_focus_leave(imp.note_view.upcast_ref(), self);
+        imp.source_row.connect_changed(glib::clone!(
+            #[weak(rename_to = details)]
+            self,
+            move |row| {
+                details
+                    .imp()
+                    .open_source_button
+                    .set_visible(is_web_link(&row.text()));
+            }
+        ));
+    }
+
+    fn save_name(&self) {
+        let imp = self.imp();
+        let Some(object) = imp.showing.borrow().clone() else {
+            return;
+        };
+        let typed = imp.name_label.text().trim().to_owned();
+        if typed.is_empty() {
+            imp.name_label.set_text(&object.display_name());
+            return;
+        }
+        if typed != object.display_name()
+            && let Some(on_renamed) = imp.on_renamed.borrow().as_ref()
+        {
+            on_renamed(&object, typed);
+        }
+    }
+
+    fn save_texts(&self) {
+        let imp = self.imp();
+        let Some(object) = imp.showing.borrow().clone() else {
+            return;
+        };
+        for (field, typed) in self.typed_texts() {
+            if typed.trim() != object.text(field)
+                && let Some(on_text_changed) = imp.on_text_changed.borrow().as_ref()
+            {
+                on_text_changed(&object, field, typed);
+            }
+        }
+    }
+
+    fn typed_texts(&self) -> [(TextField, String); 4] {
+        let imp = self.imp();
+        let buffer = imp.note_view.buffer();
+        let (start, end) = buffer.bounds();
+        [
+            (
+                TextField::Note,
+                buffer.text(&start, &end, false).to_string(),
+            ),
+            (TextField::SourceUrl, imp.source_row.text().to_string()),
+            (TextField::License, imp.license_row.text().to_string()),
+            (TextField::Author, imp.author_row.text().to_string()),
+        ]
+    }
+
+    fn show_texts(&self, object: &PigouneAssetObject) {
+        let imp = self.imp();
+        imp.note_view.buffer().set_text(&object.note());
+        imp.source_row.set_text(&object.source_url());
+        imp.license_row.set_text(&object.license());
+        imp.author_row.set_text(&object.author());
+        let filled = [
+            object.note(),
+            object.source_url(),
+            object.license(),
+            object.author(),
+        ]
+        .iter()
+        .any(|text| !text.is_empty());
+        imp.credits_row.set_expanded(filled);
+    }
+
     pub fn tag_editor(&self) -> PigouneTagEditor {
         self.imp().tag_editor.get()
     }
@@ -92,7 +254,10 @@ impl PigouneAssetDetails {
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
+        self.save_texts();
+        imp.showing.replace(selected.cloned());
         if let Some(asset) = selected {
+            self.show_texts(asset);
             self.describe(asset);
             self.show_preview(asset, thumbnails);
             imp.stack.set_visible_child_name(ASSET_PAGE);
@@ -105,7 +270,7 @@ impl PigouneAssetDetails {
     fn describe(&self, object: &PigouneAssetObject) {
         let imp = self.imp();
         let asset = object.asset();
-        imp.name_label.set_label(&asset.display_name);
+        imp.name_label.set_text(&object.display_name());
         for binding in imp.favorite_bindings.take() {
             binding.unbind();
         }
@@ -169,5 +334,18 @@ impl PigouneAssetDetails {
             }
         ));
         imp.loading.replace(Some(loading));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_web_link;
+
+    #[test]
+    fn only_web_addresses_can_be_opened() {
+        assert!(is_web_link("https://github.com/logos"));
+        assert!(is_web_link("  http://example.org "));
+        assert!(!is_web_link("livre X, page 12"));
+        assert!(!is_web_link("ftp://example.org"));
     }
 }

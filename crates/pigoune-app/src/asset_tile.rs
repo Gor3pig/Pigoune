@@ -30,6 +30,7 @@ mod imp {
         #[template_child]
         pub favorite_badge: TemplateChild<gtk::Image>,
         pub favorite_binding: RefCell<Option<glib::Binding>>,
+        pub name_bindings: RefCell<Vec<glib::Binding>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
         pub animation: RefCell<Option<glib::JoinHandle<()>>>,
         pub asset: RefCell<Option<PigouneAssetObject>>,
@@ -78,8 +79,7 @@ impl PigouneAssetTile {
 
     pub fn show_asset(&self, asset: &PigouneAssetObject, cache: &Rc<ThumbnailCache>) {
         let imp = self.imp();
-        imp.name_label.set_label(asset.display_name());
-        self.set_tooltip_text(Some(asset.display_name()));
+        self.follow_name(asset);
         imp.gif_badge.set_visible(asset.asset().is_animated);
         self.unbind_favorite();
         let binding = asset
@@ -126,6 +126,22 @@ impl PigouneAssetTile {
             loading.abort();
         }
         imp.picture.set_paintable(None::<&gdk::Paintable>);
+    }
+
+    fn follow_name(&self, asset: &PigouneAssetObject) {
+        let imp = self.imp();
+        for binding in imp.name_bindings.take() {
+            binding.unbind();
+        }
+        let label = asset
+            .bind_property("display-name", &*imp.name_label, "label")
+            .sync_create()
+            .build();
+        let tooltip = asset
+            .bind_property("display-name", self, "tooltip-text")
+            .sync_create()
+            .build();
+        imp.name_bindings.replace(vec![label, tooltip]);
     }
 
     fn unbind_favorite(&self) {

@@ -10,7 +10,7 @@ const EMBEDDED_SIZES_SEPARATOR: char = ',';
 const ASSET_COLUMNS: &str =
     "id, display_name, original_file_name, stored_path, format, width, height,
     byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms, trashed_at_unix_ms,
-    is_favorite";
+    is_favorite, note, source_url, license, author";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asset {
@@ -27,6 +27,10 @@ pub struct Asset {
     pub added_at_unix_ms: i64,
     pub trashed_at_unix_ms: Option<i64>,
     pub is_favorite: bool,
+    pub note: String,
+    pub source_url: String,
+    pub license: String,
+    pub author: String,
 }
 
 impl Library {
@@ -88,6 +92,10 @@ fn asset_from_row(row: &Row) -> rusqlite::Result<Asset> {
         added_at_unix_ms: row.get("added_at_unix_ms")?,
         trashed_at_unix_ms: row.get("trashed_at_unix_ms")?,
         is_favorite: row.get("is_favorite")?,
+        note: row.get("note")?,
+        source_url: row.get("source_url")?,
+        license: row.get("license")?,
+        author: row.get("author")?,
     })
 }
 

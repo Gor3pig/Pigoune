@@ -216,7 +216,7 @@ impl PigouneAssetPreview {
             return;
         };
         let imp = self.imp();
-        imp.preview_title.set_title(asset.display_name());
+        imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
             .set_subtitle(&position_text(selection.selected(), selection.n_items()));
         let remembered = imp
