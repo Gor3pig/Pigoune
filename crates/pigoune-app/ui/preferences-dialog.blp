@@ -18,6 +18,21 @@ Adw.PreferencesDialog dialog {
     }
 
     Adw.PreferencesGroup {
+      title: _("Grid");
+
+      Adw.ComboRow bar_position_row {
+        title: _("Sort and Size Bar");
+
+        model: StringList {
+          strings [
+            _("At the Top"),
+            _("At the Bottom"),
+          ]
+        };
+      }
+    }
+
+    Adw.PreferencesGroup {
       title: _("Trash");
 
       Adw.SwitchRow confirm_empty_trash_row {

@@ -19,6 +19,9 @@ pub const RESTORE_LAST_VIEW: &str = "restore-last-view";
 pub const LAST_VIEW: &str = "last-view";
 pub const CONFIRM_EMPTY_TRASH: &str = "confirm-empty-trash";
 pub const AUTO_EMPTY_TRASH: &str = "auto-empty-trash";
+pub const BAR_POSITION: &str = "bar-position";
+pub const BAR_AT_TOP: &str = "top";
+pub const BAR_AT_BOTTOM: &str = "bottom";
 
 pub fn load() -> gio::Settings {
     let schema = installed_schema()

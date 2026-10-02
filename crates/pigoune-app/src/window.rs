@@ -347,6 +347,14 @@ impl PigouneWindow {
             .build();
         settings
             .bind(
+                settings::BAR_POSITION,
+                &*window.imp().asset_grid,
+                "bar-position",
+            )
+            .get()
+            .build();
+        settings
+            .bind(
                 settings::SHOW_DETAILS,
                 &*window.imp().details_button,
                 "active",

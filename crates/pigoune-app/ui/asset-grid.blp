@@ -2,7 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneAssetGrid: Adw.Bin {
-  child: Adw.ToolbarView {
+  child: Adw.ToolbarView toolbar_view {
     content: ScrolledWindow scrolled_window {
       hscrollbar-policy: never;
 
@@ -13,7 +13,7 @@ template $PigouneAssetGrid: Adw.Bin {
     };
 
     [top]
-    Box top_bar {
+    Box display_bar {
       halign: end;
       spacing: 6;
       margin-start: 12;
