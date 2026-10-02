@@ -4,15 +4,36 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gio, glib};
-use pigoune_core::{Library, LibraryError, library_display_name};
+use pigoune_core::{ImportError, ImportSummary, Library, LibraryError, library_display_name};
 
+use crate::background_import::{self, FinishedImport};
 use crate::error_messages;
+use crate::import_report;
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::settings;
 
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
+const CREATE_LIBRARY_ACTION: &str = "win.create-library";
+const OPEN_LIBRARY_ACTION: &str = "win.open-library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
+const IMPORT_FILES_ACTION: &str = "win.import-files";
+const IMPORT_FOLDER_ACTION: &str = "win.import-folder";
+const OPEN_LIBRARY_ACTIONS: [&str; 3] = [
+    CLOSE_LIBRARY_ACTION,
+    IMPORT_FILES_ACTION,
+    IMPORT_FOLDER_ACTION,
+];
+
+const IMAGE_MIME_TYPES: [&str; 7] = [
+    "image/svg+xml",
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "image/vnd.microsoft.icon",
+    "image/x-icon",
+];
 
 const CLOSE_RESPONSE: &str = "close";
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
@@ -28,11 +49,13 @@ mod imp {
     use std::cell::{OnceCell, RefCell};
 
     use adw::subclass::prelude::*;
-    use gtk::prelude::*;
     use gtk::{gio, glib};
     use pigoune_core::Library;
 
-    use super::CLOSE_LIBRARY_ACTION;
+    use super::{
+        CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
+        OPEN_LIBRARY_ACTION,
+    };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/window.ui")]
@@ -41,6 +64,10 @@ mod imp {
         pub window_title: TemplateChild<adw::WindowTitle>,
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub import_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
+        pub toast_overlay: TemplateChild<adw::ToastOverlay>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -53,14 +80,20 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             class.bind_template();
-            class.install_action("win.create-library", None, |window, _, _| {
+            class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
             });
-            class.install_action_async("win.open-library", None, |window, _, _| async move {
+            class.install_action_async(OPEN_LIBRARY_ACTION, None, |window, _, _| async move {
                 window.choose_library_to_open().await;
             });
             class.install_action(CLOSE_LIBRARY_ACTION, None, |window, _, _| {
                 window.close_library();
+            });
+            class.install_action_async(IMPORT_FILES_ACTION, None, |window, _, _| async move {
+                window.choose_files_to_import().await;
+            });
+            class.install_action_async(IMPORT_FOLDER_ACTION, None, |window, _, _| async move {
+                window.choose_folders_to_import().await;
             });
         }
 
@@ -72,7 +105,7 @@ mod imp {
     impl ObjectImpl for PigouneWindow {
         fn constructed(&self) {
             self.parent_constructed();
-            self.obj().action_set_enabled(CLOSE_LIBRARY_ACTION, false);
+            self.obj().set_library_actions_enabled(false);
         }
     }
 
@@ -222,7 +255,8 @@ impl PigouneWindow {
         );
         imp.library.replace(Some(library));
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
-        self.action_set_enabled(CLOSE_LIBRARY_ACTION, true);
+        imp.import_button.set_visible(true);
+        self.set_library_actions_enabled(true);
     }
 
     fn close_library(&self) {
@@ -231,7 +265,79 @@ impl PigouneWindow {
         settings::store_string(self.settings(), settings::LAST_LIBRARY_PATH, "");
         imp.window_title.set_title("Pigoune");
         imp.stack.set_visible_child_name(WELCOME_PAGE);
-        self.action_set_enabled(CLOSE_LIBRARY_ACTION, false);
+        imp.import_button.set_visible(false);
+        self.set_library_actions_enabled(false);
+    }
+
+    fn set_library_actions_enabled(&self, enabled: bool) {
+        for action in OPEN_LIBRARY_ACTIONS {
+            self.action_set_enabled(action, enabled);
+        }
+    }
+
+    fn set_importing(&self, importing: bool) {
+        for action in [CREATE_LIBRARY_ACTION, OPEN_LIBRARY_ACTION] {
+            self.action_set_enabled(action, !importing);
+        }
+        self.set_library_actions_enabled(!importing);
+    }
+
+    async fn choose_files_to_import(&self) {
+        let file_dialog = gtk::FileDialog::builder()
+            .title(gettext("Import Files"))
+            .accept_label(gettext("_Import"))
+            .modal(true)
+            .filters(&image_filters())
+            .build();
+        if let Ok(files) = file_dialog.open_multiple_future(Some(self)).await {
+            self.import_paths(paths_of(&files)).await;
+        }
+    }
+
+    async fn choose_folders_to_import(&self) {
+        let file_dialog = gtk::FileDialog::builder()
+            .title(gettext("Import Folders"))
+            .accept_label(gettext("_Import"))
+            .modal(true)
+            .build();
+        if let Ok(folders) = file_dialog.select_multiple_folders_future(Some(self)).await {
+            self.import_paths(paths_of(&folders)).await;
+        }
+    }
+
+    async fn import_paths(&self, paths: Vec<PathBuf>) {
+        if paths.is_empty() {
+            return;
+        }
+        let Some(library) = self.imp().library.take() else {
+            return;
+        };
+
+        self.set_importing(true);
+        let finished = background_import::run(self, library, paths.clone()).await;
+        self.set_importing(false);
+
+        if let Some(FinishedImport { library, result }) = finished {
+            self.imp().library.replace(Some(library));
+            self.report_import(result, &paths);
+        } else {
+            self.close_library();
+            import_report::unexpected_stop_dialog().present(Some(self));
+        }
+    }
+
+    fn report_import(&self, result: Result<ImportSummary, ImportError>, chosen: &[PathBuf]) {
+        match result {
+            Ok(summary) if import_report::needs_attention(&summary) => {
+                import_report::summary_dialog(&summary, chosen).present(Some(self));
+            }
+            Ok(summary) => {
+                self.imp()
+                    .toast_overlay
+                    .add_toast(adw::Toast::new(&import_report::toast_text(&summary)));
+            }
+            Err(error) => import_report::failure_dialog(&error).present(Some(self)),
+        }
     }
 
     fn show_opening_error(&self, root: &Path, error: &LibraryError) {
@@ -262,4 +368,27 @@ fn opening_error_alert(root: &Path, error: &LibraryError) -> adw::AlertDialog {
     let alert = adw::AlertDialog::new(Some(&heading), Some(&error_messages::describe(error)));
     alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
     alert
+}
+
+fn image_filters() -> gio::ListStore {
+    let images = gtk::FileFilter::new();
+    images.set_name(Some(&gettext("Images")));
+    for mime_type in IMAGE_MIME_TYPES {
+        images.add_mime_type(mime_type);
+    }
+    let everything = gtk::FileFilter::new();
+    everything.set_name(Some(&gettext("All Files")));
+    everything.add_pattern("*");
+
+    let filters = gio::ListStore::new::<gtk::FileFilter>();
+    filters.append(&images);
+    filters.append(&everything);
+    filters
+}
+
+fn paths_of(files: &gio::ListModel) -> Vec<PathBuf> {
+    (0..files.n_items())
+        .filter_map(|position| files.item(position).and_downcast::<gio::File>())
+        .filter_map(|file| file.path())
+        .collect()
 }

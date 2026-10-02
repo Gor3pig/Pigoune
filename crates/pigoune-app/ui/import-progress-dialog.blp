@@ -1,0 +1,52 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneImportProgressDialog: Adw.Dialog {
+  title: _("Importing");
+  content-width: 360;
+  can-close: false;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      show-start-title-buttons: false;
+      show-end-title-buttons: false;
+    }
+
+    content: Box {
+      orientation: vertical;
+      spacing: 18;
+      margin-top: 12;
+      margin-bottom: 24;
+      margin-start: 24;
+      margin-end: 24;
+
+      Box {
+        orientation: vertical;
+        spacing: 6;
+
+        ProgressBar progress_bar {}
+
+        Label status_label {
+          label: _("Preparing…");
+
+          styles [
+            "dim-label",
+            "numeric",
+          ]
+        }
+      }
+
+      Button cancel_button {
+        label: _("_Cancel");
+        use-underline: true;
+        halign: center;
+        clicked => $on_cancel_clicked() swapped;
+
+        styles [
+          "pill",
+        ]
+      }
+    };
+  };
+}

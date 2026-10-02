@@ -29,6 +29,7 @@ fn install_actions(application: &adw::Application) {
     application.set_accels_for_action("app.quit", &["<Control>q"]);
     application.set_accels_for_action("win.create-library", &["<Control>n"]);
     application.set_accels_for_action("win.open-library", &["<Control>o"]);
+    application.set_accels_for_action("win.import-files", &["<Control>i"]);
 }
 
 fn present_main_window(application: &adw::Application) {

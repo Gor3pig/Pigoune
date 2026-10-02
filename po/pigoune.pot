@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 21:53+0200\n"
+"POT-Creation-Date: 2026-10-02 08:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: data/io.github.gor3pig.Pigoune.desktop.in:3
 msgid "Pigoune"
@@ -89,35 +90,47 @@ msgstr ""
 msgid "Main Menu"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:33
+#: crates/pigoune-app/ui/window.blp:28
+msgid "Import"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:42
 msgid "Welcome to Pigoune"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:34
+#: crates/pigoune-app/ui/window.blp:43
 msgid "The cozy box for your icons, logos and illustrations."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:46
+#: crates/pigoune-app/ui/window.blp:55
 msgid "_Create a Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:57
+#: crates/pigoune-app/ui/window.blp:66
 msgid "_Open a Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:74
+#: crates/pigoune-app/ui/window.blp:83
 msgid "Your Library Is Empty"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:75
+#: crates/pigoune-app/ui/window.blp:84
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:85
+#: crates/pigoune-app/ui/window.blp:92 crates/pigoune-app/ui/window.blp:122
+msgid "Import _Files…"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:103 crates/pigoune-app/ui/window.blp:127
+msgid "Import a F_older…"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:136
 msgid "_Close Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:92
+#: crates/pigoune-app/ui/window.blp:143
 msgid "_About Pigoune"
 msgstr ""
 
@@ -126,6 +139,7 @@ msgid "New Library"
 msgstr ""
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
+#: crates/pigoune-app/ui/import-progress-dialog.blp:41
 msgid "_Cancel"
 msgstr ""
 
@@ -133,27 +147,27 @@ msgstr ""
 msgid "C_reate"
 msgstr ""
 
-#: crates/pigoune-app/ui/new-library-dialog.blp:38
+#: crates/pigoune-app/ui/new-library-dialog.blp:51
 msgid "Name"
 msgstr ""
 
-#: crates/pigoune-app/ui/new-library-dialog.blp:39
+#: crates/pigoune-app/ui/new-library-dialog.blp:52
 msgid "My Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/new-library-dialog.blp:45
+#: crates/pigoune-app/ui/new-library-dialog.blp:58
 msgid "Location"
 msgstr ""
 
-#: crates/pigoune-app/ui/new-library-dialog.blp:46
+#: crates/pigoune-app/ui/new-library-dialog.blp:59
 msgid "No folder chosen"
 msgstr ""
 
-#: crates/pigoune-app/ui/new-library-dialog.blp:51
+#: crates/pigoune-app/ui/new-library-dialog.blp:64
 msgid "_Choose…"
 msgstr ""
 
-#: crates/pigoune-app/src/application.rs:55
+#: crates/pigoune-app/src/application.rs:56
 msgid "translator-credits"
 msgstr ""
 
@@ -201,6 +215,7 @@ msgid ""
 msgstr ""
 
 #: crates/pigoune-app/src/error_messages.rs:30
+#: crates/pigoune-app/src/import_report.rs:148
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr ""
@@ -209,23 +224,150 @@ msgstr ""
 msgid "Choose a Location"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:153
+#: crates/pigoune-app/src/window.rs:186
 msgid "_Open Another Library…"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:154
+#: crates/pigoune-app/src/window.rs:187
 msgid "_Try Again"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:186
+#: crates/pigoune-app/src/window.rs:219
 msgid "Open a Pigoune Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:261
+#: crates/pigoune-app/src/window.rs:287
+msgid "Import Files"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:288 crates/pigoune-app/src/window.rs:300
+msgid "_Import"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:299
+msgid "Import Folders"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:367
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:263
+#: crates/pigoune-app/src/window.rs:369
+#: crates/pigoune-app/src/import_report.rs:39
+#: crates/pigoune-app/src/import_report.rs:51
+#: crates/pigoune-app/src/import_report.rs:62
 msgid "_Close"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:375
+msgid "Images"
+msgstr ""
+
+#: crates/pigoune-app/src/window.rs:380
+msgid "All Files"
+msgstr ""
+
+#: crates/pigoune-app/ui/import-progress-dialog.blp:5
+msgid "Importing"
+msgstr ""
+
+#: crates/pigoune-app/ui/import-progress-dialog.blp:31
+msgid "Preparing…"
+msgstr ""
+
+#: crates/pigoune-app/src/import_progress_dialog.rs:76
+#, rust-format
+msgid "{done} of {total} file processed"
+msgid_plural "{done} of {total} files processed"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_progress_dialog.rs:89
+msgid "Cancelling…"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:21
+msgid "No images to import were found"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:31
+msgid "Nothing was imported."
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:48
+msgid "Unable to Import"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:57
+msgid "Import Stopped Unexpectedly"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:59
+msgid ""
+"The library was closed as a precaution. Open it again: everything imported "
+"so far is safe."
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:68
+msgid "Import Finished"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:69
+msgid "Import Cancelled"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:70
+msgid "Import Interrupted"
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:79
+#, rust-format
+msgid "{count} resource imported"
+msgid_plural "{count} resources imported"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:87
+#, rust-format
+msgid "{count} resource already in the library"
+msgid_plural "{count} resources already in the library"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:95
+#, rust-format
+msgid "{count} resource already in the library, added to its collection"
+msgid_plural ""
+"{count} resources already in the library, added to their collections"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:103
+#, rust-format
+msgid "{count} resource restored from the trash"
+msgid_plural "{count} resources restored from the trash"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:121
+#, rust-format
+msgid "{count} file ignored: not a supported image format"
+msgid_plural "{count} files ignored: not a supported image format"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:129
+#, rust-format
+msgid "{count} file ignored: damaged or unreadable image"
+msgid_plural "{count} files ignored: damaged or unreadable images"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/import_report.rs:145
+msgid "The destination collection no longer exists."
+msgstr ""
+
+#: crates/pigoune-app/src/import_report.rs:172
+msgid "Show Unreadable Files"
 msgstr ""
