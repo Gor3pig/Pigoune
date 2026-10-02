@@ -320,6 +320,11 @@ impl PigouneWindow {
             self,
             move |view| window.show_view(view)
         ));
+        self.imp().sidebar.connect_assets_dropped(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |view, assets, keep_source| window.drop_assets_on(view, &assets, keep_source)
+        ));
         self.imp().sidebar.connect_files_dropped(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -750,17 +755,19 @@ impl PigouneWindow {
     }
 
     fn change_selected_collections(&self, command: impl FnOnce(Vec<AssetId>) -> CollectionCommand) {
-        let imp = self.imp();
         let selected = self.selected_ids();
-        if selected.is_empty() {
-            return;
+        if !selected.is_empty() {
+            self.apply_collection_change(&command(selected.clone()), &selected);
         }
-        let command = command(selected.clone());
-        let applied = imp
+    }
+
+    fn apply_collection_change(&self, command: &CollectionCommand, assets: &[AssetId]) -> bool {
+        let applied = self
+            .imp()
             .library
             .borrow_mut()
             .as_mut()
-            .map(|library| library.apply_collection_command(&command));
+            .map(|library| library.apply_collection_command(command));
         match applied {
             Some(Ok(_)) => {}
             Some(Err(error)) => {
@@ -770,12 +777,95 @@ impl PigouneWindow {
                 );
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
                 alert.present(Some(self));
-                return;
+                return false;
             }
-            None => return,
+            None => return false,
         }
         self.refresh_sidebar();
-        self.drop_assets_leaving_view(&selected);
+        self.drop_assets_leaving_view(assets);
+        true
+    }
+
+    fn drop_assets_on(&self, target: AssetView, assets: &[AssetId], keep_source: bool) {
+        match target {
+            AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
+            AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified => {}
+        }
+    }
+
+    fn drop_assets_on_collection(&self, to: CollectionId, assets: &[AssetId], keep_source: bool) {
+        let count = assets.len();
+        let (command, message) = match self.imp().current_view.get() {
+            AssetView::Collection(from) if from == to => return,
+            AssetView::Collection(from) if !keep_source => (
+                CollectionCommand::MoveAssets {
+                    from,
+                    to,
+                    assets: assets.to_vec(),
+                },
+                ngettext(
+                    "{count} resource moved to “{name}”",
+                    "{count} resources moved to “{name}”",
+                    u32::try_from(count).unwrap_or(u32::MAX),
+                ),
+            ),
+            _ => (
+                CollectionCommand::AddAssets {
+                    collection: to,
+                    assets: assets.to_vec(),
+                },
+                ngettext(
+                    "{count} resource added to “{name}”",
+                    "{count} resources added to “{name}”",
+                    u32::try_from(count).unwrap_or(u32::MAX),
+                ),
+            ),
+        };
+        let name = self.collection_name(to).unwrap_or_default();
+        if self.apply_collection_change(&command, assets) {
+            self.show_toast(
+                &message
+                    .replace("{count}", &count.to_string())
+                    .replace("{name}", &name),
+            );
+        }
+    }
+
+    fn drop_assets_on_tag(&self, tag: TagId, assets: &[AssetId]) {
+        let count = assets.len();
+        if !self.apply_tag_command(&TagCommand::Link {
+            tag,
+            assets: assets.to_vec(),
+        }) {
+            return;
+        }
+        self.refresh_selected_tags();
+        self.refresh_sidebar();
+        self.drop_assets_leaving_view(assets);
+        self.show_toast(
+            &ngettext(
+                "Tag “{name}” added to {count} resource",
+                "Tag “{name}” added to {count} resources",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &count.to_string())
+            .replace("{name}", &self.tag_name(tag).unwrap_or_default()),
+        );
+    }
+
+    fn collection_name(&self, id: CollectionId) -> Option<String> {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()?
+            .collection(id)
+            .ok()?
+            .map(|collection| collection.name)
+    }
+
+    fn show_toast(&self, text: &str) {
+        self.imp().toast_overlay.add_toast(adw::Toast::new(text));
     }
 
     fn drop_assets_leaving_view(&self, assets: &[AssetId]) {
@@ -1309,7 +1399,10 @@ impl PigouneWindow {
             self,
             #[upgrade_or]
             false,
-            move |_, _| window.imp().library.borrow().is_some()
+            move |_, drop| {
+                window.imp().library.borrow().is_some()
+                    && drop.formats().contains_type(gdk::FileList::static_type())
+            }
         ));
         drop_target.connect_enter(glib::clone!(
             #[weak(rename_to = window)]

@@ -5,7 +5,7 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
-use pigoune_core::{AssetView, CollectionId, Tag, ViewCounts};
+use pigoune_core::{AssetId, AssetView, CollectionId, Tag, ViewCounts};
 
 use crate::collection_sort::CollectionTree;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
@@ -18,6 +18,7 @@ const COLLECTION_ICON: &str = "folder-symbolic";
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
+type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 
 pub struct SidebarContent {
     pub tree: CollectionTree,
@@ -34,7 +35,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
 
-    use super::{FilesDroppedCallback, ViewChangedCallback};
+    use super::{AssetsDroppedCallback, FilesDroppedCallback, ViewChangedCallback};
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/sidebar.ui")]
@@ -44,6 +45,7 @@ mod imp {
         pub rebuilding: Cell<bool>,
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
         pub on_files_dropped: RefCell<Option<FilesDroppedCallback>>,
+        pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
     }
 
     #[glib::object_subclass]
@@ -94,6 +96,21 @@ impl PigouneSidebar {
     pub fn files_dropped(&self, view: AssetView, paths: Vec<PathBuf>) {
         if let Some(on_files_dropped) = self.imp().on_files_dropped.borrow().as_ref() {
             on_files_dropped(view, paths);
+        }
+    }
+
+    pub fn connect_assets_dropped(
+        &self,
+        callback: impl Fn(AssetView, Vec<AssetId>, bool) + 'static,
+    ) {
+        self.imp()
+            .on_assets_dropped
+            .replace(Some(Box::new(callback)));
+    }
+
+    pub fn assets_dropped(&self, view: AssetView, assets: Vec<AssetId>, keep_source: bool) {
+        if let Some(on_assets_dropped) = self.imp().on_assets_dropped.borrow().as_ref() {
+            on_assets_dropped(view, assets, keep_source);
         }
     }
 

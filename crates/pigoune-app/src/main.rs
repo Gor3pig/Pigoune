@@ -13,6 +13,7 @@ mod collection_editor;
 mod collection_name_dialog;
 mod collection_sort;
 mod config;
+mod dragged_assets;
 mod error_messages;
 mod image_check;
 mod import_progress_dialog;

@@ -117,6 +117,10 @@ impl PigouneAssetTile {
         imp.loading.replace(Some(loading));
     }
 
+    pub fn asset(&self) -> Option<PigouneAssetObject> {
+        self.imp().asset.borrow().clone()
+    }
+
     pub fn forget_asset(&self) {
         let imp = self.imp();
         self.stop_animation();

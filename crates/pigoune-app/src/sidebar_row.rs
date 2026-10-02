@@ -6,6 +6,7 @@ use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetView, CollectionId};
 
+use crate::dragged_assets::DraggedAssets;
 use crate::sidebar::PigouneSidebar;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 
@@ -134,12 +135,13 @@ impl PigouneSidebarRow {
         set_part(&imp.header_buttons, header_buttons);
         set_part(&imp.menu, menu);
         self.open_menu_on_secondary_click();
-        self.accept_dropped_files();
+        self.accept_drops();
     }
 
-    fn accept_dropped_files(&self) {
+    fn accept_drops(&self) {
         self.add_css_class(SIDEBAR_ROW);
-        let drop_target = gtk::DropTarget::new(gdk::FileList::static_type(), gdk::DragAction::COPY);
+        let drop_target = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::COPY);
+        drop_target.set_types(&[gdk::FileList::static_type(), DraggedAssets::static_type()]);
         drop_target.connect_enter(glib::clone!(
             #[weak(rename_to = row)]
             self,
@@ -160,7 +162,9 @@ impl PigouneSidebarRow {
             self,
             #[upgrade_or]
             false,
-            move |_, _| row.view().is_some()
+            move |target, drop| target
+                .formats()
+                .is_some_and(|wanted| row.accepts(&wanted, &drop.formats()))
         ));
         drop_target.connect_drop(glib::clone!(
             #[weak(rename_to = row)]
@@ -169,22 +173,43 @@ impl PigouneSidebarRow {
             false,
             move |_, value, _, _| {
                 row.highlight_list_row(false);
-                let (Some(view), Ok(files)) = (row.view(), value.get::<gdk::FileList>()) else {
-                    return false;
-                };
-                let paths: Vec<PathBuf> =
-                    files.files().iter().filter_map(gio::File::path).collect();
-                let Some(sidebar) = row
-                    .ancestor(PigouneSidebar::static_type())
-                    .and_downcast::<PigouneSidebar>()
-                else {
-                    return false;
-                };
-                sidebar.files_dropped(view, paths);
-                true
+                row.receive(value)
             }
         ));
         self.add_controller(drop_target);
+    }
+
+    fn accepts(&self, wanted: &gdk::ContentFormats, offered: &gdk::ContentFormats) -> bool {
+        if !wanted.match_(offered) {
+            return false;
+        }
+        match self.view() {
+            None => false,
+            Some(AssetView::Collection(_) | AssetView::Tag(_)) => true,
+            Some(_) => !offered.contains_type(DraggedAssets::static_type()),
+        }
+    }
+
+    fn receive(&self, value: &glib::Value) -> bool {
+        let Some(view) = self.view() else {
+            return false;
+        };
+        let Some(sidebar) = self
+            .ancestor(PigouneSidebar::static_type())
+            .and_downcast::<PigouneSidebar>()
+        else {
+            return false;
+        };
+        if let Ok(dragged) = value.get::<DraggedAssets>() {
+            sidebar.assets_dropped(view, dragged.0, control_is_held(self));
+            return true;
+        }
+        let Ok(files) = value.get::<gdk::FileList>() else {
+            return false;
+        };
+        let paths: Vec<PathBuf> = files.files().iter().filter_map(gio::File::path).collect();
+        sidebar.files_dropped(view, paths);
+        true
     }
 
     fn highlight_list_row(&self, highlighted: bool) {
@@ -316,4 +341,16 @@ fn collection_sort_menu() -> gio::Menu {
     menu.append_section(Some(&gettext("Sort Collections By")), &criteria);
     menu.append_section(None, &direction);
     menu
+}
+
+fn control_is_held(widget: &impl IsA<gtk::Widget>) -> bool {
+    widget
+        .display()
+        .default_seat()
+        .and_then(|seat| seat.keyboard())
+        .is_some_and(|keyboard| {
+            keyboard
+                .modifier_state()
+                .contains(gdk::ModifierType::CONTROL_MASK)
+        })
 }

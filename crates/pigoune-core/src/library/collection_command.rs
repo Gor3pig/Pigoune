@@ -35,6 +35,11 @@ pub enum CollectionCommand {
         collection: CollectionId,
         assets: Vec<AssetId>,
     },
+    MoveAssets {
+        from: CollectionId,
+        to: CollectionId,
+        assets: Vec<AssetId>,
+    },
     Batch(Vec<CollectionCommand>),
 }
 
@@ -76,6 +81,9 @@ fn apply(
         }
         CollectionCommand::RemoveAssets { collection, assets } => {
             remove_assets(connection, *collection, assets)
+        }
+        CollectionCommand::MoveAssets { from, to, assets } => {
+            move_assets(connection, *from, *to, assets)
         }
         CollectionCommand::Batch(commands) => {
             let mut inverses = commands
@@ -235,6 +243,23 @@ fn remove_assets(
         collection,
         assets: removed,
     })
+}
+
+fn move_assets(
+    connection: &Connection,
+    from: CollectionId,
+    to: CollectionId,
+    assets: &[AssetId],
+) -> Result<CollectionCommand, CollectionError> {
+    usable(connection, from)?;
+    usable(connection, to)?;
+    let mut inverses = Vec::new();
+    for collection in subtree(connection, from)? {
+        inverses.push(remove_assets(connection, collection, assets)?);
+    }
+    inverses.push(add_assets(connection, to, assets)?);
+    inverses.reverse();
+    Ok(CollectionCommand::Batch(inverses))
 }
 
 fn ensure_asset_is_visible(connection: &Connection, asset: AssetId) -> Result<(), CollectionError> {

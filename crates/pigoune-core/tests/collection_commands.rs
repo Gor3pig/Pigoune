@@ -622,3 +622,80 @@ fn a_view_tells_whether_it_still_shows_a_resource() {
     assert!(fixture.shows(AssetView::All, asset));
     assert!(!fixture.shows(AssetView::Favorites, asset));
 }
+
+#[test]
+fn moving_resources_takes_them_out_of_the_source_and_its_sub_collections() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Marques", None);
+    let tech = fixture.collection("Tech", Some(brands));
+    let icons = fixture.collection("Icônes", None);
+    let kept = fixture.collection("Gardée", None);
+    let direct = fixture.asset_in("red-dot.png", Some(brands));
+    let nested = fixture.asset_in("github-mark.svg", Some(tech));
+    fixture.also_in(nested, kept, "github-mark.svg");
+    let before = fixture.snapshot();
+
+    let undo = fixture.apply(&CollectionCommand::MoveAssets {
+        from: brands,
+        to: icons,
+        assets: vec![direct, nested],
+    });
+
+    assert_eq!(fixture.collections_of(direct), [icons]);
+    let mut expected = vec![icons, kept];
+    expected.sort();
+    assert_eq!(fixture.collections_of(nested), expected);
+    fixture.apply(&undo);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn moving_into_a_sub_collection_keeps_the_resource_in_view() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Marques", None);
+    let tech = fixture.collection("Tech", Some(brands));
+    let audio = fixture.collection("Audio", Some(brands));
+    let asset = fixture.asset_in("red-dot.png", Some(tech));
+    let before = fixture.snapshot();
+
+    let undo = fixture.apply(&CollectionCommand::MoveAssets {
+        from: brands,
+        to: audio,
+        assets: vec![asset],
+    });
+
+    assert_eq!(fixture.collections_of(asset), [audio]);
+    assert!(fixture.shows(AssetView::Collection(brands), asset));
+    fixture.apply(&undo);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn moving_needs_two_existing_collections() {
+    let mut fixture = Fixture::new();
+    let gone = fixture.collection("Partie", None);
+    let tech = fixture.collection("Tech", None);
+    let asset = fixture.asset_in("red-dot.png", Some(tech));
+    fixture.apply(&CollectionCommand::Trash { id: gone });
+    let before = fixture.snapshot();
+
+    for command in [
+        CollectionCommand::MoveAssets {
+            from: tech,
+            to: gone,
+            assets: vec![asset],
+        },
+        CollectionCommand::MoveAssets {
+            from: gone,
+            to: tech,
+            assets: vec![asset],
+        },
+    ] {
+        let refused = fixture.refused(&command);
+        assert!(
+            matches!(refused, CollectionError::NotFound(id) if id == gone),
+            "{refused:?}"
+        );
+    }
+    assert_eq!(fixture.snapshot(), before);
+}

@@ -9,6 +9,7 @@ use pigoune_core::AssetId;
 use crate::asset_object::PigouneAssetObject;
 use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
+use crate::dragged_assets::DraggedAssets;
 use crate::thumbnails::ThumbnailCache;
 
 mod imp {
@@ -119,6 +120,7 @@ mod imp {
             grid.set_up_grid();
             grid.link_size_scale();
             grid.resize_with_control_scroll();
+            grid.unselect_on_empty_click();
         }
     }
 
@@ -359,6 +361,83 @@ impl PigouneAssetGrid {
         self.imp().thumbnails.forget_all();
     }
 
+    fn unselect_on_empty_click(&self) {
+        let click = gtk::GestureClick::builder()
+            .button(gdk::BUTTON_PRIMARY)
+            .propagation_phase(gtk::PropagationPhase::Capture)
+            .build();
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |gesture, _, x, y| {
+                let extending = gesture
+                    .current_event_state()
+                    .intersects(gdk::ModifierType::CONTROL_MASK | gdk::ModifierType::SHIFT_MASK);
+                if !extending
+                    && !grid.has_tile_at(x, y)
+                    && let Some(selection) = grid.selection()
+                {
+                    selection.unselect_all();
+                }
+            }
+        ));
+        self.imp().grid_view.add_controller(click);
+    }
+
+    fn has_tile_at(&self, x: f64, y: f64) -> bool {
+        self.imp()
+            .grid_view
+            .pick(x, y, gtk::PickFlags::DEFAULT)
+            .is_some_and(|widget| {
+                widget.is::<PigouneAssetTile>()
+                    || widget.ancestor(PigouneAssetTile::static_type()).is_some()
+            })
+    }
+
+    fn make_draggable(&self, tile: &PigouneAssetTile) {
+        let source = gtk::DragSource::builder()
+            .actions(gdk::DragAction::COPY)
+            .build();
+        source.connect_prepare(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            #[weak]
+            tile,
+            #[upgrade_or]
+            None,
+            move |_, _, _| {
+                let dragged = grid.assets_dragged_from(&tile.asset()?);
+                Some(gdk::ContentProvider::for_value(
+                    &DraggedAssets(dragged).to_value(),
+                ))
+            }
+        ));
+        source.connect_drag_begin(glib::clone!(
+            #[weak]
+            tile,
+            move |source, _| {
+                let picture = tile.picture();
+                let icon = gtk::WidgetPaintable::new(Some(&picture));
+                source.set_icon(Some(&icon), picture.width() / 2, picture.height() / 2);
+            }
+        ));
+        tile.add_controller(source);
+    }
+
+    fn assets_dragged_from(&self, asset: &PigouneAssetObject) -> Vec<AssetId> {
+        let selected: Vec<AssetId> = self
+            .selected_assets()
+            .iter()
+            .map(PigouneAssetObject::id)
+            .collect();
+        if selected.contains(&asset.id()) {
+            selected
+        } else {
+            self.select_asset(asset.id());
+            vec![asset.id()]
+        }
+    }
+
     fn set_up_grid(&self) {
         let imp = self.imp();
         let factory = gtk::SignalListItemFactory::new();
@@ -373,6 +452,7 @@ impl PigouneAssetGrid {
                             .sync_create()
                             .build();
                     }
+                    grid.make_draggable(&tile);
                     item.set_child(Some(&tile));
                 }
             }
