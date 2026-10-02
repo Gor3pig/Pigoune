@@ -5,8 +5,9 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetCommand, AssetId, AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary,
-    Library, LibraryError, Tag, TagCommand, TagError, TagId, TextField, library_display_name,
+    AssetCommand, AssetId, AssetView, CollectionCommand, CollectionId, CollectionRemoval,
+    ImportError, ImportSummary, Library, LibraryError, Tag, TagCommand, TagError, TagId, TextField,
+    library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -53,7 +54,8 @@ const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
 const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
 const EMPTY_TRASH_RESPONSE: &str = "empty";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
-const OPEN_LIBRARY_ACTIONS: [&str; 11] = [
+const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
+const OPEN_LIBRARY_ACTIONS: [&str; 12] = [
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
@@ -62,6 +64,7 @@ const OPEN_LIBRARY_ACTIONS: [&str; 11] = [
     NEW_COLLECTION_ACTION,
     NEW_SUBCOLLECTION_ACTION,
     RENAME_COLLECTION_ACTION,
+    DELETE_COLLECTION_ACTION,
     TOGGLE_FAVORITE_ACTION,
     RENAME_TAG_ACTION,
     DELETE_TAG_ACTION,
@@ -104,10 +107,10 @@ mod imp {
 
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION,
-        DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION, IMPORT_FILES_ACTION,
-        IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
-        OPEN_PREVIEW_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
-        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
+        DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
+        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, REMOVE_FROM_COLLECTION_ACTION,
+        RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
         SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
         collection_parameter, tag_parameter,
     };
@@ -249,6 +252,15 @@ mod imp {
                 },
             );
             install_asset_actions(class);
+            class.install_action(
+                DELETE_COLLECTION_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(id) = collection_parameter(parameter) {
+                        window.ask_collection_deletion(id);
+                    }
+                },
+            );
             class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
                 window.ask_new_collection(None);
             });
@@ -1513,6 +1525,70 @@ impl PigouneWindow {
         }
     }
 
+    fn ask_collection_deletion(&self, id: CollectionId) {
+        let read = self.imp().library.borrow().as_ref().map(|library| {
+            Ok::<_, pigoune_core::CollectionError>((
+                library.removal_of(id)?,
+                library.view_counts()?.of(AssetView::Collection(id)),
+            ))
+        });
+        let (removal, contained) = match read {
+            Some(Ok(read)) => read,
+            Some(Err(error)) => {
+                self.show_collection_error(&error);
+                return;
+            }
+            None => return,
+        };
+        let name = self.collection_name(id).unwrap_or_default();
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Delete the Collection “{name}”?").replace("{name}", &name)),
+            Some(&deletion_consequences(removal, contained)),
+        );
+        alert.add_responses(&[
+            (CLOSE_RESPONSE, &gettext("_Cancel")),
+            (DELETE_RESPONSE, &gettext("_Delete")),
+        ]);
+        alert.set_response_appearance(DELETE_RESPONSE, adw::ResponseAppearance::Destructive);
+        alert.set_default_response(Some(CLOSE_RESPONSE));
+        alert.set_close_response(CLOSE_RESPONSE);
+        alert.connect_response(
+            Some(DELETE_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| window.delete_collection(id, &name)
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn delete_collection(&self, id: CollectionId, name: &str) {
+        let deleted = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.apply_collection_command(&CollectionCommand::Trash { id }));
+        match deleted {
+            Some(Ok(_)) => {
+                self.refresh_assets();
+                self.show_toast(&gettext("Collection “{name}” deleted").replace("{name}", name));
+            }
+            Some(Err(error)) => self.show_collection_error(&error),
+            None => {}
+        }
+    }
+
+    fn show_collection_error(&self, error: &pigoune_core::CollectionError) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Unable to Change the Collections")),
+            Some(&error_messages::describe_collection(error)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
     fn ask_collection_name(&self, id: CollectionId) {
         let current_name = self
             .imp()
@@ -1933,6 +2009,40 @@ enum ImportTarget {
 
 fn collection_parameter(parameter: Option<&glib::Variant>) -> Option<CollectionId> {
     CollectionId::parse(&parameter?.get::<String>()?)
+}
+
+fn deletion_consequences(removal: CollectionRemoval, contained: usize) -> String {
+    let count = |number: usize| u32::try_from(number).unwrap_or(u32::MAX);
+    let mut sentences = Vec::new();
+    if removal.sub_collections > 0 {
+        sentences.push(
+            ngettext(
+                "Its {count} sub-collection will be deleted too.",
+                "Its {count} sub-collections will be deleted too.",
+                count(removal.sub_collections),
+            )
+            .replace("{count}", &removal.sub_collections.to_string()),
+        );
+    }
+    if removal.trashed_assets > 0 {
+        sentences.push(
+            ngettext(
+                "{count} resource found only here will go to the trash.",
+                "{count} resources found only here will go to the trash.",
+                count(removal.trashed_assets),
+            )
+            .replace("{count}", &removal.trashed_assets.to_string()),
+        );
+    }
+    if contained > removal.trashed_assets {
+        sentences.push(gettext(
+            "Resources also kept in other collections stay there.",
+        ));
+    }
+    if sentences.is_empty() {
+        sentences.push(gettext("This collection is empty."));
+    }
+    sentences.join(" ")
 }
 
 fn menu_item(label: &str, action: &str, accel: Option<&str>) -> gio::MenuItem {

@@ -43,7 +43,23 @@ pub enum CollectionCommand {
     Batch(Vec<CollectionCommand>),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CollectionRemoval {
+    pub sub_collections: usize,
+    pub trashed_assets: usize,
+}
+
 impl Library {
+    pub fn removal_of(&self, id: CollectionId) -> Result<CollectionRemoval, CollectionError> {
+        usable(&self.connection, id)?;
+        let collections = subtree(&self.connection, id)?;
+        let trashed_assets = assets_only_in(&self.connection, &collections)?.len();
+        Ok(CollectionRemoval {
+            sub_collections: collections.len().saturating_sub(1),
+            trashed_assets,
+        })
+    }
+
     pub fn apply_collection_command(
         &mut self,
         command: &CollectionCommand,

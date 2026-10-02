@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetId, AssetView, CollectionCommand, CollectionError, CollectionId, DATABASE_FILE_NAME,
-    ImportOutcome, Library,
+    AssetId, AssetView, CollectionCommand, CollectionError, CollectionId, CollectionRemoval,
+    DATABASE_FILE_NAME, ImportOutcome, Library,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -697,5 +697,37 @@ fn moving_needs_two_existing_collections() {
             "{refused:?}"
         );
     }
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn the_removal_of_a_collection_is_announced_before_it_happens() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Marques", None);
+    let tech = fixture.collection("Tech", Some(brands));
+    fixture.collection("Audio", Some(tech));
+    let kept = fixture.collection("Gardée", None);
+    fixture.asset_in("red-dot.png", Some(brands));
+    fixture.asset_in("github-mark.svg", Some(tech));
+    let shared = fixture.asset_in("spinner.gif", Some(tech));
+    fixture.also_in(shared, kept, "spinner.gif");
+    let before = fixture.snapshot();
+
+    let removal = fixture.library.removal_of(brands).expect("removal is read");
+
+    assert_eq!(
+        removal,
+        CollectionRemoval {
+            sub_collections: 2,
+            trashed_assets: 2,
+        }
+    );
+    assert_eq!(
+        fixture.library.removal_of(kept).expect("removal is read"),
+        CollectionRemoval {
+            sub_collections: 0,
+            trashed_assets: 0,
+        }
+    );
     assert_eq!(fixture.snapshot(), before);
 }

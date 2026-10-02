@@ -74,7 +74,7 @@ mod imp {
             self.parent_constructed();
             let sidebar = self.obj();
             sidebar.set_up_rows();
-            sidebar.rename_with_f2();
+            sidebar.act_on_keys();
         }
     }
 
@@ -233,7 +233,7 @@ impl PigouneSidebar {
         }
     }
 
-    fn rename_with_f2(&self) {
+    fn act_on_keys(&self) {
         let keys = gtk::EventControllerKey::new();
         keys.connect_key_pressed(glib::clone!(
             #[weak(rename_to = sidebar)]
@@ -241,12 +241,17 @@ impl PigouneSidebar {
             #[upgrade_or]
             glib::Propagation::Proceed,
             move |_, key, _, modifiers| {
-                if key != gdk::Key::F2 || !modifiers.is_empty() {
+                if !modifiers.is_empty() {
                     return glib::Propagation::Proceed;
                 }
-                let (action, id) = match sidebar.selected_view() {
-                    Some(AssetView::Collection(id)) => ("win.rename-collection", id.to_string()),
-                    Some(AssetView::Tag(id)) => ("win.rename-tag", id.to_string()),
+                let (action, id) = match (key, sidebar.selected_view()) {
+                    (gdk::Key::F2, Some(AssetView::Collection(id))) => {
+                        ("win.rename-collection", id.to_string())
+                    }
+                    (gdk::Key::F2, Some(AssetView::Tag(id))) => ("win.rename-tag", id.to_string()),
+                    (gdk::Key::Delete, Some(AssetView::Collection(id))) => {
+                        ("win.delete-collection", id.to_string())
+                    }
                     _ => return glib::Propagation::Proceed,
                 };
                 let _ = sidebar.activate_action(action, Some(&id.to_variant()));

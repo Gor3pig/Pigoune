@@ -419,6 +419,10 @@ fn collection_menu(collection: CollectionId) -> gio::Menu {
         Some(&gettext("Rename…")),
         Some(&format!("win.rename-collection::{collection}")),
     );
+    menu.append(
+        Some(&gettext("Delete…")),
+        Some(&format!("win.delete-collection::{collection}")),
+    );
     menu
 }
 
