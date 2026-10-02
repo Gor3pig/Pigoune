@@ -3,12 +3,28 @@ using Adw 1;
 
 template $PigouneGridHeader: Adw.Bin {
   child: Adw.HeaderBar {
-    title-widget: SearchEntry search_entry {
-      max-width-chars: 40;
-      placeholder-text: _("Search…");
+    title-widget: Box {
+      spacing: 6;
 
-      accessibility {
-        label: _("Search Resources");
+      SearchEntry search_entry {
+        max-width-chars: 40;
+        placeholder-text: _("Search…");
+
+        accessibility {
+          label: _("Search Resources");
+        }
+      }
+
+      MenuButton filter_button {
+        label: _("Filters");
+        always-show-arrow: true;
+        tooltip-text: _("Filter the Resources");
+
+        popover: $PigouneFilterPopover filter_popover {};
+
+        styles [
+          "flat",
+        ]
       }
     };
 
@@ -75,8 +91,7 @@ template $PigouneGridHeader: Adw.Bin {
 
     [end]
     MenuButton sort_button {
-      always-show-arrow: true;
-      tooltip-text: _("Sort");
+      icon-name: "view-sort-descending-symbolic";
       menu-model: sort_menu;
 
       styles [

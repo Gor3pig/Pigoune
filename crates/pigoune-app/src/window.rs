@@ -105,7 +105,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::prelude::*;
     use gtk::{gio, glib};
-    use pigoune_core::{AssetView, ChangeStamp, Library};
+    use pigoune_core::{AssetFilter, AssetView, ChangeStamp, Library};
 
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
@@ -164,6 +164,7 @@ mod imp {
         pub library: RefCell<Option<Library>>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
         pub search_query: RefCell<String>,
+        pub filters: RefCell<AssetFilter>,
         pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
     }
 
@@ -386,6 +387,7 @@ impl PigouneWindow {
         window.follow_sidebar(&settings);
         window.follow_trash_confirmation(&settings);
         window.follow_search();
+        window.follow_filters();
         window.follow_details_panel();
         window.type_to_search();
         window
@@ -416,7 +418,7 @@ impl PigouneWindow {
             "size" => gettext("Size"),
             _ => gettext("Date Added"),
         };
-        self.imp().grid_header.show_sort_label(&label);
+        self.imp().grid_header.show_sort_criterion(&label);
     }
 
     fn follow_details_panel(&self) {
@@ -513,6 +515,30 @@ impl PigouneWindow {
         ));
     }
 
+    fn follow_filters(&self) {
+        self.imp()
+            .grid_header
+            .filter_popover()
+            .connect_changed(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move || window.apply_filters()
+            ));
+    }
+
+    fn apply_filters(&self) {
+        let imp = self.imp();
+        let choice = imp.grid_header.filter_popover().choice();
+        let filters = AssetFilter {
+            text: String::new(),
+            formats: choice.formats,
+            favorites_only: choice.favorites_only,
+        };
+        imp.grid_header.show_filter_count(filters.chosen_filters());
+        imp.filters.replace(filters);
+        self.refresh_grid();
+    }
+
     fn search(&self, query: &str) {
         let imp = self.imp();
         if *imp.search_query.borrow() == query {
@@ -525,6 +551,9 @@ impl PigouneWindow {
     fn reset_search(&self) {
         let imp = self.imp();
         imp.search_query.replace(String::new());
+        imp.filters.replace(AssetFilter::default());
+        imp.grid_header.filter_popover().clear();
+        imp.grid_header.show_filter_count(0);
         imp.grid_header.search_entry().set_text("");
     }
 
@@ -1976,10 +2005,13 @@ impl PigouneWindow {
         let imp = self.imp();
         let view = imp.current_view.get();
         let previously_selected = self.selected_ids();
-        let query = imp.search_query.borrow().clone();
+        let filter = AssetFilter {
+            text: imp.search_query.borrow().clone(),
+            ..imp.filters.borrow().clone()
+        };
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
-                asset_objects(library, view, &query)?,
+                asset_objects(library, view, &filter)?,
                 library.view_counts()?.all,
                 view_name(library, view),
             ))
@@ -1991,9 +2023,9 @@ impl PigouneWindow {
                 } else {
                     ASSETS_PAGE
                 };
-                let searching = !query.trim().is_empty();
+                let searching = filter.narrows();
                 if assets.is_empty() && searching {
-                    self.describe_missing_results(view, &view_name, query.trim());
+                    self.describe_missing_results(view, &view_name, &filter);
                 } else if assets.is_empty() {
                     self.describe_empty_view(view, &view_name);
                 }
@@ -2063,7 +2095,7 @@ impl PigouneWindow {
         }
     }
 
-    fn describe_missing_results(&self, view: AssetView, view_name: &str, query: &str) {
+    fn describe_missing_results(&self, view: AssetView, view_name: &str, filter: &AssetFilter) {
         let scope = match view {
             AssetView::All => None,
             AssetView::Favorites => Some(gettext("Favorites")),
@@ -2072,6 +2104,9 @@ impl PigouneWindow {
             AssetView::Collection(_) | AssetView::Tag(_) => Some(view_name.to_owned()),
         };
         let description = match scope {
+            _ if filter.chosen_filters() > 0 => {
+                gettext("No resource matches the chosen filters. Clear them to see more resources.")
+            }
             Some(scope) => gettext(
                 "No resource in “{name}” matches this search. Select “All” to search everywhere.",
             )
@@ -2080,7 +2115,12 @@ impl PigouneWindow {
         };
         let page = self.imp().asset_grid.nothing_page();
         page.set_icon_name(Some("system-search-symbolic"));
-        page.set_title(&gettext("No Results for “{query}”").replace("{query}", query));
+        let query = filter.text.trim();
+        if query.is_empty() {
+            page.set_title(&gettext("No Results"));
+        } else {
+            page.set_title(&gettext("No Results for “{query}”").replace("{query}", query));
+        }
         page.set_description(Some(&description));
     }
 
@@ -2441,10 +2481,10 @@ fn view_name(library: &Library, view: AssetView) -> String {
 fn asset_objects(
     library: &Library,
     view: AssetView,
-    query: &str,
+    filter: &AssetFilter,
 ) -> Result<Vec<PigouneAssetObject>, LibraryError> {
     Ok(library
-        .find_assets_in(view, &AssetFilter::text(query))?
+        .find_assets_in(view, filter)?
         .iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {

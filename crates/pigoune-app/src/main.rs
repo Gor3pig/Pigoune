@@ -16,6 +16,7 @@ mod collection_sort;
 mod config;
 mod drag_content;
 mod error_messages;
+mod filter_popover;
 mod grid_header;
 mod image_check;
 mod import_progress_dialog;

@@ -1,11 +1,16 @@
 use adw::subclass::prelude::*;
-use gettextrs::ngettext;
+use gettextrs::{gettext, ngettext};
+
+use crate::filter_popover::PigouneFilterPopover;
 use gtk::glib;
 use gtk::prelude::*;
 
 mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
+    use gtk::prelude::*;
+
+    use crate::filter_popover::PigouneFilterPopover;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/grid-header.ui")]
@@ -20,6 +25,10 @@ mod imp {
         pub sort_button: TemplateChild<gtk::MenuButton>,
         #[template_child]
         pub details_button: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub filter_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
+        pub filter_popover: TemplateChild<PigouneFilterPopover>,
     }
 
     #[glib::object_subclass]
@@ -29,6 +38,7 @@ mod imp {
         type ParentType = adw::Bin;
 
         fn class_init(class: &mut Self::Class) {
+            PigouneFilterPopover::ensure_type();
             class.bind_template();
         }
 
@@ -53,12 +63,29 @@ impl PigouneGridHeader {
         self.imp().search_entry.get()
     }
 
+    pub fn filter_popover(&self) -> PigouneFilterPopover {
+        self.imp().filter_popover.get()
+    }
+
+    pub fn show_filter_count(&self, count: usize) {
+        let button = &self.imp().filter_button;
+        if count == 0 {
+            button.set_label(&gettext("Filters"));
+            button.remove_css_class("accent");
+        } else {
+            button.set_label(&gettext("Filters ({count})").replace("{count}", &count.to_string()));
+            button.add_css_class("accent");
+        }
+    }
+
     pub fn details_button(&self) -> gtk::ToggleButton {
         self.imp().details_button.get()
     }
 
-    pub fn show_sort_label(&self, label: &str) {
-        self.imp().sort_button.set_label(label);
+    pub fn show_sort_criterion(&self, criterion: &str) {
+        self.imp().sort_button.set_tooltip_text(Some(
+            &gettext("Sort: {criterion}").replace("{criterion}", criterion),
+        ));
     }
 
     pub fn size_adjustment(&self) -> gtk::Adjustment {

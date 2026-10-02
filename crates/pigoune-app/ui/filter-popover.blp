@@ -1,0 +1,38 @@
+using Gtk 4.0;
+
+template $PigouneFilterPopover: Popover {
+  child: Box {
+    orientation: vertical;
+    spacing: 12;
+    margin-top: 6;
+    margin-bottom: 6;
+    margin-start: 6;
+    margin-end: 6;
+    width-request: 260;
+
+    Label {
+      label: _("Type");
+      xalign: 0;
+
+      styles [
+        "heading",
+      ]
+    }
+
+    FlowBox formats_box {
+      selection-mode: none;
+      min-children-per-line: 3;
+      max-children-per-line: 3;
+      homogeneous: true;
+    }
+
+    CheckButton favorites_check {
+      label: _("Favorites Only");
+    }
+
+    Button clear_button {
+      label: _("_Clear Filters");
+      use-underline: true;
+    }
+  };
+}

@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionId, ImportOutcome,
-    Library, TagCommand, TagId,
+    Library,
 };
 use tempfile::TempDir;
 
@@ -39,20 +39,6 @@ impl Fixture {
                 favorite: true,
             })
             .expect("favorite is set");
-    }
-
-    fn tag(&mut self, assets: &[AssetId], name: &str) -> TagId {
-        self.library
-            .apply_tag_command(&TagCommand::Add {
-                assets: assets.to_vec(),
-                name: name.to_owned(),
-            })
-            .expect("tag is added");
-        self.library
-            .tag_named(name)
-            .expect("tag is read")
-            .expect("tag exists")
-            .id
     }
 
     fn found(&self, view: AssetView, filter: &AssetFilter) -> Vec<AssetId> {
@@ -123,21 +109,6 @@ fn only_favorites_can_be_kept() {
 }
 
 #[test]
-fn every_chosen_tag_must_be_carried() {
-    let mut fixture = Fixture::new();
-    let both = fixture.import("red-dot.png", None);
-    let one = fixture.import("github-mark.svg", None);
-    let red = fixture.tag(&[both, one], "rouge");
-    let logo = fixture.tag(&[both], "logo");
-    let filter = AssetFilter {
-        tags: vec![red, logo],
-        ..AssetFilter::default()
-    };
-
-    assert_eq!(fixture.found(AssetView::All, &filter), [both]);
-}
-
-#[test]
 fn filters_combine_with_the_text_and_the_view() {
     let mut fixture = Fixture::new();
     let logos = fixture
@@ -154,7 +125,6 @@ fn filters_combine_with_the_text_and_the_view() {
         text: "mark".to_owned(),
         formats: vec![AssetFormat::Svg],
         favorites_only: true,
-        tags: Vec::new(),
     };
 
     assert_eq!(
@@ -176,17 +146,13 @@ fn filters_combine_with_the_text_and_the_view() {
 
 #[test]
 fn the_chosen_filters_are_counted_without_the_text() {
-    let mut fixture = Fixture::new();
-    let png = fixture.import("red-dot.png", None);
-    let red = fixture.tag(&[png], "rouge");
     let filter = AssetFilter {
         text: "logo".to_owned(),
         formats: vec![AssetFormat::Png, AssetFormat::Svg],
         favorites_only: true,
-        tags: vec![red],
     };
 
-    assert_eq!(filter.chosen_filters(), 4);
+    assert_eq!(filter.chosen_filters(), 3);
     assert_eq!(AssetFilter::text("logo").chosen_filters(), 0);
     assert!(AssetFilter::text("logo").narrows());
     assert!(!AssetFilter::text("   ").narrows());
