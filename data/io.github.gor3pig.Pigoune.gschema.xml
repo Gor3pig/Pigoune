@@ -23,6 +23,23 @@
       <summary>Show the details panel</summary>
       <description>Whether the panel describing the selected resource is shown next to the grid.</description>
     </key>
+    <key name="sort-criterion" type="s">
+      <choices>
+        <choice value="added"/>
+        <choice value="name"/>
+        <choice value="type"/>
+        <choice value="dimensions"/>
+        <choice value="size"/>
+      </choices>
+      <default>"added"</default>
+      <summary>Sort criterion</summary>
+      <description>How the resources of the library grid are ordered.</description>
+    </key>
+    <key name="sort-reversed" type="b">
+      <default>false</default>
+      <summary>Reverse sort order</summary>
+      <description>Whether the natural direction of the sort criterion is reversed.</description>
+    </key>
     <key name="thumbnail-size" type="i">
       <range min="64" max="256"/>
       <default>128</default>

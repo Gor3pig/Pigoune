@@ -12,12 +12,23 @@ template $PigouneAssetGrid: Adw.Bin {
       };
     };
 
-    [bottom]
+    [top]
     Box {
       halign: end;
       spacing: 6;
       margin-start: 12;
       margin-end: 12;
+
+      MenuButton sort_button {
+        icon-name: "view-sort-descending-symbolic";
+        tooltip-text: _("Sort");
+        menu-model: sort_menu;
+        margin-end: 6;
+
+        styles [
+          "flat",
+        ]
+      }
 
       Image {
         icon-name: "zoom-out-symbolic";
@@ -53,4 +64,47 @@ template $PigouneAssetGrid: Adw.Bin {
       }
     }
   };
+}
+
+menu sort_menu {
+  section {
+    label: _("Sort By");
+
+    item {
+      label: _("Date Added");
+      action: "win.sort-criterion";
+      target: "added";
+    }
+
+    item {
+      label: _("Name");
+      action: "win.sort-criterion";
+      target: "name";
+    }
+
+    item {
+      label: _("Type");
+      action: "win.sort-criterion";
+      target: "type";
+    }
+
+    item {
+      label: _("Dimensions");
+      action: "win.sort-criterion";
+      target: "dimensions";
+    }
+
+    item {
+      label: _("Size");
+      action: "win.sort-criterion";
+      target: "size";
+    }
+  }
+
+  section {
+    item {
+      label: _("Reverse Order");
+      action: "win.sort-reversed";
+    }
+  }
 }

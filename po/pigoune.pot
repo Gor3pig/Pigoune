@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 09:15+0200\n"
+"POT-Creation-Date: 2026-10-02 09:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -95,11 +95,27 @@ msgid ""
 "Whether the panel describing the selected resource is shown next to the grid."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:29
+#: data/io.github.gor3pig.Pigoune.gschema.xml:35
+msgid "Sort criterion"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:36
+msgid "How the resources of the library grid are ordered."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:40
+msgid "Reverse sort order"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:41
+msgid "Whether the natural direction of the sort criterion is reversed."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:46
 msgid "Thumbnail size"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:30
+#: data/io.github.gor3pig.Pigoune.gschema.xml:47
 msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr ""
 
@@ -173,6 +189,7 @@ msgid "C_reate"
 msgstr ""
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:51
+#: crates/pigoune-app/ui/asset-grid.blp:80
 msgid "Name"
 msgstr ""
 
@@ -249,56 +266,56 @@ msgstr ""
 msgid "Choose a Location"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:232
+#: crates/pigoune-app/src/window.rs:241
 msgid "_Open Another Library…"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:233
+#: crates/pigoune-app/src/window.rs:242
 msgid "_Try Again"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:265
+#: crates/pigoune-app/src/window.rs:274
 msgid "Open a Pigoune Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:363
+#: crates/pigoune-app/src/window.rs:372
 msgid "Unable to Show the Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:366 crates/pigoune-app/src/window.rs:524
+#: crates/pigoune-app/src/window.rs:375 crates/pigoune-app/src/window.rs:533
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:435
+#: crates/pigoune-app/src/window.rs:444
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:441
+#: crates/pigoune-app/src/window.rs:450
 msgid "Import Files"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:442 crates/pigoune-app/src/window.rs:454
+#: crates/pigoune-app/src/window.rs:451 crates/pigoune-app/src/window.rs:463
 msgid "_Import"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:453
+#: crates/pigoune-app/src/window.rs:462
 msgid "Import Folders"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:522
+#: crates/pigoune-app/src/window.rs:531
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:530
+#: crates/pigoune-app/src/window.rs:539
 msgid "Images"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:535
+#: crates/pigoune-app/src/window.rs:544
 msgid "All Files"
 msgstr ""
 
@@ -417,9 +434,39 @@ msgstr ""
 msgid "Show Unreadable Files"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-grid.blp:33
-#: crates/pigoune-app/ui/asset-grid.blp:43
+#: crates/pigoune-app/ui/asset-grid.blp:24
+msgid "Sort"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:44
+#: crates/pigoune-app/ui/asset-grid.blp:54
 msgid "Thumbnail Size"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:71
+msgid "Sort By"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:74
+msgid "Date Added"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:86
+msgid "Type"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:92
+#: crates/pigoune-app/ui/asset-details.blp:70
+msgid "Dimensions"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:98
+#: crates/pigoune-app/ui/asset-details.blp:79
+msgid "Size"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:106
+msgid "Reverse Order"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-details.blp:13
@@ -432,14 +479,6 @@ msgstr ""
 
 #: crates/pigoune-app/ui/asset-details.blp:61
 msgid "Format"
-msgstr ""
-
-#: crates/pigoune-app/ui/asset-details.blp:70
-msgid "Dimensions"
-msgstr ""
-
-#: crates/pigoune-app/ui/asset-details.blp:79
-msgid "Size"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-details.blp:88

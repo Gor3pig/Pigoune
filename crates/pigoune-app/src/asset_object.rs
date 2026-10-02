@@ -21,6 +21,7 @@ mod imp {
     #[derive(Default)]
     pub struct PigouneAssetObject {
         pub entry: OnceCell<AssetEntry>,
+        pub name_key: OnceCell<glib::FilenameCollationKey>,
     }
 
     #[glib::object_subclass]
@@ -62,6 +63,12 @@ impl PigouneAssetObject {
 
     pub fn display_name(&self) -> &str {
         &self.asset().display_name
+    }
+
+    pub fn name_key(&self) -> &glib::FilenameCollationKey {
+        self.imp()
+            .name_key
+            .get_or_init(|| glib::FilenameCollationKey::from(self.display_name()))
     }
 
     pub fn file(&self) -> &Path {

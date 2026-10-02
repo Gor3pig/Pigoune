@@ -118,3 +118,13 @@ fn thumbnails_live_in_the_disposable_cache_folder_by_size() {
     );
     assert_ne!(small, large);
 }
+
+#[test]
+fn an_asset_id_survives_a_round_trip_through_text() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = library_in(&workspace);
+    let id = import(&mut library, "red-dot.png");
+
+    assert_eq!(AssetId::parse(&id.to_string()), Some(id));
+    assert_eq!(AssetId::parse("not an id"), None);
+}

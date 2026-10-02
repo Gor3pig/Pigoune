@@ -12,6 +12,11 @@ macro_rules! entity_id {
             pub(super) fn generate() -> Self {
                 Self(Uuid::now_v7())
             }
+
+            #[must_use]
+            pub fn parse(text: &str) -> Option<Self> {
+                Uuid::parse_str(text).ok().map(Self)
+            }
         }
 
         impl fmt::Display for $name {

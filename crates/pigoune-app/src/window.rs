@@ -180,6 +180,15 @@ impl PigouneWindow {
                 "active",
             )
             .build();
+        for (key, property) in [
+            (settings::SORT_CRITERION, "sort-criterion"),
+            (settings::SORT_REVERSED, "sort-reversed"),
+        ] {
+            settings
+                .bind(key, &*window.imp().asset_grid, property)
+                .build();
+            window.add_action(&settings.create_action(key));
+        }
         window.describe_selected_asset();
         window
             .imp()

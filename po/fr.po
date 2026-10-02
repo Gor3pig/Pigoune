@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 09:15+0200\n"
+"POT-Creation-Date: 2026-10-02 09:23+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -97,11 +97,27 @@ msgstr ""
 "Indique si le panneau décrivant la ressource sélectionnée est affiché à côté "
 "de la grille."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:29
+#: data/io.github.gor3pig.Pigoune.gschema.xml:35
+msgid "Sort criterion"
+msgstr "Critère de tri"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:36
+msgid "How the resources of the library grid are ordered."
+msgstr "Ordre des ressources dans la grille de la bibliothèque."
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:40
+msgid "Reverse sort order"
+msgstr "Ordre de tri inversé"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:41
+msgid "Whether the natural direction of the sort criterion is reversed."
+msgstr "Indique si le sens naturel du critère de tri est inversé."
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:46
 msgid "Thumbnail size"
 msgstr "Taille des vignettes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:30
+#: data/io.github.gor3pig.Pigoune.gschema.xml:47
 msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr "Côté des vignettes dans la grille de la bibliothèque, en pixels."
 
@@ -177,6 +193,7 @@ msgid "C_reate"
 msgstr "C_réer"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:51
+#: crates/pigoune-app/ui/asset-grid.blp:80
 msgid "Name"
 msgstr "Nom"
 
@@ -265,56 +282,56 @@ msgstr "Une erreur inattendue s'est produite : {error}"
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:232
+#: crates/pigoune-app/src/window.rs:241
 msgid "_Open Another Library…"
 msgstr "_Ouvrir une autre bibliothèque…"
 
-#: crates/pigoune-app/src/window.rs:233
+#: crates/pigoune-app/src/window.rs:242
 msgid "_Try Again"
 msgstr "_Réessayer"
 
-#: crates/pigoune-app/src/window.rs:265
+#: crates/pigoune-app/src/window.rs:274
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:363
+#: crates/pigoune-app/src/window.rs:372
 msgid "Unable to Show the Library"
 msgstr "Impossible d’afficher la bibliothèque"
 
-#: crates/pigoune-app/src/window.rs:366 crates/pigoune-app/src/window.rs:524
+#: crates/pigoune-app/src/window.rs:375 crates/pigoune-app/src/window.rs:533
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr "_Fermer"
 
-#: crates/pigoune-app/src/window.rs:435
+#: crates/pigoune-app/src/window.rs:444
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr "Déposez pour importer dans « {name} »"
 
-#: crates/pigoune-app/src/window.rs:441
+#: crates/pigoune-app/src/window.rs:450
 msgid "Import Files"
 msgstr "Importer des fichiers"
 
-#: crates/pigoune-app/src/window.rs:442 crates/pigoune-app/src/window.rs:454
+#: crates/pigoune-app/src/window.rs:451 crates/pigoune-app/src/window.rs:463
 msgid "_Import"
 msgstr "_Importer"
 
-#: crates/pigoune-app/src/window.rs:453
+#: crates/pigoune-app/src/window.rs:462
 msgid "Import Folders"
 msgstr "Importer des dossiers"
 
-#: crates/pigoune-app/src/window.rs:522
+#: crates/pigoune-app/src/window.rs:531
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
-#: crates/pigoune-app/src/window.rs:530
+#: crates/pigoune-app/src/window.rs:539
 msgid "Images"
 msgstr "Images"
 
-#: crates/pigoune-app/src/window.rs:535
+#: crates/pigoune-app/src/window.rs:544
 msgid "All Files"
 msgstr "Tous les fichiers"
 
@@ -446,10 +463,40 @@ msgstr "La collection de destination n’existe plus."
 msgid "Show Unreadable Files"
 msgstr "Afficher les fichiers illisibles"
 
-#: crates/pigoune-app/ui/asset-grid.blp:33
-#: crates/pigoune-app/ui/asset-grid.blp:43
+#: crates/pigoune-app/ui/asset-grid.blp:24
+msgid "Sort"
+msgstr "Trier"
+
+#: crates/pigoune-app/ui/asset-grid.blp:44
+#: crates/pigoune-app/ui/asset-grid.blp:54
 msgid "Thumbnail Size"
 msgstr "Taille des vignettes"
+
+#: crates/pigoune-app/ui/asset-grid.blp:71
+msgid "Sort By"
+msgstr "Trier par"
+
+#: crates/pigoune-app/ui/asset-grid.blp:74
+msgid "Date Added"
+msgstr "Date d’ajout"
+
+#: crates/pigoune-app/ui/asset-grid.blp:86
+msgid "Type"
+msgstr "Type"
+
+#: crates/pigoune-app/ui/asset-grid.blp:92
+#: crates/pigoune-app/ui/asset-details.blp:70
+msgid "Dimensions"
+msgstr "Dimensions"
+
+#: crates/pigoune-app/ui/asset-grid.blp:98
+#: crates/pigoune-app/ui/asset-details.blp:79
+msgid "Size"
+msgstr "Poids"
+
+#: crates/pigoune-app/ui/asset-grid.blp:106
+msgid "Reverse Order"
+msgstr "Ordre inverse"
 
 #: crates/pigoune-app/ui/asset-details.blp:13
 msgid "No Resource Selected"
@@ -462,14 +509,6 @@ msgstr "Sélectionnez une ressource pour voir ses détails."
 #: crates/pigoune-app/ui/asset-details.blp:61
 msgid "Format"
 msgstr "Format"
-
-#: crates/pigoune-app/ui/asset-details.blp:70
-msgid "Dimensions"
-msgstr "Dimensions"
-
-#: crates/pigoune-app/ui/asset-details.blp:79
-msgid "Size"
-msgstr "Poids"
 
 #: crates/pigoune-app/ui/asset-details.blp:88
 msgid "Added"

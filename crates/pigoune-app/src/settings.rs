@@ -9,6 +9,8 @@ pub const WINDOW_HEIGHT: &str = "window-height";
 pub const WINDOW_MAXIMIZED: &str = "window-maximized";
 pub const THUMBNAIL_SIZE: &str = "thumbnail-size";
 pub const SHOW_DETAILS: &str = "show-details";
+pub const SORT_CRITERION: &str = "sort-criterion";
+pub const SORT_REVERSED: &str = "sort-reversed";
 
 pub fn load() -> gio::Settings {
     let schema = installed_schema()

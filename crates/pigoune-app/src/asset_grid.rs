@@ -5,11 +5,12 @@ use gtk::prelude::*;
 use gtk::{gdk, glib};
 
 use crate::asset_object::PigouneAssetObject;
+use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
 use crate::thumbnails::ThumbnailCache;
 
 mod imp {
-    use std::cell::Cell;
+    use std::cell::{Cell, RefCell};
     use std::rc::Rc;
 
     use adw::prelude::*;
@@ -18,6 +19,7 @@ mod imp {
 
     use super::{DEFAULT_TILE_SIZE, LARGEST_TILE_SIZE, SMALLEST_TILE_SIZE};
     use crate::asset_object::PigouneAssetObject;
+    use crate::asset_sort::{SortCriterion, SortOrder};
     use crate::thumbnails::ThumbnailCache;
 
     #[derive(gtk::CompositeTemplate, glib::Properties)]
@@ -32,6 +34,12 @@ mod imp {
         pub size_adjustment: TemplateChild<gtk::Adjustment>,
         #[property(get, set = Self::set_tile_size, minimum = SMALLEST_TILE_SIZE, maximum = LARGEST_TILE_SIZE, default = DEFAULT_TILE_SIZE)]
         pub tile_size: Cell<i32>,
+        #[property(get, set = Self::set_sort_criterion)]
+        pub sort_criterion: RefCell<String>,
+        #[property(get, set = Self::set_sort_reversed)]
+        pub sort_reversed: Cell<bool>,
+        pub sort_order: Rc<Cell<SortOrder>>,
+        pub sorter: RefCell<Option<gtk::CustomSorter>>,
         pub assets: gio::ListStore,
         pub thumbnails: Rc<ThumbnailCache>,
     }
@@ -43,6 +51,10 @@ mod imp {
                 grid_view: TemplateChild::default(),
                 size_adjustment: TemplateChild::default(),
                 tile_size: Cell::new(DEFAULT_TILE_SIZE),
+                sort_criterion: RefCell::default(),
+                sort_reversed: Cell::default(),
+                sort_order: Rc::default(),
+                sorter: RefCell::default(),
                 assets: gio::ListStore::new::<PigouneAssetObject>(),
                 thumbnails: Rc::default(),
             }
@@ -50,6 +62,33 @@ mod imp {
     }
 
     impl PigouneAssetGrid {
+        fn set_sort_criterion(&self, criterion: String) {
+            let order = SortOrder {
+                criterion: SortCriterion::from_setting(&criterion),
+                ..self.sort_order.get()
+            };
+            self.sort_criterion.replace(criterion);
+            self.apply_sort_order(order);
+        }
+
+        fn set_sort_reversed(&self, reversed: bool) {
+            let order = SortOrder {
+                reversed,
+                ..self.sort_order.get()
+            };
+            self.sort_reversed.set(reversed);
+            self.apply_sort_order(order);
+        }
+
+        fn apply_sort_order(&self, order: SortOrder) {
+            if self.sort_order.replace(order) == order {
+                return;
+            }
+            if let Some(sorter) = self.sorter.borrow().as_ref() {
+                sorter.changed(gtk::SorterChange::Different);
+            }
+        }
+
         fn set_tile_size(&self, size: i32) {
             if self.tile_size.replace(size) != size {
                 self.obj().notify_tile_size();
@@ -178,7 +217,22 @@ impl PigouneAssetGrid {
         });
 
         imp.grid_view.set_factory(Some(&factory));
-        let selection = gtk::SingleSelection::new(Some(imp.assets.clone()));
+        let sort_order = Rc::clone(&imp.sort_order);
+        let sorter = gtk::CustomSorter::new(move |first, second| {
+            let (Some(first), Some(second)) = (
+                first.downcast_ref::<PigouneAssetObject>(),
+                second.downcast_ref::<PigouneAssetObject>(),
+            ) else {
+                return gtk::Ordering::Equal;
+            };
+            sort_order
+                .get()
+                .compare(&sorted(first), &sorted(second))
+                .into()
+        });
+        imp.sorter.replace(Some(sorter.clone()));
+        let sorted_assets = gtk::SortListModel::new(Some(imp.assets.clone()), Some(sorter));
+        let selection = gtk::SingleSelection::new(Some(sorted_assets));
         selection.set_autoselect(false);
         selection.set_can_unselect(true);
         selection.set_selected(gtk::INVALID_LIST_POSITION);
@@ -238,6 +292,13 @@ fn next_smaller_step(size: i32) -> i32 {
 )]
 fn whole_pixels(value: f64) -> i32 {
     value.round() as i32
+}
+
+fn sorted(object: &PigouneAssetObject) -> SortedAsset<'_, glib::FilenameCollationKey> {
+    SortedAsset {
+        asset: object.asset(),
+        name_key: object.name_key(),
+    }
 }
 
 fn tile_and_asset(item: &glib::Object) -> Option<(PigouneAssetTile, PigouneAssetObject)> {
