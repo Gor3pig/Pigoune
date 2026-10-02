@@ -19,6 +19,7 @@ use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTre
 use crate::error_messages;
 use crate::import_report::{self, Destination};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
+use crate::preferences_dialog;
 use crate::settings;
 use crate::sidebar::SidebarContent;
 use crate::tag_editor::SharedTag;
@@ -57,6 +58,7 @@ const EMPTY_TRASH_RESPONSE: &str = "empty";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
+const PREFERENCES_ACTION: &str = "win.preferences";
 const OPEN_LIBRARY_ACTIONS: [&str; 13] = [
     UNDO_ACTION,
     CLOSE_LIBRARY_ACTION,
@@ -112,10 +114,11 @@ mod imp {
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION,
         DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, REMOVE_FROM_COLLECTION_ACTION,
-        RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
-        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION,
-        collection_parameter, tag_parameter,
+        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, PREFERENCES_ACTION,
+        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
+        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SHRINK_THUMBNAILS_ACTION,
+        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
+        tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -225,6 +228,9 @@ mod imp {
             });
             class.install_action_async(OPEN_LIBRARY_ACTION, None, |window, _, _| async move {
                 window.choose_library_to_open().await;
+            });
+            class.install_action(PREFERENCES_ACTION, None, |window, _, _| {
+                window.show_preferences();
             });
             class.install_action(CLOSE_LIBRARY_ACTION, None, |window, _, _| {
                 window.close_library();
@@ -365,12 +371,34 @@ impl PigouneWindow {
         window.describe_selected_asset();
         window.connect_preview();
         window.follow_sidebar(&settings);
+        window.follow_trash_confirmation(&settings);
         window
             .imp()
             .settings
             .set(settings)
             .expect("settings are set only once, at construction");
         window
+    }
+
+    fn follow_trash_confirmation(&self, settings: &gio::Settings) {
+        self.label_empty_trash_button(settings);
+        settings.connect_changed(
+            Some(settings::CONFIRM_EMPTY_TRASH),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |settings, _| window.label_empty_trash_button(settings)
+            ),
+        );
+    }
+
+    fn label_empty_trash_button(&self, settings: &gio::Settings) {
+        let label = if settings.boolean(settings::CONFIRM_EMPTY_TRASH) {
+            gettext("_Empty Trash…")
+        } else {
+            gettext("_Empty Trash")
+        };
+        self.imp().trash_banner.set_button_label(Some(&label));
     }
 
     fn follow_sidebar(&self, settings: &gio::Settings) {
@@ -520,6 +548,10 @@ impl PigouneWindow {
             OPEN_ANOTHER_RESPONSE => ReopeningChoice::OpenAnother,
             _ => ReopeningChoice::Dismiss,
         }
+    }
+
+    fn show_preferences(&self) {
+        preferences_dialog::present(self, self.settings());
     }
 
     fn settings(&self) -> &gio::Settings {
@@ -806,6 +838,10 @@ impl PigouneWindow {
             .and_then(|library| library.view_counts().ok())
             .map_or(0, |counts| counts.of(AssetView::Trash));
         if count == 0 {
+            return;
+        }
+        if !self.settings().boolean(settings::CONFIRM_EMPTY_TRASH) {
+            self.empty_trash();
             return;
         }
         let alert = adw::AlertDialog::new(

@@ -77,6 +77,11 @@
       <summary>Reopen the last sidebar entry</summary>
       <description>Whether the library opens on the last selected sidebar entry instead of All.</description>
     </key>
+    <key name="confirm-empty-trash" type="b">
+      <default>true</default>
+      <summary>Confirm before emptying the trash</summary>
+      <description>Whether Pigoune asks before deleting the resources in the trash for good.</description>
+    </key>
     <key name="last-view" type="s">
       <default>""</default>
       <summary>Last sidebar entry</summary>

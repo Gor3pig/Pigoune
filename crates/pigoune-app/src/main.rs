@@ -20,6 +20,7 @@ mod image_check;
 mod import_progress_dialog;
 mod import_report;
 mod new_library_dialog;
+mod preferences_dialog;
 mod settings;
 mod sidebar;
 mod sidebar_item;

@@ -1,0 +1,29 @@
+using Gtk 4.0;
+using Adw 1;
+
+Adw.PreferencesDialog dialog {
+  Adw.PreferencesPage {
+    Adw.PreferencesGroup {
+      title: _("Sidebar");
+
+      Adw.SwitchRow show_counts_row {
+        title: _("Show Resource Counts");
+        subtitle: _("The number of resources appears next to each entry");
+      }
+
+      Adw.SwitchRow restore_last_view_row {
+        title: _("Reopen the Last Entry");
+        subtitle: _("A library opens on the entry selected last time instead of All");
+      }
+    }
+
+    Adw.PreferencesGroup {
+      title: _("Trash");
+
+      Adw.SwitchRow confirm_empty_trash_row {
+        title: _("Confirm Before Emptying the Trash");
+        subtitle: _("Ask before deleting the resources in the trash for good");
+      }
+    }
+  }
+}
