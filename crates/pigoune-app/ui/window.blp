@@ -22,6 +22,14 @@ template $PigouneWindow: Adw.ApplicationWindow {
       }
 
       [end]
+      ToggleButton details_button {
+        visible: false;
+        active: true;
+        icon-name: "sidebar-show-right-symbolic";
+        tooltip-text: _("Show Details");
+      }
+
+      [end]
       MenuButton import_button {
         visible: false;
         icon-name: "list-add-symbolic";
@@ -132,7 +140,16 @@ template $PigouneWindow: Adw.ApplicationWindow {
               StackPage {
                 name: "assets";
 
-                child: $PigouneAssetGrid asset_grid {};
+                child: Adw.OverlaySplitView details_split {
+                  sidebar-position: end;
+                  min-sidebar-width: 280;
+                  max-sidebar-width: 360;
+                  show-sidebar: bind details_button.active bidirectional;
+
+                  content: $PigouneAssetGrid asset_grid {};
+
+                  sidebar: $PigouneAssetDetails asset_details {};
+                };
               }
             };
           }

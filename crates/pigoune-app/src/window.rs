@@ -61,6 +61,7 @@ mod imp {
     use gtk::{gio, glib};
     use pigoune_core::Library;
 
+    use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
 
     use super::{
@@ -85,6 +86,10 @@ mod imp {
         pub library_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
+        #[template_child]
+        pub asset_details: TemplateChild<PigouneAssetDetails>,
+        #[template_child]
+        pub details_button: TemplateChild<gtk::ToggleButton>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -97,6 +102,7 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             PigouneAssetGrid::ensure_type();
+            PigouneAssetDetails::ensure_type();
             class.bind_template();
             class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
@@ -167,6 +173,14 @@ impl PigouneWindow {
                 "tile-size",
             )
             .build();
+        settings
+            .bind(
+                settings::SHOW_DETAILS,
+                &*window.imp().details_button,
+                "active",
+            )
+            .build();
+        window.describe_selected_asset();
         window
             .imp()
             .settings
@@ -302,7 +316,22 @@ impl PigouneWindow {
         imp.window_title.set_title("Pigoune");
         imp.stack.set_visible_child_name(WELCOME_PAGE);
         imp.import_button.set_visible(false);
+        imp.details_button.set_visible(false);
         self.set_library_actions_enabled(false);
+    }
+
+    fn describe_selected_asset(&self) {
+        let imp = self.imp();
+        imp.asset_details.show(None, &imp.asset_grid.thumbnails());
+        imp.asset_grid.connect_selected_asset_changed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |selected| {
+                let imp = window.imp();
+                imp.asset_details
+                    .show(selected.as_ref(), &imp.asset_grid.thumbnails());
+            }
+        ));
     }
 
     fn refresh_assets(&self) {
@@ -317,10 +346,12 @@ impl PigouneWindow {
                 };
                 imp.asset_grid.show_assets(&assets);
                 imp.library_stack.set_visible_child_name(page);
+                imp.details_button.set_visible(!assets.is_empty());
             }
             Some(Err(error)) => {
                 imp.asset_grid.show_assets(&[]);
                 imp.library_stack.set_visible_child_name(EMPTY_PAGE);
+                imp.details_button.set_visible(false);
                 self.show_library_error(&error);
             }
             None => {}
@@ -523,10 +554,9 @@ fn asset_objects(library: &Library) -> Result<Vec<PigouneAssetObject>, LibraryEr
         .iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {
-                id: asset.id,
-                display_name: asset.display_name.clone(),
                 file: library.file_of(asset),
                 thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
+                asset: asset.clone(),
             })
         })
         .collect())

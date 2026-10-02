@@ -18,6 +18,11 @@
       <default>false</default>
       <summary>Window maximized</summary>
     </key>
+    <key name="show-details" type="b">
+      <default>true</default>
+      <summary>Show the details panel</summary>
+      <description>Whether the panel describing the selected resource is shown next to the grid.</description>
+    </key>
     <key name="thumbnail-size" type="i">
       <range min="64" max="256"/>
       <default>128</default>

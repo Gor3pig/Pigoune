@@ -1,4 +1,6 @@
 mod application;
+mod asset_details;
+mod asset_facts;
 mod asset_grid;
 mod asset_object;
 mod asset_tile;

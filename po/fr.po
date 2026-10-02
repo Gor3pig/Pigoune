@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 09:08+0200\n"
+"POT-Creation-Date: 2026-10-02 09:15+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -86,11 +86,22 @@ msgstr "Hauteur de la fenêtre"
 msgid "Window maximized"
 msgstr "Fenêtre maximisée"
 
+#: data/io.github.gor3pig.Pigoune.gschema.xml:23
+msgid "Show the details panel"
+msgstr "Afficher le panneau de détails"
+
 #: data/io.github.gor3pig.Pigoune.gschema.xml:24
+msgid ""
+"Whether the panel describing the selected resource is shown next to the grid."
+msgstr ""
+"Indique si le panneau décrivant la ressource sélectionnée est affiché à côté "
+"de la grille."
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:29
 msgid "Thumbnail size"
 msgstr "Taille des vignettes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:25
+#: data/io.github.gor3pig.Pigoune.gschema.xml:30
 msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr "Côté des vignettes dans la grille de la bibliothèque, en pixels."
 
@@ -98,53 +109,57 @@ msgstr "Côté des vignettes dans la grille de la bibliothèque, en pixels."
 msgid "Main Menu"
 msgstr "Menu principal"
 
-#: crates/pigoune-app/ui/window.blp:28
+#: crates/pigoune-app/ui/window.blp:29
+msgid "Show Details"
+msgstr "Afficher les détails"
+
+#: crates/pigoune-app/ui/window.blp:36
 msgid "Import"
 msgstr "Importer"
 
-#: crates/pigoune-app/ui/window.blp:39
+#: crates/pigoune-app/ui/window.blp:47
 msgid "Images are copied into the library. The originals are not modified."
 msgstr ""
 "Les images sont copiées dans la bibliothèque. Les originaux ne sont pas "
 "modifiés."
 
-#: crates/pigoune-app/ui/window.blp:55
+#: crates/pigoune-app/ui/window.blp:63
 msgid "Welcome to Pigoune"
 msgstr "Bienvenue dans Pigoune"
 
-#: crates/pigoune-app/ui/window.blp:56
+#: crates/pigoune-app/ui/window.blp:64
 msgid "The cozy box for your icons, logos and illustrations."
 msgstr "La boîte réconfortante pour vos icônes, logos et illustrations."
 
-#: crates/pigoune-app/ui/window.blp:68
+#: crates/pigoune-app/ui/window.blp:76
 msgid "_Create a Library"
 msgstr "_Créer une bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:79
+#: crates/pigoune-app/ui/window.blp:87
 msgid "_Open a Library"
 msgstr "_Ouvrir une bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:100
+#: crates/pigoune-app/ui/window.blp:108
 msgid "Your Library Is Empty"
 msgstr "Votre bibliothèque est vide"
 
-#: crates/pigoune-app/ui/window.blp:101
+#: crates/pigoune-app/ui/window.blp:109
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr "Les icônes, logos et illustrations importés apparaîtront ici."
 
-#: crates/pigoune-app/ui/window.blp:109 crates/pigoune-app/ui/window.blp:148
+#: crates/pigoune-app/ui/window.blp:117 crates/pigoune-app/ui/window.blp:165
 msgid "Import _Files…"
 msgstr "Importer des _fichiers…"
 
-#: crates/pigoune-app/ui/window.blp:120 crates/pigoune-app/ui/window.blp:153
+#: crates/pigoune-app/ui/window.blp:128 crates/pigoune-app/ui/window.blp:170
 msgid "Import a F_older…"
 msgstr "Importer un _dossier…"
 
-#: crates/pigoune-app/ui/window.blp:162
+#: crates/pigoune-app/ui/window.blp:179
 msgid "_Close Library"
 msgstr "_Fermer la bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:169
+#: crates/pigoune-app/ui/window.blp:186
 msgid "_About Pigoune"
 msgstr "À _propos de Pigoune"
 
@@ -250,56 +265,56 @@ msgstr "Une erreur inattendue s'est produite : {error}"
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:218
+#: crates/pigoune-app/src/window.rs:232
 msgid "_Open Another Library…"
 msgstr "_Ouvrir une autre bibliothèque…"
 
-#: crates/pigoune-app/src/window.rs:219
+#: crates/pigoune-app/src/window.rs:233
 msgid "_Try Again"
 msgstr "_Réessayer"
 
-#: crates/pigoune-app/src/window.rs:251
+#: crates/pigoune-app/src/window.rs:265
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:332
+#: crates/pigoune-app/src/window.rs:363
 msgid "Unable to Show the Library"
 msgstr "Impossible d’afficher la bibliothèque"
 
-#: crates/pigoune-app/src/window.rs:335 crates/pigoune-app/src/window.rs:493
+#: crates/pigoune-app/src/window.rs:366 crates/pigoune-app/src/window.rs:524
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr "_Fermer"
 
-#: crates/pigoune-app/src/window.rs:404
+#: crates/pigoune-app/src/window.rs:435
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr "Déposez pour importer dans « {name} »"
 
-#: crates/pigoune-app/src/window.rs:410
+#: crates/pigoune-app/src/window.rs:441
 msgid "Import Files"
 msgstr "Importer des fichiers"
 
-#: crates/pigoune-app/src/window.rs:411 crates/pigoune-app/src/window.rs:423
+#: crates/pigoune-app/src/window.rs:442 crates/pigoune-app/src/window.rs:454
 msgid "_Import"
 msgstr "_Importer"
 
-#: crates/pigoune-app/src/window.rs:422
+#: crates/pigoune-app/src/window.rs:453
 msgid "Import Folders"
 msgstr "Importer des dossiers"
 
-#: crates/pigoune-app/src/window.rs:491
+#: crates/pigoune-app/src/window.rs:522
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
-#: crates/pigoune-app/src/window.rs:499
+#: crates/pigoune-app/src/window.rs:530
 msgid "Images"
 msgstr "Images"
 
-#: crates/pigoune-app/src/window.rs:504
+#: crates/pigoune-app/src/window.rs:535
 msgid "All Files"
 msgstr "Tous les fichiers"
 
@@ -435,3 +450,60 @@ msgstr "Afficher les fichiers illisibles"
 #: crates/pigoune-app/ui/asset-grid.blp:43
 msgid "Thumbnail Size"
 msgstr "Taille des vignettes"
+
+#: crates/pigoune-app/ui/asset-details.blp:13
+msgid "No Resource Selected"
+msgstr "Aucune ressource sélectionnée"
+
+#: crates/pigoune-app/ui/asset-details.blp:14
+msgid "Select a resource to see its details."
+msgstr "Sélectionnez une ressource pour voir ses détails."
+
+#: crates/pigoune-app/ui/asset-details.blp:61
+msgid "Format"
+msgstr "Format"
+
+#: crates/pigoune-app/ui/asset-details.blp:70
+msgid "Dimensions"
+msgstr "Dimensions"
+
+#: crates/pigoune-app/ui/asset-details.blp:79
+msgid "Size"
+msgstr "Poids"
+
+#: crates/pigoune-app/ui/asset-details.blp:88
+msgid "Added"
+msgstr "Ajoutée le"
+
+#: crates/pigoune-app/ui/asset-details.blp:97
+msgid "Original File"
+msgstr "Fichier d’origine"
+
+#: crates/pigoune-app/ui/asset-details.blp:106
+msgid "Animation"
+msgstr "Animation"
+
+#: crates/pigoune-app/ui/asset-details.blp:107
+msgid "Animated GIF"
+msgstr "GIF animé"
+
+#: crates/pigoune-app/ui/asset-details.blp:116
+msgid "Contained Sizes"
+msgstr "Tailles contenues"
+
+#: crates/pigoune-app/src/asset_facts.rs:20
+msgid "Unknown dimensions"
+msgstr "Inconnues"
+
+#: crates/pigoune-app/src/asset_facts.rs:22
+#, rust-format
+msgid "{width} × {height} pixels"
+msgstr "{width} × {height} pixels"
+
+#: crates/pigoune-app/src/asset_facts.rs:44
+msgid "Unknown date"
+msgstr "Inconnue"
+
+#: crates/pigoune-app/src/asset_facts.rs:48
+msgid "%B %-d, %Y at %H:%M"
+msgstr "%-d %B %Y à %H:%M"

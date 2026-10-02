@@ -2,11 +2,10 @@ use std::path::{Path, PathBuf};
 
 use adw::subclass::prelude::*;
 use gtk::glib;
-use pigoune_core::AssetId;
+use pigoune_core::{Asset, AssetId};
 
 pub struct AssetEntry {
-    pub id: AssetId,
-    pub display_name: String,
+    pub asset: Asset,
     pub file: PathBuf,
     pub thumbnail_file: PathBuf,
 }
@@ -53,12 +52,16 @@ impl PigouneAssetObject {
             .expect("asset objects are created with their entry")
     }
 
+    pub fn asset(&self) -> &Asset {
+        &self.entry().asset
+    }
+
     pub fn id(&self) -> AssetId {
-        self.entry().id
+        self.asset().id
     }
 
     pub fn display_name(&self) -> &str {
-        &self.entry().display_name
+        &self.asset().display_name
     }
 
     pub fn file(&self) -> &Path {

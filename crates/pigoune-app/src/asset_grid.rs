@@ -6,6 +6,7 @@ use gtk::{gdk, glib};
 
 use crate::asset_object::PigouneAssetObject;
 use crate::asset_tile::PigouneAssetTile;
+use crate::thumbnails::ThumbnailCache;
 
 mod imp {
     use std::cell::Cell;
@@ -116,6 +117,31 @@ impl PigouneAssetGrid {
         store.splice(0, store.n_items(), assets);
     }
 
+    pub fn thumbnails(&self) -> Rc<ThumbnailCache> {
+        Rc::clone(&self.imp().thumbnails)
+    }
+
+    pub fn connect_selected_asset_changed(
+        &self,
+        callback: impl Fn(Option<PigouneAssetObject>) + 'static,
+    ) {
+        let Some(selection) = self
+            .imp()
+            .grid_view
+            .model()
+            .and_downcast::<gtk::SingleSelection>()
+        else {
+            return;
+        };
+        selection.connect_selected_item_notify(move |selection| {
+            callback(
+                selection
+                    .selected_item()
+                    .and_downcast::<PigouneAssetObject>(),
+            );
+        });
+    }
+
     pub fn forget_thumbnails(&self) {
         self.imp().thumbnails.forget_all();
     }
@@ -152,8 +178,11 @@ impl PigouneAssetGrid {
         });
 
         imp.grid_view.set_factory(Some(&factory));
-        imp.grid_view
-            .set_model(Some(&gtk::NoSelection::new(Some(imp.assets.clone()))));
+        let selection = gtk::SingleSelection::new(Some(imp.assets.clone()));
+        selection.set_autoselect(false);
+        selection.set_can_unselect(true);
+        selection.set_selected(gtk::INVALID_LIST_POSITION);
+        imp.grid_view.set_model(Some(&selection));
     }
 }
 

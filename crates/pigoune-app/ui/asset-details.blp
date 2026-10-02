@@ -1,0 +1,129 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneAssetDetails: Adw.Bin {
+  child: Stack stack {
+    transition-type: crossfade;
+
+    StackPage {
+      name: "nothing";
+
+      child: Adw.StatusPage {
+        icon-name: "image-x-generic-symbolic";
+        title: _("No Resource Selected");
+        description: _("Select a resource to see its details.");
+
+        styles [
+          "compact",
+        ]
+      };
+    }
+
+    StackPage {
+      name: "asset";
+
+      child: ScrolledWindow {
+        hscrollbar-policy: never;
+
+        child: Box {
+          orientation: vertical;
+          spacing: 18;
+          margin-top: 18;
+          margin-bottom: 18;
+          margin-start: 18;
+          margin-end: 18;
+
+          Picture preview {
+            height-request: 240;
+            content-fit: contain;
+            can-shrink: true;
+          }
+
+          Label name_label {
+            wrap: true;
+            wrap-mode: word_char;
+            justify: center;
+            selectable: true;
+
+            styles [
+              "title-3",
+            ]
+          }
+
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ActionRow format_row {
+              title: _("Format");
+              subtitle-selectable: true;
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.ActionRow dimensions_row {
+              title: _("Dimensions");
+              subtitle-selectable: true;
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.ActionRow size_row {
+              title: _("Size");
+              subtitle-selectable: true;
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.ActionRow added_row {
+              title: _("Added");
+              subtitle-selectable: true;
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.ActionRow original_row {
+              title: _("Original File");
+              subtitle-selectable: true;
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.ActionRow animation_row {
+              title: _("Animation");
+              subtitle: _("Animated GIF");
+              visible: false;
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.ActionRow embedded_row {
+              title: _("Contained Sizes");
+              subtitle-selectable: true;
+              visible: false;
+
+              styles [
+                "property",
+              ]
+            }
+          }
+        };
+      };
+    }
+  };
+}

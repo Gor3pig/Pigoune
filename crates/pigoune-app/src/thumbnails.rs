@@ -50,7 +50,7 @@ pub async fn thumbnail(
     if let Some(stored) = load_stored(thumbnail_file).await {
         return Some(stored);
     }
-    let texture = render(file, widget).await?;
+    let texture = render(file, THUMBNAIL_PIXELS, widget).await?;
     store(&texture, thumbnail_file);
     Some(texture)
 }
@@ -93,20 +93,24 @@ fn loader_for(file: &Path) -> glycin::Loader {
     loader
 }
 
-async fn render(file: &Path, widget: &impl IsA<gtk::Widget>) -> Option<gdk::Texture> {
+pub async fn render(
+    file: &Path,
+    pixels: u32,
+    widget: &impl IsA<gtk::Widget>,
+) -> Option<gdk::Texture> {
     let mut image = loader_for(file).load().await.ok()?;
     let details = image.details();
     let (width, height) = if image.mime_type().as_str() == SVG_MIME_TYPE {
-        scaled_to(details.width(), details.height(), THUMBNAIL_PIXELS)
+        scaled_to(details.width(), details.height(), pixels)
     } else {
-        fit_within(details.width(), details.height(), THUMBNAIL_PIXELS)
+        fit_within(details.width(), details.height(), pixels)
     };
     let frame = image
         .specific_frame(glycin::FrameRequest::new().scale(width, height))
         .await
         .ok()?;
     let texture = frame.texture();
-    if fits_within(&texture, THUMBNAIL_PIXELS) {
+    if fits_within(&texture, pixels) {
         return Some(texture);
     }
     Some(downscale(&texture, width, height, widget).unwrap_or(texture))
