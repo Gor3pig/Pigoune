@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const UI_SOURCE_DIR: &str = "ui";
+const STYLESHEET_NAME: &str = "style.css";
 const ICONS_SOURCE_DIR: &str = "../../data/icons";
 const PO_SOURCE_DIR: &str = "../../po";
 const GETTEXT_PACKAGE: &str = "pigoune";
@@ -14,6 +15,7 @@ fn main() {
     let staging_dir = out_dir.join("resources");
 
     compile_blueprints(&staging_dir.join("ui"));
+    stage_stylesheet(&staging_dir);
     stage_application_icons(&staging_dir.join("icons"));
     compile_development_translations(&out_dir.join("locale"));
     compile_development_settings_schema(&out_dir.join("schemas"));
@@ -47,6 +49,14 @@ fn compile_blueprints(output_dir: &Path) {
         .expect("blueprint-compiler is installed");
 
     assert!(status.success(), "blueprint-compiler failed");
+}
+
+fn stage_stylesheet(output_dir: &Path) {
+    fs::copy(
+        Path::new(UI_SOURCE_DIR).join(STYLESHEET_NAME),
+        output_dir.join(STYLESHEET_NAME),
+    )
+    .expect("stylesheet exists");
 }
 
 fn stage_application_icons(output_dir: &Path) {

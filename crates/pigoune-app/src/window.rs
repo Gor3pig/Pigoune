@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 use pigoune_core::{ImportError, ImportSummary, Library, LibraryError, library_display_name};
 
 use crate::background_import::{self, FinishedImport};
@@ -68,6 +68,8 @@ mod imp {
         pub import_button: TemplateChild<gtk::MenuButton>,
         #[template_child]
         pub toast_overlay: TemplateChild<adw::ToastOverlay>,
+        #[template_child]
+        pub drop_hint: TemplateChild<adw::StatusPage>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -106,6 +108,7 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().set_library_actions_enabled(false);
+            self.obj().accept_dropped_files();
         }
     }
 
@@ -280,6 +283,62 @@ impl PigouneWindow {
             self.action_set_enabled(action, !importing);
         }
         self.set_library_actions_enabled(!importing);
+    }
+
+    fn accept_dropped_files(&self) {
+        let drop_target = gtk::DropTarget::new(gdk::FileList::static_type(), gdk::DragAction::COPY);
+        drop_target.connect_accept(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            false,
+            move |_, _| window.imp().library.borrow().is_some()
+        ));
+        drop_target.connect_enter(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            gdk::DragAction::empty(),
+            move |_, _, _| {
+                window.show_drop_hint();
+                gdk::DragAction::COPY
+            }
+        ));
+        drop_target.connect_leave(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.imp().drop_hint.set_visible(false)
+        ));
+        drop_target.connect_drop(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            false,
+            move |_, value, _, _| {
+                window.imp().drop_hint.set_visible(false);
+                let Ok(files) = value.get::<gdk::FileList>() else {
+                    return false;
+                };
+                let paths: Vec<PathBuf> =
+                    files.files().iter().filter_map(gio::File::path).collect();
+                glib::spawn_future_local(async move { window.import_paths(paths).await });
+                true
+            }
+        ));
+        self.add_controller(drop_target);
+    }
+
+    fn show_drop_hint(&self) {
+        let imp = self.imp();
+        let library_name = imp
+            .library
+            .borrow()
+            .as_ref()
+            .map(Library::name)
+            .unwrap_or_default();
+        imp.drop_hint
+            .set_title(&gettext("Drop to Import Into “{name}”").replace("{name}", &library_name));
+        imp.drop_hint.set_visible(true);
     }
 
     async fn choose_files_to_import(&self) {

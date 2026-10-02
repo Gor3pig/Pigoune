@@ -1,0 +1,10 @@
+.drop-hint {
+  background-color: color-mix(in srgb, var(--window-bg-color) 92%, transparent);
+}
+
+.drop-hint > scrolledwindow {
+  margin: 12px;
+  border: 2px dashed var(--accent-color);
+  border-radius: 12px;
+  background-color: color-mix(in srgb, var(--accent-bg-color) 8%, transparent);
+}

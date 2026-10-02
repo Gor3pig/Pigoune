@@ -30,87 +30,101 @@ template $PigouneWindow: Adw.ApplicationWindow {
       }
     }
 
-    content: Adw.ToastOverlay toast_overlay {
-      child: Gtk.Stack stack {
-        transition-type: crossfade;
+    content: Overlay {
+      [overlay]
+      Adw.StatusPage drop_hint {
+        visible: false;
+        can-target: false;
+        icon-name: "insert-image-symbolic";
+        description: _("Images are copied into the library. The originals are not modified.");
 
-        StackPage {
-          name: "welcome";
+        styles [
+          "drop-hint",
+        ]
+      }
 
-          child: Adw.StatusPage {
-            icon-name: "io.github.gor3pig.Pigoune";
-            title: _("Welcome to Pigoune");
-            description: _("The cozy box for your icons, logos and illustrations.");
+      child: Adw.ToastOverlay toast_overlay {
+        child: Gtk.Stack stack {
+          transition-type: crossfade;
 
-            styles [
-              "icon-dropshadow",
-            ]
+          StackPage {
+            name: "welcome";
 
-            child: Box {
-              orientation: vertical;
-              spacing: 12;
-              halign: center;
+            child: Adw.StatusPage {
+              icon-name: "io.github.gor3pig.Pigoune";
+              title: _("Welcome to Pigoune");
+              description: _("The cozy box for your icons, logos and illustrations.");
 
-              Button {
-                label: _("_Create a Library");
-                use-underline: true;
-                action-name: "win.create-library";
+              styles [
+                "icon-dropshadow",
+              ]
 
-                styles [
-                  "pill",
-                  "suggested-action",
-                ]
-              }
+              child: Box {
+                orientation: vertical;
+                spacing: 12;
+                halign: center;
 
-              Button {
-                label: _("_Open a Library");
-                use-underline: true;
-                action-name: "win.open-library";
+                Button {
+                  label: _("_Create a Library");
+                  use-underline: true;
+                  action-name: "win.create-library";
 
-                styles [
-                  "pill",
-                ]
-              }
+                  styles [
+                    "pill",
+                    "suggested-action",
+                  ]
+                }
+
+                Button {
+                  label: _("_Open a Library");
+                  use-underline: true;
+                  action-name: "win.open-library";
+
+                  styles [
+                    "pill",
+                  ]
+                }
+              };
             };
-          };
-        }
+          }
 
-        StackPage {
-          name: "library";
+          StackPage {
+            name: "library";
 
-          child: Adw.StatusPage {
-            icon-name: "folder-pictures-symbolic";
-            title: _("Your Library Is Empty");
-            description: _("Imported icons, logos and illustrations will appear here.");
+            child: Adw.StatusPage {
+              icon-name: "folder-pictures-symbolic";
+              title: _("Your Library Is Empty");
+              description: _("Imported icons, logos and illustrations will appear here.");
 
-            child: Box {
-              orientation: vertical;
-              spacing: 12;
-              halign: center;
+              child: Box {
+                orientation: vertical;
+                spacing: 12;
+                halign: center;
 
-              Button {
-                label: _("Import _Files…");
-                use-underline: true;
-                action-name: "win.import-files";
+                Button {
+                  label: _("Import _Files…");
+                  use-underline: true;
+                  action-name: "win.import-files";
 
-                styles [
-                  "pill",
-                  "suggested-action",
-                ]
-              }
+                  styles [
+                    "pill",
+                    "suggested-action",
+                  ]
+                }
 
-              Button {
-                label: _("Import a F_older…");
-                use-underline: true;
-                action-name: "win.import-folder";
+                Button {
+                  label: _("Import a F_older…");
+                  use-underline: true;
+                  action-name: "win.import-folder";
 
-                styles [
-                  "pill",
-                ]
-              }
+                  styles [
+                    "pill",
+                  ]
+                }
+              };
             };
-          };
-        }
+          }
+        };
       };
     };
   };

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 08:18+0200\n"
+"POT-Creation-Date: 2026-10-02 08:23+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -94,43 +94,47 @@ msgstr "Menu principal"
 msgid "Import"
 msgstr "Importer"
 
-#: crates/pigoune-app/ui/window.blp:42
+#: crates/pigoune-app/ui/window.blp:39
+msgid "Images are copied into the library. The originals are not modified."
+msgstr "Les images sont copiées dans la bibliothèque. Les originaux ne sont pas modifiés."
+
+#: crates/pigoune-app/ui/window.blp:55
 msgid "Welcome to Pigoune"
 msgstr "Bienvenue dans Pigoune"
 
-#: crates/pigoune-app/ui/window.blp:43
+#: crates/pigoune-app/ui/window.blp:56
 msgid "The cozy box for your icons, logos and illustrations."
 msgstr "La boîte réconfortante pour vos icônes, logos et illustrations."
 
-#: crates/pigoune-app/ui/window.blp:55
+#: crates/pigoune-app/ui/window.blp:68
 msgid "_Create a Library"
 msgstr "_Créer une bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:66
+#: crates/pigoune-app/ui/window.blp:79
 msgid "_Open a Library"
 msgstr "_Ouvrir une bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:83
+#: crates/pigoune-app/ui/window.blp:96
 msgid "Your Library Is Empty"
 msgstr "Votre bibliothèque est vide"
 
-#: crates/pigoune-app/ui/window.blp:84
+#: crates/pigoune-app/ui/window.blp:97
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr "Les icônes, logos et illustrations importés apparaîtront ici."
 
-#: crates/pigoune-app/ui/window.blp:92 crates/pigoune-app/ui/window.blp:122
+#: crates/pigoune-app/ui/window.blp:105 crates/pigoune-app/ui/window.blp:136
 msgid "Import _Files…"
 msgstr "Importer des _fichiers…"
 
-#: crates/pigoune-app/ui/window.blp:103 crates/pigoune-app/ui/window.blp:127
+#: crates/pigoune-app/ui/window.blp:116 crates/pigoune-app/ui/window.blp:141
 msgid "Import a F_older…"
 msgstr "Importer un _dossier…"
 
-#: crates/pigoune-app/ui/window.blp:136
+#: crates/pigoune-app/ui/window.blp:150
 msgid "_Close Library"
 msgstr "_Fermer la bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:143
+#: crates/pigoune-app/ui/window.blp:157
 msgid "_About Pigoune"
 msgstr "À _propos de Pigoune"
 
@@ -236,47 +240,52 @@ msgstr "Une erreur inattendue s'est produite : {error}"
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:186
+#: crates/pigoune-app/src/window.rs:189
 msgid "_Open Another Library…"
 msgstr "_Ouvrir une autre bibliothèque…"
 
-#: crates/pigoune-app/src/window.rs:187
+#: crates/pigoune-app/src/window.rs:190
 msgid "_Try Again"
 msgstr "_Réessayer"
 
-#: crates/pigoune-app/src/window.rs:219
+#: crates/pigoune-app/src/window.rs:222
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:287
+#: crates/pigoune-app/src/window.rs:340
+#, rust-format
+msgid "Drop to Import Into “{name}”"
+msgstr "Déposez pour importer dans « {name} »"
+
+#: crates/pigoune-app/src/window.rs:346
 msgid "Import Files"
 msgstr "Importer des fichiers"
 
-#: crates/pigoune-app/src/window.rs:288 crates/pigoune-app/src/window.rs:300
+#: crates/pigoune-app/src/window.rs:347 crates/pigoune-app/src/window.rs:359
 msgid "_Import"
 msgstr "_Importer"
 
-#: crates/pigoune-app/src/window.rs:299
+#: crates/pigoune-app/src/window.rs:358
 msgid "Import Folders"
 msgstr "Importer des dossiers"
 
-#: crates/pigoune-app/src/window.rs:367
+#: crates/pigoune-app/src/window.rs:426
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
-#: crates/pigoune-app/src/window.rs:369
+#: crates/pigoune-app/src/window.rs:428
 #: crates/pigoune-app/src/import_report.rs:39
 #: crates/pigoune-app/src/import_report.rs:51
 #: crates/pigoune-app/src/import_report.rs:62
 msgid "_Close"
 msgstr "_Fermer"
 
-#: crates/pigoune-app/src/window.rs:375
+#: crates/pigoune-app/src/window.rs:434
 msgid "Images"
 msgstr "Images"
 
-#: crates/pigoune-app/src/window.rs:380
+#: crates/pigoune-app/src/window.rs:439
 msgid "All Files"
 msgstr "Tous les fichiers"
 
