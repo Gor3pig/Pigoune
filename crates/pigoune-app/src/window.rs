@@ -6,8 +6,8 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
     AssetCommand, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId,
-    CollectionRemoval, ImportError, ImportSummary, Library, LibraryError, Tag, TagCommand,
-    TagError, TagId, TextField, UndoError, library_display_name,
+    CollectionRemoval, ImportError, ImportSummary, Library, LibraryError, TRASH_RETENTION, Tag,
+    TagCommand, TagError, TagId, TextField, UndoError, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -59,6 +59,7 @@ const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const PREFERENCES_ACTION: &str = "win.preferences";
+const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const OPEN_LIBRARY_ACTIONS: [&str; 13] = [
     UNDO_ACTION,
     CLOSE_LIBRARY_ACTION,
@@ -383,6 +384,14 @@ impl PigouneWindow {
     fn follow_trash_confirmation(&self, settings: &gio::Settings) {
         self.label_empty_trash_button(settings);
         settings.connect_changed(
+            Some(settings::AUTO_EMPTY_TRASH),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| window.empty_expired_trash()
+            ),
+        );
+        settings.connect_changed(
             Some(settings::CONFIRM_EMPTY_TRASH),
             glib::clone!(
                 #[weak(rename_to = window)]
@@ -615,6 +624,7 @@ impl PigouneWindow {
         imp.library.replace(Some(library));
         imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
+        self.empty_expired_trash();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         self.set_library_actions_enabled(true);
@@ -944,6 +954,29 @@ impl PigouneWindow {
     fn forget_undo_toast(&self) {
         if let Some((toast, _)) = self.imp().undo_toast.take() {
             toast.dismiss();
+        }
+    }
+
+    fn empty_expired_trash(&self) {
+        if !self.settings().boolean(settings::AUTO_EMPTY_TRASH) {
+            return;
+        }
+        match self.change_library(Library::empty_expired_trash) {
+            Some(Ok(0)) | None => {}
+            Some(Ok(count)) => {
+                self.refresh_assets();
+                let days = TRASH_RETENTION.as_secs() / SECONDS_PER_DAY;
+                self.show_toast(
+                    &ngettext(
+                        "{count} resource older than {days} days deleted from the trash for good",
+                        "{count} resources older than {days} days deleted from the trash for good",
+                        u32::try_from(count).unwrap_or(u32::MAX),
+                    )
+                    .replace("{count}", &count.to_string())
+                    .replace("{days}", &days.to_string()),
+                );
+            }
+            Some(Err(error)) => self.show_library_error(&error),
         }
     }
 

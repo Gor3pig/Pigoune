@@ -44,6 +44,7 @@ pub use layout::{
 pub use schema::CURRENT_FORMAT_VERSION;
 pub use tag::Tag;
 pub use tag_command::{TagCommand, TagError};
+pub use trash::TRASH_RETENTION;
 pub use view::{AssetView, ViewCounts};
 
 #[derive(Debug)]

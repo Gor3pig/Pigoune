@@ -1,28 +1,47 @@
 use std::fs;
 use std::path::Path;
+use std::time::Duration;
 
-use super::{AssetId, Library, LibraryError, layout};
+use rusqlite::params;
+
+use super::{AssetId, Library, LibraryError, clock, layout};
+
+pub const TRASH_RETENTION: Duration = Duration::from_hours(30 * 24);
 
 impl Library {
     pub fn empty_trash(&mut self) -> Result<usize, LibraryError> {
+        self.empty_trash_before(i64::MAX)
+    }
+
+    pub fn empty_expired_trash(&mut self) -> Result<usize, LibraryError> {
+        let retention = i64::try_from(TRASH_RETENTION.as_millis()).unwrap_or(i64::MAX);
+        self.empty_trash_before(clock::now_unix_ms().saturating_sub(retention))
+    }
+
+    fn empty_trash_before(&mut self, limit_unix_ms: i64) -> Result<usize, LibraryError> {
         let transaction = self.connection.transaction()?;
         let removed: Vec<AssetId> = {
-            let mut statement = transaction
-                .prepare("SELECT id FROM assets WHERE trashed_at_unix_ms IS NOT NULL")?;
+            let mut statement = transaction.prepare(
+                "SELECT id FROM assets WHERE trashed_at_unix_ms IS NOT NULL
+                 AND trashed_at_unix_ms <= ?1",
+            )?;
             statement
-                .query_map([], |row| row.get(0))?
+                .query_map([limit_unix_ms], |row| row.get(0))?
                 .collect::<Result<_, _>>()?
         };
         transaction.execute(
-            "DELETE FROM assets WHERE trashed_at_unix_ms IS NOT NULL",
-            [],
+            "DELETE FROM assets WHERE trashed_at_unix_ms IS NOT NULL AND trashed_at_unix_ms <= ?1",
+            params![limit_unix_ms],
         )?;
-        transaction.execute(
-            "DELETE FROM collections WHERE trashed_at_unix_ms IS NOT NULL",
-            [],
+        let removed_collections = transaction.execute(
+            "DELETE FROM collections
+             WHERE trashed_at_unix_ms IS NOT NULL AND trashed_at_unix_ms <= ?1",
+            params![limit_unix_ms],
         )?;
         transaction.commit()?;
-        self.history.clear();
+        if !removed.is_empty() || removed_collections > 0 {
+            self.history.clear();
+        }
         for asset in &removed {
             forget_files(&self.root, *asset);
         }

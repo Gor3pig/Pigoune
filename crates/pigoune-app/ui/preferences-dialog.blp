@@ -24,6 +24,11 @@ Adw.PreferencesDialog dialog {
         title: _("Confirm Before Emptying the Trash");
         subtitle: _("Ask before deleting the resources in the trash for good");
       }
+
+      Adw.SwitchRow auto_empty_trash_row {
+        title: _("Empty the Trash Automatically");
+        subtitle: _("Resources are deleted for good after 30 days in the trash");
+      }
     }
   }
 }

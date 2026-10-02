@@ -82,6 +82,11 @@
       <summary>Confirm before emptying the trash</summary>
       <description>Whether Pigoune asks before deleting the resources in the trash for good.</description>
     </key>
+    <key name="auto-empty-trash" type="b">
+      <default>false</default>
+      <summary>Empty the trash automatically</summary>
+      <description>Whether resources that have been in the trash for more than 30 days are deleted for good.</description>
+    </key>
     <key name="last-view" type="s">
       <default>""</default>
       <summary>Last sidebar entry</summary>

@@ -6,7 +6,7 @@ pub use library::{
     Change, ChangeStamp, Collection, CollectionCommand, CollectionError, CollectionId,
     CollectionPath, CollectionRemoval, DATABASE_FILE_NAME, FILES_DIR_NAME, HISTORY_LIMIT,
     ImportControl, ImportEnding, ImportError, ImportOutcome, ImportProgress, ImportSummary,
-    LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError, Tag, TagCommand, TagError, TagId,
-    TextField, UndoError, ViewCounts, library_display_name,
+    LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError, TRASH_RETENTION, Tag, TagCommand,
+    TagError, TagId, TextField, UndoError, ViewCounts, library_display_name,
 };
 pub use media::{AssetFormat, Dimensions};
