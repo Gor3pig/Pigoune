@@ -1004,6 +1004,7 @@ impl PigouneWindow {
     fn refresh_grid(&self) {
         let imp = self.imp();
         let view = imp.current_view.get();
+        let previously_selected = imp.asset_grid.selected_asset().map(|asset| asset.id());
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
                 asset_objects(library, view)?,
@@ -1022,6 +1023,9 @@ impl PigouneWindow {
                     ASSETS_PAGE
                 };
                 imp.asset_grid.show_assets(&assets);
+                if let Some(id) = previously_selected {
+                    imp.asset_grid.select_asset(id);
+                }
                 imp.library_stack.set_visible_child_name(page);
                 imp.details_button.set_visible(!assets.is_empty());
             }

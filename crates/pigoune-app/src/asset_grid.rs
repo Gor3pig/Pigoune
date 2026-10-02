@@ -86,9 +86,7 @@ mod imp {
             if self.sort_order.replace(order) == order {
                 return;
             }
-            if let Some(sorter) = self.sorter.borrow().as_ref() {
-                sorter.changed(gtk::SorterChange::Different);
-            }
+            self.obj().resort();
         }
 
         fn set_tile_size(&self, size: i32) {
@@ -180,6 +178,47 @@ impl PigouneAssetGrid {
     pub fn resort(&self) {
         if let Some(sorter) = self.imp().sorter.borrow().as_ref() {
             sorter.changed(gtk::SorterChange::Different);
+        }
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move || grid.follow_selection()
+        ));
+    }
+
+    pub fn select_asset(&self, id: AssetId) {
+        let Some(selection) = self.selection() else {
+            return;
+        };
+        let position = (0..selection.n_items()).find(|position| {
+            selection
+                .item(*position)
+                .and_downcast::<PigouneAssetObject>()
+                .is_some_and(|asset| asset.id() == id)
+        });
+        if let Some(position) = position {
+            selection.set_selected(position);
+        }
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move || grid.follow_selection()
+        ));
+    }
+
+    fn follow_selection(&self) {
+        let grid_view = &self.imp().grid_view;
+        let Some(selection) = self.selection() else {
+            return;
+        };
+        if selection.n_items() == 0 {
+            return;
+        }
+        let selected = selection.selected();
+        if selected == gtk::INVALID_LIST_POSITION {
+            grid_view.scroll_to(0, gtk::ListScrollFlags::NONE, None);
+        } else {
+            grid_view.scroll_to(selected, gtk::ListScrollFlags::FOCUS, None);
         }
     }
 
