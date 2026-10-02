@@ -3,6 +3,7 @@ mod asset_details;
 mod asset_facts;
 mod asset_grid;
 mod asset_object;
+mod asset_preview;
 mod asset_sort;
 mod asset_tile;
 mod background_import;

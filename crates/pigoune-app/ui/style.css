@@ -8,3 +8,40 @@
   border-radius: 12px;
   background-color: color-mix(in srgb, var(--accent-bg-color) 8%, transparent);
 }
+
+.preview-surface.white,
+.background-swatch.white {
+  background-color: #ffffff;
+}
+
+.preview-surface.grey,
+.background-swatch.grey {
+  background-color: #808080;
+}
+
+.preview-surface.black,
+.background-swatch.black {
+  background-color: #000000;
+}
+
+.preview-surface.checkerboard,
+.background-swatch.checkerboard {
+  background-color: #ffffff;
+  background-image: conic-gradient(#cccccc 25%, #ffffff 0 50%, #cccccc 0 75%, #ffffff 0);
+  background-size: 16px 16px;
+}
+
+.background-swatch.checkerboard {
+  background-size: 8px 8px;
+}
+
+.background-swatch {
+  min-width: 16px;
+  min-height: 16px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px alpha(currentColor, 0.3);
+}
+
+.background-swatch.transparent {
+  background-image: linear-gradient(135deg, transparent 45%, alpha(currentColor, 0.5) 45% 55%, transparent 55%);
+}

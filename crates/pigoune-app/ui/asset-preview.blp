@@ -1,0 +1,124 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneAssetPreview: Adw.Bin {
+  focusable: true;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      title-widget: Adw.WindowTitle preview_title {};
+
+      [start]
+      Button {
+        icon-name: "go-previous-symbolic";
+        tooltip-text: _("Back to the Library");
+        clicked => $on_back_clicked() swapped;
+      }
+
+      [end]
+      Box {
+        styles [
+          "linked",
+        ]
+
+        ToggleButton {
+          tooltip-text: _("Transparent Background");
+          action-name: "win.preview-background";
+          action-target: "'transparent'";
+
+          child: Box {
+            halign: center;
+            valign: center;
+
+            styles [
+              "background-swatch",
+              "transparent",
+            ]
+          };
+        }
+
+        ToggleButton {
+          tooltip-text: _("White Background");
+          action-name: "win.preview-background";
+          action-target: "'white'";
+
+          child: Box {
+            halign: center;
+            valign: center;
+
+            styles [
+              "background-swatch",
+              "white",
+            ]
+          };
+        }
+
+        ToggleButton {
+          tooltip-text: _("Grey Background");
+          action-name: "win.preview-background";
+          action-target: "'grey'";
+
+          child: Box {
+            halign: center;
+            valign: center;
+
+            styles [
+              "background-swatch",
+              "grey",
+            ]
+          };
+        }
+
+        ToggleButton {
+          tooltip-text: _("Black Background");
+          action-name: "win.preview-background";
+          action-target: "'black'";
+
+          child: Box {
+            halign: center;
+            valign: center;
+
+            styles [
+              "background-swatch",
+              "black",
+            ]
+          };
+        }
+
+        ToggleButton {
+          tooltip-text: _("Checkerboard Background");
+          action-name: "win.preview-background";
+          action-target: "'checkerboard'";
+
+          child: Box {
+            halign: center;
+            valign: center;
+
+            styles [
+              "background-swatch",
+              "checkerboard",
+            ]
+          };
+        }
+      }
+    }
+
+    content: Box surface {
+      styles [
+        "preview-surface",
+      ]
+
+      Picture picture {
+        hexpand: true;
+        vexpand: true;
+        content-fit: scale_down;
+        can-shrink: true;
+        margin-top: 24;
+        margin-bottom: 24;
+        margin-start: 24;
+        margin-end: 24;
+      }
+    };
+  };
+}

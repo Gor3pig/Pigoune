@@ -164,12 +164,7 @@ impl PigouneAssetGrid {
         &self,
         callback: impl Fn(Option<PigouneAssetObject>) + 'static,
     ) {
-        let Some(selection) = self
-            .imp()
-            .grid_view
-            .model()
-            .and_downcast::<gtk::SingleSelection>()
-        else {
+        let Some(selection) = self.selection() else {
             return;
         };
         selection.connect_selected_item_notify(move |selection| {
@@ -179,6 +174,46 @@ impl PigouneAssetGrid {
                     .and_downcast::<PigouneAssetObject>(),
             );
         });
+    }
+
+    pub fn selection(&self) -> Option<gtk::SingleSelection> {
+        self.imp()
+            .grid_view
+            .model()
+            .and_downcast::<gtk::SingleSelection>()
+    }
+
+    pub fn connect_preview_requested(&self, callback: impl Fn() + 'static) {
+        let callback = Rc::new(callback);
+        let grid_view = &self.imp().grid_view;
+        let on_activate = Rc::clone(&callback);
+        grid_view.connect_activate(move |grid_view, position| {
+            if let Some(selection) = grid_view.model().and_downcast::<gtk::SingleSelection>() {
+                selection.set_selected(position);
+            }
+            on_activate();
+        });
+        let space = gtk::EventControllerKey::new();
+        space.set_propagation_phase(gtk::PropagationPhase::Capture);
+        space.connect_key_pressed(move |_, key, _, modifiers| {
+            if key == gdk::Key::space && modifiers.is_empty() {
+                callback();
+                glib::Propagation::Stop
+            } else {
+                glib::Propagation::Proceed
+            }
+        });
+        grid_view.add_controller(space);
+    }
+
+    pub fn reveal_selected(&self) {
+        let grid_view = &self.imp().grid_view;
+        if let Some(selection) = self.selection() {
+            let position = selection.selected();
+            if position != gtk::INVALID_LIST_POSITION {
+                grid_view.scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
+            }
+        }
     }
 
     pub fn forget_thumbnails(&self) {

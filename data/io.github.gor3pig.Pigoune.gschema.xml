@@ -40,6 +40,18 @@
       <summary>Reverse sort order</summary>
       <description>Whether the natural direction of the sort criterion is reversed.</description>
     </key>
+    <key name="preview-background" type="s">
+      <choices>
+        <choice value="transparent"/>
+        <choice value="white"/>
+        <choice value="grey"/>
+        <choice value="black"/>
+        <choice value="checkerboard"/>
+      </choices>
+      <default>"transparent"</default>
+      <summary>Preview background</summary>
+      <description>Background shown behind the resource in the detailed preview.</description>
+    </key>
     <key name="thumbnail-size" type="i">
       <range min="64" max="256"/>
       <default>128</default>

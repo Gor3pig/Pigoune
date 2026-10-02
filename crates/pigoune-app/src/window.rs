@@ -18,6 +18,8 @@ const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
 const EMPTY_PAGE: &str = "empty";
 const ASSETS_PAGE: &str = "assets";
+const MAIN_PAGE: &str = "main";
+const PREVIEW_PAGE: &str = "preview";
 const CREATE_LIBRARY_ACTION: &str = "win.create-library";
 const OPEN_LIBRARY_ACTION: &str = "win.open-library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
@@ -63,6 +65,7 @@ mod imp {
 
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
+    use crate::asset_preview::PigouneAssetPreview;
 
     use super::{
         CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, ENLARGE_THUMBNAILS_ACTION,
@@ -90,6 +93,10 @@ mod imp {
         pub asset_details: TemplateChild<PigouneAssetDetails>,
         #[template_child]
         pub details_button: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub window_stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub asset_preview: TemplateChild<PigouneAssetPreview>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -103,6 +110,7 @@ mod imp {
         fn class_init(class: &mut Self::Class) {
             PigouneAssetGrid::ensure_type();
             PigouneAssetDetails::ensure_type();
+            PigouneAssetPreview::ensure_type();
             class.bind_template();
             class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
@@ -189,7 +197,16 @@ impl PigouneWindow {
                 .build();
             window.add_action(&settings.create_action(key));
         }
+        settings
+            .bind(
+                settings::PREVIEW_BACKGROUND,
+                &*window.imp().asset_preview,
+                "background",
+            )
+            .build();
+        window.add_action(&settings.create_action(settings::PREVIEW_BACKGROUND));
         window.describe_selected_asset();
+        window.connect_preview();
         window
             .imp()
             .settings
@@ -343,8 +360,45 @@ impl PigouneWindow {
         ));
     }
 
+    fn connect_preview(&self) {
+        let imp = self.imp();
+        imp.asset_grid.connect_preview_requested(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || window.open_preview()
+        ));
+        imp.asset_preview.connect_closed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || window.leave_preview()
+        ));
+    }
+
+    fn open_preview(&self) {
+        let imp = self.imp();
+        let Some(selection) = imp.asset_grid.selection() else {
+            return;
+        };
+        if selection.selected_item().is_none() {
+            return;
+        }
+        imp.window_stack.set_visible_child_name(PREVIEW_PAGE);
+        imp.asset_preview
+            .open(&selection, imp.asset_grid.thumbnails());
+    }
+
+    fn leave_preview(&self) {
+        let imp = self.imp();
+        if imp.window_stack.visible_child_name().as_deref() != Some(PREVIEW_PAGE) {
+            return;
+        }
+        imp.window_stack.set_visible_child_name(MAIN_PAGE);
+        imp.asset_grid.reveal_selected();
+    }
+
     fn refresh_assets(&self) {
         let imp = self.imp();
+        imp.asset_preview.close();
         let listed = imp.library.borrow().as_ref().map(asset_objects);
         match listed {
             Some(Ok(assets)) => {

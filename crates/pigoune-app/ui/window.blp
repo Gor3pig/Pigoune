@@ -6,107 +6,72 @@ template $PigouneWindow: Adw.ApplicationWindow {
   width-request: 360;
   height-request: 294;
 
-  content: Adw.ToolbarView {
-    [top]
-    Adw.HeaderBar {
-      title-widget: Adw.WindowTitle window_title {
-        title: "Pigoune";
-      };
+  content: Stack window_stack {
+    transition-type: crossfade;
 
-      [end]
-      MenuButton {
-        primary: true;
-        icon-name: "open-menu-symbolic";
-        tooltip-text: _("Main Menu");
-        menu-model: primary_menu;
-      }
+    StackPage {
+      name: "main";
 
-      [end]
-      ToggleButton details_button {
-        visible: false;
-        active: true;
-        icon-name: "sidebar-show-right-symbolic";
-        tooltip-text: _("Show Details");
-      }
+      child: Adw.ToolbarView {
+        [top]
+        Adw.HeaderBar {
+          title-widget: Adw.WindowTitle window_title {
+            title: "Pigoune";
+          };
 
-      [end]
-      MenuButton import_button {
-        visible: false;
-        icon-name: "list-add-symbolic";
-        tooltip-text: _("Import");
-        menu-model: import_menu;
-      }
-    }
-
-    content: Overlay {
-      [overlay]
-      Adw.StatusPage drop_hint {
-        visible: false;
-        can-target: false;
-        icon-name: "insert-image-symbolic";
-        description: _("Images are copied into the library. The originals are not modified.");
-
-        styles [
-          "drop-hint",
-        ]
-      }
-
-      child: Adw.ToastOverlay toast_overlay {
-        child: Gtk.Stack stack {
-          transition-type: crossfade;
-
-          StackPage {
-            name: "welcome";
-
-            child: Adw.StatusPage {
-              icon-name: "io.github.gor3pig.Pigoune";
-              title: _("Welcome to Pigoune");
-              description: _("The cozy box for your icons, logos and illustrations.");
-
-              styles [
-                "icon-dropshadow",
-              ]
-
-              child: Box {
-                orientation: vertical;
-                spacing: 12;
-                halign: center;
-
-                Button {
-                  label: _("_Create a Library");
-                  use-underline: true;
-                  action-name: "win.create-library";
-
-                  styles [
-                    "pill",
-                    "suggested-action",
-                  ]
-                }
-
-                Button {
-                  label: _("_Open a Library");
-                  use-underline: true;
-                  action-name: "win.open-library";
-
-                  styles [
-                    "pill",
-                  ]
-                }
-              };
-            };
+          [end]
+          MenuButton {
+            primary: true;
+            icon-name: "open-menu-symbolic";
+            tooltip-text: _("Main Menu");
+            menu-model: primary_menu;
           }
 
-          StackPage {
-            name: "library";
+          [end]
+          ToggleButton details_button {
+            visible: false;
+            active: true;
+            icon-name: "sidebar-show-right-symbolic";
+            tooltip-text: _("Show Details");
+          }
 
-            child: Gtk.Stack library_stack {
+          [end]
+          MenuButton import_button {
+            visible: false;
+            icon-name: "list-add-symbolic";
+            tooltip-text: _("Import");
+            menu-model: import_menu;
+          }
+        }
+
+        content: Overlay {
+          [overlay]
+          Adw.StatusPage drop_hint {
+            visible: false;
+            can-target: false;
+            icon-name: "insert-image-symbolic";
+            description: _("Images are copied into the library. The originals are not modified.");
+
+            styles [
+              "drop-hint",
+            ]
+          }
+
+          child: Adw.ToastOverlay toast_overlay {
+            child: Gtk.Stack stack {
+              transition-type: crossfade;
+
               StackPage {
-                name: "empty";
+                name: "welcome";
 
                 child: Adw.StatusPage {
-                  icon-name: "folder-pictures-symbolic";
-                  title: _("Your Library Is Empty");
-                  description: _("Imported icons, logos and illustrations will appear here.");
+                  icon-name: "io.github.gor3pig.Pigoune";
+                  title: _("Welcome to Pigoune");
+                  description: _("The cozy box for your icons, logos and illustrations.");
+
+                  styles [
+                    "icon-dropshadow",
+                  ]
 
                   child: Box {
                     orientation: vertical;
@@ -114,9 +79,9 @@ template $PigouneWindow: Adw.ApplicationWindow {
                     halign: center;
 
                     Button {
-                      label: _("Import _Files…");
+                      label: _("_Create a Library");
                       use-underline: true;
-                      action-name: "win.import-files";
+                      action-name: "win.create-library";
 
                       styles [
                         "pill",
@@ -125,9 +90,9 @@ template $PigouneWindow: Adw.ApplicationWindow {
                     }
 
                     Button {
-                      label: _("Import a F_older…");
+                      label: _("_Open a Library");
                       use-underline: true;
-                      action-name: "win.import-folder";
+                      action-name: "win.open-library";
 
                       styles [
                         "pill",
@@ -138,24 +103,73 @@ template $PigouneWindow: Adw.ApplicationWindow {
               }
 
               StackPage {
-                name: "assets";
+                name: "library";
 
-                child: Adw.OverlaySplitView details_split {
-                  sidebar-position: end;
-                  min-sidebar-width: 280;
-                  max-sidebar-width: 360;
-                  show-sidebar: bind details_button.active bidirectional;
+                child: Gtk.Stack library_stack {
+                  StackPage {
+                    name: "empty";
 
-                  content: $PigouneAssetGrid asset_grid {};
+                    child: Adw.StatusPage {
+                      icon-name: "folder-pictures-symbolic";
+                      title: _("Your Library Is Empty");
+                      description: _("Imported icons, logos and illustrations will appear here.");
 
-                  sidebar: $PigouneAssetDetails asset_details {};
+                      child: Box {
+                        orientation: vertical;
+                        spacing: 12;
+                        halign: center;
+
+                        Button {
+                          label: _("Import _Files…");
+                          use-underline: true;
+                          action-name: "win.import-files";
+
+                          styles [
+                            "pill",
+                            "suggested-action",
+                          ]
+                        }
+
+                        Button {
+                          label: _("Import a F_older…");
+                          use-underline: true;
+                          action-name: "win.import-folder";
+
+                          styles [
+                            "pill",
+                          ]
+                        }
+                      };
+                    };
+                  }
+
+                  StackPage {
+                    name: "assets";
+
+                    child: Adw.OverlaySplitView details_split {
+                      sidebar-position: end;
+                      min-sidebar-width: 280;
+                      max-sidebar-width: 360;
+                      show-sidebar: bind details_button.active bidirectional;
+
+                      content: $PigouneAssetGrid asset_grid {};
+
+                      sidebar: $PigouneAssetDetails asset_details {};
+                    };
+                  }
                 };
               }
             };
-          }
+          };
         };
       };
-    };
+    }
+
+    StackPage {
+      name: "preview";
+
+      child: $PigouneAssetPreview asset_preview {};
+    }
   };
 }
 

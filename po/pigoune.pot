@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 09:23+0200\n"
+"POT-Creation-Date: 2026-10-02 09:38+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -111,67 +111,75 @@ msgstr ""
 msgid "Whether the natural direction of the sort criterion is reversed."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:46
+#: data/io.github.gor3pig.Pigoune.gschema.xml:52
+msgid "Preview background"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:53
+msgid "Background shown behind the resource in the detailed preview."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:58
 msgid "Thumbnail size"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:47
+#: data/io.github.gor3pig.Pigoune.gschema.xml:59
 msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:20
+#: crates/pigoune-app/ui/window.blp:26
 msgid "Main Menu"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:29
+#: crates/pigoune-app/ui/window.blp:35
 msgid "Show Details"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:36
+#: crates/pigoune-app/ui/window.blp:42
 msgid "Import"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:47
+#: crates/pigoune-app/ui/window.blp:53
 msgid "Images are copied into the library. The originals are not modified."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:63
+#: crates/pigoune-app/ui/window.blp:69
 msgid "Welcome to Pigoune"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:64
+#: crates/pigoune-app/ui/window.blp:70
 msgid "The cozy box for your icons, logos and illustrations."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:76
+#: crates/pigoune-app/ui/window.blp:82
 msgid "_Create a Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:87
+#: crates/pigoune-app/ui/window.blp:93
 msgid "_Open a Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:108
+#: crates/pigoune-app/ui/window.blp:114
 msgid "Your Library Is Empty"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:109
+#: crates/pigoune-app/ui/window.blp:115
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:117 crates/pigoune-app/ui/window.blp:165
+#: crates/pigoune-app/ui/window.blp:123 crates/pigoune-app/ui/window.blp:179
 msgid "Import _Files…"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:128 crates/pigoune-app/ui/window.blp:170
+#: crates/pigoune-app/ui/window.blp:134 crates/pigoune-app/ui/window.blp:184
 msgid "Import a F_older…"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:179
+#: crates/pigoune-app/ui/window.blp:193
 msgid "_Close Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:186
+#: crates/pigoune-app/ui/window.blp:200
 msgid "_About Pigoune"
 msgstr ""
 
@@ -266,56 +274,56 @@ msgstr ""
 msgid "Choose a Location"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:241
+#: crates/pigoune-app/src/window.rs:258
 msgid "_Open Another Library…"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:242
+#: crates/pigoune-app/src/window.rs:259
 msgid "_Try Again"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:274
+#: crates/pigoune-app/src/window.rs:291
 msgid "Open a Pigoune Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:372
+#: crates/pigoune-app/src/window.rs:426
 msgid "Unable to Show the Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:375 crates/pigoune-app/src/window.rs:533
+#: crates/pigoune-app/src/window.rs:429 crates/pigoune-app/src/window.rs:587
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:444
+#: crates/pigoune-app/src/window.rs:498
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:450
+#: crates/pigoune-app/src/window.rs:504
 msgid "Import Files"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:451 crates/pigoune-app/src/window.rs:463
+#: crates/pigoune-app/src/window.rs:505 crates/pigoune-app/src/window.rs:517
 msgid "_Import"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:462
+#: crates/pigoune-app/src/window.rs:516
 msgid "Import Folders"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:531
+#: crates/pigoune-app/src/window.rs:585
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:539
+#: crates/pigoune-app/src/window.rs:593
 msgid "Images"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:544
+#: crates/pigoune-app/src/window.rs:598
 msgid "All Files"
 msgstr ""
 
@@ -516,4 +524,33 @@ msgstr ""
 
 #: crates/pigoune-app/src/asset_facts.rs:48
 msgid "%B %-d, %Y at %H:%M"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:15
+msgid "Back to the Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:26
+msgid "Transparent Background"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:42
+msgid "White Background"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:58
+msgid "Grey Background"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:74
+msgid "Black Background"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:90
+msgid "Checkerboard Background"
+msgstr ""
+
+#: crates/pigoune-app/src/asset_preview.rs:222
+#, rust-format
+msgid "{position} of {count}"
 msgstr ""

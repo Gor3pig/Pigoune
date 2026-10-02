@@ -11,6 +11,7 @@ pub const THUMBNAIL_SIZE: &str = "thumbnail-size";
 pub const SHOW_DETAILS: &str = "show-details";
 pub const SORT_CRITERION: &str = "sort-criterion";
 pub const SORT_REVERSED: &str = "sort-reversed";
+pub const PREVIEW_BACKGROUND: &str = "preview-background";
 
 pub fn load() -> gio::Settings {
     let schema = installed_schema()
