@@ -12,6 +12,7 @@ use pigoune_core::{
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::clipboard_content;
 use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_editor::SharedCollection;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
@@ -60,6 +61,8 @@ const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const PREFERENCES_ACTION: &str = "win.preferences";
 const SEARCH_ACTION: &str = "win.search";
+const COPY_SELECTED_ACTION: &str = "win.copy-selected";
+const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const OPEN_LIBRARY_ACTIONS: [&str; 14] = [
     SEARCH_ACTION,
@@ -115,14 +118,14 @@ mod imp {
     use crate::sidebar::PigouneSidebar;
 
     use super::{
-        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION,
-        DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, PREFERENCES_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
-        tag_parameter,
+        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION,
+        CREATE_LIBRARY_ACTION, DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION,
+        ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, IMPORT_FILES_ACTION,
+        IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
+        OPEN_PREVIEW_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION,
+        RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
+        SEARCH_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
+        UNDO_ACTION, collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -185,6 +188,12 @@ mod imp {
         });
         class.install_action(UNDO_ACTION, None, |window, _, _| {
             window.undo();
+        });
+        class.install_action(COPY_SELECTED_ACTION, None, |window, _, _| {
+            window.copy_selected();
+        });
+        class.install_action_async(EXPORT_SELECTED_ACTION, None, |window, _, _| async move {
+            window.export_selected().await;
         });
         class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| window.open_preview(None));
@@ -948,6 +957,13 @@ impl PigouneWindow {
             viewing.append(Some(&gettext("_Restore")), Some(RESTORE_SELECTED_ACTION));
             return viewing.upcast();
         }
+        let sharing = gio::Menu::new();
+        sharing.append_item(&menu_item(
+            &gettext("Copy"),
+            COPY_SELECTED_ACTION,
+            Some("<Control>c"),
+        ));
+        sharing.append(Some(&gettext("Export To…")), Some(EXPORT_SELECTED_ACTION));
         let organizing = gio::Menu::new();
         let favorite_label = if selected.iter().all(PigouneAssetObject::favorite) {
             gettext("Remove from Favorites")
@@ -980,6 +996,7 @@ impl PigouneWindow {
         ));
         let menu = gio::Menu::new();
         menu.append_section(None, &viewing);
+        menu.append_section(None, &sharing);
         menu.append_section(None, &organizing);
         menu.append_section(None, &discarding);
         menu.upcast()
@@ -1228,6 +1245,114 @@ impl PigouneWindow {
                 alert.present(Some(self));
             }
         }
+    }
+
+    fn copy_selected(&self) {
+        if self.copy_typed_text() {
+            return;
+        }
+        let selected = self.selected_ids();
+        if selected.is_empty() || self.is_showing_trash() {
+            return;
+        }
+        let prepared = self.imp().library.borrow().as_ref().map(|library| {
+            let copies = library.clipboard_copies(&selected)?;
+            let first_name = library.asset(selected[0])?.map(|asset| asset.display_name);
+            Ok::<_, LibraryError>((copies, first_name))
+        });
+        match prepared {
+            Some(Ok((copies, first_name))) if !copies.is_empty() => {
+                self.clipboard()
+                    .set_content(Some(&clipboard_content::provider(&copies)))
+                    .ok();
+                let message = match (copies.len(), first_name) {
+                    (1, Some(name)) => gettext("“{name}” copied").replace("{name}", &name),
+                    (count, _) => ngettext(
+                        "{count} resource copied",
+                        "{count} resources copied",
+                        u32::try_from(count).unwrap_or(u32::MAX),
+                    )
+                    .replace("{count}", &count.to_string()),
+                };
+                self.show_toast(&message);
+            }
+            Some(Err(error)) => self.show_library_error(&error),
+            Some(Ok(_)) | None => {}
+        }
+    }
+
+    fn copy_typed_text(&self) -> bool {
+        GtkWindowExt::focus(self).is_some_and(|focus| {
+            (focus.is::<gtk::Text>() || focus.is::<gtk::TextView>() || focus.is::<gtk::Label>())
+                && focus.activate_action("clipboard.copy", None).is_ok()
+        })
+    }
+
+    async fn export_selected(&self) {
+        let selected = self.selected_ids();
+        if selected.is_empty() || self.is_showing_trash() {
+            return;
+        }
+        let dialog = gtk::FileDialog::builder()
+            .title(gettext("Export To"))
+            .accept_label(gettext("_Export"))
+            .modal(true)
+            .build();
+        let Ok(folder) = dialog.select_folder_future(Some(self)).await else {
+            return;
+        };
+        let Some(path) = folder.path() else {
+            return;
+        };
+        let exported = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.export_to(&selected, &path));
+        match exported {
+            Some(Ok(copies)) => self.show_export_toast(copies.len(), &folder),
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Export")),
+                    Some(&error_messages::describe(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
+    }
+
+    fn show_export_toast(&self, count: usize, folder: &gio::File) {
+        let name = folder
+            .basename()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let toast = adw::Toast::new(
+            &ngettext(
+                "{count} resource exported to “{name}”",
+                "{count} resources exported to “{name}”",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &count.to_string())
+            .replace("{name}", &name),
+        );
+        toast.set_button_label(Some(&gettext("_Open Folder")));
+        toast.connect_button_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[strong]
+            folder,
+            move |_| {
+                gtk::FileLauncher::new(Some(&folder)).launch(
+                    Some(&window),
+                    gio::Cancellable::NONE,
+                    |_| {},
+                );
+            }
+        ));
+        self.imp().toast_overlay.add_toast(toast);
     }
 
     fn undo_typing(&self) -> bool {

@@ -8,6 +8,7 @@ mod asset_preview;
 mod asset_sort;
 mod asset_tile;
 mod background_import;
+mod clipboard_content;
 mod collection_choice;
 mod collection_drop;
 mod collection_editor;

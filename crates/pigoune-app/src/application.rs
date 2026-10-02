@@ -34,6 +34,7 @@ fn install_actions(application: &adw::Application) {
     application.set_accels_for_action("win.undo", &["<Control>z"]);
     application.set_accels_for_action("win.preferences", &["<Control>comma"]);
     application.set_accels_for_action("win.search", &["<Control>f"]);
+    application.set_accels_for_action("win.copy-selected", &["<Control>c"]);
     application.set_accels_for_action(
         "win.enlarge-thumbnails",
         &["<Control>plus", "<Control>equal", "<Control>KP_Add"],

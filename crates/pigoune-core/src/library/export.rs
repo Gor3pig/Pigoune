@@ -10,9 +10,35 @@ const REPLACEMENT: char = '-';
 
 impl Library {
     pub fn export_copies(&self, assets: &[AssetId]) -> Result<Vec<PathBuf>, LibraryError> {
-        let export_dir = layout::export_dir(&self.root);
-        forget_exports(&self.root);
-        fs::create_dir_all(&export_dir)?;
+        self.fresh_copies(assets, &layout::export_dir(&self.root))
+    }
+
+    pub fn clipboard_copies(&self, assets: &[AssetId]) -> Result<Vec<PathBuf>, LibraryError> {
+        self.fresh_copies(assets, &layout::clipboard_dir(&self.root))
+    }
+
+    pub fn export_to(
+        &self,
+        assets: &[AssetId],
+        folder: &Path,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        if !folder.is_dir() {
+            return Err(LibraryError::NotFound(folder.to_path_buf()));
+        }
+        self.copy_into(assets, folder)
+    }
+
+    fn fresh_copies(
+        &self,
+        assets: &[AssetId],
+        folder: &Path,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        let _ = fs::remove_dir_all(folder);
+        fs::create_dir_all(folder)?;
+        self.copy_into(assets, folder)
+    }
+
+    fn copy_into(&self, assets: &[AssetId], folder: &Path) -> Result<Vec<PathBuf>, LibraryError> {
         let mut taken = HashSet::new();
         let mut copies = Vec::new();
         for id in assets {
@@ -24,17 +50,33 @@ impl Library {
                 .map(|extension| extension.to_string_lossy().into_owned());
             let base = export_base_name(&asset.display_name, extension.as_deref())
                 .unwrap_or_else(|| id.to_string());
-            let name = free_name(&base, extension.as_deref(), &mut taken);
-            let copy = export_dir.join(name);
-            fs::copy(self.file_of(&asset), &copy)?;
+            let copy = loop {
+                let name = free_name(&base, extension.as_deref(), &mut taken);
+                let candidate = folder.join(name);
+                if candidate.symlink_metadata().is_err() {
+                    break candidate;
+                }
+            };
+            copy_without_overwriting(&self.file_of(&asset), &copy)?;
             copies.push(copy);
         }
         Ok(copies)
     }
 }
 
+fn copy_without_overwriting(source: &Path, destination: &Path) -> Result<(), LibraryError> {
+    let mut reader = fs::File::open(source)?;
+    let mut writer = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(destination)?;
+    std::io::copy(&mut reader, &mut writer)?;
+    Ok(())
+}
+
 pub fn forget_exports(root: &Path) {
     let _ = fs::remove_dir_all(layout::export_dir(root));
+    let _ = fs::remove_dir_all(layout::clipboard_dir(root));
 }
 
 fn export_base_name(display_name: &str, extension: Option<&str>) -> Option<String> {

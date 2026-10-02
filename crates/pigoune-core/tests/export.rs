@@ -146,3 +146,90 @@ fn a_new_export_and_a_reopening_forget_the_previous_copies() {
     assert!(!new.exists());
     drop(fixture.workspace);
 }
+
+#[test]
+fn exporting_to_a_folder_never_overwrites_a_file() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("github-mark.svg");
+    fixture.rename(svg, "Logo GitHub");
+    let folder = fixture.workspace.path().join("Bureau");
+    fs::create_dir(&folder).expect("folder is created");
+    fs::write(folder.join("Logo GitHub.svg"), b"mine").expect("file is written");
+    fs::write(folder.join("Logo GitHub (2).svg"), b"mine too").expect("file is written");
+
+    let copies = fixture
+        .library
+        .export_to(&[svg], &folder)
+        .expect("export succeeds");
+
+    assert_eq!(copies, [folder.join("Logo GitHub (3).svg")]);
+    assert_eq!(
+        fs::read(folder.join("Logo GitHub.svg")).expect("file is read"),
+        b"mine"
+    );
+    assert_eq!(
+        fs::read(folder.join("Logo GitHub (2).svg")).expect("file is read"),
+        b"mine too"
+    );
+    assert_eq!(
+        fs::read(&copies[0]).expect("copy is read"),
+        fs::read(sample_file("github-mark.svg")).expect("original is read")
+    );
+}
+
+#[test]
+fn several_exports_to_the_same_folder_add_up() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("github-mark.svg");
+    let folder = fixture.workspace.path().join("Exports");
+    fs::create_dir(&folder).expect("folder is created");
+
+    fixture
+        .library
+        .export_to(&[svg], &folder)
+        .expect("first export");
+    fixture
+        .library
+        .export_to(&[svg], &folder)
+        .expect("second export");
+
+    let mut names: Vec<String> = fs::read_dir(&folder)
+        .expect("folder is listed")
+        .map(|entry| {
+            entry
+                .expect("entry is read")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    names.sort();
+    assert_eq!(names, ["github-mark (2).svg", "github-mark.svg"]);
+}
+
+#[test]
+fn exporting_to_a_missing_folder_is_refused() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("github-mark.svg");
+    let missing = fixture.workspace.path().join("absent");
+
+    assert!(fixture.library.export_to(&[svg], &missing).is_err());
+    assert!(!missing.exists());
+}
+
+#[test]
+fn clipboard_copies_survive_a_new_drag() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("github-mark.svg");
+    let png = fixture.import("red-dot.png");
+    let copied = fixture
+        .library
+        .clipboard_copies(&[svg])
+        .expect("clipboard copies are prepared")
+        .remove(0);
+
+    fixture.export(&[png]);
+
+    assert!(copied.exists());
+    assert_eq!(file_name(&copied), "github-mark.svg");
+}
