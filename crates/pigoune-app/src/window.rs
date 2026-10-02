@@ -5,12 +5,13 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetView, CollectionId, ImportError, ImportSummary, Library, LibraryError,
+    AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary, Library, LibraryError,
     library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::error_messages;
 use crate::import_report;
@@ -34,12 +35,18 @@ const IMPORT_FILES_ACTION: &str = "win.import-files";
 const IMPORT_FOLDER_ACTION: &str = "win.import-folder";
 const ENLARGE_THUMBNAILS_ACTION: &str = "win.enlarge-thumbnails";
 const SHRINK_THUMBNAILS_ACTION: &str = "win.shrink-thumbnails";
-const OPEN_LIBRARY_ACTIONS: [&str; 5] = [
+const NEW_COLLECTION_ACTION: &str = "win.new-collection";
+const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
+const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
+const OPEN_LIBRARY_ACTIONS: [&str; 8] = [
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
     ENLARGE_THUMBNAILS_ACTION,
     SHRINK_THUMBNAILS_ACTION,
+    NEW_COLLECTION_ACTION,
+    NEW_SUBCOLLECTION_ACTION,
+    RENAME_COLLECTION_ACTION,
 ];
 
 const IMAGE_MIME_TYPES: [&str; 7] = [
@@ -77,7 +84,9 @@ mod imp {
 
     use super::{
         CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, ENLARGE_THUMBNAILS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, OPEN_LIBRARY_ACTION, SHRINK_THUMBNAILS_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
+        OPEN_LIBRARY_ACTION, RENAME_COLLECTION_ACTION, SHRINK_THUMBNAILS_ACTION,
+        collection_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -147,6 +156,27 @@ mod imp {
             class.install_action(SHRINK_THUMBNAILS_ACTION, None, |window, _, _| {
                 window.imp().asset_grid.shrink_tiles();
             });
+            class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
+                window.ask_new_collection(None);
+            });
+            class.install_action(
+                NEW_SUBCOLLECTION_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(parent) = collection_parameter(parameter) {
+                        window.ask_new_collection(Some(parent));
+                    }
+                },
+            );
+            class.install_action(
+                RENAME_COLLECTION_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(id) = collection_parameter(parameter) {
+                        window.ask_collection_name(id);
+                    }
+                },
+            );
         }
 
         fn instance_init(object: &glib::subclass::InitializingObject<Self>) {
@@ -263,11 +293,7 @@ impl PigouneWindow {
         if imp.current_view.replace(view) == view {
             return;
         }
-        settings::store_string(
-            self.settings(),
-            settings::LAST_VIEW,
-            &view_setting::to_setting(view),
-        );
+        self.remember_view(view);
         imp.asset_preview.close();
         self.refresh_grid();
     }
@@ -487,6 +513,10 @@ impl PigouneWindow {
     }
 
     fn refresh_sidebar(&self) {
+        self.refresh_sidebar_revealing(Vec::new());
+    }
+
+    fn refresh_sidebar_revealing(&self, reveal: Vec<CollectionId>) {
         let imp = self.imp();
         let order = self.collection_order();
         let show_counts = self.settings().boolean(settings::SHOW_COUNTS);
@@ -514,7 +544,99 @@ impl PigouneWindow {
             counts,
             show_counts,
             selected: imp.current_view.get(),
+            reveal,
         });
+    }
+
+    fn ask_new_collection(&self, parent: Option<CollectionId>) {
+        let title = if parent.is_some() {
+            gettext("New Sub-collection")
+        } else {
+            gettext("New Collection")
+        };
+        let dialog = PigouneCollectionNameDialog::new(
+            &title,
+            &gettext("C_reate"),
+            &gettext("New Collection"),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move |name| window.create_collection(name, parent)
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn create_collection(&self, name: &str, parent: Option<CollectionId>) -> Result<(), String> {
+        let created = self.imp().library.borrow_mut().as_mut().map(|library| {
+            let id = library.create_collection(name, parent)?;
+            Ok((id, ancestors(library, parent)))
+        });
+        match created {
+            Some(Ok((id, ancestors))) => {
+                self.imp().current_view.set(AssetView::Collection(id));
+                self.remember_view(AssetView::Collection(id));
+                self.imp().asset_preview.close();
+                self.refresh_sidebar_revealing(ancestors);
+                self.refresh_grid();
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_collection(&error)),
+            None => Ok(()),
+        }
+    }
+
+    fn ask_collection_name(&self, id: CollectionId) {
+        let current_name = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.collection(id).ok().flatten())
+            .map(|collection| collection.name);
+        let Some(current_name) = current_name else {
+            return;
+        };
+        let dialog = PigouneCollectionNameDialog::new(
+            &gettext("Rename Collection"),
+            &gettext("_Rename"),
+            &current_name,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move |name| window.rename_collection(id, name)
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn rename_collection(&self, id: CollectionId, name: &str) -> Result<(), String> {
+        let renamed = self.imp().library.borrow_mut().as_mut().map(|library| {
+            library.apply_collection_command(&CollectionCommand::Rename {
+                id,
+                name: name.to_owned(),
+            })
+        });
+        match renamed {
+            Some(Ok(_)) => {
+                self.refresh_assets();
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_collection(&error)),
+            None => Ok(()),
+        }
+    }
+
+    fn remember_view(&self, view: AssetView) {
+        settings::store_string(
+            self.settings(),
+            settings::LAST_VIEW,
+            &view_setting::to_setting(view),
+        );
     }
 
     fn refresh_grid(&self) {
@@ -756,6 +878,14 @@ fn paths_of(files: &gio::ListModel) -> Vec<PathBuf> {
         .filter_map(|position| files.item(position).and_downcast::<gio::File>())
         .filter_map(|file| file.path())
         .collect()
+}
+
+fn collection_parameter(parameter: Option<&glib::Variant>) -> Option<CollectionId> {
+    CollectionId::parse(&parameter?.get::<String>()?)
+}
+
+fn ancestors(library: &Library, parent: Option<CollectionId>) -> Vec<CollectionId> {
+    std::iter::successors(parent, |id| library.collection(*id).ok().flatten()?.parent).collect()
 }
 
 fn view_name(library: &Library, view: AssetView) -> String {

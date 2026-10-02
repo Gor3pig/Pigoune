@@ -1,0 +1,68 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneCollectionNameDialog: Adw.Dialog {
+  content-width: 400;
+  default-widget: confirm_button;
+  focus-widget: name_row;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      show-start-title-buttons: false;
+      show-end-title-buttons: false;
+
+      [start]
+      Button {
+        label: _("_Cancel");
+        use-underline: true;
+        clicked => $on_cancel_clicked() swapped;
+      }
+
+      [end]
+      Button confirm_button {
+        use-underline: true;
+        clicked => $on_confirm_clicked() swapped;
+
+        styles [
+          "suggested-action",
+        ]
+      }
+    }
+
+    content: Box {
+      orientation: vertical;
+      spacing: 12;
+      margin-top: 12;
+      margin-bottom: 24;
+      margin-start: 12;
+      margin-end: 12;
+
+      ListBox {
+        selection-mode: none;
+
+        styles [
+          "boxed-list",
+        ]
+
+        Adw.EntryRow name_row {
+          title: _("Name");
+          activates-default: true;
+          changed => $on_name_changed() swapped;
+        }
+      }
+
+      Label error_label {
+        visible: false;
+        wrap: true;
+        xalign: 0;
+        margin-start: 6;
+        margin-end: 6;
+
+        styles [
+          "error",
+        ]
+      }
+    };
+  };
+}

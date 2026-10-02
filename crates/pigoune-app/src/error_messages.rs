@@ -1,5 +1,5 @@
 use gettextrs::gettext;
-use pigoune_core::LibraryError;
+use pigoune_core::{CollectionError, LibraryError};
 
 pub fn describe(error: &LibraryError) -> String {
     match error {
@@ -29,5 +29,22 @@ pub fn describe(error: &LibraryError) -> String {
         LibraryError::Io(_) | LibraryError::Database(_) => {
             gettext("An unexpected error occurred: {error}").replace("{error}", &error.to_string())
         }
+    }
+}
+
+pub fn describe_collection(error: &CollectionError) -> String {
+    match error {
+        CollectionError::InvalidName => gettext("Enter a name for the collection."),
+        CollectionError::NameTaken(name) => {
+            gettext("A collection named “{name}” already exists here.").replace("{name}", name)
+        }
+        CollectionError::NotFound(_) => gettext("This collection no longer exists."),
+        CollectionError::WouldContainItself => {
+            gettext("A collection cannot be placed inside itself or one of its sub-collections.")
+        }
+        CollectionError::OutdatedOrder => {
+            gettext("The collections changed in the meantime. Please try again.")
+        }
+        CollectionError::Library(error) => describe(error),
     }
 }

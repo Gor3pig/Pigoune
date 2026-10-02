@@ -3,11 +3,12 @@ use std::collections::HashSet;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::prelude::*;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetView, CollectionId, ViewCounts};
 
 use crate::collection_sort::CollectionTree;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
+use crate::sidebar_row::PigouneSidebarRow;
 
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
@@ -20,6 +21,7 @@ pub struct SidebarContent {
     pub counts: ViewCounts,
     pub show_counts: bool,
     pub selected: AssetView,
+    pub reveal: Vec<CollectionId>,
 }
 
 mod imp {
@@ -57,7 +59,9 @@ mod imp {
     impl ObjectImpl for PigouneSidebar {
         fn constructed(&self) {
             self.parent_constructed();
-            self.obj().set_up_rows();
+            let sidebar = self.obj();
+            sidebar.set_up_rows();
+            sidebar.rename_with_f2();
         }
     }
 
@@ -78,7 +82,8 @@ impl PigouneSidebar {
 
     pub fn show_content(&self, content: &SidebarContent) {
         let imp = self.imp();
-        let expanded = self.expanded_collections();
+        let mut expanded = self.expanded_collections();
+        expanded.extend(content.reveal.iter().copied());
         let counts = content.show_counts.then_some(&content.counts);
 
         let root = gio::ListStore::new::<PigouneSidebarItem>();
@@ -141,6 +146,37 @@ impl PigouneSidebar {
         }
     }
 
+    fn rename_with_f2(&self) {
+        let keys = gtk::EventControllerKey::new();
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = sidebar)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, modifiers| {
+                if key != gdk::Key::F2 || !modifiers.is_empty() {
+                    return glib::Propagation::Proceed;
+                }
+                let Some(AssetView::Collection(id)) = sidebar.selected_view() else {
+                    return glib::Propagation::Proceed;
+                };
+                let _ = sidebar
+                    .activate_action("win.rename-collection", Some(&id.to_string().to_variant()));
+                glib::Propagation::Stop
+            }
+        ));
+        self.imp().list_view.add_controller(keys);
+    }
+
+    fn selected_view(&self) -> Option<AssetView> {
+        let selection = self
+            .imp()
+            .list_view
+            .model()
+            .and_downcast::<gtk::SingleSelection>()?;
+        item_at(selection.selected_item())?.view()
+    }
+
     fn expanded_collections(&self) -> HashSet<CollectionId> {
         let Some(tree_model) = self.tree_model() else {
             return HashSet::new();
@@ -167,7 +203,9 @@ impl PigouneSidebar {
             let Some(list_item) = list_item.downcast_ref::<gtk::ListItem>() else {
                 return;
             };
-            list_item.set_child(Some(&SidebarRow::new().expander));
+            let expander = gtk::TreeExpander::new();
+            expander.set_child(Some(&PigouneSidebarRow::new()));
+            list_item.set_child(Some(&expander));
         });
         factory.connect_bind(|_, list_item| {
             let Some(list_item) = list_item.downcast_ref::<gtk::ListItem>() else {
@@ -187,7 +225,9 @@ impl PigouneSidebar {
             list_item.set_activatable(!is_header);
             expander.set_list_row(Some(&row));
             expander.set_indent_for_icon(collection_of(&row).is_some());
-            SidebarRow::from_expander(&expander).show(&item);
+            if let Some(row) = expander.child().and_downcast::<PigouneSidebarRow>() {
+                row.show(&item);
+            }
         });
         self.imp().list_view.set_factory(Some(&factory));
     }
@@ -197,107 +237,6 @@ impl Default for PigouneSidebar {
     fn default() -> Self {
         glib::Object::new()
     }
-}
-
-struct SidebarRow {
-    expander: gtk::TreeExpander,
-    icon: gtk::Image,
-    label: gtk::Label,
-    count: gtk::Label,
-    sort_button: gtk::MenuButton,
-}
-
-impl SidebarRow {
-    fn new() -> Self {
-        let icon = gtk::Image::new();
-        let label = gtk::Label::builder()
-            .xalign(0.0)
-            .hexpand(true)
-            .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        let count = gtk::Label::builder()
-            .css_classes(["dim-label", "numeric", "caption"])
-            .build();
-        let sort_button = gtk::MenuButton::builder()
-            .icon_name("view-sort-descending-symbolic")
-            .tooltip_text(gettext("Sort Collections"))
-            .menu_model(&collection_sort_menu())
-            .css_classes(["flat"])
-            .build();
-        let content = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-        content.append(&icon);
-        content.append(&label);
-        content.append(&count);
-        content.append(&sort_button);
-        let expander = gtk::TreeExpander::new();
-        expander.set_child(Some(&content));
-        Self {
-            expander,
-            icon,
-            label,
-            count,
-            sort_button,
-        }
-    }
-
-    fn from_expander(expander: &gtk::TreeExpander) -> Self {
-        let content = expander
-            .child()
-            .and_downcast::<gtk::Box>()
-            .expect("sidebar rows hold a box");
-        let mut children = std::iter::successors(content.first_child(), gtk::Widget::next_sibling);
-        let mut next = || children.next().expect("sidebar rows have four parts");
-        Self {
-            expander: expander.clone(),
-            icon: next().downcast().expect("icon"),
-            label: next().downcast().expect("label"),
-            count: next().downcast().expect("count"),
-            sort_button: next().downcast().expect("sort button"),
-        }
-    }
-
-    fn show(&self, item: &PigouneSidebarItem) {
-        let is_header = item.entry() == SidebarEntry::CollectionsHeader;
-        self.icon.set_icon_name(Some(item.icon_name()));
-        self.icon.set_visible(!is_header);
-        self.label.set_label(item.label());
-        if is_header {
-            self.label.set_css_classes(&["heading", "dim-label"]);
-        } else {
-            self.label.set_css_classes(&[]);
-        }
-        self.count.set_visible(item.count().is_some());
-        self.count.set_label(
-            &item
-                .count()
-                .map(|count| count.to_string())
-                .unwrap_or_default(),
-        );
-        self.sort_button.set_visible(is_header);
-    }
-}
-
-fn collection_sort_menu() -> gio::Menu {
-    let criteria = gio::Menu::new();
-    for (label, target) in [
-        (gettext("Name"), "name"),
-        (gettext("Date Created"), "created"),
-        (gettext("Custom Order"), "custom"),
-    ] {
-        criteria.append(
-            Some(&label),
-            Some(&format!("win.collection-sort::{target}")),
-        );
-    }
-    let direction = gio::Menu::new();
-    direction.append(
-        Some(&gettext("Reverse Order")),
-        Some("win.collection-sort-reversed"),
-    );
-    let menu = gio::Menu::new();
-    menu.append_section(Some(&gettext("Sort Collections By")), &criteria);
-    menu.append_section(None, &direction);
-    menu
 }
 
 fn view_item(

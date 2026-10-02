@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 10:09+0200\n"
+"POT-Creation-Date: 2026-10-02 10:20+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -136,7 +136,8 @@ msgstr "Ordre des collections inversé"
 #: data/io.github.gor3pig.Pigoune.gschema.xml:68
 msgid ""
 "Whether the natural direction of the collection sort criterion is reversed."
-msgstr "Indique si le sens naturel du critère de tri des collections est inversé."
+msgstr ""
+"Indique si le sens naturel du critère de tri des collections est inversé."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:72
 msgid "Show resource counts"
@@ -144,7 +145,9 @@ msgstr "Afficher le nombre de ressources"
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:73
 msgid "Whether the sidebar shows how many resources each entry contains."
-msgstr "Indique si la barre latérale affiche le nombre de ressources de chaque entrée."
+msgstr ""
+"Indique si la barre latérale affiche le nombre de ressources de chaque "
+"entrée."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:77
 msgid "Reopen the last sidebar entry"
@@ -153,7 +156,9 @@ msgstr "Rouvrir la dernière entrée de la barre latérale"
 #: data/io.github.gor3pig.Pigoune.gschema.xml:78
 msgid ""
 "Whether the library opens on the last selected sidebar entry instead of All."
-msgstr "Indique si la bibliothèque s’ouvre sur la dernière entrée sélectionnée plutôt que sur « Tout »."
+msgstr ""
+"Indique si la bibliothèque s’ouvre sur la dernière entrée sélectionnée "
+"plutôt que sur « Tout »."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:82
 msgid "Last sidebar entry"
@@ -161,7 +166,9 @@ msgstr "Dernière entrée de la barre latérale"
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:83
 msgid "The sidebar entry selected when the library was last shown."
-msgstr "Entrée de la barre latérale sélectionnée lors du dernier affichage de la bibliothèque."
+msgstr ""
+"Entrée de la barre latérale sélectionnée lors du dernier affichage de la "
+"bibliothèque."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:88
 msgid "Thumbnail size"
@@ -235,16 +242,19 @@ msgstr "Nouvelle bibliothèque"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
 #: crates/pigoune-app/ui/import-progress-dialog.blp:41
+#: crates/pigoune-app/ui/collection-name-dialog.blp:17
 msgid "_Cancel"
 msgstr "_Annuler"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:24
+#: crates/pigoune-app/src/window.rs:559
 msgid "C_reate"
 msgstr "C_réer"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:51
 #: crates/pigoune-app/ui/asset-grid.blp:80
-#: crates/pigoune-app/src/sidebar.rs:283
+#: crates/pigoune-app/ui/collection-name-dialog.blp:49
+#: crates/pigoune-app/src/sidebar_row.rs:208
 msgid "Name"
 msgstr "Nom"
 
@@ -329,77 +339,118 @@ msgstr ""
 msgid "An unexpected error occurred: {error}"
 msgstr "Une erreur inattendue s'est produite : {error}"
 
+#: crates/pigoune-app/src/error_messages.rs:37
+msgid "Enter a name for the collection."
+msgstr "Saisissez un nom pour la collection."
+
+#: crates/pigoune-app/src/error_messages.rs:39
+#, rust-format
+msgid "A collection named “{name}” already exists here."
+msgstr "Une collection nommée « {name} » existe déjà ici."
+
+#: crates/pigoune-app/src/error_messages.rs:41
+msgid "This collection no longer exists."
+msgstr "Cette collection n’existe plus."
+
+#: crates/pigoune-app/src/error_messages.rs:43
+msgid ""
+"A collection cannot be placed inside itself or one of its sub-collections."
+msgstr "Une collection ne peut pas être placée dans elle-même ni dans l’une de ses sous-collections."
+
+#: crates/pigoune-app/src/error_messages.rs:46
+msgid "The collections changed in the meantime. Please try again."
+msgstr "Les collections ont changé entre-temps. Veuillez réessayer."
+
 #: crates/pigoune-app/src/new_library_dialog.rs:101
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:341
+#: crates/pigoune-app/src/window.rs:367
 msgid "_Open Another Library…"
 msgstr "_Ouvrir une autre bibliothèque…"
 
-#: crates/pigoune-app/src/window.rs:342
+#: crates/pigoune-app/src/window.rs:368
 msgid "_Try Again"
 msgstr "_Réessayer"
 
-#: crates/pigoune-app/src/window.rs:374
+#: crates/pigoune-app/src/window.rs:400
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:557
+#: crates/pigoune-app/src/window.rs:553
+msgid "New Sub-collection"
+msgstr "Nouvelle sous-collection"
+
+#: crates/pigoune-app/src/window.rs:555 crates/pigoune-app/src/window.rs:560
+#: crates/pigoune-app/src/sidebar_row.rs:111
+msgid "New Collection"
+msgstr "Nouvelle collection"
+
+#: crates/pigoune-app/src/window.rs:603
+msgid "Rename Collection"
+msgstr "Renommer la collection"
+
+#: crates/pigoune-app/src/window.rs:604
+msgid "_Rename"
+msgstr "_Renommer"
+
+#: crates/pigoune-app/src/window.rs:679
 msgid "No Unclassified Resources"
 msgstr "Aucune ressource non classée"
 
-#: crates/pigoune-app/src/window.rs:559
+#: crates/pigoune-app/src/window.rs:681
 msgid "Every resource is in at least one collection."
 msgstr "Chaque ressource est rangée dans au moins une collection."
 
-#: crates/pigoune-app/src/window.rs:562
+#: crates/pigoune-app/src/window.rs:684
 #, rust-format
 msgid "“{name}” Is Empty"
 msgstr "« {name} » est vide"
 
-#: crates/pigoune-app/src/window.rs:564
+#: crates/pigoune-app/src/window.rs:686
 msgid "Resources imported while this collection is selected are placed in it."
-msgstr "Les ressources importées pendant que cette collection est sélectionnée y sont rangées."
+msgstr ""
+"Les ressources importées pendant que cette collection est sélectionnée y "
+"sont rangées."
 
-#: crates/pigoune-app/src/window.rs:571
+#: crates/pigoune-app/src/window.rs:693
 msgid "Unable to Show the Library"
 msgstr "Impossible d’afficher la bibliothèque"
 
-#: crates/pigoune-app/src/window.rs:574 crates/pigoune-app/src/window.rs:734
+#: crates/pigoune-app/src/window.rs:696 crates/pigoune-app/src/window.rs:856
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr "_Fermer"
 
-#: crates/pigoune-app/src/window.rs:644
+#: crates/pigoune-app/src/window.rs:766
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr "Déposez pour importer dans « {name} »"
 
-#: crates/pigoune-app/src/window.rs:650
+#: crates/pigoune-app/src/window.rs:772
 msgid "Import Files"
 msgstr "Importer des fichiers"
 
-#: crates/pigoune-app/src/window.rs:651 crates/pigoune-app/src/window.rs:663
+#: crates/pigoune-app/src/window.rs:773 crates/pigoune-app/src/window.rs:785
 msgid "_Import"
 msgstr "_Importer"
 
-#: crates/pigoune-app/src/window.rs:662
+#: crates/pigoune-app/src/window.rs:784
 msgid "Import Folders"
 msgstr "Importer des dossiers"
 
-#: crates/pigoune-app/src/window.rs:732
+#: crates/pigoune-app/src/window.rs:854
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
-#: crates/pigoune-app/src/window.rs:740
+#: crates/pigoune-app/src/window.rs:862
 msgid "Images"
 msgstr "Images"
 
-#: crates/pigoune-app/src/window.rs:745
+#: crates/pigoune-app/src/window.rs:867
 msgid "All Files"
 msgstr "Tous les fichiers"
 
@@ -563,7 +614,7 @@ msgid "Size"
 msgstr "Poids"
 
 #: crates/pigoune-app/ui/asset-grid.blp:106
-#: crates/pigoune-app/src/sidebar.rs:294
+#: crates/pigoune-app/src/sidebar_row.rs:219
 msgid "Reverse Order"
 msgstr "Ordre inverse"
 
@@ -662,30 +713,38 @@ msgstr "{percent} %"
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"
 
-#: crates/pigoune-app/src/sidebar.rs:87
+#: crates/pigoune-app/src/sidebar.rs:92
 msgid "All"
 msgstr "Tout"
 
-#: crates/pigoune-app/src/sidebar.rs:94
+#: crates/pigoune-app/src/sidebar.rs:99
 msgid "Unclassified"
 msgstr "Non classés"
 
-#: crates/pigoune-app/src/sidebar.rs:101
+#: crates/pigoune-app/src/sidebar.rs:106
 msgid "Collections"
 msgstr "Collections"
 
-#: crates/pigoune-app/src/sidebar.rs:223
+#: crates/pigoune-app/src/sidebar_row.rs:103
 msgid "Sort Collections"
 msgstr "Trier les collections"
 
-#: crates/pigoune-app/src/sidebar.rs:284
+#: crates/pigoune-app/src/sidebar_row.rs:195
+msgid "New Sub-collection…"
+msgstr "Nouvelle sous-collection…"
+
+#: crates/pigoune-app/src/sidebar_row.rs:199
+msgid "Rename…"
+msgstr "Renommer…"
+
+#: crates/pigoune-app/src/sidebar_row.rs:209
 msgid "Date Created"
 msgstr "Date de création"
 
-#: crates/pigoune-app/src/sidebar.rs:285
+#: crates/pigoune-app/src/sidebar_row.rs:210
 msgid "Custom Order"
 msgstr "Ordre personnalisé"
 
-#: crates/pigoune-app/src/sidebar.rs:298
+#: crates/pigoune-app/src/sidebar_row.rs:223
 msgid "Sort Collections By"
 msgstr "Trier les collections par"
