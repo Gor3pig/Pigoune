@@ -1,4 +1,4 @@
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::{AssetId, CollectionError, CollectionId, Library, LibraryError, clock};
 
@@ -7,7 +7,11 @@ pub struct Collection {
     pub id: CollectionId,
     pub name: String,
     pub parent: Option<CollectionId>,
+    pub position: i64,
+    pub created_at_unix_ms: i64,
 }
+
+const COLLECTION_COLUMNS: &str = "id, name, parent_id, position, created_at_unix_ms";
 
 impl Library {
     pub fn create_collection(
@@ -15,15 +19,13 @@ impl Library {
         name: &str,
         parent: Option<CollectionId>,
     ) -> Result<CollectionId, CollectionError> {
-        let name = name.trim();
-        if name.is_empty() {
-            return Err(CollectionError::InvalidName);
-        }
+        let name = valid_name(name)?;
         if let Some(parent) = parent
             && !is_usable_collection(&self.connection, parent)?
         {
             return Err(CollectionError::NotFound(parent));
         }
+        ensure_name_is_free(&self.connection, parent, name, None)?;
 
         Ok(insert_collection(&self.connection, name, parent)?)
     }
@@ -32,17 +34,23 @@ impl Library {
         Ok(self
             .connection
             .query_row(
-                "SELECT id, name, parent_id FROM collections WHERE id = ?1",
+                &format!("SELECT {COLLECTION_COLUMNS} FROM collections WHERE id = ?1"),
                 [id],
-                |row| {
-                    Ok(Collection {
-                        id: row.get("id")?,
-                        name: row.get("name")?,
-                        parent: row.get("parent_id")?,
-                    })
-                },
+                collection_from_row,
             )
             .optional()?)
+    }
+
+    pub fn visible_collections(&self) -> Result<Vec<Collection>, LibraryError> {
+        let mut statement = self.connection.prepare(&format!(
+            "SELECT {COLLECTION_COLUMNS} FROM collections
+             WHERE trashed_at_unix_ms IS NULL
+             ORDER BY position, created_at_unix_ms, id"
+        ))?;
+        let collections = statement
+            .query_map([], collection_from_row)?
+            .collect::<Result<_, _>>()?;
+        Ok(collections)
     }
 
     pub fn collections_of(&self, asset: AssetId) -> Result<Vec<CollectionId>, LibraryError> {
@@ -78,11 +86,62 @@ pub fn insert_collection(
 ) -> Result<CollectionId, LibraryError> {
     let id = CollectionId::generate();
     connection.execute(
-        "INSERT INTO collections (id, parent_id, name, created_at_unix_ms)
-         VALUES (?1, ?2, ?3, ?4)",
-        params![id, parent, name, clock::now_unix_ms()],
+        "INSERT INTO collections (id, parent_id, name, position, created_at_unix_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            id,
+            parent,
+            name,
+            next_position(connection, parent)?,
+            clock::now_unix_ms()
+        ],
     )?;
     Ok(id)
+}
+
+pub fn next_position(
+    connection: &Connection,
+    parent: Option<CollectionId>,
+) -> Result<i64, LibraryError> {
+    Ok(connection.query_row(
+        "SELECT coalesce(max(position) + 1, 0) FROM collections
+         WHERE parent_id IS ?1 AND trashed_at_unix_ms IS NULL",
+        [parent],
+        |row| row.get(0),
+    )?)
+}
+
+pub fn valid_name(name: &str) -> Result<&str, CollectionError> {
+    let name = name.trim();
+    if name.is_empty() {
+        Err(CollectionError::InvalidName)
+    } else {
+        Ok(name)
+    }
+}
+
+pub fn ensure_name_is_free(
+    connection: &Connection,
+    parent: Option<CollectionId>,
+    name: &str,
+    renamed: Option<CollectionId>,
+) -> Result<(), CollectionError> {
+    match find_child_named(connection, parent, name)? {
+        Some(existing) if Some(existing) != renamed => {
+            Err(CollectionError::NameTaken(name.to_owned()))
+        }
+        _ => Ok(()),
+    }
+}
+
+fn collection_from_row(row: &Row) -> rusqlite::Result<Collection> {
+    Ok(Collection {
+        id: row.get("id")?,
+        name: row.get("name")?,
+        parent: row.get("parent_id")?,
+        position: row.get("position")?,
+        created_at_unix_ms: row.get("created_at_unix_ms")?,
+    })
 }
 
 pub fn find_child_named(

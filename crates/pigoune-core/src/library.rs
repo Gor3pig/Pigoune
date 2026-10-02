@@ -2,6 +2,7 @@ mod asset;
 mod batch_import;
 mod clock;
 mod collection;
+mod collection_command;
 mod content;
 mod error;
 mod id;
@@ -24,6 +25,7 @@ pub use batch_import::{
     ImportControl, ImportEnding, ImportProgress, ImportSummary, LARGE_FILE_BYTES,
 };
 pub use collection::Collection;
+pub use collection_command::CollectionCommand;
 pub use error::{CollectionError, ImportError, LibraryError};
 pub use id::{AssetId, CollectionId};
 pub use import::ImportOutcome;

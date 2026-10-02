@@ -1,4 +1,4 @@
-use pigoune_core::{Collection, CollectionError, Library};
+use pigoune_core::{CollectionError, Library};
 use rusqlite::Connection;
 use tempfile::TempDir;
 
@@ -15,14 +15,13 @@ fn a_root_collection_is_created_with_its_name() {
         .create_collection("Marques", None)
         .expect("collection is created");
 
-    assert_eq!(
-        library.collection(id).expect("collection is read"),
-        Some(Collection {
-            id,
-            name: "Marques".to_owned(),
-            parent: None,
-        })
-    );
+    let collection = library
+        .collection(id)
+        .expect("collection is read")
+        .expect("collection exists");
+    assert_eq!(collection.id, id);
+    assert_eq!(collection.name, "Marques");
+    assert_eq!(collection.parent, None);
 }
 
 #[test]

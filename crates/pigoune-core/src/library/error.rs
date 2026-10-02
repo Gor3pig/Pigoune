@@ -51,6 +51,12 @@ pub enum CollectionError {
     InvalidName,
     #[error("the collection {0} does not exist")]
     NotFound(CollectionId),
+    #[error("a collection named {0} already exists here")]
+    NameTaken(String),
+    #[error("a collection cannot be moved into itself or one of its sub-collections")]
+    WouldContainItself,
+    #[error("the collections to arrange no longer match the library")]
+    OutdatedOrder,
     #[error(transparent)]
     Library(#[from] LibraryError),
 }
