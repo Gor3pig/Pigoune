@@ -26,6 +26,7 @@ mod imp {
         pub label: OnceCell<gtk::Label>,
         pub count: OnceCell<gtk::Label>,
         pub header_buttons: OnceCell<gtk::Box>,
+        pub hash: OnceCell<gtk::Label>,
         pub menu: OnceCell<gtk::PopoverMenu>,
         pub item: RefCell<Option<PigouneSidebarItem>>,
     }
@@ -61,10 +62,12 @@ impl PigouneSidebarRow {
 
     pub fn show(&self, item: &PigouneSidebarItem) {
         let imp = self.imp();
-        let is_header = item.entry() == SidebarEntry::CollectionsHeader;
+        let is_header = item.is_header();
+        let is_tag = matches!(item.view(), Some(AssetView::Tag(_)));
         let icon = part(&imp.icon);
         icon.set_icon_name(Some(item.icon_name()));
-        icon.set_visible(!is_header);
+        icon.set_visible(!is_header && !is_tag);
+        part(&imp.hash).set_visible(is_tag);
         let label = part(&imp.label);
         label.set_label(item.label());
         if is_header {
@@ -80,22 +83,18 @@ impl PigouneSidebarRow {
                 .map(|count| count.to_string())
                 .unwrap_or_default(),
         );
-        part(&imp.header_buttons).set_visible(is_header);
+        part(&imp.header_buttons).set_visible(item.entry() == SidebarEntry::CollectionsHeader);
         imp.item.replace(Some(item.clone()));
-    }
-
-    fn collection(&self) -> Option<CollectionId> {
-        match self.imp().item.borrow().as_ref()?.view()? {
-            AssetView::Collection(id) => Some(id),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Tag(_) => {
-                None
-            }
-        }
     }
 
     fn build(&self) {
         let imp = self.imp();
         let icon = gtk::Image::new();
+        let hash = gtk::Label::builder()
+            .label("#")
+            .width_chars(2)
+            .css_classes(["dim-label"])
+            .build();
         let label = gtk::Label::builder()
             .xalign(0.0)
             .hexpand(true)
@@ -123,11 +122,13 @@ impl PigouneSidebarRow {
         );
         let menu = gtk::PopoverMenu::builder().has_arrow(false).build();
         self.append(&icon);
+        self.append(&hash);
         self.append(&label);
         self.append(&count);
         self.append(&header_buttons);
         self.append(&menu);
         set_part(&imp.icon, icon);
+        set_part(&imp.hash, hash);
         set_part(&imp.label, label);
         set_part(&imp.count, count);
         set_part(&imp.header_buttons, header_buttons);
@@ -237,11 +238,13 @@ impl PigouneSidebarRow {
         reason = "pointer coordinates inside a sidebar row are small"
     )]
     fn show_menu(&self, x: f64, y: f64) -> bool {
-        let Some(collection) = self.collection() else {
-            return false;
+        let model = match self.view() {
+            Some(AssetView::Collection(id)) => collection_menu(id),
+            Some(AssetView::Tag(id)) => tag_menu(&id.to_string()),
+            _ => return false,
         };
         let menu = part(&self.imp().menu);
-        menu.set_menu_model(Some(&collection_menu(collection)));
+        menu.set_menu_model(Some(&model));
         menu.set_pointing_to(Some(&gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
         menu.popup();
         true
@@ -264,6 +267,19 @@ fn set_part<Widget>(cell: &std::cell::OnceCell<Widget>, widget: Widget) {
     if cell.set(widget).is_err() {
         unreachable!("sidebar rows build their parts once");
     }
+}
+
+fn tag_menu(tag: &str) -> gio::Menu {
+    let menu = gio::Menu::new();
+    menu.append(
+        Some(&gettext("Rename…")),
+        Some(&format!("win.rename-tag::{tag}")),
+    );
+    menu.append(
+        Some(&gettext("Delete…")),
+        Some(&format!("win.delete-tag::{tag}")),
+    );
+    menu
 }
 
 fn collection_menu(collection: CollectionId) -> gio::Menu {

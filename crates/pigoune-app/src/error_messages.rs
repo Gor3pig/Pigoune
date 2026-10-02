@@ -1,5 +1,5 @@
 use gettextrs::gettext;
-use pigoune_core::{AssetError, CollectionError, LibraryError};
+use pigoune_core::{AssetError, CollectionError, LibraryError, TagError};
 
 pub fn describe(error: &LibraryError) -> String {
     match error {
@@ -53,5 +53,15 @@ pub fn describe_asset(error: &AssetError) -> String {
     match error {
         AssetError::NotFound(_) => gettext("This resource no longer exists."),
         AssetError::Library(error) => describe(error),
+    }
+}
+
+pub fn describe_tag(error: &TagError) -> String {
+    match error {
+        TagError::InvalidName => gettext("Enter a name for the tag."),
+        TagError::NotFound(_) => gettext("This tag no longer exists."),
+        TagError::AssetNotFound(_) => gettext("This resource no longer exists."),
+        TagError::NameTaken(_) => gettext("Another tag already has this name."),
+        TagError::Library(error) => describe(error),
     }
 }

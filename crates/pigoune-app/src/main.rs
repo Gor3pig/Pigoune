@@ -20,6 +20,8 @@ mod settings;
 mod sidebar;
 mod sidebar_item;
 mod sidebar_row;
+mod tag_editor;
+mod tag_input;
 mod thumbnails;
 mod view_setting;
 mod window;

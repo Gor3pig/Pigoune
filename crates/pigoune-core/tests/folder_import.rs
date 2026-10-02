@@ -159,6 +159,7 @@ fn reimporting_a_folder_reuses_its_collections() {
     assert_completed(&summary);
     assert_eq!(summary.imported.len(), 1);
     assert_eq!(summary.already_present, 1);
+    assert_eq!(summary.already_known.len(), 1);
     assert_eq!(fixture.collection_paths(), ["Marques", "Marques/Tech"]);
     assert_eq!(
         fixture.placements(),

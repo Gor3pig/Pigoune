@@ -6,6 +6,7 @@ use pigoune_core::AssetView;
 pub enum SidebarEntry {
     View(AssetView),
     CollectionsHeader,
+    TagsHeader,
 }
 
 pub struct SidebarItemData {
@@ -62,10 +63,17 @@ impl PigouneSidebarItem {
         self.data().entry
     }
 
+    pub fn is_header(&self) -> bool {
+        matches!(
+            self.entry(),
+            SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader
+        )
+    }
+
     pub fn view(&self) -> Option<AssetView> {
         match self.entry() {
             SidebarEntry::View(view) => Some(view),
-            SidebarEntry::CollectionsHeader => None,
+            SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader => None,
         }
     }
 

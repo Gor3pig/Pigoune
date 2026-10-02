@@ -2,11 +2,11 @@ use std::path::{Path, PathBuf};
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gettextrs::gettext;
+use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
     AssetCommand, AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary, Library,
-    LibraryError, library_display_name,
+    LibraryError, TagCommand, TagError, TagId, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -14,7 +14,7 @@ use crate::background_import::{self, FinishedImport};
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::error_messages;
-use crate::import_report;
+use crate::import_report::{self, Destination};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::settings;
 use crate::sidebar::SidebarContent;
@@ -39,7 +39,9 @@ const NEW_COLLECTION_ACTION: &str = "win.new-collection";
 const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
 const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
 const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
-const OPEN_LIBRARY_ACTIONS: [&str; 9] = [
+const RENAME_TAG_ACTION: &str = "win.rename-tag";
+const DELETE_TAG_ACTION: &str = "win.delete-tag";
+const OPEN_LIBRARY_ACTIONS: [&str; 11] = [
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
@@ -49,6 +51,8 @@ const OPEN_LIBRARY_ACTIONS: [&str; 9] = [
     NEW_SUBCOLLECTION_ACTION,
     RENAME_COLLECTION_ACTION,
     TOGGLE_FAVORITE_ACTION,
+    RENAME_TAG_ACTION,
+    DELETE_TAG_ACTION,
 ];
 
 const IMAGE_MIME_TYPES: [&str; 7] = [
@@ -64,6 +68,8 @@ const IMAGE_MIME_TYPES: [&str; 7] = [
 const CLOSE_RESPONSE: &str = "close";
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
 const RETRY_RESPONSE: &str = "retry";
+const MERGE_RESPONSE: &str = "merge";
+const DELETE_RESPONSE: &str = "delete";
 
 enum ReopeningChoice {
     Retry,
@@ -85,10 +91,10 @@ mod imp {
     use crate::sidebar::PigouneSidebar;
 
     use super::{
-        CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, ENLARGE_THUMBNAILS_ACTION,
+        CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, DELETE_TAG_ACTION, ENLARGE_THUMBNAILS_ACTION,
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, RENAME_COLLECTION_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_FAVORITE_ACTION, collection_parameter,
+        OPEN_LIBRARY_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, SHRINK_THUMBNAILS_ACTION,
+        TOGGLE_FAVORITE_ACTION, collection_parameter, tag_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -160,6 +166,24 @@ mod imp {
             class.install_action(SHRINK_THUMBNAILS_ACTION, None, |window, _, _| {
                 window.imp().asset_grid.shrink_tiles();
             });
+            class.install_action(
+                RENAME_TAG_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(tag) = tag_parameter(parameter) {
+                        window.ask_tag_name(tag);
+                    }
+                },
+            );
+            class.install_action(
+                DELETE_TAG_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(tag) = tag_parameter(parameter) {
+                        window.ask_tag_deletion(tag);
+                    }
+                },
+            );
             class.install_action(TOGGLE_FAVORITE_ACTION, None, |window, _, _| {
                 window.toggle_favorite();
             });
@@ -298,11 +322,11 @@ impl PigouneWindow {
             self,
             move |view, paths| {
                 let target = match view {
-                    AssetView::Collection(id) => Some(id),
-                    AssetView::All
-                    | AssetView::Favorites
-                    | AssetView::Unclassified
-                    | AssetView::Tag(_) => None,
+                    AssetView::Collection(id) => ImportTarget::Collection(id),
+                    AssetView::Tag(id) => ImportTarget::Tag(id),
+                    AssetView::All | AssetView::Favorites | AssetView::Unclassified => {
+                        ImportTarget::Nowhere
+                    }
                 };
                 glib::spawn_future_local(async move {
                     window.import_paths_into(paths, target).await;
@@ -491,8 +515,246 @@ impl PigouneWindow {
                 let imp = window.imp();
                 imp.asset_details
                     .show(selected.as_ref(), &imp.asset_grid.thumbnails());
+                window.refresh_selected_tags();
             }
         ));
+        let editor = imp.asset_details.tag_editor();
+        editor.connect_added(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |names| window.add_tags_to_selected(names)
+        ));
+        editor.connect_removed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |tag| window.remove_tag_from_selected(tag)
+        ));
+    }
+
+    fn refresh_selected_tags(&self) {
+        let imp = self.imp();
+        let Some(asset) = imp.asset_grid.selected_asset() else {
+            return;
+        };
+        let read =
+            imp.library.borrow().as_ref().map(|library| {
+                Ok::<_, LibraryError>((library.tags_of(asset.id())?, library.tags()?))
+            });
+        if let Some(Ok((current, all))) = read {
+            imp.asset_details.tag_editor().show_tags(current, all);
+        }
+    }
+
+    fn add_tags_to_selected(&self, names: Vec<String>) {
+        let Some(asset) = self.imp().asset_grid.selected_asset() else {
+            return;
+        };
+        let commands = names
+            .into_iter()
+            .map(|name| TagCommand::Add {
+                assets: vec![asset.id()],
+                name,
+            })
+            .collect();
+        if self.apply_tag_command(&TagCommand::Batch(commands)) {
+            self.refresh_selected_tags();
+            self.refresh_sidebar();
+        }
+    }
+
+    fn remove_tag_from_selected(&self, tag: TagId) {
+        let imp = self.imp();
+        let Some(asset) = imp.asset_grid.selected_asset() else {
+            return;
+        };
+        let command = TagCommand::Unlink {
+            tag,
+            assets: vec![asset.id()],
+        };
+        if !self.apply_tag_command(&command) {
+            return;
+        }
+        self.refresh_selected_tags();
+        self.refresh_sidebar();
+        if imp.current_view.get() == AssetView::Tag(tag) {
+            imp.asset_grid.remove_asset(asset.id());
+            if imp.asset_grid.is_empty() {
+                self.refresh_grid();
+            }
+        }
+    }
+
+    fn tag_imported(&self, tag: TagId, summary: &ImportSummary) {
+        let assets: Vec<_> = summary
+            .imported
+            .iter()
+            .chain(&summary.already_known)
+            .copied()
+            .collect();
+        if !assets.is_empty() {
+            self.apply_tag_command(&TagCommand::Link { tag, assets });
+        }
+    }
+
+    fn apply_tag_command(&self, command: &TagCommand) -> bool {
+        let applied = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.apply_tag_command(command));
+        match applied {
+            Some(Ok(_)) => true,
+            Some(Err(error)) => {
+                self.show_tag_error(&error);
+                false
+            }
+            None => false,
+        }
+    }
+
+    fn show_tag_error(&self, error: &TagError) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Unable to Change the Tags")),
+            Some(&error_messages::describe_tag(error)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
+    fn tag_name(&self, tag: TagId) -> Option<String> {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()?
+            .tags()
+            .ok()?
+            .into_iter()
+            .find(|candidate| candidate.id == tag)
+            .map(|candidate| candidate.name)
+    }
+
+    fn ask_tag_name(&self, tag: TagId) {
+        let Some(current_name) = self.tag_name(tag) else {
+            return;
+        };
+        let dialog = PigouneCollectionNameDialog::new(
+            &gettext("Rename Tag"),
+            &gettext("_Rename"),
+            &current_name,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move |name| window.rename_tag(tag, name)
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn rename_tag(&self, tag: TagId, name: &str) -> Result<(), String> {
+        let renamed = self.imp().library.borrow_mut().as_mut().map(|library| {
+            library.apply_tag_command(&TagCommand::Rename {
+                tag,
+                name: name.to_owned(),
+            })
+        });
+        match renamed {
+            Some(Ok(_)) => {
+                self.refresh_assets();
+                self.refresh_selected_tags();
+                Ok(())
+            }
+            Some(Err(TagError::NameTaken(existing))) => {
+                self.offer_merge(tag, existing);
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_tag(&error)),
+            None => Ok(()),
+        }
+    }
+
+    fn offer_merge(&self, from: TagId, into: TagId) {
+        let (Some(from_name), Some(into_name)) = (self.tag_name(from), self.tag_name(into)) else {
+            return;
+        };
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Merge the Tags?")),
+            Some(
+                &gettext("The tag “{into}” already exists. Merge “{from}” into “{into}”?")
+                    .replace("{into}", &into_name)
+                    .replace("{from}", &from_name),
+            ),
+        );
+        alert.add_responses(&[
+            (CLOSE_RESPONSE, &gettext("_Cancel")),
+            (MERGE_RESPONSE, &gettext("_Merge")),
+        ]);
+        alert.set_response_appearance(MERGE_RESPONSE, adw::ResponseAppearance::Suggested);
+        alert.set_default_response(Some(MERGE_RESPONSE));
+        alert.set_close_response(CLOSE_RESPONSE);
+        alert.connect_response(
+            Some(MERGE_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| {
+                    if window.apply_tag_command(&TagCommand::Merge { from, into }) {
+                        if window.imp().current_view.get() == AssetView::Tag(from) {
+                            window.imp().current_view.set(AssetView::Tag(into));
+                        }
+                        window.refresh_assets();
+                        window.refresh_selected_tags();
+                    }
+                }
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn ask_tag_deletion(&self, tag: TagId) {
+        let Some(name) = self.tag_name(tag) else {
+            return;
+        };
+        let used_by = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.view_counts().ok())
+            .map_or(0, |counts| counts.of(AssetView::Tag(tag)));
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Delete the Tag “{name}”?").replace("{name}", &name)),
+            Some(
+                &ngettext(
+                    "It will be removed from {count} resource. The resources stay in the library.",
+                    "It will be removed from {count} resources. The resources stay in the library.",
+                    u32::try_from(used_by).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &used_by.to_string()),
+            ),
+        );
+        alert.add_responses(&[
+            (CLOSE_RESPONSE, &gettext("_Cancel")),
+            (DELETE_RESPONSE, &gettext("_Delete")),
+        ]);
+        alert.set_response_appearance(DELETE_RESPONSE, adw::ResponseAppearance::Destructive);
+        alert.set_close_response(CLOSE_RESPONSE);
+        alert.connect_response(
+            Some(DELETE_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| {
+                    if window.apply_tag_command(&TagCommand::Delete { tag }) {
+                        window.refresh_assets();
+                        window.refresh_selected_tags();
+                    }
+                }
+            ),
+        );
+        alert.present(Some(self));
     }
 
     fn connect_preview(&self) {
@@ -546,9 +808,13 @@ impl PigouneWindow {
         let order = self.collection_order();
         let show_counts = self.settings().boolean(settings::SHOW_COUNTS);
         let read = imp.library.borrow().as_ref().map(|library| {
-            Ok::<_, LibraryError>((library.visible_collections()?, library.view_counts()?))
+            Ok::<_, LibraryError>((
+                library.visible_collections()?,
+                library.view_counts()?,
+                library.tags()?,
+            ))
         });
-        let (collections, counts) = match read {
+        let (collections, counts, tags) = match read {
             Some(Ok(read)) => read,
             Some(Err(error)) => {
                 self.show_library_error(&error);
@@ -556,9 +822,12 @@ impl PigouneWindow {
             }
             None => return,
         };
-        if let AssetView::Collection(id) = imp.current_view.get()
-            && !collections.iter().any(|collection| collection.id == id)
-        {
+        let still_exists = match imp.current_view.get() {
+            AssetView::Collection(id) => collections.iter().any(|collection| collection.id == id),
+            AssetView::Tag(id) => tags.iter().any(|tag| tag.id == id),
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified => true,
+        };
+        if !still_exists {
             imp.current_view.set(AssetView::All);
         }
         let tree = CollectionTree::new(collections, order, |name: &str| {
@@ -570,6 +839,7 @@ impl PigouneWindow {
             show_counts,
             selected: imp.current_view.get(),
             reveal,
+            tags,
         });
     }
 
@@ -735,7 +1005,12 @@ impl PigouneWindow {
 
     fn describe_empty_view(&self, view: AssetView, view_name: &str) {
         let page = &self.imp().nothing_page;
-        if view == AssetView::Favorites {
+        if let AssetView::Tag(_) = view {
+            page.set_title(&gettext("No Resource Tagged “{name}”").replace("{name}", view_name));
+            page.set_description(Some(&gettext(
+                "Add this tag to resources from the details panel, or drop files on it.",
+            )));
+        } else if view == AssetView::Favorites {
             page.set_title(&gettext("No Favorites"));
             page.set_description(Some(&gettext(
                 "Mark a resource as a favorite with the star in the details panel or with Ctrl+D.",
@@ -856,36 +1131,59 @@ impl PigouneWindow {
     }
 
     async fn import_paths(&self, paths: Vec<PathBuf>) {
-        self.import_paths_into(paths, self.target_collection())
-            .await;
+        let target = match self.target_collection() {
+            Some(id) => ImportTarget::Collection(id),
+            None => ImportTarget::Nowhere,
+        };
+        self.import_paths_into(paths, target).await;
     }
 
-    async fn import_paths_into(&self, paths: Vec<PathBuf>, target: Option<CollectionId>) {
+    async fn import_paths_into(&self, paths: Vec<PathBuf>, target: ImportTarget) {
         if paths.is_empty() {
             return;
         }
-        let destination = target.and_then(|id| {
+        let destination_name =
             self.imp()
                 .library
                 .borrow()
-                .as_ref()?
-                .collection(id)
-                .ok()
-                .flatten()
-                .map(|collection| collection.name)
-        });
+                .as_ref()
+                .and_then(|library| match target {
+                    ImportTarget::Collection(id) => {
+                        library.collection(id).ok().flatten().map(|c| c.name)
+                    }
+                    ImportTarget::Tag(id) => library
+                        .tags()
+                        .ok()?
+                        .into_iter()
+                        .find(|tag| tag.id == id)
+                        .map(|tag| tag.name),
+                    ImportTarget::Nowhere => None,
+                });
+        let collection = match target {
+            ImportTarget::Collection(id) => Some(id),
+            ImportTarget::Tag(_) | ImportTarget::Nowhere => None,
+        };
         let Some(library) = self.imp().library.take() else {
             return;
         };
 
         self.set_importing(true);
-        let finished = background_import::run(self, library, paths.clone(), target).await;
+        let finished = background_import::run(self, library, paths.clone(), collection).await;
         self.set_importing(false);
 
         if let Some(FinishedImport { library, result }) = finished {
             self.imp().library.replace(Some(library));
+            if let (ImportTarget::Tag(tag), Ok(summary)) = (target, &result) {
+                self.tag_imported(tag, summary);
+            }
             self.refresh_assets();
-            self.report_import(result, &paths, destination.as_deref());
+            let destination = destination_name.as_deref().map(|name| match target {
+                ImportTarget::Tag(_) => Destination::Tag(name),
+                ImportTarget::Collection(_) | ImportTarget::Nowhere => {
+                    Destination::Collection(name)
+                }
+            });
+            self.report_import(result, &paths, destination);
         } else {
             self.close_library();
             import_report::unexpected_stop_dialog().present(Some(self));
@@ -896,7 +1194,7 @@ impl PigouneWindow {
         &self,
         result: Result<ImportSummary, ImportError>,
         chosen: &[PathBuf],
-        destination: Option<&str>,
+        destination: Option<Destination>,
     ) {
         match result {
             Ok(summary) if import_report::needs_attention(&summary) => {
@@ -967,6 +1265,17 @@ fn paths_of(files: &gio::ListModel) -> Vec<PathBuf> {
         .collect()
 }
 
+fn tag_parameter(parameter: Option<&glib::Variant>) -> Option<TagId> {
+    TagId::parse(&parameter?.get::<String>()?)
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ImportTarget {
+    Nowhere,
+    Collection(CollectionId),
+    Tag(TagId),
+}
+
 fn collection_parameter(parameter: Option<&glib::Variant>) -> Option<CollectionId> {
     CollectionId::parse(&parameter?.get::<String>()?)
 }
@@ -982,9 +1291,12 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .ok()
             .flatten()
             .map_or_else(|| library.name(), |collection| collection.name),
-        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Tag(_) => {
-            library.name()
-        }
+        AssetView::Tag(id) => library
+            .tags()
+            .ok()
+            .and_then(|tags| tags.into_iter().find(|tag| tag.id == id))
+            .map_or_else(|| library.name(), |tag| tag.name),
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified => library.name(),
     }
 }
 

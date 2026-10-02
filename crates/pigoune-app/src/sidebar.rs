@@ -5,7 +5,7 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
-use pigoune_core::{AssetView, CollectionId, ViewCounts};
+use pigoune_core::{AssetView, CollectionId, Tag, ViewCounts};
 
 use crate::collection_sort::CollectionTree;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
@@ -25,6 +25,7 @@ pub struct SidebarContent {
     pub show_counts: bool,
     pub selected: AssetView,
     pub reveal: Vec<CollectionId>,
+    pub tags: Vec<Tag>,
 }
 
 mod imp {
@@ -134,6 +135,24 @@ impl PigouneSidebar {
         for item in collection_items(&content.tree, None, counts) {
             root.append(&item);
         }
+        if !content.tags.is_empty() {
+            root.append(&PigouneSidebarItem::new(SidebarItemData {
+                entry: SidebarEntry::TagsHeader,
+                label: gettext("Tags"),
+                icon_name: "",
+                count: None,
+                children: None,
+            }));
+            for tag in &content.tags {
+                root.append(&view_item(
+                    AssetView::Tag(tag.id),
+                    tag.name.clone(),
+                    "",
+                    counts,
+                    None,
+                ));
+            }
+        }
 
         let tree_model = gtk::TreeListModel::new(root, false, false, |item| {
             item.downcast_ref::<PigouneSidebarItem>()
@@ -180,11 +199,12 @@ impl PigouneSidebar {
                 if key != gdk::Key::F2 || !modifiers.is_empty() {
                     return glib::Propagation::Proceed;
                 }
-                let Some(AssetView::Collection(id)) = sidebar.selected_view() else {
-                    return glib::Propagation::Proceed;
+                let (action, id) = match sidebar.selected_view() {
+                    Some(AssetView::Collection(id)) => ("win.rename-collection", id.to_string()),
+                    Some(AssetView::Tag(id)) => ("win.rename-tag", id.to_string()),
+                    _ => return glib::Propagation::Proceed,
                 };
-                let _ = sidebar
-                    .activate_action("win.rename-collection", Some(&id.to_string().to_variant()));
+                let _ = sidebar.activate_action(action, Some(&id.to_variant()));
                 glib::Propagation::Stop
             }
         ));
@@ -243,7 +263,7 @@ impl PigouneSidebar {
             let Some(expander) = list_item.child().and_downcast::<gtk::TreeExpander>() else {
                 return;
             };
-            let is_header = item.entry() == SidebarEntry::CollectionsHeader;
+            let is_header = item.is_header();
             list_item.set_selectable(!is_header);
             list_item.set_activatable(!is_header);
             expander.set_list_row(Some(&row));

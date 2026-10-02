@@ -75,3 +75,16 @@
   background-color: rgb(0 0 0 / 60%);
   -gtk-icon-size: 12px;
 }
+
+.tag-chip {
+  padding: 2px 2px 2px 10px;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.tag-chip-remove {
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+  -gtk-icon-size: 12px;
+}

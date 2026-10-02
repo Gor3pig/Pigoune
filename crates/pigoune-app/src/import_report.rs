@@ -16,7 +16,13 @@ pub fn needs_attention(summary: &ImportSummary) -> bool {
         || !matches!(summary.ending, ImportEnding::Completed)
 }
 
-pub fn toast_text(summary: &ImportSummary, destination: Option<&str>) -> String {
+#[derive(Debug, Clone, Copy)]
+pub enum Destination<'a> {
+    Collection(&'a str),
+    Tag(&'a str),
+}
+
+pub fn toast_text(summary: &ImportSummary, destination: Option<Destination>) -> String {
     let lines = outcome_lines(summary, destination);
     if lines.is_empty() {
         gettext("No images to import were found")
@@ -28,7 +34,7 @@ pub fn toast_text(summary: &ImportSummary, destination: Option<&str>) -> String 
 pub fn summary_dialog(
     summary: &ImportSummary,
     chosen: &[PathBuf],
-    destination: Option<&str>,
+    destination: Option<Destination>,
 ) -> adw::AlertDialog {
     let mut lines = outcome_lines(summary, destination);
     lines.extend(problem_lines(summary));
@@ -76,15 +82,21 @@ fn heading(ending: &ImportEnding) -> String {
     }
 }
 
-fn outcome_lines(summary: &ImportSummary, destination: Option<&str>) -> Vec<String> {
+fn outcome_lines(summary: &ImportSummary, destination: Option<Destination>) -> Vec<String> {
     let imported = count_for_plural(summary.imported.len());
     let imported_text = match destination {
-        Some(collection) => ngettext(
+        Some(Destination::Collection(collection)) => ngettext(
             "{count} resource imported into “{collection}”",
             "{count} resources imported into “{collection}”",
             imported,
         )
         .replace("{collection}", collection),
+        Some(Destination::Tag(tag)) => ngettext(
+            "{count} resource imported with the tag “{tag}”",
+            "{count} resources imported with the tag “{tag}”",
+            imported,
+        )
+        .replace("{tag}", tag),
         None => ngettext(
             "{count} resource imported",
             "{count} resources imported",

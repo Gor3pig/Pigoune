@@ -8,6 +8,7 @@ use gtk::{gdk, glib};
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::tag_editor::PigouneTagEditor;
 use crate::thumbnails::{self, ThumbnailCache};
 
 const NOTHING_PAGE: &str = "nothing";
@@ -19,6 +20,9 @@ mod imp {
 
     use adw::subclass::prelude::*;
     use gtk::glib;
+    use gtk::prelude::*;
+
+    use crate::tag_editor::PigouneTagEditor;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/asset-details.ui")]
@@ -31,6 +35,8 @@ mod imp {
         pub name_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub favorite_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub tag_editor: TemplateChild<PigouneTagEditor>,
         pub favorite_bindings: RefCell<Vec<glib::Binding>>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
@@ -56,6 +62,7 @@ mod imp {
         type ParentType = adw::Bin;
 
         fn class_init(class: &mut Self::Class) {
+            PigouneTagEditor::ensure_type();
             class.bind_template();
         }
 
@@ -76,6 +83,10 @@ glib::wrapper! {
 }
 
 impl PigouneAssetDetails {
+    pub fn tag_editor(&self) -> PigouneTagEditor {
+        self.imp().tag_editor.get()
+    }
+
     pub fn show(&self, selected: Option<&PigouneAssetObject>, thumbnails: &Rc<ThumbnailCache>) {
         let imp = self.imp();
         if let Some(loading) = imp.loading.take() {

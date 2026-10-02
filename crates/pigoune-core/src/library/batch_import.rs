@@ -32,6 +32,7 @@ pub enum ImportEnding {
 #[derive(Debug, Default)]
 pub struct ImportSummary {
     pub imported: Vec<AssetId>,
+    pub already_known: Vec<AssetId>,
     pub large_imported: usize,
     pub already_present: usize,
     pub added_to_collection: usize,
@@ -50,9 +51,18 @@ impl ImportSummary {
                     self.large_imported += 1;
                 }
             }
-            Ok((ImportOutcome::AlreadyPresent(_), _)) => self.already_present += 1,
-            Ok((ImportOutcome::AddedToCollection(_), _)) => self.added_to_collection += 1,
-            Ok((ImportOutcome::RestoredFromTrash(_), _)) => self.restored_from_trash += 1,
+            Ok((ImportOutcome::AlreadyPresent(id), _)) => {
+                self.already_present += 1;
+                self.already_known.push(id);
+            }
+            Ok((ImportOutcome::AddedToCollection(id), _)) => {
+                self.added_to_collection += 1;
+                self.already_known.push(id);
+            }
+            Ok((ImportOutcome::RestoredFromTrash(id), _)) => {
+                self.restored_from_trash += 1;
+                self.already_known.push(id);
+            }
             Err(ImportError::UnsupportedFormat(_)) => self.unsupported += 1,
             Err(ImportError::Unreadable(path)) => self.unreadable.push(path),
             Err(serious) => return Some(serious),
