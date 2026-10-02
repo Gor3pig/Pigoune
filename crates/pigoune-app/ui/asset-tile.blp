@@ -1,0 +1,28 @@
+using Gtk 4.0;
+
+template $PigouneAssetTile: Box {
+  orientation: vertical;
+  spacing: 6;
+  margin-top: 6;
+  margin-bottom: 6;
+  margin-start: 6;
+  margin-end: 6;
+
+  Picture picture {
+    width-request: 128;
+    height-request: 128;
+    content-fit: contain;
+    can-shrink: true;
+    opacity: 0;
+  }
+
+  Label name_label {
+    ellipsize: end;
+    max-width-chars: 1;
+    hexpand: true;
+
+    styles [
+      "caption",
+    ]
+  }
+}

@@ -1,4 +1,7 @@
 mod application;
+mod asset_grid;
+mod asset_object;
+mod asset_tile;
 mod background_import;
 mod config;
 mod error_messages;
@@ -7,6 +10,7 @@ mod import_progress_dialog;
 mod import_report;
 mod new_library_dialog;
 mod settings;
+mod thumbnails;
 mod window;
 
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, textdomain};

@@ -6,6 +6,9 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, 
 use rusqlite::{OptionalExtension, Row};
 
 const EMBEDDED_SIZES_SEPARATOR: char = ',';
+const ASSET_COLUMNS: &str =
+    "id, display_name, original_file_name, stored_path, format, width, height,
+    byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms, trashed_at_unix_ms";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asset {
@@ -28,14 +31,28 @@ impl Library {
         Ok(self
             .connection
             .query_row(
-                "SELECT id, display_name, original_file_name, stored_path, format, width, height,
-                        byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms,
-                        trashed_at_unix_ms
-                 FROM assets WHERE id = ?1",
+                &format!("SELECT {ASSET_COLUMNS} FROM assets WHERE id = ?1"),
                 [id],
                 asset_from_row,
             )
             .optional()?)
+    }
+
+    pub fn visible_assets(&self) -> Result<Vec<Asset>, LibraryError> {
+        let mut statement = self.connection.prepare(&format!(
+            "SELECT {ASSET_COLUMNS} FROM assets
+             WHERE trashed_at_unix_ms IS NULL
+             ORDER BY added_at_unix_ms DESC, id DESC"
+        ))?;
+        let assets = statement
+            .query_map([], asset_from_row)?
+            .collect::<Result<_, _>>()?;
+        Ok(assets)
+    }
+
+    #[must_use]
+    pub fn file_of(&self, asset: &Asset) -> PathBuf {
+        self.root.join(&asset.stored_path)
     }
 }
 

@@ -6,6 +6,7 @@ use gettextrs::gettext;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{ImportError, ImportSummary, Library, LibraryError, library_display_name};
 
+use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::error_messages;
 use crate::import_report;
@@ -14,6 +15,8 @@ use crate::settings;
 
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
+const EMPTY_PAGE: &str = "empty";
+const ASSETS_PAGE: &str = "assets";
 const CREATE_LIBRARY_ACTION: &str = "win.create-library";
 const OPEN_LIBRARY_ACTION: &str = "win.open-library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
@@ -49,8 +52,11 @@ mod imp {
     use std::cell::{OnceCell, RefCell};
 
     use adw::subclass::prelude::*;
+    use gtk::prelude::*;
     use gtk::{gio, glib};
     use pigoune_core::Library;
+
+    use crate::asset_grid::PigouneAssetGrid;
 
     use super::{
         CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
@@ -70,6 +76,10 @@ mod imp {
         pub toast_overlay: TemplateChild<adw::ToastOverlay>,
         #[template_child]
         pub drop_hint: TemplateChild<adw::StatusPage>,
+        #[template_child]
+        pub library_stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub asset_grid: TemplateChild<PigouneAssetGrid>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -81,6 +91,7 @@ mod imp {
         type ParentType = adw::ApplicationWindow;
 
         fn class_init(class: &mut Self::Class) {
+            PigouneAssetGrid::ensure_type();
             class.bind_template();
             class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
@@ -256,7 +267,9 @@ impl PigouneWindow {
             settings::LAST_LIBRARY_PATH,
             &library.root().to_string_lossy(),
         );
+        imp.asset_grid.forget_thumbnails();
         imp.library.replace(Some(library));
+        self.refresh_assets();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         self.set_library_actions_enabled(true);
@@ -265,11 +278,44 @@ impl PigouneWindow {
     fn close_library(&self) {
         let imp = self.imp();
         imp.library.replace(None);
+        imp.asset_grid.show_assets(&[]);
+        imp.asset_grid.forget_thumbnails();
         settings::store_string(self.settings(), settings::LAST_LIBRARY_PATH, "");
         imp.window_title.set_title("Pigoune");
         imp.stack.set_visible_child_name(WELCOME_PAGE);
         imp.import_button.set_visible(false);
         self.set_library_actions_enabled(false);
+    }
+
+    fn refresh_assets(&self) {
+        let imp = self.imp();
+        let listed = imp.library.borrow().as_ref().map(asset_objects);
+        match listed {
+            Some(Ok(assets)) => {
+                let page = if assets.is_empty() {
+                    EMPTY_PAGE
+                } else {
+                    ASSETS_PAGE
+                };
+                imp.asset_grid.show_assets(&assets);
+                imp.library_stack.set_visible_child_name(page);
+            }
+            Some(Err(error)) => {
+                imp.asset_grid.show_assets(&[]);
+                imp.library_stack.set_visible_child_name(EMPTY_PAGE);
+                self.show_library_error(&error);
+            }
+            None => {}
+        }
+    }
+
+    fn show_library_error(&self, error: &LibraryError) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Unable to Show the Library")),
+            Some(&error_messages::describe(error)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
     }
 
     fn set_library_actions_enabled(&self, enabled: bool) {
@@ -378,6 +424,7 @@ impl PigouneWindow {
 
         if let Some(FinishedImport { library, result }) = finished {
             self.imp().library.replace(Some(library));
+            self.refresh_assets();
             self.report_import(result, &paths);
         } else {
             self.close_library();
@@ -450,4 +497,18 @@ fn paths_of(files: &gio::ListModel) -> Vec<PathBuf> {
         .filter_map(|position| files.item(position).and_downcast::<gio::File>())
         .filter_map(|file| file.path())
         .collect()
+}
+
+fn asset_objects(library: &Library) -> Result<Vec<PigouneAssetObject>, LibraryError> {
+    Ok(library
+        .visible_assets()?
+        .iter()
+        .map(|asset| {
+            PigouneAssetObject::new(AssetEntry {
+                id: asset.id,
+                display_name: asset.display_name.clone(),
+                file: library.file_of(asset),
+            })
+        })
+        .collect())
 }

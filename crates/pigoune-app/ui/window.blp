@@ -91,37 +91,49 @@ template $PigouneWindow: Adw.ApplicationWindow {
           StackPage {
             name: "library";
 
-            child: Adw.StatusPage {
-              icon-name: "folder-pictures-symbolic";
-              title: _("Your Library Is Empty");
-              description: _("Imported icons, logos and illustrations will appear here.");
+            child: Gtk.Stack library_stack {
+              StackPage {
+                name: "empty";
 
-              child: Box {
-                orientation: vertical;
-                spacing: 12;
-                halign: center;
+                child: Adw.StatusPage {
+                  icon-name: "folder-pictures-symbolic";
+                  title: _("Your Library Is Empty");
+                  description: _("Imported icons, logos and illustrations will appear here.");
 
-                Button {
-                  label: _("Import _Files…");
-                  use-underline: true;
-                  action-name: "win.import-files";
+                  child: Box {
+                    orientation: vertical;
+                    spacing: 12;
+                    halign: center;
 
-                  styles [
-                    "pill",
-                    "suggested-action",
-                  ]
-                }
+                    Button {
+                      label: _("Import _Files…");
+                      use-underline: true;
+                      action-name: "win.import-files";
 
-                Button {
-                  label: _("Import a F_older…");
-                  use-underline: true;
-                  action-name: "win.import-folder";
+                      styles [
+                        "pill",
+                        "suggested-action",
+                      ]
+                    }
 
-                  styles [
-                    "pill",
-                  ]
-                }
-              };
+                    Button {
+                      label: _("Import a F_older…");
+                      use-underline: true;
+                      action-name: "win.import-folder";
+
+                      styles [
+                        "pill",
+                      ]
+                    }
+                  };
+                };
+              }
+
+              StackPage {
+                name: "assets";
+
+                child: $PigouneAssetGrid asset_grid {};
+              }
             };
           }
         };

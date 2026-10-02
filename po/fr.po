@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 08:31+0200\n"
+"POT-Creation-Date: 2026-10-02 08:51+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -116,27 +116,27 @@ msgstr "_Créer une bibliothèque"
 msgid "_Open a Library"
 msgstr "_Ouvrir une bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:96
+#: crates/pigoune-app/ui/window.blp:100
 msgid "Your Library Is Empty"
 msgstr "Votre bibliothèque est vide"
 
-#: crates/pigoune-app/ui/window.blp:97
+#: crates/pigoune-app/ui/window.blp:101
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr "Les icônes, logos et illustrations importés apparaîtront ici."
 
-#: crates/pigoune-app/ui/window.blp:105 crates/pigoune-app/ui/window.blp:136
+#: crates/pigoune-app/ui/window.blp:109 crates/pigoune-app/ui/window.blp:148
 msgid "Import _Files…"
 msgstr "Importer des _fichiers…"
 
-#: crates/pigoune-app/ui/window.blp:116 crates/pigoune-app/ui/window.blp:141
+#: crates/pigoune-app/ui/window.blp:120 crates/pigoune-app/ui/window.blp:153
 msgid "Import a F_older…"
 msgstr "Importer un _dossier…"
 
-#: crates/pigoune-app/ui/window.blp:150
+#: crates/pigoune-app/ui/window.blp:162
 msgid "_Close Library"
 msgstr "_Fermer la bibliothèque"
 
-#: crates/pigoune-app/ui/window.blp:157
+#: crates/pigoune-app/ui/window.blp:169
 msgid "_About Pigoune"
 msgstr "À _propos de Pigoune"
 
@@ -242,52 +242,56 @@ msgstr "Une erreur inattendue s'est produite : {error}"
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:189
+#: crates/pigoune-app/src/window.rs:200
 msgid "_Open Another Library…"
 msgstr "_Ouvrir une autre bibliothèque…"
 
-#: crates/pigoune-app/src/window.rs:190
+#: crates/pigoune-app/src/window.rs:201
 msgid "_Try Again"
 msgstr "_Réessayer"
 
-#: crates/pigoune-app/src/window.rs:222
+#: crates/pigoune-app/src/window.rs:233
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:340
-#, rust-format
-msgid "Drop to Import Into “{name}”"
-msgstr "Déposez pour importer dans « {name} »"
+#: crates/pigoune-app/src/window.rs:314
+msgid "Unable to Show the Library"
+msgstr "Impossible d’afficher la bibliothèque"
 
-#: crates/pigoune-app/src/window.rs:346
-msgid "Import Files"
-msgstr "Importer des fichiers"
-
-#: crates/pigoune-app/src/window.rs:347 crates/pigoune-app/src/window.rs:359
-msgid "_Import"
-msgstr "_Importer"
-
-#: crates/pigoune-app/src/window.rs:358
-msgid "Import Folders"
-msgstr "Importer des dossiers"
-
-#: crates/pigoune-app/src/window.rs:426
-#, rust-format
-msgid "Unable to Open “{name}”"
-msgstr "Impossible d'ouvrir « {name} »"
-
-#: crates/pigoune-app/src/window.rs:428
+#: crates/pigoune-app/src/window.rs:317 crates/pigoune-app/src/window.rs:475
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr "_Fermer"
 
-#: crates/pigoune-app/src/window.rs:434
+#: crates/pigoune-app/src/window.rs:386
+#, rust-format
+msgid "Drop to Import Into “{name}”"
+msgstr "Déposez pour importer dans « {name} »"
+
+#: crates/pigoune-app/src/window.rs:392
+msgid "Import Files"
+msgstr "Importer des fichiers"
+
+#: crates/pigoune-app/src/window.rs:393 crates/pigoune-app/src/window.rs:405
+msgid "_Import"
+msgstr "_Importer"
+
+#: crates/pigoune-app/src/window.rs:404
+msgid "Import Folders"
+msgstr "Importer des dossiers"
+
+#: crates/pigoune-app/src/window.rs:473
+#, rust-format
+msgid "Unable to Open “{name}”"
+msgstr "Impossible d'ouvrir « {name} »"
+
+#: crates/pigoune-app/src/window.rs:481
 msgid "Images"
 msgstr "Images"
 
-#: crates/pigoune-app/src/window.rs:439
+#: crates/pigoune-app/src/window.rs:486
 msgid "All Files"
 msgstr "Tous les fichiers"
 
@@ -388,8 +392,8 @@ msgid_plural ""
 "and their previews may take longer to appear"
 msgstr[0] ""
 "{count} ressource volumineuse importée (plus de 50 Mo) : elle occupe "
-"davantage de place sur le disque et son aperçu pourra mettre plus de temps "
-"à s’afficher"
+"davantage de place sur le disque et son aperçu pourra mettre plus de temps à "
+"s’afficher"
 msgstr[1] ""
 "{count} ressources volumineuses importées (plus de 50 Mo) : elles occupent "
 "davantage de place sur le disque et leurs aperçus pourront mettre plus de "

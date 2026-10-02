@@ -1,0 +1,13 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneAssetGrid: Adw.Bin {
+  child: ScrolledWindow {
+    hscrollbar-policy: never;
+
+    child: GridView grid_view {
+      min-columns: 1;
+      max-columns: 100;
+    };
+  };
+}
