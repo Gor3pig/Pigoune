@@ -11,6 +11,7 @@ mod import_plan;
 mod layout;
 mod schema;
 mod staging;
+mod view;
 
 use std::fs::{self, File, TryLockError};
 use std::path::{Path, PathBuf};
@@ -33,6 +34,7 @@ pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
 };
 pub use schema::CURRENT_FORMAT_VERSION;
+pub use view::{AssetView, ViewCounts};
 
 #[derive(Debug)]
 pub struct Library {

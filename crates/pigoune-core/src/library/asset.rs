@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
 use crate::media::{AssetFormat, Dimensions};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
@@ -39,13 +40,18 @@ impl Library {
     }
 
     pub fn visible_assets(&self) -> Result<Vec<Asset>, LibraryError> {
+        self.visible_assets_in(AssetView::All)
+    }
+
+    pub fn visible_assets_in(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
+        let (condition, collection) = view::condition(view);
         let mut statement = self.connection.prepare(&format!(
-            "SELECT {ASSET_COLUMNS} FROM assets
-             WHERE trashed_at_unix_ms IS NULL
+            "{SUBTREE} SELECT {ASSET_COLUMNS} FROM assets
+             WHERE trashed_at_unix_ms IS NULL AND ({condition})
              ORDER BY added_at_unix_ms DESC, id DESC"
         ))?;
         let assets = statement
-            .query_map([], asset_from_row)?
+            .query_map([collection], asset_from_row)?
             .collect::<Result<_, _>>()?;
         Ok(assets)
     }

@@ -4,20 +4,27 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib};
-use pigoune_core::{ImportError, ImportSummary, Library, LibraryError, library_display_name};
+use pigoune_core::{
+    AssetView, CollectionId, ImportError, ImportSummary, Library, LibraryError,
+    library_display_name,
+};
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::error_messages;
 use crate::import_report;
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::settings;
+use crate::sidebar::SidebarContent;
 use crate::thumbnails::THUMBNAIL_PIXELS;
+use crate::view_setting;
 
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
 const EMPTY_PAGE: &str = "empty";
 const ASSETS_PAGE: &str = "assets";
+const NOTHING_PAGE: &str = "nothing";
 const MAIN_PAGE: &str = "main";
 const PREVIEW_PAGE: &str = "preview";
 const CREATE_LIBRARY_ACTION: &str = "win.create-library";
@@ -56,16 +63,17 @@ enum ReopeningChoice {
 }
 
 mod imp {
-    use std::cell::{OnceCell, RefCell};
+    use std::cell::{Cell, OnceCell, RefCell};
 
     use adw::subclass::prelude::*;
     use gtk::prelude::*;
     use gtk::{gio, glib};
-    use pigoune_core::Library;
+    use pigoune_core::{AssetView, Library};
 
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
     use crate::asset_preview::PigouneAssetPreview;
+    use crate::sidebar::PigouneSidebar;
 
     use super::{
         CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, ENLARGE_THUMBNAILS_ACTION,
@@ -97,6 +105,11 @@ mod imp {
         pub window_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_preview: TemplateChild<PigouneAssetPreview>,
+        #[template_child]
+        pub sidebar: TemplateChild<PigouneSidebar>,
+        #[template_child]
+        pub nothing_page: TemplateChild<adw::StatusPage>,
+        pub current_view: Cell<AssetView>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -111,6 +124,7 @@ mod imp {
             PigouneAssetGrid::ensure_type();
             PigouneAssetDetails::ensure_type();
             PigouneAssetPreview::ensure_type();
+            PigouneSidebar::ensure_type();
             class.bind_template();
             class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
@@ -207,12 +221,81 @@ impl PigouneWindow {
         window.add_action(&settings.create_action(settings::PREVIEW_BACKGROUND));
         window.describe_selected_asset();
         window.connect_preview();
+        window.follow_sidebar(&settings);
         window
             .imp()
             .settings
             .set(settings)
             .expect("settings are set only once, at construction");
         window
+    }
+
+    fn follow_sidebar(&self, settings: &gio::Settings) {
+        for key in [
+            settings::COLLECTION_SORT,
+            settings::COLLECTION_SORT_REVERSED,
+        ] {
+            self.add_action(&settings.create_action(key));
+        }
+        for key in [
+            settings::COLLECTION_SORT,
+            settings::COLLECTION_SORT_REVERSED,
+            settings::SHOW_COUNTS,
+        ] {
+            settings.connect_changed(
+                Some(key),
+                glib::clone!(
+                    #[weak(rename_to = window)]
+                    self,
+                    move |_, _| window.refresh_sidebar()
+                ),
+            );
+        }
+        self.imp().sidebar.connect_view_changed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |view| window.show_view(view)
+        ));
+    }
+
+    fn show_view(&self, view: AssetView) {
+        let imp = self.imp();
+        if imp.current_view.replace(view) == view {
+            return;
+        }
+        settings::store_string(
+            self.settings(),
+            settings::LAST_VIEW,
+            &view_setting::to_setting(view),
+        );
+        imp.asset_preview.close();
+        self.refresh_grid();
+    }
+
+    fn view_on_opening(&self) -> AssetView {
+        let settings = self.settings();
+        if settings.boolean(settings::RESTORE_LAST_VIEW) {
+            view_setting::from_setting(&settings.string(settings::LAST_VIEW))
+        } else {
+            AssetView::All
+        }
+    }
+
+    fn collection_order(&self) -> CollectionOrder {
+        let settings = self.settings();
+        CollectionOrder {
+            criterion: CollectionCriterion::from_setting(
+                &settings.string(settings::COLLECTION_SORT),
+            ),
+            reversed: settings.boolean(settings::COLLECTION_SORT_REVERSED),
+        }
+    }
+
+    fn target_collection(&self) -> Option<CollectionId> {
+        match self.imp().current_view.get() {
+            AssetView::Collection(id) => Some(id),
+            AssetView::All | AssetView::Unclassified => None,
+        }
     }
 
     pub fn reopen_last_library(&self) {
@@ -327,6 +410,7 @@ impl PigouneWindow {
         );
         imp.asset_grid.forget_thumbnails();
         imp.library.replace(Some(library));
+        imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
@@ -397,13 +481,59 @@ impl PigouneWindow {
     }
 
     fn refresh_assets(&self) {
+        self.imp().asset_preview.close();
+        self.refresh_sidebar();
+        self.refresh_grid();
+    }
+
+    fn refresh_sidebar(&self) {
         let imp = self.imp();
-        imp.asset_preview.close();
-        let listed = imp.library.borrow().as_ref().map(asset_objects);
-        match listed {
-            Some(Ok(assets)) => {
-                let page = if assets.is_empty() {
+        let order = self.collection_order();
+        let show_counts = self.settings().boolean(settings::SHOW_COUNTS);
+        let read = imp.library.borrow().as_ref().map(|library| {
+            Ok::<_, LibraryError>((library.visible_collections()?, library.view_counts()?))
+        });
+        let (collections, counts) = match read {
+            Some(Ok(read)) => read,
+            Some(Err(error)) => {
+                self.show_library_error(&error);
+                return;
+            }
+            None => return,
+        };
+        if let AssetView::Collection(id) = imp.current_view.get()
+            && !collections.iter().any(|collection| collection.id == id)
+        {
+            imp.current_view.set(AssetView::All);
+        }
+        let tree = CollectionTree::new(collections, order, |name: &str| {
+            glib::FilenameCollationKey::from(name)
+        });
+        imp.sidebar.show_content(&SidebarContent {
+            tree,
+            counts,
+            show_counts,
+            selected: imp.current_view.get(),
+        });
+    }
+
+    fn refresh_grid(&self) {
+        let imp = self.imp();
+        let view = imp.current_view.get();
+        let read = imp.library.borrow().as_ref().map(|library| {
+            Ok::<_, LibraryError>((
+                asset_objects(library, view)?,
+                library.view_counts()?.all,
+                view_name(library, view),
+            ))
+        });
+        match read {
+            Some(Ok((assets, library_total, view_name))) => {
+                let page = if library_total == 0 {
                     EMPTY_PAGE
+                } else if assets.is_empty() {
+                    self.describe_empty_view(view, &view_name);
+                    NOTHING_PAGE
                 } else {
                     ASSETS_PAGE
                 };
@@ -418,6 +548,21 @@ impl PigouneWindow {
                 self.show_library_error(&error);
             }
             None => {}
+        }
+    }
+
+    fn describe_empty_view(&self, view: AssetView, view_name: &str) {
+        let page = &self.imp().nothing_page;
+        if view == AssetView::Unclassified {
+            page.set_title(&gettext("No Unclassified Resources"));
+            page.set_description(Some(&gettext(
+                "Every resource is in at least one collection.",
+            )));
+        } else {
+            page.set_title(&gettext("“{name}” Is Empty").replace("{name}", view_name));
+            page.set_description(Some(&gettext(
+                "Resources imported while this collection is selected are placed in it.",
+            )));
         }
     }
 
@@ -488,11 +633,12 @@ impl PigouneWindow {
 
     fn show_drop_hint(&self) {
         let imp = self.imp();
+        let view = imp.current_view.get();
         let library_name = imp
             .library
             .borrow()
             .as_ref()
-            .map(Library::name)
+            .map(|library| view_name(library, view))
             .unwrap_or_default();
         imp.drop_hint
             .set_title(&gettext("Drop to Import Into “{name}”").replace("{name}", &library_name));
@@ -531,7 +677,8 @@ impl PigouneWindow {
         };
 
         self.set_importing(true);
-        let finished = background_import::run(self, library, paths.clone()).await;
+        let target = self.target_collection();
+        let finished = background_import::run(self, library, paths.clone(), target).await;
         self.set_importing(false);
 
         if let Some(FinishedImport { library, result }) = finished {
@@ -611,9 +758,23 @@ fn paths_of(files: &gio::ListModel) -> Vec<PathBuf> {
         .collect()
 }
 
-fn asset_objects(library: &Library) -> Result<Vec<PigouneAssetObject>, LibraryError> {
+fn view_name(library: &Library, view: AssetView) -> String {
+    match view {
+        AssetView::Collection(id) => library
+            .collection(id)
+            .ok()
+            .flatten()
+            .map_or_else(|| library.name(), |collection| collection.name),
+        AssetView::All | AssetView::Unclassified => library.name(),
+    }
+}
+
+fn asset_objects(
+    library: &Library,
+    view: AssetView,
+) -> Result<Vec<PigouneAssetObject>, LibraryError> {
     Ok(library
-        .visible_assets()?
+        .visible_assets_in(view)?
         .iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {

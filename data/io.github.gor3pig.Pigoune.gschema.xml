@@ -52,6 +52,36 @@
       <summary>Preview background</summary>
       <description>Background shown behind the resource in the detailed preview.</description>
     </key>
+    <key name="collection-sort" type="s">
+      <choices>
+        <choice value="name"/>
+        <choice value="created"/>
+        <choice value="custom"/>
+      </choices>
+      <default>"name"</default>
+      <summary>Collection sort criterion</summary>
+      <description>How collections are ordered in the sidebar.</description>
+    </key>
+    <key name="collection-sort-reversed" type="b">
+      <default>false</default>
+      <summary>Reverse collection order</summary>
+      <description>Whether the natural direction of the collection sort criterion is reversed.</description>
+    </key>
+    <key name="show-counts" type="b">
+      <default>true</default>
+      <summary>Show resource counts</summary>
+      <description>Whether the sidebar shows how many resources each entry contains.</description>
+    </key>
+    <key name="restore-last-view" type="b">
+      <default>false</default>
+      <summary>Reopen the last sidebar entry</summary>
+      <description>Whether the library opens on the last selected sidebar entry instead of All.</description>
+    </key>
+    <key name="last-view" type="s">
+      <default>""</default>
+      <summary>Last sidebar entry</summary>
+      <description>The sidebar entry selected when the library was last shown.</description>
+    </key>
     <key name="thumbnail-size" type="i">
       <range min="64" max="256"/>
       <default>128</default>

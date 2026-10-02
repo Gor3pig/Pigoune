@@ -7,7 +7,9 @@ use std::time::Duration;
 
 use adw::prelude::*;
 use gtk::{gio, glib};
-use pigoune_core::{ImportControl, ImportError, ImportProgress, ImportSummary, Library};
+use pigoune_core::{
+    CollectionId, ImportControl, ImportError, ImportProgress, ImportSummary, Library,
+};
 
 use crate::image_check::ImageCheck;
 use crate::import_progress_dialog::PigouneImportProgressDialog;
@@ -23,6 +25,7 @@ pub async fn run(
     parent: &impl IsA<gtk::Widget>,
     library: Library,
     paths: Vec<PathBuf>,
+    target: Option<CollectionId>,
 ) -> Option<FinishedImport> {
     let (progress_sender, progress_receiver) = async_channel::unbounded();
     let cancel_requested = Arc::new(AtomicBool::new(false));
@@ -33,7 +36,7 @@ pub async fn run(
         let image_check = ImageCheck::start();
         let result = library.import_paths(
             &paths,
-            None,
+            target,
             |path| image_check.is_intact(path),
             |progress| {
                 let _ = progress_sender.send_blocking(progress);

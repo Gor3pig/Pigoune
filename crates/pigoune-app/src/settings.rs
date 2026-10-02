@@ -12,6 +12,11 @@ pub const SHOW_DETAILS: &str = "show-details";
 pub const SORT_CRITERION: &str = "sort-criterion";
 pub const SORT_REVERSED: &str = "sort-reversed";
 pub const PREVIEW_BACKGROUND: &str = "preview-background";
+pub const COLLECTION_SORT: &str = "collection-sort";
+pub const COLLECTION_SORT_REVERSED: &str = "collection-sort-reversed";
+pub const SHOW_COUNTS: &str = "show-counts";
+pub const RESTORE_LAST_VIEW: &str = "restore-last-view";
+pub const LAST_VIEW: &str = "last-view";
 
 pub fn load() -> gio::Settings {
     let schema = installed_schema()

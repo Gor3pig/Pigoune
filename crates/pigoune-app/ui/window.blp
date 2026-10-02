@@ -105,58 +105,73 @@ template $PigouneWindow: Adw.ApplicationWindow {
               StackPage {
                 name: "library";
 
-                child: Gtk.Stack library_stack {
-                  StackPage {
-                    name: "empty";
+                child: Adw.OverlaySplitView sidebar_split {
+                  min-sidebar-width: 200;
+                  max-sidebar-width: 280;
 
-                    child: Adw.StatusPage {
-                      icon-name: "folder-pictures-symbolic";
-                      title: _("Your Library Is Empty");
-                      description: _("Imported icons, logos and illustrations will appear here.");
+                  sidebar: $PigouneSidebar sidebar {};
 
-                      child: Box {
-                        orientation: vertical;
-                        spacing: 12;
-                        halign: center;
+                  content: Gtk.Stack library_stack {
+                    StackPage {
+                      name: "empty";
 
-                        Button {
-                          label: _("Import _Files…");
-                          use-underline: true;
-                          action-name: "win.import-files";
+                      child: Adw.StatusPage {
+                        icon-name: "folder-pictures-symbolic";
+                        title: _("Your Library Is Empty");
+                        description: _("Imported icons, logos and illustrations will appear here.");
 
-                          styles [
-                            "pill",
-                            "suggested-action",
-                          ]
-                        }
+                        child: Box {
+                          orientation: vertical;
+                          spacing: 12;
+                          halign: center;
 
-                        Button {
-                          label: _("Import a F_older…");
-                          use-underline: true;
-                          action-name: "win.import-folder";
+                          Button {
+                            label: _("Import _Files…");
+                            use-underline: true;
+                            action-name: "win.import-files";
 
-                          styles [
-                            "pill",
-                          ]
-                        }
+                            styles [
+                              "pill",
+                              "suggested-action",
+                            ]
+                          }
+
+                          Button {
+                            label: _("Import a F_older…");
+                            use-underline: true;
+                            action-name: "win.import-folder";
+
+                            styles [
+                              "pill",
+                            ]
+                          }
+                        };
                       };
-                    };
-                  }
+                    }
 
-                  StackPage {
-                    name: "assets";
+                    StackPage {
+                      name: "assets";
 
-                    child: Adw.OverlaySplitView details_split {
-                      sidebar-position: end;
-                      min-sidebar-width: 280;
-                      max-sidebar-width: 360;
-                      show-sidebar: bind details_button.active bidirectional;
+                      child: Adw.OverlaySplitView details_split {
+                        sidebar-position: end;
+                        min-sidebar-width: 280;
+                        max-sidebar-width: 360;
+                        show-sidebar: bind details_button.active bidirectional;
 
-                      content: $PigouneAssetGrid asset_grid {};
+                        content: $PigouneAssetGrid asset_grid {};
 
-                      sidebar: $PigouneAssetDetails asset_details {};
-                    };
-                  }
+                        sidebar: $PigouneAssetDetails asset_details {};
+                      };
+                    }
+
+                    StackPage {
+                      name: "nothing";
+
+                      child: Adw.StatusPage nothing_page {
+                        icon-name: "folder-symbolic";
+                      };
+                    }
+                  };
                 };
               }
             };
