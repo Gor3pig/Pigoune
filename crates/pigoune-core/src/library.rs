@@ -1,4 +1,7 @@
+mod asset;
+mod content;
 mod error;
+mod import;
 mod layout;
 mod schema;
 mod staging;
@@ -11,7 +14,9 @@ use uuid::Uuid;
 
 use staging::StagingDir;
 
-pub use error::LibraryError;
+pub use asset::{Asset, AssetId};
+pub use error::{ImportError, LibraryError};
+pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
 };
@@ -70,6 +75,7 @@ impl Library {
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
+        remove_unfinished_imports(root);
 
         Ok(Self {
             root: root.to_path_buf(),
@@ -102,6 +108,17 @@ fn build_new_library(staging_dir: &Path) -> Result<(), LibraryError> {
     schema::initialize_new_database(&mut connection)?;
     connection.close().map_err(|(_, error)| error)?;
     Ok(())
+}
+
+fn remove_unfinished_imports(root: &Path) {
+    let Ok(entries) = fs::read_dir(root.join(FILES_DIR_NAME)) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        if layout::is_unfinished_import(&entry.file_name().to_string_lossy()) {
+            let _ = fs::remove_dir_all(entry.path());
+        }
+    }
 }
 
 fn acquire_exclusive_access(root: &Path) -> Result<Option<File>, LibraryError> {

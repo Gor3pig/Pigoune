@@ -10,7 +10,10 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+blake3 = "1.8.7"
+imagesize = { version = "0.15.0", default-features = false, features = ["gif", "jpeg", "png", "webp"] }
+roxmltree = "0.21.1"
+rusqlite = { version = "0.40.2", features = ["bundled", "fallible_uint"] }
 thiserror = "2.0.21"
 uuid = { version = "1.26.1", features = ["v7"] }
 

@@ -31,6 +31,28 @@ pub enum LibraryError {
     Database(rusqlite::Error),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum ImportError {
+    #[error("{0} is not in a supported format")]
+    UnsupportedFormat(PathBuf),
+    #[error("{0} could not be read")]
+    Unreadable(PathBuf),
+    #[error(transparent)]
+    Library(#[from] LibraryError),
+}
+
+impl From<io::Error> for ImportError {
+    fn from(error: io::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
+impl From<rusqlite::Error> for ImportError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
 impl From<io::Error> for LibraryError {
     fn from(error: io::Error) -> Self {
         match error.kind() {
