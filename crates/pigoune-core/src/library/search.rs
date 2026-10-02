@@ -3,42 +3,82 @@ use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
-use super::{Asset, AssetId, AssetView, Library, LibraryError};
+use super::{Asset, AssetId, AssetView, Library, LibraryError, TagId};
+use crate::media::AssetFormat;
 
 const FIELD_SEPARATOR: char = '\n';
 
-impl Library {
-    pub fn search_assets_in(
-        &self,
-        view: AssetView,
-        query: &str,
-    ) -> Result<Vec<Asset>, LibraryError> {
-        let words = search_words(query);
-        let assets = self.visible_assets_in(view)?;
-        if words.is_empty() {
-            return Ok(assets);
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct AssetFilter {
+    pub text: String,
+    pub formats: Vec<AssetFormat>,
+    pub favorites_only: bool,
+    pub tags: Vec<TagId>,
+}
+
+impl AssetFilter {
+    #[must_use]
+    pub fn text(text: &str) -> Self {
+        Self {
+            text: text.to_owned(),
+            ..Self::default()
         }
-        let tags = self.tag_names_by_asset()?;
-        Ok(assets
-            .into_iter()
-            .filter(|asset| {
-                let text = searchable_text(asset, tags.get(&asset.id));
+    }
+
+    #[must_use]
+    pub fn chosen_filters(&self) -> usize {
+        self.formats.len() + usize::from(self.favorites_only) + self.tags.len()
+    }
+
+    #[must_use]
+    pub fn narrows(&self) -> bool {
+        self.chosen_filters() > 0 || !search_words(&self.text).is_empty()
+    }
+
+    fn keeps(&self, asset: &Asset, words: &[String], tags: &[(TagId, String)]) -> bool {
+        (self.formats.is_empty() || self.formats.contains(&asset.format))
+            && (!self.favorites_only || asset.is_favorite)
+            && self
+                .tags
+                .iter()
+                .all(|wanted| tags.iter().any(|(tag, _)| tag == wanted))
+            && (words.is_empty() || {
+                let text = searchable_text(asset, tags);
                 words.iter().all(|word| text.contains(word.as_str()))
             })
+    }
+}
+
+impl Library {
+    pub fn find_assets_in(
+        &self,
+        view: AssetView,
+        filter: &AssetFilter,
+    ) -> Result<Vec<Asset>, LibraryError> {
+        let assets = self.visible_assets_in(view)?;
+        if !filter.narrows() {
+            return Ok(assets);
+        }
+        let words = search_words(&filter.text);
+        let tags = self.tags_by_asset()?;
+        let no_tags = Vec::new();
+        Ok(assets
+            .into_iter()
+            .filter(|asset| filter.keeps(asset, &words, tags.get(&asset.id).unwrap_or(&no_tags)))
             .collect())
     }
 
-    fn tag_names_by_asset(&self) -> Result<HashMap<AssetId, Vec<String>>, LibraryError> {
+    fn tags_by_asset(&self) -> Result<HashMap<AssetId, Vec<(TagId, String)>>, LibraryError> {
         let mut statement = self.connection.prepare(
-            "SELECT asset_tags.asset_id, tags.name FROM asset_tags
+            "SELECT asset_tags.asset_id, tags.id, tags.name FROM asset_tags
              JOIN tags ON tags.id = asset_tags.tag_id",
         )?;
-        let mut names: HashMap<AssetId, Vec<String>> = HashMap::new();
-        for row in statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))? {
-            let (asset, name) = row?;
-            names.entry(asset).or_default().push(name);
+        let mut tags: HashMap<AssetId, Vec<(TagId, String)>> = HashMap::new();
+        for row in statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))? {
+            let (asset, tag, name) = row?;
+            tags.entry(asset).or_default().push((tag, name));
         }
-        Ok(names)
+        Ok(tags)
     }
 }
 
@@ -46,7 +86,7 @@ fn search_words(query: &str) -> Vec<String> {
     query.split_whitespace().map(comparable).collect()
 }
 
-fn searchable_text(asset: &Asset, tags: Option<&Vec<String>>) -> String {
+fn searchable_text(asset: &Asset, tags: &[(TagId, String)]) -> String {
     let fields = [
         asset.display_name.as_str(),
         asset.note.as_str(),
@@ -54,7 +94,7 @@ fn searchable_text(asset: &Asset, tags: Option<&Vec<String>>) -> String {
         asset.license.as_str(),
         asset.author.as_str(),
     ];
-    let tags = tags.into_iter().flatten().map(String::as_str);
+    let tags = tags.iter().map(|(_, name)| name.as_str());
     let mut text = String::new();
     for field in fields.into_iter().chain(tags) {
         text.push_str(&comparable(field));

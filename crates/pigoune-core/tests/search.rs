@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetId, AssetView, CollectionId, ImportOutcome, Library, TagCommand, TextField,
+    AssetCommand, AssetFilter, AssetId, AssetView, CollectionId, ImportOutcome, Library,
+    TagCommand, TextField,
 };
 use tempfile::TempDir;
 
@@ -57,7 +58,7 @@ impl Fixture {
     fn found(&self, view: AssetView, query: &str) -> Vec<AssetId> {
         let mut ids: Vec<AssetId> = self
             .library
-            .search_assets_in(view, query)
+            .find_assets_in(view, &AssetFilter::text(query))
             .expect("search succeeds")
             .into_iter()
             .map(|asset| asset.id)

@@ -5,7 +5,7 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetCommand, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId,
+    AssetCommand, AssetFilter, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId,
     CollectionRemoval, ImportError, ImportSummary, Library, LibraryError, TRASH_RETENTION, Tag,
     TagCommand, TagError, TagId, TextField, UndoError, library_display_name,
 };
@@ -2444,7 +2444,7 @@ fn asset_objects(
     query: &str,
 ) -> Result<Vec<PigouneAssetObject>, LibraryError> {
     Ok(library
-        .search_assets_in(view, query)?
+        .find_assets_in(view, &AssetFilter::text(query))?
         .iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {
