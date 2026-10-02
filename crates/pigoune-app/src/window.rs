@@ -12,6 +12,7 @@ use crate::error_messages;
 use crate::import_report;
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::settings;
+use crate::thumbnails::THUMBNAIL_PIXELS;
 
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
@@ -508,6 +509,7 @@ fn asset_objects(library: &Library) -> Result<Vec<PigouneAssetObject>, LibraryEr
                 id: asset.id,
                 display_name: asset.display_name.clone(),
                 file: library.file_of(asset),
+                thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
             })
         })
         .collect())

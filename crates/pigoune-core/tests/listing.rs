@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use pigoune_core::{AssetId, DATABASE_FILE_NAME, ImportOutcome, Library};
+use pigoune_core::{AssetId, CACHE_DIR_NAME, DATABASE_FILE_NAME, ImportOutcome, Library};
 use rusqlite::Connection;
 use tempfile::TempDir;
 
@@ -97,4 +97,24 @@ fn the_file_of_an_asset_is_its_copy_inside_the_library() {
         fs::read(file).expect("copy readable"),
         fs::read(fixture("github-mark.svg")).expect("fixture readable")
     );
+}
+
+#[test]
+fn thumbnails_live_in_the_disposable_cache_folder_by_size() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = library_in(&workspace);
+    let id = import(&mut library, "red-dot.png");
+
+    let small = library.thumbnail_file(id, 128);
+    let large = library.thumbnail_file(id, 256);
+
+    assert_eq!(
+        small,
+        library
+            .root()
+            .join(CACHE_DIR_NAME)
+            .join("thumbnails/128")
+            .join(format!("{id}.png"))
+    );
+    assert_ne!(small, large);
 }

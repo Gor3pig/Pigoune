@@ -8,6 +8,7 @@ pub struct AssetEntry {
     pub id: AssetId,
     pub display_name: String,
     pub file: PathBuf,
+    pub thumbnail_file: PathBuf,
 }
 
 mod imp {
@@ -62,5 +63,9 @@ impl PigouneAssetObject {
 
     pub fn file(&self) -> &Path {
         &self.entry().file
+    }
+
+    pub fn thumbnail_file(&self) -> &Path {
+        &self.entry().thumbnail_file
     }
 }

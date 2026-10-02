@@ -71,13 +71,14 @@ impl PigouneAssetTile {
         imp.picture.set_opacity(0.0);
         let id = asset.id();
         let file = asset.file().to_path_buf();
+        let thumbnail_file = asset.thumbnail_file().to_path_buf();
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = tile)]
             self,
             #[strong]
             cache,
             async move {
-                if let Some(texture) = thumbnails::render(&file, &tile).await {
+                if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file, &tile).await {
                     cache.remember(id, texture.clone());
                     tile.fade_in(&texture);
                 }

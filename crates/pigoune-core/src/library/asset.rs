@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::{AssetId, Library, LibraryError};
+use super::{AssetId, Library, LibraryError, layout};
 use crate::media::{AssetFormat, Dimensions};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{OptionalExtension, Row};
@@ -53,6 +53,11 @@ impl Library {
     #[must_use]
     pub fn file_of(&self, asset: &Asset) -> PathBuf {
         self.root.join(&asset.stored_path)
+    }
+
+    #[must_use]
+    pub fn thumbnail_file(&self, id: AssetId, pixels: u32) -> PathBuf {
+        layout::thumbnail_path(&self.root, id, pixels)
     }
 }
 

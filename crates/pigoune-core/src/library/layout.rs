@@ -6,6 +6,7 @@ pub const LIBRARY_EXTENSION: &str = "pigoune";
 pub const DATABASE_FILE_NAME: &str = "library.db";
 pub const FILES_DIR_NAME: &str = "files";
 pub const CACHE_DIR_NAME: &str = "cache";
+const THUMBNAILS_DIR_NAME: &str = "thumbnails";
 
 const MAX_NAME_BYTES: usize = 200;
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
@@ -40,6 +41,13 @@ pub fn database_path(root: &Path) -> PathBuf {
 
 pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
     root.join(FILES_DIR_NAME).join(id.to_string())
+}
+
+pub fn thumbnail_path(root: &Path, id: AssetId, pixels: u32) -> PathBuf {
+    root.join(CACHE_DIR_NAME)
+        .join(THUMBNAILS_DIR_NAME)
+        .join(pixels.to_string())
+        .join(format!("{id}.png"))
 }
 
 pub fn stored_path(id: AssetId, original_file_name: &str) -> String {
