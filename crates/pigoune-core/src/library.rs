@@ -14,6 +14,7 @@ mod schema;
 mod staging;
 mod tag;
 mod tag_command;
+mod trash;
 mod view;
 
 use std::fs::{self, File, TryLockError};

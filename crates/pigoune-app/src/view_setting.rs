@@ -3,6 +3,7 @@ use pigoune_core::{AssetView, CollectionId, TagId};
 const ALL: &str = "all";
 const UNCLASSIFIED: &str = "unclassified";
 const FAVORITES: &str = "favorites";
+const TRASH: &str = "trash";
 const COLLECTION_PREFIX: &str = "collection:";
 const TAG_PREFIX: &str = "tag:";
 
@@ -11,6 +12,7 @@ pub fn to_setting(view: AssetView) -> String {
         AssetView::All => ALL.to_owned(),
         AssetView::Unclassified => UNCLASSIFIED.to_owned(),
         AssetView::Favorites => FAVORITES.to_owned(),
+        AssetView::Trash => TRASH.to_owned(),
         AssetView::Collection(id) => format!("{COLLECTION_PREFIX}{id}"),
         AssetView::Tag(id) => format!("{TAG_PREFIX}{id}"),
     }
@@ -22,6 +24,9 @@ pub fn from_setting(value: &str) -> AssetView {
     }
     if value == FAVORITES {
         return AssetView::Favorites;
+    }
+    if value == TRASH {
+        return AssetView::Trash;
     }
     if let Some(tag) = value.strip_prefix(TAG_PREFIX).and_then(TagId::parse) {
         return AssetView::Tag(tag);
@@ -45,6 +50,7 @@ mod tests {
             AssetView::All,
             AssetView::Unclassified,
             AssetView::Favorites,
+            AssetView::Trash,
             AssetView::Collection(collection),
             AssetView::Tag(TagId::parse("00000000-0000-7000-8000-000000000009").expect("id")),
         ] {

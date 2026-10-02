@@ -1,6 +1,6 @@
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, OptionalExtension, params};
 
-use super::{AssetId, Library, LibraryError};
+use super::{AssetId, Library, LibraryError, clock};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AssetCommand {
@@ -16,6 +16,10 @@ pub enum AssetCommand {
         asset: AssetId,
         field: TextField,
         value: String,
+    },
+    SetTrashed {
+        assets: Vec<AssetId>,
+        trashed: bool,
     },
     Batch(Vec<AssetCommand>),
 }
@@ -78,6 +82,7 @@ fn apply(connection: &Connection, command: &AssetCommand) -> Result<AssetCommand
             field,
             value,
         } => set_text(connection, *asset, *field, value),
+        AssetCommand::SetTrashed { assets, trashed } => set_trashed(connection, assets, *trashed),
         AssetCommand::Batch(commands) => {
             let mut inverses = commands
                 .iter()
@@ -152,6 +157,39 @@ fn set_text(
         field,
         value: old_value,
     })
+}
+
+fn set_trashed(
+    connection: &Connection,
+    assets: &[AssetId],
+    trashed: bool,
+) -> Result<AssetCommand, AssetError> {
+    let moment = trashed.then(clock::now_unix_ms);
+    let mut changed = Vec::new();
+    for asset in assets {
+        if !exists(connection, *asset)? {
+            return Err(AssetError::NotFound(*asset));
+        }
+        let updated = connection.execute(
+            "UPDATE assets SET trashed_at_unix_ms = ?2
+             WHERE id = ?1 AND (trashed_at_unix_ms IS NULL) = ?3",
+            params![asset, moment, trashed],
+        )?;
+        if updated > 0 {
+            changed.push(*asset);
+        }
+    }
+    Ok(AssetCommand::SetTrashed {
+        assets: changed,
+        trashed: !trashed,
+    })
+}
+
+fn exists(connection: &Connection, asset: AssetId) -> Result<bool, AssetError> {
+    Ok(connection
+        .query_row("SELECT 1 FROM assets WHERE id = ?1", [asset], |_| Ok(()))
+        .optional()?
+        .is_some())
 }
 
 fn visible_value(

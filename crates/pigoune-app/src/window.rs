@@ -375,9 +375,10 @@ impl PigouneWindow {
                 let target = match view {
                     AssetView::Collection(id) => ImportTarget::Collection(id),
                     AssetView::Tag(id) => ImportTarget::Tag(id),
-                    AssetView::All | AssetView::Favorites | AssetView::Unclassified => {
-                        ImportTarget::Nowhere
-                    }
+                    AssetView::All
+                    | AssetView::Favorites
+                    | AssetView::Unclassified
+                    | AssetView::Trash => ImportTarget::Nowhere,
                 };
                 glib::spawn_future_local(async move {
                     window.import_paths_into(paths, target).await;
@@ -418,9 +419,11 @@ impl PigouneWindow {
     fn target_collection(&self) -> Option<CollectionId> {
         match self.imp().current_view.get() {
             AssetView::Collection(id) => Some(id),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Tag(_) => {
-                None
-            }
+            AssetView::All
+            | AssetView::Favorites
+            | AssetView::Unclassified
+            | AssetView::Tag(_)
+            | AssetView::Trash => None,
         }
     }
 
@@ -896,7 +899,7 @@ impl PigouneWindow {
         match target {
             AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
             AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified => {}
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {}
         }
     }
 
@@ -1310,7 +1313,9 @@ impl PigouneWindow {
         let still_exists = match imp.current_view.get() {
             AssetView::Collection(id) => collections.iter().any(|collection| collection.id == id),
             AssetView::Tag(id) => tags.iter().any(|tag| tag.id == id),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified => true,
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {
+                true
+            }
         };
         if !still_exists {
             imp.current_view.set(AssetView::All);
@@ -1804,7 +1809,9 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .ok()
             .and_then(|tags| tags.into_iter().find(|tag| tag.id == id))
             .map_or_else(|| library.name(), |tag| tag.name),
-        AssetView::All | AssetView::Favorites | AssetView::Unclassified => library.name(),
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {
+            library.name()
+        }
     }
 }
 

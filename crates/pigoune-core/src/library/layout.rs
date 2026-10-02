@@ -43,11 +43,18 @@ pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
     root.join(FILES_DIR_NAME).join(id.to_string())
 }
 
+pub fn thumbnails_dir(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME).join(THUMBNAILS_DIR_NAME)
+}
+
 pub fn thumbnail_path(root: &Path, id: AssetId, pixels: u32) -> PathBuf {
-    root.join(CACHE_DIR_NAME)
-        .join(THUMBNAILS_DIR_NAME)
+    thumbnails_dir(root)
         .join(pixels.to_string())
-        .join(format!("{id}.png"))
+        .join(thumbnail_file_name(id))
+}
+
+pub fn thumbnail_file_name(id: AssetId) -> String {
+    format!("{id}.png")
 }
 
 pub fn stored_path(id: AssetId, original_file_name: &str) -> String {

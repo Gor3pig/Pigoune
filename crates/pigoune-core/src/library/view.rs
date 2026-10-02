@@ -15,6 +15,12 @@ const IN_SUBTREE: &str = "id IN (SELECT asset_id FROM asset_collections
 
 const FAVORITE: &str = "is_favorite = 1";
 
+const EVERYTHING: &str = "1 = 1";
+
+const NOT_TRASHED: &str = "trashed_at_unix_ms IS NULL";
+
+const TRASHED: &str = "trashed_at_unix_ms IS NOT NULL";
+
 const WITH_TAG: &str = "id IN (SELECT asset_id FROM asset_tags WHERE tag_id = ?1)";
 
 const IN_NO_COLLECTION: &str = "NOT EXISTS (SELECT 1 FROM asset_collections
@@ -29,6 +35,7 @@ pub enum AssetView {
     Unclassified,
     Collection(CollectionId),
     Tag(TagId),
+    Trash,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -36,6 +43,7 @@ pub struct ViewCounts {
     pub all: usize,
     pub favorites: usize,
     pub unclassified: usize,
+    pub trash: usize,
     pub collections: HashMap<CollectionId, usize>,
     pub tags: HashMap<TagId, usize>,
 }
@@ -49,17 +57,40 @@ impl ViewCounts {
             AssetView::Unclassified => self.unclassified,
             AssetView::Collection(id) => self.collections.get(&id).copied().unwrap_or(0),
             AssetView::Tag(id) => self.tags.get(&id).copied().unwrap_or(0),
+            AssetView::Trash => self.trash,
         }
     }
 }
 
-pub fn condition(view: AssetView) -> (&'static str, Option<String>) {
-    match view {
-        AssetView::All => ("1 = 1", None),
+pub struct ViewFilter {
+    pub trash_state: &'static str,
+    pub condition: &'static str,
+    pub parameter: Option<String>,
+}
+
+impl ViewFilter {
+    pub fn clause(&self) -> String {
+        format!("{} AND ({})", self.trash_state, self.condition)
+    }
+}
+
+pub fn filter(view: AssetView) -> ViewFilter {
+    let (condition, parameter) = match view {
+        AssetView::All | AssetView::Trash => (EVERYTHING, None),
         AssetView::Favorites => (FAVORITE, None),
         AssetView::Unclassified => (IN_NO_COLLECTION, None),
         AssetView::Collection(id) => (IN_SUBTREE, Some(id.to_string())),
         AssetView::Tag(id) => (WITH_TAG, Some(id.to_string())),
+    };
+    let trash_state = if view == AssetView::Trash {
+        TRASHED
+    } else {
+        NOT_TRASHED
+    };
+    ViewFilter {
+        trash_state,
+        condition,
+        parameter,
     }
 }
 
@@ -67,9 +98,7 @@ impl Library {
     pub fn view_counts(&self) -> Result<ViewCounts, LibraryError> {
         let count = |condition: &str| -> Result<usize, LibraryError> {
             let total: i64 = self.connection.query_row(
-                &format!(
-                    "SELECT count(*) FROM assets WHERE trashed_at_unix_ms IS NULL AND ({condition})"
-                ),
+                &format!("SELECT count(*) FROM assets WHERE {condition}"),
                 [],
                 |row| row.get(0),
             )?;
@@ -113,9 +142,10 @@ impl Library {
 
         Ok(ViewCounts {
             tags,
-            all: count("1 = 1")?,
-            favorites: count(FAVORITE)?,
-            unclassified: count(IN_NO_COLLECTION)?,
+            all: count(&filter(AssetView::All).clause())?,
+            favorites: count(&filter(AssetView::Favorites).clause())?,
+            unclassified: count(&filter(AssetView::Unclassified).clause())?,
+            trash: count(&filter(AssetView::Trash).clause())?,
             collections,
         })
     }

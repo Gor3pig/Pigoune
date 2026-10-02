@@ -50,28 +50,27 @@ impl Library {
     }
 
     pub fn visible_assets_in(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
-        let (condition, collection) = view::condition(view);
+        let filter = view::filter(view);
+        let clause = filter.clause();
         let mut statement = self.connection.prepare(&format!(
             "{SUBTREE} SELECT {ASSET_COLUMNS} FROM assets
-             WHERE trashed_at_unix_ms IS NULL AND ({condition})
+             WHERE {clause}
              ORDER BY added_at_unix_ms DESC, id DESC"
         ))?;
         let assets = statement
-            .query_map([collection], asset_from_row)?
+            .query_map([filter.parameter], asset_from_row)?
             .collect::<Result<_, _>>()?;
         Ok(assets)
     }
 
     pub fn view_contains(&self, view: AssetView, asset: AssetId) -> Result<bool, LibraryError> {
-        let (condition, collection) = view::condition(view);
+        let filter = view::filter(view);
+        let clause = filter.clause();
         Ok(self
             .connection
             .query_row(
-                &format!(
-                    "{SUBTREE} SELECT 1 FROM assets
-                     WHERE id = ?2 AND trashed_at_unix_ms IS NULL AND ({condition})"
-                ),
-                params![collection, asset],
+                &format!("{SUBTREE} SELECT 1 FROM assets WHERE id = ?2 AND {clause}"),
+                params![filter.parameter, asset],
                 |_| Ok(()),
             )
             .optional()?
