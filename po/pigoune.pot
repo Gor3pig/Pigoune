@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 09:38+0200\n"
+"POT-Creation-Date: 2026-10-02 09:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -530,27 +530,44 @@ msgstr ""
 msgid "Back to the Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:26
+#: crates/pigoune-app/ui/asset-preview.blp:21
+msgid "Zoom"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:36
 msgid "Transparent Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:42
+#: crates/pigoune-app/ui/asset-preview.blp:52
 msgid "White Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:58
+#: crates/pigoune-app/ui/asset-preview.blp:68
 msgid "Grey Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:74
+#: crates/pigoune-app/ui/asset-preview.blp:84
 msgid "Black Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:90
+#: crates/pigoune-app/ui/asset-preview.blp:100
 msgid "Checkerboard Background"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:222
+#: crates/pigoune-app/ui/asset-preview.blp:135
+msgid "Fit to Window"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:140
+msgid "Actual Size"
+msgstr ""
+
+#: crates/pigoune-app/src/asset_preview.rs:350
+#, rust-format
+msgid "{percent}%"
+msgstr ""
+
+#: crates/pigoune-app/src/asset_preview.rs:364
 #, rust-format
 msgid "{position} of {count}"
 msgstr ""

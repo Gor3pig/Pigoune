@@ -16,6 +16,8 @@ mod new_library_dialog;
 mod settings;
 mod thumbnails;
 mod window;
+mod zoom_math;
+mod zoom_view;
 
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, textdomain};
 use gtk::prelude::*;

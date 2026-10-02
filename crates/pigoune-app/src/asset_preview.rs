@@ -1,20 +1,25 @@
 use std::rc::Rc;
+use std::time::Duration;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib};
 
+use pigoune_core::{AssetFormat, Dimensions};
+
 use crate::asset_object::PigouneAssetObject;
 use crate::thumbnails::{self, ThumbnailCache};
 
 const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checkerboard"];
 const SMALLEST_RENDER_PIXELS: u32 = 256;
+const LARGEST_VECTOR_PIXELS: u32 = 4096;
+const SHARPEN_DELAY: Duration = Duration::from_millis(200);
 
 type ClosedCallback = Box<dyn Fn()>;
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
     use std::rc::Rc;
 
     use adw::subclass::prelude::*;
@@ -22,7 +27,9 @@ mod imp {
     use gtk::{gdk, glib};
 
     use super::ClosedCallback;
+    use crate::asset_object::PigouneAssetObject;
     use crate::thumbnails::ThumbnailCache;
+    use crate::zoom_view::PigouneZoomView;
 
     #[derive(Default, gtk::CompositeTemplate, glib::Properties)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/asset-preview.ui")]
@@ -33,7 +40,12 @@ mod imp {
         #[template_child]
         pub surface: TemplateChild<gtk::Box>,
         #[template_child]
-        pub picture: TemplateChild<gtk::Picture>,
+        pub zoom_view: TemplateChild<PigouneZoomView>,
+        #[template_child]
+        pub zoom_button: TemplateChild<gtk::MenuButton>,
+        pub showing: RefCell<Option<PigouneAssetObject>>,
+        pub vector_pixels: Cell<u32>,
+        pub sharpening: RefCell<Option<glib::SourceId>>,
         #[property(get, set = Self::set_background)]
         pub background: RefCell<String>,
         pub selection: RefCell<Option<gtk::SingleSelection>>,
@@ -60,7 +72,38 @@ mod imp {
         type ParentType = adw::Bin;
 
         fn class_init(class: &mut Self::Class) {
+            PigouneZoomView::ensure_type();
             class.bind_template();
+            class.install_action("preview.zoom-fit", None, |preview, _, _| {
+                preview.imp().zoom_view.fit_to_view();
+            });
+            class.install_action("preview.zoom-actual", None, |preview, _, _| {
+                preview.imp().zoom_view.show_actual_size();
+            });
+            for key in [gdk::Key::plus, gdk::Key::equal, gdk::Key::KP_Add] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.imp().zoom_view.zoom_in();
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::minus, gdk::Key::KP_Subtract] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.imp().zoom_view.zoom_out();
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::_0, gdk::Key::KP_0] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.imp().zoom_view.fit_to_view();
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::_1, gdk::Key::KP_1] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.imp().zoom_view.show_actual_size();
+                    glib::Propagation::Stop
+                });
+            }
             class.bind_template_instance_callbacks();
             class.add_binding(gdk::Key::Escape, gdk::ModifierType::empty(), |preview| {
                 preview.close();
@@ -86,7 +129,12 @@ mod imp {
     }
 
     #[glib::derived_properties]
-    impl ObjectImpl for PigouneAssetPreview {}
+    impl ObjectImpl for PigouneAssetPreview {
+        fn constructed(&self) {
+            self.parent_constructed();
+            self.obj().follow_zoom();
+        }
+    }
     impl WidgetImpl for PigouneAssetPreview {}
     impl BinImpl for PigouneAssetPreview {}
 }
@@ -140,7 +188,11 @@ impl PigouneAssetPreview {
         {
             selection.disconnect(handler);
         }
-        imp.picture.set_paintable(None::<&gdk::Paintable>);
+        if let Some(sharpening) = imp.sharpening.take() {
+            sharpening.remove();
+        }
+        imp.showing.replace(None);
+        imp.zoom_view.show_image(None, 1, 1, false);
     }
 
     fn step(&self, offset: i32) {
@@ -169,27 +221,84 @@ impl PigouneAssetPreview {
             .borrow()
             .as_ref()
             .and_then(|thumbnails| thumbnails.remembered(asset.id()));
-        imp.picture.set_paintable(remembered.as_ref());
-        self.render(&asset);
+        let (width, height) = placeholder_size(&asset, remembered.as_ref());
+        let is_vector = asset.asset().format == AssetFormat::Svg;
+        imp.zoom_view
+            .show_image(remembered.as_ref(), width, height, is_vector);
+        imp.showing.replace(Some(asset.clone()));
+        self.load(&asset, self.render_pixels(), true);
     }
 
-    fn render(&self, asset: &PigouneAssetObject) {
+    fn load(&self, asset: &PigouneAssetObject, vector_pixels: u32, first_view: bool) {
         let imp = self.imp();
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
-        let pixels = self.render_pixels();
         let file = asset.file().to_path_buf();
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = preview)]
             self,
             async move {
-                if let Some(texture) = thumbnails::render(&file, pixels, &preview).await {
-                    preview.imp().picture.set_paintable(Some(&texture));
+                let Some(detailed) = thumbnails::load_detailed(&file, vector_pixels).await else {
+                    return;
+                };
+                let imp = preview.imp();
+                imp.vector_pixels.set(vector_pixels);
+                if first_view {
+                    imp.zoom_view.show_image(
+                        Some(&detailed.texture),
+                        detailed.width,
+                        detailed.height,
+                        detailed.is_vector,
+                    );
+                } else {
+                    imp.zoom_view.replace_texture(&detailed.texture);
                 }
             }
         ));
         imp.loading.replace(Some(loading));
+    }
+
+    fn follow_zoom(&self) {
+        let imp = self.imp();
+        imp.zoom_button.set_label(&zoom_text(1.0));
+        imp.zoom_view.connect_zoom_changed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |zoom| {
+                preview.imp().zoom_button.set_label(&zoom_text(zoom));
+                preview.sharpen_later(zoom);
+            }
+        ));
+    }
+
+    fn sharpen_later(&self, zoom: f64) {
+        let imp = self.imp();
+        if let Some(sharpening) = imp.sharpening.take() {
+            sharpening.remove();
+        }
+        let Some(asset) = imp.showing.borrow().clone() else {
+            return;
+        };
+        if asset.asset().format != AssetFormat::Svg {
+            return;
+        }
+        let wanted = vector_pixels_for(asset.asset().dimensions, zoom, self.scale_factor());
+        if wanted <= imp.vector_pixels.get() {
+            return;
+        }
+        let source = glib::timeout_add_local_once(
+            SHARPEN_DELAY,
+            glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                move || {
+                    preview.imp().sharpening.replace(None);
+                    preview.load(&asset, wanted, false);
+                }
+            ),
+        );
+        imp.sharpening.replace(Some(source));
     }
 
     fn render_pixels(&self) -> u32 {
@@ -206,6 +315,39 @@ impl Default for PigouneAssetPreview {
     fn default() -> Self {
         glib::Object::new()
     }
+}
+
+fn placeholder_size(asset: &PigouneAssetObject, thumbnail: Option<&gdk::Texture>) -> (u32, u32) {
+    asset
+        .asset()
+        .dimensions
+        .map(|dimensions| (dimensions.width(), dimensions.height()))
+        .or_else(|| {
+            thumbnail.map(|texture| {
+                (
+                    u32::try_from(texture.width()).unwrap_or(1),
+                    u32::try_from(texture.height()).unwrap_or(1),
+                )
+            })
+        })
+        .unwrap_or((1, 1))
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "the result is clamped to a few thousand pixels"
+)]
+fn vector_pixels_for(dimensions: Option<Dimensions>, zoom: f64, scale_factor: i32) -> u32 {
+    let longest = dimensions.map_or(SMALLEST_RENDER_PIXELS, |dimensions| {
+        dimensions.width().max(dimensions.height())
+    });
+    let wanted = (f64::from(longest) * zoom * f64::from(scale_factor)).ceil();
+    (wanted.max(0.0) as u32).clamp(SMALLEST_RENDER_PIXELS, LARGEST_VECTOR_PIXELS)
+}
+
+fn zoom_text(zoom: f64) -> String {
+    gettext("{percent}%").replace("{percent}", &format!("{:.0}", zoom * 100.0))
 }
 
 fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
@@ -226,7 +368,18 @@ fn position_text(position: u32, count: u32) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::neighbour;
+    use pigoune_core::Dimensions;
+
+    use super::{neighbour, vector_pixels_for};
+
+    #[test]
+    fn drawings_are_redrawn_for_the_zoom_within_limits() {
+        let icon = Dimensions::new(100, 50);
+        assert_eq!(vector_pixels_for(icon, 8.0, 1), 800);
+        assert_eq!(vector_pixels_for(icon, 8.0, 2), 1600);
+        assert_eq!(vector_pixels_for(icon, 1.0, 1), 256);
+        assert_eq!(vector_pixels_for(icon, 100.0, 1), 4096);
+    }
 
     #[test]
     fn navigation_moves_by_one_inside_the_grid() {

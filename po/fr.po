@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 09:38+0200\n"
+"POT-Creation-Date: 2026-10-02 09:45+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -559,27 +559,44 @@ msgstr "%-d %B %Y à %H:%M"
 msgid "Back to the Library"
 msgstr "Revenir à la bibliothèque"
 
-#: crates/pigoune-app/ui/asset-preview.blp:26
+#: crates/pigoune-app/ui/asset-preview.blp:21
+msgid "Zoom"
+msgstr "Zoom"
+
+#: crates/pigoune-app/ui/asset-preview.blp:36
 msgid "Transparent Background"
 msgstr "Fond transparent"
 
-#: crates/pigoune-app/ui/asset-preview.blp:42
+#: crates/pigoune-app/ui/asset-preview.blp:52
 msgid "White Background"
 msgstr "Fond blanc"
 
-#: crates/pigoune-app/ui/asset-preview.blp:58
+#: crates/pigoune-app/ui/asset-preview.blp:68
 msgid "Grey Background"
 msgstr "Fond gris"
 
-#: crates/pigoune-app/ui/asset-preview.blp:74
+#: crates/pigoune-app/ui/asset-preview.blp:84
 msgid "Black Background"
 msgstr "Fond noir"
 
-#: crates/pigoune-app/ui/asset-preview.blp:90
+#: crates/pigoune-app/ui/asset-preview.blp:100
 msgid "Checkerboard Background"
 msgstr "Fond en damier"
 
-#: crates/pigoune-app/src/asset_preview.rs:222
+#: crates/pigoune-app/ui/asset-preview.blp:135
+msgid "Fit to Window"
+msgstr "Ajuster à la fenêtre"
+
+#: crates/pigoune-app/ui/asset-preview.blp:140
+msgid "Actual Size"
+msgstr "Taille réelle (100 %)"
+
+#: crates/pigoune-app/src/asset_preview.rs:350
+#, rust-format
+msgid "{percent}%"
+msgstr "{percent} %"
+
+#: crates/pigoune-app/src/asset_preview.rs:364
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"

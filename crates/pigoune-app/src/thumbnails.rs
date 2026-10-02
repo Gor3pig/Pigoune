@@ -116,6 +116,33 @@ pub async fn render(
     Some(downscale(&texture, width, height, widget).unwrap_or(texture))
 }
 
+pub struct DetailedImage {
+    pub texture: gdk::Texture,
+    pub width: u32,
+    pub height: u32,
+    pub is_vector: bool,
+}
+
+pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedImage> {
+    let mut image = loader_for(file).load().await.ok()?;
+    let details = image.details();
+    let (width, height) = (details.width(), details.height());
+    let is_vector = image.mime_type().as_str() == SVG_MIME_TYPE;
+    let request = if is_vector {
+        let (scaled_width, scaled_height) = scaled_to(width, height, vector_pixels);
+        glycin::FrameRequest::new().scale(scaled_width, scaled_height)
+    } else {
+        glycin::FrameRequest::new()
+    };
+    let frame = image.specific_frame(request).await.ok()?;
+    Some(DetailedImage {
+        texture: frame.texture(),
+        width,
+        height,
+        is_vector,
+    })
+}
+
 fn fits_within(texture: &gdk::Texture, pixels: u32) -> bool {
     u32::try_from(texture.width()).is_ok_and(|width| width <= pixels)
         && u32::try_from(texture.height()).is_ok_and(|height| height <= pixels)

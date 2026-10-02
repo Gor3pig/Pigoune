@@ -17,6 +17,16 @@ template $PigouneAssetPreview: Adw.Bin {
       }
 
       [end]
+      MenuButton zoom_button {
+        tooltip-text: _("Zoom");
+        menu-model: zoom_menu;
+
+        styles [
+          "numeric",
+        ]
+      }
+
+      [end]
       Box {
         styles [
           "linked",
@@ -109,11 +119,7 @@ template $PigouneAssetPreview: Adw.Bin {
         "preview-surface",
       ]
 
-      Picture picture {
-        hexpand: true;
-        vexpand: true;
-        content-fit: scale_down;
-        can-shrink: true;
+      $PigouneZoomView zoom_view {
         margin-top: 24;
         margin-bottom: 24;
         margin-start: 24;
@@ -121,4 +127,18 @@ template $PigouneAssetPreview: Adw.Bin {
       }
     };
   };
+}
+
+menu zoom_menu {
+  section {
+    item {
+      label: _("Fit to Window");
+      action: "preview.zoom-fit";
+    }
+
+    item {
+      label: _("Actual Size");
+      action: "preview.zoom-actual";
+    }
+  }
 }
