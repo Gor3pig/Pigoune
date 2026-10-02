@@ -8,6 +8,7 @@ use gtk::{gdk, glib};
 
 use pigoune_core::{AssetFormat, Dimensions};
 
+use crate::animation;
 use crate::asset_object::PigouneAssetObject;
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -52,6 +53,7 @@ mod imp {
         pub selection_handler: RefCell<Option<glib::SignalHandlerId>>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
+        pub animation: RefCell<Option<glib::JoinHandle<()>>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
     }
 
@@ -183,6 +185,7 @@ impl PigouneAssetPreview {
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
+        self.stop_animation();
         if let (Some(selection), Some(handler)) =
             (imp.selection.take(), imp.selection_handler.take())
         {
@@ -226,7 +229,22 @@ impl PigouneAssetPreview {
         imp.zoom_view
             .show_image(remembered.as_ref(), width, height, is_vector);
         imp.showing.replace(Some(asset.clone()));
+        self.stop_animation();
         self.load(&asset, self.render_pixels(), true);
+    }
+
+    fn play_animation(&self, asset: &PigouneAssetObject) {
+        let zoom_view = self.imp().zoom_view.get();
+        let playing = animation::play(asset.file().to_path_buf(), move |frame| {
+            zoom_view.replace_texture(frame);
+        });
+        self.imp().animation.replace(Some(playing));
+    }
+
+    fn stop_animation(&self) {
+        if let Some(playing) = self.imp().animation.take() {
+            playing.abort();
+        }
     }
 
     fn load(&self, asset: &PigouneAssetObject, vector_pixels: u32, first_view: bool) {
@@ -235,6 +253,7 @@ impl PigouneAssetPreview {
             loading.abort();
         }
         let file = asset.file().to_path_buf();
+        let animated = asset.asset().is_animated.then(|| asset.clone());
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = preview)]
             self,
@@ -242,6 +261,9 @@ impl PigouneAssetPreview {
                 let Some(detailed) = thumbnails::load_detailed(&file, vector_pixels).await else {
                     return;
                 };
+                if let Some(animated) = animated.as_ref() {
+                    preview.play_animation(animated);
+                }
                 let imp = preview.imp();
                 imp.vector_pixels.set(vector_pixels);
                 if first_view {

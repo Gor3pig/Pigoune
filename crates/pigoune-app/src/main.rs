@@ -1,3 +1,4 @@
+mod animation;
 mod application;
 mod asset_details;
 mod asset_facts;

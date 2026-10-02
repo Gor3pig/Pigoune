@@ -8,10 +8,25 @@ template $PigouneAssetTile: Box {
   margin-start: 6;
   margin-end: 6;
 
-  Picture picture {
-    content-fit: contain;
-    can-shrink: true;
-    opacity: 0;
+  Overlay {
+    child: Picture picture {
+      content-fit: contain;
+      can-shrink: true;
+      opacity: 0;
+    };
+
+    [overlay]
+    Label gif_badge {
+      label: "GIF";
+      visible: false;
+      halign: end;
+      valign: end;
+      can-target: false;
+
+      styles [
+        "gif-badge",
+      ]
+    }
   }
 
   Label name_label {

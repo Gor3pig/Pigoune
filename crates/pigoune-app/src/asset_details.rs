@@ -4,6 +4,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{gdk, glib};
 
+use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::thumbnails::{self, ThumbnailCache};
@@ -111,6 +112,12 @@ impl PigouneAssetDetails {
         imp.preview
             .set_paintable(thumbnails.remembered(object.id()).as_ref());
         let file = object.file().to_path_buf();
+        if object.asset().is_animated {
+            let preview = imp.preview.get();
+            let playing = animation::play(file, move |frame| preview.set_paintable(Some(frame)));
+            imp.loading.replace(Some(playing));
+            return;
+        }
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = details)]
             self,
