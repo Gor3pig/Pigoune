@@ -12,6 +12,7 @@ mod import;
 mod import_plan;
 mod layout;
 mod schema;
+mod search;
 mod staging;
 mod tag;
 mod tag_command;
