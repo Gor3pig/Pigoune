@@ -1,6 +1,6 @@
 use rusqlite::{Connection, OptionalExtension, params};
 
-use super::{AssetId, Library, LibraryError, clock};
+use super::{AssetId, Change, Library, LibraryError, clock};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AssetCommand {
@@ -64,6 +64,18 @@ impl Library {
         &mut self,
         command: &AssetCommand,
     ) -> Result<AssetCommand, AssetError> {
+        let inverse = self.run_asset_command(command)?;
+        self.history.record(
+            Change::Asset(command.clone()),
+            Change::Asset(inverse.clone()),
+        );
+        Ok(inverse)
+    }
+
+    pub(super) fn run_asset_command(
+        &mut self,
+        command: &AssetCommand,
+    ) -> Result<AssetCommand, AssetError> {
         let transaction = self.connection.transaction()?;
         let inverse = apply(&transaction, command)?;
         transaction.commit()?;
@@ -99,29 +111,20 @@ fn set_favorite(
     assets: &[AssetId],
     favorite: bool,
 ) -> Result<AssetCommand, AssetError> {
-    let mut were_favorite = Vec::new();
-    let mut were_not = Vec::new();
+    let mut changed = Vec::new();
     for asset in assets {
-        if is_favorite(connection, *asset)? {
-            were_favorite.push(*asset);
-        } else {
-            were_not.push(*asset);
+        if is_favorite(connection, *asset)? != favorite {
+            changed.push(*asset);
         }
         connection.execute(
             "UPDATE assets SET is_favorite = ?2 WHERE id = ?1",
             params![asset, favorite],
         )?;
     }
-    Ok(AssetCommand::Batch(vec![
-        AssetCommand::SetFavorite {
-            assets: were_favorite,
-            favorite: true,
-        },
-        AssetCommand::SetFavorite {
-            assets: were_not,
-            favorite: false,
-        },
-    ]))
+    Ok(AssetCommand::SetFavorite {
+        assets: changed,
+        favorite: !favorite,
+    })
 }
 
 fn rename(connection: &Connection, asset: AssetId, name: &str) -> Result<AssetCommand, AssetError> {

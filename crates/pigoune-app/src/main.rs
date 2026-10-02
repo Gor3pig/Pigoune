@@ -27,6 +27,7 @@ mod sidebar_row;
 mod tag_editor;
 mod tag_input;
 mod thumbnails;
+mod undo_message;
 mod view_setting;
 mod window;
 mod zoom_math;

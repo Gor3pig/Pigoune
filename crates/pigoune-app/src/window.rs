@@ -23,6 +23,7 @@ use crate::settings;
 use crate::sidebar::SidebarContent;
 use crate::tag_editor::SharedTag;
 use crate::thumbnails::THUMBNAIL_PIXELS;
+use crate::undo_message;
 use crate::view_setting;
 
 const WELCOME_PAGE: &str = "welcome";
@@ -55,7 +56,9 @@ const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
 const EMPTY_TRASH_RESPONSE: &str = "empty";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
-const OPEN_LIBRARY_ACTIONS: [&str; 12] = [
+const UNDO_ACTION: &str = "win.undo";
+const OPEN_LIBRARY_ACTIONS: [&str; 13] = [
+    UNDO_ACTION,
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
@@ -111,7 +114,7 @@ mod imp {
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, REMOVE_FROM_COLLECTION_ACTION,
         RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
-        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
+        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION,
         collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
@@ -167,6 +170,9 @@ mod imp {
         });
         class.install_action(EMPTY_TRASH_ACTION, None, |window, _, _| {
             window.ask_to_empty_trash();
+        });
+        class.install_action(UNDO_ACTION, None, |window, _, _| {
+            window.undo();
         });
         class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| window.open_preview(None));
@@ -840,6 +846,43 @@ impl PigouneWindow {
         self.refresh_assets();
     }
 
+    fn undo(&self) {
+        if self.undo_typing() {
+            return;
+        }
+        let undone = self.imp().library.borrow_mut().as_mut().map(|library| {
+            library
+                .undo()
+                .map(|change| change.map(|change| undo_message::describe(&change, library)))
+        });
+        match undone {
+            Some(Ok(Some(message))) => {
+                self.refresh_sidebar();
+                self.refresh_grid();
+                self.show_toast(&message);
+            }
+            Some(Ok(None)) => self.show_toast(&gettext("Nothing to undo")),
+            Some(Err(error)) => {
+                self.refresh_sidebar();
+                self.refresh_grid();
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Undo")),
+                    Some(&error_messages::describe_undo(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
+    }
+
+    fn undo_typing(&self) -> bool {
+        GtkWindowExt::focus(self).is_some_and(|focus| {
+            (focus.is::<gtk::Text>() || focus.is::<gtk::TextView>())
+                && focus.activate_action("text.undo", None).is_ok()
+        })
+    }
+
     fn selected_ids(&self) -> Vec<AssetId> {
         self.imp()
             .asset_grid
@@ -1210,8 +1253,17 @@ impl PigouneWindow {
             .chain(&summary.already_known)
             .copied()
             .collect();
-        if !assets.is_empty() {
-            self.apply_tag_command(&TagCommand::Link { tag, assets });
+        if assets.is_empty() {
+            return;
+        }
+        let tagged = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.tag_imported(tag, &assets));
+        if let Some(Err(error)) = tagged {
+            self.show_tag_error(&error);
         }
     }
 

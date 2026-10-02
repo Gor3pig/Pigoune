@@ -1,7 +1,7 @@
 use rusqlite::{Connection, OptionalExtension, params};
 
 use super::tag::{self, find_by_name};
-use super::{AssetId, Library, LibraryError, TagId};
+use super::{AssetId, Change, Library, LibraryError, TagId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TagCommand {
@@ -37,6 +37,21 @@ impl From<rusqlite::Error> for TagError {
 
 impl Library {
     pub fn apply_tag_command(&mut self, command: &TagCommand) -> Result<TagCommand, TagError> {
+        let inverse = self.run_tag_command(command)?;
+        self.history
+            .record(Change::Tag(command.clone()), Change::Tag(inverse.clone()));
+        Ok(inverse)
+    }
+
+    pub fn tag_imported(&mut self, tag: TagId, assets: &[AssetId]) -> Result<(), TagError> {
+        self.run_tag_command(&TagCommand::Link {
+            tag,
+            assets: assets.to_vec(),
+        })?;
+        Ok(())
+    }
+
+    pub(super) fn run_tag_command(&mut self, command: &TagCommand) -> Result<TagCommand, TagError> {
         let transaction = self.connection.transaction()?;
         let inverse = apply(&transaction, command)?;
         transaction.commit()?;

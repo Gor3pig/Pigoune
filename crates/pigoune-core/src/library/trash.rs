@@ -22,6 +22,7 @@ impl Library {
             [],
         )?;
         transaction.commit()?;
+        self.history.clear();
         for asset in &removed {
             forget_files(&self.root, *asset);
         }

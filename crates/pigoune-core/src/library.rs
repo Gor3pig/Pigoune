@@ -6,6 +6,7 @@ mod collection;
 mod collection_command;
 mod content;
 mod error;
+mod history;
 mod id;
 mod import;
 mod import_plan;
@@ -23,6 +24,7 @@ use std::path::{Path, PathBuf};
 use rusqlite::{Connection, OpenFlags};
 use uuid::Uuid;
 
+use history::History;
 use staging::StagingDir;
 
 pub use asset::Asset;
@@ -33,6 +35,7 @@ pub use batch_import::{
 pub use collection::{Collection, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use error::{CollectionError, ImportError, LibraryError};
+pub use history::{Change, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, TagId};
 pub use import::ImportOutcome;
 pub use layout::{
@@ -47,6 +50,7 @@ pub use view::{AssetView, ViewCounts};
 pub struct Library {
     root: PathBuf,
     connection: Connection,
+    history: History,
     _exclusive_access: Option<File>,
 }
 
@@ -101,6 +105,7 @@ impl Library {
         Ok(Self {
             root: root.to_path_buf(),
             connection,
+            history: History::default(),
             _exclusive_access: exclusive_access,
         })
     }

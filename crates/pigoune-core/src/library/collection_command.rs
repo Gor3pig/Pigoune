@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use rusqlite::{Connection, OptionalExtension, params};
 
 use super::collection::{self, ensure_name_is_free, is_usable_collection, valid_name};
-use super::{AssetId, CollectionError, CollectionId, Library, LibraryError, clock};
+use super::{AssetId, Change, CollectionError, CollectionId, Library, LibraryError, clock};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CollectionCommand {
@@ -61,6 +61,18 @@ impl Library {
     }
 
     pub fn apply_collection_command(
+        &mut self,
+        command: &CollectionCommand,
+    ) -> Result<CollectionCommand, CollectionError> {
+        let inverse = self.run_collection_command(command)?;
+        self.history.record(
+            Change::Collection(command.clone()),
+            Change::Collection(inverse.clone()),
+        );
+        Ok(inverse)
+    }
+
+    pub(super) fn run_collection_command(
         &mut self,
         command: &CollectionCommand,
     ) -> Result<CollectionCommand, CollectionError> {
