@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 use rusqlite::ErrorCode;
 
+use super::CollectionId;
+
 #[derive(Debug, thiserror::Error)]
 pub enum LibraryError {
     #[error("the library name is empty or contains forbidden characters")]
@@ -37,8 +39,26 @@ pub enum ImportError {
     UnsupportedFormat(PathBuf),
     #[error("{0} could not be read")]
     Unreadable(PathBuf),
+    #[error("the collection {0} does not exist")]
+    CollectionNotFound(CollectionId),
     #[error(transparent)]
     Library(#[from] LibraryError),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CollectionError {
+    #[error("a collection name cannot be empty")]
+    InvalidName,
+    #[error("the collection {0} does not exist")]
+    NotFound(CollectionId),
+    #[error(transparent)]
+    Library(#[from] LibraryError),
+}
+
+impl From<rusqlite::Error> for CollectionError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::Library(error.into())
+    }
 }
 
 impl From<io::Error> for ImportError {

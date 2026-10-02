@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use pigoune_core::{
-    Asset, AssetFormat, AssetId, DATABASE_FILE_NAME, Dimensions, FILES_DIR_NAME, ImportError,
-    ImportOutcome, Library, LibraryError,
+    Asset, AssetFormat, AssetId, CollectionId, DATABASE_FILE_NAME, Dimensions, FILES_DIR_NAME,
+    ImportError, ImportOutcome, Library, LibraryError,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -40,13 +40,46 @@ impl Fixture {
     }
 
     fn import(&mut self, source: &Path) -> Result<ImportOutcome, ImportError> {
-        self.library.import_file(source)
+        self.library.import_file(source, None)
+    }
+
+    fn import_into(
+        &mut self,
+        source: &Path,
+        target: CollectionId,
+    ) -> Result<ImportOutcome, ImportError> {
+        self.library.import_file(source, Some(target))
+    }
+
+    fn collection(&mut self, name: &str) -> CollectionId {
+        self.library
+            .create_collection(name, None)
+            .expect("collection is created")
+    }
+
+    fn collections_of(&self, asset: AssetId) -> Vec<CollectionId> {
+        self.library
+            .collections_of(asset)
+            .expect("collections are read")
+    }
+
+    fn put_in_trash(&self, asset: AssetId) {
+        self.database()
+            .execute(
+                "UPDATE assets SET trashed_at_unix_ms = 1 WHERE id = ?1",
+                [asset.to_string()],
+            )
+            .expect("asset trashed");
+    }
+
+    fn database(&self) -> Connection {
+        Connection::open(self.library.root().join(DATABASE_FILE_NAME)).expect("database opens")
     }
 
     fn import_new(&mut self, source: &Path) -> Asset {
         match self.import(source).expect("import succeeds") {
             ImportOutcome::Imported(id) => self.asset(id),
-            ImportOutcome::AlreadyPresent(_) => panic!("the file was unexpectedly a duplicate"),
+            outcome => panic!("the file was unexpectedly a duplicate: {outcome:?}"),
         }
     }
 
@@ -77,8 +110,7 @@ impl Fixture {
     }
 
     fn asset_count(&self) -> u32 {
-        Connection::open(self.library.root().join(DATABASE_FILE_NAME))
-            .expect("database opens")
+        self.database()
             .query_row("SELECT count(*) FROM assets", [], |row| row.get(0))
             .expect("assets counted")
     }
@@ -312,4 +344,148 @@ fn leftovers_of_an_interrupted_import_are_removed_on_opening() {
     let _reopened = Library::open(&root).expect("library reopens");
 
     assert!(!leftover.exists());
+}
+
+#[test]
+fn a_new_file_imported_into_a_collection_is_placed_in_it() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+
+    let outcome = fixture
+        .import_into(&fixture.sample("red-dot.png"), tech)
+        .expect("import succeeds");
+
+    let ImportOutcome::Imported(id) = outcome else {
+        panic!("unexpected outcome {outcome:?}");
+    };
+    assert_eq!(fixture.collections_of(id), [tech]);
+}
+
+#[test]
+fn a_file_imported_without_a_collection_stays_unclassified() {
+    let mut fixture = Fixture::new();
+    fixture.collection("Tech");
+
+    let asset = fixture.import_new(&fixture.sample("red-dot.png"));
+
+    assert!(fixture.collections_of(asset.id).is_empty());
+}
+
+#[test]
+fn a_duplicate_imported_into_another_collection_is_added_to_it() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Brands");
+    let tech = fixture.collection("Tech");
+    let source = fixture.sample("red-dot.png");
+    let Ok(ImportOutcome::Imported(id)) = fixture.import_into(&source, brands) else {
+        panic!("first import fails");
+    };
+
+    let outcome = fixture.import_into(&source, tech).expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::AddedToCollection(id));
+    let mut expected = vec![brands, tech];
+    expected.sort();
+    assert_eq!(fixture.collections_of(id), expected);
+    assert_eq!(fixture.stored_folders(), [id.to_string()]);
+}
+
+#[test]
+fn a_duplicate_already_in_the_collection_changes_nothing() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    let source = fixture.sample("red-dot.png");
+    let Ok(ImportOutcome::Imported(id)) = fixture.import_into(&source, tech) else {
+        panic!("first import fails");
+    };
+
+    let outcome = fixture.import_into(&source, tech).expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::AlreadyPresent(id));
+    assert_eq!(fixture.collections_of(id), [tech]);
+}
+
+#[test]
+fn a_duplicate_imported_without_a_collection_keeps_its_collections() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    let source = fixture.sample("red-dot.png");
+    let Ok(ImportOutcome::Imported(id)) = fixture.import_into(&source, tech) else {
+        panic!("first import fails");
+    };
+
+    let outcome = fixture.import(&source).expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::AlreadyPresent(id));
+    assert_eq!(fixture.collections_of(id), [tech]);
+}
+
+#[test]
+fn a_duplicate_in_the_trash_is_restored_with_its_collections() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    let source = fixture.sample("red-dot.png");
+    let Ok(ImportOutcome::Imported(id)) = fixture.import_into(&source, tech) else {
+        panic!("first import fails");
+    };
+    fixture.put_in_trash(id);
+
+    let outcome = fixture.import(&source).expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::RestoredFromTrash(id));
+    assert_eq!(fixture.asset(id).trashed_at_unix_ms, None);
+    assert_eq!(fixture.collections_of(id), [tech]);
+    assert_eq!(fixture.stored_folders(), [id.to_string()]);
+}
+
+#[test]
+fn a_duplicate_in_the_trash_imported_into_a_collection_is_restored_and_added() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    let source = fixture.sample("red-dot.png");
+    let asset = fixture.import_new(&source);
+    fixture.put_in_trash(asset.id);
+
+    let outcome = fixture.import_into(&source, tech).expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::RestoredFromTrash(asset.id));
+    assert_eq!(fixture.asset(asset.id).trashed_at_unix_ms, None);
+    assert_eq!(fixture.collections_of(asset.id), [tech]);
+}
+
+#[test]
+fn importing_into_a_missing_collection_is_refused_without_leaving_anything() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    fixture
+        .database()
+        .execute("DELETE FROM collections", [])
+        .expect("collection removed");
+
+    let result = fixture.import_into(&fixture.sample("red-dot.png"), tech);
+
+    assert!(
+        matches!(result, Err(ImportError::CollectionNotFound(id)) if id == tech),
+        "{result:?}"
+    );
+    assert!(fixture.stored_folders().is_empty());
+    assert_eq!(fixture.asset_count(), 0);
+}
+
+#[test]
+fn importing_into_a_trashed_collection_is_refused() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    fixture
+        .database()
+        .execute("UPDATE collections SET trashed_at_unix_ms = 1", [])
+        .expect("collection trashed");
+
+    let result = fixture.import_into(&fixture.sample("red-dot.png"), tech);
+
+    assert!(
+        matches!(result, Err(ImportError::CollectionNotFound(id)) if id == tech),
+        "{result:?}"
+    );
+    assert_eq!(fixture.asset_count(), 0);
 }

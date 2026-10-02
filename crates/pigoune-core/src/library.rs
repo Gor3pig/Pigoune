@@ -1,6 +1,9 @@
 mod asset;
+mod clock;
+mod collection;
 mod content;
 mod error;
+mod id;
 mod import;
 mod layout;
 mod schema;
@@ -14,8 +17,10 @@ use uuid::Uuid;
 
 use staging::StagingDir;
 
-pub use asset::{Asset, AssetId};
-pub use error::{ImportError, LibraryError};
+pub use asset::Asset;
+pub use collection::Collection;
+pub use error::{CollectionError, ImportError, LibraryError};
+pub use id::{AssetId, CollectionId};
 pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,

@@ -1,29 +1,11 @@
-use std::fmt;
 use std::path::PathBuf;
 
+use super::{AssetId, Library, LibraryError};
+use crate::media::{AssetFormat, Dimensions};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{OptionalExtension, Row};
-use uuid::Uuid;
-
-use super::{Library, LibraryError};
-use crate::media::{AssetFormat, Dimensions};
 
 const EMBEDDED_SIZES_SEPARATOR: char = ',';
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct AssetId(Uuid);
-
-impl AssetId {
-    pub(super) fn generate() -> Self {
-        Self(Uuid::now_v7())
-    }
-}
-
-impl fmt::Display for AssetId {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.hyphenated().fmt(formatter)
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asset {
@@ -38,6 +20,7 @@ pub struct Asset {
     pub is_animated: bool,
     pub embedded_sizes: Vec<Dimensions>,
     pub added_at_unix_ms: i64,
+    pub trashed_at_unix_ms: Option<i64>,
 }
 
 impl Library {
@@ -46,7 +29,8 @@ impl Library {
             .connection
             .query_row(
                 "SELECT id, display_name, original_file_name, stored_path, format, width, height,
-                        byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms
+                        byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms,
+                        trashed_at_unix_ms
                  FROM assets WHERE id = ?1",
                 [id],
                 asset_from_row,
@@ -72,6 +56,7 @@ fn asset_from_row(row: &Row) -> rusqlite::Result<Asset> {
         is_animated: row.get("is_animated")?,
         embedded_sizes: row.get::<_, EmbeddedSizes>("embedded_sizes")?.0,
         added_at_unix_ms: row.get("added_at_unix_ms")?,
+        trashed_at_unix_ms: row.get("trashed_at_unix_ms")?,
     })
 }
 
@@ -100,20 +85,6 @@ impl FromSql for EmbeddedSizes {
             .collect::<Result<_, _>>()
             .map(Self)
             .map_err(|_| FromSqlError::InvalidType)
-    }
-}
-
-impl ToSql for AssetId {
-    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(ToSqlOutput::from(self.to_string()))
-    }
-}
-
-impl FromSql for AssetId {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        Uuid::parse_str(value.as_str()?)
-            .map(Self)
-            .map_err(|error| FromSqlError::Other(Box::new(error)))
     }
 }
 
