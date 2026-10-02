@@ -309,3 +309,55 @@ fn a_refused_undo_is_forgotten_and_changes_nothing() {
     assert!(fixture.undo().is_some());
     assert_eq!(fixture.name_of(dot), "red-dot");
 }
+
+#[test]
+fn each_recorded_change_gets_a_new_stamp() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    assert_eq!(fixture.library.latest_change(), None);
+
+    fixture.apply(&trash(&[dot]));
+    let first = fixture.library.latest_change();
+    fixture.apply(&trash(&[dot]));
+    assert_eq!(fixture.library.latest_change(), first);
+
+    fixture.undo();
+    fixture.apply(&trash(&[dot]));
+    let second = fixture.library.latest_change();
+
+    assert!(first.is_some());
+    assert!(second.is_some());
+    assert_ne!(first, second);
+}
+
+#[test]
+fn a_change_is_undone_by_its_stamp_only_while_it_is_the_latest() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.apply(&trash(&[dot]));
+    let trashing = fixture
+        .library
+        .latest_change()
+        .expect("trashing is recorded");
+    let svg = fixture.import("github-mark.svg", None);
+    let favorite = AssetCommand::SetFavorite {
+        assets: vec![svg],
+        favorite: true,
+    };
+    fixture.apply(&favorite);
+
+    let stale = fixture
+        .library
+        .undo_change(trashing)
+        .expect("stale undo is harmless");
+    assert_eq!(stale, None);
+    assert_eq!(fixture.shown(AssetView::Trash), vec![dot]);
+
+    fixture.undo();
+    let undone = fixture
+        .library
+        .undo_change(trashing)
+        .expect("latest change is undone");
+    assert_eq!(undone, Some(Change::Asset(trash(&[dot]))));
+    assert_eq!(fixture.shown(AssetView::Trash), Vec::<AssetId>::new());
+}

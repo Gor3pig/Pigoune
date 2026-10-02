@@ -5,9 +5,9 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetCommand, AssetId, AssetView, CollectionCommand, CollectionId, CollectionRemoval,
-    ImportError, ImportSummary, Library, LibraryError, Tag, TagCommand, TagError, TagId, TextField,
-    library_display_name,
+    AssetCommand, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId,
+    CollectionRemoval, ImportError, ImportSummary, Library, LibraryError, Tag, TagCommand,
+    TagError, TagId, TextField, UndoError, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -101,7 +101,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::prelude::*;
     use gtk::{gio, glib};
-    use pigoune_core::{AssetView, Library};
+    use pigoune_core::{AssetView, ChangeStamp, Library};
 
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
@@ -156,6 +156,8 @@ mod imp {
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
+        pub fresh_change: Cell<Option<ChangeStamp>>,
+        pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
     }
 
     fn install_asset_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
@@ -577,6 +579,7 @@ impl PigouneWindow {
             &library.root().to_string_lossy(),
         );
         imp.asset_grid.forget_thumbnails();
+        self.forget_undo_toast();
         imp.library.replace(Some(library));
         imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
@@ -587,6 +590,7 @@ impl PigouneWindow {
 
     fn close_library(&self) {
         let imp = self.imp();
+        self.forget_undo_toast();
         imp.library.replace(None);
         imp.asset_grid.show_assets(&[]);
         imp.asset_grid.forget_thumbnails();
@@ -790,7 +794,7 @@ impl PigouneWindow {
                 u32::try_from(count).unwrap_or(u32::MAX),
             )
         };
-        self.show_toast(&message.replace("{count}", &count.to_string()));
+        self.show_undoable_toast(&message.replace("{count}", &count.to_string()));
     }
 
     fn ask_to_empty_trash(&self) {
@@ -834,34 +838,113 @@ impl PigouneWindow {
     }
 
     fn empty_trash(&self) {
-        let emptied = self
-            .imp()
-            .library
-            .borrow_mut()
-            .as_mut()
-            .map(Library::empty_trash);
+        let emptied = self.change_library(Library::empty_trash);
         if let Some(Err(error)) = emptied {
             self.show_library_error(&error);
         }
         self.refresh_assets();
     }
 
+    fn change_library<R>(&self, change: impl FnOnce(&mut Library) -> R) -> Option<R> {
+        let imp = self.imp();
+        let (result, before, after) = {
+            let mut library = imp.library.borrow_mut();
+            let library = library.as_mut()?;
+            let before = library.latest_change();
+            let result = change(library);
+            (result, before, library.latest_change())
+        };
+        imp.fresh_change.set(after.filter(|_| after != before));
+        self.dismiss_stale_undo_toast(after);
+        Some(result)
+    }
+
+    fn dismiss_stale_undo_toast(&self, latest: Option<ChangeStamp>) {
+        let imp = self.imp();
+        let stale = imp
+            .undo_toast
+            .borrow()
+            .as_ref()
+            .is_some_and(|(_, stamp)| latest != Some(*stamp));
+        if stale && let Some((toast, _)) = imp.undo_toast.take() {
+            toast.dismiss();
+        }
+    }
+
+    fn show_undoable_toast(&self, text: &str) {
+        let imp = self.imp();
+        let Some(stamp) = imp.fresh_change.get() else {
+            self.show_toast(text);
+            return;
+        };
+        let toast = adw::Toast::new(text);
+        toast.set_button_label(Some(&gettext("_Undo")));
+        toast.connect_button_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.undo_change(stamp)
+        ));
+        toast.connect_dismissed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |dismissed| {
+                let imp = window.imp();
+                let is_current = imp
+                    .undo_toast
+                    .borrow()
+                    .as_ref()
+                    .is_some_and(|(current, _)| current == dismissed);
+                if is_current {
+                    imp.undo_toast.take();
+                }
+            }
+        ));
+        if let Some((previous, _)) = imp.undo_toast.replace(Some((toast.clone(), stamp))) {
+            previous.dismiss();
+        }
+        imp.toast_overlay.add_toast(toast);
+    }
+
+    fn forget_undo_toast(&self) {
+        if let Some((toast, _)) = self.imp().undo_toast.take() {
+            toast.dismiss();
+        }
+    }
+
     fn undo(&self) {
         if self.undo_typing() {
             return;
         }
-        let undone = self.imp().library.borrow_mut().as_mut().map(|library| {
+        let undone = self.change_library(|library| {
             library
                 .undo()
                 .map(|change| change.map(|change| undo_message::describe(&change, library)))
         });
+        self.show_undo_outcome(undone, true);
+    }
+
+    fn undo_change(&self, stamp: ChangeStamp) {
+        let undone = self.change_library(|library| {
+            library
+                .undo_change(stamp)
+                .map(|change| change.map(|change| undo_message::describe(&change, library)))
+        });
+        self.show_undo_outcome(undone, false);
+    }
+
+    fn show_undo_outcome(
+        &self,
+        undone: Option<Result<Option<String>, UndoError>>,
+        tell_when_nothing: bool,
+    ) {
         match undone {
             Some(Ok(Some(message))) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
                 self.show_toast(&message);
             }
-            Some(Ok(None)) => self.show_toast(&gettext("Nothing to undo")),
+            Some(Ok(None)) if tell_when_nothing => self.show_toast(&gettext("Nothing to undo")),
+            Some(Ok(None)) | None => {}
             Some(Err(error)) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
@@ -872,7 +955,6 @@ impl PigouneWindow {
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
                 alert.present(Some(self));
             }
-            None => {}
         }
     }
 
@@ -917,12 +999,7 @@ impl PigouneWindow {
     }
 
     fn apply_asset_command(&self, command: &AssetCommand) -> bool {
-        let applied = self
-            .imp()
-            .library
-            .borrow_mut()
-            .as_mut()
-            .map(|library| library.apply_asset_command(command));
+        let applied = self.change_library(|library| library.apply_asset_command(command));
         match applied {
             Some(Ok(_)) => true,
             Some(Err(error)) => {
@@ -1061,12 +1138,7 @@ impl PigouneWindow {
     }
 
     fn apply_collection_change(&self, command: &CollectionCommand, assets: &[AssetId]) -> bool {
-        let applied = self
-            .imp()
-            .library
-            .borrow_mut()
-            .as_mut()
-            .map(|library| library.apply_collection_command(command));
+        let applied = self.change_library(|library| library.apply_collection_command(command));
         match applied {
             Some(Ok(_)) => {}
             Some(Err(error)) => {
@@ -1127,7 +1199,7 @@ impl PigouneWindow {
         };
         let name = self.collection_name(to).unwrap_or_default();
         if self.apply_collection_change(&command, assets) {
-            self.show_toast(
+            self.show_undoable_toast(
                 &message
                     .replace("{count}", &count.to_string())
                     .replace("{name}", &name),
@@ -1146,7 +1218,7 @@ impl PigouneWindow {
         self.refresh_selected_tags();
         self.refresh_sidebar();
         self.drop_assets_leaving_view(assets);
-        self.show_toast(
+        self.show_undoable_toast(
             &ngettext(
                 "Tag “{name}” added to {count} resource",
                 "Tag “{name}” added to {count} resources",
@@ -1180,7 +1252,7 @@ impl PigouneWindow {
         let Some(plan) = collection_drop::plan(&tree, dragged, drop, custom_order_shown) else {
             return;
         };
-        let applied = imp.library.borrow_mut().as_mut().map(|library| {
+        let applied = self.change_library(|library| {
             library.apply_collection_command(&CollectionCommand::Batch(plan.commands))?;
             let parent = library.collection(dragged)?.and_then(|moved| moved.parent);
             Ok::<_, pigoune_core::CollectionError>(ancestors(library, parent))
@@ -1256,24 +1328,14 @@ impl PigouneWindow {
         if assets.is_empty() {
             return;
         }
-        let tagged = self
-            .imp()
-            .library
-            .borrow_mut()
-            .as_mut()
-            .map(|library| library.tag_imported(tag, &assets));
+        let tagged = self.change_library(|library| library.tag_imported(tag, &assets));
         if let Some(Err(error)) = tagged {
             self.show_tag_error(&error);
         }
     }
 
     fn apply_tag_command(&self, command: &TagCommand) -> bool {
-        let applied = self
-            .imp()
-            .library
-            .borrow_mut()
-            .as_mut()
-            .map(|library| library.apply_tag_command(command));
+        let applied = self.change_library(|library| library.apply_tag_command(command));
         match applied {
             Some(Ok(_)) => true,
             Some(Err(error)) => {
@@ -1325,7 +1387,7 @@ impl PigouneWindow {
     }
 
     fn rename_tag(&self, tag: TagId, name: &str) -> Result<(), String> {
-        let renamed = self.imp().library.borrow_mut().as_mut().map(|library| {
+        let renamed = self.change_library(|library| {
             library.apply_tag_command(&TagCommand::Rename {
                 tag,
                 name: name.to_owned(),
@@ -1559,7 +1621,7 @@ impl PigouneWindow {
     }
 
     fn create_collection(&self, name: &str, parent: Option<CollectionId>) -> Result<(), String> {
-        let created = self.imp().library.borrow_mut().as_mut().map(|library| {
+        let created = self.change_library(|library| {
             let id = library.create_collection(name, parent)?;
             Ok((id, ancestors(library, parent)))
         });
@@ -1616,16 +1678,15 @@ impl PigouneWindow {
     }
 
     fn delete_collection(&self, id: CollectionId, name: &str) {
-        let deleted = self
-            .imp()
-            .library
-            .borrow_mut()
-            .as_mut()
-            .map(|library| library.apply_collection_command(&CollectionCommand::Trash { id }));
+        let deleted = self.change_library(|library| {
+            library.apply_collection_command(&CollectionCommand::Trash { id })
+        });
         match deleted {
             Some(Ok(_)) => {
                 self.refresh_assets();
-                self.show_toast(&gettext("Collection “{name}” deleted").replace("{name}", name));
+                self.show_undoable_toast(
+                    &gettext("Collection “{name}” deleted").replace("{name}", name),
+                );
             }
             Some(Err(error)) => self.show_collection_error(&error),
             None => {}
@@ -1668,7 +1729,7 @@ impl PigouneWindow {
     }
 
     fn rename_collection(&self, id: CollectionId, name: &str) -> Result<(), String> {
-        let renamed = self.imp().library.borrow_mut().as_mut().map(|library| {
+        let renamed = self.change_library(|library| {
             library.apply_collection_command(&CollectionCommand::Rename {
                 id,
                 name: name.to_owned(),
@@ -1738,7 +1799,7 @@ impl PigouneWindow {
             return;
         }
         let favorite = !selected.iter().all(PigouneAssetObject::favorite);
-        let applied = imp.library.borrow_mut().as_mut().map(|library| {
+        let applied = self.change_library(|library| {
             library.apply_asset_command(&AssetCommand::SetFavorite {
                 assets: selected.iter().map(PigouneAssetObject::id).collect(),
                 favorite,

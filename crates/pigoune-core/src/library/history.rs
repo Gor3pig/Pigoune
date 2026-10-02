@@ -13,6 +13,9 @@ pub enum Change {
     Tag(TagCommand),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ChangeStamp(u64);
+
 #[derive(Debug, thiserror::Error)]
 pub enum UndoError {
     #[error(transparent)]
@@ -26,10 +29,12 @@ pub enum UndoError {
 #[derive(Debug, Default)]
 pub struct History {
     entries: VecDeque<Entry>,
+    recorded: u64,
 }
 
 #[derive(Debug)]
 struct Entry {
+    stamp: ChangeStamp,
     done: Change,
     inverse: Change,
 }
@@ -42,7 +47,12 @@ impl History {
         if self.entries.len() == HISTORY_LIMIT {
             self.entries.pop_front();
         }
-        self.entries.push_back(Entry { done, inverse });
+        self.recorded += 1;
+        self.entries.push_back(Entry {
+            stamp: ChangeStamp(self.recorded),
+            done,
+            inverse,
+        });
     }
 
     pub fn clear(&mut self) {
@@ -54,6 +64,19 @@ impl Library {
     #[must_use]
     pub fn can_undo(&self) -> bool {
         !self.history.entries.is_empty()
+    }
+
+    #[must_use]
+    pub fn latest_change(&self) -> Option<ChangeStamp> {
+        self.history.entries.back().map(|entry| entry.stamp)
+    }
+
+    pub fn undo_change(&mut self, stamp: ChangeStamp) -> Result<Option<Change>, UndoError> {
+        if self.latest_change() == Some(stamp) {
+            self.undo()
+        } else {
+            Ok(None)
+        }
     }
 
     pub fn undo(&mut self) -> Result<Option<Change>, UndoError> {

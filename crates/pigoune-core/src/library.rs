@@ -35,7 +35,7 @@ pub use batch_import::{
 pub use collection::{Collection, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use error::{CollectionError, ImportError, LibraryError};
-pub use history::{Change, HISTORY_LIMIT, UndoError};
+pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, TagId};
 pub use import::ImportOutcome;
 pub use layout::{
