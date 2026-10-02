@@ -11,6 +11,7 @@ use pigoune_core::{
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_editor::SharedCollection;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
@@ -319,6 +320,11 @@ impl PigouneWindow {
             #[weak(rename_to = window)]
             self,
             move |view| window.show_view(view)
+        ));
+        self.imp().sidebar.connect_collection_dropped(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |dragged, drop| window.drop_collection(dragged, drop)
         ));
         self.imp().sidebar.connect_assets_dropped(glib::clone!(
             #[weak(rename_to = window)]
@@ -852,6 +858,55 @@ impl PigouneWindow {
             .replace("{count}", &count.to_string())
             .replace("{name}", &self.tag_name(tag).unwrap_or_default()),
         );
+    }
+
+    fn drop_collection(&self, dragged: CollectionId, drop: CollectionDrop) {
+        let imp = self.imp();
+        let order = self.collection_order();
+        let custom_order_shown = order.criterion == CollectionCriterion::Custom && !order.reversed;
+        let collections = match imp
+            .library
+            .borrow()
+            .as_ref()
+            .map(Library::visible_collections)
+        {
+            Some(Ok(collections)) => collections,
+            Some(Err(error)) => {
+                self.show_library_error(&error);
+                return;
+            }
+            None => return,
+        };
+        let tree = CollectionTree::new(collections, order, |name: &str| {
+            glib::FilenameCollationKey::from(name)
+        });
+        let Some(plan) = collection_drop::plan(&tree, dragged, drop, custom_order_shown) else {
+            return;
+        };
+        let applied = imp.library.borrow_mut().as_mut().map(|library| {
+            library.apply_collection_command(&CollectionCommand::Batch(plan.commands))?;
+            let parent = library.collection(dragged)?.and_then(|moved| moved.parent);
+            Ok::<_, pigoune_core::CollectionError>(ancestors(library, parent))
+        });
+        let reveal = match applied {
+            Some(Ok(reveal)) => reveal,
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Move the Collection")),
+                    Some(&error_messages::describe_collection(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+                return;
+            }
+            None => return,
+        };
+        if plan.switches_to_custom_order {
+            settings::store_bool(self.settings(), settings::COLLECTION_SORT_REVERSED, false);
+            settings::store_string(self.settings(), settings::COLLECTION_SORT, "custom");
+        }
+        self.refresh_sidebar_revealing(reveal);
+        self.refresh_grid();
     }
 
     fn collection_name(&self, id: CollectionId) -> Option<String> {

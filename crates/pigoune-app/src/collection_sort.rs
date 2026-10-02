@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-use pigoune_core::{Collection, CollectionId};
+use pigoune_core::{Collection, CollectionCommand, CollectionId};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum CollectionCriterion {
@@ -90,6 +90,29 @@ impl CollectionTree {
 
     pub fn children_of(&self, parent: Option<CollectionId>) -> &[Collection] {
         self.children.get(&parent).map_or(&[], Vec::as_slice)
+    }
+
+    pub fn find(&self, id: CollectionId) -> Option<&Collection> {
+        self.children
+            .values()
+            .flatten()
+            .find(|collection| collection.id == id)
+    }
+
+    pub fn arrangements(&self) -> Vec<CollectionCommand> {
+        let mut parents: Vec<Option<CollectionId>> = self.children.keys().copied().collect();
+        parents.sort();
+        parents
+            .into_iter()
+            .map(|parent| CollectionCommand::Arrange {
+                parent,
+                order: self
+                    .children_of(parent)
+                    .iter()
+                    .map(|collection| collection.id)
+                    .collect(),
+            })
+            .collect()
     }
 }
 

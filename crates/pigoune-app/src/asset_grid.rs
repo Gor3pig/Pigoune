@@ -9,7 +9,7 @@ use pigoune_core::AssetId;
 use crate::asset_object::PigouneAssetObject;
 use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
-use crate::dragged_assets::DraggedAssets;
+use crate::drag_content::DraggedAssets;
 use crate::thumbnails::ThumbnailCache;
 
 mod imp {

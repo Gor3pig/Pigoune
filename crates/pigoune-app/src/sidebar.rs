@@ -7,6 +7,7 @@ use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetId, AssetView, CollectionId, Tag, ViewCounts};
 
+use crate::collection_drop::CollectionDrop;
 use crate::collection_sort::CollectionTree;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
@@ -19,6 +20,7 @@ const COLLECTION_ICON: &str = "folder-symbolic";
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
+type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
 
 pub struct SidebarContent {
     pub tree: CollectionTree,
@@ -35,7 +37,9 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
 
-    use super::{AssetsDroppedCallback, FilesDroppedCallback, ViewChangedCallback};
+    use super::{
+        AssetsDroppedCallback, CollectionDroppedCallback, FilesDroppedCallback, ViewChangedCallback,
+    };
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/sidebar.ui")]
@@ -46,6 +50,7 @@ mod imp {
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
         pub on_files_dropped: RefCell<Option<FilesDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
+        pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
     }
 
     #[glib::object_subclass]
@@ -111,6 +116,21 @@ impl PigouneSidebar {
     pub fn assets_dropped(&self, view: AssetView, assets: Vec<AssetId>, keep_source: bool) {
         if let Some(on_assets_dropped) = self.imp().on_assets_dropped.borrow().as_ref() {
             on_assets_dropped(view, assets, keep_source);
+        }
+    }
+
+    pub fn connect_collection_dropped(
+        &self,
+        callback: impl Fn(CollectionId, CollectionDrop) + 'static,
+    ) {
+        self.imp()
+            .on_collection_dropped
+            .replace(Some(Box::new(callback)));
+    }
+
+    pub fn collection_dropped(&self, dragged: CollectionId, drop: CollectionDrop) {
+        if let Some(on_collection_dropped) = self.imp().on_collection_dropped.borrow().as_ref() {
+            on_collection_dropped(dragged, drop);
         }
     }
 

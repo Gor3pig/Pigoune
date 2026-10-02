@@ -6,19 +6,23 @@ use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetView, CollectionId};
 
-use crate::dragged_assets::DraggedAssets;
+use crate::collection_drop::{self, CollectionDrop, DropZone};
+use crate::drag_content::{DraggedAssets, DraggedCollection};
 use crate::sidebar::PigouneSidebar;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 
 const DROP_HIGHLIGHT: &str = "drop-highlight";
+const DROP_BEFORE: &str = "drop-before";
+const DROP_AFTER: &str = "drop-after";
 const SIDEBAR_ROW: &str = "sidebar-row";
 
 mod imp {
-    use std::cell::{OnceCell, RefCell};
+    use std::cell::{Cell, OnceCell, RefCell};
 
     use adw::subclass::prelude::*;
     use gtk::glib;
 
+    use crate::collection_drop::DropZone;
     use crate::sidebar_item::PigouneSidebarItem;
 
     #[derive(Default)]
@@ -30,6 +34,7 @@ mod imp {
         pub hash: OnceCell<gtk::Label>,
         pub menu: OnceCell<gtk::PopoverMenu>,
         pub item: RefCell<Option<PigouneSidebarItem>>,
+        pub drop_zone: Cell<DropZone>,
     }
 
     #[glib::object_subclass]
@@ -136,26 +141,41 @@ impl PigouneSidebarRow {
         set_part(&imp.menu, menu);
         self.open_menu_on_secondary_click();
         self.accept_drops();
+        self.offer_collection_drag();
     }
 
     fn accept_drops(&self) {
         self.add_css_class(SIDEBAR_ROW);
         let drop_target = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::COPY);
-        drop_target.set_types(&[gdk::FileList::static_type(), DraggedAssets::static_type()]);
+        drop_target.set_types(&[
+            gdk::FileList::static_type(),
+            DraggedAssets::static_type(),
+            DraggedCollection::static_type(),
+        ]);
         drop_target.connect_enter(glib::clone!(
             #[weak(rename_to = row)]
             self,
             #[upgrade_or]
             gdk::DragAction::empty(),
-            move |_, _, _| {
-                row.highlight_list_row(true);
+            move |target, _, y| {
+                row.follow_pointer(target, y);
+                gdk::DragAction::COPY
+            }
+        ));
+        drop_target.connect_motion(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            gdk::DragAction::empty(),
+            move |target, _, y| {
+                row.follow_pointer(target, y);
                 gdk::DragAction::COPY
             }
         ));
         drop_target.connect_leave(glib::clone!(
             #[weak(rename_to = row)]
             self,
-            move |_| row.highlight_list_row(false)
+            move |_| row.show_drop_zone(None)
         ));
         drop_target.connect_accept(glib::clone!(
             #[weak(rename_to = row)]
@@ -172,32 +192,67 @@ impl PigouneSidebarRow {
             #[upgrade_or]
             false,
             move |_, value, _, _| {
-                row.highlight_list_row(false);
+                row.show_drop_zone(None);
                 row.receive(value)
             }
         ));
         self.add_controller(drop_target);
     }
 
+    fn follow_pointer(&self, target: &gtk::DropTarget, y: f64) {
+        let carries_collection = target.current_drop().is_some_and(|drop| {
+            drop.formats()
+                .contains_type(DraggedCollection::static_type())
+        });
+        let zone = if carries_collection && self.view().is_some() {
+            collection_drop::zone_at(y, f64::from(self.height()))
+        } else {
+            DropZone::Into
+        };
+        self.imp().drop_zone.set(zone);
+        self.show_drop_zone(Some(zone));
+    }
+
     fn accepts(&self, wanted: &gdk::ContentFormats, offered: &gdk::ContentFormats) -> bool {
         if !wanted.match_(offered) {
             return false;
         }
-        match self.view() {
-            None => false,
-            Some(AssetView::Collection(_) | AssetView::Tag(_)) => true,
-            Some(_) => !offered.contains_type(DraggedAssets::static_type()),
+        let entry = self
+            .imp()
+            .item
+            .borrow()
+            .as_ref()
+            .map(PigouneSidebarItem::entry);
+        if offered.contains_type(DraggedCollection::static_type()) {
+            return matches!(
+                entry,
+                Some(
+                    SidebarEntry::CollectionsHeader | SidebarEntry::View(AssetView::Collection(_))
+                )
+            );
+        }
+        match entry {
+            Some(SidebarEntry::View(AssetView::Collection(_) | AssetView::Tag(_))) => true,
+            Some(SidebarEntry::View(_)) => !offered.contains_type(DraggedAssets::static_type()),
+            Some(SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader) | None => false,
         }
     }
 
     fn receive(&self, value: &glib::Value) -> bool {
-        let Some(view) = self.view() else {
-            return false;
-        };
         let Some(sidebar) = self
             .ancestor(PigouneSidebar::static_type())
             .and_downcast::<PigouneSidebar>()
         else {
+            return false;
+        };
+        if let Ok(dragged) = value.get::<DraggedCollection>() {
+            let Some(drop) = self.collection_drop() else {
+                return false;
+            };
+            sidebar.collection_dropped(dragged.0, drop);
+            return true;
+        }
+        let Some(view) = self.view() else {
             return false;
         };
         if let Ok(dragged) = value.get::<DraggedAssets>() {
@@ -212,18 +267,62 @@ impl PigouneSidebarRow {
         true
     }
 
-    fn highlight_list_row(&self, highlighted: bool) {
+    fn collection_drop(&self) -> Option<CollectionDrop> {
+        match self.view() {
+            Some(AssetView::Collection(id)) => Some(match self.imp().drop_zone.get() {
+                DropZone::Before => CollectionDrop::Before(id),
+                DropZone::Into => CollectionDrop::Into(Some(id)),
+                DropZone::After => CollectionDrop::After(id),
+            }),
+            Some(_) => None,
+            None => Some(CollectionDrop::Into(None)),
+        }
+    }
+
+    fn show_drop_zone(&self, zone: Option<DropZone>) {
         let Some(list_row) = self
             .ancestor(gtk::TreeExpander::static_type())
             .and_then(|expander| expander.parent())
         else {
             return;
         };
-        if highlighted {
-            list_row.add_css_class(DROP_HIGHLIGHT);
-        } else {
-            list_row.remove_css_class(DROP_HIGHLIGHT);
+        for (class, shown) in [
+            (DROP_BEFORE, zone == Some(DropZone::Before)),
+            (DROP_HIGHLIGHT, zone == Some(DropZone::Into)),
+            (DROP_AFTER, zone == Some(DropZone::After)),
+        ] {
+            if shown {
+                list_row.add_css_class(class);
+            } else {
+                list_row.remove_css_class(class);
+            }
         }
+    }
+
+    fn offer_collection_drag(&self) {
+        let source = gtk::DragSource::builder()
+            .actions(gdk::DragAction::COPY)
+            .build();
+        source.connect_prepare(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            None,
+            move |_, _, _| match row.view()? {
+                AssetView::Collection(id) => Some(gdk::ContentProvider::for_value(
+                    &DraggedCollection(id).to_value(),
+                )),
+                _ => None,
+            }
+        ));
+        source.connect_drag_begin(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            move |source, _| {
+                source.set_icon(Some(&gtk::WidgetPaintable::new(Some(&row))), 0, 0);
+            }
+        ));
+        self.add_controller(source);
     }
 
     fn view(&self) -> Option<AssetView> {

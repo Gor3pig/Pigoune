@@ -61,6 +61,14 @@
   background-color: color-mix(in srgb, var(--accent-bg-color) 20%, transparent);
 }
 
+.navigation-sidebar > row.drop-before {
+  box-shadow: inset 0 2px 0 0 var(--accent-color);
+}
+
+.navigation-sidebar > row.drop-after {
+  box-shadow: inset 0 -2px 0 0 var(--accent-color);
+}
+
 .sidebar-row:drop(active) {
   box-shadow: none;
   outline: none;
