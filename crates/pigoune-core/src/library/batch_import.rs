@@ -66,6 +66,7 @@ impl Library {
         &mut self,
         paths: &[PathBuf],
         target: Option<CollectionId>,
+        mut is_intact: impl FnMut(&Path) -> bool,
         mut on_progress: impl FnMut(ImportProgress) -> ImportControl,
     ) -> Result<ImportSummary, ImportError> {
         self.ensure_target_is_usable(target)?;
@@ -82,7 +83,7 @@ impl Library {
                 summary.ending = ImportEnding::Cancelled;
                 break;
             }
-            let result = self.import_planned(file, &mut folders);
+            let result = self.import_planned(file, &mut folders, &mut is_intact);
             if let Some(serious) = summary.record(result) {
                 summary.ending = ImportEnding::Interrupted(serious);
                 break;
@@ -91,21 +92,16 @@ impl Library {
         Ok(summary)
     }
 
-    pub fn import_folder(
-        &mut self,
-        folder: &Path,
-        target: Option<CollectionId>,
-        on_progress: impl FnMut(ImportProgress) -> ImportControl,
-    ) -> Result<ImportSummary, ImportError> {
-        self.import_paths(&[folder.to_path_buf()], target, on_progress)
-    }
-
     fn import_planned(
         &mut self,
         file: &PlannedFile,
         folders: &mut FolderCollections,
+        is_intact: &mut impl FnMut(&Path) -> bool,
     ) -> Result<(ImportOutcome, u64), ImportError> {
         let prepared = import::prepare(&file.source)?;
+        if !self.is_already_stored(&prepared)? && !is_intact(&file.source) {
+            return Err(ImportError::Unreadable(file.source.clone()));
+        }
         let outcome = self.store_prepared(&prepared, |connection| {
             folders.resolve(connection, &file.folders)
         })?;

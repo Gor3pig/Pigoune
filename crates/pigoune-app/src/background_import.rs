@@ -9,6 +9,7 @@ use adw::prelude::*;
 use gtk::{gio, glib};
 use pigoune_core::{ImportControl, ImportError, ImportProgress, ImportSummary, Library};
 
+use crate::image_check::ImageCheck;
 use crate::import_progress_dialog::PigouneImportProgressDialog;
 
 const PROGRESS_DIALOG_DELAY: Duration = Duration::from_millis(500);
@@ -29,14 +30,20 @@ pub async fn run(
     let worker_cancel_requested = Arc::clone(&cancel_requested);
     let work = gio::spawn_blocking(move || {
         let mut library = library;
-        let result = library.import_paths(&paths, None, |progress| {
-            let _ = progress_sender.send_blocking(progress);
-            if worker_cancel_requested.load(Ordering::Relaxed) {
-                ImportControl::Cancel
-            } else {
-                ImportControl::Continue
-            }
-        });
+        let image_check = ImageCheck::start();
+        let result = library.import_paths(
+            &paths,
+            None,
+            |path| image_check.is_intact(path),
+            |progress| {
+                let _ = progress_sender.send_blocking(progress);
+                if worker_cancel_requested.load(Ordering::Relaxed) {
+                    ImportControl::Cancel
+                } else {
+                    ImportControl::Continue
+                }
+            },
+        );
         FinishedImport { library, result }
     });
 

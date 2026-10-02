@@ -53,6 +53,10 @@ impl Library {
         }
     }
 
+    pub(super) fn is_already_stored(&self, prepared: &PreparedFile) -> Result<bool, ImportError> {
+        Ok(self.find_by_content_hash(&prepared.digest.hash)?.is_some())
+    }
+
     pub(super) fn store_prepared(
         &mut self,
         prepared: &PreparedFile,

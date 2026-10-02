@@ -2,6 +2,7 @@ mod application;
 mod background_import;
 mod config;
 mod error_messages;
+mod image_check;
 mod import_progress_dialog;
 mod import_report;
 mod new_library_dialog;

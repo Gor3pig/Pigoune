@@ -54,7 +54,7 @@ impl Fixture {
 
     fn import(&mut self, paths: &[PathBuf], target: Option<CollectionId>) -> ImportSummary {
         self.library
-            .import_paths(paths, target, |_| ImportControl::Continue)
+            .import_paths(paths, target, |_| true, |_| ImportControl::Continue)
             .expect("import runs")
     }
 
@@ -286,10 +286,15 @@ fn progress_is_reported_before_each_file() {
 
     fixture
         .library
-        .import_paths(&[fixture.sources.join("Marques")], None, |progress| {
-            reports.push(progress);
-            ImportControl::Continue
-        })
+        .import_paths(
+            &[fixture.sources.join("Marques")],
+            None,
+            |_| true,
+            |progress| {
+                reports.push(progress);
+                ImportControl::Continue
+            },
+        )
         .expect("import runs");
 
     assert_eq!(
@@ -307,13 +312,18 @@ fn a_cancelled_import_keeps_what_was_already_imported() {
 
     let summary = fixture
         .library
-        .import_paths(&[fixture.sources.join("Marques")], None, |progress| {
-            if progress.done == 1 {
-                ImportControl::Cancel
-            } else {
-                ImportControl::Continue
-            }
-        })
+        .import_paths(
+            &[fixture.sources.join("Marques")],
+            None,
+            |_| true,
+            |progress| {
+                if progress.done == 1 {
+                    ImportControl::Cancel
+                } else {
+                    ImportControl::Continue
+                }
+            },
+        )
         .expect("import runs");
 
     assert!(
@@ -333,12 +343,15 @@ fn a_serious_problem_stops_the_import_and_leaves_nothing_behind() {
     fs::set_permissions(&files_dir, fs::Permissions::from_mode(0o555)).expect("locked");
     let mut reports = 0;
 
-    let result = fixture
-        .library
-        .import_paths(&[fixture.sources.join("Marques")], None, |_| {
+    let result = fixture.library.import_paths(
+        &[fixture.sources.join("Marques")],
+        None,
+        |_| true,
+        |_| {
             reports += 1;
             ImportControl::Continue
-        });
+        },
+    );
 
     fs::set_permissions(&files_dir, fs::Permissions::from_mode(0o755)).expect("unlocked");
     let summary = result.expect("import runs");
@@ -368,12 +381,12 @@ fn importing_into_a_missing_collection_is_refused_before_starting() {
         .expect("collection removed");
     fixture.sample("Marques/a.png", "red-dot.png");
 
-    let result =
-        fixture
-            .library
-            .import_paths(&[fixture.sources.join("Marques")], Some(clients), |_| {
-                ImportControl::Continue
-            });
+    let result = fixture.library.import_paths(
+        &[fixture.sources.join("Marques")],
+        Some(clients),
+        |_| true,
+        |_| ImportControl::Continue,
+    );
 
     assert!(
         matches!(result, Err(ImportError::CollectionNotFound(id)) if id == clients),
@@ -406,4 +419,52 @@ fn only_newly_copied_files_over_50_mb_are_reported_as_large() {
     assert_eq!(first.large_imported, 1);
     assert_eq!(again.already_present, 2);
     assert_eq!(again.large_imported, 0);
+}
+
+#[test]
+fn a_new_image_judged_damaged_is_listed_as_unreadable() {
+    let mut fixture = Fixture::new();
+    let damaged = fixture.sample("Marques/damaged.png", "red-dot.png");
+    fixture.sample("Marques/fine.gif", "spinner.gif");
+
+    let summary = fixture
+        .library
+        .import_paths(
+            &[fixture.sources.join("Marques")],
+            None,
+            |path| !path.ends_with("damaged.png"),
+            |_| ImportControl::Continue,
+        )
+        .expect("import runs");
+
+    assert_completed(&summary);
+    assert_eq!(summary.imported.len(), 1);
+    assert_eq!(summary.unreadable, [damaged]);
+    assert_eq!(fixture.placements(), ["Marques/fine.gif"]);
+}
+
+#[test]
+fn only_new_supported_images_are_checked() {
+    let mut fixture = Fixture::new();
+    let known = fixture.sample("known.png", "red-dot.png");
+    fixture.import(&[known], None);
+    fixture.sample("Marques/again.png", "red-dot.png");
+    fixture.sample("Marques/new.gif", "spinner.gif");
+    fixture.write("Marques/notes.txt", b"text");
+    let mut checked = Vec::new();
+
+    fixture
+        .library
+        .import_paths(
+            &[fixture.sources.join("Marques")],
+            None,
+            |path| {
+                checked.push(path.file_name().expect("file name").to_owned());
+                true
+            },
+            |_| ImportControl::Continue,
+        )
+        .expect("import runs");
+
+    assert_eq!(checked, ["new.gif"]);
 }
