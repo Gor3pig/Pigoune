@@ -359,6 +359,19 @@ impl PigouneAssetGrid {
         self.imp().grid_view.add_controller(keys);
     }
 
+    pub fn connect_trash_requested(&self, callback: impl Fn() + 'static) {
+        let keys = gtk::EventControllerKey::new();
+        keys.connect_key_pressed(move |_, key, _, modifiers| {
+            if key == gdk::Key::Delete && modifiers.is_empty() {
+                callback();
+                glib::Propagation::Stop
+            } else {
+                glib::Propagation::Proceed
+            }
+        });
+        self.imp().grid_view.add_controller(keys);
+    }
+
     pub fn reveal_selected(&self) {
         self.follow_selection();
     }

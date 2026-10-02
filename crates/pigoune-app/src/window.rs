@@ -48,6 +48,10 @@ const RENAME_ASSET_ACTION: &str = "win.rename-asset";
 const ADD_TAG_ACTION: &str = "win.add-tag";
 const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
 const REMOVE_FROM_COLLECTION_ACTION: &str = "win.remove-from-collection";
+const TRASH_SELECTED_ACTION: &str = "win.trash-selected";
+const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
+const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
+const EMPTY_TRASH_RESPONSE: &str = "empty";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const OPEN_LIBRARY_ACTIONS: [&str; 11] = [
     CLOSE_LIBRARY_ACTION,
@@ -100,11 +104,12 @@ mod imp {
 
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION,
-        DELETE_TAG_ACTION, ENLARGE_THUMBNAILS_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
-        NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, collection_parameter,
-        tag_parameter,
+        DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION, IMPORT_FILES_ACTION,
+        IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
+        OPEN_PREVIEW_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
+        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
+        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
+        collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -126,6 +131,8 @@ mod imp {
         #[template_child]
         pub library_stack: TemplateChild<gtk::Stack>,
         #[template_child]
+        pub trash_banner: TemplateChild<adw::Banner>,
+        #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
         #[template_child]
         pub asset_details: TemplateChild<PigouneAssetDetails>,
@@ -143,6 +150,51 @@ mod imp {
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
+    }
+
+    fn install_asset_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
+        class.install_action(TOGGLE_FAVORITE_ACTION, None, |window, _, _| {
+            window.toggle_favorite();
+        });
+        class.install_action(TRASH_SELECTED_ACTION, None, |window, _, _| {
+            window.trash_selected();
+        });
+        class.install_action(RESTORE_SELECTED_ACTION, None, |window, _, _| {
+            window.restore_selected();
+        });
+        class.install_action(EMPTY_TRASH_ACTION, None, |window, _, _| {
+            window.ask_to_empty_trash();
+        });
+        class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
+            window.after_menu_closes(|window| window.open_preview(None));
+        });
+        class.install_action(RENAME_ASSET_ACTION, None, |window, _, _| {
+            window.after_menu_closes(super::PigouneWindow::start_renaming_selected);
+        });
+        class.install_action(ADD_TAG_ACTION, None, |window, _, _| {
+            window.after_menu_closes(|window| {
+                window.imp().details_button.set_active(true);
+                window.imp().asset_details.focus_tag_entry();
+            });
+        });
+        class.install_action(ADD_TO_COLLECTION_ACTION, None, |window, _, _| {
+            window.after_menu_closes(|window| {
+                window.imp().details_button.set_active(true);
+                window.imp().asset_details.open_collection_chooser();
+            });
+        });
+        class.install_action(
+            REMOVE_FROM_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(collection) = collection_parameter(parameter) {
+                    window.change_selected_collections(|assets| CollectionCommand::RemoveAssets {
+                        collection,
+                        assets,
+                    });
+                }
+            },
+        );
     }
 
     #[glib::object_subclass]
@@ -196,38 +248,7 @@ mod imp {
                     }
                 },
             );
-            class.install_action(TOGGLE_FAVORITE_ACTION, None, |window, _, _| {
-                window.toggle_favorite();
-            });
-            class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
-                window.after_menu_closes(|window| window.open_preview(None));
-            });
-            class.install_action(RENAME_ASSET_ACTION, None, |window, _, _| {
-                window.after_menu_closes(super::PigouneWindow::start_renaming_selected);
-            });
-            class.install_action(ADD_TAG_ACTION, None, |window, _, _| {
-                window.after_menu_closes(|window| {
-                    window.imp().details_button.set_active(true);
-                    window.imp().asset_details.focus_tag_entry();
-                });
-            });
-            class.install_action(ADD_TO_COLLECTION_ACTION, None, |window, _, _| {
-                window.after_menu_closes(|window| {
-                    window.imp().details_button.set_active(true);
-                    window.imp().asset_details.open_collection_chooser();
-                });
-            });
-            class.install_action(
-                REMOVE_FROM_COLLECTION_ACTION,
-                Some(glib::VariantTy::STRING),
-                |window, _, parameter| {
-                    if let Some(collection) = collection_parameter(parameter) {
-                        window.change_selected_collections(|assets| {
-                            CollectionCommand::RemoveAssets { collection, assets }
-                        });
-                    }
-                },
-            );
+            install_asset_actions(class);
             class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
                 window.ask_new_collection(None);
             });
@@ -584,6 +605,11 @@ impl PigouneWindow {
             || gio::Menu::new().upcast(),
             move || window.asset_menu()
         ));
+        imp.asset_grid.connect_trash_requested(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || window.trash_selected()
+        ));
         imp.asset_grid.connect_rename_requested(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -621,7 +647,7 @@ impl PigouneWindow {
 
     fn start_renaming_selected(&self) {
         let imp = self.imp();
-        if imp.asset_grid.selected_asset().is_some() {
+        if !self.is_showing_trash() && imp.asset_grid.selected_asset().is_some() {
             imp.details_button.set_active(true);
             imp.asset_details.start_renaming();
         }
@@ -651,6 +677,10 @@ impl PigouneWindow {
                 Some("F2"),
             ));
         }
+        if self.is_showing_trash() {
+            viewing.append(Some(&gettext("_Restore")), Some(RESTORE_SELECTED_ACTION));
+            return viewing.upcast();
+        }
         let organizing = gio::Menu::new();
         let favorite_label = if selected.iter().all(PigouneAssetObject::favorite) {
             gettext("Remove from Favorites")
@@ -675,9 +705,16 @@ impl PigouneWindow {
             );
             organizing.append_item(&item);
         }
+        let discarding = gio::Menu::new();
+        discarding.append_item(&menu_item(
+            &gettext("Move to Trash"),
+            TRASH_SELECTED_ACTION,
+            Some("Delete"),
+        ));
         let menu = gio::Menu::new();
         menu.append_section(None, &viewing);
         menu.append_section(None, &organizing);
+        menu.append_section(None, &discarding);
         menu.upcast()
     }
 
@@ -686,11 +723,109 @@ impl PigouneWindow {
         let thumbnails = imp.asset_grid.thumbnails();
         match selected {
             [] => imp.asset_details.show(None, &thumbnails),
+            trashed if self.is_showing_trash() => imp.asset_details.show_trashed(trashed),
             [single] => imp.asset_details.show(Some(single), &thumbnails),
             several => imp.asset_details.show_group(several),
         }
         self.refresh_selected_tags();
         self.refresh_selected_collections();
+    }
+
+    fn is_showing_trash(&self) -> bool {
+        self.imp().current_view.get() == AssetView::Trash
+    }
+
+    fn trash_selected(&self) {
+        if !self.is_showing_trash() {
+            self.set_trashed(&self.selected_ids(), true);
+        }
+    }
+
+    fn restore_selected(&self) {
+        if self.is_showing_trash() {
+            self.set_trashed(&self.selected_ids(), false);
+        }
+    }
+
+    fn set_trashed(&self, assets: &[AssetId], trashed: bool) {
+        if assets.is_empty()
+            || !self.apply_asset_command(&AssetCommand::SetTrashed {
+                assets: assets.to_vec(),
+                trashed,
+            })
+        {
+            return;
+        }
+        self.refresh_sidebar();
+        self.drop_assets_leaving_view(assets);
+        let count = assets.len();
+        let message = if trashed {
+            ngettext(
+                "{count} resource moved to the trash",
+                "{count} resources moved to the trash",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+        } else {
+            ngettext(
+                "{count} resource restored",
+                "{count} resources restored",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+        };
+        self.show_toast(&message.replace("{count}", &count.to_string()));
+    }
+
+    fn ask_to_empty_trash(&self) {
+        let count = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.view_counts().ok())
+            .map_or(0, |counts| counts.of(AssetView::Trash));
+        if count == 0 {
+            return;
+        }
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Empty the Trash?")),
+            Some(
+                &ngettext(
+                    "{count} resource will be deleted for good. This cannot be undone.",
+                    "{count} resources will be deleted for good. This cannot be undone.",
+                    u32::try_from(count).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &count.to_string()),
+            ),
+        );
+        alert.add_responses(&[
+            (CLOSE_RESPONSE, &gettext("_Cancel")),
+            (EMPTY_TRASH_RESPONSE, &gettext("_Empty Trash")),
+        ]);
+        alert.set_response_appearance(EMPTY_TRASH_RESPONSE, adw::ResponseAppearance::Destructive);
+        alert.set_default_response(Some(CLOSE_RESPONSE));
+        alert.set_close_response(CLOSE_RESPONSE);
+        alert.connect_response(
+            Some(EMPTY_TRASH_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| window.empty_trash()
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn empty_trash(&self) {
+        let emptied = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(Library::empty_trash);
+        if let Some(Err(error)) = emptied {
+            self.show_library_error(&error);
+        }
+        self.refresh_assets();
     }
 
     fn selected_ids(&self) -> Vec<AssetId> {
@@ -896,10 +1031,14 @@ impl PigouneWindow {
     }
 
     fn drop_assets_on(&self, target: AssetView, assets: &[AssetId], keep_source: bool) {
+        if self.is_showing_trash() {
+            return;
+        }
         match target {
+            AssetView::Trash => self.set_trashed(assets, true),
             AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
             AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {}
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified => {}
         }
     }
 
@@ -1438,7 +1577,7 @@ impl PigouneWindow {
         });
         match read {
             Some(Ok((assets, library_total, view_name))) => {
-                let page = if library_total == 0 {
+                let page = if library_total == 0 && view != AssetView::Trash {
                     EMPTY_PAGE
                 } else if assets.is_empty() {
                     self.describe_empty_view(view, &view_name);
@@ -1452,6 +1591,7 @@ impl PigouneWindow {
                 }
                 imp.library_stack.set_visible_child_name(page);
                 imp.details_button.set_visible(!assets.is_empty());
+                imp.trash_banner.set_revealed(view == AssetView::Trash);
             }
             Some(Err(error)) => {
                 imp.asset_grid.show_assets(&[]);
@@ -1466,7 +1606,7 @@ impl PigouneWindow {
     fn toggle_favorite(&self) {
         let imp = self.imp();
         let selected = imp.asset_grid.selected_assets();
-        if selected.is_empty() {
+        if selected.is_empty() || self.is_showing_trash() {
             return;
         }
         let favorite = !selected.iter().all(PigouneAssetObject::favorite);
@@ -1507,7 +1647,17 @@ impl PigouneWindow {
 
     fn describe_empty_view(&self, view: AssetView, view_name: &str) {
         let page = &self.imp().nothing_page;
-        if let AssetView::Tag(_) = view {
+        page.set_icon_name(Some(if view == AssetView::Trash {
+            "user-trash-symbolic"
+        } else {
+            "folder-symbolic"
+        }));
+        if view == AssetView::Trash {
+            page.set_title(&gettext("The Trash Is Empty"));
+            page.set_description(Some(&gettext(
+                "Resources moved to the trash can be restored from here.",
+            )));
+        } else if let AssetView::Tag(_) = view {
             page.set_title(&gettext("No Resource Tagged “{name}”").replace("{name}", view_name));
             page.set_description(Some(&gettext(
                 "Add this tag to resources from the details panel, or drop files on it.",

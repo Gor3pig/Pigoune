@@ -34,6 +34,7 @@ fn is_web_link(text: &str) -> bool {
 const NOTHING_PAGE: &str = "nothing";
 const ASSET_PAGE: &str = "asset";
 const GROUP_PAGE: &str = "group";
+const TRASHED_PAGE: &str = "trashed";
 const PREVIEW_PIXELS: u32 = 512;
 
 mod imp {
@@ -78,6 +79,8 @@ mod imp {
         pub tag_editor: TemplateChild<PigouneTagEditor>,
         #[template_child]
         pub group_title: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub trashed_page: TemplateChild<adw::StatusPage>,
         #[template_child]
         pub group_favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
@@ -310,6 +313,26 @@ impl PigouneAssetDetails {
         } else {
             imp.collection_editor.show_collections(current, all);
         }
+    }
+
+    pub fn show_trashed(&self, selected: &[PigouneAssetObject]) {
+        let imp = self.imp();
+        if let Some(loading) = imp.loading.take() {
+            loading.abort();
+        }
+        self.save_texts();
+        imp.showing.replace(None);
+        let title = match selected {
+            [single] => single.display_name(),
+            several => ngettext(
+                "{count} resource selected",
+                "{count} resources selected",
+                u32::try_from(several.len()).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &several.len().to_string()),
+        };
+        imp.trashed_page.set_title(&title);
+        imp.stack.set_visible_child_name(TRASHED_PAGE);
     }
 
     pub fn show_group(&self, selected: &[PigouneAssetObject]) {

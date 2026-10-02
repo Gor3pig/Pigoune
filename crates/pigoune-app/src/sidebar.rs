@@ -16,6 +16,7 @@ const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
 const COLLECTION_ICON: &str = "folder-symbolic";
+const TRASH_ICON: &str = "user-trash-symbolic";
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
@@ -159,6 +160,13 @@ impl PigouneSidebar {
             AssetView::Unclassified,
             gettext("Unclassified"),
             UNCLASSIFIED_ICON,
+            counts,
+            None,
+        ));
+        root.append(&view_item(
+            AssetView::Trash,
+            gettext("Trash"),
+            TRASH_ICON,
             counts,
             None,
         ));

@@ -159,7 +159,19 @@ template $PigouneWindow: Adw.ApplicationWindow {
                           max-sidebar-width: 360;
                           show-sidebar: bind details_button.active bidirectional;
 
-                          content: $PigouneAssetGrid asset_grid {};
+                          content: Box {
+                            orientation: vertical;
+
+                            Adw.Banner trash_banner {
+                              title: _("Resources in the trash are deleted for good only when it is emptied.");
+                              button-label: _("_Empty Trash…");
+                              action-name: "win.empty-trash";
+                            }
+
+                            $PigouneAssetGrid asset_grid {
+                              vexpand: true;
+                            }
+                          };
 
                           sidebar: $PigouneAssetDetails asset_details {};
                         };

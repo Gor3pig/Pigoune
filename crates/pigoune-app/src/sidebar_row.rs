@@ -233,6 +233,9 @@ impl PigouneSidebarRow {
         }
         match entry {
             Some(SidebarEntry::View(AssetView::Collection(_) | AssetView::Tag(_))) => true,
+            Some(SidebarEntry::View(AssetView::Trash)) => {
+                offered.contains_type(DraggedAssets::static_type())
+            }
             Some(SidebarEntry::View(_)) => !offered.contains_type(DraggedAssets::static_type()),
             Some(SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader) | None => false,
         }

@@ -63,6 +63,41 @@ template $PigouneAssetDetails: Adw.Bin {
           $PigouneTagEditor group_tag_editor {}
 
           $PigouneCollectionEditor group_collection_editor {}
+
+          Button {
+            label: _("Move to Trash");
+            halign: center;
+            action-name: "win.trash-selected";
+
+            styles [
+              "pill",
+            ]
+          }
+        };
+      };
+    }
+
+    StackPage {
+      name: "trashed";
+
+      child: Adw.StatusPage trashed_page {
+        icon-name: "user-trash-symbolic";
+        description: _("This selection is in the trash.");
+
+        styles [
+          "compact",
+        ]
+
+        child: Button {
+          label: _("_Restore");
+          use-underline: true;
+          halign: center;
+          action-name: "win.restore-selected";
+
+          styles [
+            "pill",
+            "suggested-action",
+          ]
         };
       };
     }
