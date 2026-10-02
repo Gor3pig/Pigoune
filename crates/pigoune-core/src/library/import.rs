@@ -1,12 +1,12 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use rusqlite::{OptionalExtension, Transaction, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 
 use super::asset::EmbeddedSizes;
 use super::content::{self, ContentDigest};
 use super::staging::StagingDir;
-use super::{AssetId, CollectionId, ImportError, Library, clock, collection, layout};
+use super::{AssetId, CollectionId, ImportError, Library, LibraryError, clock, collection, layout};
 use crate::media::{self, InspectError, MediaInfo};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,9 +17,9 @@ pub enum ImportOutcome {
     RestoredFromTrash(AssetId),
 }
 
-struct NewAsset<'a> {
-    id: AssetId,
-    original_file_name: &'a str,
+pub(super) struct PreparedFile {
+    source: PathBuf,
+    original_file_name: String,
     media: MediaInfo,
     digest: ContentDigest,
 }
@@ -30,48 +30,54 @@ impl Library {
         source: &Path,
         target: Option<CollectionId>,
     ) -> Result<ImportOutcome, ImportError> {
-        if let Some(target) = target
-            && !collection::is_usable_collection(&self.connection, target)?
-        {
-            return Err(ImportError::CollectionNotFound(target));
+        self.ensure_target_is_usable(target)?;
+        let prepared = prepare(source)?;
+        self.store_prepared(&prepared, |_| Ok(target))
+    }
+
+    pub(super) fn ensure_target_is_usable(
+        &self,
+        target: Option<CollectionId>,
+    ) -> Result<(), ImportError> {
+        match target {
+            Some(target) if !collection::is_usable_collection(&self.connection, target)? => {
+                Err(ImportError::CollectionNotFound(target))
+            }
+            _ => Ok(()),
         }
+    }
 
-        let original_file_name = importable_file_name(source)?;
-        let media = media::inspect(source).map_err(|error| inspect_failure(error, source))?;
-
-        let digest = content::digest(source)?;
-        if let Some(existing) = self.find_by_content_hash(&digest.hash)? {
-            return self.reuse_existing(existing, target);
+    pub(super) fn store_prepared(
+        &mut self,
+        prepared: &PreparedFile,
+        place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
+    ) -> Result<ImportOutcome, ImportError> {
+        if let Some(existing) = self.find_by_content_hash(&prepared.digest.hash)? {
+            return self.reuse_existing(existing, place);
         }
-
-        let asset = NewAsset {
-            id: AssetId::generate(),
-            original_file_name: &original_file_name,
-            media,
-            digest,
-        };
-        self.store_new(source, &asset, target)?;
-        Ok(ImportOutcome::Imported(asset.id))
+        let id = AssetId::generate();
+        self.store_new(prepared, id, place)?;
+        Ok(ImportOutcome::Imported(id))
     }
 
     fn store_new(
         &mut self,
-        source: &Path,
-        asset: &NewAsset,
-        target: Option<CollectionId>,
+        prepared: &PreparedFile,
+        id: AssetId,
+        place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
     ) -> Result<(), ImportError> {
-        let staging = StagingDir::create(layout::unfinished_import_dir(&self.root, asset.id))?;
-        let copy_path = staging.path().join(asset.original_file_name);
-        if content::copy_with_digest(source, &copy_path)? != asset.digest {
-            return Err(ImportError::Unreadable(source.to_path_buf()));
+        let staging = StagingDir::create(layout::unfinished_import_dir(&self.root, id))?;
+        let copy_path = staging.path().join(&prepared.original_file_name);
+        if content::copy_with_digest(&prepared.source, &copy_path)? != prepared.digest {
+            return Err(ImportError::Unreadable(prepared.source.clone()));
         }
 
         let transaction = self.connection.transaction()?;
-        insert_asset(&transaction, asset)?;
-        if let Some(target) = target {
-            add_to_collection(&transaction, asset.id, target)?;
+        insert_asset(&transaction, id, prepared)?;
+        if let Some(collection) = place(&transaction)? {
+            add_to_collection(&transaction, id, collection)?;
         }
-        let asset_dir = layout::asset_dir(&self.root, asset.id);
+        let asset_dir = layout::asset_dir(&self.root, id);
         staging.promote_to(&asset_dir)?;
         if let Err(error) = transaction.commit() {
             let _ = fs::remove_dir_all(&asset_dir);
@@ -83,12 +89,12 @@ impl Library {
     fn reuse_existing(
         &mut self,
         existing: AssetId,
-        target: Option<CollectionId>,
+        place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
     ) -> Result<ImportOutcome, ImportError> {
         let transaction = self.connection.transaction()?;
         let restored = restore_from_trash(&transaction, existing)?;
-        let added = match target {
-            Some(target) => add_to_collection(&transaction, existing, target)?,
+        let added = match place(&transaction)? {
+            Some(collection) => add_to_collection(&transaction, existing, collection)?,
             None => false,
         };
         transaction.commit()?;
@@ -135,6 +141,18 @@ fn add_to_collection(
     Ok(changed > 0)
 }
 
+pub(super) fn prepare(source: &Path) -> Result<PreparedFile, ImportError> {
+    let original_file_name = importable_file_name(source)?;
+    let media = media::inspect(source).map_err(|error| inspect_failure(error, source))?;
+    let digest = content::digest(source)?;
+    Ok(PreparedFile {
+        source: source.to_path_buf(),
+        original_file_name,
+        media,
+        digest,
+    })
+}
+
 fn importable_file_name(source: &Path) -> Result<String, ImportError> {
     let metadata =
         fs::metadata(source).map_err(|_| ImportError::Unreadable(source.to_path_buf()))?;
@@ -151,17 +169,21 @@ fn inspect_failure(error: InspectError, source: &Path) -> ImportError {
     }
 }
 
-fn insert_asset(transaction: &Transaction, asset: &NewAsset) -> Result<(), ImportError> {
+fn insert_asset(
+    transaction: &Transaction,
+    id: AssetId,
+    asset: &PreparedFile,
+) -> Result<(), ImportError> {
     transaction.execute(
         "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
                              width, height, byte_size, content_hash, is_animated,
                              embedded_sizes, added_at_unix_ms)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         params![
-            asset.id,
-            display_name_of(asset.original_file_name),
+            id,
+            display_name_of(&asset.original_file_name),
             asset.original_file_name,
-            layout::stored_path(asset.id, asset.original_file_name),
+            layout::stored_path(id, &asset.original_file_name),
             asset.media.format,
             asset.media.dimensions.map(media::Dimensions::width),
             asset.media.dimensions.map(media::Dimensions::height),

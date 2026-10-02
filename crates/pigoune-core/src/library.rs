@@ -1,10 +1,12 @@
 mod asset;
+mod batch_import;
 mod clock;
 mod collection;
 mod content;
 mod error;
 mod id;
 mod import;
+mod import_plan;
 mod layout;
 mod schema;
 mod staging;
@@ -18,6 +20,7 @@ use uuid::Uuid;
 use staging::StagingDir;
 
 pub use asset::Asset;
+pub use batch_import::{ImportControl, ImportEnding, ImportProgress, ImportSummary};
 pub use collection::Collection;
 pub use error::{CollectionError, ImportError, LibraryError};
 pub use id::{AssetId, CollectionId};
