@@ -299,7 +299,10 @@ impl PigouneWindow {
             move |view, paths| {
                 let target = match view {
                     AssetView::Collection(id) => Some(id),
-                    AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
+                    AssetView::All
+                    | AssetView::Favorites
+                    | AssetView::Unclassified
+                    | AssetView::Tag(_) => None,
                 };
                 glib::spawn_future_local(async move {
                     window.import_paths_into(paths, target).await;
@@ -340,7 +343,9 @@ impl PigouneWindow {
     fn target_collection(&self) -> Option<CollectionId> {
         match self.imp().current_view.get() {
             AssetView::Collection(id) => Some(id),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Tag(_) => {
+                None
+            }
         }
     }
 
@@ -977,7 +982,9 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .ok()
             .flatten()
             .map_or_else(|| library.name(), |collection| collection.name),
-        AssetView::All | AssetView::Favorites | AssetView::Unclassified => library.name(),
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Tag(_) => {
+            library.name()
+        }
     }
 }
 

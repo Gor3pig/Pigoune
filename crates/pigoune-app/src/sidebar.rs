@@ -315,7 +315,7 @@ fn item_at(object: Option<glib::Object>) -> Option<PigouneSidebarItem> {
 fn collection_of(row: &gtk::TreeListRow) -> Option<CollectionId> {
     match row.item().and_downcast::<PigouneSidebarItem>()?.view()? {
         AssetView::Collection(id) => Some(id),
-        AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Tag(_) => None,
     }
 }
 

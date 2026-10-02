@@ -43,3 +43,4 @@ macro_rules! entity_id {
 
 entity_id!(AssetId);
 entity_id!(CollectionId);
+entity_id!(TagId);

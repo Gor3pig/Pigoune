@@ -12,6 +12,8 @@ mod import_plan;
 mod layout;
 mod schema;
 mod staging;
+mod tag;
+mod tag_command;
 mod view;
 
 use std::fs::{self, File, TryLockError};
@@ -30,12 +32,14 @@ pub use batch_import::{
 pub use collection::Collection;
 pub use collection_command::CollectionCommand;
 pub use error::{CollectionError, ImportError, LibraryError};
-pub use id::{AssetId, CollectionId};
+pub use id::{AssetId, CollectionId, TagId};
 pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
 };
 pub use schema::CURRENT_FORMAT_VERSION;
+pub use tag::Tag;
+pub use tag_command::{TagCommand, TagError};
 pub use view::{AssetView, ViewCounts};
 
 #[derive(Debug)]

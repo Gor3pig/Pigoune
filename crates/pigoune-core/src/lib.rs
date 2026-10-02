@@ -5,7 +5,7 @@ pub use library::{
     Asset, AssetCommand, AssetError, AssetId, AssetView, CACHE_DIR_NAME, CURRENT_FORMAT_VERSION,
     Collection, CollectionCommand, CollectionError, CollectionId, DATABASE_FILE_NAME,
     FILES_DIR_NAME, ImportControl, ImportEnding, ImportError, ImportOutcome, ImportProgress,
-    ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError, ViewCounts,
-    library_display_name,
+    ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError, Tag, TagCommand,
+    TagError, TagId, ViewCounts, library_display_name,
 };
 pub use media::{AssetFormat, Dimensions};
