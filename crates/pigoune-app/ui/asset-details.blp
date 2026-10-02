@@ -20,6 +20,52 @@ template $PigouneAssetDetails: Adw.Bin {
     }
 
     StackPage {
+      name: "group";
+
+      child: ScrolledWindow {
+        hscrollbar-policy: never;
+
+        child: Box {
+          orientation: vertical;
+          spacing: 18;
+          margin-top: 24;
+          margin-bottom: 18;
+          margin-start: 18;
+          margin-end: 18;
+
+          Image {
+            icon-name: "view-grid-symbolic";
+            pixel-size: 64;
+
+            styles [
+              "dim-label",
+            ]
+          }
+
+          Label group_title {
+            wrap: true;
+            justify: center;
+
+            styles [
+              "title-3",
+            ]
+          }
+
+          Button group_favorite_button {
+            halign: center;
+            action-name: "win.toggle-favorite";
+
+            styles [
+              "pill",
+            ]
+          }
+
+          $PigouneTagEditor group_tag_editor {}
+        };
+      };
+    }
+
+    StackPage {
       name: "asset";
 
       child: ScrolledWindow {

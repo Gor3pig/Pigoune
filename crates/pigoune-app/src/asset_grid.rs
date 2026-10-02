@@ -156,10 +156,38 @@ impl PigouneAssetGrid {
         store.splice(0, store.n_items(), assets);
     }
 
+    pub fn selected_assets(&self) -> Vec<PigouneAssetObject> {
+        let Some(selection) = self.selection() else {
+            return Vec::new();
+        };
+        let chosen = selection.selection();
+        (0..chosen.size())
+            .filter_map(|index| u32::try_from(index).ok())
+            .filter_map(|index| selection.item(chosen.nth(index)))
+            .filter_map(|item| item.downcast::<PigouneAssetObject>().ok())
+            .collect()
+    }
+
     pub fn selected_asset(&self) -> Option<PigouneAssetObject> {
-        self.selection()?
-            .selected_item()
-            .and_downcast::<PigouneAssetObject>()
+        let mut selected = self.selected_assets();
+        if selected.len() == 1 {
+            selected.pop()
+        } else {
+            None
+        }
+    }
+
+    pub fn visible_assets(&self) -> Vec<PigouneAssetObject> {
+        let Some(selection) = self.selection() else {
+            return Vec::new();
+        };
+        (0..selection.n_items())
+            .filter_map(|position| {
+                selection
+                    .item(position)
+                    .and_downcast::<PigouneAssetObject>()
+            })
+            .collect()
     }
 
     pub fn remove_asset(&self, id: AssetId) {
@@ -179,14 +207,33 @@ impl PigouneAssetGrid {
         if let Some(sorter) = self.imp().sorter.borrow().as_ref() {
             sorter.changed(gtk::SorterChange::Different);
         }
-        glib::idle_add_local_once(glib::clone!(
-            #[weak(rename_to = grid)]
-            self,
-            move || grid.follow_selection()
-        ));
+        self.follow_selection_later();
     }
 
     pub fn select_asset(&self, id: AssetId) {
+        self.select_assets(&[id]);
+    }
+
+    pub fn select_assets(&self, ids: &[AssetId]) {
+        let Some(selection) = self.selection() else {
+            return;
+        };
+        let chosen = gtk::Bitset::new_empty();
+        for position in 0..selection.n_items() {
+            let is_wanted = selection
+                .item(position)
+                .and_downcast::<PigouneAssetObject>()
+                .is_some_and(|asset| ids.contains(&asset.id()));
+            if is_wanted {
+                chosen.add(position);
+            }
+        }
+        let everything = gtk::Bitset::new_range(0, selection.n_items());
+        selection.set_selection(&chosen, &everything);
+        self.follow_selection_later();
+    }
+
+    pub fn reveal_asset(&self, id: AssetId) {
         let Some(selection) = self.selection() else {
             return;
         };
@@ -197,8 +244,13 @@ impl PigouneAssetGrid {
                 .is_some_and(|asset| asset.id() == id)
         });
         if let Some(position) = position {
-            selection.set_selected(position);
+            self.imp()
+                .grid_view
+                .scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
         }
+    }
+
+    fn follow_selection_later(&self) {
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = grid)]
             self,
@@ -214,11 +266,11 @@ impl PigouneAssetGrid {
         if selection.n_items() == 0 {
             return;
         }
-        let selected = selection.selected();
-        if selected == gtk::INVALID_LIST_POSITION {
+        let chosen = selection.selection();
+        if chosen.is_empty() {
             grid_view.scroll_to(0, gtk::ListScrollFlags::NONE, None);
         } else {
-            grid_view.scroll_to(selected, gtk::ListScrollFlags::FOCUS, None);
+            grid_view.scroll_to(chosen.minimum(), gtk::ListScrollFlags::FOCUS, None);
         }
     }
 
@@ -230,44 +282,41 @@ impl PigouneAssetGrid {
         Rc::clone(&self.imp().thumbnails)
     }
 
-    pub fn connect_selected_asset_changed(
-        &self,
-        callback: impl Fn(Option<PigouneAssetObject>) + 'static,
-    ) {
+    pub fn connect_selection_changed(&self, callback: impl Fn(Vec<PigouneAssetObject>) + 'static) {
         let Some(selection) = self.selection() else {
             return;
         };
-        selection.connect_selected_item_notify(move |selection| {
-            callback(
-                selection
-                    .selected_item()
-                    .and_downcast::<PigouneAssetObject>(),
-            );
-        });
+        let callback = Rc::new(callback);
+        let on_items = Rc::clone(&callback);
+        selection.connect_selection_changed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _, _| callback(grid.selected_assets())
+        ));
+        selection.connect_items_changed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _, _, _| on_items(grid.selected_assets())
+        ));
     }
 
-    pub fn selection(&self) -> Option<gtk::SingleSelection> {
+    pub fn selection(&self) -> Option<gtk::MultiSelection> {
         self.imp()
             .grid_view
             .model()
-            .and_downcast::<gtk::SingleSelection>()
+            .and_downcast::<gtk::MultiSelection>()
     }
 
-    pub fn connect_preview_requested(&self, callback: impl Fn() + 'static) {
+    pub fn connect_preview_requested(&self, callback: impl Fn(Option<u32>) + 'static) {
         let callback = Rc::new(callback);
         let grid_view = &self.imp().grid_view;
         let on_activate = Rc::clone(&callback);
-        grid_view.connect_activate(move |grid_view, position| {
-            if let Some(selection) = grid_view.model().and_downcast::<gtk::SingleSelection>() {
-                selection.set_selected(position);
-            }
-            on_activate();
-        });
+        grid_view.connect_activate(move |_, position| on_activate(Some(position)));
         let space = gtk::EventControllerKey::new();
         space.set_propagation_phase(gtk::PropagationPhase::Capture);
         space.connect_key_pressed(move |_, key, _, modifiers| {
             if key == gdk::Key::space && modifiers.is_empty() {
-                callback();
+                callback(None);
                 glib::Propagation::Stop
             } else {
                 glib::Propagation::Proceed
@@ -278,25 +327,32 @@ impl PigouneAssetGrid {
 
     pub fn connect_rename_requested(&self, callback: impl Fn() + 'static) {
         let keys = gtk::EventControllerKey::new();
-        keys.connect_key_pressed(move |_, key, _, modifiers| {
-            if key == gdk::Key::F2 && modifiers.is_empty() {
-                callback();
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, modifiers| {
+                if !modifiers.is_empty() {
+                    return glib::Propagation::Proceed;
+                }
+                match key {
+                    gdk::Key::F2 => callback(),
+                    gdk::Key::Escape => {
+                        if let Some(selection) = grid.selection() {
+                            selection.unselect_all();
+                        }
+                    }
+                    _ => return glib::Propagation::Proceed,
+                }
                 glib::Propagation::Stop
-            } else {
-                glib::Propagation::Proceed
             }
-        });
+        ));
         self.imp().grid_view.add_controller(keys);
     }
 
     pub fn reveal_selected(&self) {
-        let grid_view = &self.imp().grid_view;
-        if let Some(selection) = self.selection() {
-            let position = selection.selected();
-            if position != gtk::INVALID_LIST_POSITION {
-                grid_view.scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
-            }
-        }
+        self.follow_selection();
     }
 
     pub fn forget_thumbnails(&self) {
@@ -360,10 +416,8 @@ impl PigouneAssetGrid {
         });
         imp.sorter.replace(Some(sorter.clone()));
         let sorted_assets = gtk::SortListModel::new(Some(imp.assets.clone()), Some(sorter));
-        let selection = gtk::SingleSelection::new(Some(sorted_assets));
-        selection.set_autoselect(false);
-        selection.set_can_unselect(true);
-        selection.set_selected(gtk::INVALID_LIST_POSITION);
+        let selection = gtk::MultiSelection::new(Some(sorted_assets));
+        imp.grid_view.set_enable_rubberband(true);
         imp.grid_view.set_model(Some(&selection));
     }
 }

@@ -92,3 +92,7 @@
 .note-view {
   background: none;
 }
+
+.tag-chip.partial {
+  opacity: 0.55;
+}

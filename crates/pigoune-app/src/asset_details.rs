@@ -2,14 +2,14 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gettextrs::gettext;
+use gettextrs::{gettext, ngettext};
 use gtk::{gdk, glib};
-use pigoune_core::TextField;
+use pigoune_core::{Tag, TextField};
 
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
-use crate::tag_editor::PigouneTagEditor;
+use crate::tag_editor::{PigouneTagEditor, SharedTag};
 use crate::thumbnails::{self, ThumbnailCache};
 
 type RenamedCallback = Box<dyn Fn(&PigouneAssetObject, String)>;
@@ -32,6 +32,7 @@ fn is_web_link(text: &str) -> bool {
 
 const NOTHING_PAGE: &str = "nothing";
 const ASSET_PAGE: &str = "asset";
+const GROUP_PAGE: &str = "group";
 const PREVIEW_PIXELS: u32 = 512;
 
 mod imp {
@@ -73,6 +74,12 @@ mod imp {
         pub favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub tag_editor: TemplateChild<PigouneTagEditor>,
+        #[template_child]
+        pub group_title: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub group_favorite_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub group_tag_editor: TemplateChild<PigouneTagEditor>,
         pub favorite_bindings: RefCell<Vec<glib::Binding>>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
@@ -245,8 +252,44 @@ impl PigouneAssetDetails {
         imp.credits_row.set_expanded(filled);
     }
 
-    pub fn tag_editor(&self) -> PigouneTagEditor {
-        self.imp().tag_editor.get()
+    pub fn tag_editors(&self) -> [PigouneTagEditor; 2] {
+        let imp = self.imp();
+        [imp.tag_editor.get(), imp.group_tag_editor.get()]
+    }
+
+    pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
+        let imp = self.imp();
+        if imp.stack.visible_child_name().as_deref() == Some(GROUP_PAGE) {
+            imp.group_tag_editor.show_tags(current, all);
+        } else {
+            imp.tag_editor.show_tags(current, all);
+        }
+    }
+
+    pub fn show_group(&self, selected: &[PigouneAssetObject]) {
+        let imp = self.imp();
+        if let Some(loading) = imp.loading.take() {
+            loading.abort();
+        }
+        self.save_texts();
+        imp.showing.replace(None);
+        imp.preview.set_paintable(None::<&gdk::Paintable>);
+        let count = selected.len();
+        imp.group_title.set_label(
+            &ngettext(
+                "{count} resource selected",
+                "{count} resources selected",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &count.to_string()),
+        );
+        let all_favorite = selected.iter().all(PigouneAssetObject::favorite);
+        imp.group_favorite_button.set_label(&if all_favorite {
+            gettext("Remove from Favorites")
+        } else {
+            gettext("Add to Favorites")
+        });
+        imp.stack.set_visible_child_name(GROUP_PAGE);
     }
 
     pub fn show(&self, selected: Option<&PigouneAssetObject>, thumbnails: &Rc<ThumbnailCache>) {

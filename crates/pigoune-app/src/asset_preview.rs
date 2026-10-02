@@ -17,7 +17,7 @@ const SMALLEST_RENDER_PIXELS: u32 = 256;
 const LARGEST_VECTOR_PIXELS: u32 = 4096;
 const SHARPEN_DELAY: Duration = Duration::from_millis(200);
 
-type ClosedCallback = Box<dyn Fn()>;
+type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
 
 mod imp {
     use std::cell::{Cell, RefCell};
@@ -49,8 +49,8 @@ mod imp {
         pub sharpening: RefCell<Option<glib::SourceId>>,
         #[property(get, set = Self::set_background)]
         pub background: RefCell<String>,
-        pub selection: RefCell<Option<gtk::SingleSelection>>,
-        pub selection_handler: RefCell<Option<glib::SignalHandlerId>>,
+        pub items: RefCell<Vec<PigouneAssetObject>>,
+        pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
         pub animation: RefCell<Option<glib::JoinHandle<()>>>,
@@ -149,29 +149,30 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneAssetPreview {
-    pub fn connect_closed(&self, callback: impl Fn() + 'static) {
+    pub fn connect_closed(&self, callback: impl Fn(Option<PigouneAssetObject>) + 'static) {
         self.imp().on_closed.replace(Some(Box::new(callback)));
     }
 
-    pub fn open(&self, selection: &gtk::SingleSelection, thumbnails: Rc<ThumbnailCache>) {
+    pub fn open(
+        &self,
+        items: Vec<PigouneAssetObject>,
+        position: u32,
+        thumbnails: Rc<ThumbnailCache>,
+    ) {
         let imp = self.imp();
         self.forget_selection();
         imp.thumbnails.replace(Some(thumbnails));
-        let handler = selection.connect_selected_item_notify(glib::clone!(
-            #[weak(rename_to = preview)]
-            self,
-            move |selection| preview.show_selected(selection)
-        ));
-        imp.selection.replace(Some(selection.clone()));
-        imp.selection_handler.replace(Some(handler));
-        self.show_selected(selection);
+        imp.items.replace(items);
+        imp.position.set(position);
+        self.show_current();
         self.grab_focus();
     }
 
     pub fn close(&self) {
+        let last = self.imp().showing.borrow().clone();
         self.forget_selection();
         if let Some(on_closed) = self.imp().on_closed.borrow().as_ref() {
-            on_closed();
+            on_closed(last);
         }
     }
 
@@ -186,11 +187,7 @@ impl PigouneAssetPreview {
             loading.abort();
         }
         self.stop_animation();
-        if let (Some(selection), Some(handler)) =
-            (imp.selection.take(), imp.selection_handler.take())
-        {
-            selection.disconnect(handler);
-        }
+        imp.items.replace(Vec::new());
         if let Some(sharpening) = imp.sharpening.take() {
             sharpening.remove();
         }
@@ -199,26 +196,32 @@ impl PigouneAssetPreview {
     }
 
     fn step(&self, offset: i32) {
-        let Some(selection) = self.imp().selection.borrow().clone() else {
-            return;
-        };
-        if let Some(position) = neighbour(selection.selected(), offset, selection.n_items()) {
-            selection.set_selected(position);
+        let imp = self.imp();
+        let count = u32::try_from(imp.items.borrow().len()).unwrap_or(u32::MAX);
+        if let Some(position) = neighbour(imp.position.get(), offset, count) {
+            imp.position.set(position);
+            self.show_current();
         }
     }
 
-    fn show_selected(&self, selection: &gtk::SingleSelection) {
-        let Some(asset) = selection
-            .selected_item()
-            .and_downcast::<PigouneAssetObject>()
-        else {
+    fn show_current(&self) {
+        let imp = self.imp();
+        let position = imp.position.get();
+        let (asset, count) = {
+            let items = imp.items.borrow();
+            let asset = usize::try_from(position)
+                .ok()
+                .and_then(|index| items.get(index))
+                .cloned();
+            (asset, u32::try_from(items.len()).unwrap_or(u32::MAX))
+        };
+        let Some(asset) = asset else {
             self.close();
             return;
         };
-        let imp = self.imp();
         imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
-            .set_subtitle(&position_text(selection.selected(), selection.n_items()));
+            .set_subtitle(&position_text(position, count));
         let remembered = imp
             .thumbnails
             .borrow()

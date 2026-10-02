@@ -5,8 +5,8 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetCommand, AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary, Library,
-    LibraryError, TagCommand, TagError, TagId, TextField, library_display_name,
+    AssetCommand, AssetId, AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary,
+    Library, LibraryError, Tag, TagCommand, TagError, TagId, TextField, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -18,6 +18,7 @@ use crate::import_report::{self, Destination};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::settings;
 use crate::sidebar::SidebarContent;
+use crate::tag_editor::SharedTag;
 use crate::thumbnails::THUMBNAIL_PIXELS;
 use crate::view_setting;
 
@@ -129,6 +130,7 @@ mod imp {
         #[template_child]
         pub nothing_page: TemplateChild<adw::StatusPage>,
         pub current_view: Cell<AssetView>,
+        pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
     }
@@ -508,15 +510,10 @@ impl PigouneWindow {
     fn describe_selected_asset(&self) {
         let imp = self.imp();
         imp.asset_details.show(None, &imp.asset_grid.thumbnails());
-        imp.asset_grid.connect_selected_asset_changed(glib::clone!(
+        imp.asset_grid.connect_selection_changed(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |selected| {
-                let imp = window.imp();
-                imp.asset_details
-                    .show(selected.as_ref(), &imp.asset_grid.thumbnails());
-                window.refresh_selected_tags();
-            }
+            move |selected| window.show_selection(&selected)
         ));
         imp.asset_details.connect_renamed(glib::clone!(
             #[weak(rename_to = window)]
@@ -539,17 +536,38 @@ impl PigouneWindow {
                 }
             }
         ));
-        let editor = imp.asset_details.tag_editor();
-        editor.connect_added(glib::clone!(
-            #[weak(rename_to = window)]
-            self,
-            move |names| window.add_tags_to_selected(names)
-        ));
-        editor.connect_removed(glib::clone!(
-            #[weak(rename_to = window)]
-            self,
-            move |tag| window.remove_tag_from_selected(tag)
-        ));
+        for editor in imp.asset_details.tag_editors() {
+            editor.connect_added(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |names| window.add_tags_to_selected(names)
+            ));
+            editor.connect_removed(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |tag| window.remove_tag_from_selected(tag)
+            ));
+        }
+    }
+
+    fn show_selection(&self, selected: &[PigouneAssetObject]) {
+        let imp = self.imp();
+        let thumbnails = imp.asset_grid.thumbnails();
+        match selected {
+            [] => imp.asset_details.show(None, &thumbnails),
+            [single] => imp.asset_details.show(Some(single), &thumbnails),
+            several => imp.asset_details.show_group(several),
+        }
+        self.refresh_selected_tags();
+    }
+
+    fn selected_ids(&self) -> Vec<AssetId> {
+        self.imp()
+            .asset_grid
+            .selected_assets()
+            .iter()
+            .map(PigouneAssetObject::id)
+            .collect()
     }
 
     fn rename_asset(&self, asset: &PigouneAssetObject, name: &str) {
@@ -600,26 +618,45 @@ impl PigouneWindow {
 
     fn refresh_selected_tags(&self) {
         let imp = self.imp();
-        let Some(asset) = imp.asset_grid.selected_asset() else {
+        let selected = self.selected_ids();
+        if selected.is_empty() {
             return;
-        };
-        let read =
-            imp.library.borrow().as_ref().map(|library| {
-                Ok::<_, LibraryError>((library.tags_of(asset.id())?, library.tags()?))
-            });
-        if let Some(Ok((current, all))) = read {
-            imp.asset_details.tag_editor().show_tags(current, all);
+        }
+        let read = imp.library.borrow().as_ref().map(|library| {
+            let mut carried: Vec<(Tag, usize)> = Vec::new();
+            for asset in &selected {
+                for tag in library.tags_of(*asset)? {
+                    match carried.iter_mut().find(|(known, _)| known.id == tag.id) {
+                        Some((_, count)) => *count += 1,
+                        None => carried.push((tag, 1)),
+                    }
+                }
+            }
+            Ok::<_, LibraryError>((carried, library.tags()?))
+        });
+        if let Some(Ok((mut carried, all))) = read {
+            carried.sort_by_key(|(tag, _)| tag.name.to_lowercase());
+            let shared = carried
+                .into_iter()
+                .map(|(tag, carried_by)| SharedTag {
+                    tag,
+                    carried_by,
+                    out_of: selected.len(),
+                })
+                .collect();
+            imp.asset_details.show_tags(shared, all);
         }
     }
 
     fn add_tags_to_selected(&self, names: Vec<String>) {
-        let Some(asset) = self.imp().asset_grid.selected_asset() else {
+        let selected = self.selected_ids();
+        if selected.is_empty() {
             return;
-        };
+        }
         let commands = names
             .into_iter()
             .map(|name| TagCommand::Add {
-                assets: vec![asset.id()],
+                assets: selected.clone(),
                 name,
             })
             .collect();
@@ -631,12 +668,13 @@ impl PigouneWindow {
 
     fn remove_tag_from_selected(&self, tag: TagId) {
         let imp = self.imp();
-        let Some(asset) = imp.asset_grid.selected_asset() else {
+        let selected = self.selected_ids();
+        if selected.is_empty() {
             return;
-        };
+        }
         let command = TagCommand::Unlink {
             tag,
-            assets: vec![asset.id()],
+            assets: selected.clone(),
         };
         if !self.apply_tag_command(&command) {
             return;
@@ -644,7 +682,9 @@ impl PigouneWindow {
         self.refresh_selected_tags();
         self.refresh_sidebar();
         if imp.current_view.get() == AssetView::Tag(tag) {
-            imp.asset_grid.remove_asset(asset.id());
+            for asset in selected {
+                imp.asset_grid.remove_asset(asset);
+            }
             if imp.asset_grid.is_empty() {
                 self.refresh_grid();
             }
@@ -829,35 +869,55 @@ impl PigouneWindow {
         imp.asset_grid.connect_preview_requested(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move || window.open_preview()
+            move |position| window.open_preview(position)
         ));
         imp.asset_preview.connect_closed(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move || window.leave_preview()
+            move |last| window.leave_preview(last.as_ref())
         ));
     }
 
-    fn open_preview(&self) {
+    fn open_preview(&self, activated: Option<u32>) {
         let imp = self.imp();
-        let Some(selection) = imp.asset_grid.selection() else {
+        let selected = imp.asset_grid.selected_assets();
+        let visible = imp.asset_grid.visible_assets();
+        let activated = activated
+            .and_then(|position| usize::try_from(position).ok())
+            .and_then(|index| visible.get(index))
+            .cloned();
+        let browsing_selection = selected.len() > 1;
+        let items = if browsing_selection {
+            selected
+        } else {
+            visible
+        };
+        let start = activated.or_else(|| imp.asset_grid.selected_assets().first().cloned());
+        let Some(start) = start else {
             return;
         };
-        if selection.selected_item().is_none() {
-            return;
-        }
+        let position = items
+            .iter()
+            .position(|asset| asset.id() == start.id())
+            .and_then(|index| u32::try_from(index).ok())
+            .unwrap_or(0);
+        imp.browsing_selection.set(browsing_selection);
         imp.window_stack.set_visible_child_name(PREVIEW_PAGE);
         imp.asset_preview
-            .open(&selection, imp.asset_grid.thumbnails());
+            .open(items, position, imp.asset_grid.thumbnails());
     }
 
-    fn leave_preview(&self) {
+    fn leave_preview(&self, last: Option<&PigouneAssetObject>) {
         let imp = self.imp();
         if imp.window_stack.visible_child_name().as_deref() != Some(PREVIEW_PAGE) {
             return;
         }
         imp.window_stack.set_visible_child_name(MAIN_PAGE);
-        imp.asset_grid.reveal_selected();
+        match last {
+            Some(last) if imp.browsing_selection.get() => imp.asset_grid.reveal_asset(last.id()),
+            Some(last) => imp.asset_grid.select_asset(last.id()),
+            None => imp.asset_grid.reveal_selected(),
+        }
     }
 
     fn refresh_assets(&self) {
@@ -1004,7 +1064,7 @@ impl PigouneWindow {
     fn refresh_grid(&self) {
         let imp = self.imp();
         let view = imp.current_view.get();
-        let previously_selected = imp.asset_grid.selected_asset().map(|asset| asset.id());
+        let previously_selected = self.selected_ids();
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
                 asset_objects(library, view)?,
@@ -1023,8 +1083,8 @@ impl PigouneWindow {
                     ASSETS_PAGE
                 };
                 imp.asset_grid.show_assets(&assets);
-                if let Some(id) = previously_selected {
-                    imp.asset_grid.select_asset(id);
+                if !previously_selected.is_empty() {
+                    imp.asset_grid.select_assets(&previously_selected);
                 }
                 imp.library_stack.set_visible_child_name(page);
                 imp.details_button.set_visible(!assets.is_empty());
@@ -1041,25 +1101,32 @@ impl PigouneWindow {
 
     fn toggle_favorite(&self) {
         let imp = self.imp();
-        let Some(asset) = imp.asset_grid.selected_asset() else {
+        let selected = imp.asset_grid.selected_assets();
+        if selected.is_empty() {
             return;
-        };
-        let favorite = !asset.favorite();
+        }
+        let favorite = !selected.iter().all(PigouneAssetObject::favorite);
         let applied = imp.library.borrow_mut().as_mut().map(|library| {
             library.apply_asset_command(&AssetCommand::SetFavorite {
-                assets: vec![asset.id()],
+                assets: selected.iter().map(PigouneAssetObject::id).collect(),
                 favorite,
             })
         });
         match applied {
             Some(Ok(_)) => {
-                asset.set_favorite(favorite);
+                for asset in &selected {
+                    asset.set_favorite(favorite);
+                }
                 self.refresh_sidebar();
                 if imp.current_view.get() == AssetView::Favorites && !favorite {
-                    imp.asset_grid.remove_asset(asset.id());
+                    for asset in &selected {
+                        imp.asset_grid.remove_asset(asset.id());
+                    }
                     if imp.asset_grid.is_empty() {
                         self.refresh_grid();
                     }
+                } else if selected.len() > 1 {
+                    imp.asset_details.show_group(&selected);
                 }
             }
             Some(Err(error)) => {

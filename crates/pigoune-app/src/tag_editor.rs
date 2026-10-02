@@ -7,6 +7,12 @@ use pigoune_core::{Tag, TagId};
 use crate::tag_input;
 
 type AddedCallback = Box<dyn Fn(Vec<String>)>;
+
+pub struct SharedTag {
+    pub tag: Tag,
+    pub carried_by: usize,
+    pub out_of: usize,
+}
 type RemovedCallback = Box<dyn Fn(TagId)>;
 
 mod imp {
@@ -70,24 +76,34 @@ impl PigouneTagEditor {
         self.imp().on_removed.replace(Some(Box::new(callback)));
     }
 
-    pub fn show_tags(&self, current: Vec<Tag>, all: Vec<Tag>) {
+    pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
         let imp = self.imp();
         let chips = part(&imp.chips);
         chips.remove_all();
-        for tag in &current {
-            chips.append(&self.chip(tag));
+        for shared in &current {
+            chips.append(&self.chip(shared));
         }
         chips.set_visible(!current.is_empty());
-        imp.current.replace(current);
+        imp.current
+            .replace(current.into_iter().map(|shared| shared.tag).collect());
         imp.all.replace(all);
         self.refresh_suggestions();
     }
 
-    fn chip(&self, tag: &Tag) -> gtk::Box {
+    fn chip(&self, shared: &SharedTag) -> gtk::Box {
+        let tag = &shared.tag;
         let chip = gtk::Box::builder()
             .spacing(2)
             .css_classes(["tag-chip"])
             .build();
+        if shared.carried_by < shared.out_of {
+            chip.add_css_class("partial");
+            chip.set_tooltip_text(Some(
+                &gettext("On {count} of {total} resources")
+                    .replace("{count}", &shared.carried_by.to_string())
+                    .replace("{total}", &shared.out_of.to_string()),
+            ));
+        }
         chip.append(&gtk::Label::new(Some(&tag.name)));
         let remove = gtk::Button::builder()
             .icon_name("window-close-symbolic")
