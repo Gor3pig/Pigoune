@@ -2,12 +2,55 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneAssetGrid: Adw.Bin {
-  child: ScrolledWindow {
-    hscrollbar-policy: never;
+  child: Adw.ToolbarView {
+    content: ScrolledWindow scrolled_window {
+      hscrollbar-policy: never;
 
-    child: GridView grid_view {
-      min-columns: 1;
-      max-columns: 100;
+      child: GridView grid_view {
+        min-columns: 1;
+        max-columns: 100;
+      };
     };
+
+    [bottom]
+    Box {
+      halign: end;
+      spacing: 6;
+      margin-start: 12;
+      margin-end: 12;
+
+      Image {
+        icon-name: "zoom-out-symbolic";
+
+        styles [
+          "dim-label",
+        ]
+      }
+
+      Scale size_scale {
+        width-request: 160;
+        draw-value: false;
+        tooltip-text: _("Thumbnail Size");
+
+        adjustment: Adjustment size_adjustment {
+          lower: 64;
+          upper: 256;
+          step-increment: 32;
+          page-increment: 32;
+        };
+
+        accessibility {
+          label: _("Thumbnail Size");
+        }
+      }
+
+      Image {
+        icon-name: "zoom-in-symbolic";
+
+        styles [
+          "dim-label",
+        ]
+      }
+    }
   };
 }

@@ -18,5 +18,11 @@
       <default>false</default>
       <summary>Window maximized</summary>
     </key>
+    <key name="thumbnail-size" type="i">
+      <range min="64" max="256"/>
+      <default>128</default>
+      <summary>Thumbnail size</summary>
+      <description>Side of the thumbnails in the library grid, in pixels.</description>
+    </key>
   </schema>
 </schemalist>

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 08:51+0200\n"
+"POT-Creation-Date: 2026-10-02 09:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -84,6 +84,14 @@ msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:19
 msgid "Window maximized"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:24
+msgid "Thumbnail size"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:25
+msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr ""
 
 #: crates/pigoune-app/ui/window.blp:20
@@ -171,7 +179,7 @@ msgstr ""
 msgid "_Choose…"
 msgstr ""
 
-#: crates/pigoune-app/src/application.rs:56
+#: crates/pigoune-app/src/application.rs:64
 msgid "translator-credits"
 msgstr ""
 
@@ -228,56 +236,56 @@ msgstr ""
 msgid "Choose a Location"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:200
+#: crates/pigoune-app/src/window.rs:218
 msgid "_Open Another Library…"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:201
+#: crates/pigoune-app/src/window.rs:219
 msgid "_Try Again"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:233
+#: crates/pigoune-app/src/window.rs:251
 msgid "Open a Pigoune Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:314
+#: crates/pigoune-app/src/window.rs:332
 msgid "Unable to Show the Library"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:317 crates/pigoune-app/src/window.rs:475
+#: crates/pigoune-app/src/window.rs:335 crates/pigoune-app/src/window.rs:493
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:386
+#: crates/pigoune-app/src/window.rs:404
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:392
+#: crates/pigoune-app/src/window.rs:410
 msgid "Import Files"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:393 crates/pigoune-app/src/window.rs:405
+#: crates/pigoune-app/src/window.rs:411 crates/pigoune-app/src/window.rs:423
 msgid "_Import"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:404
+#: crates/pigoune-app/src/window.rs:422
 msgid "Import Folders"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:473
+#: crates/pigoune-app/src/window.rs:491
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:481
+#: crates/pigoune-app/src/window.rs:499
 msgid "Images"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:486
+#: crates/pigoune-app/src/window.rs:504
 msgid "All Files"
 msgstr ""
 
@@ -394,4 +402,9 @@ msgstr ""
 
 #: crates/pigoune-app/src/import_report.rs:181
 msgid "Show Unreadable Files"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-grid.blp:33
+#: crates/pigoune-app/ui/asset-grid.blp:43
+msgid "Thumbnail Size"
 msgstr ""

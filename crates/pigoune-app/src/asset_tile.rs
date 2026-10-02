@@ -56,6 +56,10 @@ impl PigouneAssetTile {
         glib::Object::new()
     }
 
+    pub fn picture(&self) -> gtk::Picture {
+        self.imp().picture.get()
+    }
+
     pub fn show_asset(&self, asset: &PigouneAssetObject, cache: &Rc<ThumbnailCache>) {
         let imp = self.imp();
         imp.name_label.set_label(asset.display_name());

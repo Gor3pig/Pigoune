@@ -23,10 +23,14 @@ const OPEN_LIBRARY_ACTION: &str = "win.open-library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
 const IMPORT_FILES_ACTION: &str = "win.import-files";
 const IMPORT_FOLDER_ACTION: &str = "win.import-folder";
-const OPEN_LIBRARY_ACTIONS: [&str; 3] = [
+const ENLARGE_THUMBNAILS_ACTION: &str = "win.enlarge-thumbnails";
+const SHRINK_THUMBNAILS_ACTION: &str = "win.shrink-thumbnails";
+const OPEN_LIBRARY_ACTIONS: [&str; 5] = [
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
+    ENLARGE_THUMBNAILS_ACTION,
+    SHRINK_THUMBNAILS_ACTION,
 ];
 
 const IMAGE_MIME_TYPES: [&str; 7] = [
@@ -60,8 +64,8 @@ mod imp {
     use crate::asset_grid::PigouneAssetGrid;
 
     use super::{
-        CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
-        OPEN_LIBRARY_ACTION,
+        CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, ENLARGE_THUMBNAILS_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, OPEN_LIBRARY_ACTION, SHRINK_THUMBNAILS_ACTION,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -109,6 +113,12 @@ mod imp {
             class.install_action_async(IMPORT_FOLDER_ACTION, None, |window, _, _| async move {
                 window.choose_folders_to_import().await;
             });
+            class.install_action(ENLARGE_THUMBNAILS_ACTION, None, |window, _, _| {
+                window.imp().asset_grid.enlarge_tiles();
+            });
+            class.install_action(SHRINK_THUMBNAILS_ACTION, None, |window, _, _| {
+                window.imp().asset_grid.shrink_tiles();
+            });
         }
 
         fn instance_init(object: &glib::subclass::InitializingObject<Self>) {
@@ -150,6 +160,13 @@ impl PigouneWindow {
             .property("application", application)
             .build();
         window.restore_window_state(&settings);
+        settings
+            .bind(
+                settings::THUMBNAIL_SIZE,
+                &*window.imp().asset_grid,
+                "tile-size",
+            )
+            .build();
         window
             .imp()
             .settings

@@ -30,6 +30,14 @@ fn install_actions(application: &adw::Application) {
     application.set_accels_for_action("win.create-library", &["<Control>n"]);
     application.set_accels_for_action("win.open-library", &["<Control>o"]);
     application.set_accels_for_action("win.import-files", &["<Control>i"]);
+    application.set_accels_for_action(
+        "win.enlarge-thumbnails",
+        &["<Control>plus", "<Control>equal", "<Control>KP_Add"],
+    );
+    application.set_accels_for_action(
+        "win.shrink-thumbnails",
+        &["<Control>minus", "<Control>KP_Subtract"],
+    );
 }
 
 fn present_main_window(application: &adw::Application) {

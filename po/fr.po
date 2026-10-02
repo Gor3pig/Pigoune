@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-02 08:51+0200\n"
+"POT-Creation-Date: 2026-10-02 09:08+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -85,6 +85,14 @@ msgstr "Hauteur de la fenêtre"
 #: data/io.github.gor3pig.Pigoune.gschema.xml:19
 msgid "Window maximized"
 msgstr "Fenêtre maximisée"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:24
+msgid "Thumbnail size"
+msgstr "Taille des vignettes"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:25
+msgid "Side of the thumbnails in the library grid, in pixels."
+msgstr "Côté des vignettes dans la grille de la bibliothèque, en pixels."
 
 #: crates/pigoune-app/ui/window.blp:20
 msgid "Main Menu"
@@ -173,7 +181,7 @@ msgstr "Aucun dossier choisi"
 msgid "_Choose…"
 msgstr "_Choisir…"
 
-#: crates/pigoune-app/src/application.rs:56
+#: crates/pigoune-app/src/application.rs:64
 msgid "translator-credits"
 msgstr "Gor3pig"
 
@@ -242,56 +250,56 @@ msgstr "Une erreur inattendue s'est produite : {error}"
 msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
-#: crates/pigoune-app/src/window.rs:200
+#: crates/pigoune-app/src/window.rs:218
 msgid "_Open Another Library…"
 msgstr "_Ouvrir une autre bibliothèque…"
 
-#: crates/pigoune-app/src/window.rs:201
+#: crates/pigoune-app/src/window.rs:219
 msgid "_Try Again"
 msgstr "_Réessayer"
 
-#: crates/pigoune-app/src/window.rs:233
+#: crates/pigoune-app/src/window.rs:251
 msgid "Open a Pigoune Library"
 msgstr "Ouvrir une bibliothèque Pigoune"
 
-#: crates/pigoune-app/src/window.rs:314
+#: crates/pigoune-app/src/window.rs:332
 msgid "Unable to Show the Library"
 msgstr "Impossible d’afficher la bibliothèque"
 
-#: crates/pigoune-app/src/window.rs:317 crates/pigoune-app/src/window.rs:475
+#: crates/pigoune-app/src/window.rs:335 crates/pigoune-app/src/window.rs:493
 #: crates/pigoune-app/src/import_report.rs:40
 #: crates/pigoune-app/src/import_report.rs:52
 #: crates/pigoune-app/src/import_report.rs:63
 msgid "_Close"
 msgstr "_Fermer"
 
-#: crates/pigoune-app/src/window.rs:386
+#: crates/pigoune-app/src/window.rs:404
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr "Déposez pour importer dans « {name} »"
 
-#: crates/pigoune-app/src/window.rs:392
+#: crates/pigoune-app/src/window.rs:410
 msgid "Import Files"
 msgstr "Importer des fichiers"
 
-#: crates/pigoune-app/src/window.rs:393 crates/pigoune-app/src/window.rs:405
+#: crates/pigoune-app/src/window.rs:411 crates/pigoune-app/src/window.rs:423
 msgid "_Import"
 msgstr "_Importer"
 
-#: crates/pigoune-app/src/window.rs:404
+#: crates/pigoune-app/src/window.rs:422
 msgid "Import Folders"
 msgstr "Importer des dossiers"
 
-#: crates/pigoune-app/src/window.rs:473
+#: crates/pigoune-app/src/window.rs:491
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "Impossible d'ouvrir « {name} »"
 
-#: crates/pigoune-app/src/window.rs:481
+#: crates/pigoune-app/src/window.rs:499
 msgid "Images"
 msgstr "Images"
 
-#: crates/pigoune-app/src/window.rs:486
+#: crates/pigoune-app/src/window.rs:504
 msgid "All Files"
 msgstr "Tous les fichiers"
 
@@ -422,3 +430,8 @@ msgstr "La collection de destination n’existe plus."
 #: crates/pigoune-app/src/import_report.rs:181
 msgid "Show Unreadable Files"
 msgstr "Afficher les fichiers illisibles"
+
+#: crates/pigoune-app/ui/asset-grid.blp:33
+#: crates/pigoune-app/ui/asset-grid.blp:43
+msgid "Thumbnail Size"
+msgstr "Taille des vignettes"

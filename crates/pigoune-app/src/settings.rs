@@ -7,6 +7,7 @@ pub const LAST_LIBRARY_PATH: &str = "last-library-path";
 pub const WINDOW_WIDTH: &str = "window-width";
 pub const WINDOW_HEIGHT: &str = "window-height";
 pub const WINDOW_MAXIMIZED: &str = "window-maximized";
+pub const THUMBNAIL_SIZE: &str = "thumbnail-size";
 
 pub fn load() -> gio::Settings {
     let schema = installed_schema()
