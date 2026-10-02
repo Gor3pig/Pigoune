@@ -13,6 +13,8 @@ pub const SUBTREE: &str = "WITH RECURSIVE subtree(id) AS (
 const IN_SUBTREE: &str = "id IN (SELECT asset_id FROM asset_collections
         WHERE collection_id IN (SELECT id FROM subtree))";
 
+const FAVORITE: &str = "is_favorite = 1";
+
 const IN_NO_COLLECTION: &str = "NOT EXISTS (SELECT 1 FROM asset_collections
         JOIN collections ON collections.id = asset_collections.collection_id
         WHERE asset_collections.asset_id = assets.id AND collections.trashed_at_unix_ms IS NULL)";
@@ -21,6 +23,7 @@ const IN_NO_COLLECTION: &str = "NOT EXISTS (SELECT 1 FROM asset_collections
 pub enum AssetView {
     #[default]
     All,
+    Favorites,
     Unclassified,
     Collection(CollectionId),
 }
@@ -28,6 +31,7 @@ pub enum AssetView {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ViewCounts {
     pub all: usize,
+    pub favorites: usize,
     pub unclassified: usize,
     pub collections: HashMap<CollectionId, usize>,
 }
@@ -37,6 +41,7 @@ impl ViewCounts {
     pub fn of(&self, view: AssetView) -> usize {
         match view {
             AssetView::All => self.all,
+            AssetView::Favorites => self.favorites,
             AssetView::Unclassified => self.unclassified,
             AssetView::Collection(id) => self.collections.get(&id).copied().unwrap_or(0),
         }
@@ -46,6 +51,7 @@ impl ViewCounts {
 pub fn condition(view: AssetView) -> (&'static str, Option<CollectionId>) {
     match view {
         AssetView::All => ("?1 IS NULL", None),
+        AssetView::Favorites => (FAVORITE, None),
         AssetView::Unclassified => (IN_NO_COLLECTION, None),
         AssetView::Collection(id) => (IN_SUBTREE, Some(id)),
     }
@@ -56,7 +62,7 @@ impl Library {
         let count = |condition: &str| -> Result<usize, LibraryError> {
             let total: i64 = self.connection.query_row(
                 &format!(
-                    "SELECT count(*) FROM assets WHERE trashed_at_unix_ms IS NULL AND {condition}"
+                    "SELECT count(*) FROM assets WHERE trashed_at_unix_ms IS NULL AND ({condition})"
                 ),
                 [],
                 |row| row.get(0),
@@ -87,6 +93,7 @@ impl Library {
 
         Ok(ViewCounts {
             all: count("1 = 1")?,
+            favorites: count(FAVORITE)?,
             unclassified: count(IN_NO_COLLECTION)?,
             collections,
         })

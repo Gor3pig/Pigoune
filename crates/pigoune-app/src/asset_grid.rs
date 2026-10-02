@@ -4,6 +4,8 @@ use adw::subclass::prelude::*;
 use gtk::prelude::*;
 use gtk::{gdk, glib};
 
+use pigoune_core::AssetId;
+
 use crate::asset_object::PigouneAssetObject;
 use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
@@ -154,6 +156,29 @@ impl PigouneAssetGrid {
     pub fn show_assets(&self, assets: &[PigouneAssetObject]) {
         let store = &self.imp().assets;
         store.splice(0, store.n_items(), assets);
+    }
+
+    pub fn selected_asset(&self) -> Option<PigouneAssetObject> {
+        self.selection()?
+            .selected_item()
+            .and_downcast::<PigouneAssetObject>()
+    }
+
+    pub fn remove_asset(&self, id: AssetId) {
+        let store = &self.imp().assets;
+        let position = (0..store.n_items()).find(|position| {
+            store
+                .item(*position)
+                .and_downcast::<PigouneAssetObject>()
+                .is_some_and(|asset| asset.id() == id)
+        });
+        if let Some(position) = position {
+            store.remove(position);
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.imp().assets.n_items() == 0
     }
 
     pub fn thumbnails(&self) -> Rc<ThumbnailCache> {

@@ -66,3 +66,12 @@
   outline: none;
   background: none;
 }
+
+.favorite-badge {
+  margin: 4px;
+  padding: 3px;
+  border-radius: 9999px;
+  color: #f6d32d;
+  background-color: rgb(0 0 0 / 60%);
+  -gtk-icon-size: 12px;
+}

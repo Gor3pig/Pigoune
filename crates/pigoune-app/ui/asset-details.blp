@@ -39,15 +39,30 @@ template $PigouneAssetDetails: Adw.Bin {
             can-shrink: true;
           }
 
-          Label name_label {
-            wrap: true;
-            wrap-mode: word_char;
-            justify: center;
-            selectable: true;
+          Box {
+            spacing: 6;
+            halign: center;
 
-            styles [
-              "title-3",
-            ]
+            Label name_label {
+              wrap: true;
+              wrap-mode: word_char;
+              justify: center;
+              selectable: true;
+
+              styles [
+                "title-3",
+              ]
+            }
+
+            Button favorite_button {
+              valign: center;
+              action-name: "win.toggle-favorite";
+
+              styles [
+                "flat",
+                "circular",
+              ]
+            }
           }
 
           ListBox {

@@ -5,8 +5,8 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary, Library, LibraryError,
-    library_display_name,
+    AssetCommand, AssetView, CollectionCommand, CollectionId, ImportError, ImportSummary, Library,
+    LibraryError, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -38,7 +38,8 @@ const SHRINK_THUMBNAILS_ACTION: &str = "win.shrink-thumbnails";
 const NEW_COLLECTION_ACTION: &str = "win.new-collection";
 const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
 const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
-const OPEN_LIBRARY_ACTIONS: [&str; 8] = [
+const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
+const OPEN_LIBRARY_ACTIONS: [&str; 9] = [
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
@@ -47,6 +48,7 @@ const OPEN_LIBRARY_ACTIONS: [&str; 8] = [
     NEW_COLLECTION_ACTION,
     NEW_SUBCOLLECTION_ACTION,
     RENAME_COLLECTION_ACTION,
+    TOGGLE_FAVORITE_ACTION,
 ];
 
 const IMAGE_MIME_TYPES: [&str; 7] = [
@@ -86,7 +88,7 @@ mod imp {
         CLOSE_LIBRARY_ACTION, CREATE_LIBRARY_ACTION, ENLARGE_THUMBNAILS_ACTION,
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, RENAME_COLLECTION_ACTION, SHRINK_THUMBNAILS_ACTION,
-        collection_parameter,
+        TOGGLE_FAVORITE_ACTION, collection_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -157,6 +159,9 @@ mod imp {
             });
             class.install_action(SHRINK_THUMBNAILS_ACTION, None, |window, _, _| {
                 window.imp().asset_grid.shrink_tiles();
+            });
+            class.install_action(TOGGLE_FAVORITE_ACTION, None, |window, _, _| {
+                window.toggle_favorite();
             });
             class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
                 window.ask_new_collection(None);
@@ -294,7 +299,7 @@ impl PigouneWindow {
             move |view, paths| {
                 let target = match view {
                     AssetView::Collection(id) => Some(id),
-                    AssetView::All | AssetView::Unclassified => None,
+                    AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
                 };
                 glib::spawn_future_local(async move {
                     window.import_paths_into(paths, target).await;
@@ -335,7 +340,7 @@ impl PigouneWindow {
     fn target_collection(&self) -> Option<CollectionId> {
         match self.imp().current_view.get() {
             AssetView::Collection(id) => Some(id),
-            AssetView::All | AssetView::Unclassified => None,
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
         }
     }
 
@@ -688,9 +693,49 @@ impl PigouneWindow {
         }
     }
 
+    fn toggle_favorite(&self) {
+        let imp = self.imp();
+        let Some(asset) = imp.asset_grid.selected_asset() else {
+            return;
+        };
+        let favorite = !asset.favorite();
+        let applied = imp.library.borrow_mut().as_mut().map(|library| {
+            library.apply_asset_command(&AssetCommand::SetFavorite {
+                assets: vec![asset.id()],
+                favorite,
+            })
+        });
+        match applied {
+            Some(Ok(_)) => {
+                asset.set_favorite(favorite);
+                self.refresh_sidebar();
+                if imp.current_view.get() == AssetView::Favorites && !favorite {
+                    imp.asset_grid.remove_asset(asset.id());
+                    if imp.asset_grid.is_empty() {
+                        self.refresh_grid();
+                    }
+                }
+            }
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Change the Favorites")),
+                    Some(&error_messages::describe_asset(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
+    }
+
     fn describe_empty_view(&self, view: AssetView, view_name: &str) {
         let page = &self.imp().nothing_page;
-        if view == AssetView::Unclassified {
+        if view == AssetView::Favorites {
+            page.set_title(&gettext("No Favorites"));
+            page.set_description(Some(&gettext(
+                "Mark a resource as a favorite with the star in the details panel or with Ctrl+D.",
+            )));
+        } else if view == AssetView::Unclassified {
             page.set_title(&gettext("No Unclassified Resources"));
             page.set_description(Some(&gettext(
                 "Every resource is in at least one collection.",
@@ -932,7 +977,7 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .ok()
             .flatten()
             .map_or_else(|| library.name(), |collection| collection.name),
-        AssetView::All | AssetView::Unclassified => library.name(),
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified => library.name(),
     }
 }
 

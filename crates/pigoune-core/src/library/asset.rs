@@ -9,7 +9,8 @@ use rusqlite::{OptionalExtension, Row};
 const EMBEDDED_SIZES_SEPARATOR: char = ',';
 const ASSET_COLUMNS: &str =
     "id, display_name, original_file_name, stored_path, format, width, height,
-    byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms, trashed_at_unix_ms";
+    byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms, trashed_at_unix_ms,
+    is_favorite";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asset {
@@ -25,6 +26,7 @@ pub struct Asset {
     pub embedded_sizes: Vec<Dimensions>,
     pub added_at_unix_ms: i64,
     pub trashed_at_unix_ms: Option<i64>,
+    pub is_favorite: bool,
 }
 
 impl Library {
@@ -85,6 +87,7 @@ fn asset_from_row(row: &Row) -> rusqlite::Result<Asset> {
         embedded_sizes: row.get::<_, EmbeddedSizes>("embedded_sizes")?.0,
         added_at_unix_ms: row.get("added_at_unix_ms")?,
         trashed_at_unix_ms: row.get("trashed_at_unix_ms")?,
+        is_favorite: row.get("is_favorite")?,
     })
 }
 

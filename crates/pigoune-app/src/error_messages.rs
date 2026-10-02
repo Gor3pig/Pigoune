@@ -1,5 +1,5 @@
 use gettextrs::gettext;
-use pigoune_core::{CollectionError, LibraryError};
+use pigoune_core::{AssetError, CollectionError, LibraryError};
 
 pub fn describe(error: &LibraryError) -> String {
     match error {
@@ -46,5 +46,12 @@ pub fn describe_collection(error: &CollectionError) -> String {
             gettext("The collections changed in the meantime. Please try again.")
         }
         CollectionError::Library(error) => describe(error),
+    }
+}
+
+pub fn describe_asset(error: &AssetError) -> String {
+    match error {
+        AssetError::NotFound(_) => gettext("This resource no longer exists."),
+        AssetError::Library(error) => describe(error),
     }
 }

@@ -27,6 +27,9 @@ mod imp {
         pub name_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub gif_badge: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub favorite_badge: TemplateChild<gtk::Image>,
+        pub favorite_binding: RefCell<Option<glib::Binding>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
         pub animation: RefCell<Option<glib::JoinHandle<()>>>,
         pub asset: RefCell<Option<PigouneAssetObject>>,
@@ -78,6 +81,12 @@ impl PigouneAssetTile {
         imp.name_label.set_label(asset.display_name());
         self.set_tooltip_text(Some(asset.display_name()));
         imp.gif_badge.set_visible(asset.asset().is_animated);
+        self.unbind_favorite();
+        let binding = asset
+            .bind_property("favorite", &*imp.favorite_badge, "visible")
+            .sync_create()
+            .build();
+        imp.favorite_binding.replace(Some(binding));
         imp.asset.replace(Some(asset.clone()));
 
         if let Some(texture) = cache.remembered(asset.id()) {
@@ -111,11 +120,18 @@ impl PigouneAssetTile {
     pub fn forget_asset(&self) {
         let imp = self.imp();
         self.stop_animation();
+        self.unbind_favorite();
         imp.asset.replace(None);
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
         imp.picture.set_paintable(None::<&gdk::Paintable>);
+    }
+
+    fn unbind_favorite(&self) {
+        if let Some(binding) = self.imp().favorite_binding.take() {
+            binding.unbind();
+        }
     }
 
     fn animate_on_hover(&self) {

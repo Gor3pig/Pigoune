@@ -87,7 +87,7 @@ impl PigouneSidebarRow {
     fn collection(&self) -> Option<CollectionId> {
         match self.imp().item.borrow().as_ref()?.view()? {
             AssetView::Collection(id) => Some(id),
-            AssetView::All | AssetView::Unclassified => None,
+            AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
         }
     }
 

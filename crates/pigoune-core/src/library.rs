@@ -1,4 +1,5 @@
 mod asset;
+mod asset_command;
 mod batch_import;
 mod clock;
 mod collection;
@@ -22,6 +23,7 @@ use uuid::Uuid;
 use staging::StagingDir;
 
 pub use asset::Asset;
+pub use asset_command::{AssetCommand, AssetError};
 pub use batch_import::{
     ImportControl, ImportEnding, ImportProgress, ImportSummary, LARGE_FILE_BYTES,
 };

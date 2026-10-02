@@ -99,6 +99,7 @@ mod tests {
             embedded_sizes: Vec::new(),
             added_at_unix_ms: added,
             trashed_at_unix_ms: None,
+            is_favorite: false,
         }
     }
 

@@ -27,6 +27,19 @@ template $PigouneAssetTile: Box {
         "gif-badge",
       ]
     }
+
+    [overlay]
+    Image favorite_badge {
+      icon-name: "starred-symbolic";
+      visible: false;
+      halign: end;
+      valign: start;
+      can-target: false;
+
+      styles [
+        "favorite-badge",
+      ]
+    }
   }
 
   Label name_label {

@@ -11,17 +11,21 @@ pub struct AssetEntry {
 }
 
 mod imp {
-    use std::cell::OnceCell;
+    use std::cell::{Cell, OnceCell};
 
+    use adw::prelude::*;
     use adw::subclass::prelude::*;
     use gtk::glib;
 
     use super::AssetEntry;
 
-    #[derive(Default)]
+    #[derive(Default, glib::Properties)]
+    #[properties(wrapper_type = super::PigouneAssetObject)]
     pub struct PigouneAssetObject {
         pub entry: OnceCell<AssetEntry>,
         pub name_key: OnceCell<glib::FilenameCollationKey>,
+        #[property(get, set)]
+        pub favorite: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -30,6 +34,7 @@ mod imp {
         type Type = super::PigouneAssetObject;
     }
 
+    #[glib::derived_properties]
     impl ObjectImpl for PigouneAssetObject {}
 }
 
@@ -39,7 +44,9 @@ glib::wrapper! {
 
 impl PigouneAssetObject {
     pub fn new(entry: AssetEntry) -> Self {
-        let object: Self = glib::Object::new();
+        let object: Self = glib::Object::builder()
+            .property("favorite", entry.asset.is_favorite)
+            .build();
         if object.imp().entry.set(entry).is_err() {
             unreachable!("a new asset object has no entry yet");
         }

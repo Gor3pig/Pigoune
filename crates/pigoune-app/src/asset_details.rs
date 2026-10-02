@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
+use gettextrs::gettext;
 use gtk::{gdk, glib};
 
 use crate::animation;
@@ -28,6 +29,9 @@ mod imp {
         pub preview: TemplateChild<gtk::Picture>,
         #[template_child]
         pub name_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub favorite_button: TemplateChild<gtk::Button>,
+        pub favorite_bindings: RefCell<Vec<glib::Binding>>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
         #[template_child]
@@ -91,6 +95,32 @@ impl PigouneAssetDetails {
         let imp = self.imp();
         let asset = object.asset();
         imp.name_label.set_label(&asset.display_name);
+        for binding in imp.favorite_bindings.take() {
+            binding.unbind();
+        }
+        let icon = object
+            .bind_property("favorite", &*imp.favorite_button, "icon-name")
+            .transform_to(|_, favorite: bool| {
+                Some(if favorite {
+                    "starred-symbolic"
+                } else {
+                    "non-starred-symbolic"
+                })
+            })
+            .sync_create()
+            .build();
+        let tooltip = object
+            .bind_property("favorite", &*imp.favorite_button, "tooltip-text")
+            .transform_to(|_, favorite: bool| {
+                Some(if favorite {
+                    gettext("Remove from Favorites")
+                } else {
+                    gettext("Add to Favorites")
+                })
+            })
+            .sync_create()
+            .build();
+        imp.favorite_bindings.replace(vec![icon, tooltip]);
         imp.format_row
             .set_subtitle(asset_facts::format_name(asset.format));
         imp.dimensions_row

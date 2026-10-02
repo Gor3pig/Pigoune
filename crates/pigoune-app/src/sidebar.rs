@@ -13,6 +13,7 @@ use crate::sidebar_row::PigouneSidebarRow;
 
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
+const FAVORITES_ICON: &str = "starred-symbolic";
 const COLLECTION_ICON: &str = "folder-symbolic";
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
@@ -106,6 +107,13 @@ impl PigouneSidebar {
             AssetView::All,
             gettext("All"),
             ALL_ICON,
+            counts,
+            None,
+        ));
+        root.append(&view_item(
+            AssetView::Favorites,
+            gettext("Favorites"),
+            FAVORITES_ICON,
             counts,
             None,
         ));
@@ -307,7 +315,7 @@ fn item_at(object: Option<glib::Object>) -> Option<PigouneSidebarItem> {
 fn collection_of(row: &gtk::TreeListRow) -> Option<CollectionId> {
     match row.item().and_downcast::<PigouneSidebarItem>()?.view()? {
         AssetView::Collection(id) => Some(id),
-        AssetView::All | AssetView::Unclassified => None,
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified => None,
     }
 }
 

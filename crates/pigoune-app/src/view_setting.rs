@@ -2,12 +2,14 @@ use pigoune_core::{AssetView, CollectionId};
 
 const ALL: &str = "all";
 const UNCLASSIFIED: &str = "unclassified";
+const FAVORITES: &str = "favorites";
 const COLLECTION_PREFIX: &str = "collection:";
 
 pub fn to_setting(view: AssetView) -> String {
     match view {
         AssetView::All => ALL.to_owned(),
         AssetView::Unclassified => UNCLASSIFIED.to_owned(),
+        AssetView::Favorites => FAVORITES.to_owned(),
         AssetView::Collection(id) => format!("{COLLECTION_PREFIX}{id}"),
     }
 }
@@ -15,6 +17,9 @@ pub fn to_setting(view: AssetView) -> String {
 pub fn from_setting(value: &str) -> AssetView {
     if value == UNCLASSIFIED {
         return AssetView::Unclassified;
+    }
+    if value == FAVORITES {
+        return AssetView::Favorites;
     }
     value
         .strip_prefix(COLLECTION_PREFIX)
@@ -34,6 +39,7 @@ mod tests {
         for view in [
             AssetView::All,
             AssetView::Unclassified,
+            AssetView::Favorites,
             AssetView::Collection(collection),
         ] {
             assert_eq!(from_setting(&to_setting(view)), view);
