@@ -22,6 +22,13 @@ type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
+type AssetsHoveredCallback = Box<dyn Fn(Option<HoveredDrop>)>;
+
+pub struct HoveredDrop {
+    pub view: AssetView,
+    pub assets: Vec<AssetId>,
+    pub keep_source: bool,
+}
 
 pub struct SidebarContent {
     pub tree: CollectionTree,
@@ -39,7 +46,8 @@ mod imp {
     use gtk::glib;
 
     use super::{
-        AssetsDroppedCallback, CollectionDroppedCallback, FilesDroppedCallback, ViewChangedCallback,
+        AssetsDroppedCallback, AssetsHoveredCallback, CollectionDroppedCallback,
+        FilesDroppedCallback, ViewChangedCallback,
     };
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -52,6 +60,7 @@ mod imp {
         pub on_files_dropped: RefCell<Option<FilesDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
         pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
+        pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
     }
 
     #[glib::object_subclass]
@@ -117,6 +126,18 @@ impl PigouneSidebar {
     pub fn assets_dropped(&self, view: AssetView, assets: Vec<AssetId>, keep_source: bool) {
         if let Some(on_assets_dropped) = self.imp().on_assets_dropped.borrow().as_ref() {
             on_assets_dropped(view, assets, keep_source);
+        }
+    }
+
+    pub fn connect_assets_hovered(&self, callback: impl Fn(Option<HoveredDrop>) + 'static) {
+        self.imp()
+            .on_assets_hovered
+            .replace(Some(Box::new(callback)));
+    }
+
+    pub fn assets_hovered(&self, hovered: Option<HoveredDrop>) {
+        if let Some(on_assets_hovered) = self.imp().on_assets_hovered.borrow().as_ref() {
+            on_assets_hovered(hovered);
         }
     }
 

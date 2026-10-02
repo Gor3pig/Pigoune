@@ -15,6 +15,8 @@ mod collection_name_dialog;
 mod collection_sort;
 mod config;
 mod drag_content;
+mod drag_icon;
+mod drop_message;
 mod error_messages;
 mod filter_popover;
 mod grid_header;

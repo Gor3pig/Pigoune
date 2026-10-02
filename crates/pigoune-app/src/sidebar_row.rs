@@ -8,7 +8,7 @@ use pigoune_core::{AssetView, CollectionId};
 
 use crate::collection_drop::{self, CollectionDrop, DropZone};
 use crate::drag_content::{DraggedAssets, DraggedCollection};
-use crate::sidebar::PigouneSidebar;
+use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 
 const DROP_HIGHLIGHT: &str = "drop-highlight";
@@ -147,10 +147,11 @@ impl PigouneSidebarRow {
     fn accept_drops(&self) {
         self.add_css_class(SIDEBAR_ROW);
         let drop_target = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::COPY);
+        drop_target.set_preload(true);
         drop_target.set_types(&[
-            gdk::FileList::static_type(),
             DraggedAssets::static_type(),
             DraggedCollection::static_type(),
+            gdk::FileList::static_type(),
         ]);
         drop_target.connect_enter(glib::clone!(
             #[weak(rename_to = row)]
@@ -159,6 +160,7 @@ impl PigouneSidebarRow {
             gdk::DragAction::empty(),
             move |target, _, y| {
                 row.follow_pointer(target, y);
+                row.describe_hover(target);
                 gdk::DragAction::COPY
             }
         ));
@@ -169,13 +171,17 @@ impl PigouneSidebarRow {
             gdk::DragAction::empty(),
             move |target, _, y| {
                 row.follow_pointer(target, y);
+                row.describe_hover(target);
                 gdk::DragAction::COPY
             }
         ));
         drop_target.connect_leave(glib::clone!(
             #[weak(rename_to = row)]
             self,
-            move |_| row.show_drop_zone(None)
+            move |_| {
+                row.show_drop_zone(None);
+                row.forget_hover();
+            }
         ));
         drop_target.connect_accept(glib::clone!(
             #[weak(rename_to = row)]
@@ -193,10 +199,37 @@ impl PigouneSidebarRow {
             false,
             move |_, value, _, _| {
                 row.show_drop_zone(None);
+                row.forget_hover();
                 row.receive(value)
             }
         ));
         self.add_controller(drop_target);
+    }
+
+    fn describe_hover(&self, target: &gtk::DropTarget) {
+        let dragged = target
+            .value()
+            .and_then(|value| value.get::<DraggedAssets>().ok());
+        let (Some(sidebar), Some(view), Some(dragged)) = (self.sidebar(), self.view(), dragged)
+        else {
+            return;
+        };
+        sidebar.assets_hovered(Some(HoveredDrop {
+            view,
+            assets: dragged.0,
+            keep_source: control_is_held(self),
+        }));
+    }
+
+    fn forget_hover(&self) {
+        if let Some(sidebar) = self.sidebar() {
+            sidebar.assets_hovered(None);
+        }
+    }
+
+    fn sidebar(&self) -> Option<PigouneSidebar> {
+        self.ancestor(PigouneSidebar::static_type())
+            .and_downcast::<PigouneSidebar>()
     }
 
     fn follow_pointer(&self, target: &gtk::DropTarget, y: f64) {

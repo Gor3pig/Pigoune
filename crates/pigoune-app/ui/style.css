@@ -104,3 +104,11 @@
 .tag-chip.partial {
   opacity: 0.55;
 }
+
+.drag-caption {
+  margin-top: 2px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background-color: rgb(0 0 0 / 80%);
+  color: white;
+}

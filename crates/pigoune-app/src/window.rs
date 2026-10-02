@@ -16,12 +16,13 @@ use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_editor::SharedCollection;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
+use crate::drop_message;
 use crate::error_messages;
 use crate::import_report::{self, Destination};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
 use crate::settings;
-use crate::sidebar::SidebarContent;
+use crate::sidebar::{HoveredDrop, SidebarContent};
 use crate::tag_editor::SharedTag;
 use crate::thumbnails::THUMBNAIL_PIXELS;
 use crate::undo_message;
@@ -165,6 +166,7 @@ mod imp {
         pub fresh_change: Cell<Option<ChangeStamp>>,
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
+        pub hovered_drop: Cell<Option<(AssetView, bool)>>,
         pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
     }
 
@@ -388,6 +390,7 @@ impl PigouneWindow {
         window.follow_trash_confirmation(&settings);
         window.follow_search();
         window.follow_filters();
+        window.offer_export_copies();
         window.follow_details_panel();
         window.type_to_search();
         window
@@ -515,6 +518,23 @@ impl PigouneWindow {
         ));
     }
 
+    fn offer_export_copies(&self) {
+        self.imp().asset_grid.connect_export_copies(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or_default]
+            move |assets| {
+                window
+                    .imp()
+                    .library
+                    .borrow()
+                    .as_ref()
+                    .and_then(|library| library.export_copies(assets).ok())
+                    .unwrap_or_default()
+            }
+        ));
+    }
+
     fn follow_filters(&self) {
         self.imp()
             .grid_header
@@ -616,6 +636,11 @@ impl PigouneWindow {
             #[weak(rename_to = window)]
             self,
             move |dragged, drop| window.drop_collection(dragged, drop)
+        ));
+        self.imp().sidebar.connect_assets_hovered(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |hovered| window.describe_hovered_drop(hovered.as_ref())
         ));
         self.imp().sidebar.connect_assets_dropped(glib::clone!(
             #[weak(rename_to = window)]
@@ -1404,6 +1429,19 @@ impl PigouneWindow {
         true
     }
 
+    fn describe_hovered_drop(&self, hovered: Option<&HoveredDrop>) {
+        let imp = self.imp();
+        let key = hovered.map(|hovered| (hovered.view, hovered.keep_source));
+        if imp.hovered_drop.replace(key) == key {
+            return;
+        }
+        let text = hovered.and_then(|hovered| {
+            let library = imp.library.borrow();
+            drop_message::describe(hovered, imp.current_view.get(), library.as_ref()?)
+        });
+        imp.asset_grid.show_drag_caption(text.as_deref());
+    }
+
     fn drop_assets_on(&self, target: AssetView, assets: &[AssetId], keep_source: bool) {
         if self.is_showing_trash() {
             return;
@@ -2190,6 +2228,7 @@ impl PigouneWindow {
             false,
             move |_, drop| {
                 window.imp().library.borrow().is_some()
+                    && drop.drag().is_none()
                     && drop.formats().contains_type(gdk::FileList::static_type())
             }
         ));

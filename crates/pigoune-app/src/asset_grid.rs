@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use adw::subclass::prelude::*;
@@ -10,6 +11,7 @@ use crate::asset_object::PigouneAssetObject;
 use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
 use crate::drag_content::DraggedAssets;
+use crate::drag_icon;
 use crate::thumbnails::ThumbnailCache;
 
 mod imp {
@@ -51,6 +53,8 @@ mod imp {
         pub sorter: RefCell<Option<gtk::CustomSorter>>,
         pub assets: gio::ListStore,
         pub thumbnails: Rc<ThumbnailCache>,
+        pub export_copies: RefCell<Option<super::ExportCopies>>,
+        pub drag_caption: RefCell<Option<gtk::Label>>,
     }
 
     impl Default for PigouneAssetGrid {
@@ -69,6 +73,8 @@ mod imp {
                 sorter: RefCell::default(),
                 assets: gio::ListStore::new::<PigouneAssetObject>(),
                 thumbnails: Rc::default(),
+                export_copies: RefCell::default(),
+                drag_caption: RefCell::default(),
             }
         }
     }
@@ -129,6 +135,7 @@ mod imp {
             grid.set_up_grid();
             grid.resize_with_control_scroll();
             grid.unselect_on_empty_click();
+            grid.lasso_only_from_empty_space();
         }
     }
 
@@ -141,6 +148,8 @@ glib::wrapper! {
         @extends adw::Bin, gtk::Widget,
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
+
+type ExportCopies = Rc<dyn Fn(&[AssetId]) -> Vec<PathBuf>>;
 
 const ASSETS_PAGE: &str = "assets";
 const NOTHING_PAGE: &str = "nothing";
@@ -416,11 +425,12 @@ impl PigouneAssetGrid {
             #[weak(rename_to = grid)]
             self,
             move |gesture, _, x, y| {
+                let on_empty_space = grid.asset_at(x, y).is_none();
                 let extending = gesture
                     .current_event_state()
                     .intersects(gdk::ModifierType::CONTROL_MASK | gdk::ModifierType::SHIFT_MASK);
                 if !extending
-                    && grid.asset_at(x, y).is_none()
+                    && on_empty_space
                     && let Some(selection) = grid.selection()
                 {
                     selection.unselect_all();
@@ -428,6 +438,28 @@ impl PigouneAssetGrid {
             }
         ));
         self.imp().grid_view.add_controller(click);
+    }
+
+    fn lasso_only_from_empty_space(&self) {
+        let motion = gtk::EventControllerMotion::new();
+        motion.connect_motion(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |motion, x, y| {
+                let pressing = motion
+                    .current_event_state()
+                    .intersects(gdk::ModifierType::BUTTON1_MASK);
+                let on_empty_space = grid.asset_at(x, y).is_none();
+                if !pressing && grid.imp().grid_view.enables_rubberband() != on_empty_space {
+                    glib::idle_add_local_once(glib::clone!(
+                        #[weak]
+                        grid,
+                        move || grid.imp().grid_view.set_enable_rubberband(on_empty_space)
+                    ));
+                }
+            }
+        ));
+        self.imp().grid_view.add_controller(motion);
     }
 
     fn asset_at(&self, x: f64, y: f64) -> Option<PigouneAssetObject> {
@@ -518,21 +550,92 @@ impl PigouneAssetGrid {
             None,
             move |_, _, _| {
                 let dragged = grid.assets_dragged_from(&tile.asset()?);
-                Some(gdk::ContentProvider::for_value(
-                    &DraggedAssets(dragged).to_value(),
-                ))
+                Some(grid.drag_content(dragged))
             }
         ));
         source.connect_drag_begin(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
             #[weak]
             tile,
-            move |source, _| {
-                let picture = tile.picture();
-                let icon = gtk::WidgetPaintable::new(Some(&picture));
-                source.set_icon(Some(&icon), picture.width() / 2, picture.height() / 2);
+            move |source, drag| grid.show_drag_icon(source, drag, &tile)
+        ));
+        source.connect_drag_end(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _, _| {
+                grid.imp().drag_caption.take();
             }
         ));
         tile.add_controller(source);
+    }
+
+    pub fn connect_export_copies(&self, export: impl Fn(&[AssetId]) -> Vec<PathBuf> + 'static) {
+        self.imp().export_copies.replace(Some(Rc::new(export)));
+    }
+
+    fn drag_content(&self, dragged: Vec<AssetId>) -> gdk::ContentProvider {
+        let export = self.imp().export_copies.borrow().clone();
+        let copies: Vec<gio::File> = export
+            .map(|export| export(&dragged))
+            .unwrap_or_default()
+            .into_iter()
+            .map(gio::File::for_path)
+            .collect();
+        let inside = gdk::ContentProvider::for_value(&DraggedAssets(dragged).to_value());
+        if copies.is_empty() {
+            return inside;
+        }
+        let outside =
+            gdk::ContentProvider::for_value(&gdk::FileList::from_array(&copies).to_value());
+        gdk::ContentProvider::new_union(&[inside, outside])
+    }
+
+    pub fn show_drag_caption(&self, markup: Option<&str>) {
+        if let Some(caption) = self.imp().drag_caption.borrow().as_ref() {
+            caption.set_visible(markup.is_some());
+            caption.set_markup(markup.unwrap_or_default());
+        }
+    }
+
+    fn show_drag_icon(&self, source: &gtk::DragSource, drag: &gdk::Drag, tile: &PigouneAssetTile) {
+        let picture = tile.picture();
+        let grabbed = tile.asset();
+        let selected = self.selected_assets();
+        let several = selected.len() > 1
+            && grabbed
+                .as_ref()
+                .is_some_and(|grabbed| selected.iter().any(|asset| asset.id() == grabbed.id()));
+        let front = picture
+            .paintable()
+            .unwrap_or_else(|| gtk::WidgetPaintable::new(Some(&picture)).upcast());
+        let mut layers = vec![front];
+        let mut count = 1;
+        if several {
+            let thumbnails = &self.imp().thumbnails;
+            layers.extend(
+                selected
+                    .iter()
+                    .filter(|asset| {
+                        grabbed
+                            .as_ref()
+                            .is_none_or(|grabbed| grabbed.id() != asset.id())
+                    })
+                    .filter_map(|asset| thumbnails.remembered(asset.id()))
+                    .map(Cast::upcast::<gdk::Paintable>),
+            );
+            count = selected.len();
+        }
+        if let Some(icon) = drag_icon::stack_icon(self, &layers, count) {
+            let caption = drag_icon::caption_label();
+            let widget = drag_icon::icon_widget(&icon, &caption);
+            gtk::DragIcon::for_drag(drag).set_child(Some(&widget));
+            drag.set_hotspot(drag_icon::hotspot_x(&icon), icon.hot_y);
+            self.imp().drag_caption.replace(Some(caption));
+        } else {
+            let icon = gtk::WidgetPaintable::new(Some(&picture));
+            source.set_icon(Some(&icon), picture.width() / 2, picture.height() / 2);
+        }
     }
 
     fn assets_dragged_from(&self, asset: &PigouneAssetObject) -> Vec<AssetId> {
@@ -542,7 +645,9 @@ impl PigouneAssetGrid {
             .map(PigouneAssetObject::id)
             .collect();
         if selected.contains(&asset.id()) {
-            selected
+            std::iter::once(asset.id())
+                .chain(selected.into_iter().filter(|id| *id != asset.id()))
+                .collect()
         } else {
             self.select_asset(asset.id());
             vec![asset.id()]

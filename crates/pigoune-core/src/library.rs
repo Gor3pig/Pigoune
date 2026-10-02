@@ -6,6 +6,7 @@ mod collection;
 mod collection_command;
 mod content;
 mod error;
+mod export;
 mod history;
 mod id;
 mod import;
@@ -104,6 +105,7 @@ impl Library {
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
         remove_unfinished_imports(root);
+        export::forget_exports(root);
 
         Ok(Self {
             root: root.to_path_buf(),

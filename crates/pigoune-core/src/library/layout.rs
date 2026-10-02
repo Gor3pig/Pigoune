@@ -7,6 +7,7 @@ pub const DATABASE_FILE_NAME: &str = "library.db";
 pub const FILES_DIR_NAME: &str = "files";
 pub const CACHE_DIR_NAME: &str = "cache";
 const THUMBNAILS_DIR_NAME: &str = "thumbnails";
+const EXPORT_DIR_NAME: &str = "export";
 
 const MAX_NAME_BYTES: usize = 200;
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
@@ -45,6 +46,10 @@ pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
 
 pub fn thumbnails_dir(root: &Path) -> PathBuf {
     root.join(CACHE_DIR_NAME).join(THUMBNAILS_DIR_NAME)
+}
+
+pub fn export_dir(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME).join(EXPORT_DIR_NAME)
 }
 
 pub fn thumbnail_path(root: &Path, id: AssetId, pixels: u32) -> PathBuf {
