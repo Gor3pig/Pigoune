@@ -3,11 +3,32 @@ using Adw 1;
 
 template $PigouneWindow: Adw.ApplicationWindow {
   title: "Pigoune";
-  width-request: 360;
+  width-request: 440;
   height-request: 294;
+
+  Adw.Breakpoint {
+    condition ("max-width: 1040sp")
+
+    setters {
+      details_split.collapsed: true;
+      grid_header.compact: true;
+    }
+  }
+
+  Adw.Breakpoint {
+    condition ("max-width: 760sp")
+
+    setters {
+      details_split.collapsed: true;
+      sidebar_split.collapsed: true;
+      grid_header.compact: true;
+      grid_header.narrow: true;
+    }
+  }
 
   content: Stack window_stack {
     transition-type: crossfade;
+    hhomogeneous: false;
 
     StackPage {
       name: "main";
@@ -15,6 +36,7 @@ template $PigouneWindow: Adw.ApplicationWindow {
       child: Adw.ToastOverlay toast_overlay {
         child: Gtk.Stack stack {
           transition-type: crossfade;
+          hhomogeneous: false;
 
           StackPage {
             name: "welcome";

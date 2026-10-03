@@ -160,6 +160,8 @@ mod imp {
         #[template_child]
         pub sidebar: TemplateChild<PigouneSidebar>,
         #[template_child]
+        pub sidebar_split: TemplateChild<adw::OverlaySplitView>,
+        #[template_child]
         pub details_split: TemplateChild<adw::OverlaySplitView>,
         #[template_child]
         pub grid_header: TemplateChild<PigouneGridHeader>,
@@ -379,6 +381,7 @@ impl PigouneWindow {
                 &window.imp().grid_header.details_button(),
                 "active",
             )
+            .get()
             .build();
         for (key, property) in [
             (settings::SORT_CRITERION, "sort-criterion"),
@@ -405,6 +408,7 @@ impl PigouneWindow {
         window.follow_filters();
         window.offer_export_copies();
         window.follow_details_panel();
+        window.follow_sidebar_panel();
         window.type_to_search();
         window
             .imp()
@@ -444,8 +448,16 @@ impl PigouneWindow {
             .connect_active_notify(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |_| window.update_details_panel()
+                move |button| {
+                    window.remember_details_choice(button.is_active());
+                    window.update_details_panel();
+                }
             ));
+        imp.details_split.connect_collapsed_notify(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |split| window.fold_details_panel(split.is_collapsed())
+        ));
         imp.details_split.connect_show_sidebar_notify(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -456,6 +468,46 @@ impl PigouneWindow {
                 }
             }
         ));
+    }
+
+    fn remember_details_choice(&self, shown: bool) {
+        let imp = self.imp();
+        let user_toggle = imp.grid_header.details_button().is_visible();
+        if user_toggle
+            && !imp.details_split.is_collapsed()
+            && let Some(settings) = imp.settings.get()
+        {
+            settings::store_bool(settings, settings::SHOW_DETAILS, shown);
+        }
+    }
+
+    fn fold_details_panel(&self, collapsed: bool) {
+        let shown = !collapsed
+            && self
+                .imp()
+                .settings
+                .get()
+                .is_some_and(|settings| settings.boolean(settings::SHOW_DETAILS));
+        self.imp().grid_header.details_button().set_active(shown);
+        self.update_details_panel();
+    }
+
+    fn follow_sidebar_panel(&self) {
+        let imp = self.imp();
+        imp.sidebar_split
+            .bind_property("show-sidebar", &imp.grid_header.sidebar_button(), "active")
+            .bidirectional()
+            .sync_create()
+            .build();
+        imp.sidebar_split
+            .connect_collapsed_notify(|split| split.set_show_sidebar(!split.is_collapsed()));
+    }
+
+    fn close_folded_sidebar(&self) {
+        let split = &self.imp().sidebar_split;
+        if split.is_collapsed() {
+            split.set_show_sidebar(false);
+        }
     }
 
     fn update_details_panel(&self) {
@@ -643,7 +695,10 @@ impl PigouneWindow {
         self.imp().sidebar.connect_view_changed(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |view| window.show_view(view)
+            move |view| {
+                window.show_view(view);
+                window.close_folded_sidebar();
+            }
         ));
         self.imp().sidebar.connect_collection_dropped(glib::clone!(
             #[weak(rename_to = window)]

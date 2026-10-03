@@ -29,6 +29,13 @@ template $PigouneGridHeader: Adw.Bin {
     };
 
     [start]
+    ToggleButton sidebar_button {
+      visible: bind template.narrow;
+      icon-name: "sidebar-show-symbolic";
+      tooltip-text: _("Show the Sidebar");
+    }
+
+    [start]
     Label result_count {
       visible: false;
       margin-start: 6;
@@ -49,6 +56,7 @@ template $PigouneGridHeader: Adw.Bin {
 
     [end]
     Button {
+      visible: bind template.narrow inverted;
       icon-name: "zoom-in-symbolic";
       tooltip-text: _("Larger Thumbnails");
       action-name: "win.enlarge-thumbnails";
@@ -61,6 +69,7 @@ template $PigouneGridHeader: Adw.Bin {
 
     [end]
     Scale {
+      visible: bind template.compact inverted;
       width-request: 120;
       draw-value: false;
       tooltip-text: _("Thumbnail Size");
@@ -79,6 +88,7 @@ template $PigouneGridHeader: Adw.Bin {
 
     [end]
     Button {
+      visible: bind template.narrow inverted;
       icon-name: "zoom-out-symbolic";
       tooltip-text: _("Smaller Thumbnails");
       action-name: "win.shrink-thumbnails";
