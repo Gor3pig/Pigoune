@@ -14,6 +14,7 @@ use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 const DROP_HIGHLIGHT: &str = "drop-highlight";
 const DROP_BEFORE: &str = "drop-before";
 const DROP_AFTER: &str = "drop-after";
+const DROP_TARGET_ROW: &str = "drop-target-row";
 const SIDEBAR_ROW: &str = "sidebar-row";
 
 mod imp {
@@ -316,21 +317,25 @@ impl PigouneSidebarRow {
     }
 
     fn show_drop_zone(&self, zone: Option<DropZone>) {
-        let Some(list_row) = self
+        if let Some(list_row) = self
             .ancestor(gtk::TreeExpander::static_type())
             .and_then(|expander| expander.parent())
-        else {
-            return;
-        };
+        {
+            if zone.is_some() {
+                list_row.add_css_class(DROP_TARGET_ROW);
+            } else {
+                list_row.remove_css_class(DROP_TARGET_ROW);
+            }
+        }
         for (class, shown) in [
             (DROP_BEFORE, zone == Some(DropZone::Before)),
             (DROP_HIGHLIGHT, zone == Some(DropZone::Into)),
             (DROP_AFTER, zone == Some(DropZone::After)),
         ] {
             if shown {
-                list_row.add_css_class(class);
+                self.add_css_class(class);
             } else {
-                list_row.remove_css_class(class);
+                self.remove_css_class(class);
             }
         }
     }

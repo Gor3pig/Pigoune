@@ -19,6 +19,7 @@ const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
 const COLLECTION_ICON: &str = "folder-symbolic";
 const TRASH_ICON: &str = "user-trash-symbolic";
+const DRAG_OVER: &str = "drag-over";
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
@@ -87,6 +88,7 @@ mod imp {
             sidebar.set_up_rows();
             sidebar.act_on_keys();
             sidebar.skip_headers_with_arrows();
+            sidebar.quiet_hover_while_dragging();
         }
     }
 
@@ -338,6 +340,22 @@ impl PigouneSidebar {
             ))),
         ));
         self.imp().list_view.add_controller(menu_keys);
+    }
+
+    fn quiet_hover_while_dragging(&self) {
+        let list_view = self.imp().list_view.get();
+        let motion = gtk::DropControllerMotion::new();
+        motion.connect_enter(glib::clone!(
+            #[weak]
+            list_view,
+            move |_, _, _| list_view.add_css_class(DRAG_OVER)
+        ));
+        motion.connect_leave(glib::clone!(
+            #[weak]
+            list_view,
+            move |_| list_view.remove_css_class(DRAG_OVER)
+        ));
+        list_view.add_controller(motion);
     }
 
     fn skip_headers_with_arrows(&self) {
