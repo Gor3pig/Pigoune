@@ -368,6 +368,13 @@ impl PigouneWindow {
                 "tile-size",
             )
             .build();
+        settings
+            .bind(
+                settings::SHOW_NAMES,
+                &*window.imp().asset_grid,
+                "show-names",
+            )
+            .build();
         window
             .imp()
             .asset_grid

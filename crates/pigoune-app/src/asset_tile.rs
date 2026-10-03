@@ -18,6 +18,19 @@ pub fn favorite_badge_size(tile_size: i32) -> i32 {
     FAVORITE_BADGE_BASE_SIZE + tile_size.max(0) / TILE_SIZE_PER_BADGE_PIXEL
 }
 
+fn is_whole_image(thumbnail_width: i32, thumbnail_height: i32) -> bool {
+    let reduced_side = i32::try_from(thumbnails::THUMBNAIL_PIXELS).unwrap_or(i32::MAX);
+    thumbnail_width.max(thumbnail_height) < reduced_side
+}
+
+fn content_fit_for(thumbnail: &gdk::Texture) -> gtk::ContentFit {
+    if is_whole_image(thumbnail.width(), thumbnail.height()) {
+        gtk::ContentFit::ScaleDown
+    } else {
+        gtk::ContentFit::Contain
+    }
+}
+
 mod imp {
     use std::cell::RefCell;
 
@@ -33,6 +46,10 @@ mod imp {
     pub struct PigouneAssetTile {
         #[template_child]
         pub picture: TemplateChild<gtk::Picture>,
+        #[template_child]
+        pub thumbnail_space: TemplateChild<adw::Bin>,
+        #[template_child]
+        pub frame: TemplateChild<gtk::Overlay>,
         #[template_child]
         pub name_label: TemplateChild<gtk::Label>,
         #[template_child]
@@ -91,6 +108,18 @@ impl PigouneAssetTile {
         self.imp().picture.get()
     }
 
+    pub fn frame(&self) -> gtk::Overlay {
+        self.imp().frame.get()
+    }
+
+    pub fn thumbnail_space(&self) -> adw::Bin {
+        self.imp().thumbnail_space.get()
+    }
+
+    pub fn name_label(&self) -> gtk::Label {
+        self.imp().name_label.get()
+    }
+
     pub fn favorite_badge(&self) -> gtk::Image {
         self.imp().favorite_badge.get()
     }
@@ -109,6 +138,7 @@ impl PigouneAssetTile {
         self.update_description();
 
         if let Some(texture) = cache.remembered(asset.id()) {
+            imp.picture.set_content_fit(content_fit_for(&texture));
             imp.picture.set_paintable(Some(&texture));
             imp.still.replace(Some(texture));
             imp.picture.set_opacity(1.0);
@@ -249,6 +279,7 @@ impl PigouneAssetTile {
             return;
         }
         let picture = &imp.picture;
+        picture.set_content_fit(content_fit_for(texture));
         picture.set_paintable(Some(texture));
         let target = adw::PropertyAnimationTarget::new(&**picture, "opacity");
         adw::TimedAnimation::new(&**picture, 0.0, 1.0, FADE_IN_MILLISECONDS, target).play();
@@ -263,7 +294,19 @@ impl Default for PigouneAssetTile {
 
 #[cfg(test)]
 mod tests {
-    use super::favorite_badge_size;
+    use super::{favorite_badge_size, is_whole_image};
+
+    #[test]
+    fn small_images_are_shown_whole_and_never_enlarged() {
+        assert!(is_whole_image(16, 16));
+        assert!(is_whole_image(200, 120));
+    }
+
+    #[test]
+    fn reduced_copies_of_large_images_fill_their_frame() {
+        assert!(!is_whole_image(256, 40));
+        assert!(!is_whole_image(128, 256));
+    }
 
     #[test]
     fn the_favorite_badge_grows_with_the_tiles() {

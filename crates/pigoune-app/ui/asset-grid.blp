@@ -12,7 +12,11 @@ template $PigouneAssetGrid: Adw.Bin {
         name: "assets";
 
         child: ScrolledWindow scrolled_window {
-          hscrollbar-policy: never;
+          hscrollbar-policy: external;
+
+          styles [
+            "view",
+          ]
 
           child: GridView grid_view {
             min-columns: 1;

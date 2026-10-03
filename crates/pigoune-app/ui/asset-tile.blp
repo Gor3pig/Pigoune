@@ -1,4 +1,5 @@
 using Gtk 4.0;
+using Adw 1;
 
 template $PigouneAssetTile: Box {
   orientation: vertical;
@@ -7,23 +8,32 @@ template $PigouneAssetTile: Box {
   margin-bottom: 6;
   margin-start: 6;
   margin-end: 6;
+  halign: center;
 
-  Overlay {
+  Overlay frame {
     overflow: hidden;
 
     styles [
       "tile-frame",
     ]
 
-    child: Picture picture {
-      content-fit: contain;
+    child: Adw.Bin thumbnail_space {
+      margin-top: 8;
+      margin-bottom: 8;
+      margin-start: 8;
+      margin-end: 8;
+    };
+
+    [overlay]
+    Picture picture {
+      content-fit: scale_down;
       can-shrink: true;
       opacity: 0;
       margin-top: 8;
       margin-bottom: 8;
       margin-start: 8;
       margin-end: 8;
-    };
+    }
 
     [overlay]
     Label gif_badge {

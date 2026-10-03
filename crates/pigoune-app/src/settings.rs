@@ -15,6 +15,7 @@ pub const PREVIEW_BACKGROUND: &str = "preview-background";
 pub const COLLECTION_SORT: &str = "collection-sort";
 pub const COLLECTION_SORT_REVERSED: &str = "collection-sort-reversed";
 pub const SHOW_COUNTS: &str = "show-counts";
+pub const SHOW_NAMES: &str = "show-names";
 pub const RESTORE_LAST_VIEW: &str = "restore-last-view";
 pub const LAST_VIEW: &str = "last-view";
 pub const CONFIRM_EMPTY_TRASH: &str = "confirm-empty-trash";

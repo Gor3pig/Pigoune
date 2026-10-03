@@ -117,7 +117,9 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
 ## Regarder vos ressources
 
 - Changez la taille des vignettes avec le curseur au-dessus de la grille, ou avec
-  <kbd>Ctrl</kbd>+<kbd>+</kbd> et <kbd>Ctrl</kbd>+<kbd>-</kbd>.
+  <kbd>Ctrl</kbd>+<kbd>+</kbd> et <kbd>Ctrl</kbd>+<kbd>-</kbd>. Le curseur fixe la taille
+  minimale : les vignettes grandissent légèrement pour que chaque rangée occupe toute la
+  largeur de la fenêtre.
 - Triez la grille par date d'ajout, nom, type, dimensions ou poids avec le bouton de tri.
 - Les GIF animés s'animent au survol.
 - Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur une ressource pour ouvrir l'**aperçu
@@ -169,6 +171,8 @@ ordinateur avant de l'ouvrir sur un autre.
 Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
 <kbd>Ctrl</kbd>+<kbd>,</kbd> :
 
+- **Afficher le nom des ressources** sous chaque vignette de la grille. Quand les noms sont
+  masqués, survolez une vignette pour voir son nom.
 - **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
 - **Rouvrir la dernière entrée** : une bibliothèque s'ouvre sur l'entrée utilisée la dernière
   fois plutôt que sur **Tout**.

@@ -4,6 +4,15 @@ using Adw 1;
 Adw.PreferencesDialog dialog {
   Adw.PreferencesPage {
     Adw.PreferencesGroup {
+      title: _("Grid");
+
+      Adw.SwitchRow show_names_row {
+        title: _("Show Resource Names");
+        subtitle: _("The name of each resource appears under its thumbnail");
+      }
+    }
+
+    Adw.PreferencesGroup {
       title: _("Sidebar");
 
       Adw.SwitchRow show_counts_row {

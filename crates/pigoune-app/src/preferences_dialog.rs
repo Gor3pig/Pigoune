@@ -8,6 +8,7 @@ const RESOURCE: &str = "/io/github/gor3pig/Pigoune/ui/preferences-dialog.ui";
 pub fn present(parent: &impl IsA<gtk::Widget>, settings: &gio::Settings) {
     let builder = gtk::Builder::from_resource(RESOURCE);
     for (row, key) in [
+        ("show_names_row", settings::SHOW_NAMES),
         ("show_counts_row", settings::SHOW_COUNTS),
         ("restore_last_view_row", settings::RESTORE_LAST_VIEW),
         ("confirm_empty_trash_row", settings::CONFIRM_EMPTY_TRASH),

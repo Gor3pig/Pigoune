@@ -98,6 +98,9 @@ Importing a folder recreates its tree as nested collections.
 
 ## User interface notes
 
+- **Grid layout.** The grid computes how many columns fit its visible width and enlarges the
+  thumbnails slightly so that each row fills it, keeping the same gap between all frames
+  (`grid_columns.rs`).
 - **Grid performance.** The grid adapts its maximum number of columns to its visible width.
   GTK keeps widgets for a number of rows times the maximum column count, and accessibility
   updates scale badly with many widgets, so a fixed high maximum makes large libraries slow.

@@ -72,6 +72,11 @@
       <summary>Show resource counts</summary>
       <description>Whether the sidebar shows how many resources each entry contains.</description>
     </key>
+    <key name="show-names" type="b">
+      <default>true</default>
+      <summary>Show resource names</summary>
+      <description>Whether the grid shows the name of each resource under its thumbnail.</description>
+    </key>
     <key name="restore-last-view" type="b">
       <default>false</default>
       <summary>Reopen the last sidebar entry</summary>
