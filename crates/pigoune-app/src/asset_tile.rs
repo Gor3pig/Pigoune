@@ -8,6 +8,7 @@ use gtk::{gdk, glib};
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::square_space::PigouneSquareSpace;
 use crate::thumbnails::{self, ThumbnailCache};
 
 const FADE_IN_MILLISECONDS: u32 = 200;
@@ -39,6 +40,7 @@ mod imp {
     use gtk::{gdk, glib};
 
     use crate::asset_object::PigouneAssetObject;
+    use crate::square_space::PigouneSquareSpace;
 
     #[derive(Default, gtk::CompositeTemplate, glib::Properties)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/asset-tile.ui")]
@@ -47,7 +49,7 @@ mod imp {
         #[template_child]
         pub picture: TemplateChild<gtk::Picture>,
         #[template_child]
-        pub thumbnail_space: TemplateChild<adw::Bin>,
+        pub thumbnail_space: TemplateChild<PigouneSquareSpace>,
         #[template_child]
         pub frame: TemplateChild<gtk::Overlay>,
         #[template_child]
@@ -73,6 +75,7 @@ mod imp {
         type ParentType = gtk::Box;
 
         fn class_init(class: &mut Self::Class) {
+            PigouneSquareSpace::ensure_type();
             class.bind_template();
         }
 
@@ -112,7 +115,7 @@ impl PigouneAssetTile {
         self.imp().frame.get()
     }
 
-    pub fn thumbnail_space(&self) -> adw::Bin {
+    pub fn thumbnail_space(&self) -> PigouneSquareSpace {
         self.imp().thumbnail_space.get()
     }
 

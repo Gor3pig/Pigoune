@@ -1,5 +1,4 @@
 using Gtk 4.0;
-using Adw 1;
 
 template $PigouneAssetTile: Box {
   orientation: vertical;
@@ -8,7 +7,6 @@ template $PigouneAssetTile: Box {
   margin-bottom: 6;
   margin-start: 6;
   margin-end: 6;
-  halign: center;
 
   Overlay frame {
     overflow: hidden;
@@ -17,7 +15,7 @@ template $PigouneAssetTile: Box {
       "tile-frame",
     ]
 
-    child: Adw.Bin thumbnail_space {
+    child: $PigouneSquareSpace thumbnail_space {
       margin-top: 8;
       margin-bottom: 8;
       margin-start: 8;

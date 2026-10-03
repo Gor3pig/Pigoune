@@ -50,8 +50,6 @@ mod imp {
         pub context_menu: TemplateChild<gtk::PopoverMenu>,
         #[property(get, set = Self::set_tile_size, minimum = SMALLEST_TILE_SIZE, maximum = LARGEST_TILE_SIZE, default = DEFAULT_TILE_SIZE)]
         pub tile_size: Cell<i32>,
-        #[property(get, set)]
-        pub thumbnail_side: Cell<i32>,
         #[property(get, set, default = true)]
         pub show_names: Cell<bool>,
         #[property(get, set = Self::set_sort_criterion)]
@@ -76,7 +74,6 @@ mod imp {
                 nothing_page: TemplateChild::default(),
                 context_menu: TemplateChild::default(),
                 tile_size: Cell::new(DEFAULT_TILE_SIZE),
-                thumbnail_side: Cell::new(DEFAULT_TILE_SIZE),
                 show_names: Cell::new(true),
                 sort_criterion: RefCell::default(),
                 sort_reversed: Cell::default(),
@@ -781,11 +778,9 @@ impl PigouneAssetGrid {
             move |_, item| {
                 if let Some(item) = item.downcast_ref::<gtk::ListItem>() {
                     let tile = PigouneAssetTile::new();
-                    for side in ["width-request", "height-request"] {
-                        grid.bind_property("thumbnail-side", &tile.thumbnail_space(), side)
-                            .sync_create()
-                            .build();
-                    }
+                    grid.bind_property("tile-size", &tile.thumbnail_space(), "smallest-side")
+                        .sync_create()
+                        .build();
                     grid.bind_property("tile-size", &tile.favorite_badge(), "pixel-size")
                         .transform_to(|_, size: i32| Some(favorite_badge_size(size)))
                         .sync_create()
@@ -859,23 +854,17 @@ impl PigouneAssetGrid {
     }
 
     fn fit_columns(&self) {
-        let layout = grid_columns::fill_width(
+        let wanted = grid_columns::column_count(
             self.imp().scrolled_window.width(),
-            self.tile_size(),
-            SPACE_AROUND_THUMBNAIL,
+            self.tile_size() + SPACE_AROUND_THUMBNAIL,
         );
-        if self.imp().grid_view.max_columns() == layout.columns
-            && self.thumbnail_side() == layout.thumbnail_side
-        {
+        if self.imp().grid_view.max_columns() == wanted {
             return;
         }
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = grid)]
             self,
-            move || {
-                grid.imp().grid_view.set_max_columns(layout.columns);
-                grid.set_thumbnail_side(layout.thumbnail_side);
-            }
+            move || grid.imp().grid_view.set_max_columns(wanted)
         ));
     }
 
