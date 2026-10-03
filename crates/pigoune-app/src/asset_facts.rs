@@ -1,8 +1,13 @@
-use gettextrs::gettext;
+use std::time::Duration;
+
+use gettextrs::{gettext, ngettext};
 use gtk::glib;
-use pigoune_core::{AssetFormat, Dimensions};
+use pigoune_core::{AnimationTiming, Asset, AssetFormat, Dimensions};
 
 const MILLISECONDS_PER_SECOND: i64 = 1000;
+const MILLISECONDS_PER_TENTH: u128 = 100;
+const TENTHS_PER_SECOND: u128 = 10;
+const SUMMARY_SEPARATOR: &str = " · ";
 
 pub fn format_name(format: AssetFormat) -> &'static str {
     match format {
@@ -29,9 +34,56 @@ pub fn dimensions_text(dimensions: Option<Dimensions>) -> String {
 pub fn embedded_sizes_text(sizes: &[Dimensions]) -> String {
     sizes
         .iter()
-        .map(|size| format!("{} × {}", size.width(), size.height()))
+        .map(|size| side_by_side(*size))
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+fn side_by_side(size: Dimensions) -> String {
+    format!("{} × {}", size.width(), size.height())
+}
+
+pub fn summary_text(asset: &Asset, timing: Option<AnimationTiming>) -> String {
+    let mut parts = timing.map_or_else(|| still_parts(asset), animation_parts);
+    parts.push(byte_size_text(asset.byte_size));
+    parts.join(SUMMARY_SEPARATOR)
+}
+
+pub fn animation_text(timing: Option<AnimationTiming>) -> String {
+    timing.map_or_else(
+        || gettext("Animated GIF"),
+        |timing| animation_parts(timing).join(SUMMARY_SEPARATOR),
+    )
+}
+
+fn still_parts(asset: &Asset) -> Vec<String> {
+    let mut parts = vec![format_name(asset.format).to_owned()];
+    parts.extend(asset.dimensions.map(side_by_side));
+    parts
+}
+
+fn animation_parts(timing: AnimationTiming) -> Vec<String> {
+    vec![
+        gettext("Animated GIF"),
+        frames_text(timing.frames),
+        duration_text(timing.duration),
+    ]
+}
+
+fn frames_text(frames: usize) -> String {
+    ngettext(
+        "{count} frame",
+        "{count} frames",
+        u32::try_from(frames).unwrap_or(u32::MAX),
+    )
+    .replace("{count}", &frames.to_string())
+}
+
+fn duration_text(duration: Duration) -> String {
+    let tenths = (duration.as_millis() + MILLISECONDS_PER_TENTH / 2) / MILLISECONDS_PER_TENTH;
+    gettext("{seconds}.{tenths} s")
+        .replace("{seconds}", &(tenths / TENTHS_PER_SECOND).to_string())
+        .replace("{tenths}", &(tenths % TENTHS_PER_SECOND).to_string())
 }
 
 pub fn byte_size_text(byte_size: u64) -> String {
@@ -54,7 +106,23 @@ mod tests {
 
     use gtk::glib;
 
-    use super::{date_pattern, embedded_sizes_text};
+    use std::time::Duration;
+
+    use super::{date_pattern, duration_text, embedded_sizes_text, frames_text};
+
+    #[test]
+    fn a_duration_is_written_in_seconds_with_one_decimal() {
+        assert_eq!(duration_text(Duration::from_millis(2400)), "2.4 s");
+        assert_eq!(duration_text(Duration::from_millis(300)), "0.3 s");
+        assert_eq!(duration_text(Duration::from_millis(12_050)), "12.1 s");
+        assert_eq!(duration_text(Duration::from_secs(3)), "3.0 s");
+    }
+
+    #[test]
+    fn the_number_of_frames_agrees_with_its_count() {
+        assert_eq!(frames_text(1), "1 frame");
+        assert_eq!(frames_text(24), "24 frames");
+    }
 
     #[test]
     fn the_date_pattern_is_understood_by_glib() {

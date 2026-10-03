@@ -7,6 +7,7 @@ mod svg;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::time::Duration;
 
 pub use dimensions::Dimensions;
 pub use format::AssetFormat;
@@ -19,6 +20,12 @@ pub struct MediaInfo {
     pub dimensions: Option<Dimensions>,
     pub is_animated: bool,
     pub embedded_sizes: Vec<Dimensions>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AnimationTiming {
+    pub frames: usize,
+    pub duration: Duration,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,6 +43,10 @@ pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
         return svg::inspect(path);
     }
     Err(InspectError::Unsupported)
+}
+
+pub fn animation_timing(path: &Path) -> Option<AnimationTiming> {
+    gif::timing(path)
 }
 
 fn read_header(path: &Path) -> Result<Vec<u8>, InspectError> {

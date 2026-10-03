@@ -4,12 +4,12 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, glib};
-use pigoune_core::{Tag, TextField};
+use pigoune_core::{AnimationTiming, Asset, CollectionId, Tag, TextField};
 
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
-use crate::collection_places::{PigouneCollectionPlaces, SharedCollection};
+use crate::collection_places::SharedCollection;
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -59,8 +59,6 @@ mod imp {
         #[template_child]
         pub name_label: TemplateChild<gtk::EditableLabel>,
         #[template_child]
-        pub credits_row: TemplateChild<adw::ExpanderRow>,
-        #[template_child]
         pub note_view: TemplateChild<gtk::TextView>,
         #[template_child]
         pub source_row: TemplateChild<adw::EntryRow>,
@@ -102,6 +100,8 @@ mod imp {
         pub original_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub animation_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
+        pub summary_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub embedded_row: TemplateChild<adw::ActionRow>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
@@ -251,15 +251,6 @@ impl PigouneAssetDetails {
         imp.source_row.set_text(&object.source_url());
         imp.license_row.set_text(&object.license());
         imp.author_row.set_text(&object.author());
-        let filled = [
-            object.note(),
-            object.source_url(),
-            object.license(),
-            object.author(),
-        ]
-        .iter()
-        .any(|text| !text.is_empty());
-        imp.credits_row.set_expanded(filled);
     }
 
     pub fn tag_editors(&self) -> [PigouneTagEditor; 2] {
@@ -289,12 +280,14 @@ impl PigouneAssetDetails {
         }
     }
 
-    pub fn collection_places(&self) -> [PigouneCollectionPlaces; 2] {
+    pub fn connect_collection_opened(&self, callback: impl Fn(CollectionId) + 'static) {
         let imp = self.imp();
-        [
-            imp.collection_places.get(),
-            imp.group_collection_places.get(),
-        ]
+        let callback = Rc::new(callback);
+        let for_group = Rc::clone(&callback);
+        imp.group_collection_places
+            .connect_opened(move |collection| for_group(collection));
+        imp.collection_places
+            .connect_opened(move |collection| callback(collection));
     }
 
     pub fn show_collections(&self, current: &[SharedCollection], selected: usize) {
@@ -411,10 +404,26 @@ impl PigouneAssetDetails {
             .set_subtitle(&asset_facts::added_at_text(asset.added_at_unix_ms));
         imp.original_row.set_subtitle(&asset.original_file_name);
         imp.animation_row.set_visible(asset.is_animated);
+        self.show_animation(asset, None);
         imp.embedded_row
             .set_visible(!asset.embedded_sizes.is_empty());
         imp.embedded_row
             .set_subtitle(&asset_facts::embedded_sizes_text(&asset.embedded_sizes));
+    }
+
+    pub fn show_animation_timing(&self, timing: Option<AnimationTiming>) {
+        let showing = self.imp().showing.borrow().clone();
+        if let Some(object) = showing {
+            self.show_animation(object.asset(), timing);
+        }
+    }
+
+    fn show_animation(&self, asset: &Asset, timing: Option<AnimationTiming>) {
+        let imp = self.imp();
+        imp.summary_label
+            .set_label(&asset_facts::summary_text(asset, timing));
+        imp.animation_row
+            .set_subtitle(&asset_facts::animation_text(timing));
     }
 
     fn show_preview(&self, object: &PigouneAssetObject, thumbnails: &Rc<ThumbnailCache>) {

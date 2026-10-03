@@ -1,11 +1,11 @@
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use pigoune_core::{
-    Asset, AssetFormat, AssetId, CollectionId, DATABASE_FILE_NAME, Dimensions, FILES_DIR_NAME,
-    ImportError, ImportOutcome, Library, LibraryError,
+    AnimationTiming, Asset, AssetFormat, AssetId, CollectionId, DATABASE_FILE_NAME, Dimensions,
+    FILES_DIR_NAME, ImportError, ImportOutcome, Library, LibraryError,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -204,6 +204,30 @@ fn an_animated_gif_is_recognized() {
 
     assert_eq!(asset.format, AssetFormat::Gif);
     assert!(asset.is_animated);
+}
+
+#[test]
+fn an_animated_gif_reports_its_frames_and_duration() {
+    let mut fixture = Fixture::new();
+
+    let asset = fixture.import_new(&fixture.sample("spinner.gif"));
+
+    assert_eq!(
+        fixture.library.animation_timing(&asset),
+        Some(AnimationTiming {
+            frames: 3,
+            duration: Duration::from_millis(300),
+        })
+    );
+}
+
+#[test]
+fn a_still_image_has_no_animation_timing() {
+    let mut fixture = Fixture::new();
+
+    let asset = fixture.import_new(&fixture.sample("still.gif"));
+
+    assert_eq!(fixture.library.animation_timing(&asset), None);
 }
 
 #[test]

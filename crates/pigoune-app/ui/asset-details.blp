@@ -146,11 +146,30 @@ template $PigouneAssetDetails: Adw.Bin {
             }
           }
 
+          Label summary_label {
+            wrap: true;
+            justify: center;
+            selectable: true;
+            margin-top: -12;
+
+            styles [
+              "dim-label",
+            ]
+          }
+
           $PigouneTagEditor tag_editor {}
 
-          $PigouneCollectionPlaces collection_places {}
+          Label {
+            label: _("Information");
+            xalign: 0;
+            margin-bottom: -12;
 
-          ListBox {
+            styles [
+              "heading",
+            ]
+          }
+
+          ListBox info_list {
             selection-mode: none;
 
             styles [
@@ -221,77 +240,67 @@ template $PigouneAssetDetails: Adw.Bin {
                 "property",
               ]
             }
-          }
 
-          ListBox {
-            selection-mode: none;
+            ListBoxRow {
+              activatable: false;
 
-            styles [
-              "boxed-list",
-            ]
+              child: Box {
+                orientation: vertical;
+                spacing: 6;
+                margin-top: 8;
+                margin-bottom: 8;
+                margin-start: 12;
+                margin-end: 12;
 
-            Adw.ExpanderRow credits_row {
-              title: _("Notes and Credits");
-
-              ListBoxRow {
-                activatable: false;
-
-                child: Box {
-                  orientation: vertical;
-                  spacing: 6;
-                  margin-top: 8;
-                  margin-bottom: 8;
-                  margin-start: 12;
-                  margin-end: 12;
-
-                  Label {
-                    label: _("Note");
-                    xalign: 0;
-
-                    styles [
-                      "caption",
-                      "dim-label",
-                    ]
-                  }
-
-                  TextView note_view {
-                    wrap-mode: word_char;
-                    accepts-tab: false;
-                    height-request: 72;
-
-                    styles [
-                      "note-view",
-                    ]
-                  }
-                };
-              }
-
-              Adw.EntryRow source_row {
-                title: _("Source");
-
-                [suffix]
-                Button open_source_button {
-                  icon-name: "web-browser-symbolic";
-                  tooltip-text: _("Open the Link");
-                  valign: center;
-                  visible: false;
-                  clicked => $on_open_source_clicked() swapped;
+                Label {
+                  label: _("Note");
+                  xalign: 0;
 
                   styles [
-                    "flat",
+                    "caption",
+                    "dim-label",
                   ]
                 }
-              }
 
-              Adw.EntryRow license_row {
-                title: _("License");
-              }
+                TextView note_view {
+                  wrap-mode: word_char;
+                  accepts-tab: false;
+                  height-request: 72;
 
-              Adw.EntryRow author_row {
-                title: _("Author");
+                  styles [
+                    "note-view",
+                  ]
+                }
+              };
+            }
+
+            Adw.EntryRow source_row {
+              title: _("Source");
+
+              [suffix]
+              Button open_source_button {
+                icon-name: "web-browser-symbolic";
+                tooltip-text: _("Open the Link");
+                valign: center;
+                visible: false;
+                clicked => $on_open_source_clicked() swapped;
+
+                styles [
+                  "flat",
+                ]
               }
             }
+
+            Adw.EntryRow license_row {
+              title: _("License");
+            }
+
+            Adw.EntryRow author_row {
+              title: _("Author");
+            }
           }
+
+          $PigouneCollectionPlaces collection_places {}
         };
       };
     }

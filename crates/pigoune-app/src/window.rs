@@ -960,13 +960,11 @@ impl PigouneWindow {
                 move |tag| window.remove_tag_from_selected(tag)
             ));
         }
-        for places in imp.asset_details.collection_places() {
-            places.connect_opened(glib::clone!(
-                #[weak(rename_to = window)]
-                self,
-                move |collection| window.go_to_collection(collection)
-            ));
-        }
+        imp.asset_details.connect_collection_opened(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |collection| window.go_to_collection(collection)
+        ));
     }
 
     fn start_renaming_selected(&self) {
@@ -1056,7 +1054,15 @@ impl PigouneWindow {
         match selected {
             [] => imp.asset_details.show(None, &thumbnails),
             trashed if self.is_showing_trash() => imp.asset_details.show_trashed(trashed),
-            [single] => imp.asset_details.show(Some(single), &thumbnails),
+            [single] => {
+                imp.asset_details.show(Some(single), &thumbnails);
+                let timing = imp
+                    .library
+                    .borrow()
+                    .as_ref()
+                    .and_then(|library| library.animation_timing(single.asset()));
+                imp.asset_details.show_animation_timing(timing);
+            }
             several => imp.asset_details.show_group(several),
         }
         self.refresh_selected_tags();

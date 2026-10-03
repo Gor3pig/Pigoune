@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
-use crate::media::{AssetFormat, Dimensions};
+use crate::media::{self, AnimationTiming, AssetFormat, Dimensions};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{OptionalExtension, Row, params};
 
@@ -83,6 +83,14 @@ impl Library {
     }
 
     #[must_use]
+    pub fn animation_timing(&self, asset: &Asset) -> Option<AnimationTiming> {
+        if asset.is_animated {
+            media::animation_timing(&self.file_of(asset))
+        } else {
+            None
+        }
+    }
+
     pub fn thumbnail_file(&self, id: AssetId, pixels: u32) -> PathBuf {
         layout::thumbnail_path(&self.root, id, pixels)
     }
