@@ -7,6 +7,8 @@ use pigoune_core::{Tag, TagId};
 use crate::tag_input;
 
 type AddedCallback = Box<dyn Fn(Vec<String>)>;
+type OpenedCallback = Box<dyn Fn(TagId)>;
+type AppliedCallback = Box<dyn Fn(String)>;
 
 pub struct SharedTag {
     pub tag: Tag,
@@ -23,18 +25,21 @@ mod imp {
     use gtk::prelude::*;
     use pigoune_core::Tag;
 
-    use super::{AddedCallback, RemovedCallback};
+    use super::{AddedCallback, AppliedCallback, OpenedCallback, RemovedCallback};
 
     #[derive(Default)]
     pub struct PigouneTagEditor {
         pub chips: OnceCell<gtk::FlowBox>,
         pub entry: OnceCell<gtk::Entry>,
+        pub entry_child: OnceCell<gtk::FlowBoxChild>,
         pub popover: OnceCell<gtk::Popover>,
         pub suggestions: OnceCell<gtk::ListBox>,
         pub current: RefCell<Vec<Tag>>,
         pub all: RefCell<Vec<Tag>>,
         pub on_added: RefCell<Option<AddedCallback>>,
         pub on_removed: RefCell<Option<RemovedCallback>>,
+        pub on_opened: RefCell<Option<OpenedCallback>>,
+        pub on_applied: RefCell<Option<AppliedCallback>>,
     }
 
     #[glib::object_subclass]
@@ -76,6 +81,14 @@ impl PigouneTagEditor {
         self.imp().on_removed.replace(Some(Box::new(callback)));
     }
 
+    pub fn connect_opened(&self, callback: impl Fn(TagId) + 'static) {
+        self.imp().on_opened.replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_applied(&self, callback: impl Fn(String) + 'static) {
+        self.imp().on_applied.replace(Some(Box::new(callback)));
+    }
+
     pub fn focus_entry(&self) {
         part(&self.imp().entry).grab_focus();
     }
@@ -83,11 +96,20 @@ impl PigouneTagEditor {
     pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
         let imp = self.imp();
         let chips = part(&imp.chips);
-        chips.remove_all();
-        for shared in &current {
-            chips.append(&self.chip(shared));
+        let entry_child = part(&imp.entry_child);
+        while let Some(child) = chips.first_child() {
+            if child == entry_child.clone().upcast::<gtk::Widget>() {
+                break;
+            }
+            chips.remove(&child);
         }
-        chips.set_visible(!current.is_empty());
+        for (position, shared) in current.iter().enumerate() {
+            let chip = gtk::FlowBoxChild::builder()
+                .child(&self.chip(shared))
+                .focusable(false)
+                .build();
+            chips.insert(&chip, i32::try_from(position).unwrap_or(-1));
+        }
         imp.current
             .replace(current.into_iter().map(|shared| shared.tag).collect());
         imp.all.replace(all);
@@ -96,36 +118,70 @@ impl PigouneTagEditor {
 
     fn chip(&self, shared: &SharedTag) -> gtk::Box {
         let tag = &shared.tag;
-        let chip = gtk::Box::builder()
-            .spacing(2)
-            .css_classes(["tag-chip"])
+        let partial = shared.carried_by < shared.out_of;
+        let chip = gtk::Box::builder().css_classes(["tag-chip"]).build();
+        let content = gtk::Box::builder().spacing(4).build();
+        content.append(&gtk::Label::new(Some(&tag.name)));
+        let open = gtk::Button::builder()
+            .child(&content)
+            .css_classes(["flat", "tag-chip-label"])
             .build();
-        if shared.carried_by < shared.out_of {
+        if partial {
             chip.add_css_class("partial");
-            chip.set_tooltip_text(Some(
-                &gettext("On {count} of {total} resources")
+            content.append(
+                &gtk::Label::builder()
+                    .label(format!("{}/{}", shared.carried_by, shared.out_of))
+                    .css_classes(["caption", "dim-label", "numeric"])
+                    .build(),
+            );
+            open.set_tooltip_text(Some(
+                &gettext("On {count} of {total} resources. Click to add it to all of them.")
                     .replace("{count}", &shared.carried_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
             ));
+        } else {
+            open.set_tooltip_text(Some(
+                &gettext("Open the Tag “{name}”").replace("{name}", &tag.name),
+            ));
         }
-        chip.append(&gtk::Label::new(Some(&tag.name)));
+        let id = tag.id;
+        let name = tag.name.clone();
+        open.connect_clicked(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| editor.activate_tag(id, &name, partial)
+        ));
         let remove = gtk::Button::builder()
             .icon_name("window-close-symbolic")
             .tooltip_text(gettext("Remove the Tag “{name}”").replace("{name}", &tag.name))
+            .valign(gtk::Align::Center)
             .css_classes(["flat", "circular", "tag-chip-remove"])
             .build();
-        let id = tag.id;
         remove.connect_clicked(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |_| {
-                if let Some(on_removed) = editor.imp().on_removed.borrow().as_ref() {
-                    on_removed(id);
-                }
-            }
+            move |_| editor.remove(id)
         ));
+        chip.append(&open);
         chip.append(&remove);
         chip
+    }
+
+    pub fn activate_tag(&self, id: TagId, name: &str, partial: bool) {
+        let imp = self.imp();
+        if partial {
+            if let Some(on_applied) = imp.on_applied.borrow().as_ref() {
+                on_applied(name.to_owned());
+            }
+        } else if let Some(on_opened) = imp.on_opened.borrow().as_ref() {
+            on_opened(id);
+        }
+    }
+
+    fn remove(&self, id: TagId) {
+        if let Some(on_removed) = self.imp().on_removed.borrow().as_ref() {
+            on_removed(id);
+        }
     }
 
     fn build(&self) {
@@ -135,15 +191,26 @@ impl PigouneTagEditor {
 
         let chips = gtk::FlowBox::builder()
             .selection_mode(gtk::SelectionMode::None)
-            .column_spacing(6)
-            .row_spacing(6)
+            .column_spacing(4)
+            .row_spacing(4)
             .max_children_per_line(30)
-            .halign(gtk::Align::Center)
-            .visible(false)
+            .homogeneous(false)
             .build();
         let entry = gtk::Entry::builder()
             .placeholder_text(gettext("Add a Tag…"))
+            .has_frame(false)
+            .width_chars(8)
+            .hexpand(true)
+            .css_classes(["tag-field-entry"])
             .build();
+        let entry_child = gtk::FlowBoxChild::builder()
+            .child(&entry)
+            .focusable(false)
+            .build();
+        chips.append(&entry_child);
+        let field = gtk::Box::builder().css_classes(["tag-field"]).build();
+        field.append(&chips);
+        chips.set_hexpand(true);
         let suggestions = gtk::ListBox::builder()
             .selection_mode(gtk::SelectionMode::None)
             .css_classes(["navigation-sidebar"])
@@ -156,17 +223,27 @@ impl PigouneTagEditor {
             .build();
         popover.set_parent(&entry);
 
-        self.append(&chips);
-        self.append(&entry);
+        self.append(&field);
         set_part(&imp.chips, chips);
         set_part(&imp.entry, entry.clone());
+        set_part(&imp.entry_child, entry_child);
         set_part(&imp.popover, popover.clone());
         set_part(&imp.suggestions, suggestions.clone());
+
+        let click = gtk::GestureClick::new();
+        click.connect_released(glib::clone!(
+            #[weak]
+            entry,
+            move |_, _, _, _| {
+                entry.grab_focus();
+            }
+        ));
+        field.add_controller(click);
 
         entry.connect_changed(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |_| editor.refresh_suggestions()
+            move |_| editor.on_text_changed()
         ));
         entry.connect_activate(glib::clone!(
             #[weak(rename_to = editor)]
@@ -203,6 +280,22 @@ impl PigouneTagEditor {
         entry.add_controller(focus);
     }
 
+    fn on_text_changed(&self) {
+        let entry = part(&self.imp().entry);
+        let text = entry.text();
+        if text.contains(',') {
+            let (finished, rest) = tag_input::split_finished(&text);
+            entry.set_text(&rest);
+            entry.set_position(-1);
+            if !finished.is_empty()
+                && let Some(on_added) = self.imp().on_added.borrow().as_ref()
+            {
+                on_added(finished);
+            }
+        }
+        self.refresh_suggestions();
+    }
+
     fn on_entry_key(&self, key: gdk::Key) -> glib::Propagation {
         let imp = self.imp();
         let popover = part(&imp.popover);
@@ -215,6 +308,13 @@ impl PigouneTagEditor {
             }
             gdk::Key::Escape if popover.is_visible() => {
                 popover.popdown();
+                glib::Propagation::Stop
+            }
+            gdk::Key::BackSpace if part(&imp.entry).text().is_empty() => {
+                let last = imp.current.borrow().last().map(|tag| tag.id);
+                if let Some(last) = last {
+                    self.remove(last);
+                }
                 glib::Propagation::Stop
             }
             _ => glib::Propagation::Proceed,

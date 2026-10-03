@@ -15,6 +15,18 @@ pub fn names_in(text: &str) -> Vec<String> {
         .collect()
 }
 
+pub fn split_finished(text: &str) -> (Vec<String>, String) {
+    match text.rfind(SEPARATOR) {
+        Some(position) => (
+            names_in(&text[..position]),
+            text[position + SEPARATOR.len_utf8()..]
+                .trim_start()
+                .to_owned(),
+        ),
+        None => (Vec::new(), text.to_owned()),
+    }
+}
+
 pub fn fragment_being_typed(text: &str) -> &str {
     text.rsplit(SEPARATOR).next().unwrap_or_default().trim()
 }
@@ -45,7 +57,9 @@ pub fn suggestions<'a>(all: &'a [Tag], typed: &str, already: &[TagId]) -> Vec<&'
 mod tests {
     use pigoune_core::{Tag, TagId};
 
-    use super::{fragment_being_typed, names_in, suggestions, with_last_fragment_replaced};
+    use super::{
+        fragment_being_typed, names_in, split_finished, suggestions, with_last_fragment_replaced,
+    };
 
     fn tag(number: u8, name: &str) -> Tag {
         Tag {
@@ -61,6 +75,20 @@ mod tests {
             ["logo", "social", "bleu"]
         );
         assert!(names_in(" , ").is_empty());
+    }
+
+    #[test]
+    fn a_comma_finishes_the_names_before_it_and_keeps_what_follows() {
+        assert_eq!(
+            split_finished("logo,"),
+            (vec!["logo".to_owned()], String::new())
+        );
+        assert_eq!(
+            split_finished("logo, bleu, so"),
+            (vec!["logo".to_owned(), "bleu".to_owned()], "so".to_owned())
+        );
+        assert_eq!(split_finished("logo"), (Vec::new(), "logo".to_owned()));
+        assert_eq!(split_finished(" , "), (Vec::new(), String::new()));
     }
 
     #[test]

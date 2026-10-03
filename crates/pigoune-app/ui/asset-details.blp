@@ -60,7 +60,7 @@ template $PigouneAssetDetails: Adw.Bin {
             ]
           }
 
-          $PigouneTagEditor group_tag_editor {}
+          $PigouneTagSummary group_tag_summary {}
 
           $PigouneCollectionPlaces group_collection_places {}
 
@@ -123,180 +123,188 @@ template $PigouneAssetDetails: Adw.Bin {
           }
 
           Box {
-            spacing: 6;
-            halign: center;
+            orientation: vertical;
+            spacing: 4;
 
-            EditableLabel name_label {
-              xalign: 0.5;
-              tooltip-text: _("Rename (F2)");
+            Box {
+              spacing: 6;
+              halign: center;
 
-              styles [
-                "title-3",
-              ]
-            }
+              EditableLabel name_label {
+                xalign: 0.5;
+                tooltip-text: _("Rename (F2)");
 
-            Button favorite_button {
-              valign: center;
-              action-name: "win.toggle-favorite";
+                styles [
+                  "title-3",
+                ]
+              }
 
-              styles [
-                "flat",
-                "circular",
-              ]
-            }
-          }
-
-          Label summary_label {
-            wrap: true;
-            justify: center;
-            selectable: true;
-            margin-top: -12;
-
-            styles [
-              "dim-label",
-            ]
-          }
-
-          $PigouneTagEditor tag_editor {}
-
-          Label {
-            label: _("Information");
-            xalign: 0;
-            margin-bottom: -12;
-
-            styles [
-              "heading",
-            ]
-          }
-
-          ListBox info_list {
-            selection-mode: none;
-
-            styles [
-              "boxed-list",
-            ]
-
-            Adw.ActionRow format_row {
-              title: _("Format");
-              subtitle-selectable: true;
-
-              styles [
-                "property",
-              ]
-            }
-
-            Adw.ActionRow dimensions_row {
-              title: _("Dimensions");
-              subtitle-selectable: true;
-
-              styles [
-                "property",
-              ]
-            }
-
-            Adw.ActionRow size_row {
-              title: _("Size");
-              subtitle-selectable: true;
-
-              styles [
-                "property",
-              ]
-            }
-
-            Adw.ActionRow added_row {
-              title: _("Added");
-              subtitle-selectable: true;
-
-              styles [
-                "property",
-              ]
-            }
-
-            Adw.ActionRow original_row {
-              title: _("Original File");
-              subtitle-selectable: true;
-
-              styles [
-                "property",
-              ]
-            }
-
-            Adw.ActionRow animation_row {
-              title: _("Animation");
-              subtitle: _("Animated GIF");
-              visible: false;
-
-              styles [
-                "property",
-              ]
-            }
-
-            Adw.ActionRow embedded_row {
-              title: _("Contained Sizes");
-              subtitle-selectable: true;
-              visible: false;
-
-              styles [
-                "property",
-              ]
-            }
-
-            ListBoxRow {
-              activatable: false;
-
-              child: Box {
-                orientation: vertical;
-                spacing: 6;
-                margin-top: 8;
-                margin-bottom: 8;
-                margin-start: 12;
-                margin-end: 12;
-
-                Label {
-                  label: _("Note");
-                  xalign: 0;
-
-                  styles [
-                    "caption",
-                    "dim-label",
-                  ]
-                }
-
-                TextView note_view {
-                  wrap-mode: word_char;
-                  accepts-tab: false;
-                  height-request: 72;
-
-                  styles [
-                    "note-view",
-                  ]
-                }
-              };
-            }
-
-            Adw.EntryRow source_row {
-              title: _("Source");
-
-              [suffix]
-              Button open_source_button {
-                icon-name: "web-browser-symbolic";
-                tooltip-text: _("Open the Link");
+              Button favorite_button {
                 valign: center;
-                visible: false;
-                clicked => $on_open_source_clicked() swapped;
+                action-name: "win.toggle-favorite";
 
                 styles [
                   "flat",
+                  "circular",
                 ]
               }
             }
 
-            Adw.EntryRow license_row {
-              title: _("License");
+            Label summary_label {
+              wrap: true;
+              justify: center;
+              selectable: true;
+
+              styles [
+                "dim-label",
+              ]
+            }
+          }
+
+          $PigouneTagSummary tag_summary {}
+
+          Box {
+            orientation: vertical;
+            spacing: 6;
+
+            Label {
+              label: _("Information");
+              xalign: 0;
+
+              styles [
+                "heading",
+              ]
             }
 
-            Adw.EntryRow author_row {
-              title: _("Author");
+            ListBox info_list {
+              selection-mode: none;
+
+              styles [
+                "boxed-list",
+              ]
+
+              Adw.ActionRow format_row {
+                title: _("Format");
+                subtitle-selectable: true;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              Adw.ActionRow dimensions_row {
+                title: _("Dimensions");
+                subtitle-selectable: true;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              Adw.ActionRow size_row {
+                title: _("Size");
+                subtitle-selectable: true;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              Adw.ActionRow added_row {
+                title: _("Added");
+                subtitle-selectable: true;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              Adw.ActionRow original_row {
+                title: _("Original File");
+                subtitle-selectable: true;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              Adw.ActionRow animation_row {
+                title: _("Animation");
+                subtitle: _("Animated GIF");
+                visible: false;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              Adw.ActionRow embedded_row {
+                title: _("Contained Sizes");
+                subtitle-selectable: true;
+                visible: false;
+
+                styles [
+                  "property",
+                ]
+              }
+
+              ListBoxRow {
+                activatable: false;
+
+                child: Box {
+                  orientation: vertical;
+                  spacing: 6;
+                  margin-top: 8;
+                  margin-bottom: 8;
+                  margin-start: 12;
+                  margin-end: 12;
+
+                  Label {
+                    label: _("Note");
+                    xalign: 0;
+
+                    styles [
+                      "caption",
+                      "dim-label",
+                    ]
+                  }
+
+                  TextView note_view {
+                    wrap-mode: word_char;
+                    accepts-tab: false;
+                    height-request: 72;
+
+                    styles [
+                      "note-view",
+                    ]
+                  }
+                };
+              }
+
+              Adw.EntryRow source_row {
+                title: _("Source");
+
+                [suffix]
+                Button open_source_button {
+                  icon-name: "web-browser-symbolic";
+                  tooltip-text: _("Open the Link");
+                  valign: center;
+                  visible: false;
+                  clicked => $on_open_source_clicked() swapped;
+
+                  styles [
+                    "flat",
+                  ]
+                }
+              }
+
+              Adw.EntryRow license_row {
+                title: _("License");
+              }
+
+              Adw.EntryRow author_row {
+                title: _("Author");
+              }
             }
           }
 

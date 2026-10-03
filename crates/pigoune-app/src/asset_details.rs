@@ -47,7 +47,7 @@ mod imp {
     use super::{RenamedCallback, TextChangedCallback};
     use crate::asset_object::PigouneAssetObject;
     use crate::collection_places::PigouneCollectionPlaces;
-    use crate::tag_editor::PigouneTagEditor;
+    use crate::tag_summary::PigouneTagSummary;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/asset-details.ui")]
@@ -74,7 +74,7 @@ mod imp {
         #[template_child]
         pub favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub tag_editor: TemplateChild<PigouneTagEditor>,
+        pub tag_summary: TemplateChild<PigouneTagSummary>,
         #[template_child]
         pub group_title: TemplateChild<gtk::Label>,
         #[template_child]
@@ -82,7 +82,7 @@ mod imp {
         #[template_child]
         pub group_favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub group_tag_editor: TemplateChild<PigouneTagEditor>,
+        pub group_tag_summary: TemplateChild<PigouneTagSummary>,
         #[template_child]
         pub collection_places: TemplateChild<PigouneCollectionPlaces>,
         #[template_child]
@@ -114,7 +114,7 @@ mod imp {
         type ParentType = adw::Bin;
 
         fn class_init(class: &mut Self::Class) {
-            PigouneTagEditor::ensure_type();
+            PigouneTagSummary::ensure_type();
             PigouneCollectionPlaces::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
@@ -255,15 +255,15 @@ impl PigouneAssetDetails {
 
     pub fn tag_editors(&self) -> [PigouneTagEditor; 2] {
         let imp = self.imp();
-        [imp.tag_editor.get(), imp.group_tag_editor.get()]
+        [imp.tag_summary.editor(), imp.group_tag_summary.editor()]
     }
 
     pub fn focus_tag_entry(&self) {
         let imp = self.imp();
         if self.is_showing_group() {
-            imp.group_tag_editor.focus_entry();
+            imp.group_tag_summary.open_editor();
         } else {
-            imp.tag_editor.focus_entry();
+            imp.tag_summary.open_editor();
         }
     }
 
@@ -274,9 +274,9 @@ impl PigouneAssetDetails {
     pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
         let imp = self.imp();
         if self.is_showing_group() {
-            imp.group_tag_editor.show_tags(current, all);
+            imp.group_tag_summary.show_tags(current, all);
         } else {
-            imp.tag_editor.show_tags(current, all);
+            imp.tag_summary.show_tags(current, all);
         }
     }
 

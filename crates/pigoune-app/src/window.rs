@@ -959,6 +959,16 @@ impl PigouneWindow {
                 self,
                 move |tag| window.remove_tag_from_selected(tag)
             ));
+            editor.connect_opened(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |tag| window.go_to_view(AssetView::Tag(tag), Vec::new())
+            ));
+            editor.connect_applied(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |name| window.add_tags_to_selected(vec![name])
+            ));
         }
         imp.asset_details.connect_collection_opened(glib::clone!(
             #[weak(rename_to = window)]
@@ -1594,15 +1604,19 @@ impl PigouneWindow {
             let parent = library.collection(id).ok().flatten().and_then(|c| c.parent);
             ancestors(library, parent)
         });
-        let Some(reveal) = reveal else {
-            return;
-        };
-        imp.current_view.set(AssetView::Collection(id));
-        self.remember_view(AssetView::Collection(id));
+        if let Some(reveal) = reveal {
+            self.go_to_view(AssetView::Collection(id), reveal);
+        }
+    }
+
+    fn go_to_view(&self, view: AssetView, reveal: Vec<CollectionId>) {
+        let imp = self.imp();
+        imp.current_view.set(view);
+        self.remember_view(view);
         imp.asset_preview.close();
         self.refresh_sidebar_revealing(reveal);
         self.refresh_grid();
-        imp.sidebar.point_out(AssetView::Collection(id));
+        imp.sidebar.point_out(view);
         imp.asset_grid.point_out_selected_next();
     }
 
