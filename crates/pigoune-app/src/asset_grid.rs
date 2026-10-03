@@ -10,7 +10,7 @@ use pigoune_core::AssetId;
 
 use crate::asset_object::PigouneAssetObject;
 use crate::asset_sort::SortedAsset;
-use crate::asset_tile::PigouneAssetTile;
+use crate::asset_tile::{PigouneAssetTile, favorite_badge_size};
 use crate::drag_content::DraggedAssets;
 use crate::drag_icon;
 use crate::found_flash;
@@ -777,6 +777,10 @@ impl PigouneAssetGrid {
                             .sync_create()
                             .build();
                     }
+                    grid.bind_property("tile-size", &tile.favorite_badge(), "pixel-size")
+                        .transform_to(|_, size: i32| Some(favorite_badge_size(size)))
+                        .sync_create()
+                        .build();
                     grid.make_draggable(&tile);
                     tile.bind_property("description", item, "accessible-label")
                         .sync_create()

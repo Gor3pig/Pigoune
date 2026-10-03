@@ -91,12 +91,9 @@ row.drop-target-row:not(:selected) {
 }
 
 .favorite-badge {
-  margin: 4px;
-  padding: 3px;
-  border-radius: 9999px;
+  margin: 6px;
   color: #f6d32d;
-  background-color: rgb(0 0 0 / 60%);
-  -gtk-icon-size: 12px;
+  -gtk-icon-shadow: 0 1px 2px rgb(0 0 0 / 55%);
 }
 
 .tag-field {

@@ -11,6 +11,12 @@ use crate::asset_object::PigouneAssetObject;
 use crate::thumbnails::{self, ThumbnailCache};
 
 const FADE_IN_MILLISECONDS: u32 = 200;
+const FAVORITE_BADGE_BASE_SIZE: i32 = 10;
+const TILE_SIZE_PER_BADGE_PIXEL: i32 = 16;
+
+pub fn favorite_badge_size(tile_size: i32) -> i32 {
+    FAVORITE_BADGE_BASE_SIZE + tile_size.max(0) / TILE_SIZE_PER_BADGE_PIXEL
+}
 
 mod imp {
     use std::cell::RefCell;
@@ -83,6 +89,10 @@ impl PigouneAssetTile {
 
     pub fn picture(&self) -> gtk::Picture {
         self.imp().picture.get()
+    }
+
+    pub fn favorite_badge(&self) -> gtk::Image {
+        self.imp().favorite_badge.get()
     }
 
     pub fn show_asset(&self, asset: &PigouneAssetObject, cache: &Rc<ThumbnailCache>) {
@@ -248,5 +258,23 @@ impl PigouneAssetTile {
 impl Default for PigouneAssetTile {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::favorite_badge_size;
+
+    #[test]
+    fn the_favorite_badge_grows_with_the_tiles() {
+        assert_eq!(favorite_badge_size(64), 14);
+        assert_eq!(favorite_badge_size(128), 18);
+        assert_eq!(favorite_badge_size(256), 26);
+    }
+
+    #[test]
+    fn the_favorite_badge_never_vanishes() {
+        assert_eq!(favorite_badge_size(0), 10);
+        assert_eq!(favorite_badge_size(-32), 10);
     }
 }
