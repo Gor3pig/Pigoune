@@ -1,0 +1,38 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a library
+        2. Drag a folder onto the window
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Pigoune version
+      description: Shown in "About Pigoune", in the main menu.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Distribution and GNOME version
+      placeholder: Fedora 44, GNOME 50
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Run `flatpak run io.github.gor3pig.Pigoune` in a terminal to see the logs.

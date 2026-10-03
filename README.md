@@ -13,7 +13,7 @@
 [![Rust](https://img.shields.io/badge/Rust-GTK4%20%C2%B7%20libadwaita-e66100?style=for-the-badge&logo=rust&logoColor=white)](https://gtk-rs.org)
 [![Flathub : bientôt](https://img.shields.io/badge/Flathub-bient%C3%B4t-9141ac?style=for-the-badge&logo=flathub&logoColor=white)](https://flathub.org)
 
-[Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [🇬🇧 English](#-english)
+[Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Contribuer](#contribuer) · [🇬🇧 English](#-english)
 
 </div>
 
@@ -97,6 +97,13 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 
 Pigoune sera disponible sur **Flathub**. Revenez bientôt !
 
+## Contribuer
+
+Pigoune est un logiciel libre, et toute aide est la bienvenue : signaler un bug, proposer une
+idée, traduire ou améliorer le code. Le guide [CONTRIBUTING.md](CONTRIBUTING.md) (en anglais)
+explique comment compiler Pigoune et proposer une modification, et
+[ARCHITECTURE.md](ARCHITECTURE.md) présente l'organisation du code.
+
 ## Licence
 
 Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure](COPYING).
@@ -148,6 +155,13 @@ you need them.
 ### Installation
 
 Pigoune will be available on **Flathub**. Stay tuned!
+
+### Contributing
+
+Pigoune is free software and help is welcome: bug reports, ideas, translations and code. See
+[CONTRIBUTING.md](CONTRIBUTING.md) to build Pigoune and submit a change,
+[ARCHITECTURE.md](ARCHITECTURE.md) for an overview of the code and
+[po/README.md](po/README.md) to translate it.
 
 ### License
 

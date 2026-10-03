@@ -26,6 +26,16 @@ no_comments_in_sources() {
     fi
 }
 
+no_long_dashes() {
+    local found
+    found=$(git ls-files --cached --others --exclude-standard \
+        | xargs -r grep -nIE $'\xe2\x80\x94|\xe2\x80\x93' || true)
+    if [ -n "$found" ]; then
+        printf '%s\n' "$found"
+        return 1
+    fi
+}
+
 validate_desktop_file() {
     local workdir
     workdir=$(mktemp -d)
@@ -50,7 +60,7 @@ translatable_files_are_listed() {
     local missing=0 file
     while IFS= read -r file; do
         if ! grep -qxF "$file" po/POTFILES.in; then
-            printf 'Absent de po/POTFILES.in : %s\n' "$file"
+            printf 'Missing from po/POTFILES.in: %s\n' "$file"
             missing=1
         fi
     done < <(git ls-files --cached --others --exclude-standard -- '*.blp' '*.rs' \
@@ -70,7 +80,7 @@ translations_are_complete() {
         msgmerge --quiet --no-fuzzy-matching "po/$language.po" "$workdir/pigoune.pot" \
             --output-file="$workdir/$language.po"
         statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language.po" 2>&1)
-        printf '%s : %s\n' "$language" "$statistics"
+        printf '%s: %s\n' "$language" "$statistics"
         if grep -qE 'non traduit|untranslated|approximati|fuzzy' <<<"$statistics"; then
             incomplete=1
         fi
@@ -79,19 +89,20 @@ translations_are_complete() {
     return $incomplete
 }
 
-step "Formatage (rustfmt)" cargo fmt --all --check
-step "Relecture stricte (clippy)" cargo clippy --workspace --all-targets --quiet -- -D warnings
+step "Formatting (rustfmt)" cargo fmt --all --check
+step "Strict lints (clippy)" cargo clippy --workspace --all-targets --quiet -- -D warnings
 step "Tests" cargo test --workspace --quiet
-step "Aucun commentaire dans le code" no_comments_in_sources
-step "Lanceur GNOME (.desktop)" validate_desktop_file
-step "Fiche de l'application (metainfo)" validate_metainfo
-step "Fichiers traduisibles déclarés" translatable_files_are_listed
-step "Traductions complètes" translations_are_complete
+step "No comments in the code" no_comments_in_sources
+step "Plain hyphens only" no_long_dashes
+step "Desktop entry" validate_desktop_file
+step "AppStream metainfo" validate_metainfo
+step "Translatable files are listed" translatable_files_are_listed
+step "Translations are complete" translations_are_complete
 
 printf '\n'
 if [ ${#failures[@]} -eq 0 ]; then
-    printf '\033[1;32m✅ Tout est vert.\033[0m\n'
+    printf '\033[1;32m✅ All checks passed.\033[0m\n'
 else
-    printf '\033[1;31m❌ À corriger : %s\033[0m\n' "${failures[*]}"
+    printf '\033[1;31m❌ To fix: %s\033[0m\n' "${failures[*]}"
     exit 1
 fi
