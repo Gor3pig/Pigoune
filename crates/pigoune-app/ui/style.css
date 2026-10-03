@@ -128,6 +128,11 @@
   background: none;
 }
 
+.mosaic-cell {
+  border-radius: 8px;
+  background-color: color-mix(in srgb, currentColor 6%, transparent);
+}
+
 .tag-pill {
   min-height: 22px;
   padding: 0 9px;

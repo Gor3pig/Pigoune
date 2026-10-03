@@ -33,22 +33,33 @@ template $PigouneAssetDetails: Adw.Bin {
           margin-start: 18;
           margin-end: 18;
 
-          Image {
-            icon-name: "view-grid-symbolic";
-            pixel-size: 64;
-
-            styles [
-              "dim-label",
-            ]
+          Grid group_mosaic {
+            halign: center;
+            row-spacing: 4;
+            column-spacing: 4;
           }
 
-          Label group_title {
-            wrap: true;
-            justify: center;
+          Box {
+            orientation: vertical;
+            spacing: 4;
 
-            styles [
-              "title-3",
-            ]
+            Label group_title {
+              wrap: true;
+              justify: center;
+
+              styles [
+                "title-3",
+              ]
+            }
+
+            Label group_summary {
+              wrap: true;
+              justify: center;
+
+              styles [
+                "dim-label",
+              ]
+            }
           }
 
           Button group_favorite_button {

@@ -49,6 +49,28 @@ pub fn summary_text(asset: &Asset, timing: Option<AnimationTiming>) -> String {
     parts.join(SUMMARY_SEPARATOR)
 }
 
+pub fn group_summary_text(assets: &[&Asset]) -> String {
+    let total: u64 = assets.iter().map(|asset| asset.byte_size).sum();
+    [
+        formats_text(assets.iter().map(|asset| asset.format)),
+        gettext("{size} in total").replace("{size}", &byte_size_text(total)),
+    ]
+    .join(SUMMARY_SEPARATOR)
+}
+
+fn formats_text(formats: impl Iterator<Item = AssetFormat>) -> String {
+    let mut seen = Vec::new();
+    for format in formats {
+        if !seen.contains(&format) {
+            seen.push(format);
+        }
+    }
+    seen.iter()
+        .map(|format| format_name(*format))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 pub fn animation_text(timing: Option<AnimationTiming>) -> String {
     timing.map_or_else(
         || gettext("Animated GIF"),
@@ -108,7 +130,22 @@ mod tests {
 
     use std::time::Duration;
 
-    use super::{date_pattern, duration_text, embedded_sizes_text, frames_text};
+    use pigoune_core::AssetFormat;
+
+    use super::{date_pattern, duration_text, embedded_sizes_text, formats_text, frames_text};
+
+    #[test]
+    fn each_format_is_listed_once_in_order_of_appearance() {
+        let formats = [
+            AssetFormat::Svg,
+            AssetFormat::Png,
+            AssetFormat::Svg,
+            AssetFormat::Gif,
+            AssetFormat::Png,
+        ];
+        assert_eq!(formats_text(formats.into_iter()), "SVG, PNG, GIF");
+        assert_eq!(formats_text(std::iter::empty()), "");
+    }
 
     #[test]
     fn a_duration_is_written_in_seconds_with_one_decimal() {

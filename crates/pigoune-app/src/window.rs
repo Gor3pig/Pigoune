@@ -1073,7 +1073,7 @@ impl PigouneWindow {
                     .and_then(|library| library.animation_timing(single.asset()));
                 imp.asset_details.show_animation_timing(timing);
             }
-            several => imp.asset_details.show_group(several),
+            several => imp.asset_details.show_group(several, &thumbnails),
         }
         self.refresh_selected_tags();
         self.refresh_selected_collections();
@@ -2378,7 +2378,8 @@ impl PigouneWindow {
                         self.refresh_grid();
                     }
                 } else if selected.len() > 1 {
-                    imp.asset_details.show_group(&selected);
+                    imp.asset_details
+                        .show_group(&selected, &imp.asset_grid.thumbnails());
                 }
             }
             Some(Err(error)) => {

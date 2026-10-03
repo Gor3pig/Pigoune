@@ -10,6 +10,7 @@ use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::collection_places::SharedCollection;
+use crate::group_mosaic;
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -102,6 +103,11 @@ mod imp {
         pub animation_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub summary_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub group_mosaic: TemplateChild<gtk::Grid>,
+        #[template_child]
+        pub group_summary: TemplateChild<gtk::Label>,
+        pub group_loading: RefCell<Vec<glib::JoinHandle<()>>>,
         #[template_child]
         pub embedded_row: TemplateChild<adw::ActionRow>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
@@ -320,11 +326,19 @@ impl PigouneAssetDetails {
         imp.stack.set_visible_child_name(TRASHED_PAGE);
     }
 
-    pub fn show_group(&self, selected: &[PigouneAssetObject]) {
+    pub fn show_group(&self, selected: &[PigouneAssetObject], thumbnails: &Rc<ThumbnailCache>) {
         let imp = self.imp();
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
+        for loading in imp.group_loading.take() {
+            loading.abort();
+        }
+        imp.group_loading
+            .replace(group_mosaic::fill(&imp.group_mosaic, selected, thumbnails));
+        let assets: Vec<&Asset> = selected.iter().map(PigouneAssetObject::asset).collect();
+        imp.group_summary
+            .set_label(&asset_facts::group_summary_text(&assets));
         self.save_texts();
         imp.showing.replace(None);
         imp.preview.set_paintable(None::<&gdk::Paintable>);

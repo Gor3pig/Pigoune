@@ -24,6 +24,7 @@ mod filter_popover;
 mod found_flash;
 mod grid_columns;
 mod grid_header;
+mod group_mosaic;
 mod image_check;
 mod import_progress_dialog;
 mod import_report;
