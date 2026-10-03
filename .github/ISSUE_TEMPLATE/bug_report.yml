@@ -1,14 +1,55 @@
 name: Bug report
-description: Something does not work as expected
+description: Something in Pigoune does not work as expected
 labels: [bug]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! You can write in English or in French.
+
+        Before you start, please check that the problem is not [already reported](https://github.com/Gor3pig/Pigoune/issues?q=is%3Aissue), and have a look at the [user guide](https://github.com/Gor3pig/Pigoune/blob/main/help/en/README.md) if you are not sure how something is meant to work.
+
+        Please do not attach private files: only share images you are allowed to publish.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Pigoune is affected?
+      options:
+        - Import (files, folders, drag and drop into Pigoune)
+        - Library (create, open, close, move)
+        - Grid and thumbnails
+        - Details panel
+        - Collections
+        - Tags
+        - Favorites
+        - Search and filters
+        - Detailed preview
+        - Drag out, copy or export
+        - Trash and undo
+        - Preferences
+        - Translation
+        - Keyboard or accessibility
+        - Other
+    validations:
+      required: true
+
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
-      description: Describe the problem, and what you expected instead.
+      description: Describe the problem. Screenshots are very welcome.
     validations:
       required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+
   - type: textarea
     id: steps
     attributes:
@@ -19,20 +60,77 @@ body:
         3. ...
     validations:
       required: true
+
+  - type: dropdown
+    id: formats
+    attributes:
+      label: File formats involved
+      multiple: true
+      options:
+        - SVG
+        - PNG
+        - JPEG
+        - WebP
+        - GIF
+        - ICO
+        - None in particular
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: Sample file
+      description: If a specific file triggers the bug and you may share it, attach it here (you can zip it).
+
   - type: input
     id: version
     attributes:
       label: Pigoune version
       description: Shown in "About Pigoune", in the main menu.
+      placeholder: "1.1.0"
     validations:
       required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation
+      options:
+        - Flatpak package from a GitHub release
+        - Built from source
+        - Other
+    validations:
+      required: true
+
   - type: input
     id: system
     attributes:
       label: Distribution and GNOME version
       placeholder: Fedora 44, GNOME 50
+
+  - type: dropdown
+    id: library-size
+    attributes:
+      label: Library size
+      description: Roughly how many assets does the library hold? Useful for slowness issues.
+      options:
+        - Fewer than 100
+        - 100 to 1,000
+        - 1,000 to 10,000
+        - More than 10,000
+
   - type: textarea
     id: logs
     attributes:
-      label: Logs or screenshots
-      description: Run `flatpak run io.github.gor3pig.Pigoune` in a terminal to see the logs.
+      label: Logs
+      description: |
+        Start Pigoune from a terminal with `flatpak run io.github.gor3pig.Pigoune`, reproduce the bug, then paste what appears here.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this bug is not reported yet.
+          required: true
+        - label: I use the latest version of Pigoune.

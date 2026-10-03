@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: User guide
+    url: https://github.com/Gor3pig/Pigoune/blob/main/help/en/README.md
+    about: How to use Pigoune, with answers to common questions. A French version is linked at the top.
+  - name: Report a security vulnerability
+    url: https://github.com/Gor3pig/Pigoune/security/advisories/new
+    about: Please report security issues privately rather than in a public issue.

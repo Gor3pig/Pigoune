@@ -1,0 +1,44 @@
+name: Translation
+description: Add a language or report a translation mistake
+labels: [translation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping translate Pigoune! The [translation guide](https://github.com/Gor3pig/Pigoune/blob/main/po/README.md) explains how translations work. You are welcome to open a pull request directly.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Request
+      options:
+        - Add a new language
+        - Fix a mistake in an existing translation
+        - Untranslated text in the interface
+    validations:
+      required: true
+
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      placeholder: German (de)
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: |
+        For a mistake, copy the current text and your suggestion, and say where it appears. A screenshot helps.
+        For a new language, say whether you would like to translate it yourself.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Pigoune version
+      description: Shown in "About Pigoune", in the main menu.
+      placeholder: "1.1.0"

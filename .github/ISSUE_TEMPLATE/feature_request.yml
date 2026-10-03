@@ -1,16 +1,71 @@
 name: Feature request
-description: Suggest an idea for Pigoune
+description: Suggest an idea to make Pigoune better
 labels: [enhancement]
 body:
-  - type: textarea
-    id: problem
+  - type: markdown
     attributes:
-      label: What would you like to do?
-      description: Describe the need or the problem first, before any solution.
+      value: |
+        Thanks for sharing your idea! You can write in English or in French.
+
+        Pigoune aims to stay a focused library for graphic assets: **fully local and offline, with no account, and never modifying your original files**. Ideas that fit these principles have the best chance to make it in.
+
+        Please check the [existing issues](https://github.com/Gor3pig/Pigoune/issues?q=is%3Aissue) and the [user guide](https://github.com/Gor3pig/Pigoune/blob/main/help/en/README.md) first: maybe Pigoune already does it.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Pigoune is it about?
+      options:
+        - Import (files, folders, drag and drop into Pigoune)
+        - Library (create, open, close, move)
+        - Grid and thumbnails
+        - Details panel
+        - Collections
+        - Tags
+        - Favorites
+        - Search and filters
+        - Detailed preview
+        - Drag out, copy or export
+        - Trash and undo
+        - Preferences
+        - Keyboard or accessibility
+        - Something new
     validations:
       required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: What would you like to do?
+      description: Describe your need or the problem you run into, before any solution.
+      placeholder: When I prepare a presentation, I want to...
+    validations:
+      required: true
+
   - type: textarea
     id: idea
     attributes:
       label: Your idea
-      description: How could Pigoune help? Mockups and examples from other apps are welcome.
+      description: How could Pigoune help?
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: How do you manage today?
+      description: Workarounds or other apps you use for this.
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or examples
+      description: Sketches, screenshots or examples from other apps are very welcome.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this idea is not suggested yet.
+          required: true
+        - label: My idea keeps Pigoune local, offline and without an account, and leaves original files untouched.
