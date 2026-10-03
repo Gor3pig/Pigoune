@@ -144,17 +144,9 @@ Keep each commit focused on one change, and make sure the project builds and pas
 The automatic check runs on every pull request. Reviews may ask for changes: this is a normal
 part of the process, not a judgment of your work.
 
-## Making a release
+## Releases
 
-Releases are made by the maintainer:
-
-1. Update the version in `meson.build` and `Cargo.toml`, run `cargo update -w`, and add the
-   release notes to `data/io.github.gor3pig.Pigoune.metainfo.xml.in`, with their French
-   translation.
-2. Point the screenshot URLs in the metainfo at the new tag.
-3. Commit, tag the commit with `vX.Y.Z` and push the tag.
-4. The release workflow builds the Flatpak package from the tag and attaches it to a draft
-   release. Write the release notes there, then publish it.
+Releases are made by the maintainer, following [RELEASING.md](RELEASING.md).
 
 ## License
 
