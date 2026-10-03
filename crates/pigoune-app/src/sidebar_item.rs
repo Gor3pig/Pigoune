@@ -1,4 +1,5 @@
 use adw::subclass::prelude::*;
+use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::AssetView;
 
@@ -91,5 +92,22 @@ impl PigouneSidebarItem {
 
     pub fn children(&self) -> Option<gio::ListStore> {
         self.data().children.clone()
+    }
+
+    pub fn spoken_label(&self) -> String {
+        let name = match self.view() {
+            Some(AssetView::Tag(_)) => gettext("Tag {name}").replace("{name}", self.label()),
+            _ => self.label().to_owned(),
+        };
+        let Some(count) = self.count() else {
+            return name;
+        };
+        ngettext(
+            "{name}, {count} resource",
+            "{name}, {count} resources",
+            u32::try_from(count).unwrap_or(u32::MAX),
+        )
+        .replace("{name}", &name)
+        .replace("{count}", &count.to_string())
     }
 }

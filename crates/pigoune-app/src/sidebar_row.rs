@@ -393,6 +393,13 @@ impl PigouneSidebarRow {
         self.add_controller(long_press);
     }
 
+    pub fn open_menu(&self) -> bool {
+        self.show_menu(
+            f64::from(self.width()) / 2.0,
+            f64::from(self.height()) / 2.0,
+        )
+    }
+
     #[expect(
         clippy::cast_possible_truncation,
         reason = "pointer coordinates inside a sidebar row are small"

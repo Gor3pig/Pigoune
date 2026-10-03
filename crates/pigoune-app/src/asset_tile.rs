@@ -2,9 +2,11 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
+use gettextrs::gettext;
 use gtk::{gdk, glib};
 
 use crate::animation;
+use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -13,13 +15,15 @@ const FADE_IN_MILLISECONDS: u32 = 200;
 mod imp {
     use std::cell::RefCell;
 
+    use adw::prelude::*;
     use adw::subclass::prelude::*;
     use gtk::{gdk, glib};
 
     use crate::asset_object::PigouneAssetObject;
 
-    #[derive(Default, gtk::CompositeTemplate)]
+    #[derive(Default, gtk::CompositeTemplate, glib::Properties)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/asset-tile.ui")]
+    #[properties(wrapper_type = super::PigouneAssetTile)]
     pub struct PigouneAssetTile {
         #[template_child]
         pub picture: TemplateChild<gtk::Picture>,
@@ -35,6 +39,8 @@ mod imp {
         pub animation: RefCell<Option<glib::JoinHandle<()>>>,
         pub asset: RefCell<Option<PigouneAssetObject>>,
         pub still: RefCell<Option<gdk::Texture>>,
+        #[property(get, set)]
+        pub description: RefCell<String>,
     }
 
     #[glib::object_subclass]
@@ -52,10 +58,12 @@ mod imp {
         }
     }
 
+    #[glib::derived_properties]
     impl ObjectImpl for PigouneAssetTile {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().animate_on_hover();
+            self.obj().describe_for_screen_readers();
         }
     }
     impl WidgetImpl for PigouneAssetTile {}
@@ -88,6 +96,7 @@ impl PigouneAssetTile {
             .build();
         imp.favorite_binding.replace(Some(binding));
         imp.asset.replace(Some(asset.clone()));
+        self.update_description();
 
         if let Some(texture) = cache.remembered(asset.id()) {
             imp.picture.set_paintable(Some(&texture));
@@ -146,6 +155,35 @@ impl PigouneAssetTile {
             .sync_create()
             .build();
         imp.name_bindings.replace(vec![label, tooltip]);
+    }
+
+    fn describe_for_screen_readers(&self) {
+        let imp = self.imp();
+        imp.name_label.connect_label_notify(glib::clone!(
+            #[weak(rename_to = tile)]
+            self,
+            move |_| tile.update_description()
+        ));
+        imp.favorite_badge.connect_visible_notify(glib::clone!(
+            #[weak(rename_to = tile)]
+            self,
+            move |_| tile.update_description()
+        ));
+    }
+
+    fn update_description(&self) {
+        let imp = self.imp();
+        let Some(asset) = imp.asset.borrow().clone() else {
+            return;
+        };
+        let mut parts = vec![
+            imp.name_label.label().to_string(),
+            asset_facts::format_name(asset.asset().format).to_owned(),
+        ];
+        if imp.favorite_badge.is_visible() {
+            parts.push(gettext("favorite"));
+        }
+        self.set_description(parts.join(", "));
     }
 
     fn unbind_favorite(&self) {

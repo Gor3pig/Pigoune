@@ -7,6 +7,7 @@ use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetId, AssetView, CollectionId, Tag, ViewCounts};
 
+use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::CollectionDrop;
 use crate::collection_sort::CollectionTree;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
@@ -84,6 +85,7 @@ mod imp {
             let sidebar = self.obj();
             sidebar.set_up_rows();
             sidebar.act_on_keys();
+            sidebar.skip_headers_with_arrows();
         }
     }
 
@@ -280,6 +282,136 @@ impl PigouneSidebar {
             }
         ));
         self.imp().list_view.add_controller(keys);
+
+        let menu_keys = gtk::ShortcutController::new();
+        menu_keys.add_shortcut(gtk::Shortcut::new(
+            gtk::ShortcutTrigger::parse_string(MENU_KEYS),
+            Some(gtk::CallbackAction::new(glib::clone!(
+                #[weak(rename_to = sidebar)]
+                self,
+                #[upgrade_or]
+                glib::Propagation::Proceed,
+                move |_, _| {
+                    if sidebar.focused_row().is_some_and(|row| row.open_menu()) {
+                        glib::Propagation::Stop
+                    } else {
+                        glib::Propagation::Proceed
+                    }
+                }
+            ))),
+        ));
+        self.imp().list_view.add_controller(menu_keys);
+    }
+
+    fn skip_headers_with_arrows(&self) {
+        let keys = gtk::EventControllerKey::new();
+        keys.set_propagation_phase(gtk::PropagationPhase::Capture);
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = sidebar)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, modifiers| {
+                if !modifiers.is_empty() || !sidebar.focus_is_on_an_entry() {
+                    return glib::Propagation::Proceed;
+                }
+                match key {
+                    gdk::Key::Up | gdk::Key::KP_Up => sidebar.move_to_next_entry(-1),
+                    gdk::Key::Down | gdk::Key::KP_Down => sidebar.move_to_next_entry(1),
+                    gdk::Key::Right | gdk::Key::KP_Right => sidebar.expand_selected(),
+                    gdk::Key::Left | gdk::Key::KP_Left => sidebar.collapse_selected(),
+                    _ => return glib::Propagation::Proceed,
+                }
+                glib::Propagation::Stop
+            }
+        ));
+        self.imp().list_view.add_controller(keys);
+    }
+
+    fn focus_is_on_an_entry(&self) -> bool {
+        self.root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| {
+                focus.is_ancestor(&*self.imp().list_view)
+                    && focus
+                        .first_child()
+                        .is_some_and(|child| child.is::<gtk::TreeExpander>())
+            })
+    }
+
+    fn move_to_next_entry(&self, step: i64) {
+        let Some(selection) = self
+            .imp()
+            .list_view
+            .model()
+            .and_downcast::<gtk::SingleSelection>()
+        else {
+            return;
+        };
+        let current = selection.selected();
+        if current == gtk::INVALID_LIST_POSITION {
+            return;
+        }
+        let entries = i64::from(selection.n_items());
+        let mut position = i64::from(current) + step;
+        while (0..entries).contains(&position) {
+            let Ok(target) = u32::try_from(position) else {
+                return;
+            };
+            if item_at(selection.item(target)).is_some_and(|item| !item.is_header()) {
+                self.imp().list_view.scroll_to(
+                    target,
+                    gtk::ListScrollFlags::FOCUS | gtk::ListScrollFlags::SELECT,
+                    None,
+                );
+                return;
+            }
+            position += step;
+        }
+    }
+
+    fn selected_tree_row(&self) -> Option<gtk::TreeListRow> {
+        self.imp()
+            .list_view
+            .model()
+            .and_downcast::<gtk::SingleSelection>()?
+            .selected_item()
+            .and_downcast::<gtk::TreeListRow>()
+    }
+
+    fn expand_selected(&self) {
+        if let Some(row) = self.selected_tree_row()
+            && row.is_expandable()
+        {
+            row.set_expanded(true);
+        }
+    }
+
+    fn collapse_selected(&self) {
+        let Some(row) = self.selected_tree_row() else {
+            return;
+        };
+        if row.is_expanded() {
+            row.set_expanded(false);
+        } else if let Some(parent) = row.parent() {
+            self.imp().list_view.scroll_to(
+                parent.position(),
+                gtk::ListScrollFlags::FOCUS | gtk::ListScrollFlags::SELECT,
+                None,
+            );
+        }
+    }
+
+    fn focused_row(&self) -> Option<PigouneSidebarRow> {
+        let focus = self.root()?.focus()?;
+        if !focus.is_ancestor(&*self.imp().list_view) {
+            return None;
+        }
+        focus
+            .first_child()
+            .and_downcast::<gtk::TreeExpander>()?
+            .child()
+            .and_downcast::<PigouneSidebarRow>()
     }
 
     fn selected_view(&self) -> Option<AssetView> {
@@ -337,11 +469,17 @@ impl PigouneSidebar {
             let is_header = item.is_header();
             list_item.set_selectable(!is_header);
             list_item.set_activatable(!is_header);
+            let spoken_label = item.spoken_label();
+            list_item.set_focusable(!is_header);
+            list_item.set_accessible_label(&spoken_label);
+            expander.set_focusable(!is_header);
             expander.set_list_row(Some(&row));
             expander.set_indent_for_icon(collection_of(&row).is_some());
             if let Some(row) = expander.child().and_downcast::<PigouneSidebarRow>() {
                 row.show(&item);
             }
+            expander.reset_relation(gtk::AccessibleRelation::LabelledBy);
+            expander.update_property(&[gtk::accessible::Property::Label(&spoken_label)]);
         });
         self.imp().list_view.set_factory(Some(&factory));
     }

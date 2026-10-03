@@ -14,6 +14,8 @@ use crate::drag_content::DraggedAssets;
 use crate::drag_icon;
 use crate::thumbnails::ThumbnailCache;
 
+pub const MENU_KEYS: &str = "<Shift>F10|Menu";
+
 mod imp {
     use std::cell::{Cell, RefCell};
     use std::rc::Rc;
@@ -491,16 +493,36 @@ impl PigouneAssetGrid {
         self.imp().grid_view.add_controller(click);
 
         let long_press = gtk::GestureLongPress::new();
+        let on_long_press = Rc::clone(&callback);
         long_press.connect_pressed(glib::clone!(
             #[weak(rename_to = grid)]
             self,
             move |gesture, x, y| {
-                if grid.show_context_menu(x, y, &*callback) {
+                if grid.show_context_menu(x, y, &*on_long_press) {
                     gesture.set_state(gtk::EventSequenceState::Claimed);
                 }
             }
         ));
         self.imp().grid_view.add_controller(long_press);
+
+        let menu_keys = gtk::ShortcutController::new();
+        menu_keys.add_shortcut(gtk::Shortcut::new(
+            gtk::ShortcutTrigger::parse_string(MENU_KEYS),
+            Some(gtk::CallbackAction::new(glib::clone!(
+                #[weak(rename_to = grid)]
+                self,
+                #[upgrade_or]
+                glib::Propagation::Proceed,
+                move |_, _| {
+                    if grid.show_context_menu_for_focus(&*callback) {
+                        glib::Propagation::Stop
+                    } else {
+                        glib::Propagation::Proceed
+                    }
+                }
+            ))),
+        ));
+        self.imp().grid_view.add_controller(menu_keys);
     }
 
     #[expect(
@@ -512,6 +534,57 @@ impl PigouneAssetGrid {
         let Some(asset) = self.asset_at(x, y) else {
             return false;
         };
+        let Some(point) = imp.grid_view.compute_point(
+            &*imp.grid_box,
+            &gtk::graphene::Point::new(x as f32, y as f32),
+        ) else {
+            return false;
+        };
+        let pointing_to = gdk::Rectangle::new(point.x() as i32, point.y() as i32, 1, 1);
+        self.pop_up_menu_for(&asset, &pointing_to, menu_model);
+        true
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "tile bounds inside the grid fit in an i32"
+    )]
+    fn show_context_menu_for_focus(&self, menu_model: &dyn Fn() -> gio::MenuModel) -> bool {
+        let imp = self.imp();
+        let Some(tile) = self.focused_tile() else {
+            return false;
+        };
+        let (Some(asset), Some(bounds)) = (tile.asset(), tile.compute_bounds(&*imp.grid_box))
+        else {
+            return false;
+        };
+        let pointing_to = gdk::Rectangle::new(
+            bounds.x() as i32,
+            bounds.y() as i32,
+            bounds.width() as i32,
+            bounds.height() as i32,
+        );
+        self.pop_up_menu_for(&asset, &pointing_to, menu_model);
+        true
+    }
+
+    fn focused_tile(&self) -> Option<PigouneAssetTile> {
+        let focus = self.root()?.focus()?;
+        if !focus.is_ancestor(&*self.imp().grid_view) {
+            return None;
+        }
+        focus
+            .downcast_ref::<PigouneAssetTile>()
+            .cloned()
+            .or_else(|| focus.first_child().and_downcast::<PigouneAssetTile>())
+    }
+
+    fn pop_up_menu_for(
+        &self,
+        asset: &PigouneAssetObject,
+        pointing_to: &gdk::Rectangle,
+        menu_model: &dyn Fn() -> gio::MenuModel,
+    ) {
         let is_selected = self
             .selected_assets()
             .iter()
@@ -519,22 +592,10 @@ impl PigouneAssetGrid {
         if !is_selected {
             self.select_asset(asset.id());
         }
-        let Some(point) = imp.grid_view.compute_point(
-            &*imp.grid_box,
-            &gtk::graphene::Point::new(x as f32, y as f32),
-        ) else {
-            return false;
-        };
-        let menu = &imp.context_menu;
+        let menu = &self.imp().context_menu;
         menu.set_menu_model(Some(&menu_model()));
-        menu.set_pointing_to(Some(&gdk::Rectangle::new(
-            point.x() as i32,
-            point.y() as i32,
-            1,
-            1,
-        )));
+        menu.set_pointing_to(Some(pointing_to));
         menu.popup();
-        true
     }
 
     fn make_draggable(&self, tile: &PigouneAssetTile) {
@@ -669,6 +730,9 @@ impl PigouneAssetGrid {
                             .build();
                     }
                     grid.make_draggable(&tile);
+                    tile.bind_property("description", item, "accessible-label")
+                        .sync_create()
+                        .build();
                     item.set_child(Some(&tile));
                 }
             }
