@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Allow the image decoding sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
