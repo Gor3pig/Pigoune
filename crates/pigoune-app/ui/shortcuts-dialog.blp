@@ -1,0 +1,144 @@
+using Gtk 4.0;
+using Adw 1;
+
+Adw.ShortcutsDialog shortcuts_dialog {
+  Adw.ShortcutsSection {
+    title: _("Library");
+
+    Adw.ShortcutsItem {
+      title: _("New Library");
+      action-name: "win.create-library";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Open a Library");
+      action-name: "win.open-library";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Import Files");
+      action-name: "win.import-files";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Search");
+      action-name: "win.search";
+    }
+  }
+
+  Adw.ShortcutsSection {
+    title: _("Resources");
+
+    Adw.ShortcutsItem {
+      title: _("Open the Detailed Preview");
+      accelerator: "space";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Select All Resources");
+      action-name: "win.select-all";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Deselect All Resources");
+      accelerator: "Escape";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Copy to the Clipboard");
+      action-name: "win.copy-selected";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Rename");
+      accelerator: "F2";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Add to or Remove From Favorites");
+      action-name: "win.toggle-favorite";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Move to the Trash");
+      accelerator: "Delete";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Undo");
+      action-name: "win.undo";
+    }
+  }
+
+  Adw.ShortcutsSection {
+    title: _("View");
+
+    Adw.ShortcutsItem {
+      title: _("Enlarge Thumbnails");
+      action-name: "win.enlarge-thumbnails";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Shrink Thumbnails");
+      action-name: "win.shrink-thumbnails";
+    }
+  }
+
+  Adw.ShortcutsSection {
+    title: _("Detailed Preview");
+
+    Adw.ShortcutsItem {
+      title: _("Previous Resource");
+      accelerator: "Left";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Next Resource");
+      accelerator: "Right";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Zoom In");
+      accelerator: "plus";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Zoom Out");
+      accelerator: "minus";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Fit to Window");
+      accelerator: "0";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Actual Size");
+      accelerator: "1";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Close the Preview");
+      accelerator: "Escape space";
+    }
+  }
+
+  Adw.ShortcutsSection {
+    title: _("General");
+
+    Adw.ShortcutsItem {
+      title: _("Show Keyboard Shortcuts");
+      action-name: "app.shortcuts";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Preferences");
+      action-name: "win.preferences";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Quit");
+      action-name: "app.quit";
+    }
+  }
+}

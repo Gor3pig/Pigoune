@@ -63,6 +63,7 @@ const PREFERENCES_ACTION: &str = "win.preferences";
 const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
+const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const OPEN_LIBRARY_ACTIONS: [&str; 14] = [
     SEARCH_ACTION,
@@ -124,8 +125,8 @@ mod imp {
         IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
         OPEN_PREVIEW_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION,
         RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
-        SEARCH_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
-        UNDO_ACTION, collection_parameter, tag_parameter,
+        SEARCH_ACTION, SELECT_ALL_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
+        TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -191,6 +192,9 @@ mod imp {
         });
         class.install_action(COPY_SELECTED_ACTION, None, |window, _, _| {
             window.copy_selected();
+        });
+        class.install_action(SELECT_ALL_ACTION, None, |window, _, _| {
+            window.select_all();
         });
         class.install_action_async(EXPORT_SELECTED_ACTION, None, |window, _, _| async move {
             window.export_selected().await;
@@ -1282,10 +1286,27 @@ impl PigouneWindow {
     }
 
     fn copy_typed_text(&self) -> bool {
+        self.activate_on_focused_text("clipboard.copy")
+    }
+
+    fn activate_on_focused_text(&self, action: &str) -> bool {
         GtkWindowExt::focus(self).is_some_and(|focus| {
             (focus.is::<gtk::Text>() || focus.is::<gtk::TextView>() || focus.is::<gtk::Label>())
-                && focus.activate_action("clipboard.copy", None).is_ok()
+                && focus.activate_action(action, None).is_ok()
         })
+    }
+
+    fn select_all(&self) {
+        if self.select_all_typed_text() {
+            return;
+        }
+        if let Some(selection) = self.imp().asset_grid.selection() {
+            selection.select_all();
+        }
+    }
+
+    fn select_all_typed_text(&self) -> bool {
+        self.activate_on_focused_text("selection.select-all")
     }
 
     async fn export_selected(&self) {
