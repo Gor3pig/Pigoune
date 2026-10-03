@@ -86,7 +86,7 @@ impl PigouneImportProgressDialog {
     fn on_cancel_clicked(&self) {
         let imp = self.imp();
         imp.cancel_button.set_sensitive(false);
-        imp.cancel_button.set_label(&gettext("Cancelling…"));
+        imp.cancel_button.set_label(&gettext("Canceling…"));
         if let Some(on_cancel_requested) = imp.on_cancel_requested.borrow().as_ref() {
             on_cancel_requested();
         }

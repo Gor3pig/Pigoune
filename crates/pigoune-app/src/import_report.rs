@@ -77,7 +77,7 @@ pub fn unexpected_stop_dialog() -> adw::AlertDialog {
 fn heading(ending: &ImportEnding) -> String {
     match ending {
         ImportEnding::Completed => gettext("Import Finished"),
-        ImportEnding::Cancelled => gettext("Import Cancelled"),
+        ImportEnding::Cancelled => gettext("Import Canceled"),
         ImportEnding::Interrupted(_) => gettext("Import Interrupted"),
     }
 }

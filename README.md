@@ -6,7 +6,7 @@
 
 **P**lateforme d'**I**cônes et **G**raphismes **O**rganisée, **U**nifiée, **N**ative et **É**légante
 
-*La boîte réconfortante où ranger, retrouver et réutiliser vos icônes, logos et illustrations.*
+*Toutes vos ressources graphiques, rangées et à portée de main.*
 
 [![Licence : GPL v3](https://img.shields.io/badge/licence-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
 [![GNOME](https://img.shields.io/badge/GNOME-50-4a86cf?style=for-the-badge&logo=gnome&logoColor=white)](https://www.gnome.org)
@@ -107,6 +107,6 @@ Pigoune est un logiciel libre distribué sous licence
 
 **Pigoune** — **P**latform for **I**cons and **G**raphics **O**rganized, **U**nified, **N**ative and **E**legant.
 
-A cozy box for your icons, logos and illustrations: a native GNOME app to collect, organize,
-find and reuse your graphic assets. Local-first, portable libraries, your original files are
+All your graphic assets, organized and within reach: a native GNOME app to collect, organize,
+find and reuse your icons, logos and illustrations. Local-first, portable libraries, your original files are
 never touched. 🚧 *Currently in development — coming soon to Flathub.*

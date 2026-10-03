@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 08:16+0200\n"
+"POT-Creation-Date: 2026-10-03 08:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,9 +36,9 @@ msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:10
 msgid ""
-"Pigoune is a cozy box for your icons, logos and illustrations. Drop your "
-"graphic assets in, and Pigoune keeps a safe copy, helps you organize them "
-"and gives them back with a simple drag and drop."
+"All your graphic assets, organized and within reach. Drop your icons, logos "
+"and illustrations into Pigoune: it keeps a safe copy, helps you organize "
+"them and gives them back with a simple drag and drop."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:16
@@ -197,7 +197,7 @@ msgid "Welcome to Pigoune"
 msgstr ""
 
 #: crates/pigoune-app/ui/window.blp:59
-msgid "The cozy box for your icons, logos and illustrations."
+msgid "All your graphic assets, organized and within reach."
 msgstr ""
 
 #: crates/pigoune-app/ui/window.blp:71
@@ -495,6 +495,7 @@ msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1052
 #: crates/pigoune-app/ui/asset-details.blp:68
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:63
 msgid "Move to Trash"
 msgstr ""
 
@@ -693,15 +694,15 @@ msgstr ""
 msgid "Unable to Change the Favorites"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2340 crates/pigoune-app/src/sidebar.rs:176
+#: crates/pigoune-app/src/window.rs:2340 crates/pigoune-app/src/sidebar.rs:177
 msgid "Favorites"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2341 crates/pigoune-app/src/sidebar.rs:183
+#: crates/pigoune-app/src/window.rs:2341 crates/pigoune-app/src/sidebar.rs:184
 msgid "Unclassified"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2342 crates/pigoune-app/src/sidebar.rs:190
+#: crates/pigoune-app/src/window.rs:2342 crates/pigoune-app/src/sidebar.rs:191
 #: crates/pigoune-app/ui/preferences-dialog.blp:21
 msgid "Trash"
 msgstr ""
@@ -848,7 +849,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: crates/pigoune-app/src/import_progress_dialog.rs:89
-msgid "Cancelling…"
+msgid "Canceling…"
 msgstr ""
 
 #: crates/pigoune-app/src/import_report.rs:28
@@ -878,7 +879,7 @@ msgid "Import Finished"
 msgstr ""
 
 #: crates/pigoune-app/src/import_report.rs:80
-msgid "Import Cancelled"
+msgid "Import Canceled"
 msgstr ""
 
 #: crates/pigoune-app/src/import_report.rs:81
@@ -1114,7 +1115,7 @@ msgid "White Background"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:68
-msgid "Grey Background"
+msgid "Gray Background"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:84
@@ -1145,25 +1146,25 @@ msgstr ""
 msgid "{position} of {count}"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar.rs:169
+#: crates/pigoune-app/src/sidebar.rs:170
 msgid "All"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar.rs:197
+#: crates/pigoune-app/src/sidebar.rs:198
 #: crates/pigoune-app/src/collection_editor.rs:137
 msgid "Collections"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar.rs:208
+#: crates/pigoune-app/src/sidebar.rs:209
 msgid "Tags"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-grid.blp:22
+#: crates/pigoune-app/ui/asset-grid.blp:23
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:30
 msgid "Resources"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_tile.rs:179
+#: crates/pigoune-app/src/asset_tile.rs:184
 msgid "favorite"
 msgstr ""
 
@@ -1248,11 +1249,7 @@ msgid "Rename"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:58
-msgid "Add to or Remove From Favorites"
-msgstr ""
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:63
-msgid "Move to the Trash"
+msgid "Add to or Remove from Favorites"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:68
