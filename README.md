@@ -11,7 +11,7 @@
 [![Licence : GPL v3](https://img.shields.io/badge/licence-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
 [![GNOME](https://img.shields.io/badge/GNOME-51-4a86cf?style=for-the-badge&logo=gnome&logoColor=white)](https://www.gnome.org)
 [![Rust](https://img.shields.io/badge/Rust-GTK4%20%C2%B7%20libadwaita-e66100?style=for-the-badge&logo=rust&logoColor=white)](https://gtk-rs.org)
-[![Flathub : bientôt](https://img.shields.io/badge/Flathub-bient%C3%B4t-9141ac?style=for-the-badge&logo=flathub&logoColor=white)](https://flathub.org)
+[![Dernière version](https://img.shields.io/github/v/release/Gor3pig/Pigoune?style=for-the-badge&label=version&color=9141ac&logo=flatpak&logoColor=white)](https://github.com/Gor3pig/Pigoune/releases/latest)
 
 [Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Guide](#guide-dutilisation) · [Contribuer](#contribuer) · [🇬🇧 English](#-english)
 
@@ -22,7 +22,8 @@
 ---
 
 > [!NOTE]
-> **Pigoune 1.1.0 est sorti** et arrive bientôt sur Flathub.
+> **Pigoune 1.1.0 est disponible.** [Téléchargez le paquet Flatpak](https://github.com/Gor3pig/Pigoune/releases/latest)
+> pour l'essayer.
 
 ## Pigoune, c'est quoi ?
 
@@ -97,8 +98,15 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 
 ## Installation
 
-Pigoune sera bientôt disponible sur **Flathub**. En attendant, vous pouvez le compiler vous-même
-en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
+Téléchargez le fichier `.flatpak` de la [dernière version](https://github.com/Gor3pig/Pigoune/releases/latest),
+puis ouvrez-le avec Logiciels, ou lancez :
+
+```sh
+flatpak install --user pigoune-1.1.0.flatpak
+```
+
+Le paquet ne se met pas à jour tout seul : installez chaque nouvelle version de la même façon.
+Vous pouvez aussi compiler Pigoune vous-même en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Guide d'utilisation
 
@@ -126,7 +134,8 @@ Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure
 *All your graphic assets, organized and within reach.*
 
 > [!NOTE]
-> **Pigoune 1.1.0 is out** and coming soon to Flathub.
+> **Pigoune 1.1.0 is available.** [Download the Flatpak package](https://github.com/Gor3pig/Pigoune/releases/latest)
+> to try it.
 
 ### What is Pigoune?
 
@@ -162,8 +171,15 @@ you need them.
 
 ### Installation
 
-Pigoune will soon be available on **Flathub**. In the meantime, you can build it yourself by
-following [CONTRIBUTING.md](CONTRIBUTING.md).
+Download the `.flatpak` file of the [latest release](https://github.com/Gor3pig/Pigoune/releases/latest),
+then open it with Software, or run:
+
+```sh
+flatpak install --user pigoune-1.1.0.flatpak
+```
+
+The package does not update itself: install each new release the same way. You can also build
+Pigoune yourself by following [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### User guide
 
