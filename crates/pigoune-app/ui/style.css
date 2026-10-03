@@ -319,7 +319,8 @@ gridview.asset-grid > child:hover .tile-frame {
   background-color: color-mix(in srgb, currentColor 10%, transparent);
 }
 
-gridview.asset-grid > child:selected .tile-frame {
+gridview.asset-grid > child:selected .tile-frame,
+gridview.asset-grid > child:active .tile-frame {
   background-color: color-mix(in srgb, var(--accent-bg-color) 14%, transparent);
   box-shadow: inset 0 0 0 2px var(--accent-color);
 }
