@@ -361,7 +361,7 @@ impl PigouneSidebarRow {
         self.add_controller(source);
     }
 
-    fn view(&self) -> Option<AssetView> {
+    pub fn view(&self) -> Option<AssetView> {
         self.imp().item.borrow().as_ref()?.view()
     }
 

@@ -13,6 +13,7 @@ use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
 use crate::drag_content::DraggedAssets;
 use crate::drag_icon;
+use crate::found_flash;
 use crate::grid_columns;
 use crate::thumbnails::ThumbnailCache;
 
@@ -288,6 +289,48 @@ impl PigouneAssetGrid {
                 .grid_view
                 .scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
         }
+    }
+
+    pub fn point_out_selected_next(&self) {
+        let selected: HashSet<AssetId> = self
+            .selected_assets()
+            .iter()
+            .map(PigouneAssetObject::id)
+            .collect();
+        let Some(selection) = self.selection() else {
+            return;
+        };
+        let Some(first) =
+            (0..selection.n_items()).find(|position| selection.is_selected(*position))
+        else {
+            return;
+        };
+        self.imp()
+            .grid_view
+            .scroll_to(first, gtk::ListScrollFlags::FOCUS, None);
+        let grid = self.downgrade();
+        found_flash::flash_after_previous(move || {
+            grid.upgrade()
+                .is_none_or(|grid| grid.flash_tiles_of(&selected))
+        });
+    }
+
+    fn flash_tiles_of(&self, ids: &HashSet<AssetId>) -> bool {
+        let mut flashed = false;
+        let mut child = self.imp().grid_view.first_child();
+        while let Some(cell) = child {
+            let is_wanted = cell
+                .first_child()
+                .and_downcast::<PigouneAssetTile>()
+                .and_then(|tile| tile.asset())
+                .is_some_and(|asset| ids.contains(&asset.id()));
+            if is_wanted && cell.is_mapped() {
+                found_flash::flash(&cell);
+                flashed = true;
+            }
+            child = cell.next_sibling();
+        }
+        flashed
     }
 
     fn follow_selection_later(&self) {

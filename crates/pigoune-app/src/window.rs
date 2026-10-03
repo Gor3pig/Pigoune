@@ -6,16 +6,17 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId,
-    CollectionRemoval, ImportError, ImportSummary, Library, LibraryError, TRASH_RETENTION, Tag,
-    TagCommand, TagError, TagId, TextField, UndoError, library_display_name,
+    CollectionPath, CollectionRemoval, ImportError, ImportSummary, Library, LibraryError,
+    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::clipboard_content;
+use crate::collection_chooser;
 use crate::collection_drop::{self, CollectionDrop};
-use crate::collection_editor::SharedCollection;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
+use crate::collection_places::SharedCollection;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::drop_message;
 use crate::error_messages;
@@ -214,10 +215,7 @@ mod imp {
             });
         });
         class.install_action(ADD_TO_COLLECTION_ACTION, None, |window, _, _| {
-            window.after_menu_closes(|window| {
-                window.imp().grid_header.details_button().set_active(true);
-                window.imp().asset_details.open_collection_chooser();
-            });
+            window.after_menu_closes(super::PigouneWindow::ask_collection_for_selected);
         });
         class.install_action(
             REMOVE_FROM_COLLECTION_ACTION,
@@ -962,20 +960,11 @@ impl PigouneWindow {
                 move |tag| window.remove_tag_from_selected(tag)
             ));
         }
-        for editor in imp.asset_details.collection_editors() {
-            editor.connect_added(glib::clone!(
+        for places in imp.asset_details.collection_places() {
+            places.connect_opened(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |collection| window.change_selected_collections(|assets| {
-                    CollectionCommand::AddAssets { collection, assets }
-                })
-            ));
-            editor.connect_removed(glib::clone!(
-                #[weak(rename_to = window)]
-                self,
-                move |collection| window.change_selected_collections(|assets| {
-                    CollectionCommand::RemoveAssets { collection, assets }
-                })
+                move |collection| window.go_to_collection(collection)
             ));
         }
     }
@@ -1564,10 +1553,58 @@ impl PigouneWindow {
     }
 
     fn refresh_selected_collections(&self) {
+        let selected = self.selected_ids().len();
+        if let Some((shared, _)) = self.selected_collections() {
+            self.imp().asset_details.show_collections(&shared, selected);
+        }
+    }
+
+    fn ask_collection_for_selected(&self) {
+        let Some((shared, all)) = self.selected_collections() else {
+            return;
+        };
+        let held_by_all = shared
+            .iter()
+            .filter(|shared| shared.held_by == shared.out_of)
+            .map(|shared| shared.path.id)
+            .collect();
+        collection_chooser::present(
+            self,
+            all,
+            held_by_all,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |collection| window.change_selected_collections(|assets| {
+                    CollectionCommand::AddAssets { collection, assets }
+                })
+            ),
+        );
+    }
+
+    fn go_to_collection(&self, id: CollectionId) {
+        let imp = self.imp();
+        let reveal = imp.library.borrow().as_ref().map(|library| {
+            let parent = library.collection(id).ok().flatten().and_then(|c| c.parent);
+            ancestors(library, parent)
+        });
+        let Some(reveal) = reveal else {
+            return;
+        };
+        imp.current_view.set(AssetView::Collection(id));
+        self.remember_view(AssetView::Collection(id));
+        imp.asset_preview.close();
+        self.refresh_sidebar_revealing(reveal);
+        self.refresh_grid();
+        imp.sidebar.point_out(AssetView::Collection(id));
+        imp.asset_grid.point_out_selected_next();
+    }
+
+    fn selected_collections(&self) -> Option<(Vec<SharedCollection>, Vec<CollectionPath>)> {
         let imp = self.imp();
         let selected = self.selected_ids();
         if selected.is_empty() {
-            return;
+            return None;
         }
         let read = imp.library.borrow().as_ref().map(|library| {
             let mut held: Vec<(CollectionId, usize)> = Vec::new();
@@ -1599,7 +1636,9 @@ impl PigouneWindow {
                     })
                 })
                 .collect();
-            imp.asset_details.show_collections(&shared, all);
+            Some((shared, all))
+        } else {
+            None
         }
     }
 

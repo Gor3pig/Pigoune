@@ -4,12 +4,12 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, glib};
-use pigoune_core::{CollectionPath, Tag, TextField};
+use pigoune_core::{Tag, TextField};
 
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
-use crate::collection_editor::{PigouneCollectionEditor, SharedCollection};
+use crate::collection_places::{PigouneCollectionPlaces, SharedCollection};
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -46,7 +46,7 @@ mod imp {
 
     use super::{RenamedCallback, TextChangedCallback};
     use crate::asset_object::PigouneAssetObject;
-    use crate::collection_editor::PigouneCollectionEditor;
+    use crate::collection_places::PigouneCollectionPlaces;
     use crate::tag_editor::PigouneTagEditor;
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -86,9 +86,9 @@ mod imp {
         #[template_child]
         pub group_tag_editor: TemplateChild<PigouneTagEditor>,
         #[template_child]
-        pub collection_editor: TemplateChild<PigouneCollectionEditor>,
+        pub collection_places: TemplateChild<PigouneCollectionPlaces>,
         #[template_child]
-        pub group_collection_editor: TemplateChild<PigouneCollectionEditor>,
+        pub group_collection_places: TemplateChild<PigouneCollectionPlaces>,
         pub favorite_bindings: RefCell<Vec<glib::Binding>>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
@@ -115,7 +115,7 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             PigouneTagEditor::ensure_type();
-            PigouneCollectionEditor::ensure_type();
+            PigouneCollectionPlaces::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
         }
@@ -276,15 +276,6 @@ impl PigouneAssetDetails {
         }
     }
 
-    pub fn open_collection_chooser(&self) {
-        let imp = self.imp();
-        if self.is_showing_group() {
-            imp.group_collection_editor.open_chooser();
-        } else {
-            imp.collection_editor.open_chooser();
-        }
-    }
-
     fn is_showing_group(&self) -> bool {
         self.imp().stack.visible_child_name().as_deref() == Some(GROUP_PAGE)
     }
@@ -298,20 +289,21 @@ impl PigouneAssetDetails {
         }
     }
 
-    pub fn collection_editors(&self) -> [PigouneCollectionEditor; 2] {
+    pub fn collection_places(&self) -> [PigouneCollectionPlaces; 2] {
         let imp = self.imp();
         [
-            imp.collection_editor.get(),
-            imp.group_collection_editor.get(),
+            imp.collection_places.get(),
+            imp.group_collection_places.get(),
         ]
     }
 
-    pub fn show_collections(&self, current: &[SharedCollection], all: Vec<CollectionPath>) {
+    pub fn show_collections(&self, current: &[SharedCollection], selected: usize) {
         let imp = self.imp();
         if self.is_showing_group() {
-            imp.group_collection_editor.show_collections(current, all);
+            imp.group_collection_places
+                .show_collections(current, selected);
         } else {
-            imp.collection_editor.show_collections(current, all);
+            imp.collection_places.show_collections(current, selected);
         }
     }
 

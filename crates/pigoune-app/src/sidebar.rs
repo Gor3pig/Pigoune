@@ -10,6 +10,7 @@ use pigoune_core::{AssetId, AssetView, CollectionId, Tag, ViewCounts};
 use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::CollectionDrop;
 use crate::collection_sort::CollectionTree;
+use crate::found_flash;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
 
@@ -241,6 +242,42 @@ impl PigouneSidebar {
         let position = position_of(&tree_model, content.selected).unwrap_or(0);
         selection.set_selected(position);
         imp.rebuilding.set(false);
+    }
+
+    pub fn point_out(&self, view: AssetView) {
+        let Some(position) = self
+            .tree_model()
+            .and_then(|tree_model| position_of(&tree_model, view))
+        else {
+            return;
+        };
+        self.imp()
+            .list_view
+            .scroll_to(position, gtk::ListScrollFlags::NONE, None);
+        let sidebar = self.downgrade();
+        found_flash::flash_once_shown(move || {
+            sidebar
+                .upgrade()
+                .is_none_or(|sidebar| sidebar.flash_row_of(view))
+        });
+    }
+
+    fn flash_row_of(&self, view: AssetView) -> bool {
+        let mut child = self.imp().list_view.first_child();
+        while let Some(row) = child {
+            let shows_view = row
+                .first_child()
+                .and_downcast::<gtk::TreeExpander>()
+                .and_then(|expander| expander.child())
+                .and_downcast::<PigouneSidebarRow>()
+                .is_some_and(|sidebar_row| sidebar_row.view() == Some(view));
+            if shows_view && row.is_mapped() {
+                found_flash::flash(&row);
+                return true;
+            }
+            child = row.next_sibling();
+        }
+        false
     }
 
     fn announce_selection(&self, selection: &gtk::SingleSelection) {

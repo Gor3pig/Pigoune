@@ -112,3 +112,103 @@
   background-color: rgb(0 0 0 / 80%);
   color: white;
 }
+
+row.found-0,
+child.found-0 {
+  box-shadow: 0 0 0 0.104px alpha(@accent_color, 0.104), inset 0 0 0 2px alpha(@accent_color, 0.208);
+}
+
+row.found-1,
+child.found-1 {
+  box-shadow: 0 0 0 0.312px alpha(@accent_color, 0.312), inset 0 0 0 2px alpha(@accent_color, 0.625);
+}
+
+row.found-2,
+child.found-2 {
+  box-shadow: 0 0 0 0.661px alpha(@accent_color, 0.495), inset 0 0 0 2px alpha(@accent_color, 0.989);
+}
+
+row.found-3,
+child.found-3 {
+  box-shadow: 0 0 0 2.172px alpha(@accent_color, 0.451), inset 0 0 0 2px alpha(@accent_color, 0.879);
+}
+
+row.found-4,
+child.found-4 {
+  box-shadow: 0 0 0 3.511px alpha(@accent_color, 0.408), inset 0 0 0 2px alpha(@accent_color, 0.776);
+}
+
+row.found-5,
+child.found-5 {
+  box-shadow: 0 0 0 4.688px alpha(@accent_color, 0.367), inset 0 0 0 2px alpha(@accent_color, 0.679);
+}
+
+row.found-6,
+child.found-6 {
+  box-shadow: 0 0 0 5.713px alpha(@accent_color, 0.327), inset 0 0 0 2px alpha(@accent_color, 0.588);
+}
+
+row.found-7,
+child.found-7 {
+  box-shadow: 0 0 0 6.597px alpha(@accent_color, 0.289), inset 0 0 0 2px alpha(@accent_color, 0.504);
+}
+
+row.found-8,
+child.found-8 {
+  box-shadow: 0 0 0 7.35px alpha(@accent_color, 0.253), inset 0 0 0 2px alpha(@accent_color, 0.427);
+}
+
+row.found-9,
+child.found-9 {
+  box-shadow: 0 0 0 7.983px alpha(@accent_color, 0.219), inset 0 0 0 2px alpha(@accent_color, 0.356);
+}
+
+row.found-10,
+child.found-10 {
+  box-shadow: 0 0 0 8.506px alpha(@accent_color, 0.186), inset 0 0 0 2px alpha(@accent_color, 0.291);
+}
+
+row.found-11,
+child.found-11 {
+  box-shadow: 0 0 0 8.93px alpha(@accent_color, 0.156), inset 0 0 0 2px alpha(@accent_color, 0.233);
+}
+
+row.found-12,
+child.found-12 {
+  box-shadow: 0 0 0 9.265px alpha(@accent_color, 0.128), inset 0 0 0 2px alpha(@accent_color, 0.182);
+}
+
+row.found-13,
+child.found-13 {
+  box-shadow: 0 0 0 9.521px alpha(@accent_color, 0.102), inset 0 0 0 2px alpha(@accent_color, 0.136);
+}
+
+row.found-14,
+child.found-14 {
+  box-shadow: 0 0 0 9.71px alpha(@accent_color, 0.078), inset 0 0 0 2px alpha(@accent_color, 0.098);
+}
+
+row.found-15,
+child.found-15 {
+  box-shadow: 0 0 0 9.841px alpha(@accent_color, 0.056), inset 0 0 0 2px alpha(@accent_color, 0.065);
+}
+
+row.found-16,
+child.found-16 {
+  box-shadow: 0 0 0 9.925px alpha(@accent_color, 0.038), inset 0 0 0 2px alpha(@accent_color, 0.04);
+}
+
+row.found-17,
+child.found-17 {
+  box-shadow: 0 0 0 9.973px alpha(@accent_color, 0.022), inset 0 0 0 2px alpha(@accent_color, 0.02);
+}
+
+row.found-18,
+child.found-18 {
+  box-shadow: 0 0 0 9.994px alpha(@accent_color, 0.01), inset 0 0 0 2px alpha(@accent_color, 0.007);
+}
+
+row.found-19,
+child.found-19 {
+  box-shadow: 0 0 0 10px alpha(@accent_color, 0.002), inset 0 0 0 2px alpha(@accent_color, 0.001);
+}
