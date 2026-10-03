@@ -23,23 +23,23 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.0/data/screenshots/01.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.1/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.0/data/screenshots/02.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.1/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.0/data/screenshots/03.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.1/data/screenshots/03.png</image>
       <caption>Organize several assets at once with tags and collections</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.0/data/screenshots/04.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.1/data/screenshots/04.png</image>
       <caption>See the details of an asset at a glance</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.0/data/screenshots/05.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.2.1/data/screenshots/05.png</image>
       <caption>Light or dark, Pigoune follows your system style</caption>
     </screenshot>
   </screenshots>
@@ -75,6 +75,11 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.2.1" date="2026-10-03">
+      <description>
+        <p>Stop the thumbnail grid from flickering while the window is resized.</p>
+      </description>
+    </release>
     <release version="1.2.0" date="2026-10-03">
       <description>
         <p>Give the thumbnail grid a cleaner look.</p>
