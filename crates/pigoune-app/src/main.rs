@@ -25,6 +25,7 @@ mod found_flash;
 mod grid_columns;
 mod grid_header;
 mod group_mosaic;
+mod help_url;
 mod image_check;
 mod import_progress_dialog;
 mod import_report;

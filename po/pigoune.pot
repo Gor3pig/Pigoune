@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 14:46+0200\n"
+"POT-Creation-Date: 2026-10-03 14:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -304,6 +304,10 @@ msgid "_Keyboard Shortcuts"
 msgstr ""
 
 #: crates/pigoune-app/ui/window.blp:268
+msgid "_Help"
+msgstr ""
+
+#: crates/pigoune-app/ui/window.blp:273
 msgid "_About Pigoune"
 msgstr ""
 
@@ -349,7 +353,7 @@ msgstr ""
 msgid "_Choose…"
 msgstr ""
 
-#: crates/pigoune-app/src/application.rs:70
+#: crates/pigoune-app/src/application.rs:85
 msgid "translator-credits"
 msgstr ""
 
@@ -1365,10 +1369,14 @@ msgid "Show Keyboard Shortcuts"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:135
-msgid "Preferences"
+msgid "Help"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:140
+msgid "Preferences"
+msgstr ""
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Quit"
 msgstr ""
 

@@ -13,7 +13,7 @@
 [![Rust](https://img.shields.io/badge/Rust-GTK4%20%C2%B7%20libadwaita-e66100?style=for-the-badge&logo=rust&logoColor=white)](https://gtk-rs.org)
 [![Flathub : bientôt](https://img.shields.io/badge/Flathub-bient%C3%B4t-9141ac?style=for-the-badge&logo=flathub&logoColor=white)](https://flathub.org)
 
-[Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Contribuer](#contribuer) · [🇬🇧 English](#-english)
+[Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Guide](#guide-dutilisation) · [Contribuer](#contribuer) · [🇬🇧 English](#-english)
 
 <img src="data/screenshots/01.png" alt="Pigoune main window" width="860">
 
@@ -100,6 +100,11 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 Pigoune sera bientôt disponible sur **Flathub**. En attendant, vous pouvez le compiler vous-même
 en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Guide d'utilisation
+
+Le [guide d'utilisation](help/fr/README.md) présente pas à pas tout ce que Pigoune sait faire.
+Dans l'application, il s'ouvre aussi depuis le menu principal ou avec <kbd>F1</kbd>.
+
 ## Contribuer
 
 Pigoune est un logiciel libre, et toute aide est la bienvenue : signaler un bug, proposer une
@@ -159,6 +164,11 @@ you need them.
 
 Pigoune will soon be available on **Flathub**. In the meantime, you can build it yourself by
 following [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### User guide
+
+The [user guide](help/en/README.md) walks you through everything Pigoune can do. In the app, it
+also opens from the main menu or with <kbd>F1</kbd>.
 
 ### Contributing
 

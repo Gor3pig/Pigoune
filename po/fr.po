@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 14:46+0200\n"
+"POT-Creation-Date: 2026-10-03 14:58+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -329,6 +329,10 @@ msgid "_Keyboard Shortcuts"
 msgstr "_Raccourcis clavier"
 
 #: crates/pigoune-app/ui/window.blp:268
+msgid "_Help"
+msgstr "_Aide"
+
+#: crates/pigoune-app/ui/window.blp:273
 msgid "_About Pigoune"
 msgstr "À _propos de Pigoune"
 
@@ -374,7 +378,7 @@ msgstr "Aucun dossier choisi"
 msgid "_Choose…"
 msgstr "_Choisir…"
 
-#: crates/pigoune-app/src/application.rs:70
+#: crates/pigoune-app/src/application.rs:85
 msgid "translator-credits"
 msgstr "Gor3pig"
 
@@ -1444,10 +1448,14 @@ msgid "Show Keyboard Shortcuts"
 msgstr "Afficher les raccourcis clavier"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:135
+msgid "Help"
+msgstr "Aide"
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:140
 msgid "Preferences"
 msgstr "Préférences"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:140
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Quit"
 msgstr "Quitter"
 

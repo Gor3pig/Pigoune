@@ -1,8 +1,9 @@
 use adw::prelude::*;
 use gettextrs::gettext;
-use gtk::gio;
+use gtk::{gio, glib};
 
 use crate::config::{APP_ID, RESOURCE_BASE_PATH, VERSION};
+use crate::help_url;
 use crate::settings;
 use crate::window::PigouneWindow;
 
@@ -24,9 +25,13 @@ fn install_actions(application: &adw::Application) {
     let about = gio::ActionEntry::builder("about")
         .activate(|application: &adw::Application, _, _| show_about_dialog(application))
         .build();
-    application.add_action_entries([quit, about]);
+    let help = gio::ActionEntry::builder("help")
+        .activate(|application: &adw::Application, _, _| open_help(application))
+        .build();
+    application.add_action_entries([quit, about, help]);
 
     application.set_accels_for_action("app.quit", &["<Control>q"]);
+    application.set_accels_for_action("app.help", &["F1"]);
     application.set_accels_for_action("win.create-library", &["<Control>n"]);
     application.set_accels_for_action("win.open-library", &["<Control>o"]);
     application.set_accels_for_action("win.import-files", &["<Control>i"]);
@@ -55,6 +60,16 @@ fn present_main_window(application: &adw::Application) {
     let window = PigouneWindow::new(application, settings::load());
     window.present();
     window.reopen_last_library();
+}
+
+fn open_help(application: &adw::Application) {
+    let languages = glib::language_names();
+    let languages: Vec<&str> = languages.iter().map(glib::GString::as_str).collect();
+    gtk::UriLauncher::new(&help_url::help_url(&languages)).launch(
+        application.active_window().as_ref(),
+        gio::Cancellable::NONE,
+        |_| {},
+    );
 }
 
 fn show_about_dialog(application: &adw::Application) {
