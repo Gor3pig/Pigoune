@@ -4,140 +4,30 @@
 
 # Pigoune
 
-**P**lateforme d'**I**cônes et **G**raphismes **O**rganisée, **U**nifiée, **N**ative et **É**légante
+**P**latform for **I**cons and **G**raphics **O**rganized, **U**nified, **N**ative and **E**legant
 
-*Toutes vos ressources graphiques, rangées et à portée de main.*
+*All your graphic assets, organized and within reach.*
 
-[![Licence : GPL v3](https://img.shields.io/badge/licence-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
 [![GNOME](https://img.shields.io/badge/GNOME-51-4a86cf?style=for-the-badge&logo=gnome&logoColor=white)](https://www.gnome.org)
 [![Rust](https://img.shields.io/badge/Rust-GTK4%20%C2%B7%20libadwaita-e66100?style=for-the-badge&logo=rust&logoColor=white)](https://gtk-rs.org)
-[![Dernière version](https://img.shields.io/github/v/release/Gor3pig/Pigoune?style=for-the-badge&label=version&color=9141ac&logo=flatpak&logoColor=white)](https://github.com/Gor3pig/Pigoune/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/Gor3pig/Pigoune?style=for-the-badge&label=version&color=9141ac&logo=flatpak&logoColor=white)](https://github.com/Gor3pig/Pigoune/releases/latest)
 
-[Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Guide](#guide-dutilisation) · [Contribuer](#contribuer) · [🇬🇧 English](#-english)
+**English** · [Français](README.fr.md)
 
-<img src="data/screenshots/01.png" alt="Pigoune main window" width="860">
+[Features](#features) · [Principles](#principles) · [Installation](#installation) · [Guide](#user-guide) · [Contributing](#contributing)
+
+<img src="data/screenshots/01.png" alt="The main window of Pigoune" width="860">
 
 </div>
 
 ---
 
 > [!NOTE]
-> **Pigoune 1.1.0 est disponible.** [Téléchargez le paquet Flatpak](https://github.com/Gor3pig/Pigoune/releases/latest)
-> pour l'essayer.
-
-## Pigoune, c'est quoi ?
-
-Des icônes dans `Téléchargements`, des logos dans un vieux dossier de projet, un SVG perdu
-quelque part sur le bureau… **Pigoune rassemble tout ça dans une seule bibliothèque**, bien
-rangée et agréable à parcourir.
-
-Déposez-y vos ressources graphiques : Pigoune en garde une copie en lieu sûr (vos fichiers
-d'origine ne sont jamais touchés), vous aide à les organiser et vous les rend d'un simple
-glisser-déposer quand vous en avez besoin.
-
-## Fonctionnalités
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### Déposer
-Glissez des fichiers ou des dossiers entiers : SVG, PNG, JPEG, WebP, GIF et ICO. Chaque image
-est vérifiée avant d'entrer, et les doublons sont reconnus automatiquement.
-
-</td>
-<td width="50%" valign="top">
-
-### Organiser
-Collections imbriquées, tags, favoris, ainsi qu'une note, une source, une licence et un auteur
-pour chaque ressource.
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### Retrouver
-Recherche instantanée et filtres par type ou par favori, même parmi des milliers de
-ressources. Un clic sur une collection ou un tag vous montre où se trouve la ressource.
-
-</td>
-<td width="50%" valign="top">
-
-### Réutiliser
-Glissez une ressource vers n'importe quelle application, copiez-la dans le presse-papiers ou
-exportez-la dans un dossier.
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### Admirer
-Grille de vignettes à taille réglable, GIF animés au survol, et aperçu détaillé avec zoom d'une
-simple pression sur <kbd>Espace</kbd>.
-
-</td>
-<td width="50%" valign="top">
-
-### Se rassurer
-Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattrape toujours.
-
-</td>
-</tr>
-</table>
-
-## Principes
-
-- **Vos originaux ne sont jamais modifiés** : Pigoune travaille sur ses propres copies.
-- **100 % local** : pas de compte, pas de cloud, pas de télémétrie.
-- **Une bibliothèque portable** : un simple dossier que vous placez où vous voulez, et que vous
-  pouvez emporter sur un autre ordinateur.
-- **Pensé pour GNOME** : une application native et soignée, en mode clair comme sombre,
-  utilisable au clavier et avec un lecteur d'écran, qui s'adapte aux petites fenêtres.
-
-## Installation
-
-Téléchargez le fichier `.flatpak` de la [dernière version](https://github.com/Gor3pig/Pigoune/releases/latest),
-puis ouvrez-le avec Logiciels, ou lancez :
-
-```sh
-flatpak install --user pigoune-1.1.0.flatpak
-```
-
-Le paquet ne se met pas à jour tout seul : installez chaque nouvelle version de la même façon.
-Vous pouvez aussi compiler Pigoune vous-même en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Guide d'utilisation
-
-Le [guide d'utilisation](help/fr/README.md) présente pas à pas tout ce que Pigoune sait faire.
-Dans l'application, il s'ouvre aussi depuis le menu principal ou avec <kbd>F1</kbd>.
-
-## Contribuer
-
-Pigoune est un logiciel libre, et toute aide est la bienvenue : signaler un bug, proposer une
-idée, traduire ou améliorer le code. Le guide [CONTRIBUTING.md](CONTRIBUTING.md) (en anglais)
-explique comment compiler Pigoune et proposer une modification, et
-[ARCHITECTURE.md](ARCHITECTURE.md) présente l'organisation du code.
-
-## Licence
-
-Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure](COPYING).
-
----
-
-## 🇬🇧 English
-
-**Pigoune** - **P**latform for **I**cons and **G**raphics **O**rganized, **U**nified,
-**N**ative and **E**legant.
-
-*All your graphic assets, organized and within reach.*
-
-> [!NOTE]
 > **Pigoune 1.1.0 is available.** [Download the Flatpak package](https://github.com/Gor3pig/Pigoune/releases/latest)
 > to try it.
 
-### What is Pigoune?
+## What is Pigoune?
 
 Icons in `Downloads`, logos in an old project folder, an SVG lost somewhere on the desktop…
 **Pigoune gathers all of them in a single library**, neatly organized and pleasant to browse.
@@ -146,22 +36,58 @@ Drop your graphic assets in: Pigoune keeps a safe copy (your original files are 
 touched), helps you organize them and hands them back with a simple drag and drop whenever
 you need them.
 
-### Features
+## Features
 
-- **Drop** files or whole folders: SVG, PNG, JPEG, WebP, GIF and ICO. Every image is checked
-  before it comes in, and duplicates are recognized automatically.
-- **Organize** with nested collections, tags and favorites, plus a note, a source, a license
-  and an author for each asset.
-- **Find** anything instantly with search and filters by type or favorite, even among
-  thousands of assets. Clicking a collection or a tag shows you where an asset lives.
-- **Reuse** assets by dragging them into any application, copying them to the clipboard or
-  exporting them to a folder.
-- **Enjoy** a thumbnail grid with adjustable size, animated GIFs on hover, and a detailed
-  preview with zoom at the press of <kbd>Space</kbd>.
-- **Relax**: the trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd> mean a mistake can always be
-  fixed.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### Principles
+### Drop
+Drag files or whole folders: SVG, PNG, JPEG, WebP, GIF and ICO. Every image is checked before
+it comes in, and duplicates are recognized automatically.
+
+</td>
+<td width="50%" valign="top">
+
+### Organize
+Nested collections, tags and favorites, plus a note, a source, a license and an author for each
+asset.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### Find
+Instant search and filters by type or favorite, even among thousands of assets. Clicking a
+collection or a tag shows you where an asset lives.
+
+</td>
+<td width="50%" valign="top">
+
+### Reuse
+Drag an asset into any application, copy it to the clipboard or export it to a folder.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### Enjoy
+A thumbnail grid with adjustable size, animated GIFs on hover, and a detailed preview with zoom
+at the press of <kbd>Space</kbd>.
+
+</td>
+<td width="50%" valign="top">
+
+### Relax
+The trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>: a mistake can always be fixed.
+
+</td>
+</tr>
+</table>
+
+## Principles
 
 - **Your originals are never modified**: Pigoune works on its own copies.
 - **Fully local**: no account, no cloud, no telemetry.
@@ -169,7 +95,7 @@ you need them.
 - **Made for GNOME**: a native, polished app in light and dark mode, usable with the keyboard
   and a screen reader, and adaptive to small windows.
 
-### Installation
+## Installation
 
 Download the `.flatpak` file of the [latest release](https://github.com/Gor3pig/Pigoune/releases/latest),
 then open it with Software, or run:
@@ -181,18 +107,18 @@ flatpak install --user pigoune-1.1.0.flatpak
 The package does not update itself: install each new release the same way. You can also build
 Pigoune yourself by following [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### User guide
+## User guide
 
 The [user guide](help/en/README.md) walks you through everything Pigoune can do. In the app, it
 also opens from the main menu or with <kbd>F1</kbd>.
 
-### Contributing
+## Contributing
 
-Pigoune is free software and help is welcome: bug reports, ideas, translations and code. See
-[CONTRIBUTING.md](CONTRIBUTING.md) to build Pigoune and submit a change,
-[ARCHITECTURE.md](ARCHITECTURE.md) for an overview of the code and
-[po/README.md](po/README.md) to translate it.
+Pigoune is free software and help is welcome: bug reports, ideas, translations and code.
+[CONTRIBUTING.md](CONTRIBUTING.md) explains how to build Pigoune and submit a change,
+[ARCHITECTURE.md](ARCHITECTURE.md) gives an overview of the code and
+[po/README.md](po/README.md) explains how to translate it.
 
-### License
+## License
 
 Pigoune is free software released under the [GNU GPL v3 or later](COPYING).
