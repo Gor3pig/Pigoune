@@ -74,9 +74,17 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
-    <release version="0.1.0" date="2026-10-01">
+    <release version="1.0.0" date="2026-10-03">
       <description>
-        <p>First development snapshot.</p>
+        <p>The first public version of Pigoune.</p>
+        <ul>
+          <li>Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with duplicate detection</li>
+          <li>Organize assets with nested collections, tags, favorites, notes and credits</li>
+          <li>Find any asset instantly with search and filters</li>
+          <li>Preview assets up close, animated GIFs included</li>
+          <li>Reuse assets by dragging, copying or exporting them</li>
+          <li>Undo changes and restore assets from the trash</li>
+        </ul>
       </description>
     </release>
   </releases>

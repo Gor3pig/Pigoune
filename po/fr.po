@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 14:38+0200\n"
+"POT-Creation-Date: 2026-10-03 14:46+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -81,8 +81,42 @@ msgid "Light or dark, Pigoune follows your system style"
 msgstr "Clair ou sombre, Pigoune suit le style de votre système"
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:79
-msgid "First development snapshot."
-msgstr "Première version de développement."
+msgid "The first public version of Pigoune."
+msgstr "La première version publique de Pigoune."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:81
+msgid ""
+"Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with "
+"duplicate detection"
+msgstr ""
+"Importez des fichiers SVG, PNG, JPEG, WebP, GIF et ICO, ou des dossiers "
+"entiers, avec détection des doublons"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:82
+msgid ""
+"Organize assets with nested collections, tags, favorites, notes and credits"
+msgstr ""
+"Organisez vos ressources avec des collections imbriquées, des tags, des "
+"favoris, des notes et des crédits"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:83
+msgid "Find any asset instantly with search and filters"
+msgstr ""
+"Retrouvez n’importe quelle ressource instantanément grâce à la recherche et "
+"aux filtres"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:84
+msgid "Preview assets up close, animated GIFs included"
+msgstr "Examinez vos ressources de près, GIF animés compris"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:85
+msgid "Reuse assets by dragging, copying or exporting them"
+msgstr "Réutilisez-les par glisser-déposer, copie ou export"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:86
+msgid "Undo changes and restore assets from the trash"
+msgstr ""
+"Annulez vos modifications et restaurez vos ressources depuis la corbeille"
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:6
 msgid "Last opened library"
@@ -1715,6 +1749,9 @@ msgid "{name} and {count} other"
 msgid_plural "{name} and {count} others"
 msgstr[0] "{name} et {count} autre"
 msgstr[1] "{name} et {count} autres"
+
+#~ msgid "First development snapshot."
+#~ msgstr "Première version de développement."
 
 #~ msgid "Notes and Credits"
 #~ msgstr "Notes et crédits"

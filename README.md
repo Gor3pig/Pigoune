@@ -22,7 +22,7 @@
 ---
 
 > [!NOTE]
-> 🚧 **Pigoune est en cours de développement.** La première version n'est pas encore disponible.
+> **Pigoune 1.0.0 est sorti** et arrive bientôt sur Flathub.
 
 ## Pigoune, c'est quoi ?
 
@@ -97,7 +97,8 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 
 ## Installation
 
-Pigoune sera disponible sur **Flathub**. Revenez bientôt !
+Pigoune sera bientôt disponible sur **Flathub**. En attendant, vous pouvez le compiler vous-même
+en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contribuer
 
@@ -120,7 +121,7 @@ Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure
 *All your graphic assets, organized and within reach.*
 
 > [!NOTE]
-> 🚧 **Pigoune is under development.** The first release is not available yet.
+> **Pigoune 1.0.0 is out** and coming soon to Flathub.
 
 ### What is Pigoune?
 
@@ -156,7 +157,8 @@ you need them.
 
 ### Installation
 
-Pigoune will be available on **Flathub**. Stay tuned!
+Pigoune will soon be available on **Flathub**. In the meantime, you can build it yourself by
+following [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Contributing
 
