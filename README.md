@@ -105,7 +105,7 @@ Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure
 
 ## 🇬🇧 English
 
-**Pigoune** — **P**latform for **I**cons and **G**raphics **O**rganized, **U**nified,
+**Pigoune** - **P**latform for **I**cons and **G**raphics **O**rganized, **U**nified,
 **N**ative and **E**legant.
 
 *All your graphic assets, organized and within reach.*
