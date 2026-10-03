@@ -22,7 +22,7 @@
 ---
 
 > [!NOTE]
-> **Pigoune 1.0.0 est sorti** et arrive bientôt sur Flathub.
+> **Pigoune 1.1.0 est sorti** et arrive bientôt sur Flathub.
 
 ## Pigoune, c'est quoi ?
 
@@ -126,7 +126,7 @@ Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure
 *All your graphic assets, organized and within reach.*
 
 > [!NOTE]
-> **Pigoune 1.0.0 is out** and coming soon to Flathub.
+> **Pigoune 1.1.0 is out** and coming soon to Flathub.
 
 ### What is Pigoune?
 

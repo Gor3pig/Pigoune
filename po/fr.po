@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 14:58+0200\n"
+"POT-Creation-Date: 2026-10-03 15:08+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -80,11 +80,17 @@ msgstr "Voyez les détails d’une ressource d’un coup d’œil"
 msgid "Light or dark, Pigoune follows your system style"
 msgstr "Clair ou sombre, Pigoune suit le style de votre système"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:79
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:80
+msgid "Add a user guide, available from the main menu or with F1."
+msgstr ""
+"Ajout d’un guide d’utilisation, accessible depuis le menu principal ou avec "
+"F1."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:85
 msgid "The first public version of Pigoune."
 msgstr "La première version publique de Pigoune."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:81
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:87
 msgid ""
 "Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with "
 "duplicate detection"
@@ -92,28 +98,28 @@ msgstr ""
 "Importez des fichiers SVG, PNG, JPEG, WebP, GIF et ICO, ou des dossiers "
 "entiers, avec détection des doublons"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:82
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:88
 msgid ""
 "Organize assets with nested collections, tags, favorites, notes and credits"
 msgstr ""
 "Organisez vos ressources avec des collections imbriquées, des tags, des "
 "favoris, des notes et des crédits"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:83
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:89
 msgid "Find any asset instantly with search and filters"
 msgstr ""
 "Retrouvez n’importe quelle ressource instantanément grâce à la recherche et "
 "aux filtres"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:84
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:90
 msgid "Preview assets up close, animated GIFs included"
 msgstr "Examinez vos ressources de près, GIF animés compris"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:85
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:91
 msgid "Reuse assets by dragging, copying or exporting them"
 msgstr "Réutilisez-les par glisser-déposer, copie ou export"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:86
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:92
 msgid "Undo changes and restore assets from the trash"
 msgstr ""
 "Annulez vos modifications et restaurez vos ressources depuis la corbeille"
