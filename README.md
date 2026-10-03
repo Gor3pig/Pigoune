@@ -15,6 +15,8 @@
 
 [Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Contribuer](#contribuer) · [🇬🇧 English](#-english)
 
+<img src="data/screenshots/01.png" alt="Pigoune main window" width="860">
+
 </div>
 
 ---

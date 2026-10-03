@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 10:59+0200\n"
+"POT-Creation-Date: 2026-10-03 14:38+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,7 +61,27 @@ msgstr ""
 msgid "Portable libraries, fully local, original files never touched"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:56
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:27
+msgid "Browse your graphic assets in a thumbnail grid"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:31
+msgid "Narrow down your library with search and filters"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:35
+msgid "Organize several assets at once with tags and collections"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:39
+msgid "See the details of an asset at a glance"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:43
+msgid "Light or dark, Pigoune follows your system style"
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:79
 msgid "First development snapshot."
 msgstr ""
 
@@ -282,7 +302,7 @@ msgstr ""
 #: crates/pigoune-app/src/window.rs:433
 #: crates/pigoune-app/ui/grid-header.blp:125
 #: crates/pigoune-app/ui/collection-name-dialog.blp:49
-#: crates/pigoune-app/src/sidebar_row.rs:472
+#: crates/pigoune-app/src/sidebar_row.rs:477
 msgid "Name"
 msgstr ""
 
@@ -447,8 +467,8 @@ msgid "Open Preview"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1007
-#: crates/pigoune-app/src/sidebar_row.rs:442
-#: crates/pigoune-app/src/sidebar_row.rs:459
+#: crates/pigoune-app/src/sidebar_row.rs:447
+#: crates/pigoune-app/src/sidebar_row.rs:464
 msgid "Rename…"
 msgstr ""
 
@@ -670,7 +690,7 @@ msgid "New Sub-collection"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:2152 crates/pigoune-app/src/window.rs:2157
-#: crates/pigoune-app/src/sidebar_row.rs:124
+#: crates/pigoune-app/src/sidebar_row.rs:125
 msgid "New Collection"
 msgstr ""
 
@@ -692,15 +712,15 @@ msgstr ""
 msgid "Unable to Change the Favorites"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2400 crates/pigoune-app/src/sidebar.rs:178
+#: crates/pigoune-app/src/window.rs:2400 crates/pigoune-app/src/sidebar.rs:180
 msgid "Favorites"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2401 crates/pigoune-app/src/sidebar.rs:185
+#: crates/pigoune-app/src/window.rs:2401 crates/pigoune-app/src/sidebar.rs:187
 msgid "Unclassified"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2402 crates/pigoune-app/src/sidebar.rs:192
+#: crates/pigoune-app/src/window.rs:2402 crates/pigoune-app/src/sidebar.rs:194
 #: crates/pigoune-app/ui/preferences-dialog.blp:21
 msgid "Trash"
 msgstr ""
@@ -1003,7 +1023,7 @@ msgid "Sort By"
 msgstr ""
 
 #: crates/pigoune-app/ui/grid-header.blp:151
-#: crates/pigoune-app/src/sidebar_row.rs:483
+#: crates/pigoune-app/src/sidebar_row.rs:488
 msgid "Reverse Order"
 msgstr ""
 
@@ -1163,15 +1183,15 @@ msgstr ""
 msgid "{position} of {count}"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar.rs:171
+#: crates/pigoune-app/src/sidebar.rs:173
 msgid "All"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar.rs:199
+#: crates/pigoune-app/src/sidebar.rs:201
 msgid "Collections"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar.rs:210
+#: crates/pigoune-app/src/sidebar.rs:212
 #: crates/pigoune-app/src/tag_summary.rs:132
 msgid "Tags"
 msgstr ""
@@ -1325,28 +1345,28 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar_row.rs:116
+#: crates/pigoune-app/src/sidebar_row.rs:117
 msgid "Sort Collections"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar_row.rs:446
-#: crates/pigoune-app/src/sidebar_row.rs:463
+#: crates/pigoune-app/src/sidebar_row.rs:451
+#: crates/pigoune-app/src/sidebar_row.rs:468
 msgid "Delete…"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar_row.rs:455
+#: crates/pigoune-app/src/sidebar_row.rs:460
 msgid "New Sub-collection…"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar_row.rs:473
+#: crates/pigoune-app/src/sidebar_row.rs:478
 msgid "Date Created"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar_row.rs:474
+#: crates/pigoune-app/src/sidebar_row.rs:479
 msgid "Custom Order"
 msgstr ""
 
-#: crates/pigoune-app/src/sidebar_row.rs:487
+#: crates/pigoune-app/src/sidebar_row.rs:492
 msgid "Sort Collections By"
 msgstr ""
 

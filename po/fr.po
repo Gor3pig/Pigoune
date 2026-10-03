@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-03 10:59+0200\n"
+"POT-Creation-Date: 2026-10-03 14:38+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -59,7 +59,28 @@ msgid "Portable libraries, fully local, original files never touched"
 msgstr ""
 "Bibliothèques portables, 100 % locales, fichiers d’origine jamais modifiés"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:56
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:27
+msgid "Browse your graphic assets in a thumbnail grid"
+msgstr "Parcourez vos ressources graphiques dans une grille de vignettes"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:31
+msgid "Narrow down your library with search and filters"
+msgstr "Affinez votre bibliothèque avec la recherche et les filtres"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:35
+msgid "Organize several assets at once with tags and collections"
+msgstr ""
+"Organisez plusieurs ressources à la fois avec les tags et les collections"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:39
+msgid "See the details of an asset at a glance"
+msgstr "Voyez les détails d’une ressource d’un coup d’œil"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:43
+msgid "Light or dark, Pigoune follows your system style"
+msgstr "Clair ou sombre, Pigoune suit le style de votre système"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:79
 msgid "First development snapshot."
 msgstr "Première version de développement."
 
@@ -299,7 +320,7 @@ msgstr "C_réer"
 #: crates/pigoune-app/src/window.rs:433
 #: crates/pigoune-app/ui/grid-header.blp:125
 #: crates/pigoune-app/ui/collection-name-dialog.blp:49
-#: crates/pigoune-app/src/sidebar_row.rs:472
+#: crates/pigoune-app/src/sidebar_row.rs:477
 msgid "Name"
 msgstr "Nom"
 
@@ -478,8 +499,8 @@ msgid "Open Preview"
 msgstr "Ouvrir l’aperçu"
 
 #: crates/pigoune-app/src/window.rs:1007
-#: crates/pigoune-app/src/sidebar_row.rs:442
-#: crates/pigoune-app/src/sidebar_row.rs:459
+#: crates/pigoune-app/src/sidebar_row.rs:447
+#: crates/pigoune-app/src/sidebar_row.rs:464
 msgid "Rename…"
 msgstr "Renommer…"
 
@@ -713,7 +734,7 @@ msgid "New Sub-collection"
 msgstr "Nouvelle sous-collection"
 
 #: crates/pigoune-app/src/window.rs:2152 crates/pigoune-app/src/window.rs:2157
-#: crates/pigoune-app/src/sidebar_row.rs:124
+#: crates/pigoune-app/src/sidebar_row.rs:125
 msgid "New Collection"
 msgstr "Nouvelle collection"
 
@@ -735,15 +756,15 @@ msgstr "Renommer la collection"
 msgid "Unable to Change the Favorites"
 msgstr "Impossible de modifier les favoris"
 
-#: crates/pigoune-app/src/window.rs:2400 crates/pigoune-app/src/sidebar.rs:178
+#: crates/pigoune-app/src/window.rs:2400 crates/pigoune-app/src/sidebar.rs:180
 msgid "Favorites"
 msgstr "Favoris"
 
-#: crates/pigoune-app/src/window.rs:2401 crates/pigoune-app/src/sidebar.rs:185
+#: crates/pigoune-app/src/window.rs:2401 crates/pigoune-app/src/sidebar.rs:187
 msgid "Unclassified"
 msgstr "Non classés"
 
-#: crates/pigoune-app/src/window.rs:2402 crates/pigoune-app/src/sidebar.rs:192
+#: crates/pigoune-app/src/window.rs:2402 crates/pigoune-app/src/sidebar.rs:194
 #: crates/pigoune-app/ui/preferences-dialog.blp:21
 msgid "Trash"
 msgstr "Corbeille"
@@ -1069,7 +1090,7 @@ msgid "Sort By"
 msgstr "Trier par"
 
 #: crates/pigoune-app/ui/grid-header.blp:151
-#: crates/pigoune-app/src/sidebar_row.rs:483
+#: crates/pigoune-app/src/sidebar_row.rs:488
 msgid "Reverse Order"
 msgstr "Ordre inverse"
 
@@ -1229,15 +1250,15 @@ msgstr "{percent} %"
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"
 
-#: crates/pigoune-app/src/sidebar.rs:171
+#: crates/pigoune-app/src/sidebar.rs:173
 msgid "All"
 msgstr "Tout"
 
-#: crates/pigoune-app/src/sidebar.rs:199
+#: crates/pigoune-app/src/sidebar.rs:201
 msgid "Collections"
 msgstr "Collections"
 
-#: crates/pigoune-app/src/sidebar.rs:210
+#: crates/pigoune-app/src/sidebar.rs:212
 #: crates/pigoune-app/src/tag_summary.rs:132
 msgid "Tags"
 msgstr "Tags"
@@ -1396,28 +1417,28 @@ msgstr "Préférences"
 msgid "Quit"
 msgstr "Quitter"
 
-#: crates/pigoune-app/src/sidebar_row.rs:116
+#: crates/pigoune-app/src/sidebar_row.rs:117
 msgid "Sort Collections"
 msgstr "Trier les collections"
 
-#: crates/pigoune-app/src/sidebar_row.rs:446
-#: crates/pigoune-app/src/sidebar_row.rs:463
+#: crates/pigoune-app/src/sidebar_row.rs:451
+#: crates/pigoune-app/src/sidebar_row.rs:468
 msgid "Delete…"
 msgstr "Supprimer…"
 
-#: crates/pigoune-app/src/sidebar_row.rs:455
+#: crates/pigoune-app/src/sidebar_row.rs:460
 msgid "New Sub-collection…"
 msgstr "Nouvelle sous-collection…"
 
-#: crates/pigoune-app/src/sidebar_row.rs:473
+#: crates/pigoune-app/src/sidebar_row.rs:478
 msgid "Date Created"
 msgstr "Date de création"
 
-#: crates/pigoune-app/src/sidebar_row.rs:474
+#: crates/pigoune-app/src/sidebar_row.rs:479
 msgid "Custom Order"
 msgstr "Ordre personnalisé"
 
-#: crates/pigoune-app/src/sidebar_row.rs:487
+#: crates/pigoune-app/src/sidebar_row.rs:492
 msgid "Sort Collections By"
 msgstr "Trier les collections par"
 
