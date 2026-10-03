@@ -68,7 +68,7 @@ mod tests {
     fn complete_images_are_intact() {
         let check = ImageCheck::start();
         for name in [
-            "github-mark.svg",
+            "dark-circle.svg",
             "red-dot.png",
             "blue-photo.jpg",
             "spinner.gif",

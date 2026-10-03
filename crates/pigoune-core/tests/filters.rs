@@ -69,7 +69,7 @@ fn sorted(mut ids: Vec<AssetId>) -> Vec<AssetId> {
 fn no_filter_keeps_the_whole_view() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png", None);
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
 
     assert_eq!(
         fixture.found(AssetView::All, &AssetFilter::default()),
@@ -81,7 +81,7 @@ fn no_filter_keeps_the_whole_view() {
 fn any_of_the_chosen_types_is_kept() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png", None);
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
     fixture.import("still.gif", None);
     let filter = AssetFilter {
         formats: vec![AssetFormat::Png, AssetFormat::Svg],
@@ -98,7 +98,7 @@ fn any_of_the_chosen_types_is_kept() {
 fn only_favorites_can_be_kept() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png", None);
-    fixture.import("github-mark.svg", None);
+    fixture.import("dark-circle.svg", None);
     fixture.favorite(png);
     let filter = AssetFilter {
         favorites_only: true,
@@ -115,14 +115,14 @@ fn filters_combine_with_the_text_and_the_view() {
         .library
         .create_collection("Logos", None)
         .expect("collection is created");
-    let wanted = fixture.import("github-mark.svg", Some(logos));
+    let wanted = fixture.import("dark-circle.svg", Some(logos));
     let other_type = fixture.import("red-dot.png", Some(logos));
     let outside = fixture.import("still.gif", None);
     for asset in [wanted, other_type, outside] {
         fixture.favorite(asset);
     }
     let filter = AssetFilter {
-        text: "mark".to_owned(),
+        text: "circle".to_owned(),
         formats: vec![AssetFormat::Svg],
         favorites_only: true,
     };

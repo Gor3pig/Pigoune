@@ -30,7 +30,7 @@ fn visible_assets_are_listed_from_newest_to_oldest() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let mut library = library_in(&workspace);
     let first = import(&mut library, "red-dot.png");
-    let second = import(&mut library, "github-mark.svg");
+    let second = import(&mut library, "dark-circle.svg");
     let third = import(&mut library, "spinner.gif");
 
     let listed: Vec<AssetId> = library
@@ -48,7 +48,7 @@ fn assets_in_the_trash_are_not_listed() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let mut library = library_in(&workspace);
     let kept = import(&mut library, "red-dot.png");
-    let trashed = import(&mut library, "github-mark.svg");
+    let trashed = import(&mut library, "dark-circle.svg");
     Connection::open(library.root().join(DATABASE_FILE_NAME))
         .expect("database opens")
         .execute(
@@ -84,7 +84,7 @@ fn an_empty_library_lists_nothing() {
 fn the_file_of_an_asset_is_its_copy_inside_the_library() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let mut library = library_in(&workspace);
-    let id = import(&mut library, "github-mark.svg");
+    let id = import(&mut library, "dark-circle.svg");
     let asset = library
         .asset(id)
         .expect("asset is read")
@@ -95,7 +95,7 @@ fn the_file_of_an_asset_is_its_copy_inside_the_library() {
     assert!(file.starts_with(library.root()));
     assert_eq!(
         fs::read(file).expect("copy readable"),
-        fs::read(fixture("github-mark.svg")).expect("fixture readable")
+        fs::read(fixture("dark-circle.svg")).expect("fixture readable")
     );
 }
 

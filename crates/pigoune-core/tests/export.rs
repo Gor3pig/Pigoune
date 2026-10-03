@@ -59,7 +59,7 @@ fn file_name(path: &Path) -> String {
 #[test]
 fn a_copy_takes_the_display_name_and_the_original_extension() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     fixture.rename(svg, "Logo GitHub");
 
     let copies = fixture.export(&[svg]);
@@ -68,7 +68,7 @@ fn a_copy_takes_the_display_name_and_the_original_extension() {
     assert_eq!(file_name(&copies[0]), "Logo GitHub.svg");
     assert_eq!(
         fs::read(&copies[0]).expect("copy is read"),
-        fs::read(sample_file("github-mark.svg")).expect("original is read")
+        fs::read(sample_file("dark-circle.svg")).expect("original is read")
     );
 }
 
@@ -113,7 +113,7 @@ fn the_same_name_and_extension_get_a_number() {
 #[test]
 fn copies_never_touch_the_library_files() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     let copy = fixture.export(&[svg]).remove(0);
 
     fs::write(&copy, b"modified").expect("copy is changed");
@@ -125,14 +125,14 @@ fn copies_never_touch_the_library_files() {
         .expect("asset exists");
     assert_eq!(
         fs::read(fixture.library.file_of(&asset)).expect("original is read"),
-        fs::read(sample_file("github-mark.svg")).expect("fixture is read")
+        fs::read(sample_file("dark-circle.svg")).expect("fixture is read")
     );
 }
 
 #[test]
 fn a_new_export_and_a_reopening_forget_the_previous_copies() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     let png = fixture.import("red-dot.png");
     let old = fixture.export(&[svg]).remove(0);
 
@@ -150,7 +150,7 @@ fn a_new_export_and_a_reopening_forget_the_previous_copies() {
 #[test]
 fn exporting_to_a_folder_never_overwrites_a_file() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     fixture.rename(svg, "Logo GitHub");
     let folder = fixture.workspace.path().join("Bureau");
     fs::create_dir(&folder).expect("folder is created");
@@ -173,14 +173,14 @@ fn exporting_to_a_folder_never_overwrites_a_file() {
     );
     assert_eq!(
         fs::read(&copies[0]).expect("copy is read"),
-        fs::read(sample_file("github-mark.svg")).expect("original is read")
+        fs::read(sample_file("dark-circle.svg")).expect("original is read")
     );
 }
 
 #[test]
 fn several_exports_to_the_same_folder_add_up() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     let folder = fixture.workspace.path().join("Exports");
     fs::create_dir(&folder).expect("folder is created");
 
@@ -204,13 +204,13 @@ fn several_exports_to_the_same_folder_add_up() {
         })
         .collect();
     names.sort();
-    assert_eq!(names, ["github-mark (2).svg", "github-mark.svg"]);
+    assert_eq!(names, ["dark-circle (2).svg", "dark-circle.svg"]);
 }
 
 #[test]
 fn exporting_to_a_missing_folder_is_refused() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     let missing = fixture.workspace.path().join("absent");
 
     assert!(fixture.library.export_to(&[svg], &missing).is_err());
@@ -220,7 +220,7 @@ fn exporting_to_a_missing_folder_is_refused() {
 #[test]
 fn clipboard_copies_survive_a_new_drag() {
     let mut fixture = Fixture::new();
-    let svg = fixture.import("github-mark.svg");
+    let svg = fixture.import("dark-circle.svg");
     let png = fixture.import("red-dot.png");
     let copied = fixture
         .library
@@ -231,5 +231,5 @@ fn clipboard_copies_survive_a_new_drag() {
     fixture.export(&[png]);
 
     assert!(copied.exists());
-    assert_eq!(file_name(&copied), "github-mark.svg");
+    assert_eq!(file_name(&copied), "dark-circle.svg");
 }

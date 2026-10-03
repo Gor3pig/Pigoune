@@ -86,7 +86,7 @@ fn sample() -> Sample {
     let tech = fixture.collection("Tech", Some(brands));
     let fashion = fixture.collection("Mode", None);
     let in_brands = fixture.import("red-dot.png", Some(brands));
-    let in_tech = fixture.import("github-mark.svg", Some(tech));
+    let in_tech = fixture.import("dark-circle.svg", Some(tech));
     let in_tech_and_fashion = fixture.import("spinner.gif", Some(tech));
     fixture.import("spinner.gif", Some(fashion));
     let unclassified = fixture.import("still.gif", None);

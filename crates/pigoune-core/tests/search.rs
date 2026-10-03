@@ -83,7 +83,7 @@ fn sorted(mut ids: Vec<AssetId>) -> Vec<AssetId> {
 fn an_empty_query_shows_the_whole_view() {
     let mut fixture = Fixture::new();
     let dot = fixture.import("red-dot.png", None);
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
 
     assert_eq!(fixture.found(AssetView::All, "   "), sorted(vec![dot, svg]));
 }
@@ -92,17 +92,17 @@ fn an_empty_query_shows_the_whole_view() {
 fn the_name_is_searched_by_any_part_of_a_word() {
     let mut fixture = Fixture::new();
     fixture.import("red-dot.png", None);
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
 
-    assert_eq!(fixture.found(AssetView::All, "git"), [svg]);
-    assert_eq!(fixture.found(AssetView::All, "MARK"), [svg]);
+    assert_eq!(fixture.found(AssetView::All, "dar"), [svg]);
+    assert_eq!(fixture.found(AssetView::All, "CIRC"), [svg]);
 }
 
 #[test]
 fn every_text_field_and_the_tags_are_searched() {
     let mut fixture = Fixture::new();
     let note = fixture.import("red-dot.png", None);
-    let source = fixture.import("github-mark.svg", None);
+    let source = fixture.import("dark-circle.svg", None);
     let license = fixture.import("still.gif", None);
     let author = fixture.import("spinner.gif", None);
     let tagged = fixture.import("green-square.webp", None);
@@ -135,7 +135,7 @@ fn accents_and_case_do_not_matter() {
 fn every_word_must_be_found_somewhere() {
     let mut fixture = Fixture::new();
     let dot = fixture.import("red-dot.png", None);
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
     fixture.tag(dot, "rouge");
     fixture.tag(svg, "noir");
 

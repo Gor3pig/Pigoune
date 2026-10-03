@@ -148,14 +148,14 @@ fn now_unix_ms() -> i64 {
 #[test]
 fn an_imported_file_is_copied_and_described() {
     let mut fixture = Fixture::new();
-    let source = fixture.sample("github-mark.svg");
+    let source = fixture.sample("dark-circle.svg");
     let original = fs::read(&source).expect("source readable");
     let before = now_unix_ms();
 
     let asset = fixture.import_new(&source);
 
-    assert_eq!(asset.display_name, "github-mark");
-    assert_eq!(asset.original_file_name, "github-mark.svg");
+    assert_eq!(asset.display_name, "dark-circle");
+    assert_eq!(asset.original_file_name, "dark-circle.svg");
     assert_eq!(asset.format, AssetFormat::Svg);
     assert_eq!(asset.dimensions, Some(dimensions(98, 96)));
     assert_eq!(asset.byte_size, original.len() as u64);
@@ -170,7 +170,7 @@ fn an_imported_file_is_copied_and_described() {
         asset.stored_path,
         Path::new(FILES_DIR_NAME)
             .join(asset.id.to_string())
-            .join("github-mark.svg")
+            .join("dark-circle.svg")
     );
 
     let copy = fixture.library.root().join(&asset.stored_path);

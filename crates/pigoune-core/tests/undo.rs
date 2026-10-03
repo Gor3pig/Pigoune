@@ -244,7 +244,7 @@ fn tagging_imported_resources_is_not_recorded() {
         .expect("tag is read")
         .expect("tag exists")
         .id;
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
 
     fixture
         .library
@@ -339,7 +339,7 @@ fn a_change_is_undone_by_its_stamp_only_while_it_is_the_latest() {
         .library
         .latest_change()
         .expect("trashing is recorded");
-    let svg = fixture.import("github-mark.svg", None);
+    let svg = fixture.import("dark-circle.svg", None);
     let favorite = AssetCommand::SetFavorite {
         assets: vec![svg],
         favorite: true,

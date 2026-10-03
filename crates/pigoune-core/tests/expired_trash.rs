@@ -104,7 +104,7 @@ fn the_trash_keeps_resources_for_thirty_days() {
 fn only_resources_trashed_for_more_than_thirty_days_are_deleted() {
     let mut fixture = Fixture::new();
     let old = fixture.import("red-dot.png", None);
-    let recent = fixture.import("github-mark.svg", None);
+    let recent = fixture.import("dark-circle.svg", None);
     let kept = fixture.import("still.gif", None);
     fixture.trash(&[old, recent]);
     fixture.age_asset(old, TRASH_RETENTION + ONE_DAY);
@@ -139,7 +139,7 @@ fn an_old_deleted_collection_disappears_with_its_resources() {
         .create_collection("Récente", None)
         .expect("collection is created");
     let in_old = fixture.import("red-dot.png", Some(old));
-    let in_recent = fixture.import("github-mark.svg", Some(recent));
+    let in_recent = fixture.import("dark-circle.svg", Some(recent));
     for id in [old, recent] {
         fixture
             .library

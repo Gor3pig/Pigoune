@@ -90,7 +90,7 @@ fn a_trashed_resource_leaves_every_view_for_the_trash() {
     let mut fixture = Fixture::new();
     let tech = fixture.collection("Tech");
     let trashed = fixture.import("red-dot.png", Some(tech));
-    let kept = fixture.import("github-mark.svg", None);
+    let kept = fixture.import("dark-circle.svg", None);
 
     fixture.trash(&[trashed]);
 
@@ -158,7 +158,7 @@ fn a_resource_whose_collection_disappeared_comes_back_unclassified() {
 fn trashing_twice_only_records_the_real_change() {
     let mut fixture = Fixture::new();
     let first = fixture.import("red-dot.png", None);
-    let second = fixture.import("github-mark.svg", None);
+    let second = fixture.import("dark-circle.svg", None);
     fixture.trash(&[first]);
 
     let undo = fixture.trash(&[first, second]);
@@ -199,7 +199,7 @@ fn emptying_the_trash_deletes_files_thumbnails_and_records_for_good() {
     let mut fixture = Fixture::new();
     let gone = fixture.collection("Partie");
     let trashed = fixture.import("red-dot.png", Some(gone));
-    let kept = fixture.import("github-mark.svg", Some(gone));
+    let kept = fixture.import("dark-circle.svg", Some(gone));
     let tech = fixture.collection("Tech");
     fixture
         .library

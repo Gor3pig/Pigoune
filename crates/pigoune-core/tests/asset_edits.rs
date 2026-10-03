@@ -13,7 +13,7 @@ impl Fixture {
     fn new() -> Self {
         let workspace = tempfile::tempdir().expect("temporary directory");
         let mut library = Library::create(workspace.path(), "Essai").expect("library is created");
-        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/github-mark.svg");
+        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/dark-circle.svg");
         let ImportOutcome::Imported(asset) =
             library.import_file(&source, None).expect("import succeeds")
         else {
@@ -54,11 +54,11 @@ fn renaming_changes_only_the_displayed_name_and_can_be_undone() {
         name: "  Logo GitHub ".to_owned(),
     });
     assert_eq!(fixture.read().display_name, "Logo GitHub");
-    assert_eq!(fixture.read().original_file_name, "github-mark.svg");
+    assert_eq!(fixture.read().original_file_name, "dark-circle.svg");
     assert_eq!(fixture.file(), file_before);
 
     fixture.apply(&undo);
-    assert_eq!(fixture.read().display_name, "github-mark");
+    assert_eq!(fixture.read().display_name, "dark-circle");
 }
 
 #[test]
@@ -71,7 +71,7 @@ fn a_blank_name_is_refused() {
     });
 
     assert!(matches!(result, Err(AssetError::InvalidName)), "{result:?}");
-    assert_eq!(fixture.read().display_name, "github-mark");
+    assert_eq!(fixture.read().display_name, "dark-circle");
 }
 
 #[test]

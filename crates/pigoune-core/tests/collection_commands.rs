@@ -362,8 +362,8 @@ fn trashing_a_collection_takes_its_tree_and_the_resources_found_only_there() {
     let tech = fixture.collection("Tech", Some(brands));
     let kept = fixture.collection("Gardée", None);
     let only_inside = fixture.asset_in("red-dot.png", Some(tech));
-    let twice_inside = fixture.asset_in("github-mark.svg", Some(brands));
-    fixture.also_in(twice_inside, tech, "github-mark.svg");
+    let twice_inside = fixture.asset_in("dark-circle.svg", Some(brands));
+    fixture.also_in(twice_inside, tech, "dark-circle.svg");
     let also_outside = fixture.asset_in("spinner.gif", Some(tech));
     fixture.also_in(also_outside, kept, "spinner.gif");
     let unclassified = fixture.asset_in("still.gif", None);
@@ -383,7 +383,7 @@ fn trashing_can_be_undone_and_redone_exactly() {
     let brands = fixture.collection("Marques", None);
     let tech = fixture.collection("Tech", Some(brands));
     fixture.asset_in("red-dot.png", Some(tech));
-    fixture.asset_in("github-mark.svg", Some(brands));
+    fixture.asset_in("dark-circle.svg", Some(brands));
     let before = fixture.snapshot();
 
     let undo = fixture.apply(&CollectionCommand::Trash { id: brands });
@@ -468,7 +468,7 @@ fn resources_can_be_added_to_a_collection_and_the_addition_undone() {
     let mut fixture = Fixture::new();
     let tech = fixture.collection("Tech", None);
     let already_there = fixture.asset_in("red-dot.png", Some(tech));
-    let newcomer = fixture.asset_in("github-mark.svg", None);
+    let newcomer = fixture.asset_in("dark-circle.svg", None);
     let before = fixture.snapshot();
 
     let undo = fixture.apply(&CollectionCommand::AddAssets {
@@ -495,7 +495,7 @@ fn resources_can_be_removed_from_a_collection_and_the_removal_undone() {
     let kept = fixture.collection("Gardée", None);
     let inside = fixture.asset_in("red-dot.png", Some(tech));
     fixture.also_in(inside, kept, "red-dot.png");
-    let outside = fixture.asset_in("github-mark.svg", None);
+    let outside = fixture.asset_in("dark-circle.svg", None);
     let before = fixture.snapshot();
 
     let undo = fixture.apply(&CollectionCommand::RemoveAssets {
@@ -522,7 +522,7 @@ fn a_trashed_collection_or_resource_cannot_be_linked() {
     let gone = fixture.collection("Partie", None);
     let tech = fixture.collection("Tech", None);
     let asset = fixture.asset_in("red-dot.png", None);
-    let trashed = fixture.asset_in("github-mark.svg", None);
+    let trashed = fixture.asset_in("dark-circle.svg", None);
     fixture.apply(&CollectionCommand::Trash { id: gone });
     fixture.apply(&CollectionCommand::SetTrashed {
         collections: vec![],
@@ -631,8 +631,8 @@ fn moving_resources_takes_them_out_of_the_source_and_its_sub_collections() {
     let icons = fixture.collection("Icônes", None);
     let kept = fixture.collection("Gardée", None);
     let direct = fixture.asset_in("red-dot.png", Some(brands));
-    let nested = fixture.asset_in("github-mark.svg", Some(tech));
-    fixture.also_in(nested, kept, "github-mark.svg");
+    let nested = fixture.asset_in("dark-circle.svg", Some(tech));
+    fixture.also_in(nested, kept, "dark-circle.svg");
     let before = fixture.snapshot();
 
     let undo = fixture.apply(&CollectionCommand::MoveAssets {
@@ -708,7 +708,7 @@ fn the_removal_of_a_collection_is_announced_before_it_happens() {
     fixture.collection("Audio", Some(tech));
     let kept = fixture.collection("Gardée", None);
     fixture.asset_in("red-dot.png", Some(brands));
-    fixture.asset_in("github-mark.svg", Some(tech));
+    fixture.asset_in("dark-circle.svg", Some(tech));
     let shared = fixture.asset_in("spinner.gif", Some(tech));
     fixture.also_in(shared, kept, "spinner.gif");
     let before = fixture.snapshot();

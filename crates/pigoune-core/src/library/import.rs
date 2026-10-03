@@ -230,8 +230,8 @@ mod tests {
     #[test]
     fn the_display_name_is_the_file_name_without_its_extension() {
         assert_eq!(
-            display_name_of("github-mark-white.svg"),
-            "github-mark-white"
+            display_name_of("dark-circle-light.svg"),
+            "dark-circle-light"
         );
         assert_eq!(display_name_of("logo.final.png"), "logo.final");
         assert_eq!(display_name_of("README"), "README");

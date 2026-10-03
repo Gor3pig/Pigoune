@@ -76,7 +76,7 @@ fn favorite(assets: &[AssetId], favorite: bool) -> AssetCommand {
 fn a_favorite_shows_in_the_favorites_view_and_its_count() {
     let mut fixture = Fixture::new();
     let liked = fixture.import("red-dot.png");
-    fixture.import("github-mark.svg");
+    fixture.import("dark-circle.svg");
 
     fixture.apply(&favorite(&[liked], true));
 
@@ -96,7 +96,7 @@ fn a_favorite_shows_in_the_favorites_view_and_its_count() {
 fn undoing_restores_each_previous_state() {
     let mut fixture = Fixture::new();
     let already = fixture.import("red-dot.png");
-    let newly = fixture.import("github-mark.svg");
+    let newly = fixture.import("dark-circle.svg");
     fixture.apply(&favorite(&[already], true));
 
     let undo = fixture.apply(&favorite(&[already, newly], true));
@@ -124,7 +124,7 @@ fn removing_a_favorite_takes_it_out_of_the_view() {
 fn an_unknown_or_trashed_resource_is_refused_and_nothing_changes() {
     let mut fixture = Fixture::new();
     let kept = fixture.import("red-dot.png");
-    let trashed = fixture.import("github-mark.svg");
+    let trashed = fixture.import("dark-circle.svg");
     Connection::open(fixture.library.root().join(DATABASE_FILE_NAME))
         .expect("database opens")
         .execute(

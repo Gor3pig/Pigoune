@@ -104,7 +104,7 @@ fn assert_completed(summary: &ImportSummary) {
 #[test]
 fn a_folder_tree_becomes_nested_collections() {
     let mut fixture = Fixture::new();
-    fixture.sample("Marques/github.svg", "github-mark.svg");
+    fixture.sample("Marques/github.svg", "dark-circle.svg");
     fixture.sample("Marques/Tech/red.png", "red-dot.png");
     fixture.sample("Marques/Tech/Anciens/spinner.gif", "spinner.gif");
     fixture.write("Marques/Docs/notes.txt", b"not an image");
@@ -201,7 +201,7 @@ fn hidden_entries_are_skipped_without_being_counted() {
     let mut fixture = Fixture::new();
     fixture.sample("Marques/red.png", "red-dot.png");
     fixture.sample("Marques/.thumbnail.png", "still.gif");
-    fixture.sample("Marques/.git/logo.svg", "github-mark.svg");
+    fixture.sample("Marques/.git/logo.svg", "dark-circle.svg");
 
     let summary = fixture.import(&[fixture.sources.join("Marques")], None);
 
@@ -214,7 +214,7 @@ fn hidden_entries_are_skipped_without_being_counted() {
 #[test]
 fn symbolic_links_inside_a_folder_are_not_followed() {
     let mut fixture = Fixture::new();
-    let outside_file = fixture.sample("Ailleurs/logo.svg", "github-mark.svg");
+    let outside_file = fixture.sample("Ailleurs/logo.svg", "dark-circle.svg");
     let outside_folder = fixture.folder("Ailleurs");
     fixture.sample("Marques/red.png", "red-dot.png");
     symlink(&outside_file, fixture.sources.join("Marques/link.svg")).expect("file link");
@@ -268,7 +268,7 @@ fn a_folder_without_any_image_creates_no_collection() {
 #[test]
 fn files_and_folders_can_be_imported_together() {
     let mut fixture = Fixture::new();
-    let loose = fixture.sample("loose.svg", "github-mark.svg");
+    let loose = fixture.sample("loose.svg", "dark-circle.svg");
     fixture.sample("Marques/red.png", "red-dot.png");
 
     let summary = fixture.import(&[loose, fixture.sources.join("Marques")], None);
@@ -282,7 +282,7 @@ fn progress_is_reported_before_each_file() {
     let mut fixture = Fixture::new();
     fixture.sample("Marques/a.png", "red-dot.png");
     fixture.sample("Marques/b.gif", "spinner.gif");
-    fixture.sample("Marques/c.svg", "github-mark.svg");
+    fixture.sample("Marques/c.svg", "dark-circle.svg");
     let mut reports = Vec::new();
 
     fixture
@@ -309,7 +309,7 @@ fn a_cancelled_import_keeps_what_was_already_imported() {
     let mut fixture = Fixture::new();
     fixture.sample("Marques/a.png", "red-dot.png");
     fixture.sample("Marques/b.gif", "spinner.gif");
-    fixture.sample("Marques/c.svg", "github-mark.svg");
+    fixture.sample("Marques/c.svg", "dark-circle.svg");
 
     let summary = fixture
         .library

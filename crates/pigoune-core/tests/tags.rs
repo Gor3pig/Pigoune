@@ -129,7 +129,7 @@ fn set(ids: &[AssetId]) -> BTreeSet<AssetId> {
 fn a_tag_is_shared_whatever_the_case_and_keeps_its_first_writing() {
     let mut fixture = Fixture::new();
     let first = fixture.import("red-dot.png");
-    let second = fixture.import("github-mark.svg");
+    let second = fixture.import("dark-circle.svg");
 
     let logo = fixture.tag(&[first], "  Logo ");
     let again = fixture.tag(&[second], "logo");
@@ -189,7 +189,7 @@ fn adding_can_be_undone_including_the_new_tag() {
 fn adding_an_existing_tag_can_be_undone_without_losing_the_tag() {
     let mut fixture = Fixture::new();
     let first = fixture.import("red-dot.png");
-    let second = fixture.import("github-mark.svg");
+    let second = fixture.import("dark-circle.svg");
     fixture.tag(&[first], "logo");
     let before = fixture.snapshot();
 
@@ -232,7 +232,7 @@ fn renaming_can_be_undone_and_refuses_a_taken_name() {
 fn merging_joins_the_resources_and_can_be_undone() {
     let mut fixture = Fixture::new();
     let first = fixture.import("red-dot.png");
-    let both = fixture.import("github-mark.svg");
+    let both = fixture.import("dark-circle.svg");
     let second = fixture.import("spinner.gif");
     let logos = fixture.tag(&[first, both], "logos");
     let logo = fixture.tag(&[both, second], "logo");
@@ -253,7 +253,7 @@ fn merging_joins_the_resources_and_can_be_undone() {
 fn deleting_removes_the_tag_from_every_resource_and_can_be_undone() {
     let mut fixture = Fixture::new();
     let first = fixture.import("red-dot.png");
-    let second = fixture.import("github-mark.svg");
+    let second = fixture.import("dark-circle.svg");
     let tag = fixture.tag(&[first, second], "logo");
     let before = fixture.snapshot();
 
@@ -270,7 +270,7 @@ fn deleting_removes_the_tag_from_every_resource_and_can_be_undone() {
 fn blank_names_trashed_resources_and_unknown_tags_are_refused_without_change() {
     let mut fixture = Fixture::new();
     let kept = fixture.import("red-dot.png");
-    let trashed = fixture.import("github-mark.svg");
+    let trashed = fixture.import("dark-circle.svg");
     Connection::open(fixture.library.root().join(DATABASE_FILE_NAME))
         .expect("database opens")
         .execute(
