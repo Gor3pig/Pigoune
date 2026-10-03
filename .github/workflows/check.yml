@@ -5,57 +5,20 @@ on:
     branches: [main]
   pull_request:
 
-defaults:
-  run:
-    shell: bash
-
-env:
-  CARGO_HOME: /opt/cargo
-  RUSTUP_HOME: /opt/rustup
-
 jobs:
   check:
     name: check.sh
     runs-on: ubuntu-latest
-    container:
-      image: registry.fedoraproject.org/fedora:44
-      options: --privileged
     steps:
-      - name: Install system dependencies
-        run: >
-          dnf install -y --setopt=install_weak_deps=False
-          git gcc pkgconf-pkg-config gtk4-devel libadwaita-devel libseccomp-devel
-          lcms2-devel fontconfig-devel blueprint-compiler gettext glib2-devel
-          desktop-file-utils appstream glycin-loaders bubblewrap
-
       - name: Check out the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Create an unprivileged user
-        run: |
-          useradd --create-home builder
-          mkdir -p "$CARGO_HOME" "$RUSTUP_HOME"
-          chown -R builder "$GITHUB_WORKSPACE" "$CARGO_HOME" "$RUSTUP_HOME"
+      - name: Allow the image decoding sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Cache Cargo files
-        uses: actions/cache@v4
-        with:
-          path: |
-            /opt/cargo/registry
-            /opt/cargo/git
-            target
-          key: cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
-          restore-keys: cargo-
-
-      - name: Run check.sh as the unprivileged user
-        run: |
-          chown -R builder "$GITHUB_WORKSPACE" "$CARGO_HOME" "$RUSTUP_HOME"
-          su builder --command '
-            set -euo pipefail
-            curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs \
-              | sh -s -- -y --profile minimal --default-toolchain none
-            source "$CARGO_HOME/env"
-            git config --global --add safe.directory "$GITHUB_WORKSPACE"
-            cd "$GITHUB_WORKSPACE"
-            ./check.sh
-          '
+      - name: Run check.sh in Fedora 44
+        run: >
+          docker run --rm --privileged
+          --volume "$PWD:/src:ro"
+          registry.fedoraproject.org/fedora:44
+          bash /src/.github/ci/check-in-fedora.sh
