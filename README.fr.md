@@ -24,7 +24,7 @@
 ---
 
 > [!NOTE]
-> **Pigoune 1.1.0 est disponible.** [Téléchargez le paquet Flatpak](https://github.com/Gor3pig/Pigoune/releases/latest)
+> **Pigoune est disponible.** [Téléchargez le paquet Flatpak de la dernière version](https://github.com/Gor3pig/Pigoune/releases/latest)
 > pour l'essayer.
 
 ## Pigoune, c'est quoi ?
@@ -101,10 +101,11 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 ## Installation
 
 Téléchargez le fichier `.flatpak` de la [dernière version](https://github.com/Gor3pig/Pigoune/releases/latest),
-puis ouvrez-le avec Logiciels, ou lancez :
+puis ouvrez-le avec Logiciels, ou lancez cette commande depuis le dossier où vous l'avez
+enregistré :
 
 ```sh
-flatpak install --user pigoune-1.1.0.flatpak
+flatpak install --user pigoune-*.flatpak
 ```
 
 Le paquet ne se met pas à jour tout seul : installez chaque nouvelle version de la même façon.

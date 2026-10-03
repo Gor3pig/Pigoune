@@ -24,7 +24,7 @@
 ---
 
 > [!NOTE]
-> **Pigoune 1.1.0 is available.** [Download the Flatpak package](https://github.com/Gor3pig/Pigoune/releases/latest)
+> **Pigoune is available.** [Download the Flatpak package of the latest release](https://github.com/Gor3pig/Pigoune/releases/latest)
 > to try it.
 
 ## What is Pigoune?
@@ -98,10 +98,10 @@ The trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>: a mistake can always be fi
 ## Installation
 
 Download the `.flatpak` file of the [latest release](https://github.com/Gor3pig/Pigoune/releases/latest),
-then open it with Software, or run:
+then open it with Software, or run this command from the folder where you saved it:
 
 ```sh
-flatpak install --user pigoune-1.1.0.flatpak
+flatpak install --user pigoune-*.flatpak
 ```
 
 The package does not update itself: install each new release the same way. You can also build
