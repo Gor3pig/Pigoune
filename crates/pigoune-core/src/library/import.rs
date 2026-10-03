@@ -1,10 +1,11 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{Connection, OptionalExtension, Transaction, params};
+use rusqlite::{Connection, OptionalExtension, params};
 
 use super::asset::EmbeddedSizes;
 use super::content::{self, ContentDigest};
+use super::import_batch::ImportBatch;
 use super::staging::StagingDir;
 use super::{AssetId, CollectionId, ImportError, Library, LibraryError, clock, collection, layout};
 use crate::media::{self, InspectError, MediaInfo};
@@ -38,7 +39,17 @@ impl Library {
     ) -> Result<ImportOutcome, ImportError> {
         self.ensure_target_is_usable(target)?;
         let prepared = prepare(source)?;
-        self.store_prepared(&prepared, |_| Ok(target))
+        let mut batch = ImportBatch::begin(&self.connection)?;
+        match self.store_prepared(&prepared, |_| Ok(target), &mut batch) {
+            Ok(outcome) => {
+                batch.commit(&self.connection)?;
+                Ok(outcome)
+            }
+            Err(error) => {
+                batch.abandon(&self.connection);
+                Err(error)
+            }
+        }
     }
 
     pub(super) fn ensure_target_is_usable(
@@ -61,12 +72,13 @@ impl Library {
         &mut self,
         prepared: &PreparedFile,
         place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
+        batch: &mut ImportBatch,
     ) -> Result<ImportOutcome, ImportError> {
         if let Some(existing) = self.find_by_content_hash(&prepared.digest.hash)? {
             return self.reuse_existing(existing, place);
         }
         let id = AssetId::generate();
-        self.store_new(prepared, id, place)?;
+        self.store_new(prepared, id, place, batch)?;
         Ok(ImportOutcome::Imported(id))
     }
 
@@ -75,6 +87,7 @@ impl Library {
         prepared: &PreparedFile,
         id: AssetId,
         place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
+        batch: &mut ImportBatch,
     ) -> Result<(), ImportError> {
         let staging = StagingDir::create(layout::unfinished_import_dir(&self.root, id))?;
         let copy_path = staging.path().join(&prepared.original_file_name);
@@ -82,17 +95,13 @@ impl Library {
             return Err(ImportError::Unreadable(prepared.source.clone()));
         }
 
-        let transaction = self.connection.transaction()?;
-        insert_asset(&transaction, id, prepared)?;
-        if let Some(collection) = place(&transaction)? {
-            add_to_collection(&transaction, id, collection)?;
+        let savepoint = self.connection.savepoint()?;
+        insert_asset(&savepoint, id, prepared)?;
+        if let Some(collection) = place(&savepoint)? {
+            add_to_collection(&savepoint, id, collection)?;
         }
-        let asset_dir = layout::asset_dir(&self.root, id);
-        staging.promote_to(&asset_dir)?;
-        if let Err(error) = transaction.commit() {
-            let _ = fs::remove_dir_all(&asset_dir);
-            return Err(error.into());
-        }
+        savepoint.commit()?;
+        batch.stage(staging, layout::asset_dir(&self.root, id));
         Ok(())
     }
 
@@ -101,13 +110,13 @@ impl Library {
         existing: AssetId,
         place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
     ) -> Result<ImportOutcome, ImportError> {
-        let transaction = self.connection.transaction()?;
-        let restored = restore_from_trash(&transaction, existing)?;
-        let added = match place(&transaction)? {
-            Some(collection) => add_to_collection(&transaction, existing, collection)?,
+        let savepoint = self.connection.savepoint()?;
+        let restored = restore_from_trash(&savepoint, existing)?;
+        let added = match place(&savepoint)? {
+            Some(collection) => add_to_collection(&savepoint, existing, collection)?,
             None => false,
         };
-        transaction.commit()?;
+        savepoint.commit()?;
 
         Ok(if restored {
             ImportOutcome::RestoredFromTrash(existing)
@@ -130,8 +139,8 @@ impl Library {
     }
 }
 
-fn restore_from_trash(transaction: &Transaction, id: AssetId) -> Result<bool, ImportError> {
-    let changed = transaction.execute(
+fn restore_from_trash(connection: &Connection, id: AssetId) -> Result<bool, ImportError> {
+    let changed = connection.execute(
         "UPDATE assets SET trashed_at_unix_ms = NULL
          WHERE id = ?1 AND trashed_at_unix_ms IS NOT NULL",
         [id],
@@ -140,11 +149,11 @@ fn restore_from_trash(transaction: &Transaction, id: AssetId) -> Result<bool, Im
 }
 
 fn add_to_collection(
-    transaction: &Transaction,
+    connection: &Connection,
     asset: AssetId,
     collection: CollectionId,
 ) -> Result<bool, ImportError> {
-    let changed = transaction.execute(
+    let changed = connection.execute(
         "INSERT OR IGNORE INTO asset_collections (asset_id, collection_id) VALUES (?1, ?2)",
         params![asset, collection],
     )?;
@@ -180,11 +189,11 @@ fn inspect_failure(error: InspectError, source: &Path) -> ImportError {
 }
 
 fn insert_asset(
-    transaction: &Transaction,
+    connection: &Connection,
     id: AssetId,
     asset: &PreparedFile,
 ) -> Result<(), ImportError> {
-    transaction.execute(
+    connection.execute(
         "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
                              width, height, byte_size, content_hash, is_animated,
                              embedded_sizes, added_at_unix_ms)

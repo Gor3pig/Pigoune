@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use rusqlite::Connection;
 
 use super::import::{self, ImportOutcome};
+use super::import_batch::ImportBatch;
 use super::import_plan::{ImportPlan, PlannedFile};
 use super::{AssetId, CollectionId, ImportError, Library, LibraryError, collection};
 
@@ -42,7 +43,37 @@ pub struct ImportSummary {
     pub ending: ImportEnding,
 }
 
+#[derive(Clone, Copy)]
+struct SavedSummary {
+    imported: usize,
+    already_known: usize,
+    large_imported: usize,
+    already_present: usize,
+    added_to_collection: usize,
+    restored_from_trash: usize,
+}
+
 impl ImportSummary {
+    fn saved(&self) -> SavedSummary {
+        SavedSummary {
+            imported: self.imported.len(),
+            already_known: self.already_known.len(),
+            large_imported: self.large_imported,
+            already_present: self.already_present,
+            added_to_collection: self.added_to_collection,
+            restored_from_trash: self.restored_from_trash,
+        }
+    }
+
+    fn return_to(&mut self, saved: SavedSummary) {
+        self.imported.truncate(saved.imported);
+        self.already_known.truncate(saved.already_known);
+        self.large_imported = saved.large_imported;
+        self.already_present = saved.already_present;
+        self.added_to_collection = saved.added_to_collection;
+        self.restored_from_trash = saved.restored_from_trash;
+    }
+
     fn record(&mut self, result: Result<(ImportOutcome, u64), ImportError>) -> Option<ImportError> {
         match result {
             Ok((ImportOutcome::Imported(id), byte_size)) => {
@@ -87,17 +118,32 @@ impl Library {
             ..ImportSummary::default()
         };
         let mut folders = FolderCollections::new(target);
+        let mut batch = ImportBatch::begin(&self.connection)?;
+        let mut saved = summary.saved();
 
         for (done, file) in plan.files.iter().enumerate() {
             if on_progress(ImportProgress { done, total }) == ImportControl::Cancel {
                 summary.ending = ImportEnding::Cancelled;
                 break;
             }
-            let result = self.import_planned(file, &mut folders, &mut is_intact);
+            let result = self.import_planned(file, &mut folders, &mut is_intact, &mut batch);
             if let Some(serious) = summary.record(result) {
                 summary.ending = ImportEnding::Interrupted(serious);
                 break;
             }
+            if batch.is_due() {
+                if let Err(failure) = batch.commit(&self.connection) {
+                    summary.return_to(saved);
+                    summary.ending = ImportEnding::Interrupted(failure);
+                    return Ok(summary);
+                }
+                saved = summary.saved();
+                batch = ImportBatch::begin(&self.connection)?;
+            }
+        }
+        if let Err(failure) = batch.commit(&self.connection) {
+            summary.return_to(saved);
+            summary.ending = ImportEnding::Interrupted(failure);
         }
         Ok(summary)
     }
@@ -107,14 +153,17 @@ impl Library {
         file: &PlannedFile,
         folders: &mut FolderCollections,
         is_intact: &mut impl FnMut(&Path) -> bool,
+        batch: &mut ImportBatch,
     ) -> Result<(ImportOutcome, u64), ImportError> {
         let prepared = import::prepare(&file.source)?;
         if !self.is_already_stored(&prepared)? && !is_intact(&file.source) {
             return Err(ImportError::Unreadable(file.source.clone()));
         }
-        let outcome = self.store_prepared(&prepared, |connection| {
-            folders.resolve(connection, &file.folders)
-        })?;
+        let outcome = self.store_prepared(
+            &prepared,
+            |connection| folders.resolve(connection, &file.folders),
+            batch,
+        )?;
         Ok((outcome, prepared.byte_size()))
     }
 }

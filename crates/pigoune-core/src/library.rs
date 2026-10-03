@@ -10,6 +10,7 @@ mod export;
 mod history;
 mod id;
 mod import;
+mod import_batch;
 mod import_plan;
 mod layout;
 mod schema;

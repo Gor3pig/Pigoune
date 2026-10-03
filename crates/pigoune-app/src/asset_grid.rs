@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -12,6 +13,7 @@ use crate::asset_sort::SortedAsset;
 use crate::asset_tile::PigouneAssetTile;
 use crate::drag_content::DraggedAssets;
 use crate::drag_icon;
+use crate::grid_columns;
 use crate::thumbnails::ThumbnailCache;
 
 pub const MENU_KEYS: &str = "<Shift>F10|Menu";
@@ -110,6 +112,7 @@ mod imp {
         fn set_tile_size(&self, size: i32) {
             if self.tile_size.replace(size) != size {
                 self.obj().notify_tile_size();
+                self.obj().fit_columns();
             }
         }
     }
@@ -138,6 +141,7 @@ mod imp {
             grid.resize_with_control_scroll();
             grid.unselect_on_empty_click();
             grid.lasso_only_from_empty_space();
+            grid.follow_visible_width();
         }
     }
 
@@ -253,12 +257,13 @@ impl PigouneAssetGrid {
         let Some(selection) = self.selection() else {
             return;
         };
+        let wanted: HashSet<AssetId> = ids.iter().copied().collect();
         let chosen = gtk::Bitset::new_empty();
         for position in 0..selection.n_items() {
             let is_wanted = selection
                 .item(position)
                 .and_downcast::<PigouneAssetObject>()
-                .is_some_and(|asset| ids.contains(&asset.id()));
+                .is_some_and(|asset| wanted.contains(&asset.id()));
             if is_wanted {
                 chosen.add(position);
             }
@@ -783,6 +788,34 @@ impl PigouneAssetGrid {
 }
 
 impl PigouneAssetGrid {
+    fn follow_visible_width(&self) {
+        self.imp()
+            .scrolled_window
+            .hadjustment()
+            .connect_page_size_notify(glib::clone!(
+                #[weak(rename_to = grid)]
+                self,
+                move |_| grid.fit_columns()
+            ));
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "the visible width of the grid fits in an i32"
+    )]
+    fn fit_columns(&self) {
+        let width = self.imp().scrolled_window.hadjustment().page_size() as i32;
+        let wanted = grid_columns::widest_column_count(width, self.tile_size());
+        if self.imp().grid_view.max_columns() == wanted {
+            return;
+        }
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move || grid.imp().grid_view.set_max_columns(wanted)
+        ));
+    }
+
     pub fn link_size_adjustment(&self, adjustment: &gtk::Adjustment) {
         self.bind_property("tile-size", adjustment, "value")
             .transform_to(|_, size: i32| Some(f64::from(size)))

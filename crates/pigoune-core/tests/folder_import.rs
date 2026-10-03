@@ -469,3 +469,76 @@ fn only_new_supported_images_are_checked() {
 
     assert_eq!(checked, ["new.gif"]);
 }
+
+#[test]
+fn every_file_of_a_large_folder_is_kept_after_reopening() {
+    let mut fixture = Fixture::new();
+    for index in 0..60 {
+        fixture.write(&format!("Lot/{index}.svg"), &numbered_svg(index));
+    }
+
+    let summary = fixture.import(&[fixture.sources.join("Lot")], None);
+
+    assert_completed(&summary);
+    assert_eq!(summary.imported.len(), 60);
+    let root = fixture.library.root().to_path_buf();
+    drop(fixture.library);
+    let reopened = Library::open(&root).expect("library reopens");
+    assert_eq!(reopened.visible_assets().expect("assets listed").len(), 60);
+    assert_eq!(stored_folders(&root).len(), 60);
+}
+
+#[test]
+fn an_import_stopped_abruptly_leaves_no_file_without_its_record() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Essai").expect("library is created");
+    let root = library.root().to_path_buf();
+    let folder = workspace.path().join("Lot");
+    fs::create_dir(&folder).expect("folder created");
+    for index in 0..3 {
+        fs::write(folder.join(format!("{index}.svg")), numbered_svg(index)).expect("written");
+    }
+
+    let stopped = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        library.import_paths(
+            std::slice::from_ref(&folder),
+            None,
+            |_| true,
+            |progress| {
+                assert!(progress.done < 2, "the import stops abruptly");
+                ImportControl::Continue
+            },
+        )
+    }));
+    drop(library);
+
+    assert!(stopped.is_err());
+    let reopened = Library::open(&root).expect("library reopens");
+    let recorded = reopened.visible_assets().expect("assets listed");
+    let mut recorded_folders: Vec<String> =
+        recorded.iter().map(|asset| asset.id.to_string()).collect();
+    recorded_folders.sort();
+    assert_eq!(stored_folders(&root), recorded_folders);
+}
+
+fn numbered_svg(index: usize) -> Vec<u8> {
+    format!(
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><rect width=\"{index}\" height=\"8\"/></svg>"
+    )
+    .into_bytes()
+}
+
+fn stored_folders(root: &Path) -> Vec<String> {
+    let mut folders: Vec<String> = fs::read_dir(root.join(FILES_DIR_NAME))
+        .expect("files folder listed")
+        .map(|entry| {
+            entry
+                .expect("entry read")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    folders.sort();
+    folders
+}

@@ -20,6 +20,7 @@ mod drag_icon;
 mod drop_message;
 mod error_messages;
 mod filter_popover;
+mod grid_columns;
 mod grid_header;
 mod image_check;
 mod import_progress_dialog;
