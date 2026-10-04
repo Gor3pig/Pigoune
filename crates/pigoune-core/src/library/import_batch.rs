@@ -1,5 +1,6 @@
 use std::fs;
-use std::path::PathBuf;
+use std::io;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use rusqlite::Connection;
@@ -34,7 +35,7 @@ impl ImportBatch {
     pub(super) fn commit(self, connection: &Connection) -> Result<(), ImportError> {
         let mut promoted = Vec::with_capacity(self.staged.len());
         for (staging, destination) in self.staged {
-            if let Err(error) = staging.promote_to(&destination) {
+            if let Err(error) = promote(staging, &destination) {
                 roll_back(connection, &promoted);
                 return Err(error.into());
             }
@@ -51,6 +52,13 @@ impl ImportBatch {
         roll_back(connection, &[]);
         drop(self.staged);
     }
+}
+
+fn promote(staging: StagingDir, destination: &Path) -> io::Result<()> {
+    if let Some(bucket) = destination.parent() {
+        fs::create_dir_all(bucket)?;
+    }
+    staging.promote_to(destination)
 }
 
 fn roll_back(connection: &Connection, promoted: &[PathBuf]) {

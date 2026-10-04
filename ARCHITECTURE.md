@@ -66,16 +66,21 @@ A library is a self-contained folder that can be moved or copied to another comp
 My logos.pigoune/
 ├── library.db                      SQLite database: assets, collections, tags, metadata
 ├── files/
-│   └── <uuid>/<original-name>      one folder per asset, keeping the original file name
+│   └── <xx>/<uuid>/<original-name>      one folder per asset, keeping the original file name
 └── cache/
-    └── thumbnails/<pixels>/<uuid>.png   disposable, regenerated when missing
+    └── thumbnails/<pixels>/<xx>/<uuid>.png   disposable, regenerated when missing
 ```
 
 - Paths stored in the database are relative to the library, which keeps it portable.
+- `<xx>` is a bucket named after the last two hexadecimal digits of the asset UUID, so that no
+  folder holds more than a small share of the assets. These digits are random, unlike the
+  beginning of a UUIDv7, which encodes the creation time.
 - The database is identified by `PRAGMA application_id` and versioned by `PRAGMA
   user_version`. Migrations are listed in `crates/pigoune-core/src/library/schema.rs`: SQL
   files from `migrations/`, or a Rust step when existing files must be read again (format 2
-  looks for animated PNG and WebP among assets imported earlier). A library created by a newer
+  looks for animated PNG and WebP among assets imported earlier). Format 3 records the bucketed
+  paths, then moves the folders and thumbnails into their buckets; every opening finishes moves
+  left behind by an interruption. A library created by a newer
   version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.

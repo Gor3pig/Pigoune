@@ -12,6 +12,7 @@ const CLIPBOARD_DIR_NAME: &str = "clipboard";
 const OPENING_DIR_NAME: &str = "open";
 
 const MAX_NAME_BYTES: usize = 200;
+const BUCKET_NAME_LENGTH: usize = 2;
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
 
 pub fn library_folder_name(requested_name: &str) -> Result<String, LibraryError> {
@@ -42,8 +43,17 @@ pub fn database_path(root: &Path) -> PathBuf {
     root.join(DATABASE_FILE_NAME)
 }
 
+pub fn bucket_name(id: AssetId) -> String {
+    let text = id.to_string();
+    text[text.len() - BUCKET_NAME_LENGTH..].to_owned()
+}
+
+pub fn files_dir(root: &Path) -> PathBuf {
+    root.join(FILES_DIR_NAME)
+}
+
 pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
-    root.join(FILES_DIR_NAME).join(id.to_string())
+    files_dir(root).join(bucket_name(id)).join(id.to_string())
 }
 
 pub fn thumbnails_dir(root: &Path) -> PathBuf {
@@ -65,20 +75,26 @@ pub fn opening_dir(root: &Path) -> PathBuf {
 pub fn thumbnail_path(root: &Path, id: AssetId, pixels: u32) -> PathBuf {
     thumbnails_dir(root)
         .join(pixels.to_string())
-        .join(thumbnail_file_name(id))
+        .join(thumbnail_in_size_dir(id))
 }
 
-pub fn thumbnail_file_name(id: AssetId) -> String {
+pub fn thumbnail_in_size_dir(id: AssetId) -> PathBuf {
+    Path::new(&bucket_name(id)).join(thumbnail_file_name(id))
+}
+
+fn thumbnail_file_name(id: AssetId) -> String {
     format!("{id}.png")
 }
 
 pub fn stored_path(id: AssetId, original_file_name: &str) -> String {
-    format!("{FILES_DIR_NAME}/{id}/{original_file_name}")
+    format!(
+        "{FILES_DIR_NAME}/{}/{id}/{original_file_name}",
+        bucket_name(id)
+    )
 }
 
 pub fn unfinished_import_dir(root: &Path, id: AssetId) -> PathBuf {
-    root.join(FILES_DIR_NAME)
-        .join(format!(".{id}{UNFINISHED_IMPORT_SUFFIX}"))
+    files_dir(root).join(format!(".{id}{UNFINISHED_IMPORT_SUFFIX}"))
 }
 
 pub fn is_unfinished_import(entry_name: &str) -> bool {

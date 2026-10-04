@@ -95,18 +95,7 @@ impl Fixture {
     }
 
     fn stored_folders(&self) -> Vec<String> {
-        let mut names: Vec<String> = fs::read_dir(self.files_dir())
-            .expect("files folder readable")
-            .map(|entry| {
-                entry
-                    .expect("entry")
-                    .file_name()
-                    .to_string_lossy()
-                    .into_owned()
-            })
-            .collect();
-        names.sort();
-        names
+        asset_folders(&self.files_dir())
     }
 
     fn asset_count(&self) -> u32 {
@@ -169,6 +158,7 @@ fn an_imported_file_is_copied_and_described() {
     assert_eq!(
         asset.stored_path,
         Path::new(FILES_DIR_NAME)
+            .join(bucket_of(asset.id))
             .join(asset.id.to_string())
             .join("dark-circle.svg")
     );
@@ -540,4 +530,42 @@ fn importing_into_a_trashed_collection_is_refused() {
         "{result:?}"
     );
     assert_eq!(fixture.asset_count(), 0);
+}
+
+fn asset_folders(files_dir: &Path) -> Vec<String> {
+    let mut names: Vec<String> = fs::read_dir(files_dir)
+        .expect("files folder listed")
+        .flat_map(|entry| {
+            let entry = entry.expect("entry read");
+            if is_bucket(&entry) {
+                folder_names(&entry.path())
+            } else {
+                vec![entry.file_name().to_string_lossy().into_owned()]
+            }
+        })
+        .collect();
+    names.sort();
+    names
+}
+
+fn is_bucket(entry: &fs::DirEntry) -> bool {
+    entry.file_name().len() == 2 && entry.path().is_dir()
+}
+
+fn folder_names(folder: &Path) -> Vec<String> {
+    fs::read_dir(folder)
+        .expect("bucket listed")
+        .map(|entry| {
+            entry
+                .expect("entry read")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect()
+}
+
+fn bucket_of(id: AssetId) -> String {
+    let text = id.to_string();
+    text[text.len() - 2..].to_owned()
 }

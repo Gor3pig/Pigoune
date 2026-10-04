@@ -55,6 +55,6 @@ fn forget_files(root: &Path, asset: AssetId) {
         return;
     };
     for size in sizes.flatten() {
-        let _ = fs::remove_file(size.path().join(layout::thumbnail_file_name(asset)));
+        let _ = fs::remove_file(size.path().join(layout::thumbnail_in_size_dir(asset)));
     }
 }

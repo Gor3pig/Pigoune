@@ -529,8 +529,32 @@ fn numbered_svg(index: usize) -> Vec<u8> {
 }
 
 fn stored_folders(root: &Path) -> Vec<String> {
-    let mut folders: Vec<String> = fs::read_dir(root.join(FILES_DIR_NAME))
+    asset_folders(&root.join(FILES_DIR_NAME))
+}
+
+fn asset_folders(files_dir: &Path) -> Vec<String> {
+    let mut names: Vec<String> = fs::read_dir(files_dir)
         .expect("files folder listed")
+        .flat_map(|entry| {
+            let entry = entry.expect("entry read");
+            if is_bucket(&entry) {
+                folder_names(&entry.path())
+            } else {
+                vec![entry.file_name().to_string_lossy().into_owned()]
+            }
+        })
+        .collect();
+    names.sort();
+    names
+}
+
+fn is_bucket(entry: &fs::DirEntry) -> bool {
+    entry.file_name().len() == 2 && entry.path().is_dir()
+}
+
+fn folder_names(folder: &Path) -> Vec<String> {
+    fs::read_dir(folder)
+        .expect("bucket listed")
         .map(|entry| {
             entry
                 .expect("entry read")
@@ -538,7 +562,5 @@ fn stored_folders(root: &Path) -> Vec<String> {
                 .to_string_lossy()
                 .into_owned()
         })
-        .collect();
-    folders.sort();
-    folders
+        .collect()
 }

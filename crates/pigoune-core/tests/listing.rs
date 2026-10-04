@@ -114,6 +114,7 @@ fn thumbnails_live_in_the_disposable_cache_folder_by_size() {
             .root()
             .join(CACHE_DIR_NAME)
             .join("thumbnails/128")
+            .join(bucket_of(id))
             .join(format!("{id}.png"))
     );
     assert_ne!(small, large);
@@ -127,4 +128,9 @@ fn an_asset_id_survives_a_round_trip_through_text() {
 
     assert_eq!(AssetId::parse(&id.to_string()), Some(id));
     assert_eq!(AssetId::parse("not an id"), None);
+}
+
+fn bucket_of(id: AssetId) -> String {
+    let text = id.to_string();
+    text[text.len() - 2..].to_owned()
 }

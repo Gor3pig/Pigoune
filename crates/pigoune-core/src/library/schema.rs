@@ -2,17 +2,18 @@ use std::path::Path;
 
 use rusqlite::{Connection, ErrorCode};
 
-use super::{LibraryError, animation_recheck};
+use super::{LibraryError, animation_recheck, buckets};
 
-pub const CURRENT_FORMAT_VERSION: u32 = 2;
+pub const CURRENT_FORMAT_VERSION: u32 = 3;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 
 enum Migration {
     Statements(&'static str),
     RecheckAnimations,
+    RecordBucketedPaths,
 }
 
-const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = ["1.0", "1.4"];
+const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = ["1.0", "1.4", "1.5"];
 
 #[must_use]
 pub fn oldest_compatible_version(format_version: u32) -> Option<&'static str> {
@@ -23,6 +24,7 @@ pub fn oldest_compatible_version(format_version: u32) -> Option<&'static str> {
 const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::Statements(include_str!("migrations/v1.sql")),
     Migration::RecheckAnimations,
+    Migration::RecordBucketedPaths,
 ];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
@@ -100,6 +102,7 @@ fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<
     match migration {
         Migration::Statements(statements) => Ok(connection.execute_batch(statements)?),
         Migration::RecheckAnimations => animation_recheck::mark_animated_assets(connection, root),
+        Migration::RecordBucketedPaths => buckets::record_bucketed_paths(connection),
     }
 }
 
@@ -115,6 +118,7 @@ mod tests {
     fn every_format_names_the_first_version_of_pigoune_able_to_read_it() {
         assert_eq!(oldest_compatible_version(1), Some("1.0"));
         assert_eq!(oldest_compatible_version(2), Some("1.4"));
+        assert_eq!(oldest_compatible_version(3), Some("1.5"));
         assert!(oldest_compatible_version(CURRENT_FORMAT_VERSION).is_some());
         assert_eq!(oldest_compatible_version(0), None);
         assert_eq!(oldest_compatible_version(CURRENT_FORMAT_VERSION + 1), None);

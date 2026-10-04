@@ -2,6 +2,7 @@ mod animation_recheck;
 mod asset;
 mod asset_command;
 mod batch_import;
+mod buckets;
 mod clock;
 mod collection;
 mod collection_command;
@@ -113,6 +114,7 @@ impl Library {
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
+        buckets::move_into_buckets(root);
         remove_unfinished_imports(root);
         export::forget_exports(root);
 
