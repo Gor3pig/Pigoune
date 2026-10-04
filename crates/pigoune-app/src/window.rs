@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
@@ -868,8 +869,35 @@ impl PigouneWindow {
         }
     }
 
+    fn thumbnail_storage(&self) -> Option<preferences_dialog::ThumbnailStorage> {
+        let library = self.imp().library.borrow();
+        let library = library.as_ref()?;
+        Some(preferences_dialog::ThumbnailStorage {
+            library_name: library.name(),
+            bytes: library.thumbnail_cache_bytes(),
+            clear: Rc::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move || {
+                    window
+                        .imp()
+                        .library
+                        .borrow()
+                        .as_ref()
+                        .map_or(Ok(()), |library| {
+                            library
+                                .clear_thumbnail_cache()
+                                .map_err(|error| error_messages::describe(&error))
+                        })
+                }
+            )),
+        })
+    }
+
     fn show_preferences(&self) {
-        preferences_dialog::present(self, self.settings());
+        preferences_dialog::present(self, self.settings(), self.thumbnail_storage());
     }
 
     fn settings(&self) -> &gio::Settings {

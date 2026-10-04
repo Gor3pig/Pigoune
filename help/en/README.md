@@ -196,6 +196,8 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
 - **Show Resource Counts** next to each entry of the sidebar.
 - **Confirm Before Emptying the Trash**.
 - **Empty the Trash Automatically**: assets are deleted for good after 30 days in the trash.
+- **Thumbnails**, under **Storage**, shows the space taken by the thumbnails of the open
+  library. **Clear** frees it; thumbnails are made again when they are needed.
 
 ## Keyboard shortcuts
 

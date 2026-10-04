@@ -40,6 +40,22 @@ Adw.PreferencesDialog dialog {
       }
     }
 
+    Adw.PreferencesGroup storage_group {
+      title: _("Storage");
+      visible: false;
+
+      Adw.ActionRow thumbnails_row {
+        title: _("Thumbnails");
+
+        [suffix]
+        Button clear_thumbnails_button {
+          label: _("_Clear");
+          use-underline: true;
+          valign: center;
+        }
+      }
+    }
+
     Adw.PreferencesGroup {
       title: _("Trash");
 

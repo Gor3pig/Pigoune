@@ -226,6 +226,8 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
 - **Confirmer avant de vider la corbeille**.
 - **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
   30 jours dans la corbeille.
+- **Vignettes**, dans **Stockage**, indique la place prise par les vignettes de la bibliothèque
+  ouverte. **Vider** la libère ; les vignettes sont recréées quand on en a besoin.
 
 ## Raccourcis clavier
 

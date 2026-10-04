@@ -19,6 +19,7 @@ mod search;
 mod staging;
 mod tag;
 mod tag_command;
+mod thumbnail_cache;
 mod trash;
 mod view;
 
