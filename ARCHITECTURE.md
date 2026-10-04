@@ -123,6 +123,14 @@ Importing a folder recreates its tree as nested collections.
 - **Adaptive layout.** Breakpoints collapse the details panel, then the sidebar, on narrow
   windows.
 
+## Website
+
+`website/` holds the presentation website, published on GitHub Pages by
+`.github/workflows/website.yml`. `website/build.sh` assembles it with the icon and the
+screenshots from `data/`, so they are never duplicated. The script only adds comfort (sections
+fading in, enlarged screenshots, the latest version on the download button): every page works
+without it, and animations are turned off for visitors who ask for reduced motion.
+
 ## Translations
 
 User interface strings are written in American English and extracted with gettext. See

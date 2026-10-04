@@ -15,7 +15,7 @@
 
 **English** · [Français](README.fr.md)
 
-[Features](#features) · [Principles](#principles) · [Installation](#installation) · [Guide](#user-guide) · [Contributing](#contributing)
+[Website](https://gor3pig.github.io/Pigoune/) · [Features](#features) · [Principles](#principles) · [Installation](#installation) · [Guide](#user-guide) · [Contributing](#contributing)
 
 <img src="data/screenshots/01.png" alt="The main window of Pigoune" width="860">
 

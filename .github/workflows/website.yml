@@ -1,0 +1,41 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - website/**
+      - data/icons/**
+      - data/screenshots/**
+      - .github/workflows/website.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: website
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish the website
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Assemble the website
+        run: website/build.sh _site
+
+      - name: Upload the website
+        uses: actions/upload-pages-artifact@v5
+
+      - name: Publish on GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

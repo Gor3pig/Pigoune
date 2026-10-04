@@ -144,6 +144,22 @@ Keep each commit focused on one change, and make sure the project builds and pas
 The automatic check runs on every pull request. Reviews may ask for changes: this is a normal
 part of the process, not a judgment of your work.
 
+## The website
+
+The website at <https://gor3pig.github.io/Pigoune/> lives in `website/`: one page in English
+(`index.html`) and one in French (`fr/index.html`), kept identical, with a shared stylesheet and
+a small script. It uses plain HTML, CSS and JavaScript, with no framework, no external fonts and
+no tracking, and it works without JavaScript. The icon and the screenshots are copied from
+`data/` when the site is assembled. To preview it:
+
+```sh
+website/build.sh /tmp/pigoune-website
+python3 -m http.server --directory /tmp/pigoune-website
+```
+
+Then open <http://localhost:8000/>. The `Website` workflow publishes it on GitHub Pages
+whenever `website/`, the icons or the screenshots change on `main`.
+
 ## Releases
 
 Releases are made by the maintainer, following [RELEASING.md](RELEASING.md).
