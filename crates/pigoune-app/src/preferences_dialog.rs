@@ -33,6 +33,9 @@ pub fn present(
             settings.bind(key, &row, "active").build();
         }
     }
+    if let Some(row) = builder.object::<adw::SpinRow>("recent_libraries_row") {
+        follow_recent_libraries_limit(&row, settings);
+    }
     let (Some(dialog), Some(page)) = (
         builder.object::<adw::PreferencesDialog>("dialog"),
         builder.object::<adw::PreferencesPage>("page"),
@@ -44,6 +47,29 @@ pub fn present(
     }
     dialog.connect_map(move |dialog| fit_to_content(dialog, &page));
     dialog.present(Some(parent));
+}
+
+fn follow_recent_libraries_limit(row: &adw::SpinRow, settings: &gio::Settings) {
+    row.set_value(f64::from(settings.int(settings::RECENT_LIBRARIES_LIMIT)));
+    row.connect_value_notify(glib::clone!(
+        #[strong]
+        settings,
+        move |row| {
+            settings::store_int(
+                &settings,
+                settings::RECENT_LIBRARIES_LIMIT,
+                whole_number(row.value()),
+            );
+        }
+    ));
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "the spin row holds small whole numbers"
+)]
+fn whole_number(value: f64) -> i32 {
+    value.round() as i32
 }
 
 fn offer_thumbnail_cleaning(

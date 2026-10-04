@@ -171,6 +171,8 @@ mod imp {
         pub welcome_recent_box: TemplateChild<gtk::Box>,
         #[template_child]
         pub welcome_recent_list: TemplateChild<gtk::ListBox>,
+        #[template_child]
+        pub welcome_recent_count: TemplateChild<gtk::Label>,
         pub welcome_recent_paths: RefCell<Vec<String>>,
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
@@ -496,6 +498,7 @@ impl PigouneWindow {
             .settings
             .set(settings)
             .expect("settings are set only once, at construction");
+        window.follow_recent_libraries_limit(window.settings());
         window.refresh_recent_libraries();
         window
     }
@@ -1060,6 +1063,7 @@ impl PigouneWindow {
         self.store_recent_libraries(&recent_libraries::with_opened(
             &self.recent_library_paths(),
             &path,
+            self.recent_libraries_limit(),
         ));
         imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
@@ -1067,6 +1071,26 @@ impl PigouneWindow {
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         self.set_library_actions_enabled(true);
+    }
+
+    fn recent_libraries_limit(&self) -> usize {
+        usize::try_from(self.settings().int(settings::RECENT_LIBRARIES_LIMIT)).unwrap_or(0)
+    }
+
+    fn follow_recent_libraries_limit(&self, settings: &gio::Settings) {
+        settings.connect_changed(
+            Some(settings::RECENT_LIBRARIES_LIMIT),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| {
+                    window.store_recent_libraries(&recent_libraries::limited(
+                        &window.recent_library_paths(),
+                        window.recent_libraries_limit(),
+                    ));
+                }
+            ),
+        );
     }
 
     fn recent_library_paths(&self) -> Vec<String> {
@@ -1092,11 +1116,11 @@ impl PigouneWindow {
             .borrow()
             .as_ref()
             .map(|library| library.root().to_string_lossy().into_owned());
-        let paths: Vec<String> = self
-            .recent_library_paths()
-            .into_iter()
-            .filter(|path| Some(path) != open.as_ref())
-            .collect();
+        let paths: Vec<String> =
+            recent_libraries::limited(&self.recent_library_paths(), self.recent_libraries_limit())
+                .into_iter()
+                .filter(|path| Some(path) != open.as_ref())
+                .collect();
         imp.recent_menu.remove_all();
         let libraries = gio::Menu::new();
         for (path, label) in paths.iter().zip(recent_libraries::labels(&paths)) {
@@ -1223,6 +1247,7 @@ impl PigouneWindow {
             imp.welcome_recent_list.append(&row);
         }
         imp.welcome_recent_paths.replace(paths.to_vec());
+        imp.welcome_recent_count.set_label(&paths.len().to_string());
         imp.welcome_recent_box.set_visible(!paths.is_empty());
     }
 

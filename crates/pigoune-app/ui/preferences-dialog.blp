@@ -11,6 +11,18 @@ Adw.PreferencesDialog dialog {
         subtitle: _("At startup, the library left open last time opens again");
       }
 
+      Adw.SpinRow recent_libraries_row {
+        title: _("Recent Libraries");
+        subtitle: _("How many libraries the menu and the welcome page offer, 0 to turn them off");
+
+        adjustment: Adjustment {
+          lower: 0;
+          upper: 8;
+          step-increment: 1;
+          page-increment: 1;
+        };
+      }
+
       Adw.SwitchRow restore_last_view_row {
         title: _("Reopen the Last Entry");
         subtitle: _("A library opens on the entry selected last time instead of All");

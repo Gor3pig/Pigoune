@@ -44,7 +44,6 @@ template $PigouneWindow: Adw.ApplicationWindow {
             name: "welcome";
 
             child: Adw.ToolbarView {
-
               [top]
               Adw.HeaderBar {
                 [end]
@@ -104,10 +103,20 @@ template $PigouneWindow: Adw.ApplicationWindow {
                       Label {
                         label: _("Recent Libraries");
                         xalign: 0;
-                        hexpand: true;
 
                         styles [
                           "heading",
+                        ]
+                      }
+
+                      Label welcome_recent_count {
+                        xalign: 0;
+                        hexpand: true;
+                        margin-start: 8;
+
+                        styles [
+                          "dim-label",
+                          "numeric",
                         ]
                       }
 
@@ -122,12 +131,18 @@ template $PigouneWindow: Adw.ApplicationWindow {
                       }
                     }
 
-                    ListBox welcome_recent_list {
-                      selection-mode: none;
+                    ScrolledWindow {
+                      hscrollbar-policy: never;
+                      propagate-natural-height: true;
+                      max-content-height: 166;
 
-                      styles [
-                        "boxed-list",
-                      ]
+                      child: ListBox welcome_recent_list {
+                        selection-mode: none;
+
+                        styles [
+                          "boxed-list",
+                        ]
+                      };
                     }
                   }
                 };

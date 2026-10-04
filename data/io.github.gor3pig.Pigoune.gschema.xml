@@ -11,6 +11,12 @@
       <summary>Recent libraries</summary>
       <description>Paths of the libraries opened last, the most recent first.</description>
     </key>
+    <key name="recent-libraries-limit" type="i">
+      <range min="0" max="8"/>
+      <default>5</default>
+      <summary>Number of recent libraries</summary>
+      <description>How many recent libraries the main menu and the welcome page offer. 0 turns the list off.</description>
+    </key>
     <key name="window-width" type="i">
       <default>1100</default>
       <summary>Window width</summary>

@@ -5,6 +5,7 @@ use crate::config::{APP_ID, DEVELOPMENT_SCHEMAS_DIR};
 
 pub const LAST_LIBRARY_PATH: &str = "last-library-path";
 pub const RECENT_LIBRARIES: &str = "recent-libraries";
+pub const RECENT_LIBRARIES_LIMIT: &str = "recent-libraries-limit";
 pub const WINDOW_WIDTH: &str = "window-width";
 pub const WINDOW_HEIGHT: &str = "window-height";
 pub const WINDOW_MAXIMIZED: &str = "window-maximized";

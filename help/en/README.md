@@ -28,8 +28,8 @@ libraries as you like, for example one per project or per client.
 
 To open an existing library, choose **Open a Library**. Pigoune reopens the last library you
 used every time it starts. While a library is open, the main menu offers **New Library…** and
-**Open Library…** to switch to another one, and **Recent Libraries** lists the last five
-libraries you opened. The welcome page shows them too, so you can reopen one in a click. Remove one from the list with
+**Open Library…** to switch to another one, and **Recent Libraries** lists the last libraries
+you opened, five by default. The welcome page shows them too, so you can reopen one in a click. Remove one from the list with
 its cross, or choose **Clear the List**: only the list changes, the libraries themselves are
 kept.
 
@@ -200,6 +200,8 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
 
 - **Reopen the Last Library**: at startup, Pigoune opens the library you left open. Turn it off
   to start from the welcome page and choose a library each time.
+- **Recent Libraries**: how many recent libraries the main menu and the welcome page offer,
+  from 0 to 8. Choose 0 to turn the list off.
 - **Reopen the Last Entry**: a library opens on the entry you used last instead of **All**.
 - **Show Resource Names** under each thumbnail of the grid. When names are hidden, hover over a
   thumbnail to see its name.
