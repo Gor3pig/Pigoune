@@ -904,9 +904,13 @@ impl PigouneWindow {
 
     fn show_library_info(&self) {
         let shown = self.imp().library.borrow().as_ref().map(|library| {
-            library.overview().map(|overview| {
-                PigouneLibraryInfoDialog::new(&library.name(), library.root(), &overview)
-            })
+            Ok::<_, LibraryError>(PigouneLibraryInfoDialog::new(
+                &library.name(),
+                library.root(),
+                &library.overview()?,
+                library.format_shares()?,
+                library.storage_use()?,
+            ))
         });
         match shown {
             Some(Ok(dialog)) => dialog.present(Some(self)),

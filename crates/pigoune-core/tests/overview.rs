@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
@@ -75,4 +76,32 @@ fn the_overview_counts_what_the_library_holds() {
     assert_eq!(overview.in_trash, 1);
     assert_eq!(overview.collections, 1);
     assert_eq!(overview.tags, 1);
+
+    let mut shares = library.format_shares().expect("shares are read");
+    shares.sort_by_key(|share| share.format.code());
+    let summary: Vec<(&str, usize, u64)> = shares
+        .iter()
+        .map(|share| (share.format.code(), share.count, share.bytes))
+        .collect();
+    let size_of = |name: &str| fs::metadata(sample_file(name)).expect("fixture").len();
+    assert_eq!(
+        summary,
+        [
+            ("gif", 1, size_of("spinner.gif")),
+            ("png", 1, size_of("red-dot.png")),
+            ("svg", 1, size_of("dark-circle.svg")),
+        ]
+    );
+
+    let storage = library.storage_use().expect("storage is read");
+    assert_eq!(
+        storage.resources,
+        size_of("spinner.gif") + size_of("red-dot.png") + size_of("dark-circle.svg")
+    );
+    assert_eq!(storage.trash, size_of("blue-photo.jpg"));
+    assert!(storage.database > 0);
+    assert_eq!(
+        storage.total(),
+        storage.resources + storage.trash + storage.thumbnails + storage.database
+    );
 }

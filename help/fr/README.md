@@ -212,7 +212,9 @@ Choisissez **Informations sur la bibliothèque** dans le menu principal pour voi
 la bibliothèque ouverte : le nombre de ressources, de collections, de tags, de favoris, d'images
 animées, de SVG et de ressources dans la corbeille, son emplacement, si ce disque est amovible,
 sa date de création et les versions de Pigoune capables de l'ouvrir. Des boutons copient son emplacement ou ouvrent
-son dossier.
+son dossier. Un graphique en anneau montre comment la place se répartit entre les formats, en
+poids ou en nombre de ressources, et une barre montre la place de la bibliothèque sur son disque
+à côté de l'espace libre.
 
 ## Préférences
 

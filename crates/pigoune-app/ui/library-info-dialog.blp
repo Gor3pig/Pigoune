@@ -39,6 +39,101 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
             row-spacing: 12;
           }
 
+          Box chart_box {
+            orientation: vertical;
+            spacing: 18;
+
+            Box {
+              spacing: 24;
+              halign: center;
+
+              Overlay {
+                valign: center;
+
+                child: $PigouneRingChart ring_chart {};
+
+                [overlay]
+                Box {
+                  orientation: vertical;
+                  halign: center;
+                  valign: center;
+
+                  Label total_label {
+                    styles [
+                      "title-3",
+                      "numeric",
+                    ]
+                  }
+
+                  Label total_caption {
+                    styles [
+                      "caption",
+                      "dim-label",
+                    ]
+                  }
+                }
+              }
+
+              Grid legend_grid {
+                valign: center;
+                column-spacing: 12;
+                row-spacing: 6;
+              }
+            }
+
+            Adw.ToggleGroup measure_toggles {
+              halign: center;
+              active-name: "weight";
+              notify::active-name => $on_measure_changed() swapped;
+
+              Adw.Toggle {
+                name: "weight";
+                label: _("Size");
+              }
+
+              Adw.Toggle {
+                name: "count";
+                label: _("Number");
+              }
+            }
+
+            Label storage_label {
+              wrap: true;
+              justify: center;
+
+              styles [
+                "caption",
+                "dim-label",
+              ]
+            }
+          }
+
+          Box disk_box {
+            orientation: vertical;
+            spacing: 6;
+
+            Label {
+              label: _("Disk Space");
+              xalign: 0;
+
+              styles [
+                "heading",
+              ]
+            }
+
+            $PigouneStackedBar disk_bar {}
+
+            Label disk_label {
+              xalign: 0;
+              wrap: true;
+              use-markup: true;
+
+              styles [
+                "caption",
+              ]
+            }
+          }
+
           ListBox {
             selection-mode: none;
 

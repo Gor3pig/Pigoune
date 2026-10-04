@@ -18,6 +18,7 @@ mod overview;
 mod schema;
 mod search;
 mod staging;
+mod storage;
 mod tag;
 mod tag_command;
 mod thumbnail_cache;
@@ -50,6 +51,7 @@ pub use layout::{
 pub use overview::LibraryOverview;
 pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
 pub use search::AssetFilter;
+pub use storage::{FormatShare, StorageUse};
 pub use tag::Tag;
 pub use tag_command::{TagCommand, TagError};
 pub use trash::TRASH_RETENTION;
