@@ -17,29 +17,30 @@
       <li>Organize with nested collections, tags and favorites</li>
       <li>Find anything instantly with search and filters</li>
       <li>Reuse assets with drag and drop or the clipboard</li>
+      <li>Convert assets to PNG, JPEG, WebP, AVIF or ICO, at any size</li>
       <li>Portable libraries, fully local, original files never touched</li>
     </ul>
   </description>
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.3.0/data/screenshots/01.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.3.0/data/screenshots/02.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.3.0/data/screenshots/03.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/03.png</image>
       <caption>Organize several assets at once with tags and collections</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.3.0/data/screenshots/04.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/04.png</image>
       <caption>See the details of an asset at a glance</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.3.0/data/screenshots/05.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/05.png</image>
       <caption>Light or dark, Pigoune follows your system style</caption>
     </screenshot>
   </screenshots>
@@ -75,6 +76,20 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.4.0" date="2026-10-04">
+      <description>
+        <p>A big update, with new formats, conversion and a closer look at your libraries.</p>
+        <ul>
+          <li>Import AVIF, JPEG XL, TIFF and BMP images, and play animated PNG and WebP images.</li>
+          <li>Pause an animation in the preview and step through it frame by frame.</li>
+          <li>Export assets converted to PNG, JPEG, WebP, AVIF or ICO, with size, quality, background and multi-size icons.</li>
+          <li>See the key figures of a library, a chart of the space used by each format, its disk space and its records.</li>
+          <li>Reopen recent libraries from the main menu or the welcome page.</li>
+          <li>Choose whether to reopen the last library, play animations on hover and how many recent libraries to keep, and clear the thumbnails.</li>
+          <li>Libraries opened with Pigoune 1.4 can no longer be opened with an older version, so update Pigoune on all your computers.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.3.0" date="2026-10-04">
       <description>
         <p>Take a much closer look at your assets in the detailed preview.</p>

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 18:28+0200\n"
+"POT-Creation-Date: 2026-10-04 18:38+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -58,124 +58,190 @@ msgid "Reuse assets with drag and drop or the clipboard"
 msgstr "Réutilisez vos ressources par glisser-déposer ou via le presse-papiers"
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:20
+msgid "Convert assets to PNG, JPEG, WebP, AVIF or ICO, at any size"
+msgstr ""
+"Convertissez vos ressources en PNG, JPEG, WebP, AVIF ou ICO, à la taille "
+"voulue"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:21
 msgid "Portable libraries, fully local, original files never touched"
 msgstr ""
 "Bibliothèques portables, 100 % locales, fichiers d’origine jamais modifiés"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:27
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:28
 msgid "Browse your graphic assets in a thumbnail grid"
 msgstr "Parcourez vos ressources graphiques dans une grille de vignettes"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:31
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:32
 msgid "Narrow down your library with search and filters"
 msgstr "Affinez votre bibliothèque avec la recherche et les filtres"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:35
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:36
 msgid "Organize several assets at once with tags and collections"
 msgstr ""
 "Organisez plusieurs ressources à la fois avec les tags et les collections"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:39
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:40
 msgid "See the details of an asset at a glance"
 msgstr "Voyez les détails d’une ressource d’un coup d’œil"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:43
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:44
 msgid "Light or dark, Pigoune follows your system style"
 msgstr "Clair ou sombre, Pigoune suit le style de votre système"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:80
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:81
+msgid ""
+"A big update, with new formats, conversion and a closer look at your "
+"libraries."
+msgstr ""
+"Une grosse mise à jour, avec de nouveaux formats, la conversion et un regard "
+"neuf sur vos bibliothèques."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:83
+msgid ""
+"Import AVIF, JPEG XL, TIFF and BMP images, and play animated PNG and WebP "
+"images."
+msgstr ""
+"Importez des images AVIF, JPEG XL, TIFF et BMP, et regardez s’animer les PNG "
+"et WebP animés."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:84
+msgid "Pause an animation in the preview and step through it frame by frame."
+msgstr ""
+"Mettez une animation en pause dans l’aperçu et parcourez-la image par image."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:85
+msgid ""
+"Export assets converted to PNG, JPEG, WebP, AVIF or ICO, with size, quality, "
+"background and multi-size icons."
+msgstr ""
+"Exportez vos ressources converties en PNG, JPEG, WebP, AVIF ou ICO, avec "
+"taille, qualité, fond et icônes à plusieurs tailles."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:86
+msgid ""
+"See the key figures of a library, a chart of the space used by each format, "
+"its disk space and its records."
+msgstr ""
+"Découvrez les chiffres clés d’une bibliothèque, un graphique de la place "
+"prise par chaque format, son espace disque et ses records."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:87
+msgid "Reopen recent libraries from the main menu or the welcome page."
+msgstr ""
+"Rouvrez vos bibliothèques récentes depuis le menu principal ou la page "
+"d’accueil."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:88
+msgid ""
+"Choose whether to reopen the last library, play animations on hover and how "
+"many recent libraries to keep, and clear the thumbnails."
+msgstr ""
+"Choisissez de rouvrir ou non la dernière bibliothèque, d’animer ou non les "
+"vignettes au survol et le nombre de bibliothèques récentes, et videz les "
+"vignettes."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:89
+msgid ""
+"Libraries opened with Pigoune 1.4 can no longer be opened with an older "
+"version, so update Pigoune on all your computers."
+msgstr ""
+"Une bibliothèque ouverte avec Pigoune 1.4 ne peut plus être ouverte avec une "
+"version plus ancienne : mettez Pigoune à jour sur tous vos ordinateurs."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:95
 msgid "Take a much closer look at your assets in the detailed preview."
 msgstr "Examinez vos ressources de bien plus près dans l’aperçu détaillé."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:82
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:97
 msgid ""
 "Move between assets with on-screen arrows, a two-finger swipe, Home and End."
 msgstr ""
 "Passez d’une ressource à l’autre avec les flèches à l’écran, un balayage à "
 "deux doigts, Début et Fin."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:83
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:98
 msgid "See the format, dimensions and size of the shown asset."
 msgstr "Voyez le format, les dimensions et le poids de la ressource affichée."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:84
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:99
 msgid ""
 "Drag the image freely, zoom with new buttons, and fill the screen with F11."
 msgstr ""
 "Déplacez l’image librement, zoomez avec de nouveaux boutons et passez en "
 "plein écran avec F11."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:85
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:100
 msgid "Spot the real edges of an image and, from 800%, every single pixel."
 msgstr ""
 "Repérez les vrais bords d’une image et, à partir de 800 %, chacun de ses "
 "pixels."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:86
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:101
 msgid "Star, copy, export or open the shown asset without leaving the preview."
 msgstr ""
 "Mettez en favori, copiez, exportez ou ouvrez la ressource affichée sans "
 "quitter l’aperçu."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:87
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:102
 msgid "Switch between the sizes stored in an ICO file."
 msgstr "Passez d’une taille à l’autre dans un fichier ICO."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:88
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:103
 msgid "Open any asset in another application with Open With."
 msgstr ""
 "Ouvrez n’importe quelle ressource dans une autre application avec Ouvrir "
 "avec."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:89
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:104
 msgid "Grab the window more easily by the middle of the library header."
 msgstr ""
 "Attrapez plus facilement la fenêtre par le milieu de la barre de la "
 "bibliothèque."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:95
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:110
 msgid "Stop the thumbnail grid from flickering while the window is resized."
 msgstr ""
 "La grille de vignettes ne clignote plus quand on redimensionne la fenêtre."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:100
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:115
 msgid "Give the thumbnail grid a cleaner look."
 msgstr "Une grille de vignettes plus soignée."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:102
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:117
 msgid "Thumbnails sit in square frames, evenly spaced across the whole width."
 msgstr ""
 "Les vignettes sont posées dans des cadres carrés, régulièrement espacés sur "
 "toute la largeur."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:103
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:118
 msgid "Favorites show a larger yellow star that grows with the thumbnails."
 msgstr ""
 "Les favoris affichent une étoile jaune plus grande, qui suit la taille des "
 "vignettes."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:104
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:119
 msgid "A new preference hides the names under the thumbnails."
 msgstr "Une nouvelle préférence masque les noms sous les vignettes."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:105
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:120
 msgid ""
 "Small images stay sharp, and the lasso shows the selection while it is drawn."
 msgstr ""
 "Les petites images restent nettes, et le lasso montre la sélection pendant "
 "le geste."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:111
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:126
 msgid "Add a user guide, available from the main menu or with F1."
 msgstr ""
 "Ajout d’un guide d’utilisation, accessible depuis le menu principal ou avec "
 "F1."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:116
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:131
 msgid "The first public version of Pigoune."
 msgstr "La première version publique de Pigoune."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:118
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:133
 msgid ""
 "Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with "
 "duplicate detection"
@@ -183,28 +249,28 @@ msgstr ""
 "Importez des fichiers SVG, PNG, JPEG, WebP, GIF et ICO, ou des dossiers "
 "entiers, avec détection des doublons"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:119
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:134
 msgid ""
 "Organize assets with nested collections, tags, favorites, notes and credits"
 msgstr ""
 "Organisez vos ressources avec des collections imbriquées, des tags, des "
 "favoris, des notes et des crédits"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:120
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:135
 msgid "Find any asset instantly with search and filters"
 msgstr ""
 "Retrouvez n’importe quelle ressource instantanément grâce à la recherche et "
 "aux filtres"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:121
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:136
 msgid "Preview assets up close, animated GIFs included"
 msgstr "Examinez vos ressources de près, GIF animés compris"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:122
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:137
 msgid "Reuse assets by dragging, copying or exporting them"
 msgstr "Réutilisez-les par glisser-déposer, copie ou export"
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:123
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:138
 msgid "Undo changes and restore assets from the trash"
 msgstr ""
 "Annulez vos modifications et restaurez vos ressources depuis la corbeille"
