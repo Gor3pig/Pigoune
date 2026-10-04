@@ -100,6 +100,15 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 
 ## Installation
 
+### 1. Préparer Flatpak
+
+Pigoune est distribué au format Flatpak. Fedora, Linux Mint, Pop!_OS et beaucoup d'autres
+distributions l'intègrent déjà. Sur Ubuntu et quelques autres, installez-le d'abord en suivant le
+[guide officiel pour votre distribution](https://flathub.org/setup), puis redémarrez votre
+session.
+
+### 2. Installer Pigoune
+
 Téléchargez le fichier `.flatpak` de la [dernière version](https://github.com/Gor3pig/Pigoune/releases/latest),
 puis ouvrez-le avec Logiciels, ou lancez cette commande depuis le dossier où vous l'avez
 enregistré :
@@ -108,8 +117,20 @@ enregistré :
 flatpak install --user pigoune-*.flatpak
 ```
 
-Le paquet ne se met pas à jour tout seul : installez chaque nouvelle version de la même façon.
-Vous pouvez aussi compiler Pigoune vous-même en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
+L'environnement GNOME dont Pigoune a besoin est téléchargé depuis Flathub la première fois.
+
+### 3. Mettre à jour Pigoune
+
+Le paquet ne se met pas encore à jour tout seul. Quand une nouvelle version sort, téléchargez son
+fichier `.flatpak` et installez-le par-dessus l'actuel, avec Logiciels ou avec cette commande :
+
+```sh
+flatpak install --user --reinstall pigoune-*.flatpak
+```
+
+Si le dossier contient plusieurs fichiers Pigoune, tapez plutôt le nom complet du plus récent.
+Vos bibliothèques et vos réglages sont conservés. Vous pouvez aussi compiler Pigoune vous-même
+en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Guide d'utilisation
 

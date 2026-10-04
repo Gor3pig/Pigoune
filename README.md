@@ -98,6 +98,14 @@ The trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>: a mistake can always be fi
 
 ## Installation
 
+### 1. Set up Flatpak
+
+Pigoune is distributed as a Flatpak. Fedora, Linux Mint, Pop!_OS and many other distributions
+ship Flatpak already. On Ubuntu and a few others, set it up first by following the
+[official guide for your distribution](https://flathub.org/setup), then restart your session.
+
+### 2. Install Pigoune
+
 Download the `.flatpak` file of the [latest release](https://github.com/Gor3pig/Pigoune/releases/latest),
 then open it with Software, or run this command from the folder where you saved it:
 
@@ -105,8 +113,20 @@ then open it with Software, or run this command from the folder where you saved 
 flatpak install --user pigoune-*.flatpak
 ```
 
-The package does not update itself: install each new release the same way. You can also build
-Pigoune yourself by following [CONTRIBUTING.md](CONTRIBUTING.md).
+The GNOME runtime that Pigoune needs is downloaded from Flathub the first time.
+
+### 3. Update Pigoune
+
+The package does not update itself yet. When a new release comes out, download its `.flatpak`
+file and install it over the current one, with Software or with this command:
+
+```sh
+flatpak install --user --reinstall pigoune-*.flatpak
+```
+
+If the folder holds several Pigoune files, type the full name of the newest one instead. Your
+libraries and settings are kept. You can also build Pigoune yourself by following
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## User guide
 
