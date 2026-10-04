@@ -27,9 +27,6 @@ pub const EXPORT_QUALITY: &str = "export-quality";
 pub const EXPORT_BACKGROUND: &str = "export-background";
 pub const EXPORT_KEEP_TRANSPARENCY: &str = "export-keep-transparency";
 pub const EXPORT_SIZE_UNIT: &str = "export-size-unit";
-pub const EXPORT_WIDTH: &str = "export-width";
-pub const EXPORT_HEIGHT: &str = "export-height";
-pub const EXPORT_KEEP_PROPORTIONS: &str = "export-keep-proportions";
 pub const EXPORT_ICON_SIZES: &str = "export-icon-sizes";
 
 pub fn load() -> gio::Settings {
@@ -53,12 +50,6 @@ pub fn store_int(settings: &gio::Settings, key: &str, value: i32) {
 
 pub fn store_bool(settings: &gio::Settings, key: &str, value: bool) {
     if let Err(error) = settings.set_boolean(key, value) {
-        glib_warning(key, &error);
-    }
-}
-
-pub fn store_double(settings: &gio::Settings, key: &str, value: f64) {
-    if let Err(error) = settings.set_double(key, value) {
         glib_warning(key, &error);
     }
 }

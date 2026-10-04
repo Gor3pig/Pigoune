@@ -1453,7 +1453,7 @@ impl PigouneWindow {
             return;
         }
         let dialog = PigouneExportAsDialog::new(
-            conversion_memory::load(self.settings()),
+            conversion_memory::load(self.settings(), natural_size(&assets[0])),
             natural_size(&assets[0]),
             glib::clone!(
                 #[weak(rename_to = window)]

@@ -26,6 +26,19 @@ impl Default for CustomSize {
 }
 
 impl CustomSize {
+    pub fn original(unit: SizeUnit, natural: (u32, u32)) -> Self {
+        let (width, height) = match unit {
+            SizeUnit::Pixels => (f64::from(natural.0), f64::from(natural.1)),
+            SizeUnit::Percent => (FULL_PERCENT, FULL_PERCENT),
+        };
+        Self {
+            unit,
+            width,
+            height,
+            linked: true,
+        }
+    }
+
     pub fn target(self, natural: (u32, u32)) -> (u32, u32) {
         let (width, height) = (f64::from(natural.0), f64::from(natural.1));
         match (self.unit, self.linked) {
@@ -205,6 +218,17 @@ mod tests {
         let stretched = pixels(800.0, 100.0, false);
         let linked = stretched.with_linked(true, PHOTO);
         assert_eq!(sides(linked), (800, 600));
+    }
+
+    #[test]
+    fn the_original_size_can_be_shown_in_either_unit() {
+        let in_pixels = CustomSize::original(SizeUnit::Pixels, PHOTO);
+        assert_eq!(sides(in_pixels), (800, 600));
+        assert!(in_pixels.linked);
+        assert_eq!(in_pixels.target(PHOTO), PHOTO);
+        let in_percent = CustomSize::original(SizeUnit::Percent, PHOTO);
+        assert_eq!(sides(in_percent), (100, 100));
+        assert_eq!(in_percent.target(PHOTO), PHOTO);
     }
 
     #[test]

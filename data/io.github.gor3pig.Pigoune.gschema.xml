@@ -150,23 +150,6 @@
       <summary>Export size unit</summary>
       <description>Whether the export width and height are in pixels or a percentage of the original.</description>
     </key>
-    <key name="export-width" type="d">
-      <range min="1" max="32768"/>
-      <default>100</default>
-      <summary>Export width</summary>
-      <description>Width of converted exports, in the export size unit.</description>
-    </key>
-    <key name="export-height" type="d">
-      <range min="1" max="32768"/>
-      <default>100</default>
-      <summary>Export height</summary>
-      <description>Height of converted exports, in the export size unit.</description>
-    </key>
-    <key name="export-keep-proportions" type="b">
-      <default>true</default>
-      <summary>Keep proportions in exports</summary>
-      <description>Whether changing the export width or height updates the other side.</description>
-    </key>
     <key name="export-icon-sizes" type="ai">
       <default>[16, 32, 48, 256]</default>
       <summary>Icon export sizes</summary>

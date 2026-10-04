@@ -141,16 +141,16 @@ a tag in the details panel works the same way.
   never overwritten.
 - **Convert** them with **Export As…** in the right-click menu: choose PNG, JPEG, WebP, AVIF or
   ICO, then a folder. JPEG and AVIF offer a quality setting. JPEG has no transparency, so a
-  background color fills the transparent areas; the other formats keep transparency unless
-  you turn off **Keep Transparency** to use a background color too. Choose the width and height, in pixels or as
-  a percentage; 100% keeps the original size. With the padlock closed, proportions are kept:
-  changing one side updates the other, and several images of different shapes each fit
-  inside the given width and height. Open it to stretch an image freely. SVG images stay
-  sharp at any size; an enlarged pixel image becomes blurry. A resized file carries its size
-  in its name, such as `logo-512x384.png`. For ICO, tick the sizes to include (16, 32, 48 and 256 by default): they all
-  go into a single icon file. Pigoune remembers your last choices for the next export. The
-  original stays untouched in the library, and existing files
-  are never overwritten.
+  background color fills the transparent areas; the other formats keep transparency unless you
+  turn off **Keep Transparency** to use a background color too. Choose the width and height, in
+  pixels or as a percentage; 100% keeps the original size. With the padlock closed, proportions
+  are kept: changing one side updates the other, and several images of different shapes each fit
+  inside the given width and height. Open it to stretch an image freely. SVG images stay sharp
+  at any size; an enlarged pixel image becomes blurry. A resized file carries its size in its
+  name, such as `logo-512x384.png`. For ICO, tick the sizes to include (16, 32, 48 and 256 by
+  default): they all go into a single icon file. Pigoune remembers your format, quality,
+  background and unit for the next export, while the size always starts from the original. The
+  original stays untouched in the library, and existing files are never overwritten.
 - **Open** an asset in another application, such as an image editor, with **Open With…** in
   the right-click menu. The application receives a copy: your library stays untouched, so
   save your changes under a new name and import them if you want to keep them.

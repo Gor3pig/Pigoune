@@ -9,23 +9,21 @@ use crate::settings;
 const PIXELS: &str = "pixels";
 const PERCENT: &str = "percent";
 
-pub fn load(stored: &gio::Settings) -> ConversionSettings {
+pub fn load(stored: &gio::Settings, natural: (u32, u32)) -> ConversionSettings {
     let defaults = ConversionSettings::default();
     ConversionSettings {
         format: format_of(&stored.string(settings::EXPORT_FORMAT)).unwrap_or(defaults.format),
         quality: u8::try_from(stored.int(settings::EXPORT_QUALITY)).unwrap_or(defaults.quality),
         background: color_of(&stored.string(settings::EXPORT_BACKGROUND))
             .unwrap_or(defaults.background),
-        custom: CustomSize {
-            unit: if stored.string(settings::EXPORT_SIZE_UNIT) == PIXELS {
+        custom: CustomSize::original(
+            if stored.string(settings::EXPORT_SIZE_UNIT) == PIXELS {
                 SizeUnit::Pixels
             } else {
                 SizeUnit::Percent
             },
-            width: stored.double(settings::EXPORT_WIDTH),
-            height: stored.double(settings::EXPORT_HEIGHT),
-            linked: stored.boolean(settings::EXPORT_KEEP_PROPORTIONS),
-        },
+            natural,
+        ),
         keep_transparency: stored.boolean(settings::EXPORT_KEEP_TRANSPARENCY),
         icon_sides: icon_sides_of(&stored.get::<Vec<i32>>(settings::EXPORT_ICON_SIZES)),
     }
@@ -49,13 +47,6 @@ pub fn store(stored: &gio::Settings, chosen: &ConversionSettings) {
         SizeUnit::Percent => PERCENT,
     };
     settings::store_string(stored, settings::EXPORT_SIZE_UNIT, unit);
-    settings::store_double(stored, settings::EXPORT_WIDTH, chosen.custom.width);
-    settings::store_double(stored, settings::EXPORT_HEIGHT, chosen.custom.height);
-    settings::store_bool(
-        stored,
-        settings::EXPORT_KEEP_PROPORTIONS,
-        chosen.custom.linked,
-    );
     let sides: Vec<i32> = chosen
         .icon_sides
         .sides()

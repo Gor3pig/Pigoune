@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 16:34+0200\n"
+"POT-Creation-Date: 2026-10-04 16:42+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -373,35 +373,11 @@ msgid ""
 "original."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:156
-msgid "Export width"
-msgstr ""
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:157
-msgid "Width of converted exports, in the export size unit."
-msgstr ""
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:162
-msgid "Export height"
-msgstr ""
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:163
-msgid "Height of converted exports, in the export size unit."
-msgstr ""
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:167
-msgid "Keep proportions in exports"
-msgstr ""
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:168
-msgid "Whether changing the export width or height updates the other side."
-msgstr ""
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:172
+#: data/io.github.gor3pig.Pigoune.gschema.xml:155
 msgid "Icon export sizes"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:173
+#: data/io.github.gor3pig.Pigoune.gschema.xml:156
 msgid "Sizes, in pixels, gathered in an exported ICO file."
 msgstr ""
 

@@ -160,17 +160,17 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   fichiers existants ne sont jamais écrasés.
 - **Convertissez-les** avec **Exporter au format…** dans le menu du clic droit : choisissez PNG,
   JPEG, WebP, AVIF ou ICO, puis un dossier. JPEG et AVIF proposent un réglage de qualité ; le
-  JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes ;
-  les autres formats gardent la transparence, sauf si vous désactivez **Garder la
-  transparence** pour utiliser aussi une couleur de fond.
-  Choisissez la largeur et la hauteur, en pixels ou en pourcentage ; 100 % garde la taille
-  d'origine. Cadenas fermé, les proportions sont gardées : changer un côté ajuste l'autre, et
-  plusieurs images de formes différentes tiennent chacune dans la largeur et la hauteur
-  indiquées. Ouvrez-le pour étirer librement une image. Un SVG reste net à toutes les
-  tailles ; une image en pixels agrandie devient floue. Un fichier redimensionné porte sa
-  taille dans son nom, par exemple `logo-512x384.png`. Pour l'ICO, cochez les tailles à inclure (16, 32, 48 et 256 par défaut) :
-  elles vont toutes dans un seul fichier d'icône. Pigoune retient vos derniers choix pour le
-  prochain export. L'original reste intact dans la
+  JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes ; les
+  autres formats gardent la transparence, sauf si vous désactivez **Garder la transparence**
+  pour utiliser aussi une couleur de fond. Choisissez la largeur et la hauteur, en pixels ou en
+  pourcentage ; 100 % garde la taille d'origine. Cadenas fermé, les proportions sont gardées :
+  changer un côté ajuste l'autre, et plusieurs images de formes différentes tiennent chacune
+  dans la largeur et la hauteur indiquées. Ouvrez-le pour étirer librement une image. Un SVG
+  reste net à toutes les tailles ; une image en pixels agrandie devient floue. Un fichier
+  redimensionné porte sa taille dans son nom, par exemple `logo-512x384.png`. Pour l'ICO, cochez
+  les tailles à inclure (16, 32, 48 et 256 par défaut) : elles vont toutes dans un seul fichier
+  d'icône. Pigoune retient votre format, votre qualité, votre fond et votre unité pour le
+  prochain export, et la taille repart toujours de l'original. L'original reste intact dans la
   bibliothèque, et les fichiers existants ne sont jamais écrasés.
 - **Ouvrez** une ressource dans une autre application, un logiciel de retouche par exemple,
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre

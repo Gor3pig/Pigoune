@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 16:34+0200\n"
+"POT-Creation-Date: 2026-10-04 16:42+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -426,35 +426,11 @@ msgstr ""
 "Si la largeur et la hauteur des exports sont en pixels ou en pourcentage de "
 "l’original."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:156
-msgid "Export width"
-msgstr "Largeur des exports"
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:157
-msgid "Width of converted exports, in the export size unit."
-msgstr "Largeur des exports convertis, dans l’unité de taille des exports."
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:162
-msgid "Export height"
-msgstr "Hauteur des exports"
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:163
-msgid "Height of converted exports, in the export size unit."
-msgstr "Hauteur des exports convertis, dans l’unité de taille des exports."
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:167
-msgid "Keep proportions in exports"
-msgstr "Garder les proportions dans les exports"
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:168
-msgid "Whether changing the export width or height updates the other side."
-msgstr "Si changer la largeur ou la hauteur d’un export ajuste l’autre côté."
-
-#: data/io.github.gor3pig.Pigoune.gschema.xml:172
+#: data/io.github.gor3pig.Pigoune.gschema.xml:155
 msgid "Icon export sizes"
 msgstr "Tailles des exports d’icône"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:173
+#: data/io.github.gor3pig.Pigoune.gschema.xml:156
 msgid "Sizes, in pixels, gathered in an exported ICO file."
 msgstr "Tailles, en pixels, réunies dans un fichier ICO exporté."
 
@@ -2163,6 +2139,25 @@ msgstr ""
 #: crates/pigoune-app/src/conversion_report.rs:58
 msgid "the conversion failed"
 msgstr "la conversion a échoué"
+
+#~ msgid "Export width"
+#~ msgstr "Largeur des exports"
+
+#~ msgid "Width of converted exports, in the export size unit."
+#~ msgstr "Largeur des exports convertis, dans l’unité de taille des exports."
+
+#~ msgid "Export height"
+#~ msgstr "Hauteur des exports"
+
+#~ msgid "Height of converted exports, in the export size unit."
+#~ msgstr "Hauteur des exports convertis, dans l’unité de taille des exports."
+
+#~ msgid "Keep proportions in exports"
+#~ msgstr "Garder les proportions dans les exports"
+
+#~ msgid "Whether changing the export width or height updates the other side."
+#~ msgstr ""
+#~ "Si changer la largeur ou la hauteur d’un export ajuste l’autre côté."
 
 #~ msgid "Small files, keeps transparency"
 #~ msgstr "Fichiers légers, garde la transparence"
