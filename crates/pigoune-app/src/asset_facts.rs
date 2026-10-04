@@ -7,7 +7,7 @@ use pigoune_core::{AnimationTiming, Asset, AssetFormat, Dimensions};
 const MILLISECONDS_PER_SECOND: i64 = 1000;
 const MILLISECONDS_PER_TENTH: u128 = 100;
 const TENTHS_PER_SECOND: u128 = 10;
-const SUMMARY_SEPARATOR: &str = " · ";
+pub const SUMMARY_SEPARATOR: &str = " · ";
 
 pub fn format_name(format: AssetFormat) -> &'static str {
     match format {

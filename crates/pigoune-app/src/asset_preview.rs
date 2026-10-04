@@ -9,6 +9,7 @@ use gtk::{gdk, glib};
 use pigoune_core::{AssetFormat, Dimensions};
 
 use crate::animation;
+use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -320,7 +321,7 @@ impl PigouneAssetPreview {
         };
         imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
-            .set_subtitle(&position_text(position, count));
+            .set_subtitle(&subtitle_text(&asset, position, count));
         self.update_step_buttons();
         let remembered = imp
             .thumbnails
@@ -483,6 +484,14 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
     u32::try_from(target)
         .ok()
         .filter(|position| *position < count)
+}
+
+fn subtitle_text(asset: &PigouneAssetObject, position: u32, count: u32) -> String {
+    [
+        position_text(position, count),
+        asset_facts::summary_text(asset.asset(), None),
+    ]
+    .join(asset_facts::SUMMARY_SEPARATOR)
 }
 
 fn position_text(position: u32, count: u32) -> String {
