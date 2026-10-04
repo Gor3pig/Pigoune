@@ -18,8 +18,11 @@ use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_places::SharedCollection;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
+use crate::conversion_report;
 use crate::drop_message;
 use crate::error_messages;
+use crate::export_as_dialog::PigouneExportAsDialog;
+use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report::{self, Destination};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
@@ -65,6 +68,7 @@ const PREFERENCES_ACTION: &str = "win.preferences";
 const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
+const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const OPEN_LIBRARY_ACTIONS: [&str; 14] = [
@@ -99,6 +103,7 @@ const IMAGE_MIME_TYPES: [&str; 11] = [
 ];
 
 const CLOSE_RESPONSE: &str = "close";
+const DEFAULT_VECTOR_EXPORT_PIXELS: u32 = 512;
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
 const RETRY_RESPONSE: &str = "retry";
 const MERGE_RESPONSE: &str = "merge";
@@ -122,17 +127,19 @@ mod imp {
     use crate::asset_grid::PigouneAssetGrid;
     use crate::asset_preview::PigouneAssetPreview;
     use crate::grid_header::PigouneGridHeader;
+    use crate::image_conversion::ConversionSettings;
     use crate::sidebar::PigouneSidebar;
 
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION,
         CREATE_LIBRARY_ACTION, DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION,
-        ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, IMPORT_FILES_ACTION,
-        IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
-        OPEN_PREVIEW_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION,
-        RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
-        SEARCH_ACTION, SELECT_ALL_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
-        TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, tag_parameter,
+        ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
+        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
+        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
+        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
+        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION,
+        collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -175,6 +182,7 @@ mod imp {
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
+        pub conversion_settings: Cell<ConversionSettings>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
@@ -206,6 +214,9 @@ mod imp {
         });
         class.install_action_async(EXPORT_SELECTED_ACTION, None, |window, _, _| async move {
             window.export_selected().await;
+        });
+        class.install_action(EXPORT_SELECTED_AS_ACTION, None, |window, _, _| {
+            window.export_selected_as();
         });
         class.install_action_async(OPEN_WITH_ACTION, None, |window, _, _| async move {
             window.open_selected_with().await;
@@ -1047,6 +1058,10 @@ impl PigouneWindow {
             Some("<Control>c"),
         ));
         sharing.append(Some(&gettext("Export To…")), Some(EXPORT_SELECTED_ACTION));
+        sharing.append(
+            Some(&gettext("Export As…")),
+            Some(EXPORT_SELECTED_AS_ACTION),
+        );
         let organizing = gio::Menu::new();
         let favorite_label = if selected.iter().all(PigouneAssetObject::favorite) {
             gettext("Remove from Favorites")
@@ -1432,6 +1447,98 @@ impl PigouneWindow {
         }
     }
 
+    fn export_selected_as(&self) {
+        let assets = self.targeted_assets();
+        if assets.is_empty() || self.is_showing_trash() {
+            return;
+        }
+        let dialog = PigouneExportAsDialog::new(
+            self.imp().conversion_settings.get(),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |settings| {
+                    window.imp().conversion_settings.set(settings);
+                    let assets = assets.clone();
+                    glib::spawn_future_local(async move {
+                        window.convert_into_folder(&assets, settings).await;
+                    });
+                }
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    async fn convert_into_folder(
+        &self,
+        assets: &[PigouneAssetObject],
+        settings: ConversionSettings,
+    ) {
+        let dialog = gtk::FileDialog::builder()
+            .title(gettext("Export As"))
+            .accept_label(gettext("_Export"))
+            .modal(true)
+            .build();
+        let Ok(folder) = dialog.select_folder_future(Some(self)).await else {
+            return;
+        };
+        let Some(path) = folder.path() else {
+            return;
+        };
+        let progress = adw::Toast::new(&conversion_report::progress_text(
+            assets.len(),
+            settings.format,
+        ));
+        progress.set_timeout(0);
+        self.imp().toast_overlay.add_toast(progress.clone());
+        let mut exported = 0;
+        let mut failures = Vec::new();
+        for asset in assets {
+            match self.convert_one(asset, &path, settings).await {
+                Ok(()) => exported += 1,
+                Err(reason) => failures.push(conversion_report::Failure {
+                    name: asset.display_name(),
+                    reason,
+                }),
+            }
+        }
+        progress.dismiss();
+        if exported > 0 {
+            self.show_folder_toast(
+                &conversion_report::success_text(exported, settings.format, &folder_name(&folder)),
+                &folder,
+            );
+        }
+        if !failures.is_empty() {
+            let alert = adw::AlertDialog::new(
+                Some(&conversion_report::failures_heading(failures.len())),
+                Some(&conversion_report::failures_body(&failures)),
+            );
+            alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+            alert.present(Some(self));
+        }
+    }
+
+    async fn convert_one(
+        &self,
+        asset: &PigouneAssetObject,
+        folder: &Path,
+        settings: ConversionSettings,
+    ) -> Result<(), String> {
+        let vector_pixels = asset
+            .asset()
+            .dimensions
+            .map_or(DEFAULT_VECTOR_EXPORT_PIXELS, |size| {
+                size.width().max(size.height())
+            });
+        let bytes = image_conversion::convert(asset.file(), vector_pixels, settings)
+            .await
+            .map_err(conversion_report::reason)?;
+        Library::save_converted(asset.asset(), folder, settings.format.extension(), &bytes)
+            .map(|_| ())
+            .map_err(|error| error_messages::describe(&error))
+    }
+
     async fn open_selected_with(&self) {
         let selected = self.targeted_ids();
         let [asset] = selected[..] else {
@@ -1471,19 +1578,18 @@ impl PigouneWindow {
     }
 
     fn show_export_toast(&self, count: usize, folder: &gio::File) {
-        let name = folder
-            .basename()
-            .map(|name| name.to_string_lossy().into_owned())
-            .unwrap_or_default();
-        let toast = adw::Toast::new(
-            &ngettext(
-                "{count} resource exported to “{name}”",
-                "{count} resources exported to “{name}”",
-                u32::try_from(count).unwrap_or(u32::MAX),
-            )
-            .replace("{count}", &count.to_string())
-            .replace("{name}", &name),
-        );
+        let message = ngettext(
+            "{count} resource exported to “{name}”",
+            "{count} resources exported to “{name}”",
+            u32::try_from(count).unwrap_or(u32::MAX),
+        )
+        .replace("{count}", &count.to_string())
+        .replace("{name}", &folder_name(folder));
+        self.show_folder_toast(&message, folder);
+    }
+
+    fn show_folder_toast(&self, message: &str, folder: &gio::File) {
+        let toast = adw::Toast::new(message);
         toast.set_button_label(Some(&gettext("_Open Folder")));
         toast.connect_button_clicked(glib::clone!(
             #[weak(rename_to = window)]
@@ -2748,6 +2854,13 @@ impl PigouneWindow {
         settings::store_int(settings, settings::WINDOW_HEIGHT, height);
         settings::store_bool(settings, settings::WINDOW_MAXIMIZED, self.is_maximized());
     }
+}
+
+fn folder_name(folder: &gio::File) -> String {
+    folder
+        .basename()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_default()
 }
 
 fn opening_error_alert(root: &Path, error: &LibraryError) -> adw::AlertDialog {

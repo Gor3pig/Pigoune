@@ -1,8 +1,9 @@
 use std::collections::HashSet;
-use std::fs;
+use std::fs::{self, File};
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use super::{AssetId, Library, LibraryError, layout};
+use super::{Asset, AssetId, Library, LibraryError, layout};
 
 const MAX_NAME_BYTES: usize = 200;
 const FORBIDDEN_CHARACTERS: [char; 2] = ['/', '\0'];
@@ -33,6 +34,25 @@ impl Library {
         self.copy_into(assets, folder)
     }
 
+    pub fn save_converted(
+        asset: &Asset,
+        folder: &Path,
+        extension: &str,
+        contents: &[u8],
+    ) -> Result<PathBuf, LibraryError> {
+        if !folder.is_dir() {
+            return Err(LibraryError::NotFound(folder.to_path_buf()));
+        }
+        let (mut file, path) = create_free_file(
+            folder,
+            &base_name_of(asset),
+            Some(extension),
+            &mut HashSet::new(),
+        )?;
+        file.write_all(contents)?;
+        Ok(path)
+    }
+
     fn fresh_copies(
         &self,
         assets: &[AssetId],
@@ -50,33 +70,49 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
-            let extension = Path::new(&asset.original_file_name)
-                .extension()
-                .map(|extension| extension.to_string_lossy().into_owned());
-            let base = export_base_name(&asset.display_name, extension.as_deref())
-                .unwrap_or_else(|| id.to_string());
-            let copy = loop {
-                let name = free_name(&base, extension.as_deref(), &mut taken);
-                let candidate = folder.join(name);
-                if candidate.symlink_metadata().is_err() {
-                    break candidate;
-                }
-            };
-            copy_without_overwriting(&self.file_of(&asset), &copy)?;
+            let extension = original_extension(&asset);
+            let (mut file, copy) = create_free_file(
+                folder,
+                &base_name_of(&asset),
+                extension.as_deref(),
+                &mut taken,
+            )?;
+            io::copy(&mut File::open(self.file_of(&asset))?, &mut file)?;
             copies.push(copy);
         }
         Ok(copies)
     }
 }
 
-fn copy_without_overwriting(source: &Path, destination: &Path) -> Result<(), LibraryError> {
-    let mut reader = fs::File::open(source)?;
-    let mut writer = fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(destination)?;
-    std::io::copy(&mut reader, &mut writer)?;
-    Ok(())
+fn original_extension(asset: &Asset) -> Option<String> {
+    Path::new(&asset.original_file_name)
+        .extension()
+        .map(|extension| extension.to_string_lossy().into_owned())
+}
+
+fn base_name_of(asset: &Asset) -> String {
+    export_base_name(&asset.display_name, original_extension(asset).as_deref())
+        .unwrap_or_else(|| asset.id.to_string())
+}
+
+fn create_free_file(
+    folder: &Path,
+    base: &str,
+    extension: Option<&str>,
+    taken: &mut HashSet<String>,
+) -> io::Result<(File, PathBuf)> {
+    loop {
+        let path = folder.join(free_name(base, extension, taken));
+        match fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(file) => return Ok((file, path)),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error),
+        }
+    }
 }
 
 pub fn forget_exports(root: &Path) {

@@ -1,0 +1,85 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneExportAsDialog: Adw.Dialog {
+  title: _("Export As");
+  follows-content-size: true;
+  default-widget: export_button;
+
+  child: Adw.ToolbarView {
+    width-request: 420;
+
+    [top]
+    Adw.HeaderBar {
+      show-start-title-buttons: false;
+      show-end-title-buttons: false;
+
+      [start]
+      Button {
+        label: _("_Cancel");
+        use-underline: true;
+        clicked => $on_cancel_clicked() swapped;
+      }
+
+      [end]
+      Button export_button {
+        label: _("_Export…");
+        use-underline: true;
+        clicked => $on_export_clicked() swapped;
+
+        styles [
+          "suggested-action",
+        ]
+      }
+    }
+
+    content: Box {
+      orientation: vertical;
+      margin-top: 12;
+      margin-bottom: 24;
+      margin-start: 12;
+      margin-end: 12;
+
+      ListBox {
+        selection-mode: none;
+
+        styles [
+          "boxed-list",
+        ]
+
+        Adw.ComboRow format_row {
+          title: _("Format");
+          notify::selected => $on_format_changed() swapped;
+        }
+
+        Adw.SpinRow quality_row {
+          title: _("Quality");
+          subtitle: _("A higher quality makes larger files");
+
+          adjustment: Adjustment {
+            lower: 1;
+            upper: 100;
+            step-increment: 1;
+            page-increment: 10;
+            value: 90;
+          };
+        }
+
+        Adw.ActionRow background_row {
+          title: _("Background");
+          subtitle: _("Fills the transparent areas");
+          activatable-widget: background_button;
+
+          [suffix]
+          ColorDialogButton background_button {
+            valign: center;
+
+            dialog: ColorDialog {
+              with-alpha: false;
+            };
+          }
+        }
+      }
+    };
+  };
+}

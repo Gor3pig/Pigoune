@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use pigoune_core::{AssetCommand, AssetId, ImportOutcome, Library};
+use pigoune_core::{Asset, AssetCommand, AssetId, ImportOutcome, Library};
 use tempfile::TempDir;
 
 struct Fixture {
@@ -34,6 +34,13 @@ impl Fixture {
                 name: name.to_owned(),
             })
             .expect("resource is renamed");
+    }
+
+    fn asset(&self, id: AssetId) -> Asset {
+        self.library
+            .asset(id)
+            .expect("asset readable")
+            .expect("asset exists")
     }
 
     fn export(&self, assets: &[AssetId]) -> Vec<PathBuf> {
@@ -328,4 +335,48 @@ fn a_missing_asset_has_no_opening_copy() {
         fixture.library.opening_copy(svg).expect("lookup works"),
         None
     );
+}
+
+#[test]
+fn a_conversion_takes_the_display_name_and_the_new_extension() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    fixture.rename(png, "Point rouge");
+    let folder = fixture.workspace.path().join("Exports");
+    fs::create_dir(&folder).expect("folder is created");
+    fs::write(folder.join("Point rouge.jpg"), b"mine").expect("file is written");
+
+    let saved = Library::save_converted(&fixture.asset(png), &folder, "jpg", b"converted")
+        .expect("conversion is saved");
+
+    assert_eq!(saved, folder.join("Point rouge (2).jpg"));
+    assert_eq!(fs::read(&saved).expect("file is read"), b"converted");
+    assert_eq!(
+        fs::read(folder.join("Point rouge.jpg")).expect("file is read"),
+        b"mine"
+    );
+}
+
+#[test]
+fn the_original_extension_is_not_kept_in_a_conversion() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    fixture.rename(png, "red-dot.png");
+    let folder = fixture.workspace.path().join("Exports");
+    fs::create_dir(&folder).expect("folder is created");
+
+    let saved = Library::save_converted(&fixture.asset(png), &folder, "webp", b"converted")
+        .expect("conversion is saved");
+
+    assert_eq!(saved, folder.join("red-dot.webp"));
+}
+
+#[test]
+fn a_conversion_to_a_missing_folder_is_refused() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    let missing = fixture.workspace.path().join("absent");
+
+    assert!(Library::save_converted(&fixture.asset(png), &missing, "jpg", b"converted").is_err());
+    assert!(!missing.exists());
 }

@@ -147,7 +147,8 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
   du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
-  sur l'image propose **Copier**, **Ouvrir avec…** et **Exporter vers…** pour elle.
+  sur l'image propose **Copier**, **Ouvrir avec…**, **Exporter vers…** et **Exporter au
+  format…** pour elle.
 
 ## Réutiliser vos ressources
 
@@ -157,6 +158,11 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
 - **Copiez-les** avec <kbd>Ctrl</kbd>+<kbd>C</kbd> pour les coller ailleurs.
 - **Exportez-les** dans un dossier avec **Exporter vers…** dans le menu du clic droit. Les
   fichiers existants ne sont jamais écrasés.
+- **Convertissez-les** avec **Exporter au format…** dans le menu du clic droit : choisissez PNG,
+  JPEG, WebP, AVIF ou ICO, puis un dossier. JPEG et AVIF proposent un réglage de qualité ; le
+  JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes. Le
+  format ICO est limité à 256 × 256 pixels. L'original reste intact dans la bibliothèque, et
+  les fichiers existants ne sont jamais écrasés.
 - **Ouvrez** une ressource dans une autre application, un logiciel de retouche par exemple,
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et

@@ -130,7 +130,7 @@ a tag in the details panel works the same way.
 - From 800% on, a light grid separates the pixels of pictures, which helps to check icons and
   pixel art; turn it off with **Show Pixel Grid** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Copy**, **Open With…** and **Export To…** for it.
+  the image offers **Copy**, **Open With…**, **Export To…** and **Export As…** for it.
 
 ## Reusing assets
 
@@ -139,6 +139,10 @@ a tag in the details panel works the same way.
 - **Copy** them with <kbd>Ctrl</kbd>+<kbd>C</kbd> and paste them elsewhere.
 - **Export** them to a folder with **Export To…** in the right-click menu. Existing files are
   never overwritten.
+- **Convert** them with **Export As…** in the right-click menu: choose PNG, JPEG, WebP, AVIF or
+  ICO, then a folder. JPEG and AVIF offer a quality setting; JPEG has no transparency, so a
+  background color fills the transparent areas. ICO is limited to 256 × 256 pixels. The
+  original stays untouched in the library, and existing files are never overwritten.
 - **Open** an asset in another application, such as an image editor, with **Open With…** in
   the right-click menu. The application receives a copy: your library stays untouched, so
   save your changes under a new name and import them if you want to keep them.

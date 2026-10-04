@@ -943,6 +943,7 @@ fn context_menu_model(favorite: bool) -> gio::MenuModel {
     sharing.append_item(&copy);
     sharing.append(Some(&gettext("Open With…")), Some("win.open-with"));
     sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
+    sharing.append(Some(&gettext("Export As…")), Some("win.export-selected-as"));
     let organizing = gio::Menu::new();
     let favorite_label = if favorite {
         gettext("Remove from Favorites")

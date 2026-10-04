@@ -67,7 +67,7 @@ collection or a tag shows you where an asset lives.
 
 ### Reuse
 Drag an asset into any application, open it with another one, copy it to the clipboard or
-export it to a folder.
+export it to a folder, as it is or converted to PNG, JPEG, WebP, AVIF or ICO.
 
 </td>
 </tr>
