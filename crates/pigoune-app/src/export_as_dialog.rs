@@ -41,6 +41,8 @@ mod imp {
         #[template_child]
         pub link_button: TemplateChild<gtk::ToggleButton>,
         #[template_child]
+        pub several_hint: TemplateChild<gtk::Label>,
+        #[template_child]
         pub unit_dropdown: TemplateChild<gtk::DropDown>,
         #[template_child]
         pub icon_sides_row: TemplateChild<gtk::ListBoxRow>,
@@ -93,10 +95,12 @@ impl PigouneExportAsDialog {
     pub fn new(
         settings: ConversionSettings,
         reference: (u32, u32),
+        resource_count: usize,
         on_export: impl Fn(ConversionSettings) + 'static,
     ) -> Self {
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
+        imp.several_hint.set_visible(resource_count > 1);
         let names: Vec<&str> = TargetFormat::ALL
             .iter()
             .map(|format| format.name())
@@ -186,6 +190,7 @@ impl PigouneExportAsDialog {
     fn show_custom(&self, custom: CustomSize) {
         let imp = self.imp();
         imp.custom.set(custom);
+        imp.several_hint.set_label(&several_text(custom));
         imp.showing_custom.set(true);
         let largest = match custom.unit {
             SizeUnit::Pixels => LARGEST_PIXELS,
@@ -262,6 +267,16 @@ impl PigouneExportAsDialog {
         if let Some(on_export) = self.imp().on_export.borrow().as_ref() {
             on_export(settings);
         }
+    }
+}
+
+fn several_text(custom: CustomSize) -> String {
+    match (custom.unit, custom.linked) {
+        (SizeUnit::Percent, _) => gettext("Each resource is resized by this percentage"),
+        (SizeUnit::Pixels, true) => {
+            gettext("Each resource fits inside this frame, without being stretched")
+        }
+        (SizeUnit::Pixels, false) => gettext("Each resource takes exactly this size"),
     }
 }
 

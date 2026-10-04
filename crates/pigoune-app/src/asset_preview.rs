@@ -945,11 +945,12 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
 }
 
 fn context_menu_model(favorite: bool) -> gio::MenuModel {
+    let viewing = gio::Menu::new();
+    viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
     let sharing = gio::Menu::new();
     let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
     copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));
     sharing.append_item(&copy);
-    sharing.append(Some(&gettext("Open With…")), Some("win.open-with"));
     sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
     sharing.append(Some(&gettext("Export As…")), Some("win.export-selected-as"));
     let organizing = gio::Menu::new();
@@ -960,6 +961,7 @@ fn context_menu_model(favorite: bool) -> gio::MenuModel {
     };
     organizing.append(Some(&favorite_label), Some("win.toggle-favorite"));
     let menu = gio::Menu::new();
+    menu.append_section(None, &viewing);
     menu.append_section(None, &sharing);
     menu.append_section(None, &organizing);
     menu.upcast()

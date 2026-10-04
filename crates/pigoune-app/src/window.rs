@@ -1813,6 +1813,7 @@ impl PigouneWindow {
         let dialog = PigouneExportAsDialog::new(
             conversion_memory::load(self.settings(), natural_size(&assets[0])),
             natural_size(&assets[0]),
+            assets.len(),
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,

@@ -156,6 +156,16 @@ template $PigouneExportAsDialog: Adw.Dialog {
               }
             }
 
+            Label several_hint {
+              xalign: 0;
+              wrap: true;
+              visible: false;
+
+              styles [
+                "caption",
+              ]
+            }
+
             Label {
               label: _("A pixel image that is enlarged becomes blurry; SVG images stay sharp");
               xalign: 0;
