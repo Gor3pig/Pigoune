@@ -119,6 +119,12 @@ mod imp {
             class.install_action("preview.zoom-actual", None, |preview, _, _| {
                 preview.imp().zoom_view.show_actual_size();
             });
+            class.install_action("preview.zoom-in", None, |preview, _, _| {
+                preview.imp().zoom_view.zoom_in();
+            });
+            class.install_action("preview.zoom-out", None, |preview, _, _| {
+                preview.imp().zoom_view.zoom_out();
+            });
             for key in [gdk::Key::plus, gdk::Key::equal, gdk::Key::KP_Add] {
                 class.add_binding(key, gdk::ModifierType::empty(), |preview| {
                     preview.imp().zoom_view.zoom_in();

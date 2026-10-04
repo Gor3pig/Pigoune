@@ -6,6 +6,8 @@ use crate::zoom_math::{self, Point, Size};
 
 const WHEEL_ZOOM_FACTOR: f64 = 1.25;
 const KEY_ZOOM_FACTOR: f64 = 1.25;
+const MOVABLE_CURSOR: &str = "grab";
+const MOVING_CURSOR: &str = "grabbing";
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 
@@ -28,6 +30,7 @@ mod imp {
         pub center: Cell<Point>,
         pub pointer: Cell<Option<Point>>,
         pub drag_start: Cell<Point>,
+        pub dragging: Cell<bool>,
         pub pinch_start: Cell<f64>,
         pub on_zoom_changed: RefCell<Option<ZoomChangedCallback>>,
     }
@@ -46,6 +49,7 @@ mod imp {
                 center: Cell::new(Point { x: 0.5, y: 0.5 }),
                 pointer: Cell::default(),
                 drag_start: Cell::new(Point { x: 0.0, y: 0.0 }),
+                dragging: Cell::default(),
                 pinch_start: Cell::new(1.0),
                 on_zoom_changed: RefCell::default(),
             }
@@ -162,9 +166,21 @@ impl PigouneZoomView {
             zoom,
         ));
         self.queue_draw();
+        self.update_cursor();
         if changed && let Some(on_zoom_changed) = imp.on_zoom_changed.borrow().as_ref() {
             on_zoom_changed(zoom);
         }
+    }
+
+    fn update_cursor(&self) {
+        let imp = self.imp();
+        let movable = zoom_math::can_pan(self.view_size(), imp.image.get(), imp.zoom.get());
+        let cursor = match (movable, imp.dragging.get()) {
+            (false, _) => None,
+            (true, false) => Some(MOVABLE_CURSOR),
+            (true, true) => Some(MOVING_CURSOR),
+        };
+        self.set_cursor_from_name(cursor);
     }
 
     fn settle_after_resize(&self) {
@@ -275,6 +291,16 @@ impl PigouneZoomView {
             move |_, _, _| {
                 let imp = view.imp();
                 imp.drag_start.set(imp.center.get());
+                imp.dragging.set(true);
+                view.update_cursor();
+            }
+        ));
+        drag.connect_drag_end(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, _, _| {
+                view.imp().dragging.set(false);
+                view.update_cursor();
             }
         ));
         drag.connect_drag_update(glib::clone!(

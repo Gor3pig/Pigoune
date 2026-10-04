@@ -1,6 +1,26 @@
 using Gtk 4.0;
 using Adw 1;
 
+menu zoom_menu {
+  section {
+    item {
+      custom: "zoom-buttons";
+    }
+  }
+
+  section {
+    item {
+      label: _("Fit to Window");
+      action: "preview.zoom-fit";
+    }
+
+    item {
+      label: _("Actual Size");
+      action: "preview.zoom-actual";
+    }
+  }
+}
+
 template $PigouneAssetPreview: Adw.Bin {
   focusable: true;
 
@@ -32,7 +52,38 @@ template $PigouneAssetPreview: Adw.Bin {
       [end]
       MenuButton zoom_button {
         tooltip-text: _("Zoom");
-        menu-model: zoom_menu;
+
+        popover: PopoverMenu {
+          menu-model: zoom_menu;
+
+          [zoom-buttons]
+          Box {
+            halign: center;
+            spacing: 12;
+
+            Button {
+              icon-name: "zoom-out-symbolic";
+              tooltip-text: _("Zoom Out");
+              action-name: "preview.zoom-out";
+
+              styles [
+                "flat",
+                "circular",
+              ]
+            }
+
+            Button {
+              icon-name: "zoom-in-symbolic";
+              tooltip-text: _("Zoom In");
+              action-name: "preview.zoom-in";
+
+              styles [
+                "flat",
+                "circular",
+              ]
+            }
+          }
+        };
 
         styles [
           "numeric",
@@ -197,18 +248,4 @@ template $PigouneAssetPreview: Adw.Bin {
       }
     };
   };
-}
-
-menu zoom_menu {
-  section {
-    item {
-      label: _("Fit to Window");
-      action: "preview.zoom-fit";
-    }
-
-    item {
-      label: _("Actual Size");
-      action: "preview.zoom-actual";
-    }
-  }
 }

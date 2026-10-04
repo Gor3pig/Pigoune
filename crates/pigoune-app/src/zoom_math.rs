@@ -57,6 +57,10 @@ fn clamp_axis(center: f64, view: f64, image: f64, zoom: f64) -> f64 {
     }
 }
 
+pub fn can_pan(view: Size, image: Size, zoom: f64) -> bool {
+    image.width * zoom > view.width.ceil() || image.height * zoom > view.height.ceil()
+}
+
 pub fn shows_sharp_pixels(
     zoom: f64,
     image_width: f64,
@@ -122,6 +126,14 @@ mod tests {
                 y: 2700.0
             }
         );
+    }
+
+    #[test]
+    fn only_an_image_larger_than_the_view_can_be_moved() {
+        assert!(!can_pan(VIEW, size(800.0, 600.0), 1.0));
+        assert!(!can_pan(VIEW, size(1600.0, 1200.0), 0.5));
+        assert!(can_pan(VIEW, size(801.0, 100.0), 1.0));
+        assert!(can_pan(VIEW, size(100.0, 100.0), 7.0));
     }
 
     #[test]
