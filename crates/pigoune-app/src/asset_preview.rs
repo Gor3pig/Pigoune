@@ -6,7 +6,7 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib};
 
-use pigoune_core::{AssetFormat, Dimensions};
+use pigoune_core::{Asset, AssetFormat, Dimensions};
 
 use crate::animation;
 use crate::asset_facts;
@@ -65,6 +65,8 @@ mod imp {
         pub zoom_button: TemplateChild<gtk::MenuButton>,
         #[template_child]
         pub favorite_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub icon_sizes: TemplateChild<gtk::Box>,
         #[template_child]
         pub context_menu: TemplateChild<gtk::PopoverMenu>,
         pub swipe: RefCell<SwipeSteps>,
@@ -300,6 +302,71 @@ impl PigouneAssetPreview {
     #[template_callback]
     fn on_next_clicked(&self) {
         self.step(1);
+    }
+
+    fn offer_icon_sizes(&self, asset: &PigouneAssetObject) {
+        let sizes_box = &*self.imp().icon_sizes;
+        while let Some(button) = sizes_box.first_child() {
+            sizes_box.remove(&button);
+        }
+        let sizes = &asset.asset().embedded_sizes;
+        sizes_box.set_visible(sizes.len() > 1);
+        if sizes.len() < 2 {
+            return;
+        }
+        let largest = sizes.last().copied();
+        let mut group: Option<gtk::ToggleButton> = None;
+        for size in sizes.iter().copied() {
+            let button = gtk::ToggleButton::builder()
+                .label(icon_size_label(size))
+                .tooltip_text(asset_facts::dimensions_text(Some(size)))
+                .focus_on_click(false)
+                .can_focus(false)
+                .css_classes(["osd", "numeric", "icon-size"])
+                .active(Some(size) == largest)
+                .build();
+            button.set_group(group.as_ref());
+            button.connect_toggled(glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                #[weak]
+                asset,
+                move |button| {
+                    if button.is_active() {
+                        preview.show_icon_size(&asset, size);
+                    }
+                }
+            ));
+            sizes_box.append(&button);
+            group.get_or_insert(button);
+        }
+    }
+
+    fn show_icon_size(&self, asset: &PigouneAssetObject, size: Dimensions) {
+        let imp = self.imp();
+        if let Some(loading) = imp.loading.take() {
+            loading.abort();
+        }
+        let file = asset.file().to_path_buf();
+        let shown = asset_at_size(asset.asset(), size);
+        let loading = glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            async move {
+                let Some(icon) = thumbnails::load_icon_size(&file, size).await else {
+                    return;
+                };
+                let imp = preview.imp();
+                imp.zoom_view
+                    .show_image(Some(&icon.texture), icon.width, icon.height, false);
+                imp.preview_title.set_subtitle(&subtitle_text(
+                    &shown,
+                    imp.position.get(),
+                    preview.count(),
+                ));
+            }
+        ));
+        imp.loading.replace(Some(loading));
     }
 
     fn watch_favorite(&self, asset: &PigouneAssetObject) {
@@ -631,7 +698,7 @@ impl PigouneAssetPreview {
         };
         imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
-            .set_subtitle(&subtitle_text(&asset, position, count));
+            .set_subtitle(&subtitle_text(asset.asset(), position, count));
         self.update_controls();
         let remembered = imp
             .thumbnails
@@ -643,6 +710,7 @@ impl PigouneAssetPreview {
         imp.zoom_view
             .show_image(remembered.as_ref(), width, height, is_vector);
         imp.showing.replace(Some(asset.clone()));
+        self.offer_icon_sizes(&asset);
         self.watch_favorite(&asset);
         self.stop_animation();
         self.load(&asset, self.render_pixels(), true);
@@ -817,12 +885,27 @@ fn context_menu_model(favorite: bool) -> gio::MenuModel {
     menu.upcast()
 }
 
-fn subtitle_text(asset: &PigouneAssetObject, position: u32, count: u32) -> String {
+fn icon_size_label(size: Dimensions) -> String {
+    if size.width() == size.height() {
+        size.width().to_string()
+    } else {
+        format!("{} × {}", size.width(), size.height())
+    }
+}
+
+fn subtitle_text(asset: &Asset, position: u32, count: u32) -> String {
     [
         position_text(position, count),
-        asset_facts::summary_text(asset.asset(), None),
+        asset_facts::summary_text(asset, None),
     ]
     .join(asset_facts::SUMMARY_SEPARATOR)
+}
+
+fn asset_at_size(asset: &Asset, size: Dimensions) -> Asset {
+    Asset {
+        dimensions: Some(size),
+        ..asset.clone()
+    }
 }
 
 fn position_text(position: u32, count: u32) -> String {

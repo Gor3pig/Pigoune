@@ -247,6 +247,22 @@ template $PigouneAssetPreview: Adw.Bin {
       };
 
       [overlay]
+      Box icon_sizes {
+        halign: center;
+        valign: end;
+        margin-bottom: 18;
+        visible: false;
+
+        styles [
+          "linked",
+        ]
+
+        accessibility {
+          label: _("Icon Size");
+        }
+      }
+
+      [overlay]
       Button previous_button {
         icon-name: "go-previous-symbolic";
         tooltip-text: _("Previous Resource");

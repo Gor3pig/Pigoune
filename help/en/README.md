@@ -118,6 +118,8 @@ a tag in the details panel works the same way.
   to the first and last asset.
 - Press <kbd>F11</kbd>, or choose **Full Screen** in the zoom menu, to fill the screen; the top
   bar comes back when you move the mouse, and <kbd>Esc</kbd> leaves full screen.
+- For an ICO file holding several sizes, buttons below the image show each size as it was drawn
+  (16, 32, 48, 256…).
 - In the preview, drag the image to examine any part of it, even a corner brought to the
   middle of the screen. A dashed outline shows the real edges of the image, transparent
   margins included; turn it off with **Show Image Bounds** in the zoom menu.

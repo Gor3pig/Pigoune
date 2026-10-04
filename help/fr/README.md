@@ -133,6 +133,8 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
 - Appuyez sur <kbd>F11</kbd>, ou choisissez **Plein écran** dans le menu du zoom, pour occuper
   tout l'écran ; la barre du haut revient quand vous bougez la souris, et <kbd>Échap</kbd> quitte
   le plein écran.
+- Pour un fichier ICO qui contient plusieurs tailles, des boutons sous l'image affichent chaque
+  taille telle qu'elle a été dessinée (16, 32, 48, 256…).
 - Dans l'aperçu, faites glisser l'image pour en examiner n'importe quelle partie, même un coin
   amené au milieu de l'écran. Un contour en pointillés montre les vrais bords de l'image,
   marges transparentes comprises ; désactivez-le avec **Afficher les limites de l'image** dans

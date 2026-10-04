@@ -14,6 +14,11 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
 }
 
+.icon-size:checked {
+  background-color: var(--accent-bg-color);
+  color: var(--accent-fg-color);
+}
+
 .preview-step {
   min-width: 48px;
   min-height: 48px;

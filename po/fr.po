@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 11:13+0200\n"
+"POT-Creation-Date: 2026-10-04 11:21+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -608,7 +608,7 @@ msgid "Open Preview"
 msgstr "Ouvrir l’aperçu"
 
 #: crates/pigoune-app/src/window.rs:1026
-#: crates/pigoune-app/src/asset_preview.rs:799
+#: crates/pigoune-app/src/asset_preview.rs:870
 msgid "Open With…"
 msgstr "Ouvrir avec…"
 
@@ -624,26 +624,26 @@ msgid "_Restore"
 msgstr "_Restaurer"
 
 #: crates/pigoune-app/src/window.rs:1041
-#: crates/pigoune-app/src/asset_preview.rs:796
+#: crates/pigoune-app/src/asset_preview.rs:867
 msgid "Copy"
 msgstr "Copier"
 
 #: crates/pigoune-app/src/window.rs:1045
-#: crates/pigoune-app/src/asset_preview.rs:800
+#: crates/pigoune-app/src/asset_preview.rs:871
 msgid "Export To…"
 msgstr "Exporter vers…"
 
 #: crates/pigoune-app/src/window.rs:1048
-#: crates/pigoune-app/src/asset_preview.rs:330
-#: crates/pigoune-app/src/asset_preview.rs:803
+#: crates/pigoune-app/src/asset_preview.rs:395
+#: crates/pigoune-app/src/asset_preview.rs:874
 #: crates/pigoune-app/src/asset_details.rs:356
 #: crates/pigoune-app/src/asset_details.rs:403
 msgid "Remove from Favorites"
 msgstr "Retirer des favoris"
 
 #: crates/pigoune-app/src/window.rs:1050
-#: crates/pigoune-app/src/asset_preview.rs:334
-#: crates/pigoune-app/src/asset_preview.rs:805
+#: crates/pigoune-app/src/asset_preview.rs:399
+#: crates/pigoune-app/src/asset_preview.rs:876
 #: crates/pigoune-app/src/asset_details.rs:358
 #: crates/pigoune-app/src/asset_details.rs:405
 msgid "Add to Favorites"
@@ -1350,70 +1350,74 @@ msgstr "Afficher les limites de l’image"
 msgid "Show Pixel Grid"
 msgstr "Afficher la grille des pixels"
 
-#: crates/pigoune-app/ui/asset-preview.blp:52
-#: crates/pigoune-app/ui/asset-preview.blp:65
+#: crates/pigoune-app/ui/asset-preview.blp:56
+#: crates/pigoune-app/ui/asset-preview.blp:69
 msgid "Back to the Library"
 msgstr "Revenir à la bibliothèque"
 
-#: crates/pigoune-app/ui/asset-preview.blp:58
+#: crates/pigoune-app/ui/asset-preview.blp:62
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:6
 msgid "Library"
 msgstr "Bibliothèque"
 
-#: crates/pigoune-app/ui/asset-preview.blp:82
+#: crates/pigoune-app/ui/asset-preview.blp:86
 msgid "Zoom"
 msgstr "Zoom"
 
-#: crates/pigoune-app/ui/asset-preview.blp:94
+#: crates/pigoune-app/ui/asset-preview.blp:98
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:116
 msgid "Zoom Out"
 msgstr "Zoom arrière"
 
-#: crates/pigoune-app/ui/asset-preview.blp:105
+#: crates/pigoune-app/ui/asset-preview.blp:109
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:111
 msgid "Zoom In"
 msgstr "Zoom avant"
 
-#: crates/pigoune-app/ui/asset-preview.blp:123
+#: crates/pigoune-app/ui/asset-preview.blp:127
 msgid "Background"
 msgstr "Fond"
 
-#: crates/pigoune-app/ui/asset-preview.blp:145
+#: crates/pigoune-app/ui/asset-preview.blp:149
 msgid "Transparent Background"
 msgstr "Fond transparent"
 
-#: crates/pigoune-app/ui/asset-preview.blp:161
+#: crates/pigoune-app/ui/asset-preview.blp:165
 msgid "White Background"
 msgstr "Fond blanc"
 
-#: crates/pigoune-app/ui/asset-preview.blp:177
+#: crates/pigoune-app/ui/asset-preview.blp:181
 msgid "Gray Background"
 msgstr "Fond gris"
 
-#: crates/pigoune-app/ui/asset-preview.blp:193
+#: crates/pigoune-app/ui/asset-preview.blp:197
 msgid "Black Background"
 msgstr "Fond noir"
 
-#: crates/pigoune-app/ui/asset-preview.blp:209
+#: crates/pigoune-app/ui/asset-preview.blp:213
 msgid "Checkerboard Background"
 msgstr "Fond en damier"
 
-#: crates/pigoune-app/ui/asset-preview.blp:248
+#: crates/pigoune-app/ui/asset-preview.blp:261
+msgid "Icon Size"
+msgstr "Taille de l’icône"
+
+#: crates/pigoune-app/ui/asset-preview.blp:268
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:91
 msgid "Previous Resource"
 msgstr "Ressource précédente"
 
-#: crates/pigoune-app/ui/asset-preview.blp:267
+#: crates/pigoune-app/ui/asset-preview.blp:287
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:96
 msgid "Next Resource"
 msgstr "Ressource suivante"
 
-#: crates/pigoune-app/src/asset_preview.rs:781
+#: crates/pigoune-app/src/asset_preview.rs:852
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:823
+#: crates/pigoune-app/src/asset_preview.rs:902
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"

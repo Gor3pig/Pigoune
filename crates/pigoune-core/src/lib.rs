@@ -9,4 +9,4 @@ pub use library::{
     ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError, TRASH_RETENTION,
     Tag, TagCommand, TagError, TagId, TextField, UndoError, ViewCounts, library_display_name,
 };
-pub use media::{AnimationTiming, AssetFormat, Dimensions};
+pub use media::{AnimationTiming, AssetFormat, Dimensions, single_size_icon};

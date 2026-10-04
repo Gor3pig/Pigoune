@@ -6,7 +6,7 @@ use std::path::Path;
 
 use gtk::prelude::*;
 use gtk::{gdk, gio, graphene, gsk};
-use pigoune_core::AssetId;
+use pigoune_core::{AssetId, Dimensions};
 
 pub const THUMBNAIL_PIXELS: u32 = 256;
 const REMEMBERED_THUMBNAILS: usize = 600;
@@ -140,6 +140,22 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
         width,
         height,
         is_vector,
+    })
+}
+
+pub async fn load_icon_size(file: &Path, size: Dimensions) -> Option<DetailedImage> {
+    let (bytes, _) = gio::File::for_path(file)
+        .load_contents_future()
+        .await
+        .ok()?;
+    let icon = pigoune_core::single_size_icon(&bytes, size)?;
+    let mut image = glycin::Loader::new_vec(icon).load().await.ok()?;
+    let frame = image.next_frame().await.ok()?;
+    Some(DetailedImage {
+        texture: frame.texture(),
+        width: size.width(),
+        height: size.height(),
+        is_vector: false,
     })
 }
 

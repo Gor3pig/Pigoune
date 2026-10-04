@@ -8,6 +8,7 @@ use super::{Dimensions, InspectError};
 const HEADER_LENGTH: usize = 6;
 const ENTRY_LENGTH: usize = 16;
 const FULL_SIDE: u32 = 256;
+const SINGLE_IMAGE_OFFSET: usize = HEADER_LENGTH + ENTRY_LENGTH;
 
 pub fn embedded_sizes(path: &Path) -> Result<Vec<Dimensions>, InspectError> {
     let file = File::open(path).map_err(|_| InspectError::Unreadable)?;
@@ -32,6 +33,32 @@ fn read_sizes(reader: &mut impl Read) -> io::Result<Vec<Dimensions>> {
     Ok(sizes.into_iter().collect())
 }
 
+#[must_use]
+pub fn single_size_icon(bytes: &[u8], size: Dimensions) -> Option<Vec<u8>> {
+    let header = bytes.get(..HEADER_LENGTH)?;
+    let count = usize::from(u16::from_le_bytes([header[4], header[5]]));
+    let entries = bytes.get(HEADER_LENGTH..HEADER_LENGTH + count * ENTRY_LENGTH)?;
+    let (entry, image) = entries
+        .as_chunks::<ENTRY_LENGTH>()
+        .0
+        .iter()
+        .filter(|entry| Dimensions::new(side(entry[0]), side(entry[1])) == Some(size))
+        .filter_map(|entry| Some((entry, image_of(bytes, entry)?)))
+        .max_by_key(|(entry, image)| (u16::from_le_bytes([entry[6], entry[7]]), image.len()))?;
+    let mut icon = Vec::with_capacity(SINGLE_IMAGE_OFFSET + image.len());
+    icon.extend([0, 0, 1, 0, 1, 0]);
+    icon.extend(&entry[..12]);
+    icon.extend(u32::try_from(SINGLE_IMAGE_OFFSET).ok()?.to_le_bytes());
+    icon.extend(image);
+    Some(icon)
+}
+
+fn image_of<'a>(bytes: &'a [u8], entry: &[u8; ENTRY_LENGTH]) -> Option<&'a [u8]> {
+    let length = usize::try_from(u32::from_le_bytes(entry[8..12].try_into().ok()?)).ok()?;
+    let offset = usize::try_from(u32::from_le_bytes(entry[12..16].try_into().ok()?)).ok()?;
+    bytes.get(offset..offset.checked_add(length)?)
+}
+
 fn side(stored: u8) -> u32 {
     if stored == 0 {
         FULL_SIDE
@@ -42,8 +69,44 @@ fn side(stored: u8) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::read_sizes;
+    use super::{read_sizes, single_size_icon};
     use crate::media::Dimensions;
+
+    struct Image {
+        side: u8,
+        bit_count: u16,
+        data: Vec<u8>,
+    }
+
+    fn icon_with(images: &[Image]) -> Vec<u8> {
+        let count = u16::try_from(images.len()).expect("few entries");
+        let mut bytes = vec![0, 0, 1, 0];
+        bytes.extend(count.to_le_bytes());
+        let mut offset = 6 + 16 * images.len();
+        for image in images {
+            bytes.extend([image.side, image.side, 0, 0, 1, 0]);
+            bytes.extend(image.bit_count.to_le_bytes());
+            bytes.extend(
+                u32::try_from(image.data.len())
+                    .expect("small")
+                    .to_le_bytes(),
+            );
+            bytes.extend(u32::try_from(offset).expect("small").to_le_bytes());
+            offset += image.data.len();
+        }
+        for image in images {
+            bytes.extend(&image.data);
+        }
+        bytes
+    }
+
+    fn image(side: u8, bit_count: u16, data: &[u8]) -> Image {
+        Image {
+            side,
+            bit_count,
+            data: data.to_vec(),
+        }
+    }
 
     fn ico(sides: &[(u8, u8)]) -> Vec<u8> {
         let count = u16::try_from(sides.len()).expect("few entries");
@@ -82,5 +145,56 @@ mod tests {
     fn a_truncated_directory_is_unreadable() {
         let bytes = ico(&[(16, 16), (32, 32)]);
         assert!(read_sizes(&mut &bytes[..30]).is_err());
+    }
+
+    #[test]
+    fn the_chosen_size_becomes_an_icon_of_its_own() {
+        let bytes = icon_with(&[image(16, 32, b"small"), image(32, 32, b"medium")]);
+
+        let icon = single_size_icon(&bytes, dimensions(32, 32)).expect("size exists");
+
+        assert_eq!(&icon[..6], [0, 0, 1, 0, 1, 0]);
+        assert_eq!(&icon[6..8], [32, 32]);
+        assert_eq!(&icon[14..18], 6_u32.to_le_bytes());
+        assert_eq!(&icon[18..22], 22_u32.to_le_bytes());
+        assert_eq!(&icon[22..], b"medium");
+        assert_eq!(
+            read_sizes(&mut icon.as_slice()).expect("readable"),
+            [dimensions(32, 32)]
+        );
+    }
+
+    #[test]
+    fn the_richest_copy_of_a_size_is_chosen() {
+        let bytes = icon_with(&[
+            image(16, 4, b"poor"),
+            image(16, 32, b"rich"),
+            image(16, 8, b"middle"),
+        ]);
+
+        let icon = single_size_icon(&bytes, dimensions(16, 16)).expect("size exists");
+
+        assert_eq!(&icon[22..], b"rich");
+    }
+
+    #[test]
+    fn a_full_side_size_is_found() {
+        let bytes = icon_with(&[image(0, 32, b"large")]);
+
+        let icon = single_size_icon(&bytes, dimensions(256, 256)).expect("size exists");
+
+        assert_eq!(&icon[22..], b"large");
+    }
+
+    #[test]
+    fn a_missing_size_or_a_truncated_image_gives_nothing() {
+        let bytes = icon_with(&[image(16, 32, b"small")]);
+
+        assert_eq!(single_size_icon(&bytes, dimensions(48, 48)), None);
+        assert_eq!(
+            single_size_icon(&bytes[..bytes.len() - 2], dimensions(16, 16)),
+            None
+        );
+        assert_eq!(single_size_icon(&bytes[..10], dimensions(16, 16)), None);
     }
 }
