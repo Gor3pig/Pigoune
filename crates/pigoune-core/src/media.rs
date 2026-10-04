@@ -14,7 +14,7 @@ use std::time::Duration;
 
 pub use dimensions::Dimensions;
 pub use format::AssetFormat;
-pub use ico::single_size_icon;
+pub use ico::{icon_from_pngs, single_size_icon};
 
 const HEADER_LENGTH: u64 = 512;
 

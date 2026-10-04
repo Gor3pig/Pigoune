@@ -5,9 +5,10 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetCommand, AssetFilter, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId,
-    CollectionPath, CollectionRemoval, ImportError, ImportSummary, Library, LibraryError,
-    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, library_display_name,
+    AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
+    CollectionId, CollectionPath, CollectionRemoval, ImportError, ImportSummary, Library,
+    LibraryError, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
+    library_display_name,
 };
 
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -1454,6 +1455,7 @@ impl PigouneWindow {
         }
         let dialog = PigouneExportAsDialog::new(
             self.imp().conversion_settings.get(),
+            natural_size(&assets[0]),
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1525,18 +1527,23 @@ impl PigouneWindow {
         folder: &Path,
         settings: ConversionSettings,
     ) -> Result<(), String> {
-        let vector_pixels = asset
-            .asset()
-            .dimensions
-            .map_or(DEFAULT_VECTOR_EXPORT_PIXELS, |size| {
-                size.width().max(size.height())
-            });
-        let bytes = image_conversion::convert(asset.file(), vector_pixels, settings)
+        let source = image_conversion::Source {
+            file: asset.file(),
+            is_vector: asset.asset().format == AssetFormat::Svg,
+            natural: natural_size(asset),
+        };
+        let converted = image_conversion::convert(&source, settings)
             .await
             .map_err(conversion_report::reason)?;
-        Library::save_converted(asset.asset(), folder, settings.format.extension(), &bytes)
-            .map(|_| ())
-            .map_err(|error| error_messages::describe(&error))
+        Library::save_converted(
+            asset.asset(),
+            folder,
+            converted.name_suffix.as_deref(),
+            settings.format.extension(),
+            &converted.bytes,
+        )
+        .map(|_| ())
+        .map_err(|error| error_messages::describe(&error))
     }
 
     async fn open_selected_with(&self) {
@@ -2854,6 +2861,13 @@ impl PigouneWindow {
         settings::store_int(settings, settings::WINDOW_HEIGHT, height);
         settings::store_bool(settings, settings::WINDOW_MAXIMIZED, self.is_maximized());
     }
+}
+
+fn natural_size(asset: &PigouneAssetObject) -> (u32, u32) {
+    asset.asset().dimensions.map_or(
+        (DEFAULT_VECTOR_EXPORT_PIXELS, DEFAULT_VECTOR_EXPORT_PIXELS),
+        |size| (size.width(), size.height()),
+    )
 }
 
 fn folder_name(folder: &gio::File) -> String {

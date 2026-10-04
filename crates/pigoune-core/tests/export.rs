@@ -346,7 +346,7 @@ fn a_conversion_takes_the_display_name_and_the_new_extension() {
     fs::create_dir(&folder).expect("folder is created");
     fs::write(folder.join("Point rouge.jpg"), b"mine").expect("file is written");
 
-    let saved = Library::save_converted(&fixture.asset(png), &folder, "jpg", b"converted")
+    let saved = Library::save_converted(&fixture.asset(png), &folder, None, "jpg", b"converted")
         .expect("conversion is saved");
 
     assert_eq!(saved, folder.join("Point rouge (2).jpg"));
@@ -365,7 +365,7 @@ fn the_original_extension_is_not_kept_in_a_conversion() {
     let folder = fixture.workspace.path().join("Exports");
     fs::create_dir(&folder).expect("folder is created");
 
-    let saved = Library::save_converted(&fixture.asset(png), &folder, "webp", b"converted")
+    let saved = Library::save_converted(&fixture.asset(png), &folder, None, "webp", b"converted")
         .expect("conversion is saved");
 
     assert_eq!(saved, folder.join("red-dot.webp"));
@@ -377,6 +377,22 @@ fn a_conversion_to_a_missing_folder_is_refused() {
     let png = fixture.import("red-dot.png");
     let missing = fixture.workspace.path().join("absent");
 
-    assert!(Library::save_converted(&fixture.asset(png), &missing, "jpg", b"converted").is_err());
+    assert!(
+        Library::save_converted(&fixture.asset(png), &missing, None, "jpg", b"converted").is_err()
+    );
     assert!(!missing.exists());
+}
+
+#[test]
+fn a_conversion_can_carry_its_size_in_its_name() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    fixture.rename(png, "Logo");
+    let folder = fixture.workspace.path().join("Exports");
+    fs::create_dir(&folder).expect("folder is created");
+
+    let saved = Library::save_converted(&fixture.asset(png), &folder, Some("512"), "png", b"x")
+        .expect("conversion is saved");
+
+    assert_eq!(saved, folder.join("Logo-512.png"));
 }

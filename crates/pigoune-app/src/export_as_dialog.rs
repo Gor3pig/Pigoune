@@ -3,19 +3,27 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib};
 
+use crate::export_size::{CustomSize, SizeUnit};
+use crate::icon_sides::ICON_SIDES;
 use crate::image_conversion::{ConversionSettings, TargetFormat};
 
 const COLOR_CHANNEL_MAX: f32 = 255.0;
+const LARGEST_PIXELS: f64 = 32768.0;
+const LOCKED_ICON: &str = "changes-prevent-symbolic";
+const UNLOCKED_ICON: &str = "changes-allow-symbolic";
+const LARGEST_PERCENT: f64 = 1000.0;
 
 type ExportCallback = Box<dyn Fn(ConversionSettings)>;
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
 
     use adw::subclass::prelude::*;
     use gtk::glib;
 
     use super::ExportCallback;
+    use crate::export_size::CustomSize;
+    use crate::icon_sides::IconSides;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/export-as-dialog.ui")]
@@ -23,11 +31,31 @@ mod imp {
         #[template_child]
         pub format_row: TemplateChild<adw::ComboRow>,
         #[template_child]
+        pub export_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub dimensions_row: TemplateChild<gtk::ListBoxRow>,
+        #[template_child]
+        pub width_spin: TemplateChild<gtk::SpinButton>,
+        #[template_child]
+        pub height_spin: TemplateChild<gtk::SpinButton>,
+        #[template_child]
+        pub link_button: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub unit_dropdown: TemplateChild<gtk::DropDown>,
+        #[template_child]
+        pub icon_sides_row: TemplateChild<gtk::ListBoxRow>,
+        #[template_child]
+        pub icon_sides_box: TemplateChild<gtk::FlowBox>,
+        #[template_child]
         pub quality_row: TemplateChild<adw::SpinRow>,
         #[template_child]
         pub background_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub background_button: TemplateChild<gtk::ColorDialogButton>,
+        pub icon_sides: Cell<IconSides>,
+        pub custom: Cell<CustomSize>,
+        pub reference: Cell<(u32, u32)>,
+        pub showing_custom: Cell<bool>,
         pub on_export: RefCell<Option<ExportCallback>>,
     }
 
@@ -62,6 +90,7 @@ glib::wrapper! {
 impl PigouneExportAsDialog {
     pub fn new(
         settings: ConversionSettings,
+        reference: (u32, u32),
         on_export: impl Fn(ConversionSettings) + 'static,
     ) -> Self {
         let dialog: Self = glib::Object::new();
@@ -79,6 +108,10 @@ impl PigouneExportAsDialog {
         imp.format_row
             .set_selected(u32::try_from(position).unwrap_or(0));
         imp.quality_row.set_value(f64::from(settings.quality));
+        imp.reference.set(reference);
+        dialog.show_custom(settings.custom);
+        imp.icon_sides.set(settings.icon_sides);
+        dialog.offer_icon_sides();
         imp.background_button
             .set_rgba(&rgba_of(settings.background));
         imp.on_export.replace(Some(Box::new(on_export)));
@@ -100,16 +133,109 @@ impl PigouneExportAsDialog {
             format: self.format(),
             quality: byte_of(imp.quality_row.value()),
             background: channels_of(&imp.background_button.rgba()),
+            custom: imp.custom.get(),
+            icon_sides: imp.icon_sides.get(),
+        }
+    }
+
+    fn offer_icon_sides(&self) {
+        let imp = self.imp();
+        for side in ICON_SIDES {
+            let check = gtk::CheckButton::with_label(&side.to_string());
+            check.set_active(imp.icon_sides.get().contains(side));
+            check.connect_toggled(glib::clone!(
+                #[weak(rename_to = dialog)]
+                self,
+                move |check| {
+                    let imp = dialog.imp();
+                    imp.icon_sides
+                        .set(imp.icon_sides.get().with(side, check.is_active()));
+                    dialog.refresh_rows();
+                }
+            ));
+            imp.icon_sides_box.append(&check);
         }
     }
 
     #[template_callback]
     fn on_format_changed(&self) {
         let imp = self.imp();
+        imp.format_row.set_subtitle(&description(self.format()));
+        self.refresh_rows();
+    }
+
+    fn refresh_rows(&self) {
+        let imp = self.imp();
         let format = self.format();
-        imp.format_row.set_subtitle(&description(format));
+        let is_icon = format == TargetFormat::Ico;
+        imp.dimensions_row.set_visible(!is_icon);
+        imp.icon_sides_row.set_visible(is_icon);
         imp.quality_row.set_visible(format.has_quality());
         imp.background_row.set_visible(!format.keeps_transparency());
+        imp.export_button
+            .set_sensitive(!is_icon || !imp.icon_sides.get().is_empty());
+    }
+
+    fn show_custom(&self, custom: CustomSize) {
+        let imp = self.imp();
+        imp.custom.set(custom);
+        imp.showing_custom.set(true);
+        let largest = match custom.unit {
+            SizeUnit::Pixels => LARGEST_PIXELS,
+            SizeUnit::Percent => LARGEST_PERCENT,
+        };
+        for (spin, value) in [
+            (&imp.width_spin, custom.width),
+            (&imp.height_spin, custom.height),
+        ] {
+            spin.adjustment().set_upper(largest);
+            spin.set_value(value);
+        }
+        imp.link_button.set_active(custom.linked);
+        imp.link_button.set_icon_name(if custom.linked {
+            LOCKED_ICON
+        } else {
+            UNLOCKED_ICON
+        });
+        imp.unit_dropdown
+            .set_selected(u32::from(custom.unit == SizeUnit::Percent));
+        imp.showing_custom.set(false);
+    }
+
+    fn change_custom(&self, change: impl FnOnce(CustomSize, (u32, u32)) -> CustomSize) {
+        let imp = self.imp();
+        if imp.showing_custom.get() {
+            return;
+        }
+        self.show_custom(change(imp.custom.get(), imp.reference.get()));
+    }
+
+    #[template_callback]
+    fn on_width_changed(&self) {
+        let width = self.imp().width_spin.value();
+        self.change_custom(|custom, reference| custom.with_width(width, reference));
+    }
+
+    #[template_callback]
+    fn on_height_changed(&self) {
+        let height = self.imp().height_spin.value();
+        self.change_custom(|custom, reference| custom.with_height(height, reference));
+    }
+
+    #[template_callback]
+    fn on_link_toggled(&self) {
+        let linked = self.imp().link_button.is_active();
+        self.change_custom(|custom, reference| custom.with_linked(linked, reference));
+    }
+
+    #[template_callback]
+    fn on_unit_changed(&self) {
+        let unit = if self.imp().unit_dropdown.selected() == 0 {
+            SizeUnit::Pixels
+        } else {
+            SizeUnit::Percent
+        };
+        self.change_custom(|custom, reference| custom.in_unit(unit, reference));
     }
 
     #[template_callback]
@@ -132,7 +258,7 @@ fn description(format: TargetFormat) -> String {
         TargetFormat::Png | TargetFormat::Webp => gettext("Lossless, keeps transparency"),
         TargetFormat::Jpeg => gettext("Small files, no transparency"),
         TargetFormat::Avif => gettext("Small files, keeps transparency"),
-        TargetFormat::Ico => gettext("Icons up to 256 × 256 pixels, keeps transparency"),
+        TargetFormat::Ico => gettext("One icon file holding several sizes, keeps transparency"),
     }
 }
 

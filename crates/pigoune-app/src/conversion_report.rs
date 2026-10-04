@@ -52,8 +52,8 @@ pub fn failures_body(failures: &[Failure]) -> String {
 pub fn reason(error: ConversionError) -> String {
     match error {
         ConversionError::Unreadable => gettext("the image could not be read"),
-        ConversionError::TooLargeForIcon => {
-            gettext("too large for ICO, which allows 256 × 256 pixels at most")
+        ConversionError::TooSmallForIcon => {
+            gettext("smaller than every chosen icon size, and pixel images are never enlarged")
         }
         ConversionError::EncodingFailed => gettext("the conversion failed"),
     }

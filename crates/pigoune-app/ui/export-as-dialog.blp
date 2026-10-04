@@ -52,6 +52,159 @@ template $PigouneExportAsDialog: Adw.Dialog {
           notify::selected => $on_format_changed() swapped;
         }
 
+        ListBoxRow dimensions_row {
+          activatable: false;
+
+          child: Box {
+            orientation: vertical;
+            spacing: 6;
+            margin-top: 12;
+            margin-bottom: 12;
+            margin-start: 12;
+            margin-end: 12;
+
+            Grid {
+              column-spacing: 12;
+              row-spacing: 6;
+
+              Label {
+                label: _("Width");
+                xalign: 0;
+                hexpand: true;
+
+                layout {
+                  column: 0;
+                  row: 0;
+                }
+              }
+
+              SpinButton width_spin {
+                numeric: true;
+                valign: center;
+                value-changed => $on_width_changed() swapped;
+
+                adjustment: Adjustment {
+                  lower: 1;
+                  upper: 32768;
+                  step-increment: 1;
+                  page-increment: 10;
+                };
+
+                layout {
+                  column: 1;
+                  row: 0;
+                }
+              }
+
+              Label {
+                label: _("Height");
+                xalign: 0;
+
+                layout {
+                  column: 0;
+                  row: 1;
+                }
+              }
+
+              SpinButton height_spin {
+                numeric: true;
+                valign: center;
+                value-changed => $on_height_changed() swapped;
+
+                adjustment: Adjustment {
+                  lower: 1;
+                  upper: 32768;
+                  step-increment: 1;
+                  page-increment: 10;
+                };
+
+                layout {
+                  column: 1;
+                  row: 1;
+                }
+              }
+
+              ToggleButton link_button {
+                icon-name: "changes-prevent-symbolic";
+                tooltip-text: _("Keep Proportions");
+                valign: center;
+                toggled => $on_link_toggled() swapped;
+
+                layout {
+                  column: 2;
+                  row: 0;
+                  row-span: 2;
+                }
+              }
+
+              DropDown unit_dropdown {
+                valign: center;
+                notify::selected => $on_unit_changed() swapped;
+
+                model: StringList {
+                  strings [
+                    _("pixels"),
+                    "%",
+                  ]
+                };
+
+                layout {
+                  column: 3;
+                  row: 0;
+                  row-span: 2;
+                }
+              }
+            }
+
+            Label {
+              label: _("A pixel image that is enlarged becomes blurry; SVG images stay sharp");
+              xalign: 0;
+              wrap: true;
+
+              styles [
+                "dim-label",
+                "caption",
+              ]
+            }
+          };
+        }
+
+        ListBoxRow icon_sides_row {
+          activatable: false;
+
+          child: Box {
+            orientation: vertical;
+            spacing: 6;
+            margin-top: 12;
+            margin-bottom: 12;
+            margin-start: 12;
+            margin-end: 12;
+
+            Label {
+              label: _("Icon Sizes");
+              xalign: 0;
+            }
+
+            Label {
+              label: _("Sizes larger than a pixel image are skipped");
+              xalign: 0;
+              wrap: true;
+
+              styles [
+                "dim-label",
+                "caption",
+              ]
+            }
+
+            FlowBox icon_sides_box {
+              selection-mode: none;
+              min-children-per-line: 4;
+              max-children-per-line: 4;
+              homogeneous: true;
+            }
+          };
+        }
+
         Adw.SpinRow quality_row {
           title: _("Quality");
           subtitle: _("A higher quality makes larger files");

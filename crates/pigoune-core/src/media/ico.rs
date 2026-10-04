@@ -9,6 +9,8 @@ const HEADER_LENGTH: usize = 6;
 const ENTRY_LENGTH: usize = 16;
 const FULL_SIDE: u32 = 256;
 const SINGLE_IMAGE_OFFSET: usize = HEADER_LENGTH + ENTRY_LENGTH;
+const PLANES: u16 = 1;
+const BITS_PER_PIXEL: u16 = 32;
 
 pub fn embedded_sizes(path: &Path) -> Result<Vec<Dimensions>, InspectError> {
     let file = File::open(path).map_err(|_| InspectError::Unreadable)?;
@@ -53,6 +55,39 @@ pub fn single_size_icon(bytes: &[u8], size: Dimensions) -> Option<Vec<u8>> {
     Some(icon)
 }
 
+#[must_use]
+pub fn icon_from_pngs(images: &[(Dimensions, &[u8])]) -> Option<Vec<u8>> {
+    let count = u16::try_from(images.len()).ok()?;
+    let mut icon = vec![0, 0, 1, 0];
+    icon.extend(count.to_le_bytes());
+    let mut offset = HEADER_LENGTH + ENTRY_LENGTH * images.len();
+    for (size, png) in images {
+        icon.extend([
+            stored_side(size.width())?,
+            stored_side(size.height())?,
+            0,
+            0,
+        ]);
+        icon.extend(PLANES.to_le_bytes());
+        icon.extend(BITS_PER_PIXEL.to_le_bytes());
+        icon.extend(u32::try_from(png.len()).ok()?.to_le_bytes());
+        icon.extend(u32::try_from(offset).ok()?.to_le_bytes());
+        offset += png.len();
+    }
+    for (_, png) in images {
+        icon.extend(*png);
+    }
+    Some(icon)
+}
+
+fn stored_side(side: u32) -> Option<u8> {
+    if side == FULL_SIDE {
+        Some(0)
+    } else {
+        u8::try_from(side).ok().filter(|stored| *stored > 0)
+    }
+}
+
 fn image_of<'a>(bytes: &'a [u8], entry: &[u8; ENTRY_LENGTH]) -> Option<&'a [u8]> {
     let length = usize::try_from(u32::from_le_bytes(entry[8..12].try_into().ok()?)).ok()?;
     let offset = usize::try_from(u32::from_le_bytes(entry[12..16].try_into().ok()?)).ok()?;
@@ -69,7 +104,7 @@ fn side(stored: u8) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{read_sizes, single_size_icon};
+    use super::{icon_from_pngs, read_sizes, single_size_icon};
     use crate::media::Dimensions;
 
     struct Image {
@@ -196,5 +231,25 @@ mod tests {
             None
         );
         assert_eq!(single_size_icon(&bytes[..10], dimensions(16, 16)), None);
+    }
+
+    #[test]
+    fn an_icon_is_assembled_from_several_pictures() {
+        let small = b"small picture".as_slice();
+        let large = b"large picture".as_slice();
+        let icon = icon_from_pngs(&[(dimensions(16, 16), small), (dimensions(256, 256), large)])
+            .expect("icon assembled");
+
+        assert_eq!(
+            read_sizes(&mut icon.as_slice()).expect("readable"),
+            [dimensions(16, 16), dimensions(256, 256)]
+        );
+        let single = single_size_icon(&icon, dimensions(256, 256)).expect("size found");
+        assert!(single.ends_with(large));
+    }
+
+    #[test]
+    fn an_icon_side_cannot_exceed_256_pixels() {
+        assert_eq!(icon_from_pngs(&[(dimensions(300, 300), b"picture")]), None);
     }
 }

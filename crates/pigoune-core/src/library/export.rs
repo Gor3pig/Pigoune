@@ -37,18 +37,19 @@ impl Library {
     pub fn save_converted(
         asset: &Asset,
         folder: &Path,
+        name_suffix: Option<&str>,
         extension: &str,
         contents: &[u8],
     ) -> Result<PathBuf, LibraryError> {
         if !folder.is_dir() {
             return Err(LibraryError::NotFound(folder.to_path_buf()));
         }
-        let (mut file, path) = create_free_file(
-            folder,
-            &base_name_of(asset),
-            Some(extension),
-            &mut HashSet::new(),
-        )?;
+        let base = match name_suffix {
+            Some(suffix) => format!("{}-{suffix}", base_name_of(asset)),
+            None => base_name_of(asset),
+        };
+        let (mut file, path) =
+            create_free_file(folder, &base, Some(extension), &mut HashSet::new())?;
         file.write_all(contents)?;
         Ok(path)
     }
