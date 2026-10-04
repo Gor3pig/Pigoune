@@ -1392,7 +1392,7 @@ impl PigouneWindow {
     }
 
     async fn export_selected(&self) {
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if selected.is_empty() || self.is_showing_trash() {
             return;
         }
@@ -1428,7 +1428,7 @@ impl PigouneWindow {
     }
 
     async fn open_selected_with(&self) {
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         let [asset] = selected[..] else {
             return;
         };
@@ -1503,16 +1503,19 @@ impl PigouneWindow {
         })
     }
 
-    fn targeted_ids(&self) -> Vec<AssetId> {
+    fn targeted_assets(&self) -> Vec<PigouneAssetObject> {
         let imp = self.imp();
         if imp.window_stack.visible_child_name().as_deref() == Some(PREVIEW_PAGE) {
-            return imp
-                .asset_preview
-                .shown_asset()
-                .map(|asset| vec![asset.id()])
-                .unwrap_or_default();
+            return imp.asset_preview.shown_asset().into_iter().collect();
         }
-        self.selected_ids()
+        imp.asset_grid.selected_assets()
+    }
+
+    fn targeted_ids(&self) -> Vec<AssetId> {
+        self.targeted_assets()
+            .iter()
+            .map(PigouneAssetObject::id)
+            .collect()
     }
 
     fn selected_ids(&self) -> Vec<AssetId> {
@@ -2146,6 +2149,7 @@ impl PigouneWindow {
             .unwrap_or(0);
         imp.browsing_selection.set(browsing_selection);
         imp.window_stack.set_visible_child_name(PREVIEW_PAGE);
+        imp.asset_preview.set_actionable(!self.is_showing_trash());
         imp.asset_preview
             .open(items, position, imp.asset_grid.thumbnails());
     }
@@ -2425,7 +2429,7 @@ impl PigouneWindow {
 
     fn toggle_favorite(&self) {
         let imp = self.imp();
-        let selected = imp.asset_grid.selected_assets();
+        let selected = self.targeted_assets();
         if selected.is_empty() || self.is_showing_trash() {
             return;
         }

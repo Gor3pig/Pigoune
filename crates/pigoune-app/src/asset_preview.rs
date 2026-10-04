@@ -4,7 +4,7 @@ use std::time::Duration;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
-use gtk::{gdk, glib};
+use gtk::{gdk, gio, glib};
 
 use pigoune_core::{AssetFormat, Dimensions};
 
@@ -19,6 +19,7 @@ const LARGEST_VECTOR_PIXELS: u32 = 4096;
 const SHARPEN_DELAY: Duration = Duration::from_millis(200);
 const STEP_BUTTONS_DELAY: Duration = Duration::from_secs(2);
 const SHOWN_STEP_BUTTON: &str = "shown";
+const FAVORITE_STYLE: &str = "favorite";
 
 type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
 
@@ -55,6 +56,13 @@ mod imp {
         pub zoom_view: TemplateChild<PigouneZoomView>,
         #[template_child]
         pub zoom_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
+        pub favorite_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub context_menu: TemplateChild<gtk::PopoverMenu>,
+        pub watched_favorite: RefCell<Option<(PigouneAssetObject, glib::SignalHandlerId)>>,
+        #[property(get, set)]
+        pub actionable: Cell<bool>,
         #[template_child]
         pub previous_button: TemplateChild<gtk::Button>,
         #[template_child]
@@ -166,6 +174,14 @@ mod imp {
                 preview.close();
                 glib::Propagation::Stop
             });
+            class.add_binding(gdk::Key::Menu, gdk::ModifierType::empty(), |preview| {
+                preview.show_context_menu(None);
+                glib::Propagation::Stop
+            });
+            class.add_binding(gdk::Key::F10, gdk::ModifierType::SHIFT_MASK, |preview| {
+                preview.show_context_menu(None);
+                glib::Propagation::Stop
+            });
             class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
                 preview.step(-1);
                 glib::Propagation::Stop
@@ -187,6 +203,7 @@ mod imp {
             self.parent_constructed();
             self.obj().follow_zoom();
             self.obj().follow_pointer();
+            self.obj().listen_to_menu_requests();
         }
     }
     impl WidgetImpl for PigouneAssetPreview {}
@@ -245,6 +262,93 @@ impl PigouneAssetPreview {
     #[template_callback]
     fn on_next_clicked(&self) {
         self.step(1);
+    }
+
+    fn watch_favorite(&self, asset: &PigouneAssetObject) {
+        self.unwatch_favorite();
+        let handler = asset.connect_notify_local(
+            Some("favorite"),
+            glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                move |asset, _| preview.show_favorite(asset.favorite())
+            ),
+        );
+        self.imp()
+            .watched_favorite
+            .replace(Some((asset.clone(), handler)));
+        self.show_favorite(asset.favorite());
+    }
+
+    fn unwatch_favorite(&self) {
+        if let Some((asset, handler)) = self.imp().watched_favorite.take() {
+            asset.disconnect(handler);
+        }
+    }
+
+    fn show_favorite(&self, favorite: bool) {
+        let button = &self.imp().favorite_button;
+        if favorite {
+            button.set_icon_name("starred-symbolic");
+            button.set_tooltip_text(Some(&gettext("Remove from Favorites")));
+            button.add_css_class(FAVORITE_STYLE);
+        } else {
+            button.set_icon_name("non-starred-symbolic");
+            button.set_tooltip_text(Some(&gettext("Add to Favorites")));
+            button.remove_css_class(FAVORITE_STYLE);
+        }
+    }
+
+    fn listen_to_menu_requests(&self) {
+        let zoom_view = &*self.imp().zoom_view;
+        let click = gtk::GestureClick::builder()
+            .button(gdk::BUTTON_SECONDARY)
+            .build();
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, _, x, y| preview.show_context_menu(Some((x, y)))
+        ));
+        zoom_view.add_controller(click);
+        let long_press = gtk::GestureLongPress::builder().touch_only(true).build();
+        long_press.connect_pressed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, x, y| preview.show_context_menu(Some((x, y)))
+        ));
+        zoom_view.add_controller(long_press);
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "points inside the preview fit in an i32"
+    )]
+    fn show_context_menu(&self, point: Option<(f64, f64)>) {
+        let imp = self.imp();
+        let Some(asset) = imp.showing.borrow().clone() else {
+            return;
+        };
+        if !imp.actionable.get() {
+            return;
+        }
+        let zoom_view = &*imp.zoom_view;
+        let (x, y) = point.unwrap_or_else(|| {
+            (
+                f64::from(zoom_view.width()) / 2.0,
+                f64::from(zoom_view.height()) / 2.0,
+            )
+        });
+        let Some(inside) = zoom_view.compute_point(
+            &*imp.surface,
+            &gtk::graphene::Point::new(x as f32, y as f32),
+        ) else {
+            return;
+        };
+        let pointing_to = gdk::Rectangle::new(inside.x() as i32, inside.y() as i32, 1, 1);
+        imp.context_menu
+            .set_menu_model(Some(&context_menu_model(asset.favorite())));
+        imp.context_menu.set_pointing_to(Some(&pointing_to));
+        imp.context_menu.popup();
     }
 
     fn follow_pointer(&self) {
@@ -340,6 +444,7 @@ impl PigouneAssetPreview {
         imp.showing.replace(None);
         imp.zoom_view.show_image(None, 1, 1, false);
         self.hide_step_buttons();
+        self.unwatch_favorite();
     }
 
     fn step(&self, offset: i32) {
@@ -380,6 +485,7 @@ impl PigouneAssetPreview {
         imp.zoom_view
             .show_image(remembered.as_ref(), width, height, is_vector);
         imp.showing.replace(Some(asset.clone()));
+        self.watch_favorite(&asset);
         self.stop_animation();
         self.load(&asset, self.render_pixels(), true);
     }
@@ -531,6 +637,26 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
     u32::try_from(target)
         .ok()
         .filter(|position| *position < count)
+}
+
+fn context_menu_model(favorite: bool) -> gio::MenuModel {
+    let sharing = gio::Menu::new();
+    let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
+    copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));
+    sharing.append_item(&copy);
+    sharing.append(Some(&gettext("Open With…")), Some("win.open-with"));
+    sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
+    let organizing = gio::Menu::new();
+    let favorite_label = if favorite {
+        gettext("Remove from Favorites")
+    } else {
+        gettext("Add to Favorites")
+    };
+    organizing.append(Some(&favorite_label), Some("win.toggle-favorite"));
+    let menu = gio::Menu::new();
+    menu.append_section(None, &sharing);
+    menu.append_section(None, &organizing);
+    menu.upcast()
 }
 
 fn subtitle_text(asset: &PigouneAssetObject, position: u32, count: u32) -> String {

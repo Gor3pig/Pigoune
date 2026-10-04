@@ -111,6 +111,10 @@ row.drop-target-row:not(:selected) {
   box-shadow: 0 4px 0 -2px @accent_color;
 }
 
+.preview-favorite.favorite {
+  color: #f6d32d;
+}
+
 .favorite-badge {
   margin: 6px;
   color: #f6d32d;

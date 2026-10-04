@@ -56,6 +56,16 @@ template $PigouneAssetPreview: Adw.Bin {
         clicked => $on_back_clicked() swapped;
       }
 
+      [start]
+      Button favorite_button {
+        action-name: "win.toggle-favorite";
+        visible: bind template.actionable;
+
+        styles [
+          "preview-favorite",
+        ]
+      }
+
       [end]
       MenuButton zoom_button {
         tooltip-text: _("Zoom");
@@ -213,6 +223,11 @@ template $PigouneAssetPreview: Adw.Bin {
           margin-bottom: 24;
           margin-start: 24;
           margin-end: 24;
+        }
+
+        PopoverMenu context_menu {
+          has-arrow: false;
+          halign: start;
         }
       };
 
