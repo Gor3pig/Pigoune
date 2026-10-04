@@ -409,14 +409,15 @@ impl PigouneWindow {
             )
             .build();
         window.add_action(&settings.create_action(settings::PREVIEW_BACKGROUND));
-        settings
-            .bind(
-                settings::PREVIEW_BOUNDS,
-                &*window.imp().asset_preview,
-                "show-bounds",
-            )
-            .build();
-        window.add_action(&settings.create_action(settings::PREVIEW_BOUNDS));
+        for (key, property) in [
+            (settings::PREVIEW_BOUNDS, "show-bounds"),
+            (settings::PREVIEW_PIXEL_GRID, "show-pixel-grid"),
+        ] {
+            settings
+                .bind(key, &*window.imp().asset_preview, property)
+                .build();
+            window.add_action(&settings.create_action(key));
+        }
         window.describe_selected_asset();
         window.connect_preview();
         window.follow_sidebar(&settings);

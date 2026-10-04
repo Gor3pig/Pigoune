@@ -11,6 +11,8 @@ const MOVING_CURSOR: &str = "grabbing";
 const BOUNDS_WIDTH: f32 = 1.0;
 const BOUNDS_DASH: [f32; 2] = [3.0, 3.0];
 const BOUNDS_OPACITY: f32 = 0.35;
+const PIXEL_GRID_WIDTH: f32 = 1.0;
+const PIXEL_GRID_OPACITY: f32 = 0.15;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 
@@ -35,6 +37,7 @@ mod imp {
         pub drag_start: Cell<Point>,
         pub dragging: Cell<bool>,
         pub shows_bounds: Cell<bool>,
+        pub shows_pixel_grid: Cell<bool>,
         pub pinch_start: Cell<f64>,
         pub on_zoom_changed: RefCell<Option<ZoomChangedCallback>>,
     }
@@ -55,6 +58,7 @@ mod imp {
                 drag_start: Cell::new(Point { x: 0.0, y: 0.0 }),
                 dragging: Cell::default(),
                 shows_bounds: Cell::default(),
+                shows_pixel_grid: Cell::default(),
                 pinch_start: Cell::new(1.0),
                 on_zoom_changed: RefCell::default(),
             }
@@ -128,6 +132,11 @@ impl PigouneZoomView {
         self.queue_draw();
     }
 
+    pub fn set_shows_pixel_grid(&self, shows_pixel_grid: bool) {
+        self.imp().shows_pixel_grid.set(shows_pixel_grid);
+        self.queue_draw();
+    }
+
     pub fn replace_texture(&self, texture: &gdk::Texture) {
         self.imp().texture.replace(Some(texture.clone()));
         self.queue_draw();
@@ -180,6 +189,36 @@ impl PigouneZoomView {
         if changed && let Some(on_zoom_changed) = imp.on_zoom_changed.borrow().as_ref() {
             on_zoom_changed(zoom);
         }
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "pixel counts and drawing coordinates fit easily"
+    )]
+    fn draw_pixel_grid(&self, snapshot: &gtk::Snapshot, bounds: &graphene::Rect, zoom: f64) {
+        let image = self.imp().image.get();
+        let view = self.view_size();
+        let columns = image.width.round() as u32;
+        let rows = image.height.round() as u32;
+        let builder = gsk::PathBuilder::new();
+        for column in
+            zoom_math::visible_grid_lines(f64::from(bounds.x()), zoom, columns, view.width)
+        {
+            let x = bounds.x() + (f64::from(column) * zoom) as f32;
+            builder.move_to(x, bounds.y().max(0.0));
+            builder.line_to(x, (bounds.y() + bounds.height()).min(view.height as f32));
+        }
+        for row in zoom_math::visible_grid_lines(f64::from(bounds.y()), zoom, rows, view.height) {
+            let y = bounds.y() + (f64::from(row) * zoom) as f32;
+            builder.move_to(bounds.x().max(0.0), y);
+            builder.line_to((bounds.x() + bounds.width()).min(view.width as f32), y);
+        }
+        snapshot.append_stroke(
+            &builder.to_path(),
+            &gsk::Stroke::new(PIXEL_GRID_WIDTH),
+            &self.color().with_alpha(PIXEL_GRID_OPACITY),
+        );
     }
 
     fn update_cursor(&self) {
@@ -259,6 +298,9 @@ impl PigouneZoomView {
             gsk::ScalingFilter::Trilinear
         };
         snapshot.append_scaled_texture(&texture, filter, &bounds);
+        if imp.shows_pixel_grid.get() && zoom_math::shows_pixel_grid(zoom, imp.is_vector.get()) {
+            self.draw_pixel_grid(snapshot, &bounds, zoom);
+        }
         if imp.shows_bounds.get() {
             draw_bounds(snapshot, &bounds, &self.color());
         }

@@ -84,6 +84,8 @@ mod imp {
         pub compact: Cell<bool>,
         #[property(get, set = Self::set_show_bounds)]
         pub show_bounds: Cell<bool>,
+        #[property(get, set = Self::set_show_pixel_grid)]
+        pub show_pixel_grid: Cell<bool>,
         pub items: RefCell<Vec<PigouneAssetObject>>,
         pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
@@ -108,6 +110,11 @@ mod imp {
         fn set_show_bounds(&self, show_bounds: bool) {
             self.show_bounds.set(show_bounds);
             self.zoom_view.set_shows_bounds(show_bounds);
+        }
+
+        fn set_show_pixel_grid(&self, show_pixel_grid: bool) {
+            self.show_pixel_grid.set(show_pixel_grid);
+            self.zoom_view.set_shows_pixel_grid(show_pixel_grid);
         }
 
         fn set_compact(&self, compact: bool) {

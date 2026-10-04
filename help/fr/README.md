@@ -134,6 +134,9 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   amené au milieu de l'écran. Un contour en pointillés montre les vrais bords de l'image,
   marges transparentes comprises ; désactivez-le avec **Afficher les limites de l'image** dans
   le menu du zoom.
+- À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier
+  une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
+  du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
   sur l'image propose **Copier**, **Ouvrir avec…** et **Exporter vers…** pour elle.
 

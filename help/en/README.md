@@ -119,6 +119,8 @@ a tag in the details panel works the same way.
 - In the preview, drag the image to examine any part of it, even a corner brought to the
   middle of the screen. A dashed outline shows the real edges of the image, transparent
   margins included; turn it off with **Show Image Bounds** in the zoom menu.
+- From 800% on, a light grid separates the pixels of pictures, which helps to check icons and
+  pixel art; turn it off with **Show Pixel Grid** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
   the image offers **Copy**, **Open With…** and **Export To…** for it.
 

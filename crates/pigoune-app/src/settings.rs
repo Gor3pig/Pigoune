@@ -13,6 +13,7 @@ pub const SORT_CRITERION: &str = "sort-criterion";
 pub const SORT_REVERSED: &str = "sort-reversed";
 pub const PREVIEW_BACKGROUND: &str = "preview-background";
 pub const PREVIEW_BOUNDS: &str = "preview-bounds";
+pub const PREVIEW_PIXEL_GRID: &str = "preview-pixel-grid";
 pub const COLLECTION_SORT: &str = "collection-sort";
 pub const COLLECTION_SORT_REVERSED: &str = "collection-sort-reversed";
 pub const SHOW_COUNTS: &str = "show-counts";

@@ -1,6 +1,9 @@
+use std::ops::Range;
+
 pub const LARGEST_ZOOM: f64 = 32.0;
 pub const ACTUAL_SIZE: f64 = 1.0;
 pub const SHARP_PIXELS_FROM: f64 = 2.0;
+pub const PIXEL_GRID_FROM: f64 = 8.0;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Size {
@@ -51,6 +54,24 @@ pub fn clamp_center(center: Point, view: Size, image: Size, zoom: f64) -> Point 
 fn clamp_axis(center: f64, view: f64, image: f64, zoom: f64) -> f64 {
     let half_visible = view / zoom / 2.0;
     center.clamp((image - half_visible).min(0.0), half_visible.max(image))
+}
+
+pub fn shows_pixel_grid(zoom: f64, is_vector: bool) -> bool {
+    !is_vector && zoom >= PIXEL_GRID_FROM
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "line indexes are kept between zero and the image size"
+)]
+pub fn visible_grid_lines(start: f64, spacing: f64, pixels: u32, view: f64) -> Range<u32> {
+    let first = (-start / spacing).ceil().max(0.0);
+    let last = ((view - start) / spacing).floor().min(f64::from(pixels));
+    if last < first {
+        return 0..0;
+    }
+    (first as u32)..(last as u32 + 1)
 }
 
 pub fn shows_sharp_pixels(
@@ -162,6 +183,26 @@ mod tests {
         let fit = fit_zoom(VIEW, image, false);
         let centered = Point { x: 800.0, y: 300.0 };
         assert_eq!(clamp_center(centered, VIEW, image, fit), centered);
+    }
+
+    #[test]
+    fn the_pixel_grid_appears_from_800_percent_on_pictures_only() {
+        assert!(!shows_pixel_grid(7.9, false));
+        assert!(shows_pixel_grid(8.0, false));
+        assert!(!shows_pixel_grid(32.0, true));
+    }
+
+    #[test]
+    fn only_the_grid_lines_inside_the_view_are_drawn() {
+        assert_eq!(visible_grid_lines(100.0, 10.0, 16, 800.0), 0..17);
+        assert_eq!(visible_grid_lines(-35.0, 10.0, 100, 50.0), 4..9);
+        assert_eq!(visible_grid_lines(-5000.0, 10.0, 1000, 800.0), 500..581);
+    }
+
+    #[test]
+    fn an_image_outside_the_view_draws_no_grid_line() {
+        assert!(visible_grid_lines(900.0, 10.0, 16, 800.0).is_empty());
+        assert!(visible_grid_lines(-500.0, 10.0, 16, 800.0).is_empty());
     }
 
     #[test]
