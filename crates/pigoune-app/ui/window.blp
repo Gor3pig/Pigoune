@@ -50,7 +50,7 @@ template $PigouneWindow: Adw.ApplicationWindow {
                   primary: true;
                   icon-name: "open-menu-symbolic";
                   tooltip-text: _("Main Menu");
-                  menu-model: primary_menu;
+                  menu-model: welcome_menu;
                 }
               }
 
@@ -246,7 +246,55 @@ menu import_menu {
   }
 }
 
+menu welcome_menu {
+  section {
+    item {
+      label: _("_New Library…");
+      action: "win.create-library";
+    }
+
+    item {
+      label: _("_Open Library…");
+      action: "win.open-library";
+    }
+  }
+
+  section {
+    item {
+      label: _("_Preferences");
+      action: "win.preferences";
+    }
+
+    item {
+      label: _("_Keyboard Shortcuts");
+      action: "app.shortcuts";
+    }
+
+    item {
+      label: _("_Help");
+      action: "app.help";
+    }
+
+    item {
+      label: _("_About Pigoune");
+      action: "app.about";
+    }
+  }
+}
+
 menu primary_menu {
+  section {
+    item {
+      label: _("_New Library…");
+      action: "win.create-library";
+    }
+
+    item {
+      label: _("_Open Library…");
+      action: "win.open-library";
+    }
+  }
+
   section {
     item {
       label: _("Library _Information");

@@ -55,7 +55,8 @@ to change it.
 - Long tasks (imports, thumbnails) run off the main thread or asynchronously, so that the
   interface never freezes.
 - `build.rs` compiles the Blueprint files, the GResource bundle, the development translations
-  and the settings schema, so that `cargo run` works without installing anything.
+  and the settings schema, so that `cargo run` works without installing anything. It also
+  merges the translations into the metainfo, which the About window reads to show what is new.
 
 ## The library format
 

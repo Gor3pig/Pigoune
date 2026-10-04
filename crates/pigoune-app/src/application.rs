@@ -62,10 +62,14 @@ fn present_main_window(application: &adw::Application) {
     window.reopen_last_library();
 }
 
-fn open_help(application: &adw::Application) {
+fn localized_help_url() -> String {
     let languages = glib::language_names();
     let languages: Vec<&str> = languages.iter().map(glib::GString::as_str).collect();
-    gtk::UriLauncher::new(&help_url::help_url(&languages)).launch(
+    help_url::help_url(&languages)
+}
+
+fn open_help(application: &adw::Application) {
+    gtk::UriLauncher::new(&localized_help_url()).launch(
         application.active_window().as_ref(),
         gio::Cancellable::NONE,
         |_| {},
@@ -73,16 +77,18 @@ fn open_help(application: &adw::Application) {
 }
 
 fn show_about_dialog(application: &adw::Application) {
-    let dialog = adw::AboutDialog::builder()
-        .application_name("Pigoune")
-        .application_icon(APP_ID)
-        .developer_name("Gor3pig")
-        .version(VERSION)
-        .website("https://github.com/Gor3pig/Pigoune")
-        .issue_url("https://github.com/Gor3pig/Pigoune/issues")
-        .license_type(gtk::License::Gpl30)
-        .copyright("© 2026 Gor3pig")
-        .translator_credits(gettext("translator-credits"))
-        .build();
+    let dialog = adw::AboutDialog::from_appdata(
+        &format!("{RESOURCE_BASE_PATH}/metainfo.xml"),
+        Some(VERSION),
+    );
+    dialog.set_application_icon(APP_ID);
+    dialog.set_developer_name("Gor3pig");
+    dialog.set_version(VERSION);
+    dialog.set_website("https://github.com/Gor3pig/Pigoune");
+    dialog.set_issue_url("https://github.com/Gor3pig/Pigoune/issues");
+    dialog.set_support_url(&localized_help_url());
+    dialog.set_license_type(gtk::License::Gpl30);
+    dialog.set_copyright("© 2026 Gor3pig");
+    dialog.set_translator_credits(&gettext("translator-credits"));
     dialog.present(application.active_window().as_ref());
 }

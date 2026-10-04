@@ -28,7 +28,9 @@ l'enregistrer. Vous pouvez en créer autant que vous voulez, par exemple une par
 client.
 
 Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque**. Pigoune
-rouvre la dernière bibliothèque utilisée à chaque démarrage.
+rouvre la dernière bibliothèque utilisée à chaque démarrage. Quand une bibliothèque est
+ouverte, le menu principal propose **Nouvelle bibliothèque…** et **Ouvrir une bibliothèque…**
+pour passer à une autre.
 
 ### Importer des ressources
 

@@ -9,6 +9,8 @@ const ICONS_SOURCE_DIR: &str = "../../data/icons";
 const PO_SOURCE_DIR: &str = "../../po";
 const GETTEXT_PACKAGE: &str = "pigoune";
 const DATA_SOURCE_DIR: &str = "../../data";
+const METAINFO_TEMPLATE: &str = "io.github.gor3pig.Pigoune.metainfo.xml.in";
+const STAGED_METAINFO: &str = "metainfo.xml";
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR is set by cargo"));
@@ -17,6 +19,7 @@ fn main() {
     compile_blueprints(&staging_dir.join("ui"));
     stage_stylesheet(&staging_dir);
     stage_application_icons(&staging_dir.join("icons"));
+    stage_translated_metainfo(&staging_dir);
     compile_development_translations(&out_dir.join("locale"));
     compile_development_settings_schema(&out_dir.join("schemas"));
 
@@ -30,6 +33,7 @@ fn main() {
     println!("cargo::rerun-if-changed={ICONS_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={PO_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={DATA_SOURCE_DIR}/io.github.gor3pig.Pigoune.gschema.xml");
+    println!("cargo::rerun-if-changed={DATA_SOURCE_DIR}/{METAINFO_TEMPLATE}");
 }
 
 fn compile_blueprints(output_dir: &Path) {
@@ -69,6 +73,21 @@ fn stage_application_icons(output_dir: &Path) {
         )
         .expect("official icon exists");
     }
+}
+
+fn stage_translated_metainfo(output_dir: &Path) {
+    let status = Command::new("msgfmt")
+        .arg("--xml")
+        .arg("--template")
+        .arg(Path::new(DATA_SOURCE_DIR).join(METAINFO_TEMPLATE))
+        .arg("-d")
+        .arg(PO_SOURCE_DIR)
+        .arg("--output-file")
+        .arg(output_dir.join(STAGED_METAINFO))
+        .status()
+        .expect("msgfmt is installed");
+
+    assert!(status.success(), "msgfmt failed to translate the metainfo");
 }
 
 fn compile_development_translations(locale_dir: &Path) {

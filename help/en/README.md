@@ -27,7 +27,8 @@ A library is a folder where Pigoune keeps a copy of your assets. On the welcome 
 libraries as you like, for example one per project or per client.
 
 To open an existing library, choose **Open a Library**. Pigoune reopens the last library you
-used every time it starts.
+used every time it starts. While a library is open, the main menu offers **New Library…** and
+**Open Library…** to switch to another one.
 
 ### Import assets
 
