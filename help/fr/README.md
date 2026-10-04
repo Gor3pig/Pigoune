@@ -122,7 +122,7 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   minimale : les vignettes grandissent légèrement pour que chaque rangée occupe toute la
   largeur de la fenêtre.
 - Triez la grille par date d'ajout, nom, type, dimensions ou poids avec le bouton de tri.
-- Les GIF animés s'animent au survol.
+- Les GIF, PNG et WebP animés s'animent au survol.
 - Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur une ressource pour ouvrir l'**aperçu
   détaillé**. Zoomez avec la molette ou avec <kbd>+</kbd> et <kbd>-</kbd>, utilisez
   <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, et choisissez

@@ -1,3 +1,4 @@
+mod animation_recheck;
 mod asset;
 mod asset_command;
 mod batch_import;
@@ -101,7 +102,7 @@ impl Library {
         schema::ensure_is_writable(&connection)?;
         schema::configure_connection(&connection)?;
         schema::ensure_is_intact(&connection)?;
-        schema::migrate_to_current_version(&mut connection)?;
+        schema::migrate_to_current_version(&mut connection, root)?;
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
@@ -137,7 +138,7 @@ fn build_new_library(staging_dir: &Path) -> Result<(), LibraryError> {
 
     let mut connection = Connection::open(layout::database_path(staging_dir))?;
     schema::configure_connection(&connection)?;
-    schema::initialize_new_database(&mut connection)?;
+    schema::initialize_new_database(&mut connection, staging_dir)?;
     connection.close().map_err(|(_, error)| error)?;
     Ok(())
 }

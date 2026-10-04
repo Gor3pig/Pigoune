@@ -1,11 +1,21 @@
+use std::path::Path;
+
 use rusqlite::{Connection, ErrorCode};
 
-use super::LibraryError;
+use super::{LibraryError, animation_recheck};
 
-pub const CURRENT_FORMAT_VERSION: u32 = 1;
+pub const CURRENT_FORMAT_VERSION: u32 = 2;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 
-const MIGRATIONS: [&str; CURRENT_FORMAT_VERSION as usize] = [include_str!("migrations/v1.sql")];
+enum Migration {
+    Statements(&'static str),
+    RecheckAnimations,
+}
+
+const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
+    Migration::Statements(include_str!("migrations/v1.sql")),
+    Migration::RecheckAnimations,
+];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
     connection.pragma_update(None, "foreign_keys", true)?;
@@ -15,9 +25,12 @@ pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError>
     Ok(())
 }
 
-pub fn initialize_new_database(connection: &mut Connection) -> Result<(), LibraryError> {
+pub fn initialize_new_database(
+    connection: &mut Connection,
+    root: &Path,
+) -> Result<(), LibraryError> {
     connection.pragma_update(None, "application_id", PIGOUNE_APPLICATION_ID)?;
-    migrate_to_current_version(connection)
+    migrate_to_current_version(connection, root)
 }
 
 pub fn ensure_is_pigoune_database(connection: &Connection) -> Result<bool, LibraryError> {
@@ -49,7 +62,10 @@ pub fn read_format_version(connection: &Connection) -> Result<u32, LibraryError>
     Ok(connection.pragma_query_value(None, "user_version", |row| row.get(0))?)
 }
 
-pub fn migrate_to_current_version(connection: &mut Connection) -> Result<(), LibraryError> {
+pub fn migrate_to_current_version(
+    connection: &mut Connection,
+    root: &Path,
+) -> Result<(), LibraryError> {
     let found = read_format_version(connection)?;
     if found > CURRENT_FORMAT_VERSION {
         return Err(LibraryError::NewerFormat {
@@ -64,12 +80,19 @@ pub fn migrate_to_current_version(connection: &mut Connection) -> Result<(), Lib
     let transaction = connection.transaction()?;
     for (version, migration) in (1..=CURRENT_FORMAT_VERSION).zip(MIGRATIONS) {
         if version > found {
-            transaction.execute_batch(migration)?;
+            apply(&transaction, &migration, root)?;
         }
     }
     transaction.pragma_update(None, "user_version", CURRENT_FORMAT_VERSION)?;
     transaction.commit()?;
     Ok(())
+}
+
+fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<(), LibraryError> {
+    match migration {
+        Migration::Statements(statements) => Ok(connection.execute_batch(statements)?),
+        Migration::RecheckAnimations => animation_recheck::mark_animated_assets(connection, root),
+    }
 }
 
 fn is_not_a_database(error: &rusqlite::Error) -> bool {

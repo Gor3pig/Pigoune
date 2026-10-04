@@ -47,8 +47,18 @@ fn side_by_side(size: Dimensions) -> String {
     format!("{} × {}", size.width(), size.height())
 }
 
+pub fn animation_badge_text(format: AssetFormat) -> &'static str {
+    match format {
+        AssetFormat::Png => "APNG",
+        _ => format_name(format),
+    }
+}
+
 pub fn summary_text(asset: &Asset, timing: Option<AnimationTiming>) -> String {
-    let mut parts = timing.map_or_else(|| still_parts(asset), animation_parts);
+    let mut parts = timing.map_or_else(
+        || still_parts(asset),
+        |timing| animation_parts(asset.format, timing),
+    );
     parts.push(byte_size_text(asset.byte_size));
     parts.join(SUMMARY_SEPARATOR)
 }
@@ -75,11 +85,15 @@ fn formats_text(formats: impl Iterator<Item = AssetFormat>) -> String {
         .join(", ")
 }
 
-pub fn animation_text(timing: Option<AnimationTiming>) -> String {
+pub fn animation_text(format: AssetFormat, timing: Option<AnimationTiming>) -> String {
     timing.map_or_else(
-        || gettext("Animated GIF"),
-        |timing| animation_parts(timing).join(SUMMARY_SEPARATOR),
+        || animated_format_text(format),
+        |timing| animation_parts(format, timing).join(SUMMARY_SEPARATOR),
     )
+}
+
+fn animated_format_text(format: AssetFormat) -> String {
+    gettext("Animated {format}").replace("{format}", format_name(format))
 }
 
 fn still_parts(asset: &Asset) -> Vec<String> {
@@ -88,9 +102,9 @@ fn still_parts(asset: &Asset) -> Vec<String> {
     parts
 }
 
-fn animation_parts(timing: AnimationTiming) -> Vec<String> {
+fn animation_parts(format: AssetFormat, timing: AnimationTiming) -> Vec<String> {
     vec![
-        gettext("Animated GIF"),
+        animated_format_text(format),
         frames_text(timing.frames),
         duration_text(timing.duration),
     ]
@@ -136,7 +150,10 @@ mod tests {
 
     use pigoune_core::AssetFormat;
 
-    use super::{date_pattern, duration_text, embedded_sizes_text, formats_text, frames_text};
+    use super::{
+        animation_badge_text, date_pattern, duration_text, embedded_sizes_text, formats_text,
+        frames_text,
+    };
 
     #[test]
     fn each_format_is_listed_once_in_order_of_appearance() {
@@ -157,6 +174,13 @@ mod tests {
         assert_eq!(duration_text(Duration::from_millis(300)), "0.3 s");
         assert_eq!(duration_text(Duration::from_millis(12_050)), "12.1 s");
         assert_eq!(duration_text(Duration::from_secs(3)), "3.0 s");
+    }
+
+    #[test]
+    fn an_animated_png_is_badged_by_its_own_name() {
+        assert_eq!(animation_badge_text(AssetFormat::Png), "APNG");
+        assert_eq!(animation_badge_text(AssetFormat::Webp), "WebP");
+        assert_eq!(animation_badge_text(AssetFormat::Gif), "GIF");
     }
 
     #[test]

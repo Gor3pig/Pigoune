@@ -72,8 +72,10 @@ My logos.pigoune/
 
 - Paths stored in the database are relative to the library, which keeps it portable.
 - The database is identified by `PRAGMA application_id` and versioned by `PRAGMA
-  user_version`. Migrations live in `crates/pigoune-core/src/library/migrations/`, and a
-  library created by a newer version of Pigoune is refused with a clear message.
+  user_version`. Migrations are listed in `crates/pigoune-core/src/library/schema.rs`: SQL
+  files from `migrations/`, or a Rust step when existing files must be read again (format 2
+  looks for animated PNG and WebP among assets imported earlier). A library created by a newer
+  version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.
 - A library is locked while it is open, so that two windows cannot write to it at once.

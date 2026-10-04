@@ -55,7 +55,7 @@ mod imp {
         #[template_child]
         pub name_label: TemplateChild<gtk::Label>,
         #[template_child]
-        pub gif_badge: TemplateChild<gtk::Label>,
+        pub animation_badge: TemplateChild<gtk::Label>,
         #[template_child]
         pub favorite_badge: TemplateChild<gtk::Image>,
         pub favorite_binding: RefCell<Option<glib::Binding>>,
@@ -130,7 +130,9 @@ impl PigouneAssetTile {
     pub fn show_asset(&self, asset: &PigouneAssetObject, cache: &Rc<ThumbnailCache>) {
         let imp = self.imp();
         self.follow_name(asset);
-        imp.gif_badge.set_visible(asset.asset().is_animated);
+        imp.animation_badge.set_visible(asset.asset().is_animated);
+        imp.animation_badge
+            .set_label(asset_facts::animation_badge_text(asset.asset().format));
         self.unbind_favorite();
         let binding = asset
             .bind_property("favorite", &*imp.favorite_badge, "visible")

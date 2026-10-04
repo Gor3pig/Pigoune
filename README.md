@@ -75,8 +75,8 @@ export it to a folder.
 <td width="50%" valign="top">
 
 ### Enjoy
-A thumbnail grid with adjustable size, animated GIFs on hover, and a detailed preview with zoom
-at the press of <kbd>Space</kbd>.
+A thumbnail grid with adjustable size, animations (GIF, PNG, WebP) on hover, and a detailed
+preview with zoom at the press of <kbd>Space</kbd>.
 
 </td>
 <td width="50%" valign="top">

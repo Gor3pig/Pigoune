@@ -226,6 +226,30 @@ fn an_animated_gif_reports_its_frames_and_duration() {
 }
 
 #[test]
+fn animated_png_and_webp_report_their_frames_and_duration() {
+    let mut fixture = Fixture::new();
+
+    for (name, format) in [
+        ("blinking.png", AssetFormat::Png),
+        ("blinking.webp", AssetFormat::Webp),
+    ] {
+        let asset = fixture.import_new(&fixture.sample(name));
+
+        assert_eq!(asset.format, format, "{name}");
+        assert_eq!(asset.dimensions, Some(dimensions(4, 4)), "{name}");
+        assert!(asset.is_animated, "{name}");
+        assert_eq!(
+            fixture.library.animation_timing(&asset),
+            Some(AnimationTiming {
+                frames: 3,
+                duration: Duration::from_millis(600),
+            }),
+            "{name}"
+        );
+    }
+}
+
+#[test]
 fn a_still_image_has_no_animation_timing() {
     let mut fixture = Fixture::new();
 

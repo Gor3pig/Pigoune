@@ -437,7 +437,7 @@ impl PigouneAssetDetails {
         imp.summary_label
             .set_label(&asset_facts::summary_text(asset, timing));
         imp.animation_row
-            .set_subtitle(&asset_facts::animation_text(timing));
+            .set_subtitle(&asset_facts::animation_text(asset.format, timing));
     }
 
     fn show_preview(&self, object: &PigouneAssetObject, thumbnails: &Rc<ThumbnailCache>) {

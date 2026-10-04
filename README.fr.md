@@ -77,8 +77,8 @@ dans le presse-papiers ou exportez-la dans un dossier.
 <td width="50%" valign="top">
 
 ### Admirer
-Grille de vignettes à taille réglable, GIF animés au survol, et aperçu détaillé avec zoom d'une
-simple pression sur <kbd>Espace</kbd>.
+Grille de vignettes à taille réglable, animations (GIF, PNG, WebP) au survol, et aperçu détaillé
+avec zoom d'une simple pression sur <kbd>Espace</kbd>.
 
 </td>
 <td width="50%" valign="top">

@@ -109,7 +109,7 @@ a tag in the details panel works the same way.
   <kbd>Ctrl</kbd>+<kbd>+</kbd> and <kbd>Ctrl</kbd>+<kbd>-</kbd>. The slider sets the smallest
   size: thumbnails grow slightly so that each row fills the whole width of the window.
 - Sort the grid by date added, name, type, dimensions or size with the sort button.
-- Animated GIFs play when you hover over them.
+- Animated GIF, PNG and WebP images play when you hover over them.
 - Press <kbd>Space</kbd> or double-click an asset to open the **detailed preview**. Zoom with
   the scroll wheel or with <kbd>+</kbd> and <kbd>-</kbd>, use <kbd>0</kbd> to fit the window
   and <kbd>1</kbd> for the actual size, and choose a background color from the top bar. Press

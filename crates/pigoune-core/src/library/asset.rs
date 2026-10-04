@@ -85,7 +85,7 @@ impl Library {
     #[must_use]
     pub fn animation_timing(&self, asset: &Asset) -> Option<AnimationTiming> {
         if asset.is_animated {
-            media::animation_timing(&self.file_of(asset))
+            media::animation_timing(&self.file_of(asset), asset.format)
         } else {
             None
         }

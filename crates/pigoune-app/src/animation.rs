@@ -65,6 +65,16 @@ mod tests {
     }
 
     #[test]
+    fn animated_png_and_webp_loop_over_their_frames() {
+        for name in ["blinking.png", "blinking.webp"] {
+            assert!(
+                frames_shown_within(name, 4, Duration::from_secs(5)) >= 4,
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
     fn a_still_image_shows_a_single_frame() {
         assert_eq!(
             frames_shown_within("still.gif", 2, Duration::from_secs(2)),

@@ -3,6 +3,7 @@ use std::io::{self, BufReader, Read};
 use std::path::Path;
 use std::time::Duration;
 
+use super::frame_timing::FrameTally;
 use super::{AnimationTiming, InspectError};
 
 const SCREEN_DESCRIPTOR_END: usize = 13;
@@ -16,8 +17,6 @@ const COLOR_TABLE_SIZE_BITS: u8 = 0x07;
 const GRAPHIC_CONTROL_LABEL: u8 = 0xF9;
 const GRAPHIC_CONTROL_LENGTH: usize = 4;
 const FRAMES_OF_AN_ANIMATION: usize = 2;
-const SHORTEST_HONORED_DELAY: u16 = 2;
-const DELAY_OF_A_TOO_SHORT_FRAME: u16 = 10;
 const MILLISECONDS_PER_DELAY_UNIT: u64 = 10;
 
 enum Block {
@@ -35,23 +34,13 @@ pub fn is_animated(path: &Path) -> Result<bool, InspectError> {
 
 pub fn timing(path: &Path) -> Option<AnimationTiming> {
     let file = File::open(path).ok()?;
-    let mut total = Duration::ZERO;
-    let frames = scan_frames(&mut BufReader::new(file), usize::MAX, |delay| {
-        total += displayed_duration(delay);
+    let mut tally = FrameTally::default();
+    scan_frames(&mut BufReader::new(file), usize::MAX, |delay| {
+        tally.add(Duration::from_millis(
+            u64::from(delay) * MILLISECONDS_PER_DELAY_UNIT,
+        ));
     });
-    (frames > 0).then_some(AnimationTiming {
-        frames,
-        duration: total,
-    })
-}
-
-fn displayed_duration(delay: u16) -> Duration {
-    let delay = if delay < SHORTEST_HONORED_DELAY {
-        DELAY_OF_A_TOO_SHORT_FRAME
-    } else {
-        delay
-    };
-    Duration::from_millis(u64::from(delay) * MILLISECONDS_PER_DELAY_UNIT)
+    tally.timing()
 }
 
 fn count_frames(reader: &mut impl Read, limit: usize) -> usize {
@@ -152,9 +141,7 @@ fn read_array<const LENGTH: usize>(reader: &mut impl Read) -> io::Result<[u8; LE
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
-    use super::{count_frames, displayed_duration, scan_frames};
+    use super::{count_frames, scan_frames};
 
     const HEADER: &[u8] = b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff";
     const FRAME: &[u8] = b"\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00";
@@ -208,14 +195,6 @@ mod tests {
         });
         assert_eq!(frames, 3);
         assert_eq!(delays, [10, 50, 0]);
-    }
-
-    #[test]
-    fn a_missing_or_tiny_delay_lasts_a_tenth_of_a_second_like_in_browsers() {
-        assert_eq!(displayed_duration(0), Duration::from_millis(100));
-        assert_eq!(displayed_duration(1), Duration::from_millis(100));
-        assert_eq!(displayed_duration(2), Duration::from_millis(20));
-        assert_eq!(displayed_duration(50), Duration::from_millis(500));
     }
 
     #[test]

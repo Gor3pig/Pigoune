@@ -1,8 +1,11 @@
 mod dimensions;
 mod format;
+mod frame_timing;
 mod gif;
 mod ico;
+mod png;
 mod svg;
+mod webp;
 
 use std::fs::File;
 use std::io::Read;
@@ -46,8 +49,13 @@ pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
     Err(InspectError::Unsupported)
 }
 
-pub fn animation_timing(path: &Path) -> Option<AnimationTiming> {
-    gif::timing(path)
+pub fn animation_timing(path: &Path, format: AssetFormat) -> Option<AnimationTiming> {
+    match format {
+        AssetFormat::Gif => gif::timing(path),
+        AssetFormat::Png => png::timing(path),
+        AssetFormat::Webp => webp::timing(path),
+        _ => None,
+    }
 }
 
 fn read_header(path: &Path) -> Result<Vec<u8>, InspectError> {
@@ -73,7 +81,7 @@ fn inspect_binary(path: &Path, format: AssetFormat) -> Result<MediaInfo, Inspect
     Ok(MediaInfo {
         format,
         dimensions: Some(probe_dimensions(path)?),
-        is_animated: format == AssetFormat::Gif && gif::is_animated(path)?,
+        is_animated: is_animated(path, format)?,
         embedded_sizes: Vec::new(),
     })
 }
@@ -83,4 +91,13 @@ fn probe_dimensions(path: &Path) -> Result<Dimensions, InspectError> {
     let width = u32::try_from(size.width).map_err(|_| InspectError::Unreadable)?;
     let height = u32::try_from(size.height).map_err(|_| InspectError::Unreadable)?;
     Dimensions::new(width, height).ok_or(InspectError::Unreadable)
+}
+
+pub fn is_animated(path: &Path, format: AssetFormat) -> Result<bool, InspectError> {
+    match format {
+        AssetFormat::Gif => gif::is_animated(path),
+        AssetFormat::Png => png::is_animated(path),
+        AssetFormat::Webp => webp::is_animated(path),
+        _ => Ok(false),
+    }
 }
