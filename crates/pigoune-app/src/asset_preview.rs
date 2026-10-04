@@ -18,9 +18,10 @@ const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checke
 const SMALLEST_RENDER_PIXELS: u32 = 256;
 const LARGEST_VECTOR_PIXELS: u32 = 4096;
 const SHARPEN_DELAY: Duration = Duration::from_millis(200);
-const STEP_BUTTONS_DELAY: Duration = Duration::from_secs(2);
+const CONTROLS_DELAY: Duration = Duration::from_secs(2);
 const SHOWN_STEP_BUTTON: &str = "shown";
 const FAVORITE_STYLE: &str = "favorite";
+const FLOATING_HEADER: &str = "floating";
 const MOUSE_BACK_BUTTON: u32 = 8;
 const MOUSE_FORWARD_BUTTON: u32 = 9;
 
@@ -44,6 +45,8 @@ mod imp {
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/asset-preview.ui")]
     #[properties(wrapper_type = super::PigouneAssetPreview)]
     pub struct PigouneAssetPreview {
+        #[template_child]
+        pub toolbar_view: TemplateChild<adw::ToolbarView>,
         #[template_child]
         pub header_bar: TemplateChild<adw::HeaderBar>,
         #[template_child]
@@ -72,8 +75,9 @@ mod imp {
         pub previous_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub next_button: TemplateChild<gtk::Button>,
-        pub step_buttons_shown: Cell<bool>,
-        pub step_buttons_hiding: RefCell<Option<glib::SourceId>>,
+        pub controls_shown: Cell<bool>,
+        pub follows_fullscreen: Cell<bool>,
+        pub controls_hiding: RefCell<Option<glib::SourceId>>,
         pub pointer: Cell<Option<(f64, f64)>>,
         pub showing: RefCell<Option<PigouneAssetObject>>,
         pub vector_pixels: Cell<u32>,
@@ -179,8 +183,19 @@ mod imp {
             }
             class.bind_template_instance_callbacks();
             class.add_binding(gdk::Key::Escape, gdk::ModifierType::empty(), |preview| {
-                preview.close();
+                if preview.is_fullscreen() {
+                    preview.set_fullscreen(false);
+                } else {
+                    preview.close();
+                }
                 glib::Propagation::Stop
+            });
+            class.add_binding(gdk::Key::F11, gdk::ModifierType::empty(), |preview| {
+                preview.set_fullscreen(!preview.is_fullscreen());
+                glib::Propagation::Stop
+            });
+            class.install_action("preview.fullscreen", None, |preview, _, _| {
+                preview.set_fullscreen(!preview.is_fullscreen());
             });
             class.add_binding(gdk::Key::space, gdk::ModifierType::empty(), |preview| {
                 preview.close();
@@ -255,6 +270,7 @@ impl PigouneAssetPreview {
         imp.items.replace(items);
         imp.position.set(position);
         self.show_current();
+        self.follow_fullscreen();
         self.grab_focus();
     }
 
@@ -263,6 +279,7 @@ impl PigouneAssetPreview {
     }
 
     pub fn close(&self) {
+        self.set_fullscreen(false);
         let last = self.imp().showing.borrow().clone();
         self.forget_selection();
         if let Some(on_closed) = self.imp().on_closed.borrow().as_ref() {
@@ -380,7 +397,7 @@ impl PigouneAssetPreview {
             move |_, x, y| {
                 let moved = preview.imp().pointer.replace(Some((x, y))) != Some((x, y));
                 if moved {
-                    preview.show_step_buttons();
+                    preview.show_controls();
                 }
             }
         ));
@@ -389,56 +406,115 @@ impl PigouneAssetPreview {
             self,
             move |_| {
                 preview.imp().pointer.set(None);
-                preview.hide_step_buttons();
+                preview.hide_controls();
             }
         ));
         self.add_controller(motion);
     }
 
-    fn show_step_buttons(&self) {
+    fn show_controls(&self) {
         let imp = self.imp();
-        imp.step_buttons_shown.set(true);
-        self.update_step_buttons();
-        if let Some(hiding) = imp.step_buttons_hiding.take() {
+        imp.controls_shown.set(true);
+        self.update_controls();
+        if let Some(hiding) = imp.controls_hiding.take() {
             hiding.remove();
         }
         let hiding = glib::timeout_add_local_once(
-            STEP_BUTTONS_DELAY,
+            CONTROLS_DELAY,
             glib::clone!(
                 #[weak(rename_to = preview)]
                 self,
                 move || {
-                    preview.imp().step_buttons_hiding.replace(None);
-                    if preview.is_hovering_a_step_button() {
-                        preview.show_step_buttons();
+                    preview.imp().controls_hiding.replace(None);
+                    if preview.is_holding_controls() {
+                        preview.show_controls();
                     } else {
-                        preview.hide_step_buttons();
+                        preview.hide_controls();
                     }
                 }
             ),
         );
-        imp.step_buttons_hiding.replace(Some(hiding));
+        imp.controls_hiding.replace(Some(hiding));
     }
 
-    fn hide_step_buttons(&self) {
+    fn hide_controls(&self) {
         let imp = self.imp();
-        if let Some(hiding) = imp.step_buttons_hiding.take() {
+        if let Some(hiding) = imp.controls_hiding.take() {
             hiding.remove();
         }
-        imp.step_buttons_shown.set(false);
-        self.update_step_buttons();
+        imp.controls_shown.set(false);
+        self.update_controls();
     }
 
-    fn is_hovering_a_step_button(&self) -> bool {
+    fn is_holding_controls(&self) -> bool {
         let imp = self.imp();
-        [&*imp.previous_button, &*imp.next_button]
-            .iter()
-            .any(|button| button.state_flags().contains(gtk::StateFlags::PRELIGHT))
+        let hovered = [
+            imp.previous_button.upcast_ref::<gtk::Widget>(),
+            imp.next_button.upcast_ref(),
+            imp.header_bar.upcast_ref(),
+        ]
+        .iter()
+        .any(|widget| widget.state_flags().contains(gtk::StateFlags::PRELIGHT));
+        let menu_open = [
+            imp.zoom_button.popover(),
+            Some(imp.background_popover.get().upcast()),
+            Some(imp.context_menu.get().upcast()),
+        ]
+        .iter()
+        .flatten()
+        .any(WidgetExt::is_visible);
+        hovered || menu_open
     }
 
-    fn update_step_buttons(&self) {
+    fn window(&self) -> Option<gtk::Window> {
+        self.root().and_downcast::<gtk::Window>()
+    }
+
+    fn is_fullscreen(&self) -> bool {
+        self.window().is_some_and(|window| window.is_fullscreen())
+    }
+
+    fn set_fullscreen(&self, fullscreen: bool) {
+        let Some(window) = self.window() else {
+            return;
+        };
+        if fullscreen {
+            window.fullscreen();
+        } else if window.is_fullscreen() {
+            window.unfullscreen();
+        }
+    }
+
+    fn float_header(&self, floating: bool) {
         let imp = self.imp();
-        let shown = imp.step_buttons_shown.get();
+        imp.toolbar_view.set_extend_content_to_top_edge(floating);
+        if floating {
+            imp.header_bar.add_css_class(FLOATING_HEADER);
+        } else {
+            imp.header_bar.remove_css_class(FLOATING_HEADER);
+        }
+        self.update_controls();
+    }
+
+    fn follow_fullscreen(&self) {
+        let imp = self.imp();
+        if imp.follows_fullscreen.replace(true) {
+            return;
+        }
+        if let Some(window) = self.window() {
+            window.connect_fullscreened_notify(glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                move |window| preview.float_header(window.is_fullscreen())
+            ));
+        }
+    }
+
+    fn update_controls(&self) {
+        let imp = self.imp();
+        let shown = imp.controls_shown.get();
+        imp.toolbar_view
+            .set_reveal_top_bars(shown || !self.is_fullscreen());
         let position = imp.position.get();
         let count = u32::try_from(imp.items.borrow().len()).unwrap_or(u32::MAX);
         for (button, offset) in [(&*imp.previous_button, -1), (&*imp.next_button, 1)] {
@@ -464,7 +540,7 @@ impl PigouneAssetPreview {
         }
         imp.showing.replace(None);
         imp.zoom_view.show_image(None, 1, 1, false);
-        self.hide_step_buttons();
+        self.hide_controls();
         self.unwatch_favorite();
     }
 
@@ -556,7 +632,7 @@ impl PigouneAssetPreview {
         imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
             .set_subtitle(&subtitle_text(&asset, position, count));
-        self.update_step_buttons();
+        self.update_controls();
         let remembered = imp
             .thumbnails
             .borrow()

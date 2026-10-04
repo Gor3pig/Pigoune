@@ -18,6 +18,12 @@ menu zoom_menu {
       label: _("Actual Size");
       action: "preview.zoom-actual";
     }
+
+    item {
+      label: _("Full Screen");
+      action: "preview.fullscreen";
+      accel: "F11";
+    }
   }
 
   section {
@@ -36,10 +42,14 @@ menu zoom_menu {
 template $PigouneAssetPreview: Adw.Bin {
   focusable: true;
 
-  child: Adw.ToolbarView {
+  child: Adw.ToolbarView toolbar_view {
     [top]
     Adw.HeaderBar header_bar {
       title-widget: Adw.WindowTitle preview_title {};
+
+      styles [
+        "preview-header",
+      ]
 
       [start]
       Button {

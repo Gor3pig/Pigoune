@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 11:02+0200\n"
+"POT-Creation-Date: 2026-10-04 11:13+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -235,8 +235,8 @@ msgid ""
 "Whether thin lines separate the pixels of a picture zoomed to 800% or more "
 "in the detailed preview."
 msgstr ""
-"Indique si de fines lignes séparent les pixels d’une image agrandie à "
-"800 % ou plus dans l’aperçu détaillé."
+"Indique si de fines lignes séparent les pixels d’une image agrandie à 800 % "
+"ou plus dans l’aperçu détaillé."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:72
 msgid "Collection sort criterion"
@@ -427,7 +427,7 @@ msgstr "C_réer"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:51
 #: crates/pigoune-app/src/window.rs:453
-#: crates/pigoune-app/ui/grid-header.blp:125
+#: crates/pigoune-app/ui/grid-header.blp:128
 #: crates/pigoune-app/ui/collection-name-dialog.blp:49
 #: crates/pigoune-app/src/sidebar_row.rs:477
 msgid "Name"
@@ -565,25 +565,25 @@ msgid "Choose a Location"
 msgstr "Choisir un emplacement"
 
 #: crates/pigoune-app/src/window.rs:454
-#: crates/pigoune-app/ui/grid-header.blp:131
+#: crates/pigoune-app/ui/grid-header.blp:134
 #: crates/pigoune-app/ui/filter-popover.blp:14
 msgid "Type"
 msgstr "Type"
 
 #: crates/pigoune-app/src/window.rs:455
-#: crates/pigoune-app/ui/grid-header.blp:137
+#: crates/pigoune-app/ui/grid-header.blp:140
 #: crates/pigoune-app/ui/asset-details.blp:207
 msgid "Dimensions"
 msgstr "Dimensions"
 
 #: crates/pigoune-app/src/window.rs:456
-#: crates/pigoune-app/ui/grid-header.blp:143
+#: crates/pigoune-app/ui/grid-header.blp:146
 #: crates/pigoune-app/ui/asset-details.blp:216
 msgid "Size"
 msgstr "Poids"
 
 #: crates/pigoune-app/src/window.rs:457
-#: crates/pigoune-app/ui/grid-header.blp:119
+#: crates/pigoune-app/ui/grid-header.blp:122
 msgid "Date Added"
 msgstr "Date d’ajout"
 
@@ -608,7 +608,7 @@ msgid "Open Preview"
 msgstr "Ouvrir l’aperçu"
 
 #: crates/pigoune-app/src/window.rs:1026
-#: crates/pigoune-app/src/asset_preview.rs:729
+#: crates/pigoune-app/src/asset_preview.rs:799
 msgid "Open With…"
 msgstr "Ouvrir avec…"
 
@@ -624,26 +624,26 @@ msgid "_Restore"
 msgstr "_Restaurer"
 
 #: crates/pigoune-app/src/window.rs:1041
-#: crates/pigoune-app/src/asset_preview.rs:726
+#: crates/pigoune-app/src/asset_preview.rs:796
 msgid "Copy"
 msgstr "Copier"
 
 #: crates/pigoune-app/src/window.rs:1045
-#: crates/pigoune-app/src/asset_preview.rs:730
+#: crates/pigoune-app/src/asset_preview.rs:800
 msgid "Export To…"
 msgstr "Exporter vers…"
 
 #: crates/pigoune-app/src/window.rs:1048
-#: crates/pigoune-app/src/asset_preview.rs:314
-#: crates/pigoune-app/src/asset_preview.rs:733
+#: crates/pigoune-app/src/asset_preview.rs:330
+#: crates/pigoune-app/src/asset_preview.rs:803
 #: crates/pigoune-app/src/asset_details.rs:356
 #: crates/pigoune-app/src/asset_details.rs:403
 msgid "Remove from Favorites"
 msgstr "Retirer des favoris"
 
 #: crates/pigoune-app/src/window.rs:1050
-#: crates/pigoune-app/src/asset_preview.rs:318
-#: crates/pigoune-app/src/asset_preview.rs:735
+#: crates/pigoune-app/src/asset_preview.rs:334
+#: crates/pigoune-app/src/asset_preview.rs:805
 #: crates/pigoune-app/src/asset_details.rs:358
 #: crates/pigoune-app/src/asset_details.rs:405
 msgid "Add to Favorites"
@@ -1172,49 +1172,49 @@ msgstr "La collection de destination n’existe plus."
 msgid "Show Unreadable Files"
 msgstr "Afficher les fichiers illisibles"
 
-#: crates/pigoune-app/ui/grid-header.blp:11
+#: crates/pigoune-app/ui/grid-header.blp:12
+msgid "Show the Sidebar"
+msgstr "Afficher la barre latérale"
+
+#: crates/pigoune-app/ui/grid-header.blp:21
 msgid "Search…"
 msgstr "Rechercher…"
 
-#: crates/pigoune-app/ui/grid-header.blp:14
+#: crates/pigoune-app/ui/grid-header.blp:24
 msgid "Search Resources"
 msgstr "Rechercher des ressources"
 
-#: crates/pigoune-app/ui/grid-header.blp:19
+#: crates/pigoune-app/ui/grid-header.blp:29
 #: crates/pigoune-app/src/grid_header.rs:96
 msgid "Filters"
 msgstr "Filtres"
 
-#: crates/pigoune-app/ui/grid-header.blp:21
+#: crates/pigoune-app/ui/grid-header.blp:31
 msgid "Filter the Resources"
 msgstr "Filtrer les ressources"
 
-#: crates/pigoune-app/ui/grid-header.blp:35
-msgid "Show the Sidebar"
-msgstr "Afficher la barre latérale"
-
-#: crates/pigoune-app/ui/grid-header.blp:54
+#: crates/pigoune-app/ui/grid-header.blp:57
 msgid "Show Details"
 msgstr "Afficher les détails"
 
-#: crates/pigoune-app/ui/grid-header.blp:61
+#: crates/pigoune-app/ui/grid-header.blp:64
 msgid "Larger Thumbnails"
 msgstr "Vignettes plus grandes"
 
-#: crates/pigoune-app/ui/grid-header.blp:75
-#: crates/pigoune-app/ui/grid-header.blp:85
+#: crates/pigoune-app/ui/grid-header.blp:78
+#: crates/pigoune-app/ui/grid-header.blp:88
 msgid "Thumbnail Size"
 msgstr "Taille des vignettes"
 
-#: crates/pigoune-app/ui/grid-header.blp:93
+#: crates/pigoune-app/ui/grid-header.blp:96
 msgid "Smaller Thumbnails"
 msgstr "Vignettes plus petites"
 
-#: crates/pigoune-app/ui/grid-header.blp:116
+#: crates/pigoune-app/ui/grid-header.blp:119
 msgid "Sort By"
 msgstr "Trier par"
 
-#: crates/pigoune-app/ui/grid-header.blp:151
+#: crates/pigoune-app/ui/grid-header.blp:154
 #: crates/pigoune-app/src/sidebar_row.rs:488
 msgid "Reverse Order"
 msgstr "Ordre inverse"
@@ -1337,78 +1337,83 @@ msgstr "Ajuster à la fenêtre"
 msgid "Actual Size"
 msgstr "Taille réelle (100 %)"
 
-#: crates/pigoune-app/ui/asset-preview.blp:25
+#: crates/pigoune-app/ui/asset-preview.blp:23
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
+msgid "Full Screen"
+msgstr "Plein écran"
+
+#: crates/pigoune-app/ui/asset-preview.blp:31
 msgid "Show Image Bounds"
 msgstr "Afficher les limites de l’image"
 
-#: crates/pigoune-app/ui/asset-preview.blp:30
+#: crates/pigoune-app/ui/asset-preview.blp:36
 msgid "Show Pixel Grid"
 msgstr "Afficher la grille des pixels"
 
-#: crates/pigoune-app/ui/asset-preview.blp:46
-#: crates/pigoune-app/ui/asset-preview.blp:59
+#: crates/pigoune-app/ui/asset-preview.blp:52
+#: crates/pigoune-app/ui/asset-preview.blp:65
 msgid "Back to the Library"
 msgstr "Revenir à la bibliothèque"
 
-#: crates/pigoune-app/ui/asset-preview.blp:52
+#: crates/pigoune-app/ui/asset-preview.blp:58
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:6
 msgid "Library"
 msgstr "Bibliothèque"
 
-#: crates/pigoune-app/ui/asset-preview.blp:76
+#: crates/pigoune-app/ui/asset-preview.blp:82
 msgid "Zoom"
 msgstr "Zoom"
 
-#: crates/pigoune-app/ui/asset-preview.blp:88
+#: crates/pigoune-app/ui/asset-preview.blp:94
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:116
 msgid "Zoom Out"
 msgstr "Zoom arrière"
 
-#: crates/pigoune-app/ui/asset-preview.blp:99
+#: crates/pigoune-app/ui/asset-preview.blp:105
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:111
 msgid "Zoom In"
 msgstr "Zoom avant"
 
-#: crates/pigoune-app/ui/asset-preview.blp:117
+#: crates/pigoune-app/ui/asset-preview.blp:123
 msgid "Background"
 msgstr "Fond"
 
-#: crates/pigoune-app/ui/asset-preview.blp:139
+#: crates/pigoune-app/ui/asset-preview.blp:145
 msgid "Transparent Background"
 msgstr "Fond transparent"
 
-#: crates/pigoune-app/ui/asset-preview.blp:155
+#: crates/pigoune-app/ui/asset-preview.blp:161
 msgid "White Background"
 msgstr "Fond blanc"
 
-#: crates/pigoune-app/ui/asset-preview.blp:171
+#: crates/pigoune-app/ui/asset-preview.blp:177
 msgid "Gray Background"
 msgstr "Fond gris"
 
-#: crates/pigoune-app/ui/asset-preview.blp:187
+#: crates/pigoune-app/ui/asset-preview.blp:193
 msgid "Black Background"
 msgstr "Fond noir"
 
-#: crates/pigoune-app/ui/asset-preview.blp:203
+#: crates/pigoune-app/ui/asset-preview.blp:209
 msgid "Checkerboard Background"
 msgstr "Fond en damier"
 
-#: crates/pigoune-app/ui/asset-preview.blp:242
+#: crates/pigoune-app/ui/asset-preview.blp:248
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:91
 msgid "Previous Resource"
 msgstr "Ressource précédente"
 
-#: crates/pigoune-app/ui/asset-preview.blp:261
+#: crates/pigoune-app/ui/asset-preview.blp:267
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:96
 msgid "Next Resource"
 msgstr "Ressource suivante"
 
-#: crates/pigoune-app/src/asset_preview.rs:711
+#: crates/pigoune-app/src/asset_preview.rs:781
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:753
+#: crates/pigoune-app/src/asset_preview.rs:823
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"
@@ -1560,27 +1565,27 @@ msgstr "Première ressource"
 msgid "Last Resource"
 msgstr "Dernière ressource"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:136
 msgid "Close the Preview"
 msgstr "Fermer l’aperçu"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:137
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:142
 msgid "General"
 msgstr "Général"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:140
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Show Keyboard Shortcuts"
 msgstr "Afficher les raccourcis clavier"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
 msgid "Help"
 msgstr "Aide"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
 msgid "Preferences"
 msgstr "Préférences"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
 msgid "Quit"
 msgstr "Quitter"
 

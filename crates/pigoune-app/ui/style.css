@@ -9,6 +9,11 @@
   background-color: color-mix(in srgb, var(--accent-bg-color) 8%, transparent);
 }
 
+.preview-header.floating {
+  background-color: var(--headerbar-bg-color);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+}
+
 .preview-step {
   min-width: 48px;
   min-height: 48px;
