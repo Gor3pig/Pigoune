@@ -25,6 +25,7 @@ use crate::conversion_report;
 use crate::drop_message;
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
+use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report::{self, Destination};
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
@@ -1123,7 +1124,10 @@ impl PigouneWindow {
                 .collect();
         imp.recent_menu.remove_all();
         let libraries = gio::Menu::new();
-        for (path, label) in paths.iter().zip(recent_libraries::labels(&paths)) {
+        for (path, label) in paths
+            .iter()
+            .zip(recent_libraries::labels(&host_path::shown_paths(&paths)))
+        {
             let item = gio::MenuItem::new(Some(&label), None);
             item.set_action_and_target_value(
                 Some(OPEN_RECENT_LIBRARY_ACTION),
@@ -1240,7 +1244,10 @@ impl PigouneWindow {
     fn show_welcome_recent_libraries(&self, paths: &[String]) {
         let imp = self.imp();
         imp.welcome_recent_list.remove_all();
-        for (path, label) in paths.iter().zip(recent_libraries::labels(paths)) {
+        for (path, label) in paths
+            .iter()
+            .zip(recent_libraries::labels(&host_path::shown_paths(paths)))
+        {
             let row = welcome_recent_row(&label, Path::new(path));
             row.add_suffix(&self.forget_button(path));
             row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
@@ -3284,7 +3291,10 @@ fn short_folder(folder: &Path) -> String {
 
 fn welcome_recent_row(label: &str, root: &Path) -> adw::ActionRow {
     let found = root.is_dir();
-    let location = root.parent().map(short_folder).unwrap_or_default();
+    let location = host_path::shown_path(root)
+        .parent()
+        .map(short_folder)
+        .unwrap_or_default();
     let subtitle = if found {
         location
     } else {

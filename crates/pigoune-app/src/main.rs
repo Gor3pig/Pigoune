@@ -33,6 +33,7 @@ mod grid_columns;
 mod grid_header;
 mod group_mosaic;
 mod help_url;
+mod host_path;
 mod icon_sides;
 mod image_check;
 mod image_conversion;

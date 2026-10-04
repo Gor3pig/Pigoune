@@ -52,6 +52,9 @@ to change it.
   `asset_preview.rs`, ...) and, when it has a fixed layout, a Blueprint file in `ui/`.
 - Small pure helpers (sorting, layout math, text formatting) sit in their own modules with unit
   tests, for example `asset_sort.rs`, `grid_columns.rs`, `tag_cloud.rs` or `asset_facts.rs`.
+- Inside Flatpak, folders chosen in the file chooser arrive as document portal paths
+  (`/run/user/<uid>/doc/<id>/...`). `host_path.rs` asks the portal for the real location, which
+  is only shown to the user: the library is still opened through the portal path.
 - Long tasks (imports, thumbnails) run off the main thread or asynchronously, so that the
   interface never freezes.
 - `build.rs` compiles the Blueprint files, the GResource bundle, the development translations

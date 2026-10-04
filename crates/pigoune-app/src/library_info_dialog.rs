@@ -12,6 +12,7 @@ use pigoune_core::{
 
 use crate::asset_facts;
 use crate::config::VERSION;
+use crate::host_path;
 use crate::thumbnails;
 
 use crate::chart_slices::{self, Measure, Slice};
@@ -155,7 +156,8 @@ impl PigouneLibraryInfoDialog {
             imp.figures_grid
                 .attach(&figure_tile(amount, &caption), column, row, 2, 1);
         }
-        imp.location_row.set_subtitle(&root.to_string_lossy());
+        imp.location_row
+            .set_subtitle(&host_path::shown_path(root).to_string_lossy());
         imp.disk_row.set_subtitle(&disk_text(root));
         imp.created_row.set_visible(overview.created_at.is_some());
         if let Some(created_at) = overview.created_at {
@@ -334,7 +336,8 @@ impl PigouneLibraryInfoDialog {
 
     #[template_callback]
     fn on_copy_location_clicked(&self) {
-        self.clipboard().set_text(&self.root().to_string_lossy());
+        self.clipboard()
+            .set_text(&host_path::shown_path(&self.root()).to_string_lossy());
         self.imp()
             .toast_overlay
             .add_toast(adw::Toast::new(&gettext("Location copied")));
