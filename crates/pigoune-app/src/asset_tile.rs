@@ -33,7 +33,7 @@ fn content_fit_for(thumbnail: &gdk::Texture) -> gtk::ContentFit {
 }
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
 
     use adw::prelude::*;
     use adw::subclass::prelude::*;
@@ -66,6 +66,8 @@ mod imp {
         pub still: RefCell<Option<gdk::Texture>>,
         #[property(get, set)]
         pub description: RefCell<String>,
+        #[property(get, set)]
+        pub animates_on_hover: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -257,7 +259,10 @@ impl PigouneAssetTile {
         let Some(asset) = imp.asset.borrow().clone() else {
             return;
         };
-        if !asset.asset().is_animated || imp.animation.borrow().is_some() {
+        if !imp.animates_on_hover.get()
+            || !asset.asset().is_animated
+            || imp.animation.borrow().is_some()
+        {
             return;
         }
         let picture = imp.picture.get();

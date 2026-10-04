@@ -52,6 +52,8 @@ mod imp {
         pub tile_size: Cell<i32>,
         #[property(get, set, default = true)]
         pub show_names: Cell<bool>,
+        #[property(get, set, default = true)]
+        pub animate_on_hover: Cell<bool>,
         #[property(get, set = Self::set_sort_criterion)]
         pub sort_criterion: RefCell<String>,
         #[property(get, set = Self::set_sort_reversed)]
@@ -75,6 +77,7 @@ mod imp {
                 context_menu: TemplateChild::default(),
                 tile_size: Cell::new(DEFAULT_TILE_SIZE),
                 show_names: Cell::new(true),
+                animate_on_hover: Cell::new(true),
                 sort_criterion: RefCell::default(),
                 sort_reversed: Cell::default(),
                 sort_order: Rc::default(),
@@ -786,6 +789,9 @@ impl PigouneAssetGrid {
                         .sync_create()
                         .build();
                     grid.bind_property("show-names", &tile.name_label(), "visible")
+                        .sync_create()
+                        .build();
+                    grid.bind_property("animate-on-hover", &tile, "animates-on-hover")
                         .sync_create()
                         .build();
                     grid.make_draggable(&tile);

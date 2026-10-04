@@ -2,15 +2,32 @@ using Gtk 4.0;
 using Adw 1;
 
 Adw.PreferencesDialog dialog {
-  content-height: 560;
+  Adw.PreferencesPage page {
+    Adw.PreferencesGroup {
+      title: _("Opening");
 
-  Adw.PreferencesPage {
+      Adw.SwitchRow reopen_last_library_row {
+        title: _("Reopen the Last Library");
+        subtitle: _("At startup, the library left open last time opens again");
+      }
+
+      Adw.SwitchRow restore_last_view_row {
+        title: _("Reopen the Last Entry");
+        subtitle: _("A library opens on the entry selected last time instead of All");
+      }
+    }
+
     Adw.PreferencesGroup {
       title: _("Grid");
 
       Adw.SwitchRow show_names_row {
         title: _("Show Resource Names");
         subtitle: _("The name of each resource appears under its thumbnail");
+      }
+
+      Adw.SwitchRow animate_on_hover_row {
+        title: _("Play Animations on Hover");
+        subtitle: _("Animated thumbnails play when the pointer is over them");
       }
     }
 
@@ -21,11 +38,6 @@ Adw.PreferencesDialog dialog {
         title: _("Show Resource Counts");
         subtitle: _("The number of resources appears next to each entry");
       }
-
-      Adw.SwitchRow restore_last_view_row {
-        title: _("Reopen the Last Entry");
-        subtitle: _("A library opens on the entry selected last time instead of All");
-      }
     }
 
     Adw.PreferencesGroup {
@@ -33,7 +45,7 @@ Adw.PreferencesDialog dialog {
 
       Adw.SwitchRow confirm_empty_trash_row {
         title: _("Confirm Before Emptying the Trash");
-        subtitle: _("Ask before deleting the resources in the trash for good");
+        subtitle: _("A confirmation is asked before resources are deleted for good");
       }
 
       Adw.SwitchRow auto_empty_trash_row {

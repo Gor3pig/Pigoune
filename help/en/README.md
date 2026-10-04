@@ -186,10 +186,14 @@ folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening i
 
 Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
 
+- **Reopen the Last Library**: at startup, Pigoune opens the library you left open. Turn it off
+  to start from the welcome page and choose a library each time.
+- **Reopen the Last Entry**: a library opens on the entry you used last instead of **All**.
 - **Show Resource Names** under each thumbnail of the grid. When names are hidden, hover over a
   thumbnail to see its name.
+- **Play Animations on Hover**: turn it off if moving thumbnails distract you; animations still
+  play in the details panel and the preview.
 - **Show Resource Counts** next to each entry of the sidebar.
-- **Reopen the Last Entry**: a library opens on the entry you used last instead of **All**.
 - **Confirm Before Emptying the Trash**.
 - **Empty the Trash Automatically**: assets are deleted for good after 30 days in the trash.
 

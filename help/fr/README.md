@@ -213,11 +213,16 @@ ordinateur avant de l'ouvrir sur un autre.
 Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
 <kbd>Ctrl</kbd>+<kbd>,</kbd> :
 
-- **Afficher le nom des ressources** sous chaque vignette de la grille. Quand les noms sont
-  masqués, survolez une vignette pour voir son nom.
-- **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
+- **Rouvrir la dernière bibliothèque** : au lancement, Pigoune ouvre la bibliothèque laissée
+  ouverte. Désactivez-le pour partir de la page d'accueil et choisir une bibliothèque à chaque
+  fois.
 - **Rouvrir la dernière entrée** : une bibliothèque s'ouvre sur l'entrée utilisée la dernière
   fois plutôt que sur **Tout**.
+- **Afficher le nom des ressources** sous chaque vignette de la grille. Quand les noms sont
+  masqués, survolez une vignette pour voir son nom.
+- **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
+  distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
+- **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
 - **Confirmer avant de vider la corbeille**.
 - **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
   30 jours dans la corbeille.

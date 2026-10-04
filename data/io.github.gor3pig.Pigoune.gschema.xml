@@ -87,6 +87,16 @@
       <summary>Show resource names</summary>
       <description>Whether the grid shows the name of each resource under its thumbnail.</description>
     </key>
+    <key name="reopen-last-library" type="b">
+      <default>true</default>
+      <summary>Reopen the last library at startup</summary>
+      <description>Whether Pigoune opens the library left open last time instead of its welcome page.</description>
+    </key>
+    <key name="animate-on-hover" type="b">
+      <default>true</default>
+      <summary>Play animations on hover</summary>
+      <description>Whether animated thumbnails play when the pointer is over them in the grid.</description>
+    </key>
     <key name="restore-last-view" type="b">
       <default>false</default>
       <summary>Reopen the last sidebar entry</summary>

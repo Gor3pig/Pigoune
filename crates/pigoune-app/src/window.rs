@@ -394,6 +394,13 @@ impl PigouneWindow {
                 "show-names",
             )
             .build();
+        settings
+            .bind(
+                settings::ANIMATE_ON_HOVER,
+                &*window.imp().asset_grid,
+                "animate-on-hover",
+            )
+            .build();
         window
             .imp()
             .asset_grid
@@ -809,7 +816,7 @@ impl PigouneWindow {
 
     pub fn reopen_last_library(&self) {
         let last_library_path = self.settings().string(settings::LAST_LIBRARY_PATH);
-        if last_library_path.is_empty() {
+        if last_library_path.is_empty() || !self.settings().boolean(settings::REOPEN_LAST_LIBRARY) {
             return;
         }
         let window = self.clone();
