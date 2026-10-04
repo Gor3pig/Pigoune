@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use gtk::{gdk, gio, glib};
 
-const SHORTEST_FRAME: Duration = Duration::from_millis(20);
+pub const SHORTEST_FRAME: Duration = Duration::from_millis(20);
 
 pub fn play(file: PathBuf, show_frame: impl Fn(&gdk::Texture) + 'static) -> glib::JoinHandle<()> {
     glib::spawn_future_local(async move {

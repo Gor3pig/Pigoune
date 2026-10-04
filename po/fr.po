@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 15:16+0200\n"
+"POT-Creation-Date: 2026-10-04 15:33+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -661,7 +661,7 @@ msgid "Open Preview"
 msgstr "Ouvrir l’aperçu"
 
 #: crates/pigoune-app/src/window.rs:1030
-#: crates/pigoune-app/src/asset_preview.rs:873
+#: crates/pigoune-app/src/asset_preview.rs:944
 msgid "Open With…"
 msgstr "Ouvrir avec…"
 
@@ -677,26 +677,26 @@ msgid "_Restore"
 msgstr "_Restaurer"
 
 #: crates/pigoune-app/src/window.rs:1045
-#: crates/pigoune-app/src/asset_preview.rs:870
+#: crates/pigoune-app/src/asset_preview.rs:941
 msgid "Copy"
 msgstr "Copier"
 
 #: crates/pigoune-app/src/window.rs:1049
-#: crates/pigoune-app/src/asset_preview.rs:874
+#: crates/pigoune-app/src/asset_preview.rs:945
 msgid "Export To…"
 msgstr "Exporter vers…"
 
 #: crates/pigoune-app/src/window.rs:1052
-#: crates/pigoune-app/src/asset_preview.rs:398
-#: crates/pigoune-app/src/asset_preview.rs:877
+#: crates/pigoune-app/src/asset_preview.rs:444
+#: crates/pigoune-app/src/asset_preview.rs:948
 #: crates/pigoune-app/src/asset_details.rs:356
 #: crates/pigoune-app/src/asset_details.rs:403
 msgid "Remove from Favorites"
 msgstr "Retirer des favoris"
 
 #: crates/pigoune-app/src/window.rs:1054
-#: crates/pigoune-app/src/asset_preview.rs:402
-#: crates/pigoune-app/src/asset_preview.rs:879
+#: crates/pigoune-app/src/asset_preview.rs:448
+#: crates/pigoune-app/src/asset_preview.rs:950
 #: crates/pigoune-app/src/asset_details.rs:358
 #: crates/pigoune-app/src/asset_details.rs:405
 msgid "Add to Favorites"
@@ -1313,6 +1313,7 @@ msgid "Original File"
 msgstr "Fichier d’origine"
 
 #: crates/pigoune-app/ui/asset-details.blp:243
+#: crates/pigoune-app/ui/asset-preview.blp:279
 msgid "Animation"
 msgstr "Animation"
 
@@ -1380,17 +1381,17 @@ msgid "%B %-d, %Y at %H:%M"
 msgstr "%-d %B %Y à %H:%M"
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:121
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:136
 msgid "Fit to Window"
 msgstr "Ajuster à la fenêtre"
 
 #: crates/pigoune-app/ui/asset-preview.blp:18
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:126
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:141
 msgid "Actual Size"
 msgstr "Taille réelle (100 %)"
 
 #: crates/pigoune-app/ui/asset-preview.blp:23
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:146
 msgid "Full Screen"
 msgstr "Plein écran"
 
@@ -1417,12 +1418,12 @@ msgid "Zoom"
 msgstr "Zoom"
 
 #: crates/pigoune-app/ui/asset-preview.blp:98
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:116
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
 msgid "Zoom Out"
 msgstr "Zoom arrière"
 
 #: crates/pigoune-app/ui/asset-preview.blp:109
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:111
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:126
 msgid "Zoom In"
 msgstr "Zoom avant"
 
@@ -1454,22 +1455,41 @@ msgstr "Fond en damier"
 msgid "Icon Size"
 msgstr "Taille de l’icône"
 
-#: crates/pigoune-app/ui/asset-preview.blp:268
+#: crates/pigoune-app/ui/asset-preview.blp:284
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:116
+msgid "Previous Frame"
+msgstr "Image précédente"
+
+#: crates/pigoune-app/ui/asset-preview.blp:297
+#: crates/pigoune-app/src/asset_preview.rs:790
+msgid "Pause"
+msgstr "Pause"
+
+#: crates/pigoune-app/ui/asset-preview.blp:310
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:121
+msgid "Next Frame"
+msgstr "Image suivante"
+
+#: crates/pigoune-app/ui/asset-preview.blp:334
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:91
 msgid "Previous Resource"
 msgstr "Ressource précédente"
 
-#: crates/pigoune-app/ui/asset-preview.blp:287
+#: crates/pigoune-app/ui/asset-preview.blp:353
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:96
 msgid "Next Resource"
 msgstr "Ressource suivante"
 
-#: crates/pigoune-app/src/asset_preview.rs:855
+#: crates/pigoune-app/src/asset_preview.rs:792
+msgid "Play"
+msgstr "Lecture"
+
+#: crates/pigoune-app/src/asset_preview.rs:926
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:912
+#: crates/pigoune-app/src/asset_preview.rs:983
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"
@@ -1621,27 +1641,31 @@ msgstr "Première ressource"
 msgid "Last Resource"
 msgstr "Dernière ressource"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:136
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:111
+msgid "Pause or Play the Animation"
+msgstr "Mettre en pause ou relancer l’animation"
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:151
 msgid "Close the Preview"
 msgstr "Fermer l’aperçu"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:142
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:157
 msgid "General"
 msgstr "Général"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
 msgid "Show Keyboard Shortcuts"
 msgstr "Afficher les raccourcis clavier"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
 msgid "Help"
 msgstr "Aide"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:170
 msgid "Preferences"
 msgstr "Préférences"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:175
 msgid "Quit"
 msgstr "Quitter"
 

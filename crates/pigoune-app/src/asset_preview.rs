@@ -8,7 +8,7 @@ use gtk::{gdk, gio, glib};
 
 use pigoune_core::{Asset, AssetFormat, Dimensions};
 
-use crate::animation;
+use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::swipe_steps;
@@ -36,6 +36,7 @@ mod imp {
     use gtk::{gdk, glib};
 
     use super::ClosedCallback;
+    use crate::animation_player::AnimationPlayer;
     use crate::asset_object::PigouneAssetObject;
     use crate::swipe_steps::SwipeSteps;
     use crate::thumbnails::ThumbnailCache;
@@ -68,6 +69,12 @@ mod imp {
         #[template_child]
         pub icon_sizes: TemplateChild<gtk::Box>,
         #[template_child]
+        pub animation_controls: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub play_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub frame_label: TemplateChild<gtk::Label>,
+        #[template_child]
         pub context_menu: TemplateChild<gtk::PopoverMenu>,
         pub swipe: RefCell<SwipeSteps>,
         pub watched_favorite: RefCell<Option<(PigouneAssetObject, glib::SignalHandlerId)>>,
@@ -96,7 +103,7 @@ mod imp {
         pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
-        pub animation: RefCell<Option<glib::JoinHandle<()>>>,
+        pub player: RefCell<Option<AnimationPlayer>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
     }
 
@@ -219,6 +226,18 @@ mod imp {
                 preview.show_last();
                 glib::Propagation::Stop
             });
+            class.add_binding(gdk::Key::k, gdk::ModifierType::empty(), |preview| {
+                preview.toggle_playing();
+                glib::Propagation::Stop
+            });
+            class.add_binding(gdk::Key::comma, gdk::ModifierType::empty(), |preview| {
+                preview.step_frame(-1);
+                glib::Propagation::Stop
+            });
+            class.add_binding(gdk::Key::period, gdk::ModifierType::empty(), |preview| {
+                preview.step_frame(1);
+                glib::Propagation::Stop
+            });
             class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
                 preview.step(-1);
                 glib::Propagation::Stop
@@ -292,6 +311,33 @@ impl PigouneAssetPreview {
     #[template_callback]
     fn on_back_clicked(&self) {
         self.close();
+    }
+
+    #[template_callback]
+    fn on_play_clicked(&self) {
+        self.toggle_playing();
+    }
+
+    #[template_callback]
+    fn on_previous_frame_clicked(&self) {
+        self.step_frame(-1);
+    }
+
+    #[template_callback]
+    fn on_next_frame_clicked(&self) {
+        self.step_frame(1);
+    }
+
+    fn toggle_playing(&self) {
+        if let Some(player) = self.imp().player.borrow().as_ref() {
+            player.toggle_playing();
+        }
+    }
+
+    fn step_frame(&self, delta: isize) {
+        if let Some(player) = self.imp().player.borrow().as_ref() {
+            player.step(delta);
+        }
     }
 
     #[template_callback]
@@ -717,17 +763,42 @@ impl PigouneAssetPreview {
     }
 
     fn play_animation(&self, asset: &PigouneAssetObject) {
-        let zoom_view = self.imp().zoom_view.get();
-        let playing = animation::play(asset.file().to_path_buf(), move |frame| {
-            zoom_view.replace_texture(frame);
-        });
-        self.imp().animation.replace(Some(playing));
+        let format = asset.asset().format;
+        let Some(timing) = pigoune_core::animation_timing(asset.file(), format) else {
+            return;
+        };
+        let preview = self.downgrade();
+        let player = AnimationPlayer::start(
+            asset.file().to_path_buf(),
+            timing.frames,
+            move |frame, state| {
+                if let Some(preview) = preview.upgrade() {
+                    preview.show_frame(frame, state);
+                }
+            },
+        );
+        self.imp().player.replace(Some(player));
+        self.imp().animation_controls.set_visible(true);
+    }
+
+    fn show_frame(&self, frame: &gdk::Texture, state: PlaybackState) {
+        let imp = self.imp();
+        imp.zoom_view.replace_texture(frame);
+        imp.frame_label
+            .set_label(&format!("{} / {}", state.index + 1, state.frame_count));
+        let (icon, tooltip) = if state.playing {
+            ("media-playback-pause-symbolic", gettext("Pause"))
+        } else {
+            ("media-playback-start-symbolic", gettext("Play"))
+        };
+        imp.play_button.set_icon_name(icon);
+        imp.play_button.set_tooltip_text(Some(&tooltip));
     }
 
     fn stop_animation(&self) {
-        if let Some(playing) = self.imp().animation.take() {
-            playing.abort();
-        }
+        let imp = self.imp();
+        imp.player.replace(None);
+        imp.animation_controls.set_visible(false);
     }
 
     fn load(&self, asset: &PigouneAssetObject, vector_pixels: u32, first_view: bool) {

@@ -87,7 +87,7 @@ fn write_atomically(destination: &Path, content: &[u8]) -> io::Result<()> {
     })
 }
 
-fn loader_for(file: &Path) -> glycin::Loader {
+pub fn loader_for(file: &Path) -> glycin::Loader {
     let mut loader = glycin::Loader::new(gio::File::for_path(file));
     loader.use_expose_base_dir(false);
     loader

@@ -263,6 +263,72 @@ template $PigouneAssetPreview: Adw.Bin {
       }
 
       [overlay]
+      Box animation_controls {
+        halign: center;
+        valign: end;
+        margin-bottom: 18;
+        spacing: 2;
+        visible: false;
+
+        styles [
+          "osd",
+          "animation-controls",
+        ]
+
+        accessibility {
+          label: _("Animation");
+        }
+
+        Button previous_frame_button {
+          icon-name: "media-skip-backward-symbolic";
+          tooltip-text: _("Previous Frame");
+          focus-on-click: false;
+          can-focus: false;
+          clicked => $on_previous_frame_clicked() swapped;
+
+          styles [
+            "flat",
+            "circular",
+          ]
+        }
+
+        Button play_button {
+          icon-name: "media-playback-pause-symbolic";
+          tooltip-text: _("Pause");
+          focus-on-click: false;
+          can-focus: false;
+          clicked => $on_play_clicked() swapped;
+
+          styles [
+            "flat",
+            "circular",
+          ]
+        }
+
+        Button next_frame_button {
+          icon-name: "media-skip-forward-symbolic";
+          tooltip-text: _("Next Frame");
+          focus-on-click: false;
+          can-focus: false;
+          clicked => $on_next_frame_clicked() swapped;
+
+          styles [
+            "flat",
+            "circular",
+          ]
+        }
+
+        Label frame_label {
+          margin-start: 6;
+          margin-end: 10;
+
+          styles [
+            "numeric",
+          ]
+        }
+      }
+
+      [overlay]
       Button previous_button {
         icon-name: "go-previous-symbolic";
         tooltip-text: _("Previous Resource");

@@ -1,4 +1,5 @@
 mod animation;
+mod animation_player;
 mod application;
 mod asset_details;
 mod asset_facts;
@@ -22,6 +23,7 @@ mod drop_message;
 mod error_messages;
 mod filter_popover;
 mod found_flash;
+mod frame_cache;
 mod grid_columns;
 mod grid_header;
 mod group_mosaic;

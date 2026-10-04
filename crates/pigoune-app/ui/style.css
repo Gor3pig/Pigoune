@@ -19,6 +19,11 @@
   color: var(--accent-fg-color);
 }
 
+.animation-controls {
+  padding: 4px;
+  border-radius: 9999px;
+}
+
 .preview-step {
   min-width: 48px;
   min-height: 48px;

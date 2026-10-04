@@ -49,6 +49,7 @@ pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
     Err(InspectError::Unsupported)
 }
 
+#[must_use]
 pub fn animation_timing(path: &Path, format: AssetFormat) -> Option<AnimationTiming> {
     match format {
         AssetFormat::Gif => gif::timing(path),

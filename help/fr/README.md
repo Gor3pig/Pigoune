@@ -136,6 +136,9 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   le plein écran.
 - Pour un fichier ICO qui contient plusieurs tailles, des boutons sous l'image affichent chaque
   taille telle qu'elle a été dessinée (16, 32, 48, 256…).
+- Pour une animation, une barre sous l'image la met en pause, la relance et la parcourt image
+  par image, en indiquant l'image affichée. Au clavier, <kbd>K</kbd> met en pause ou relance,
+  <kbd>,</kbd> et <kbd>.</kbd> affichent l'image précédente et suivante.
 - Dans l'aperçu, faites glisser l'image pour en examiner n'importe quelle partie, même un coin
   amené au milieu de l'écran. Un contour en pointillés montre les vrais bords de l'image,
   marges transparentes comprises ; désactivez-le avec **Afficher les limites de l'image** dans
