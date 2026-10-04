@@ -24,23 +24,23 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/01.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.1/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/02.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.1/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/03.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.1/data/screenshots/03.png</image>
       <caption>Organize several assets at once with tags and collections</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/04.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.1/data/screenshots/04.png</image>
       <caption>See the details of an asset at a glance</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/05.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.1/data/screenshots/05.png</image>
       <caption>Light or dark, Pigoune follows your system style</caption>
     </screenshot>
   </screenshots>
@@ -76,6 +76,15 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.5.1" date="2026-10-04">
+      <description>
+        <p>Pigoune now has its own website and updates itself.</p>
+        <ul>
+          <li>The About window links to the new website of Pigoune.</li>
+          <li>Pigoune installed from its website updates itself through Software.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.5.0" date="2026-10-04">
       <description>
         <p>Libraries ready to grow, and their real location shown in Flatpak.</p>
