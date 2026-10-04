@@ -21,6 +21,16 @@
 }
 
 .preview-surface.white,
+.preview-surface.grey,
+.preview-surface.checkerboard {
+  color: #000000;
+}
+
+.preview-surface.black {
+  color: #ffffff;
+}
+
+.preview-surface.white,
 .background-swatch.white {
   background-color: #ffffff;
 }

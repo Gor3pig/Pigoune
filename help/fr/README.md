@@ -128,6 +128,10 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   ressource précédente ou suivante avec les flèches du clavier ou avec les boutons fléchés qui
   apparaissent quand vous bougez la souris, et choisissez une couleur de fond dans la
   barre du haut. Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd> pour revenir.
+- Dans l'aperçu, faites glisser l'image pour en examiner n'importe quelle partie, même un coin
+  amené au milieu de l'écran. Un contour en pointillés montre les vrais bords de l'image,
+  marges transparentes comprises ; désactivez-le avec **Afficher les limites de l'image** dans
+  le menu du zoom.
 
 ## Réutiliser vos ressources
 

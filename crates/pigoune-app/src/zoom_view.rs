@@ -8,6 +8,9 @@ const WHEEL_ZOOM_FACTOR: f64 = 1.25;
 const KEY_ZOOM_FACTOR: f64 = 1.25;
 const MOVABLE_CURSOR: &str = "grab";
 const MOVING_CURSOR: &str = "grabbing";
+const BOUNDS_WIDTH: f32 = 1.0;
+const BOUNDS_DASH: [f32; 2] = [3.0, 3.0];
+const BOUNDS_OPACITY: f32 = 0.35;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 
@@ -31,6 +34,7 @@ mod imp {
         pub pointer: Cell<Option<Point>>,
         pub drag_start: Cell<Point>,
         pub dragging: Cell<bool>,
+        pub shows_bounds: Cell<bool>,
         pub pinch_start: Cell<f64>,
         pub on_zoom_changed: RefCell<Option<ZoomChangedCallback>>,
     }
@@ -50,6 +54,7 @@ mod imp {
                 pointer: Cell::default(),
                 drag_start: Cell::new(Point { x: 0.0, y: 0.0 }),
                 dragging: Cell::default(),
+                shows_bounds: Cell::default(),
                 pinch_start: Cell::new(1.0),
                 on_zoom_changed: RefCell::default(),
             }
@@ -116,6 +121,11 @@ impl PigouneZoomView {
         });
         imp.is_vector.set(is_vector);
         self.fit_to_view();
+    }
+
+    pub fn set_shows_bounds(&self, shows_bounds: bool) {
+        self.imp().shows_bounds.set(shows_bounds);
+        self.queue_draw();
     }
 
     pub fn replace_texture(&self, texture: &gdk::Texture) {
@@ -249,6 +259,9 @@ impl PigouneZoomView {
             gsk::ScalingFilter::Trilinear
         };
         snapshot.append_scaled_texture(&texture, filter, &bounds);
+        if imp.shows_bounds.get() {
+            draw_bounds(snapshot, &bounds, &self.color());
+        }
     }
 
     fn listen_to_drag(&self) {
@@ -362,6 +375,25 @@ impl PigouneZoomView {
         ));
         self.add_controller(double_click);
     }
+}
+
+fn draw_bounds(snapshot: &gtk::Snapshot, bounds: &graphene::Rect, color: &gdk::RGBA) {
+    let half = BOUNDS_WIDTH / 2.0;
+    let outline = graphene::Rect::new(
+        bounds.x() - half,
+        bounds.y() - half,
+        bounds.width() + BOUNDS_WIDTH,
+        bounds.height() + BOUNDS_WIDTH,
+    );
+    let builder = gsk::PathBuilder::new();
+    builder.add_rect(&outline);
+    let dashed = gsk::Stroke::new(BOUNDS_WIDTH);
+    dashed.set_dash(&BOUNDS_DASH);
+    snapshot.append_stroke(
+        &builder.to_path(),
+        &dashed,
+        &color.with_alpha(BOUNDS_OPACITY),
+    );
 }
 
 impl Default for PigouneZoomView {

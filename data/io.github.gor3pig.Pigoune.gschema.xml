@@ -52,6 +52,11 @@
       <summary>Preview background</summary>
       <description>Background shown behind the resource in the detailed preview.</description>
     </key>
+    <key name="preview-bounds" type="b">
+      <default>true</default>
+      <summary>Show image bounds</summary>
+      <description>Whether a dashed outline marks the edges of the resource in the detailed preview.</description>
+    </key>
     <key name="collection-sort" type="s">
       <choices>
         <choice value="name"/>

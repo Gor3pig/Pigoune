@@ -409,6 +409,14 @@ impl PigouneWindow {
             )
             .build();
         window.add_action(&settings.create_action(settings::PREVIEW_BACKGROUND));
+        settings
+            .bind(
+                settings::PREVIEW_BOUNDS,
+                &*window.imp().asset_preview,
+                "show-bounds",
+            )
+            .build();
+        window.add_action(&settings.create_action(settings::PREVIEW_BOUNDS));
         window.describe_selected_asset();
         window.connect_preview();
         window.follow_sidebar(&settings);

@@ -69,6 +69,8 @@ mod imp {
         pub background: RefCell<String>,
         #[property(get, set = Self::set_compact)]
         pub compact: Cell<bool>,
+        #[property(get, set = Self::set_show_bounds)]
+        pub show_bounds: Cell<bool>,
         pub items: RefCell<Vec<PigouneAssetObject>>,
         pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
@@ -85,8 +87,14 @@ mod imp {
             }
             self.surface.add_css_class(&background);
             self.background_button_swatch.add_css_class(&background);
+            self.zoom_view.queue_draw();
             self.background_popover.popdown();
             self.background.replace(background);
+        }
+
+        fn set_show_bounds(&self, show_bounds: bool) {
+            self.show_bounds.set(show_bounds);
+            self.zoom_view.set_shows_bounds(show_bounds);
         }
 
         fn set_compact(&self, compact: bool) {

@@ -19,6 +19,13 @@ menu zoom_menu {
       action: "preview.zoom-actual";
     }
   }
+
+  section {
+    item {
+      label: _("Show Image Bounds");
+      action: "win.preview-bounds";
+    }
+  }
 }
 
 template $PigouneAssetPreview: Adw.Bin {
