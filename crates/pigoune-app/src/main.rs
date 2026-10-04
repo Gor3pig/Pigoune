@@ -36,6 +36,7 @@ mod sidebar;
 mod sidebar_item;
 mod sidebar_row;
 mod square_space;
+mod swipe_steps;
 mod tag_cloud;
 mod tag_editor;
 mod tag_input;

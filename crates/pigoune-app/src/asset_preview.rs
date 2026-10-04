@@ -11,6 +11,7 @@ use pigoune_core::{AssetFormat, Dimensions};
 use crate::animation;
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::swipe_steps;
 use crate::thumbnails::{self, ThumbnailCache};
 
 const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checkerboard"];
@@ -20,6 +21,8 @@ const SHARPEN_DELAY: Duration = Duration::from_millis(200);
 const STEP_BUTTONS_DELAY: Duration = Duration::from_secs(2);
 const SHOWN_STEP_BUTTON: &str = "shown";
 const FAVORITE_STYLE: &str = "favorite";
+const MOUSE_BACK_BUTTON: u32 = 8;
+const MOUSE_FORWARD_BUTTON: u32 = 9;
 
 type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
 
@@ -33,6 +36,7 @@ mod imp {
 
     use super::ClosedCallback;
     use crate::asset_object::PigouneAssetObject;
+    use crate::swipe_steps::SwipeSteps;
     use crate::thumbnails::ThumbnailCache;
     use crate::zoom_view::PigouneZoomView;
 
@@ -60,6 +64,7 @@ mod imp {
         pub favorite_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub context_menu: TemplateChild<gtk::PopoverMenu>,
+        pub swipe: RefCell<SwipeSteps>,
         pub watched_favorite: RefCell<Option<(PigouneAssetObject, glib::SignalHandlerId)>>,
         #[property(get, set)]
         pub actionable: Cell<bool>,
@@ -182,6 +187,14 @@ mod imp {
                 preview.show_context_menu(None);
                 glib::Propagation::Stop
             });
+            class.add_binding(gdk::Key::Home, gdk::ModifierType::empty(), |preview| {
+                preview.show_position(0);
+                glib::Propagation::Stop
+            });
+            class.add_binding(gdk::Key::End, gdk::ModifierType::empty(), |preview| {
+                preview.show_last();
+                glib::Propagation::Stop
+            });
             class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
                 preview.step(-1);
                 glib::Propagation::Stop
@@ -204,6 +217,7 @@ mod imp {
             self.obj().follow_zoom();
             self.obj().follow_pointer();
             self.obj().listen_to_menu_requests();
+            self.obj().listen_to_navigation();
         }
     }
     impl WidgetImpl for PigouneAssetPreview {}
@@ -448,11 +462,72 @@ impl PigouneAssetPreview {
     }
 
     fn step(&self, offset: i32) {
+        let count = self.count();
+        if let Some(position) = neighbour(self.imp().position.get(), offset, count) {
+            self.show_position(position);
+        }
+    }
+
+    fn show_last(&self) {
+        if let Some(last) = self.count().checked_sub(1) {
+            self.show_position(last);
+        }
+    }
+
+    fn show_position(&self, position: u32) {
         let imp = self.imp();
-        let count = u32::try_from(imp.items.borrow().len()).unwrap_or(u32::MAX);
-        if let Some(position) = neighbour(imp.position.get(), offset, count) {
+        if position < self.count() && position != imp.position.get() {
             imp.position.set(position);
             self.show_current();
+        }
+    }
+
+    fn count(&self) -> u32 {
+        u32::try_from(self.imp().items.borrow().len()).unwrap_or(u32::MAX)
+    }
+
+    fn listen_to_navigation(&self) {
+        let scroll = gtk::EventControllerScroll::new(gtk::EventControllerScrollFlags::BOTH_AXES);
+        scroll.set_propagation_phase(gtk::PropagationPhase::Capture);
+        scroll.connect_scroll_begin(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_| preview.imp().swipe.borrow_mut().ended()
+        ));
+        scroll.connect_scroll_end(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_| preview.imp().swipe.borrow_mut().ended()
+        ));
+        scroll.connect_scroll(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |controller, horizontal, vertical| {
+                if horizontal.abs() <= vertical.abs() {
+                    return glib::Propagation::Proceed;
+                }
+                let offset = if controller.unit() == gdk::ScrollUnit::Wheel {
+                    swipe_steps::wheel_tilt_step(horizontal)
+                } else {
+                    preview.imp().swipe.borrow_mut().swiped(horizontal)
+                };
+                if let Some(offset) = offset {
+                    preview.step(offset);
+                }
+                glib::Propagation::Stop
+            }
+        ));
+        self.add_controller(scroll);
+        for (button, offset) in [(MOUSE_BACK_BUTTON, -1), (MOUSE_FORWARD_BUTTON, 1)] {
+            let click = gtk::GestureClick::builder().button(button).build();
+            click.connect_pressed(glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                move |_, _, _, _| preview.step(offset)
+            ));
+            self.add_controller(click);
         }
     }
 
