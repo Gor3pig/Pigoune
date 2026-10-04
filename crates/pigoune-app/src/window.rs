@@ -2179,6 +2179,7 @@ impl PigouneWindow {
 
     fn show_in_all(&self, id: AssetId) {
         let imp = self.imp();
+        self.reset_search();
         imp.current_view.set(AssetView::All);
         self.remember_view(AssetView::All);
         imp.asset_preview.close();

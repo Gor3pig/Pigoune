@@ -23,10 +23,10 @@ guide walks you through everything it can do.
 ### Create a library
 
 A library is a folder where Pigoune keeps a copy of your assets. On the welcome screen, choose
-**Create a Library**, give it a name and pick where to save it. You can create as many
+**New Library…**, give it a name and pick where to save it. You can create as many
 libraries as you like, for example one per project or per client.
 
-To open an existing library, choose **Open a Library**. Pigoune reopens the last library you
+To open an existing library, choose **Open Library…**. Pigoune reopens the last library you
 used every time it starts. While a library is open, the main menu offers **New Library…** and
 **Open Library…** to switch to another one, and **Recent Libraries** lists the last libraries
 you opened, five by default. The welcome page shows them too, so you can reopen one in a click. Remove one from the list with

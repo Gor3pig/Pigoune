@@ -23,11 +23,11 @@ bibliothèque bien organisée. Ce guide présente tout ce qu'il sait faire.
 ### Créer une bibliothèque
 
 Une bibliothèque est un dossier dans lequel Pigoune garde une copie de vos ressources. Sur
-l'écran d'accueil, choisissez **Créer une bibliothèque**, donnez-lui un nom et choisissez où
+l'écran d'accueil, choisissez **Nouvelle bibliothèque…**, donnez-lui un nom et choisissez où
 l'enregistrer. Vous pouvez en créer autant que vous voulez, par exemple une par projet ou par
 client.
 
-Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque**. Pigoune
+Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque…**. Pigoune
 rouvre la dernière bibliothèque utilisée à chaque démarrage. Quand une bibliothèque est
 ouverte, le menu principal propose **Nouvelle bibliothèque…** et **Ouvrir une bibliothèque…**
 pour passer à une autre, et **Bibliothèques récentes** liste les dernières bibliothèques
