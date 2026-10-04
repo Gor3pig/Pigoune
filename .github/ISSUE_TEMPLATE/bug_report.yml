@@ -86,7 +86,7 @@ body:
     attributes:
       label: Pigoune version
       description: Shown in "About Pigoune", in the main menu.
-      placeholder: "1.2.1"
+      placeholder: "1.3.0"
     validations:
       required: true
 

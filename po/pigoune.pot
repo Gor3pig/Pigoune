@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 11:21+0200\n"
+"POT-Creation-Date: 2026-10-04 11:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -82,62 +82,100 @@ msgid "Light or dark, Pigoune follows your system style"
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:80
-msgid "Stop the thumbnail grid from flickering while the window is resized."
+msgid "Take a much closer look at your assets in the detailed preview."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:82
+msgid ""
+"Move between assets with on-screen arrows, a two-finger swipe, Home and End."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:83
+msgid "See the format, dimensions and size of the shown asset."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:84
+msgid ""
+"Drag the image freely, zoom with new buttons, and fill the screen with F11."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:85
-msgid "Give the thumbnail grid a cleaner look."
+msgid "Spot the real edges of an image and, from 800%, every single pixel."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:86
+msgid "Star, copy, export or open the shown asset without leaving the preview."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:87
-msgid "Thumbnails sit in square frames, evenly spaced across the whole width."
+msgid "Switch between the sizes stored in an ICO file."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:88
-msgid "Favorites show a larger yellow star that grows with the thumbnails."
+msgid "Open any asset in another application with Open With."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:89
+msgid "Grab the window more easily by the middle of the library header."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:95
+msgid "Stop the thumbnail grid from flickering while the window is resized."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:100
+msgid "Give the thumbnail grid a cleaner look."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:102
+msgid "Thumbnails sit in square frames, evenly spaced across the whole width."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:103
+msgid "Favorites show a larger yellow star that grows with the thumbnails."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:104
 msgid "A new preference hides the names under the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:90
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:105
 msgid ""
 "Small images stay sharp, and the lasso shows the selection while it is drawn."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:96
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:111
 msgid "Add a user guide, available from the main menu or with F1."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:101
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:116
 msgid "The first public version of Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:103
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:118
 msgid ""
 "Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with "
 "duplicate detection"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:104
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:119
 msgid ""
 "Organize assets with nested collections, tags, favorites, notes and credits"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:105
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:120
 msgid "Find any asset instantly with search and filters"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:106
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:121
 msgid "Preview assets up close, animated GIFs included"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:107
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:122
 msgid "Reuse assets by dragging, copying or exporting them"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:108
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:123
 msgid "Undo changes and restore assets from the trash"
 msgstr ""
 
@@ -555,7 +593,7 @@ msgid "Open Preview"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1026
-#: crates/pigoune-app/src/asset_preview.rs:870
+#: crates/pigoune-app/src/asset_preview.rs:873
 msgid "Open With…"
 msgstr ""
 
@@ -571,26 +609,26 @@ msgid "_Restore"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1041
-#: crates/pigoune-app/src/asset_preview.rs:867
+#: crates/pigoune-app/src/asset_preview.rs:870
 msgid "Copy"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1045
-#: crates/pigoune-app/src/asset_preview.rs:871
+#: crates/pigoune-app/src/asset_preview.rs:874
 msgid "Export To…"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1048
-#: crates/pigoune-app/src/asset_preview.rs:395
-#: crates/pigoune-app/src/asset_preview.rs:874
+#: crates/pigoune-app/src/asset_preview.rs:398
+#: crates/pigoune-app/src/asset_preview.rs:877
 #: crates/pigoune-app/src/asset_details.rs:356
 #: crates/pigoune-app/src/asset_details.rs:403
 msgid "Remove from Favorites"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:1050
-#: crates/pigoune-app/src/asset_preview.rs:399
-#: crates/pigoune-app/src/asset_preview.rs:876
+#: crates/pigoune-app/src/asset_preview.rs:402
+#: crates/pigoune-app/src/asset_preview.rs:879
 #: crates/pigoune-app/src/asset_details.rs:358
 #: crates/pigoune-app/src/asset_details.rs:405
 msgid "Add to Favorites"
@@ -1324,12 +1362,12 @@ msgstr ""
 msgid "Next Resource"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:852
+#: crates/pigoune-app/src/asset_preview.rs:855
 #, rust-format
 msgid "{percent}%"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:902
+#: crates/pigoune-app/src/asset_preview.rs:912
 #, rust-format
 msgid "{position} of {count}"
 msgstr ""
