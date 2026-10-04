@@ -45,8 +45,12 @@ jobs:
         run: |
           flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse \
             --force-clean --repo=repo build build-aux/io.github.gor3pig.Pigoune.json
+          updates=()
+          if [ -f website/pigoune.gpg ]; then
+            updates=(--repo-url=https://gor3pig.github.io/Pigoune/repo/ --gpg-keys=website/pigoune.gpg)
+          fi
           flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
-            repo "pigoune-$VERSION.flatpak" io.github.gor3pig.Pigoune
+            "${updates[@]}" repo "pigoune-$VERSION.flatpak" io.github.gor3pig.Pigoune
 
       - name: Attach the package to the release
         run: |

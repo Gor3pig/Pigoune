@@ -159,7 +159,9 @@ python3 -m http.server --directory /tmp/pigoune-website
 ```
 
 Then open <http://localhost:8000/>. The `Website` workflow publishes it on GitHub Pages
-whenever `website/`, the icons or the screenshots change on `main`.
+whenever `website/`, the icons or the screenshots change on `main`, and when a release is
+published, together with the signed Flatpak repository described in
+[RELEASING.md](RELEASING.md).
 
 ## Releases
 

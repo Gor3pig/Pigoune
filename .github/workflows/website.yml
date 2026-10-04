@@ -8,6 +8,8 @@ on:
       - data/icons/**
       - data/screenshots/**
       - .github/workflows/website.yml
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -19,9 +21,12 @@ concurrency:
   group: website
   cancel-in-progress: true
 
+env:
+  SIGNING_KEY_ID: D130B3228769BDEA5C85902FC4AC2F9BFCF2920E
+
 jobs:
   publish:
-    name: Publish the website
+    name: Publish the website and the Flatpak repository
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -30,11 +35,28 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v7
 
-      - name: Install the WebP encoder
-        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends webp
+      - name: Install the tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends webp flatpak ostree
 
       - name: Assemble the website
         run: website/build.sh _site
+
+      - name: Download the package of the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download --pattern 'pigoune-*.flatpak' --dir "$RUNNER_TEMP/release"
+
+      - name: Build the signed Flatpak repository
+        env:
+          SIGNING_KEY: ${{ secrets.FLATPAK_REPO_SIGNING_KEY }}
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          install -d -m 700 "$GNUPGHOME"
+          printf '%s\n' "$SIGNING_KEY" | gpg --batch --import
+          website/flatpak-repo.sh "$RUNNER_TEMP"/release/pigoune-*.flatpak _site/repo "$SIGNING_KEY_ID"
+          rm -rf "$GNUPGHOME"
 
       - name: Upload the website
         uses: actions/upload-pages-artifact@v5

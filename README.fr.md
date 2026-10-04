@@ -24,8 +24,8 @@
 ---
 
 > [!NOTE]
-> **Pigoune est disponible.** [Téléchargez le paquet Flatpak de la dernière version](https://github.com/Gor3pig/Pigoune/releases/latest)
-> pour l'essayer.
+> **Pigoune est disponible.** [Installez-le en un clic](#installation), et il se tient à jour
+> tout seul.
 
 ## Pigoune, c'est quoi ?
 
@@ -111,28 +111,31 @@ session.
 
 ### 2. Installer Pigoune
 
-Téléchargez le fichier `.flatpak` de la [dernière version](https://github.com/Gor3pig/Pigoune/releases/latest),
-puis ouvrez-le avec Logiciels, ou lancez cette commande depuis le dossier où vous l'avez
-enregistré :
+Ouvrez [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) avec Logiciels, qui installe Pigoune ainsi que l'environnement
+GNOME dont il a besoin depuis Flathub, ou lancez cette commande :
 
 ```sh
-flatpak install --user pigoune-*.flatpak
+flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 ```
 
-L'environnement GNOME dont Pigoune a besoin est téléchargé depuis Flathub la première fois.
+### 3. Rester à jour
 
-### 3. Mettre à jour Pigoune
+Pigoune se met à jour comme vos autres applications : Logiciels propose chaque nouvelle
+version, et `flatpak update` l'installe aussi. Chaque mise à jour est signée : seules les
+versions officielles sont acceptées.
 
-Le paquet ne se met pas encore à jour tout seul. Quand une nouvelle version sort, téléchargez son
-fichier `.flatpak` et installez-le par-dessus l'actuel, avec Logiciels ou avec cette commande :
+Si vous avez installé Pigoune 1.5 ou plus ancien à partir d'un fichier `.flatpak` téléchargé,
+il ne se met pas à jour tout seul. Passez une fois aux mises à jour automatiques avec ces deux
+commandes. Vos bibliothèques et vos réglages sont conservés.
 
 ```sh
-flatpak install --user --reinstall pigoune-*.flatpak
+flatpak uninstall --user io.github.gor3pig.Pigoune
+flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 ```
 
-Si le dossier contient plusieurs fichiers Pigoune, tapez plutôt le nom complet du plus récent.
-Vos bibliothèques et vos réglages sont conservés. Vous pouvez aussi compiler Pigoune vous-même
-en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
+Le fichier `.flatpak` de chaque version reste joint à sa
+[version sur GitHub](https://github.com/Gor3pig/Pigoune/releases). Vous pouvez aussi compiler
+Pigoune vous-même en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Guide d'utilisation
 

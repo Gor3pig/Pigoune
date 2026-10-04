@@ -36,8 +36,7 @@
     <h1>Pigoune</h1>
     <p class="tagline">All your graphic assets, organized and within reach.</p>
     <div class="actions">
-      <a class="button primary" data-latest-label="Download {version}" href="https://github.com/Gor3pig/Pigoune/releases/latest">Download</a>
-      <a class="button" href="#install">How to install</a>
+      <a class="button primary" data-latest-label="Install {version}" href="#install">Install</a>
       <a class="button" href="https://github.com/Gor3pig/Pigoune">View on GitHub</a>
     </div>
     <p class="note">Free software for Linux, in English and French.</p>
@@ -164,14 +163,19 @@
         <p>Pigoune is distributed as a Flatpak. Fedora, Linux Mint, Pop!_OS and many other distributions ship Flatpak already. On Ubuntu and a few others, set it up first by following the <a href="https://flathub.org/setup">official guide for your distribution</a>, then restart your session.</p>
 
         <h3>2. Install Pigoune</h3>
-        <p>Download the <code>.flatpak</code> file of the <a href="https://github.com/Gor3pig/Pigoune/releases/latest">latest release</a>, then open it with Software, or run this command from the folder where you saved it:</p>
-        <pre><code>flatpak install --user pigoune-*.flatpak</code></pre>
-        <p>The GNOME runtime that Pigoune needs is downloaded from Flathub the first time.</p>
+        <p>Click the button below and open the file with Software: it installs Pigoune, along with the GNOME runtime it needs from Flathub.</p>
+        <p class="install-button"><a class="button primary" href="pigoune.flatpakref">Install Pigoune</a></p>
+        <p>Or run this command:</p>
+        <pre><code>flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref</code></pre>
 
-        <h3>3. Update Pigoune</h3>
-        <p>The package does not update itself yet. When a new release comes out, download its <code>.flatpak</code> file and install it over the current one, with Software or with this command:</p>
-        <pre><code>flatpak install --user --reinstall pigoune-*.flatpak</code></pre>
-        <p>If the folder holds several Pigoune files, type the full name of the newest one instead. Your libraries and settings are kept.</p>
+        <h3>3. Stay up to date</h3>
+        <p>Pigoune updates itself like your other apps: Software offers each new version, and <code>flatpak update</code> installs it too. Every update is signed, so only official versions are accepted.</p>
+
+        <h3>Installed from a downloaded <code>.flatpak</code> file?</h3>
+        <p>If you installed Pigoune 1.5 or older from a downloaded <code>.flatpak</code> file, it does not update itself. Switch once to automatic updates with these two commands. Your libraries and settings are kept.</p>
+        <pre><code>flatpak uninstall --user io.github.gor3pig.Pigoune
+flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref</code></pre>
+        <p>The <code>.flatpak</code> file of each version is still attached to its <a href="https://github.com/Gor3pig/Pigoune/releases">release</a>, for those who prefer it.</p>
       </div>
     </section>
   </main>

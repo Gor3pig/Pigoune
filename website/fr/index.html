@@ -35,8 +35,7 @@
     <h1>Pigoune</h1>
     <p class="tagline">Toutes vos ressources graphiques, rangées et à portée de main.</p>
     <div class="actions">
-      <a class="button primary" data-latest-label="Télécharger {version}" href="https://github.com/Gor3pig/Pigoune/releases/latest">Télécharger</a>
-      <a class="button" href="#installer">Comment l’installer</a>
+      <a class="button primary" data-latest-label="Installer {version}" href="#installer">Installer</a>
       <a class="button" href="https://github.com/Gor3pig/Pigoune">Voir sur GitHub</a>
     </div>
     <p class="note">Logiciel libre pour Linux, en français et en anglais.</p>
@@ -163,14 +162,19 @@
         <p>Pigoune est distribué au format Flatpak. Fedora, Linux Mint, Pop!_OS et beaucoup d’autres distributions l’intègrent déjà. Sur Ubuntu et quelques autres, installez-le d’abord en suivant le <a href="https://flathub.org/setup">guide officiel pour votre distribution</a>, puis redémarrez votre session.</p>
 
         <h3>2. Installer Pigoune</h3>
-        <p>Téléchargez le fichier <code>.flatpak</code> de la <a href="https://github.com/Gor3pig/Pigoune/releases/latest">dernière version</a>, puis ouvrez-le avec Logiciels, ou lancez cette commande depuis le dossier où vous l’avez enregistré :</p>
-        <pre><code>flatpak install --user pigoune-*.flatpak</code></pre>
-        <p>L’environnement GNOME dont Pigoune a besoin est téléchargé depuis Flathub la première fois.</p>
+        <p>Cliquez sur le bouton ci-dessous et ouvrez le fichier avec Logiciels : il installe Pigoune, ainsi que l’environnement GNOME dont il a besoin, depuis Flathub.</p>
+        <p class="install-button"><a class="button primary" href="../pigoune.flatpakref">Installer Pigoune</a></p>
+        <p>Ou lancez cette commande :</p>
+        <pre><code>flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref</code></pre>
 
-        <h3>3. Mettre à jour Pigoune</h3>
-        <p>Le paquet ne se met pas encore à jour tout seul. Quand une nouvelle version sort, téléchargez son fichier <code>.flatpak</code> et installez-le par-dessus l’actuel, avec Logiciels ou avec cette commande :</p>
-        <pre><code>flatpak install --user --reinstall pigoune-*.flatpak</code></pre>
-        <p>Si le dossier contient plusieurs fichiers Pigoune, tapez plutôt le nom complet du plus récent. Vos bibliothèques et vos réglages sont conservés.</p>
+        <h3>3. Rester à jour</h3>
+        <p>Pigoune se met à jour comme vos autres applications : Logiciels propose chaque nouvelle version, et <code>flatpak update</code> l’installe aussi. Chaque mise à jour est signée : seules les versions officielles sont acceptées.</p>
+
+        <h3>Installé à partir d’un fichier <code>.flatpak</code> téléchargé ?</h3>
+        <p>Si vous avez installé Pigoune 1.5 ou plus ancien à partir d’un fichier <code>.flatpak</code> téléchargé, il ne se met pas à jour tout seul. Passez une fois aux mises à jour automatiques avec ces deux commandes. Vos bibliothèques et vos réglages sont conservés.</p>
+        <pre><code>flatpak uninstall --user io.github.gor3pig.Pigoune
+flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref</code></pre>
+        <p>Le fichier <code>.flatpak</code> de chaque version reste joint à sa <a href="https://github.com/Gor3pig/Pigoune/releases">version sur GitHub</a>, pour ceux qui le préfèrent.</p>
       </div>
     </section>
   </main>
