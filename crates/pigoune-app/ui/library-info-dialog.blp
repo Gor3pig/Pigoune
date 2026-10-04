@@ -108,6 +108,29 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
             }
           }
 
+          Box records_box {
+            orientation: vertical;
+            spacing: 6;
+
+            Label {
+              label: _("Records");
+              xalign: 0;
+
+              styles [
+                "heading",
+              ]
+            }
+
+            ListBox records_list {
+              selection-mode: none;
+              row-activated => $on_record_activated() swapped;
+
+              styles [
+                "boxed-list",
+              ]
+            }
+          }
+
           Box disk_box {
             orientation: vertical;
             spacing: 6;

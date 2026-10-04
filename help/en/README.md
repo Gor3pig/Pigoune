@@ -187,7 +187,8 @@ number of assets, collections, tags, favorites, animated images, SVG images and 
 trash, where the library is stored, whether that disk is removable, when the library was
 created and which versions of Pigoune can open it. Buttons copy its location or open its folder.
 A ring chart shows how the space is shared between formats, by size or by number of assets,
-and a bar shows the room the library takes on its disk next to the free space.
+and a bar shows the room the library takes on its disk next to the free space. **Records** name
+the heaviest, the largest, the newest and the oldest asset; click one to see it in the grid.
 
 ## Preferences
 

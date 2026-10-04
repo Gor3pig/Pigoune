@@ -5,7 +5,13 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
-use pigoune_core::{FormatShare, LibraryOverview, StorageUse, oldest_compatible_version};
+use pigoune_core::{
+    Asset, AssetId, FormatShare, LibraryOverview, LibraryRecords, StorageUse,
+    oldest_compatible_version,
+};
+
+use crate::asset_facts;
+use crate::thumbnails;
 
 use crate::chart_slices::{self, Measure, Slice};
 
@@ -14,6 +20,18 @@ const LIBRARY_COLOR: &str = "#3584e4";
 const OTHER_FILES_COLOR: &str = "#9a9996";
 const FREE_SPACE_COLOR: &str = "rgba(154, 153, 150, 0.25)";
 const COUNT_TOGGLE: &str = "count";
+const RECORD_THUMBNAIL_SIDE: i32 = 40;
+
+type ShowCallback = Box<dyn Fn(AssetId)>;
+
+pub struct LibraryReport {
+    pub name: String,
+    pub root: PathBuf,
+    pub overview: LibraryOverview,
+    pub shares: Vec<FormatShare>,
+    pub storage: StorageUse,
+    pub records: LibraryRecords,
+}
 
 mod imp {
     use std::cell::RefCell;
@@ -22,7 +40,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
-    use pigoune_core::{FormatShare, StorageUse};
+    use pigoune_core::{AssetId, FormatShare, StorageUse};
 
     use crate::ring_chart::PigouneRingChart;
     use crate::stacked_bar::PigouneStackedBar;
@@ -51,6 +69,10 @@ mod imp {
         #[template_child]
         pub storage_label: TemplateChild<gtk::Label>,
         #[template_child]
+        pub records_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub records_list: TemplateChild<gtk::ListBox>,
+        #[template_child]
         pub disk_box: TemplateChild<gtk::Box>,
         #[template_child]
         pub disk_bar: TemplateChild<PigouneStackedBar>,
@@ -67,6 +89,8 @@ mod imp {
         pub root: RefCell<PathBuf>,
         pub shares: RefCell<Vec<FormatShare>>,
         pub storage: RefCell<Option<StorageUse>>,
+        pub record_ids: RefCell<Vec<AssetId>>,
+        pub on_show: RefCell<Option<super::ShowCallback>>,
     }
 
     #[glib::object_subclass]
@@ -100,16 +124,22 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneLibraryInfoDialog {
-    pub fn new(
-        name: &str,
-        root: &Path,
-        overview: &LibraryOverview,
-        shares: Vec<FormatShare>,
-        storage: StorageUse,
-    ) -> Self {
+    pub fn new(report: LibraryReport, on_show: impl Fn(AssetId) + 'static) -> Self {
+        let LibraryReport {
+            name,
+            root,
+            overview,
+            shares,
+            storage,
+            records,
+        } = report;
+        let (name, root, overview) = (name.as_str(), root.as_path(), &overview);
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
+        imp.on_show.replace(Some(Box::new(on_show)));
         imp.root.replace(root.to_path_buf());
+        imp.records_box.set_visible(overview.resources > 1);
+        dialog.show_records(&records);
         imp.chart_box.set_visible(overview.resources > 0);
         imp.shares.replace(shares);
         imp.storage.replace(Some(storage));
@@ -133,6 +163,65 @@ impl PigouneLibraryInfoDialog {
         imp.format_row
             .set_subtitle(&compatibility_text(overview.format_version));
         dialog
+    }
+
+    fn show_records(&self, records: &LibraryRecords) {
+        let entries = [
+            (RecordKind::Heaviest, &records.heaviest),
+            (RecordKind::Largest, &records.largest),
+            (RecordKind::Newest, &records.newest),
+            (RecordKind::Oldest, &records.oldest),
+        ];
+        let imp = self.imp();
+        for (kind, asset) in entries {
+            let Some(asset) = asset else {
+                continue;
+            };
+            imp.records_list.append(&self.record_row(kind, asset));
+            imp.record_ids.borrow_mut().push(asset.id);
+        }
+    }
+
+    fn record_row(&self, kind: RecordKind, asset: &Asset) -> adw::ActionRow {
+        let row = adw::ActionRow::builder()
+            .title(kind.title())
+            .subtitle(kind.detail(asset))
+            .activatable(true)
+            .build();
+        let picture = gtk::Image::builder()
+            .pixel_size(RECORD_THUMBNAIL_SIDE)
+            .valign(gtk::Align::Center)
+            .build();
+        row.add_prefix(&picture);
+        row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
+        let file = self.root().join(&asset.stored_path);
+        glib::spawn_future_local(glib::clone!(
+            #[weak]
+            picture,
+            async move {
+                let pixels =
+                    u32::try_from(RECORD_THUMBNAIL_SIDE * picture.scale_factor()).unwrap_or(1);
+                if let Some(texture) = thumbnails::render(&file, pixels, &picture).await {
+                    picture.set_paintable(Some(&texture));
+                }
+            }
+        ));
+        row
+    }
+
+    #[template_callback]
+    fn on_record_activated(&self, row: &gtk::ListBoxRow) {
+        let imp = self.imp();
+        let Some(id) = usize::try_from(row.index())
+            .ok()
+            .and_then(|index| imp.record_ids.borrow().get(index).copied())
+        else {
+            return;
+        };
+        self.close();
+        if let Some(on_show) = imp.on_show.borrow().as_ref() {
+            on_show(id);
+        }
     }
 
     #[template_callback]
@@ -324,6 +413,39 @@ fn figure_tile(count: usize, caption: &str) -> gtk::Widget {
     tile.upcast()
 }
 
+#[derive(Clone, Copy)]
+enum RecordKind {
+    Heaviest,
+    Largest,
+    Newest,
+    Oldest,
+}
+
+impl RecordKind {
+    fn title(self) -> String {
+        match self {
+            Self::Heaviest => gettext("Heaviest"),
+            Self::Largest => gettext("Largest"),
+            Self::Newest => gettext("Newest"),
+            Self::Oldest => gettext("Oldest"),
+        }
+    }
+
+    fn detail(self, asset: &Asset) -> String {
+        let detail = match self {
+            Self::Heaviest => glib::format_size(asset.byte_size).to_string(),
+            Self::Largest => asset.dimensions.map_or_else(String::new, |size| {
+                format!("{} × {}", size.width(), size.height())
+            }),
+            Self::Newest | Self::Oldest => gettext("added on {date}").replace(
+                "{date}",
+                &asset_facts::added_at_text(asset.added_at_unix_ms),
+            ),
+        };
+        format!("{} · {detail}", asset.display_name)
+    }
+}
+
 fn storage_text(storage: &StorageUse) -> String {
     [
         gettext("Resources {size}").replace("{size}", &glib::format_size(storage.resources)),
@@ -431,9 +553,13 @@ fn date_text(moment: std::time::SystemTime) -> String {
         .duration_since(UNIX_EPOCH)
         .ok()
         .and_then(|elapsed| i64::try_from(elapsed.as_secs()).ok())
-        .and_then(|seconds| glib::DateTime::from_unix_local(seconds).ok())
-        .and_then(|date| date.format(&gettext("%B %-d, %Y")).ok())
-        .map_or_else(|| gettext("Unknown date"), |text| text.to_string())
+        .map_or_else(|| gettext("Unknown date"), day_of)
+}
+
+fn day_of(unix_seconds: i64) -> String {
+    glib::DateTime::from_unix_local(unix_seconds)
+        .and_then(|date| date.format(&gettext("%B %-d, %Y")))
+        .map_or_else(|_| gettext("Unknown date"), |text| text.to_string())
 }
 
 #[cfg(test)]

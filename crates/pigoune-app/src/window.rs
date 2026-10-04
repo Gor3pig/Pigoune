@@ -27,7 +27,7 @@ use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report::{self, Destination};
-use crate::library_info_dialog::PigouneLibraryInfoDialog;
+use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
 use crate::settings;
@@ -904,13 +904,26 @@ impl PigouneWindow {
 
     fn show_library_info(&self) {
         let shown = self.imp().library.borrow().as_ref().map(|library| {
-            Ok::<_, LibraryError>(PigouneLibraryInfoDialog::new(
-                &library.name(),
-                library.root(),
-                &library.overview()?,
-                library.format_shares()?,
-                library.storage_use()?,
-            ))
+            Ok::<_, LibraryError>(LibraryReport {
+                name: library.name(),
+                root: library.root().to_path_buf(),
+                overview: library.overview()?,
+                shares: library.format_shares()?,
+                storage: library.storage_use()?,
+                records: library.records()?,
+            })
+        });
+        let shown = shown.map(|report| {
+            report.map(|report| {
+                PigouneLibraryInfoDialog::new(
+                    report,
+                    glib::clone!(
+                        #[weak(rename_to = window)]
+                        self,
+                        move |id| window.show_in_all(id)
+                    ),
+                )
+            })
         });
         match shown {
             Some(Ok(dialog)) => dialog.present(Some(self)),
@@ -1883,6 +1896,18 @@ impl PigouneWindow {
         if let Some(reveal) = reveal {
             self.go_to_view(AssetView::Collection(id), reveal);
         }
+    }
+
+    fn show_in_all(&self, id: AssetId) {
+        let imp = self.imp();
+        imp.current_view.set(AssetView::All);
+        self.remember_view(AssetView::All);
+        imp.asset_preview.close();
+        self.refresh_sidebar_revealing(Vec::new());
+        self.refresh_grid();
+        imp.sidebar.point_out(AssetView::All);
+        imp.asset_grid.select_asset(id);
+        imp.asset_grid.point_out_selected_next();
     }
 
     fn go_to_view(&self, view: AssetView, reveal: Vec<CollectionId>) {

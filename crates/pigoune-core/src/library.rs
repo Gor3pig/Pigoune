@@ -15,6 +15,7 @@ mod import_batch;
 mod import_plan;
 mod layout;
 mod overview;
+mod records;
 mod schema;
 mod search;
 mod staging;
@@ -49,6 +50,7 @@ pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
 };
 pub use overview::LibraryOverview;
+pub use records::LibraryRecords;
 pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
 pub use search::AssetFilter;
 pub use storage::{FormatShare, StorageUse};

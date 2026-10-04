@@ -105,3 +105,55 @@ fn the_overview_counts_what_the_library_holds() {
         storage.resources + storage.trash + storage.thumbnails + storage.database
     );
 }
+
+#[test]
+fn the_records_name_the_heaviest_largest_newest_and_oldest_resources() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Records").expect("library is created");
+    assert_eq!(library.records().expect("records read").heaviest, None);
+    let names = [
+        "dark-circle.svg",
+        "red-dot.png",
+        "blue-photo.jpg",
+        "navy-tile.bmp",
+        "still.gif",
+    ];
+    let ids: Vec<AssetId> = names
+        .iter()
+        .map(|name| import(&mut library, name))
+        .collect();
+    let database = Connection::open(library.root().join(DATABASE_FILE_NAME)).expect("database");
+    for (rank, id) in (1_i64..).zip(&ids) {
+        database
+            .execute(
+                "UPDATE assets SET added_at_unix_ms = ?1 WHERE id = ?2",
+                rusqlite::params![rank * 1000, id.to_string()],
+            )
+            .expect("date set");
+    }
+    database
+        .execute(
+            "UPDATE assets SET width = 9000, height = 9000 WHERE id = ?1",
+            [ids[0].to_string()],
+        )
+        .expect("svg declared huge");
+    database
+        .execute(
+            "UPDATE assets SET trashed_at_unix_ms = 1 WHERE id = ?1",
+            [ids[4].to_string()],
+        )
+        .expect("gif trashed");
+
+    let records = library.records().expect("records read");
+
+    let heaviest = names
+        .iter()
+        .take(4)
+        .max_by_key(|name| fs::metadata(sample_file(name)).expect("fixture").len())
+        .expect("a heaviest fixture");
+    let name_of = |asset: Option<pigoune_core::Asset>| asset.expect("a record").original_file_name;
+    assert_eq!(name_of(records.heaviest), *heaviest);
+    assert_eq!(name_of(records.largest), "navy-tile.bmp");
+    assert_eq!(name_of(records.newest), "navy-tile.bmp");
+    assert_eq!(name_of(records.oldest), "dark-circle.svg");
+}

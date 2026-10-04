@@ -214,7 +214,8 @@ animées, de SVG et de ressources dans la corbeille, son emplacement, si ce disq
 sa date de création et les versions de Pigoune capables de l'ouvrir. Des boutons copient son emplacement ou ouvrent
 son dossier. Un graphique en anneau montre comment la place se répartit entre les formats, en
 poids ou en nombre de ressources, et une barre montre la place de la bibliothèque sur son disque
-à côté de l'espace libre.
+à côté de l'espace libre. Les **records** désignent la ressource la plus lourde, la plus grande,
+la plus récente et la plus ancienne ; cliquez sur l'une d'elles pour la voir dans la grille.
 
 ## Préférences
 
