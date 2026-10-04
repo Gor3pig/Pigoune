@@ -16,6 +16,7 @@ const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checke
 const SMALLEST_RENDER_PIXELS: u32 = 256;
 const LARGEST_VECTOR_PIXELS: u32 = 4096;
 const SHARPEN_DELAY: Duration = Duration::from_millis(200);
+const STEP_BUTTONS_DELAY: Duration = Duration::from_secs(2);
 
 type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
 
@@ -44,6 +45,17 @@ mod imp {
         pub zoom_view: TemplateChild<PigouneZoomView>,
         #[template_child]
         pub zoom_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
+        pub previous_revealer: TemplateChild<gtk::Revealer>,
+        #[template_child]
+        pub next_revealer: TemplateChild<gtk::Revealer>,
+        #[template_child]
+        pub previous_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub next_button: TemplateChild<gtk::Button>,
+        pub step_buttons_shown: Cell<bool>,
+        pub step_buttons_hiding: RefCell<Option<glib::SourceId>>,
+        pub pointer: Cell<Option<(f64, f64)>>,
         pub showing: RefCell<Option<PigouneAssetObject>>,
         pub vector_pixels: Cell<u32>,
         pub sharpening: RefCell<Option<glib::SourceId>>,
@@ -135,6 +147,7 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().follow_zoom();
+            self.obj().follow_pointer();
         }
     }
     impl WidgetImpl for PigouneAssetPreview {}
@@ -181,6 +194,91 @@ impl PigouneAssetPreview {
         self.close();
     }
 
+    #[template_callback]
+    fn on_previous_clicked(&self) {
+        self.step(-1);
+    }
+
+    #[template_callback]
+    fn on_next_clicked(&self) {
+        self.step(1);
+    }
+
+    fn follow_pointer(&self) {
+        let motion = gtk::EventControllerMotion::new();
+        motion.connect_motion(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, x, y| {
+                let moved = preview.imp().pointer.replace(Some((x, y))) != Some((x, y));
+                if moved {
+                    preview.show_step_buttons();
+                }
+            }
+        ));
+        motion.connect_leave(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_| {
+                preview.imp().pointer.set(None);
+                preview.hide_step_buttons();
+            }
+        ));
+        self.add_controller(motion);
+    }
+
+    fn show_step_buttons(&self) {
+        let imp = self.imp();
+        imp.step_buttons_shown.set(true);
+        self.update_step_buttons();
+        if let Some(hiding) = imp.step_buttons_hiding.take() {
+            hiding.remove();
+        }
+        let hiding = glib::timeout_add_local_once(
+            STEP_BUTTONS_DELAY,
+            glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                move || {
+                    preview.imp().step_buttons_hiding.replace(None);
+                    if preview.is_hovering_a_step_button() {
+                        preview.show_step_buttons();
+                    } else {
+                        preview.hide_step_buttons();
+                    }
+                }
+            ),
+        );
+        imp.step_buttons_hiding.replace(Some(hiding));
+    }
+
+    fn hide_step_buttons(&self) {
+        let imp = self.imp();
+        if let Some(hiding) = imp.step_buttons_hiding.take() {
+            hiding.remove();
+        }
+        imp.step_buttons_shown.set(false);
+        self.update_step_buttons();
+    }
+
+    fn is_hovering_a_step_button(&self) -> bool {
+        let imp = self.imp();
+        [&*imp.previous_button, &*imp.next_button]
+            .iter()
+            .any(|button| button.state_flags().contains(gtk::StateFlags::PRELIGHT))
+    }
+
+    fn update_step_buttons(&self) {
+        let imp = self.imp();
+        let shown = imp.step_buttons_shown.get();
+        let position = imp.position.get();
+        let count = u32::try_from(imp.items.borrow().len()).unwrap_or(u32::MAX);
+        imp.previous_revealer
+            .set_reveal_child(shown && neighbour(position, -1, count).is_some());
+        imp.next_revealer
+            .set_reveal_child(shown && neighbour(position, 1, count).is_some());
+    }
+
     fn forget_selection(&self) {
         let imp = self.imp();
         if let Some(loading) = imp.loading.take() {
@@ -193,6 +291,7 @@ impl PigouneAssetPreview {
         }
         imp.showing.replace(None);
         imp.zoom_view.show_image(None, 1, 1, false);
+        self.hide_step_buttons();
     }
 
     fn step(&self, offset: i32) {
@@ -222,6 +321,7 @@ impl PigouneAssetPreview {
         imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
             .set_subtitle(&position_text(position, count));
+        self.update_step_buttons();
         let remembered = imp
             .thumbnails
             .borrow()

@@ -125,7 +125,8 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
 - Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur une ressource pour ouvrir l'**aperçu
   détaillé**. Zoomez avec la molette ou avec <kbd>+</kbd> et <kbd>-</kbd>, utilisez
   <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, passez à la
-  ressource précédente ou suivante avec les flèches, et choisissez une couleur de fond dans la
+  ressource précédente ou suivante avec les flèches du clavier ou avec les boutons fléchés qui
+  apparaissent quand vous bougez la souris, et choisissez une couleur de fond dans la
   barre du haut. Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd> pour revenir.
 
 ## Réutiliser vos ressources

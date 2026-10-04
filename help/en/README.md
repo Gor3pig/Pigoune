@@ -111,9 +111,9 @@ a tag in the details panel works the same way.
 - Animated GIFs play when you hover over them.
 - Press <kbd>Space</kbd> or double-click an asset to open the **detailed preview**. Zoom with
   the scroll wheel or with <kbd>+</kbd> and <kbd>-</kbd>, use <kbd>0</kbd> to fit the window
-  and <kbd>1</kbd> for the actual size, move to the previous or next asset with the arrow keys,
-  and choose a background color from the top bar. Press <kbd>Space</kbd> or
-  <kbd>Esc</kbd> to go back.
+  and <kbd>1</kbd> for the actual size, move to the previous or next asset with the arrow keys
+  or with the arrow buttons that appear when you move the mouse, and choose a background color
+  from the top bar. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
 
 ## Reusing assets
 

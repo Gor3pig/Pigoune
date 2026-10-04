@@ -114,16 +114,62 @@ template $PigouneAssetPreview: Adw.Bin {
       }
     }
 
-    content: Box surface {
-      styles [
-        "preview-surface",
-      ]
+    content: Overlay {
+      child: Box surface {
+        styles [
+          "preview-surface",
+        ]
 
-      $PigouneZoomView zoom_view {
-        margin-top: 24;
-        margin-bottom: 24;
-        margin-start: 24;
-        margin-end: 24;
+        $PigouneZoomView zoom_view {
+          margin-top: 24;
+          margin-bottom: 24;
+          margin-start: 24;
+          margin-end: 24;
+        }
+      };
+
+      [overlay]
+      Revealer previous_revealer {
+        transition-type: crossfade;
+        halign: start;
+        valign: center;
+        margin-start: 18;
+
+        child: Button previous_button {
+          icon-name: "go-previous-symbolic";
+          tooltip-text: _("Previous Resource");
+          focus-on-click: false;
+          can-focus: false;
+          clicked => $on_previous_clicked() swapped;
+
+          styles [
+            "circular",
+            "osd",
+            "preview-step",
+          ]
+        };
+      }
+
+      [overlay]
+      Revealer next_revealer {
+        transition-type: crossfade;
+        halign: end;
+        valign: center;
+        margin-end: 18;
+
+        child: Button next_button {
+          icon-name: "go-next-symbolic";
+          tooltip-text: _("Next Resource");
+          focus-on-click: false;
+          can-focus: false;
+          clicked => $on_next_clicked() swapped;
+
+          styles [
+            "circular",
+            "osd",
+            "preview-step",
+          ]
+        };
       }
     };
   };

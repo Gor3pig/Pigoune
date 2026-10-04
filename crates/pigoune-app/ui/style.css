@@ -9,6 +9,11 @@
   background-color: color-mix(in srgb, var(--accent-bg-color) 8%, transparent);
 }
 
+.preview-step {
+  min-width: 48px;
+  min-height: 48px;
+}
+
 .preview-surface.white,
 .background-swatch.white {
   background-color: #ffffff;

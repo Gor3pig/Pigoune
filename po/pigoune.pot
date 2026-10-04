@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 09:52+0200\n"
+"POT-Creation-Date: 2026-10-04 09:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1240,22 +1240,32 @@ msgstr ""
 msgid "Checkerboard Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:135
+#: crates/pigoune-app/ui/asset-preview.blp:140
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
+msgid "Previous Resource"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:162
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
+msgid "Next Resource"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:181
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:111
 msgid "Fit to Window"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:140
+#: crates/pigoune-app/ui/asset-preview.blp:186
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:116
 msgid "Actual Size"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:375
+#: crates/pigoune-app/src/asset_preview.rs:475
 #, rust-format
 msgid "{percent}%"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:389
+#: crates/pigoune-app/src/asset_preview.rs:489
 #, rust-format
 msgid "{position} of {count}"
 msgstr ""
@@ -1396,14 +1406,6 @@ msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:88
 msgid "Detailed Preview"
-msgstr ""
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
-msgid "Previous Resource"
-msgstr ""
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
-msgid "Next Resource"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:101

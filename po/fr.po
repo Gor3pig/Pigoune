@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 09:52+0200\n"
+"POT-Creation-Date: 2026-10-04 09:59+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -1324,22 +1324,32 @@ msgstr "Fond noir"
 msgid "Checkerboard Background"
 msgstr "Fond en damier"
 
-#: crates/pigoune-app/ui/asset-preview.blp:135
+#: crates/pigoune-app/ui/asset-preview.blp:140
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
+msgid "Previous Resource"
+msgstr "Ressource précédente"
+
+#: crates/pigoune-app/ui/asset-preview.blp:162
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
+msgid "Next Resource"
+msgstr "Ressource suivante"
+
+#: crates/pigoune-app/ui/asset-preview.blp:181
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:111
 msgid "Fit to Window"
 msgstr "Ajuster à la fenêtre"
 
-#: crates/pigoune-app/ui/asset-preview.blp:140
+#: crates/pigoune-app/ui/asset-preview.blp:186
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:116
 msgid "Actual Size"
 msgstr "Taille réelle (100 %)"
 
-#: crates/pigoune-app/src/asset_preview.rs:375
+#: crates/pigoune-app/src/asset_preview.rs:475
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:389
+#: crates/pigoune-app/src/asset_preview.rs:489
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"
@@ -1486,14 +1496,6 @@ msgstr "Réduire les vignettes"
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:88
 msgid "Detailed Preview"
 msgstr "Aperçu détaillé"
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
-msgid "Previous Resource"
-msgstr "Ressource précédente"
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
-msgid "Next Resource"
-msgstr "Ressource suivante"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:101
 msgid "Zoom In"
