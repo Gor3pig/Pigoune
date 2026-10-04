@@ -2869,9 +2869,7 @@ impl PigouneWindow {
                     imp.asset_grid.select_assets(&previously_selected);
                 }
                 imp.library_stack.set_visible_child_name(page);
-                imp.grid_header
-                    .details_button()
-                    .set_visible(!assets.is_empty());
+                imp.grid_header.details_button().set_visible(true);
                 self.update_details_panel();
                 imp.trash_banner.set_revealed(view == AssetView::Trash);
             }
