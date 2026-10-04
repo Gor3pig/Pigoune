@@ -1452,6 +1452,7 @@ impl PigouneWindow {
         if assets.is_empty() || self.is_showing_trash() {
             return;
         }
+        let paused_frame = self.paused_preview_frame();
         let dialog = PigouneExportAsDialog::new(
             conversion_memory::load(self.settings(), natural_size(&assets[0])),
             natural_size(&assets[0]),
@@ -1461,8 +1462,11 @@ impl PigouneWindow {
                 move |settings| {
                     conversion_memory::store(window.settings(), &settings);
                     let assets = assets.clone();
+                    let paused_frame = paused_frame.clone();
                     glib::spawn_future_local(async move {
-                        window.convert_into_folder(&assets, settings).await;
+                        window
+                            .convert_into_folder(&assets, paused_frame, settings)
+                            .await;
                     });
                 }
             ),
@@ -1470,9 +1474,17 @@ impl PigouneWindow {
         dialog.present(Some(self));
     }
 
+    fn paused_preview_frame(&self) -> Option<(gdk::Texture, usize)> {
+        let imp = self.imp();
+        (imp.window_stack.visible_child_name().as_deref() == Some(PREVIEW_PAGE))
+            .then(|| imp.asset_preview.paused_frame())
+            .flatten()
+    }
+
     async fn convert_into_folder(
         &self,
         assets: &[PigouneAssetObject],
+        paused_frame: Option<(gdk::Texture, usize)>,
         settings: ConversionSettings,
     ) {
         let dialog = gtk::FileDialog::builder()
@@ -1495,7 +1507,10 @@ impl PigouneWindow {
         let mut exported = 0;
         let mut failures = Vec::new();
         for asset in assets {
-            match self.convert_one(asset, &path, settings).await {
+            match self
+                .convert_one(asset, &path, paused_frame.clone(), settings)
+                .await
+            {
                 Ok(()) => exported += 1,
                 Err(reason) => failures.push(conversion_report::Failure {
                     name: asset.display_name(),
@@ -1524,12 +1539,15 @@ impl PigouneWindow {
         &self,
         asset: &PigouneAssetObject,
         folder: &Path,
+        paused_frame: Option<(gdk::Texture, usize)>,
         settings: ConversionSettings,
     ) -> Result<(), String> {
+        let frame_number = paused_frame.as_ref().map(|(_, index)| index + 1);
         let source = image_conversion::Source {
             file: asset.file(),
             is_vector: asset.asset().format == AssetFormat::Svg,
             natural: natural_size(asset),
+            still: paused_frame.map(|(texture, _)| texture),
         };
         let converted = image_conversion::convert(&source, settings)
             .await
@@ -1537,7 +1555,8 @@ impl PigouneWindow {
         Library::save_converted(
             asset.asset(),
             folder,
-            converted.name_suffix.as_deref(),
+            conversion_report::name_suffix(frame_number, converted.name_suffix.as_deref())
+                .as_deref(),
             settings.format.extension(),
             &converted.bytes,
         )

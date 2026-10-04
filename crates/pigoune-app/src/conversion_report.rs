@@ -58,3 +58,26 @@ pub fn reason(error: ConversionError) -> String {
         ConversionError::EncodingFailed => gettext("the conversion failed"),
     }
 }
+
+pub fn name_suffix(frame_number: Option<usize>, size: Option<&str>) -> Option<String> {
+    let frame = frame_number
+        .map(|number| gettext("frame-{number}").replace("{number}", &number.to_string()));
+    let parts: Vec<String> = frame.into_iter().chain(size.map(str::to_owned)).collect();
+    (!parts.is_empty()).then(|| parts.join("-"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::name_suffix;
+
+    #[test]
+    fn the_frame_and_the_size_both_appear_in_the_name() {
+        assert_eq!(name_suffix(None, None), None);
+        assert_eq!(name_suffix(None, Some("64x64")).as_deref(), Some("64x64"));
+        assert_eq!(name_suffix(Some(3), None).as_deref(), Some("frame-3"));
+        assert_eq!(
+            name_suffix(Some(3), Some("64x64")).as_deref(),
+            Some("frame-3-64x64")
+        );
+    }
+}

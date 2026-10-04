@@ -167,11 +167,13 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   changer un côté ajuste l'autre, et plusieurs images de formes différentes tiennent chacune
   dans la largeur et la hauteur indiquées. Ouvrez-le pour étirer librement une image. Un SVG
   reste net à toutes les tailles ; une image en pixels agrandie devient floue. Un fichier
-  redimensionné porte sa taille dans son nom, par exemple `logo-512x384.png`. Pour l'ICO, cochez
-  les tailles à inclure (16, 32, 48 et 256 par défaut) : elles vont toutes dans un seul fichier
-  d'icône. Pigoune retient votre format, votre qualité, votre fond et votre unité pour le
-  prochain export, et la taille repart toujours de l'original. L'original reste intact dans la
-  bibliothèque, et les fichiers existants ne sont jamais écrasés.
+  redimensionné porte sa taille dans son nom, par exemple `logo-512x384.png`. Depuis l'aperçu,
+  une animation en pause sur une image exporte cette image, nommée par exemple
+  `spinner-image-3.png`. Pour l'ICO, cochez les tailles à inclure (16, 32, 48 et 256 par défaut)
+  : elles vont toutes dans un seul fichier d'icône. Pigoune retient votre format, votre qualité,
+  votre fond et votre unité pour le prochain export, et la taille repart toujours de l'original.
+  L'original reste intact dans la bibliothèque, et les fichiers existants ne sont jamais
+  écrasés.
 - **Ouvrez** une ressource dans une autre application, un logiciel de retouche par exemple,
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et

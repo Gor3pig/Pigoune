@@ -105,6 +105,21 @@ pub struct Source<'a> {
     pub file: &'a Path,
     pub is_vector: bool,
     pub natural: (u32, u32),
+    pub still: Option<gdk::Texture>,
+}
+
+impl Source<'_> {
+    fn natural_size(&self) -> (u32, u32) {
+        self.still
+            .as_ref()
+            .and_then(|still| {
+                Some((
+                    u32::try_from(still.width()).ok()?,
+                    u32::try_from(still.height()).ok()?,
+                ))
+            })
+            .unwrap_or(self.natural)
+    }
 }
 
 pub struct Converted {
@@ -122,9 +137,10 @@ pub async fn convert(
             name_suffix: None,
         });
     }
-    let target = settings.custom.target(source.natural);
+    let natural = source.natural_size();
+    let target = settings.custom.target(natural);
     let image = sized_image(source, target).await?;
-    let name_suffix = (target != source.natural).then(|| format!("{}x{}", target.0, target.1));
+    let name_suffix = (target != natural).then(|| format!("{}x{}", target.0, target.1));
     Ok(Converted {
         bytes: encode(image, settings).await?,
         name_suffix,
@@ -138,14 +154,17 @@ async fn icon(
     let original = if source.is_vector {
         None
     } else {
-        Some(load(source.file, source.natural.0.max(source.natural.1)).await?)
+        {
+            let (width, height) = source.natural_size();
+            Some(load(source, width.max(height)).await?)
+        }
     };
     let mut pictures = Vec::new();
     for side in settings.icon_sides.sides() {
         let image = match &original {
             Some(original) if original.width().max(original.height()) < side => continue,
             Some(original) => shrunk(original.clone(), side).await?,
-            None => load(source.file, side).await?,
+            None => load(source, side).await?,
         };
         let png = encode_png(image.centered_on_square(side), settings).await?;
         pictures.push((
@@ -167,7 +186,7 @@ async fn sized_image(
     source: &Source<'_>,
     (width, height): (u32, u32),
 ) -> Result<RgbaImage, ConversionError> {
-    let image = load(source.file, width.max(height)).await?;
+    let image = load(source, width.max(height)).await?;
     if (image.width(), image.height()) == (width, height) {
         return Ok(image);
     }
@@ -188,11 +207,16 @@ async fn shrunk(image: RgbaImage, side: u32) -> Result<RgbaImage, ConversionErro
     resized(image, width, height).await
 }
 
-async fn load(file: &Path, vector_side: u32) -> Result<RgbaImage, ConversionError> {
-    let image = thumbnails::load_detailed(file, vector_side)
-        .await
-        .ok_or(ConversionError::Unreadable)?;
-    let texture = image.texture;
+async fn load(source: &Source<'_>, vector_side: u32) -> Result<RgbaImage, ConversionError> {
+    let texture = match &source.still {
+        Some(still) => still.clone(),
+        None => {
+            thumbnails::load_detailed(source.file, vector_side)
+                .await
+                .ok_or(ConversionError::Unreadable)?
+                .texture
+        }
+    };
     let width = u32::try_from(texture.width()).map_err(|_| ConversionError::Unreadable)?;
     let height = u32::try_from(texture.height()).map_err(|_| ConversionError::Unreadable)?;
     RgbaImage::new(width, height, straight_rgba(&texture)).ok_or(ConversionError::Unreadable)
@@ -289,6 +313,7 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     use gtk::glib;
+    use gtk::prelude::*;
     use pigoune_core::Dimensions;
 
     use super::{
@@ -316,6 +341,7 @@ mod tests {
             file: &file,
             is_vector: file.extension().is_some_and(|extension| extension == "svg"),
             natural,
+            still: None,
         };
         let context = glib::MainContext::new();
         context
@@ -498,6 +524,32 @@ mod tests {
         let size = Dimensions::new(16, 16).expect("valid size");
         let single = pigoune_core::single_size_icon(&converted.bytes, size).expect("size found");
         assert_eq!(first_pixel(single), [255, 255, 0, 255]);
+    }
+
+    #[test]
+    fn a_frame_already_shown_is_exported_instead_of_the_file() {
+        let green = [0_u8, 255, 0, 255].repeat(6);
+        let still = gtk::gdk::MemoryTexture::new(
+            3,
+            2,
+            gtk::gdk::MemoryFormat::R8g8b8a8,
+            &glib::Bytes::from_owned(green),
+            12,
+        );
+        let file = fixture("blinking.png");
+        let source = Source {
+            file: &file,
+            is_vector: false,
+            natural: (4, 4),
+            still: Some(still.upcast()),
+        };
+        let context = glib::MainContext::new();
+        let converted = context
+            .with_thread_default(|| context.block_on(convert(&source, settings(TargetFormat::Png))))
+            .expect("context available")
+            .expect("converted");
+        assert_eq!(png_size(&converted.bytes), (3, 2));
+        assert_eq!(first_pixel(converted.bytes), [0, 255, 0, 255]);
     }
 
     #[test]

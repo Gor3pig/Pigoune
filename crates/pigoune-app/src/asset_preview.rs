@@ -104,6 +104,7 @@ mod imp {
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
         pub player: RefCell<Option<AnimationPlayer>>,
+        pub paused_frame: RefCell<Option<(gdk::Texture, usize)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
     }
 
@@ -293,6 +294,10 @@ impl PigouneAssetPreview {
         self.show_current();
         self.follow_fullscreen();
         self.grab_focus();
+    }
+
+    pub fn paused_frame(&self) -> Option<(gdk::Texture, usize)> {
+        self.imp().paused_frame.borrow().clone()
     }
 
     pub fn shown_asset(&self) -> Option<PigouneAssetObject> {
@@ -784,6 +789,8 @@ impl PigouneAssetPreview {
     fn show_frame(&self, frame: &gdk::Texture, state: PlaybackState) {
         let imp = self.imp();
         imp.zoom_view.replace_texture(frame);
+        imp.paused_frame
+            .replace((!state.playing).then(|| (frame.clone(), state.index)));
         imp.frame_label
             .set_label(&format!("{} / {}", state.index + 1, state.frame_count));
         let (icon, tooltip) = if state.playing {
@@ -798,6 +805,7 @@ impl PigouneAssetPreview {
     fn stop_animation(&self) {
         let imp = self.imp();
         imp.player.replace(None);
+        imp.paused_frame.replace(None);
         imp.animation_controls.set_visible(false);
     }
 
