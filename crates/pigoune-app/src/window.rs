@@ -726,12 +726,17 @@ impl PigouneWindow {
 
     fn follow_trash_confirmation(&self, settings: &gio::Settings) {
         self.label_empty_trash_button(settings);
+        self.describe_trash_retention(settings);
+        self.explain_empty_trash_button();
         settings.connect_changed(
             Some(settings::AUTO_EMPTY_TRASH),
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |_, _| window.empty_expired_trash()
+                move |settings, _| {
+                    window.describe_trash_retention(settings);
+                    window.empty_expired_trash();
+                }
             ),
         );
         settings.connect_changed(
@@ -742,6 +747,23 @@ impl PigouneWindow {
                 move |settings, _| window.label_empty_trash_button(settings)
             ),
         );
+    }
+
+    fn describe_trash_retention(&self, settings: &gio::Settings) {
+        let title = if settings.boolean(settings::AUTO_EMPTY_TRASH) {
+            gettext("Resources in the trash are deleted for good after 30 days.")
+        } else {
+            gettext("Resources in the trash are deleted for good only when it is emptied.")
+        };
+        self.imp().trash_banner.set_title(&title);
+    }
+
+    fn explain_empty_trash_button(&self) {
+        if let Some(button) = descendant_button(self.imp().trash_banner.upcast_ref()) {
+            button.set_tooltip_text(Some(&gettext(
+                "Delete every resource in the trash for good",
+            )));
+        }
     }
 
     fn label_empty_trash_button(&self, settings: &gio::Settings) {
@@ -3199,6 +3221,20 @@ impl PigouneWindow {
         settings::store_int(settings, settings::WINDOW_HEIGHT, height);
         settings::store_bool(settings, settings::WINDOW_MAXIMIZED, self.is_maximized());
     }
+}
+
+fn descendant_button(widget: &gtk::Widget) -> Option<gtk::Button> {
+    if let Ok(button) = widget.clone().downcast::<gtk::Button>() {
+        return Some(button);
+    }
+    let mut child = widget.first_child();
+    while let Some(current) = child {
+        if let Some(button) = descendant_button(&current) {
+            return Some(button);
+        }
+        child = current.next_sibling();
+    }
+    None
 }
 
 fn recent_removal_text(count: usize) -> String {
