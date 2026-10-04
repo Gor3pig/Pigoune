@@ -6,13 +6,26 @@ template $PigouneAssetPreview: Adw.Bin {
 
   child: Adw.ToolbarView {
     [top]
-    Adw.HeaderBar {
+    Adw.HeaderBar header_bar {
       title-widget: Adw.WindowTitle preview_title {};
+
+      [start]
+      Button {
+        tooltip-text: _("Back to the Library");
+        visible: bind template.compact inverted;
+        clicked => $on_back_clicked() swapped;
+
+        child: Adw.ButtonContent {
+          icon-name: "go-previous-symbolic";
+          label: _("Library");
+        };
+      }
 
       [start]
       Button {
         icon-name: "go-previous-symbolic";
         tooltip-text: _("Back to the Library");
+        visible: bind template.compact;
         clicked => $on_back_clicked() swapped;
       }
 
@@ -27,7 +40,24 @@ template $PigouneAssetPreview: Adw.Bin {
       }
 
       [end]
-      Box {
+      MenuButton background_button {
+        tooltip-text: _("Background");
+        visible: bind template.compact;
+
+        child: Box background_button_swatch {
+          halign: center;
+          valign: center;
+
+          styles [
+            "background-swatch",
+          ]
+        };
+
+        popover: Popover background_popover {};
+      }
+
+      [end]
+      Box background_swatches {
         styles [
           "linked",
         ]
@@ -129,47 +159,41 @@ template $PigouneAssetPreview: Adw.Bin {
       };
 
       [overlay]
-      Revealer previous_revealer {
-        transition-type: crossfade;
+      Button previous_button {
+        icon-name: "go-previous-symbolic";
+        tooltip-text: _("Previous Resource");
         halign: start;
         valign: center;
         margin-start: 18;
+        focus-on-click: false;
+        can-focus: false;
+        can-target: false;
+        clicked => $on_previous_clicked() swapped;
 
-        child: Button previous_button {
-          icon-name: "go-previous-symbolic";
-          tooltip-text: _("Previous Resource");
-          focus-on-click: false;
-          can-focus: false;
-          clicked => $on_previous_clicked() swapped;
-
-          styles [
-            "circular",
-            "osd",
-            "preview-step",
-          ]
-        };
+        styles [
+          "circular",
+          "osd",
+          "preview-step",
+        ]
       }
 
       [overlay]
-      Revealer next_revealer {
-        transition-type: crossfade;
+      Button next_button {
+        icon-name: "go-next-symbolic";
+        tooltip-text: _("Next Resource");
         halign: end;
         valign: center;
         margin-end: 18;
+        focus-on-click: false;
+        can-focus: false;
+        can-target: false;
+        clicked => $on_next_clicked() swapped;
 
-        child: Button next_button {
-          icon-name: "go-next-symbolic";
-          tooltip-text: _("Next Resource");
-          focus-on-click: false;
-          can-focus: false;
-          clicked => $on_next_clicked() swapped;
-
-          styles [
-            "circular",
-            "osd",
-            "preview-step",
-          ]
-        };
+        styles [
+          "circular",
+          "osd",
+          "preview-step",
+        ]
       }
     };
   };

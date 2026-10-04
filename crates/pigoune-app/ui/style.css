@@ -12,6 +12,12 @@
 .preview-step {
   min-width: 48px;
   min-height: 48px;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.preview-step.shown {
+  opacity: 1;
 }
 
 .preview-surface.white,

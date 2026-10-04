@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 09:59+0200\n"
+"POT-Creation-Date: 2026-10-04 10:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -272,79 +272,79 @@ msgstr ""
 msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:51 crates/pigoune-app/ui/window.blp:120
+#: crates/pigoune-app/ui/window.blp:52 crates/pigoune-app/ui/window.blp:121
 msgid "Main Menu"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:58
+#: crates/pigoune-app/ui/window.blp:59
 msgid "Welcome to Pigoune"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:59
+#: crates/pigoune-app/ui/window.blp:60
 msgid "All your graphic assets, organized and within reach."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:71
+#: crates/pigoune-app/ui/window.blp:72
 msgid "_Create a Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:82
+#: crates/pigoune-app/ui/window.blp:83
 msgid "_Open a Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:112
+#: crates/pigoune-app/ui/window.blp:113
 msgid "Import"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:143
+#: crates/pigoune-app/ui/window.blp:144
 msgid "Images are copied into the library. The originals are not modified."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:156
+#: crates/pigoune-app/ui/window.blp:157
 msgid "Your Library Is Empty"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:157
+#: crates/pigoune-app/ui/window.blp:158
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:165 crates/pigoune-app/ui/window.blp:237
+#: crates/pigoune-app/ui/window.blp:166 crates/pigoune-app/ui/window.blp:238
 msgid "Import _Files…"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:176 crates/pigoune-app/ui/window.blp:242
+#: crates/pigoune-app/ui/window.blp:177 crates/pigoune-app/ui/window.blp:243
 msgid "Import a F_older…"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:195
+#: crates/pigoune-app/ui/window.blp:196
 msgid "Resources in the trash are deleted for good only when it is emptied."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:196 crates/pigoune-app/src/window.rs:676
+#: crates/pigoune-app/ui/window.blp:197 crates/pigoune-app/src/window.rs:676
 msgid "_Empty Trash…"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:213
+#: crates/pigoune-app/ui/window.blp:214
 msgid "Details"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:251
+#: crates/pigoune-app/ui/window.blp:252
 msgid "_Close Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:258
+#: crates/pigoune-app/ui/window.blp:259
 msgid "_Preferences"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:263
+#: crates/pigoune-app/ui/window.blp:264
 msgid "_Keyboard Shortcuts"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:268
+#: crates/pigoune-app/ui/window.blp:269
 msgid "_Help"
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:273
+#: crates/pigoune-app/ui/window.blp:274
 msgid "_About Pigoune"
 msgstr ""
 
@@ -1212,60 +1212,70 @@ msgstr ""
 msgid "%B %-d, %Y at %H:%M"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:15
+#: crates/pigoune-app/ui/asset-preview.blp:14
+#: crates/pigoune-app/ui/asset-preview.blp:27
 msgid "Back to the Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:21
+#: crates/pigoune-app/ui/asset-preview.blp:20
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:6
+msgid "Library"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:34
 msgid "Zoom"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:36
+#: crates/pigoune-app/ui/asset-preview.blp:44
+msgid "Background"
+msgstr ""
+
+#: crates/pigoune-app/ui/asset-preview.blp:66
 msgid "Transparent Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:52
+#: crates/pigoune-app/ui/asset-preview.blp:82
 msgid "White Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:68
+#: crates/pigoune-app/ui/asset-preview.blp:98
 msgid "Gray Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:84
+#: crates/pigoune-app/ui/asset-preview.blp:114
 msgid "Black Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:100
+#: crates/pigoune-app/ui/asset-preview.blp:130
 msgid "Checkerboard Background"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:140
+#: crates/pigoune-app/ui/asset-preview.blp:170
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:91
 msgid "Previous Resource"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:162
+#: crates/pigoune-app/ui/asset-preview.blp:192
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:96
 msgid "Next Resource"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:181
+#: crates/pigoune-app/ui/asset-preview.blp:211
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:111
 msgid "Fit to Window"
 msgstr ""
 
-#: crates/pigoune-app/ui/asset-preview.blp:186
+#: crates/pigoune-app/ui/asset-preview.blp:216
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:116
 msgid "Actual Size"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:475
+#: crates/pigoune-app/src/asset_preview.rs:503
 #, rust-format
 msgid "{percent}%"
 msgstr ""
 
-#: crates/pigoune-app/src/asset_preview.rs:489
+#: crates/pigoune-app/src/asset_preview.rs:525
 #, rust-format
 msgid "{position} of {count}"
 msgstr ""
@@ -1350,10 +1360,6 @@ msgstr ""
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:41
 msgid "Resources are deleted for good after 30 days in the trash"
-msgstr ""
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:6
-msgid "Library"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:14

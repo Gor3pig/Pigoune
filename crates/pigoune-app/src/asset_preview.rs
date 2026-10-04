@@ -18,6 +18,7 @@ const SMALLEST_RENDER_PIXELS: u32 = 256;
 const LARGEST_VECTOR_PIXELS: u32 = 4096;
 const SHARPEN_DELAY: Duration = Duration::from_millis(200);
 const STEP_BUTTONS_DELAY: Duration = Duration::from_secs(2);
+const SHOWN_STEP_BUTTON: &str = "shown";
 
 type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
 
@@ -39,17 +40,21 @@ mod imp {
     #[properties(wrapper_type = super::PigouneAssetPreview)]
     pub struct PigouneAssetPreview {
         #[template_child]
+        pub header_bar: TemplateChild<adw::HeaderBar>,
+        #[template_child]
         pub preview_title: TemplateChild<adw::WindowTitle>,
+        #[template_child]
+        pub background_button_swatch: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub background_popover: TemplateChild<gtk::Popover>,
+        #[template_child]
+        pub background_swatches: TemplateChild<gtk::Box>,
         #[template_child]
         pub surface: TemplateChild<gtk::Box>,
         #[template_child]
         pub zoom_view: TemplateChild<PigouneZoomView>,
         #[template_child]
         pub zoom_button: TemplateChild<gtk::MenuButton>,
-        #[template_child]
-        pub previous_revealer: TemplateChild<gtk::Revealer>,
-        #[template_child]
-        pub next_revealer: TemplateChild<gtk::Revealer>,
         #[template_child]
         pub previous_button: TemplateChild<gtk::Button>,
         #[template_child]
@@ -62,6 +67,8 @@ mod imp {
         pub sharpening: RefCell<Option<glib::SourceId>>,
         #[property(get, set = Self::set_background)]
         pub background: RefCell<String>,
+        #[property(get, set = Self::set_compact)]
+        pub compact: Cell<bool>,
         pub items: RefCell<Vec<PigouneAssetObject>>,
         pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
@@ -74,9 +81,26 @@ mod imp {
         fn set_background(&self, background: String) {
             for known in super::BACKGROUNDS {
                 self.surface.remove_css_class(known);
+                self.background_button_swatch.remove_css_class(known);
             }
             self.surface.add_css_class(&background);
+            self.background_button_swatch.add_css_class(&background);
+            self.background_popover.popdown();
             self.background.replace(background);
+        }
+
+        fn set_compact(&self, compact: bool) {
+            if self.compact.replace(compact) == compact {
+                return;
+            }
+            let swatches = self.background_swatches.get();
+            if compact {
+                self.header_bar.remove(&swatches);
+                self.background_popover.set_child(Some(&swatches));
+            } else {
+                self.background_popover.set_child(None::<&gtk::Widget>);
+                self.header_bar.pack_end(&swatches);
+            }
         }
     }
 
@@ -274,10 +298,15 @@ impl PigouneAssetPreview {
         let shown = imp.step_buttons_shown.get();
         let position = imp.position.get();
         let count = u32::try_from(imp.items.borrow().len()).unwrap_or(u32::MAX);
-        imp.previous_revealer
-            .set_reveal_child(shown && neighbour(position, -1, count).is_some());
-        imp.next_revealer
-            .set_reveal_child(shown && neighbour(position, 1, count).is_some());
+        for (button, offset) in [(&*imp.previous_button, -1), (&*imp.next_button, 1)] {
+            let available = shown && neighbour(position, offset, count).is_some();
+            if available {
+                button.add_css_class(SHOWN_STEP_BUTTON);
+            } else {
+                button.remove_css_class(SHOWN_STEP_BUTTON);
+            }
+            button.set_can_target(available);
+        }
     }
 
     fn forget_selection(&self) {
