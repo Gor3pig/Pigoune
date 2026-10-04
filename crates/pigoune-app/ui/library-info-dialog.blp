@@ -1,0 +1,104 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneLibraryInfoDialog: Adw.Dialog {
+  title: _("Library Information");
+  follows-content-size: true;
+
+  child: Adw.ToolbarView {
+    width-request: 520;
+
+    [top]
+    Adw.HeaderBar {}
+
+    content: Adw.ToastOverlay toast_overlay {
+      child: ScrolledWindow {
+        hscrollbar-policy: never;
+        propagate-natural-height: true;
+
+        child: Box {
+          orientation: vertical;
+          spacing: 24;
+          margin-top: 12;
+          margin-bottom: 24;
+          margin-start: 24;
+          margin-end: 24;
+
+          Label name_label {
+            wrap: true;
+            justify: center;
+
+            styles [
+              "title-1",
+            ]
+          }
+
+          Grid figures_grid {
+            column-homogeneous: true;
+            column-spacing: 12;
+            row-spacing: 12;
+          }
+
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ActionRow location_row {
+              title: _("Location");
+              subtitle-selectable: true;
+
+              [suffix]
+              Button {
+                icon-name: "edit-copy-symbolic";
+                tooltip-text: _("Copy the Location");
+                valign: center;
+                clicked => $on_copy_location_clicked() swapped;
+
+                styles [
+                  "flat",
+                ]
+              }
+
+              [suffix]
+              Button {
+                icon-name: "folder-open-symbolic";
+                tooltip-text: _("Open the Folder");
+                valign: center;
+                clicked => $on_open_folder_clicked() swapped;
+
+                styles [
+                  "flat",
+                ]
+              }
+            }
+
+            Adw.ActionRow disk_row {
+              title: _("Disk");
+            }
+
+            Adw.ActionRow created_row {
+              title: _("Created");
+            }
+
+            Adw.ActionRow format_row {
+              title: _("Compatibility");
+
+              [suffix]
+              Image {
+                icon-name: "object-select-symbolic";
+                valign: center;
+
+                styles [
+                  "success",
+                ]
+              }
+            }
+          }
+        };
+      };
+    };
+  };
+}

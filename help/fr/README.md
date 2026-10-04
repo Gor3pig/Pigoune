@@ -208,6 +208,12 @@ Une bibliothèque ne peut être ouverte que dans une seule fenêtre de Pigoune �
 la gardez dans un dossier synchronisé (Nextcloud, Syncthing…), fermez Pigoune sur un
 ordinateur avant de l'ouvrir sur un autre.
 
+Choisissez **Informations sur la bibliothèque** dans le menu principal pour voir ce que contient
+la bibliothèque ouverte : le nombre de ressources, de collections, de tags, de favoris, d'images
+animées, de SVG et de ressources dans la corbeille, son emplacement, si ce disque est amovible,
+sa date de création et les versions de Pigoune capables de l'ouvrir. Des boutons copient son emplacement ou ouvrent
+son dossier.
+
 ## Préférences
 
 Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur

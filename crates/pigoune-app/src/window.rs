@@ -27,6 +27,7 @@ use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report::{self, Destination};
+use crate::library_info_dialog::PigouneLibraryInfoDialog;
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
 use crate::settings;
@@ -68,14 +69,16 @@ const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const PREFERENCES_ACTION: &str = "win.preferences";
+const LIBRARY_INFO_ACTION: &str = "win.library-info";
 const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
-const OPEN_LIBRARY_ACTIONS: [&str; 14] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 15] = [
     SEARCH_ACTION,
+    LIBRARY_INFO_ACTION,
     UNDO_ACTION,
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
@@ -136,12 +139,12 @@ mod imp {
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION,
         CREATE_LIBRARY_ACTION, DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
-        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION,
-        collection_parameter, tag_parameter,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
+        NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_WITH_ACTION,
+        PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
+        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
+        SELECT_ALL_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
+        UNDO_ACTION, collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -275,6 +278,9 @@ mod imp {
             });
             class.install_action(PREFERENCES_ACTION, None, |window, _, _| {
                 window.show_preferences();
+            });
+            class.install_action(LIBRARY_INFO_ACTION, None, |window, _, _| {
+                window.show_library_info();
             });
             class.install_action(CLOSE_LIBRARY_ACTION, None, |window, _, _| {
                 window.close_library();
@@ -894,6 +900,26 @@ impl PigouneWindow {
                 }
             )),
         })
+    }
+
+    fn show_library_info(&self) {
+        let shown = self.imp().library.borrow().as_ref().map(|library| {
+            library.overview().map(|overview| {
+                PigouneLibraryInfoDialog::new(&library.name(), library.root(), &overview)
+            })
+        });
+        match shown {
+            Some(Ok(dialog)) => dialog.present(Some(self)),
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Read the Library Information")),
+                    Some(&error_messages::describe(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
     }
 
     fn show_preferences(&self) {

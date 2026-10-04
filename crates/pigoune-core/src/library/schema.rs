@@ -12,6 +12,14 @@ enum Migration {
     RecheckAnimations,
 }
 
+const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = ["1.0", "1.4"];
+
+#[must_use]
+pub fn oldest_compatible_version(format_version: u32) -> Option<&'static str> {
+    let index = usize::try_from(format_version.checked_sub(1)?).ok()?;
+    FIRST_READING_VERSIONS.get(index).copied()
+}
+
 const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::Statements(include_str!("migrations/v1.sql")),
     Migration::RecheckAnimations,
@@ -97,4 +105,18 @@ fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<
 
 fn is_not_a_database(error: &rusqlite::Error) -> bool {
     error.sqlite_error_code() == Some(ErrorCode::NotADatabase)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
+
+    #[test]
+    fn every_format_names_the_first_version_of_pigoune_able_to_read_it() {
+        assert_eq!(oldest_compatible_version(1), Some("1.0"));
+        assert_eq!(oldest_compatible_version(2), Some("1.4"));
+        assert!(oldest_compatible_version(CURRENT_FORMAT_VERSION).is_some());
+        assert_eq!(oldest_compatible_version(0), None);
+        assert_eq!(oldest_compatible_version(CURRENT_FORMAT_VERSION + 1), None);
+    }
 }

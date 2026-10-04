@@ -82,6 +82,10 @@
   background-image: linear-gradient(135deg, transparent 45%, alpha(currentColor, 0.5) 45% 55%, transparent 55%);
 }
 
+.figure-tile {
+  padding: 12px 6px;
+}
+
 .animation-badge {
   margin: 6px;
   padding: 1px 5px;

@@ -37,6 +37,7 @@ mod image_check;
 mod image_conversion;
 mod import_progress_dialog;
 mod import_report;
+mod library_info_dialog;
 mod new_library_dialog;
 mod preferences_dialog;
 mod settings;

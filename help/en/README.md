@@ -182,6 +182,11 @@ folder while Pigoune is closed.
 A library can only be open in one Pigoune window at a time. If you keep a library in a synced
 folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening it on another.
 
+Choose **Library Information** in the main menu to see what the open library holds: the
+number of assets, collections, tags, favorites, animated images, SVG images and assets in the
+trash, where the library is stored, whether that disk is removable, when the library was
+created and which versions of Pigoune can open it. Buttons copy its location or open its folder.
+
 ## Preferences
 
 Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:

@@ -14,6 +14,7 @@ mod import;
 mod import_batch;
 mod import_plan;
 mod layout;
+mod overview;
 mod schema;
 mod search;
 mod staging;
@@ -46,7 +47,8 @@ pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
 };
-pub use schema::CURRENT_FORMAT_VERSION;
+pub use overview::LibraryOverview;
+pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
 pub use search::AssetFilter;
 pub use tag::Tag;
 pub use tag_command::{TagCommand, TagError};
