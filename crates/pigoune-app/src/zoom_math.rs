@@ -50,15 +50,7 @@ pub fn clamp_center(center: Point, view: Size, image: Size, zoom: f64) -> Point 
 
 fn clamp_axis(center: f64, view: f64, image: f64, zoom: f64) -> f64 {
     let half_visible = view / zoom / 2.0;
-    if half_visible * 2.0 >= image {
-        image / 2.0
-    } else {
-        center.clamp(half_visible, image - half_visible)
-    }
-}
-
-pub fn can_pan(view: Size, image: Size, zoom: f64) -> bool {
-    image.width * zoom > view.width.ceil() || image.height * zoom > view.height.ceil()
+    center.clamp((image - half_visible).min(0.0), half_visible.max(image))
 }
 
 pub fn shows_sharp_pixels(
@@ -115,25 +107,61 @@ mod tests {
     }
 
     #[test]
-    fn a_small_image_stays_centered_and_a_large_one_cannot_leave_the_view() {
-        let small = clamp_center(Point { x: 0.0, y: 0.0 }, VIEW, size(100.0, 100.0), 1.0);
-        assert_eq!(small, Point { x: 50.0, y: 50.0 });
-        let large = clamp_center(Point { x: 0.0, y: 5000.0 }, VIEW, size(4000.0, 3000.0), 1.0);
-        assert_eq!(
-            large,
+    fn a_small_image_moves_anywhere_but_stays_whole_in_the_view() {
+        let image = size(100.0, 100.0);
+        let pushed_right_down = clamp_center(
             Point {
-                x: 400.0,
-                y: 2700.0
+                x: -900.0,
+                y: -900.0,
+            },
+            VIEW,
+            image,
+            1.0,
+        );
+        assert_eq!(
+            pushed_right_down,
+            Point {
+                x: -300.0,
+                y: -200.0
             }
         );
+        let pushed_left_up = clamp_center(Point { x: 900.0, y: 900.0 }, VIEW, image, 1.0);
+        assert_eq!(pushed_left_up, Point { x: 400.0, y: 300.0 });
+        let moved = Point { x: 20.0, y: 70.0 };
+        assert_eq!(clamp_center(moved, VIEW, image, 1.0), moved);
     }
 
     #[test]
-    fn only_an_image_larger_than_the_view_can_be_moved() {
-        assert!(!can_pan(VIEW, size(800.0, 600.0), 1.0));
-        assert!(!can_pan(VIEW, size(1600.0, 1200.0), 0.5));
-        assert!(can_pan(VIEW, size(801.0, 100.0), 1.0));
-        assert!(can_pan(VIEW, size(100.0, 100.0), 7.0));
+    fn a_large_image_brings_any_corner_to_the_center_but_no_further() {
+        let image = size(4000.0, 3000.0);
+        let corner = clamp_center(
+            Point {
+                x: -50.0,
+                y: 5000.0,
+            },
+            VIEW,
+            image,
+            1.0,
+        );
+        assert_eq!(corner, Point { x: 0.0, y: 3000.0 });
+        let zoomed = clamp_center(
+            Point {
+                x: -50.0,
+                y: 5000.0,
+            },
+            VIEW,
+            image,
+            2.0,
+        );
+        assert_eq!(zoomed, Point { x: 0.0, y: 3000.0 });
+    }
+
+    #[test]
+    fn a_fitted_image_is_already_inside_the_limits() {
+        let image = size(1600.0, 600.0);
+        let fit = fit_zoom(VIEW, image, false);
+        let centered = Point { x: 800.0, y: 300.0 };
+        assert_eq!(clamp_center(centered, VIEW, image, fit), centered);
     }
 
     #[test]

@@ -174,8 +174,7 @@ impl PigouneZoomView {
 
     fn update_cursor(&self) {
         let imp = self.imp();
-        let movable = zoom_math::can_pan(self.view_size(), imp.image.get(), imp.zoom.get());
-        let cursor = match (movable, imp.dragging.get()) {
+        let cursor = match (imp.texture.borrow().is_some(), imp.dragging.get()) {
             (false, _) => None,
             (true, false) => Some(MOVABLE_CURSOR),
             (true, true) => Some(MOVING_CURSOR),
@@ -252,6 +251,48 @@ impl PigouneZoomView {
         snapshot.append_scaled_texture(&texture, filter, &bounds);
     }
 
+    fn listen_to_drag(&self) {
+        let drag = gtk::GestureDrag::new();
+        drag.connect_drag_begin(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, _, _| {
+                let imp = view.imp();
+                imp.drag_start.set(imp.center.get());
+                imp.dragging.set(true);
+                view.update_cursor();
+            }
+        ));
+        drag.connect_drag_end(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, _, _| {
+                view.imp().dragging.set(false);
+                view.update_cursor();
+            }
+        ));
+        drag.connect_drag_update(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, offset_x, offset_y| {
+                let imp = view.imp();
+                if offset_x != 0.0 || offset_y != 0.0 {
+                    imp.fits.set(false);
+                }
+                let start = imp.drag_start.get();
+                let zoom = imp.zoom.get();
+                view.apply_zoom(
+                    zoom,
+                    Point {
+                        x: start.x - offset_x / zoom,
+                        y: start.y - offset_y / zoom,
+                    },
+                );
+            }
+        ));
+        self.add_controller(drag);
+    }
+
     fn listen_to_gestures(&self) {
         let motion = gtk::EventControllerMotion::new();
         motion.connect_motion(glib::clone!(
@@ -284,42 +325,7 @@ impl PigouneZoomView {
         ));
         self.add_controller(wheel);
 
-        let drag = gtk::GestureDrag::new();
-        drag.connect_drag_begin(glib::clone!(
-            #[weak(rename_to = view)]
-            self,
-            move |_, _, _| {
-                let imp = view.imp();
-                imp.drag_start.set(imp.center.get());
-                imp.dragging.set(true);
-                view.update_cursor();
-            }
-        ));
-        drag.connect_drag_end(glib::clone!(
-            #[weak(rename_to = view)]
-            self,
-            move |_, _, _| {
-                view.imp().dragging.set(false);
-                view.update_cursor();
-            }
-        ));
-        drag.connect_drag_update(glib::clone!(
-            #[weak(rename_to = view)]
-            self,
-            move |_, offset_x, offset_y| {
-                let imp = view.imp();
-                let start = imp.drag_start.get();
-                let zoom = imp.zoom.get();
-                view.apply_zoom(
-                    zoom,
-                    Point {
-                        x: start.x - offset_x / zoom,
-                        y: start.y - offset_y / zoom,
-                    },
-                );
-            }
-        ));
-        self.add_controller(drag);
+        self.listen_to_drag();
 
         let pinch = gtk::GestureZoom::new();
         pinch.connect_begin(glib::clone!(
