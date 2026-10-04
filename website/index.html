@@ -8,12 +8,27 @@
   <link rel="icon" type="image/png" sizes="64x64" href="images/pigoune-64x64.png">
   <link rel="alternate" hreflang="en" href="https://gor3pig.github.io/Pigoune/">
   <link rel="alternate" hreflang="fr" href="https://gor3pig.github.io/Pigoune/fr/">
+  <script src="language.js"></script>
+  <link rel="canonical" href="https://gor3pig.github.io/Pigoune/">
+  <link rel="alternate" hreflang="x-default" href="https://gor3pig.github.io/Pigoune/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Pigoune">
+  <meta property="og:title" content="Pigoune - Organize, find and reuse your graphic assets">
+  <meta property="og:description" content="Pigoune gathers your icons, logos and illustrations in a single library, neatly organized and fully local. A free app for GNOME.">
+  <meta property="og:url" content="https://gor3pig.github.io/Pigoune/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="fr_FR">
+  <meta property="og:image" content="https://gor3pig.github.io/Pigoune/images/share.png">
+  <meta property="og:image:width" content="2300">
+  <meta property="og:image:height" content="1540">
+  <meta property="og:image:alt" content="The main window of Pigoune, with a grid of icons and logos">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
 <body data-close-label="Close">
   <div class="wrap top">
-    <p class="language"><strong>English</strong> · <a href="fr/" hreflang="fr" lang="fr">Français</a></p>
+    <p class="language"><strong>English</strong> · <a href="fr/" hreflang="fr" lang="fr" data-language="fr">Français</a></p>
   </div>
 
   <header class="wrap hero">
@@ -23,13 +38,14 @@
     <div class="actions">
       <a class="button primary" data-latest-label="Download {version}" href="https://github.com/Gor3pig/Pigoune/releases/latest">Download</a>
       <a class="button" href="#install">How to install</a>
+      <a class="button" href="https://github.com/Gor3pig/Pigoune">View on GitHub</a>
     </div>
     <p class="note">Free software for Linux, in English and French.</p>
   </header>
 
   <main>
     <div class="wrap showcase reveal">
-      <a class="zoom" href="images/01.png"><img src="images/01.png" alt="The main window of Pigoune, with a grid of icons and logos" width="2300" height="1540"></a>
+      <a class="zoom" href="images/01.webp"><img src="images/01.webp" alt="The main window of Pigoune, with a grid of icons and logos" width="2300" height="1540"></a>
     </div>
 
     <section class="wrap reveal">
@@ -80,19 +96,19 @@
       <h2>A closer look</h2>
       <div class="gallery">
         <figure>
-          <a class="zoom" href="images/02.png"><img src="images/02.png" alt="Narrow down your library with search and filters" width="2300" height="1540" loading="lazy"></a>
+          <a class="zoom" href="images/02.webp"><img src="images/02.webp" alt="Narrow down your library with search and filters" width="2300" height="1540" loading="lazy"></a>
           <figcaption aria-hidden="true">Narrow down your library with search and filters</figcaption>
         </figure>
         <figure>
-          <a class="zoom" href="images/03.png"><img src="images/03.png" alt="Organize several assets at once with tags and collections" width="2300" height="1540" loading="lazy"></a>
+          <a class="zoom" href="images/03.webp"><img src="images/03.webp" alt="Organize several assets at once with tags and collections" width="2300" height="1540" loading="lazy"></a>
           <figcaption aria-hidden="true">Organize several assets at once with tags and collections</figcaption>
         </figure>
         <figure>
-          <a class="zoom" href="images/04.png"><img src="images/04.png" alt="See the details of an asset at a glance" width="2300" height="1540" loading="lazy"></a>
+          <a class="zoom" href="images/04.webp"><img src="images/04.webp" alt="See the details of an asset at a glance" width="2300" height="1540" loading="lazy"></a>
           <figcaption aria-hidden="true">See the details of an asset at a glance</figcaption>
         </figure>
         <figure>
-          <a class="zoom" href="images/05.png"><img src="images/05.png" alt="Light or dark, Pigoune follows your system style" width="2300" height="1540" loading="lazy"></a>
+          <a class="zoom" href="images/05.webp"><img src="images/05.webp" alt="Light or dark, Pigoune follows your system style" width="2300" height="1540" loading="lazy"></a>
           <figcaption aria-hidden="true">Light or dark, Pigoune follows your system style</figcaption>
         </figure>
       </div>
@@ -106,6 +122,39 @@
         <li><strong>Portable libraries</strong>: a plain folder you can keep anywhere and take to another computer.</li>
         <li><strong>Made for GNOME</strong>: a native, polished app in light and dark mode, usable with the keyboard and a screen reader, and adaptive to small windows.</li>
       </ul>
+    </section>
+
+    <section class="wrap reveal" id="systems">
+      <h2>Which systems?</h2>
+      <p class="intro">Pigoune runs on Linux, packaged as a Flatpak.</p>
+      <div class="cards systems">
+        <article class="card">
+          <p class="badge supported">Supported</p>
+          <h3>Linux, any distribution</h3>
+          <p>Any distribution that supports Flatpak, whatever the desktop: GNOME, KDE Plasma, Xfce, Cinnamon and others.</p>
+          <ul class="chips" aria-label="Examples of distributions">
+            <li>Fedora</li>
+            <li>Ubuntu</li>
+            <li>Debian</li>
+            <li>Linux Mint</li>
+            <li>Pop!_OS</li>
+            <li>openSUSE</li>
+            <li>Arch Linux</li>
+            <li>elementary OS</li>
+            <li>Zorin OS</li>
+          </ul>
+        </article>
+        <article class="card">
+          <p class="badge required">Required</p>
+          <h3>A 64-bit PC</h3>
+          <p>With an Intel or AMD processor (x86_64), like most desktop and laptop computers. ARM devices, such as the Raspberry Pi or Apple Silicon Macs running Linux, are not supported.</p>
+        </article>
+        <article class="card">
+          <p class="badge unavailable">Not available</p>
+          <h3>Windows and macOS</h3>
+          <p>Pigoune is made for Linux and the GNOME platform. There is no version for Windows or macOS.</p>
+        </article>
+      </div>
     </section>
 
     <section class="wrap reveal" id="install">

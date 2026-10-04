@@ -101,7 +101,13 @@ kbd {
 .top {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 1.25rem;
   padding-block: 1rem;
+}
+
+.top .language {
+  margin: 0;
 }
 
 .language {
@@ -441,4 +447,68 @@ footer nav {
   .acronym .initial {
     color: var(--accent);
   }
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 0 0.6rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.badge.supported {
+  background: rgb(38 162 105 / 0.15);
+  color: #1b7a4f;
+}
+
+.badge.required {
+  background: rgb(53 132 228 / 0.15);
+  color: #1a5fb4;
+}
+
+.badge.unavailable {
+  background: rgb(94 92 100 / 0.15);
+  color: var(--muted);
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge.supported {
+    color: #8ff0a4;
+  }
+
+  .badge.required {
+    color: #99c1f1;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: var(--code);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.not-found {
+  padding-block: 4rem;
+}
+
+.not-found .tagline {
+  margin-bottom: 0.75rem;
+}
+
+.not-found .actions {
+  margin-top: 2rem;
 }

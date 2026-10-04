@@ -30,6 +30,9 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v7
 
+      - name: Install the WebP encoder
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends webp
+
       - name: Assemble the website
         run: website/build.sh _site
 

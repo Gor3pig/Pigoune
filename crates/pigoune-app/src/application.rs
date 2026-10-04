@@ -84,7 +84,7 @@ fn show_about_dialog(application: &adw::Application) {
     dialog.set_application_icon(APP_ID);
     dialog.set_developer_name("Gor3pig");
     dialog.set_version(VERSION);
-    dialog.set_website("https://github.com/Gor3pig/Pigoune");
+    dialog.set_website("https://gor3pig.github.io/Pigoune/");
     dialog.set_issue_url("https://github.com/Gor3pig/Pigoune/issues");
     dialog.set_support_url(&localized_help_url());
     dialog.set_license_type(gtk::License::Gpl30);

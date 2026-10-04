@@ -56,6 +56,19 @@ async function showLatestVersion() {
   }
 }
 
+function rememberChosenLanguage() {
+  document.querySelectorAll("[data-language]").forEach((link) => {
+    link.addEventListener("click", () => {
+      try {
+        localStorage.setItem("pigoune-language", link.dataset.language);
+      } catch {
+        return;
+      }
+    });
+  });
+}
+
+rememberChosenLanguage();
 revealSectionsWhileScrolling();
 enlargeScreenshotsOnClick();
 showLatestVersion();
