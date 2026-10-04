@@ -212,6 +212,10 @@ impl PigouneAssetPreview {
         self.grab_focus();
     }
 
+    pub fn shown_asset(&self) -> Option<PigouneAssetObject> {
+        self.imp().showing.borrow().clone()
+    }
+
     pub fn close(&self) {
         let last = self.imp().showing.borrow().clone();
         self.forget_selection();

@@ -27,14 +27,14 @@ template $PigouneWindow: Adw.ApplicationWindow {
     }
   }
 
-  content: Stack window_stack {
-    transition-type: crossfade;
-    hhomogeneous: false;
+  content: Adw.ToastOverlay toast_overlay {
+    child: Stack window_stack {
+      transition-type: crossfade;
+      hhomogeneous: false;
 
-    StackPage {
-      name: "main";
+      StackPage {
+        name: "main";
 
-      child: Adw.ToastOverlay toast_overlay {
         child: Gtk.Stack stack {
           transition-type: crossfade;
           hhomogeneous: false;
@@ -221,14 +221,14 @@ template $PigouneWindow: Adw.ApplicationWindow {
             };
           }
         };
-      };
-    }
+      }
 
-    StackPage {
-      name: "preview";
+      StackPage {
+        name: "preview";
 
-      child: $PigouneAssetPreview asset_preview {};
-    }
+        child: $PigouneAssetPreview asset_preview {};
+      }
+    };
   };
 }
 

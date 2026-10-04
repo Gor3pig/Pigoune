@@ -1329,7 +1329,7 @@ impl PigouneWindow {
         if self.copy_typed_text() {
             return;
         }
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if selected.is_empty() || self.is_showing_trash() {
             return;
         }
@@ -1493,6 +1493,18 @@ impl PigouneWindow {
             (focus.is::<gtk::Text>() || focus.is::<gtk::TextView>())
                 && focus.activate_action("text.undo", None).is_ok()
         })
+    }
+
+    fn targeted_ids(&self) -> Vec<AssetId> {
+        let imp = self.imp();
+        if imp.window_stack.visible_child_name().as_deref() == Some(PREVIEW_PAGE) {
+            return imp
+                .asset_preview
+                .shown_asset()
+                .map(|asset| vec![asset.id()])
+                .unwrap_or_default();
+        }
+        self.selected_ids()
     }
 
     fn selected_ids(&self) -> Vec<AssetId> {
