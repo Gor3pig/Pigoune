@@ -24,23 +24,23 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/01.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/02.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/03.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/03.png</image>
       <caption>Organize several assets at once with tags and collections</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/04.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/04.png</image>
       <caption>See the details of an asset at a glance</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.4.0/data/screenshots/05.png</image>
+      <image type="source" width="2300" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v1.5.0/data/screenshots/05.png</image>
       <caption>Light or dark, Pigoune follows your system style</caption>
     </screenshot>
   </screenshots>
@@ -76,6 +76,16 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="1.5.0" date="2026-10-04">
+      <description>
+        <p>Libraries ready to grow, and their real location shown in Flatpak.</p>
+        <ul>
+          <li>Assets are now sorted into small subfolders inside a library, so very large libraries stay easy to handle for file managers, backups, sync tools and USB drives.</li>
+          <li>The welcome page, the recent libraries and the library information show the real folder of a library instead of a technical path.</li>
+          <li>Libraries opened with Pigoune 1.5 can no longer be opened with an older version, so update Pigoune on all your computers.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.4.0" date="2026-10-04">
       <description>
         <p>A big update, with new formats, conversion and a closer look at your libraries.</p>

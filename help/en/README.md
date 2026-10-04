@@ -175,7 +175,8 @@ and credits. Imports cannot be undone, and emptying the trash clears the undo hi
 
 A library is a regular folder whose name ends with `.pigoune`. It contains:
 
-- `files/`, a copy of every asset, with its original file name;
+- `files/`, a copy of every asset, with its original file name, sorted into small subfolders
+  so that even very large libraries stay easy to handle;
 - `library.db`, the database holding collections, tags and all other information;
 - `cache/`, thumbnails that Pigoune can rebuild at any time.
 

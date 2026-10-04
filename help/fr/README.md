@@ -200,7 +200,8 @@ efface l'historique des annulations.
 
 Une bibliothèque est un simple dossier dont le nom se termine par `.pigoune`. Il contient :
 
-- `files/`, une copie de chaque ressource, avec son nom de fichier d'origine ;
+- `files/`, une copie de chaque ressource, avec son nom de fichier d'origine, rangée dans de
+  petits sous-dossiers pour que même une très grande bibliothèque reste facile à manipuler ;
 - `library.db`, la base de données qui contient les collections, les tags et toutes les
   autres informations ;
 - `cache/`, les vignettes, que Pigoune peut refaire à tout moment.
