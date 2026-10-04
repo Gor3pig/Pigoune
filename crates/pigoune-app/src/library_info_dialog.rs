@@ -11,6 +11,7 @@ use pigoune_core::{
 };
 
 use crate::asset_facts;
+use crate::config::VERSION;
 use crate::thumbnails;
 
 use crate::chart_slices::{self, Measure, Slice};
@@ -531,10 +532,8 @@ fn disk_plain_text(free: u64, size: u64) -> String {
 }
 
 fn compatibility_text(format_version: u32) -> String {
-    oldest_compatible_version(format_version).map_or_else(
-        || gettext("Library format {number}").replace("{number}", &format_version.to_string()),
-        |version| gettext("Pigoune {version} or later").replace("{version}", version),
-    )
+    let version = oldest_compatible_version(format_version).unwrap_or(VERSION);
+    gettext("Pigoune {version} or later").replace("{version}", version)
 }
 
 fn disk_text(root: &Path) -> String {
