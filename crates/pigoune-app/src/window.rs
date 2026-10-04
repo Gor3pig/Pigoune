@@ -84,12 +84,16 @@ const OPEN_LIBRARY_ACTIONS: [&str; 14] = [
     DELETE_TAG_ACTION,
 ];
 
-const IMAGE_MIME_TYPES: [&str; 7] = [
+const IMAGE_MIME_TYPES: [&str; 11] = [
     "image/svg+xml",
     "image/png",
     "image/jpeg",
     "image/webp",
+    "image/avif",
+    "image/jxl",
     "image/gif",
+    "image/tiff",
+    "image/bmp",
     "image/vnd.microsoft.icon",
     "image/x-icon",
 ];

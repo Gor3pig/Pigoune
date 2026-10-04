@@ -37,7 +37,8 @@ Cliquez sur le bouton **+** en haut de la barre latérale, ou appuyez sur
 dossier…**. Vous pouvez aussi simplement glisser des fichiers ou des dossiers depuis Fichiers
 jusque dans la fenêtre de Pigoune.
 
-- Les formats pris en charge sont SVG, PNG, JPEG, WebP, GIF et ICO.
+- Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF,
+  BMP et ICO.
 - Pigoune vérifie chaque image avant de l'importer : un fichier abîmé est signalé au lieu
   d'être ajouté.
 - Les doublons sont reconnus : un fichier déjà présent n'est jamais copié deux fois.

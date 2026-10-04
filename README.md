@@ -43,8 +43,8 @@ you need them.
 <td width="50%" valign="top">
 
 ### Drop
-Drag files or whole folders: SVG, PNG, JPEG, WebP, GIF and ICO. Every image is checked before
-it comes in, and duplicates are recognized automatically.
+Drag files or whole folders: SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF, BMP and ICO. Every
+image is checked before it comes in, and duplicates are recognized automatically.
 
 </td>
 <td width="50%" valign="top">

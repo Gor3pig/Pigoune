@@ -15,7 +15,11 @@ pub fn format_name(format: AssetFormat) -> &'static str {
         AssetFormat::Png => "PNG",
         AssetFormat::Jpeg => "JPEG",
         AssetFormat::Webp => "WebP",
+        AssetFormat::Avif => "AVIF",
+        AssetFormat::Jxl => "JPEG XL",
         AssetFormat::Gif => "GIF",
+        AssetFormat::Tiff => "TIFF",
+        AssetFormat::Bmp => "BMP",
         AssetFormat::Ico => "ICO",
     }
 }

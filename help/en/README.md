@@ -35,7 +35,8 @@ Click the **+** button at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>
 choose **Import Files…** or **Import a Folder…**. You can also simply drag files or folders
 from Files onto the Pigoune window.
 
-- Supported formats are SVG, PNG, JPEG, WebP, GIF and ICO.
+- Supported formats are SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF, BMP
+  and ICO.
 - Pigoune checks every image before importing it, so damaged files are listed instead of
   added.
 - Duplicates are recognized: a file already in the library is never copied twice.
