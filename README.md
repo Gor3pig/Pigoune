@@ -66,7 +66,8 @@ collection or a tag shows you where an asset lives.
 <td width="50%" valign="top">
 
 ### Reuse
-Drag an asset into any application, copy it to the clipboard or export it to a folder.
+Drag an asset into any application, open it with another one, copy it to the clipboard or
+export it to a folder.
 
 </td>
 </tr>

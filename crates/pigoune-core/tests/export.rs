@@ -233,3 +233,99 @@ fn clipboard_copies_survive_a_new_drag() {
     assert!(copied.exists());
     assert_eq!(file_name(&copied), "dark-circle.svg");
 }
+
+#[test]
+fn an_opening_copy_takes_the_display_name() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("dark-circle.svg");
+    fixture.rename(svg, "Logo GitHub");
+
+    let copy = fixture
+        .library
+        .opening_copy(svg)
+        .expect("opening copy is prepared")
+        .expect("asset exists");
+
+    assert_eq!(file_name(&copy), "Logo GitHub.svg");
+    assert_eq!(
+        fs::read(&copy).expect("copy is read"),
+        fs::read(sample_file("dark-circle.svg")).expect("original is read")
+    );
+}
+
+#[test]
+fn opening_copies_stay_until_the_library_is_reopened() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("dark-circle.svg");
+    let png = fixture.import("red-dot.png");
+    let first = fixture
+        .library
+        .opening_copy(svg)
+        .expect("first copy")
+        .expect("asset exists");
+    let second = fixture
+        .library
+        .opening_copy(png)
+        .expect("second copy")
+        .expect("asset exists");
+    fixture.export(&[png]);
+    fixture
+        .library
+        .clipboard_copies(&[svg])
+        .expect("clipboard copies are prepared");
+
+    assert!(first.exists());
+    assert!(second.exists());
+
+    let root = fixture.library.root().to_path_buf();
+    drop(fixture.library);
+    let _reopened = Library::open(&root).expect("library reopens");
+    assert!(!first.exists());
+    assert!(!second.exists());
+    drop(fixture.workspace);
+}
+
+#[test]
+fn opening_the_same_asset_twice_replaces_its_copy() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("dark-circle.svg");
+    let first = fixture
+        .library
+        .opening_copy(svg)
+        .expect("first copy")
+        .expect("asset exists");
+    fs::write(&first, b"edited elsewhere").expect("copy is changed");
+    fixture.rename(svg, "Cercle");
+
+    let second = fixture
+        .library
+        .opening_copy(svg)
+        .expect("second copy")
+        .expect("asset exists");
+
+    assert!(!first.exists());
+    assert_eq!(file_name(&second), "Cercle.svg");
+    assert_eq!(
+        fs::read(&second).expect("copy is read"),
+        fs::read(sample_file("dark-circle.svg")).expect("original is read")
+    );
+}
+
+#[test]
+fn a_missing_asset_has_no_opening_copy() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("dark-circle.svg");
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: vec![svg],
+            trashed: true,
+        })
+        .expect("asset is trashed");
+    fixture.library.empty_trash().expect("trash is emptied");
+
+    assert_eq!(
+        fixture.library.opening_copy(svg).expect("lookup works"),
+        None
+    );
+}

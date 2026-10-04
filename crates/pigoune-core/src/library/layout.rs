@@ -9,6 +9,7 @@ pub const CACHE_DIR_NAME: &str = "cache";
 const THUMBNAILS_DIR_NAME: &str = "thumbnails";
 const EXPORT_DIR_NAME: &str = "export";
 const CLIPBOARD_DIR_NAME: &str = "clipboard";
+const OPENING_DIR_NAME: &str = "open";
 
 const MAX_NAME_BYTES: usize = 200;
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
@@ -55,6 +56,10 @@ pub fn export_dir(root: &Path) -> PathBuf {
 
 pub fn clipboard_dir(root: &Path) -> PathBuf {
     root.join(CACHE_DIR_NAME).join(CLIPBOARD_DIR_NAME)
+}
+
+pub fn opening_dir(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME).join(OPENING_DIR_NAME)
 }
 
 pub fn thumbnail_path(root: &Path, id: AssetId, pixels: u32) -> PathBuf {

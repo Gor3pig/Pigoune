@@ -136,6 +136,10 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
 - **Copiez-les** avec <kbd>Ctrl</kbd>+<kbd>C</kbd> pour les coller ailleurs.
 - **Exportez-les** dans un dossier avec **Exporter vers…** dans le menu du clic droit. Les
   fichiers existants ne sont jamais écrasés.
+- **Ouvrez** une ressource dans une autre application, un logiciel de retouche par exemple,
+  avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
+  bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
+  importez-les si vous voulez les garder.
 
 ## Corbeille et annulation
 

@@ -122,6 +122,9 @@ a tag in the details panel works the same way.
 - **Copy** them with <kbd>Ctrl</kbd>+<kbd>C</kbd> and paste them elsewhere.
 - **Export** them to a folder with **Export To…** in the right-click menu. Existing files are
   never overwritten.
+- **Open** an asset in another application, such as an image editor, with **Open With…** in
+  the right-click menu. The application receives a copy: your library stays untouched, so
+  save your changes under a new name and import them if you want to keep them.
 
 ## Trash and undo
 

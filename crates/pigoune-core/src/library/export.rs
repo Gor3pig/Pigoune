@@ -17,6 +17,11 @@ impl Library {
         self.fresh_copies(assets, &layout::clipboard_dir(&self.root))
     }
 
+    pub fn opening_copy(&self, asset: AssetId) -> Result<Option<PathBuf>, LibraryError> {
+        let folder = layout::opening_dir(&self.root).join(asset.to_string());
+        Ok(self.fresh_copies(&[asset], &folder)?.pop())
+    }
+
     pub fn export_to(
         &self,
         assets: &[AssetId],
@@ -77,6 +82,7 @@ fn copy_without_overwriting(source: &Path, destination: &Path) -> Result<(), Lib
 pub fn forget_exports(root: &Path) {
     let _ = fs::remove_dir_all(layout::export_dir(root));
     let _ = fs::remove_dir_all(layout::clipboard_dir(root));
+    let _ = fs::remove_dir_all(layout::opening_dir(root));
 }
 
 fn export_base_name(display_name: &str, extension: Option<&str>) -> Option<String> {

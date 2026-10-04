@@ -67,8 +67,8 @@ ressources. Un clic sur une collection ou un tag vous montre où se trouve la re
 <td width="50%" valign="top">
 
 ### Réutiliser
-Glissez une ressource vers n'importe quelle application, copiez-la dans le presse-papiers ou
-exportez-la dans un dossier.
+Glissez une ressource vers n'importe quelle application, ouvrez-la avec une autre, copiez-la
+dans le presse-papiers ou exportez-la dans un dossier.
 
 </td>
 </tr>

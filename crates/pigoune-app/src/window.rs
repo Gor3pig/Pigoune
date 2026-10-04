@@ -49,6 +49,7 @@ const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
 const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
 const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
+const OPEN_WITH_ACTION: &str = "win.open-with";
 const RENAME_ASSET_ACTION: &str = "win.rename-asset";
 const ADD_TAG_ACTION: &str = "win.add-tag";
 const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
@@ -124,7 +125,7 @@ mod imp {
         CREATE_LIBRARY_ACTION, DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, IMPORT_FILES_ACTION,
         IMPORT_FOLDER_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
-        OPEN_PREVIEW_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION,
+        OPEN_PREVIEW_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION,
         RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
         SEARCH_ACTION, SELECT_ALL_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
         TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, tag_parameter,
@@ -201,6 +202,9 @@ mod imp {
         });
         class.install_action_async(EXPORT_SELECTED_ACTION, None, |window, _, _| async move {
             window.export_selected().await;
+        });
+        class.install_action_async(OPEN_WITH_ACTION, None, |window, _, _| async move {
+            window.open_selected_with().await;
         });
         class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| window.open_preview(None));
@@ -1009,6 +1013,9 @@ impl PigouneWindow {
             OPEN_PREVIEW_ACTION,
             Some("space"),
         ));
+        if selected.len() == 1 && !self.is_showing_trash() {
+            viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
+        }
         if selected.len() == 1 {
             viewing.append_item(&menu_item(
                 &gettext("Rename…"),
@@ -1410,6 +1417,44 @@ impl PigouneWindow {
             }
             None => {}
         }
+    }
+
+    async fn open_selected_with(&self) {
+        let selected = self.selected_ids();
+        let [asset] = selected[..] else {
+            return;
+        };
+        if self.is_showing_trash() {
+            return;
+        }
+        let prepared = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.opening_copy(asset));
+        let copy = match prepared {
+            Some(Ok(Some(copy))) => copy,
+            Some(Err(error)) => {
+                self.show_open_with_error(&error_messages::describe(&error));
+                return;
+            }
+            Some(Ok(None)) | None => return,
+        };
+        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(copy)));
+        launcher.set_always_ask(true);
+        if let Err(error) = launcher.launch_future(Some(self)).await
+            && !is_dismissed(&error)
+        {
+            self.show_open_with_error(error.message());
+        }
+    }
+
+    fn show_open_with_error(&self, details: &str) {
+        let alert =
+            adw::AlertDialog::new(Some(&gettext("Unable to Open the Resource")), Some(details));
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
     }
 
     fn show_export_toast(&self, count: usize, folder: &gio::File) {
@@ -2753,6 +2798,13 @@ fn deletion_consequences(removal: CollectionRemoval, contained: usize) -> String
         sentences.push(gettext("This collection is empty."));
     }
     sentences.join(" ")
+}
+
+fn is_dismissed(error: &glib::Error) -> bool {
+    matches!(
+        error.kind::<gtk::DialogError>(),
+        Some(gtk::DialogError::Dismissed | gtk::DialogError::Cancelled)
+    ) || error.matches(gio::IOErrorEnum::Cancelled)
 }
 
 fn menu_item(label: &str, action: &str, accel: Option<&str>) -> gio::MenuItem {
