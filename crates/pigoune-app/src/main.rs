@@ -41,6 +41,7 @@ mod import_report;
 mod library_info_dialog;
 mod new_library_dialog;
 mod preferences_dialog;
+mod recent_libraries;
 mod ring_chart;
 mod settings;
 mod sidebar;

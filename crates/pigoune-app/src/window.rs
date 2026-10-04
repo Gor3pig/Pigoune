@@ -30,6 +30,7 @@ use crate::import_report::{self, Destination};
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
+use crate::recent_libraries;
 use crate::settings;
 use crate::sidebar::{HoveredDrop, SidebarContent};
 use crate::tag_editor::SharedTag;
@@ -70,6 +71,11 @@ const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const PREFERENCES_ACTION: &str = "win.preferences";
 const LIBRARY_INFO_ACTION: &str = "win.library-info";
+const OPEN_RECENT_LIBRARY_ACTION: &str = "win.open-recent-library";
+const CLEAR_RECENT_LIBRARIES_ACTION: &str = "win.clear-recent-libraries";
+const LIBRARY_ENTRIES: i32 = 2;
+const WELCOME_MINIMUM_HEIGHT: i32 = 480;
+const LIBRARY_MINIMUM_HEIGHT: i32 = 294;
 const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
@@ -136,11 +142,12 @@ mod imp {
     use crate::sidebar::PigouneSidebar;
 
     use super::{
-        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION,
-        CREATE_LIBRARY_ACTION, DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION,
-        ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
-        NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_WITH_ACTION,
+        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
+        CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
+        DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
+        EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION, IMPORT_FILES_ACTION,
+        IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
+        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
         PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
         RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
         SELECT_ALL_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
@@ -153,6 +160,18 @@ mod imp {
     pub struct PigouneWindow {
         #[template_child]
         pub window_title: TemplateChild<adw::WindowTitle>,
+        #[template_child]
+        pub library_libraries_section: TemplateChild<gio::Menu>,
+        pub recent_menu: gio::Menu,
+        #[template_child]
+        pub primary_menu: TemplateChild<gio::Menu>,
+        #[template_child]
+        pub library_menu_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
+        pub welcome_recent_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub welcome_recent_list: TemplateChild<gtk::ListBox>,
+        pub welcome_recent_paths: RefCell<Vec<String>>,
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
         #[template_child]
@@ -282,6 +301,18 @@ mod imp {
             class.install_action(LIBRARY_INFO_ACTION, None, |window, _, _| {
                 window.show_library_info();
             });
+            class.install_action(CLEAR_RECENT_LIBRARIES_ACTION, None, |window, _, _| {
+                window.forget_recent_libraries(&[]);
+            });
+            class.install_action(
+                OPEN_RECENT_LIBRARY_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(path) = parameter.and_then(glib::Variant::get::<String>) {
+                        window.open_recent_library(&path);
+                    }
+                },
+            );
             class.install_action(CLOSE_LIBRARY_ACTION, None, |window, _, _| {
                 window.close_library();
             });
@@ -358,6 +389,9 @@ mod imp {
             self.parent_constructed();
             self.obj().set_library_actions_enabled(false);
             self.obj().accept_dropped_files();
+            self.obj().follow_welcome_recent_list();
+            self.obj().open_submenus_on_hover();
+            self.obj().follow_page_height();
         }
     }
 
@@ -462,6 +496,7 @@ impl PigouneWindow {
             .settings
             .set(settings)
             .expect("settings are set only once, at construction");
+        window.refresh_recent_libraries();
         window
     }
 
@@ -994,21 +1029,217 @@ impl PigouneWindow {
     fn show_library(&self, library: Library) {
         let imp = self.imp();
         imp.window_title.set_title(&library.name());
-        settings::store_string(
-            self.settings(),
-            settings::LAST_LIBRARY_PATH,
-            &library.root().to_string_lossy(),
-        );
+        let path = library.root().to_string_lossy().into_owned();
+        settings::store_string(self.settings(), settings::LAST_LIBRARY_PATH, &path);
         imp.asset_grid.forget_thumbnails();
         self.forget_undo_toast();
         self.reset_search();
         imp.library.replace(Some(library));
+        self.store_recent_libraries(&recent_libraries::with_opened(
+            &self.recent_library_paths(),
+            &path,
+        ));
         imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
         self.empty_expired_trash();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         self.set_library_actions_enabled(true);
+    }
+
+    fn recent_library_paths(&self) -> Vec<String> {
+        self.settings()
+            .strv(settings::RECENT_LIBRARIES)
+            .iter()
+            .map(ToString::to_string)
+            .collect()
+    }
+
+    fn store_recent_libraries(&self, paths: &[String]) {
+        let paths: Vec<&str> = paths.iter().map(String::as_str).collect();
+        if let Err(error) = self.settings().set_strv(settings::RECENT_LIBRARIES, paths) {
+            glib::g_warning!("pigoune", "Unable to save the recent libraries: {error}");
+        }
+        self.refresh_recent_libraries();
+    }
+
+    fn refresh_recent_libraries(&self) {
+        let imp = self.imp();
+        let open = imp
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.root().to_string_lossy().into_owned());
+        let paths: Vec<String> = self
+            .recent_library_paths()
+            .into_iter()
+            .filter(|path| Some(path) != open.as_ref())
+            .collect();
+        imp.recent_menu.remove_all();
+        let libraries = gio::Menu::new();
+        for (path, label) in paths.iter().zip(recent_libraries::labels(&paths)) {
+            let item = gio::MenuItem::new(Some(&label), None);
+            item.set_action_and_target_value(
+                Some(OPEN_RECENT_LIBRARY_ACTION),
+                Some(&path.to_variant()),
+            );
+            libraries.append_item(&item);
+        }
+        let clearing = gio::Menu::new();
+        clearing.append(
+            Some(&gettext("Clear the List")),
+            Some(CLEAR_RECENT_LIBRARIES_ACTION),
+        );
+        imp.recent_menu.append_section(None, &libraries);
+        imp.recent_menu.append_section(None, &clearing);
+        self.show_welcome_recent_libraries(&paths);
+        let section = &imp.library_libraries_section;
+        if section.n_items() > LIBRARY_ENTRIES {
+            section.remove(LIBRARY_ENTRIES);
+        }
+        if !paths.is_empty() {
+            section.append_submenu(Some(&gettext("_Recent Libraries")), &imp.recent_menu);
+        }
+    }
+
+    fn follow_page_height(&self) {
+        self.imp()
+            .stack
+            .connect_visible_child_name_notify(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |stack| {
+                    let height = if stack.visible_child_name().as_deref() == Some(WELCOME_PAGE) {
+                        WELCOME_MINIMUM_HEIGHT
+                    } else {
+                        LIBRARY_MINIMUM_HEIGHT
+                    };
+                    window.set_height_request(height);
+                }
+            ));
+        self.set_height_request(WELCOME_MINIMUM_HEIGHT);
+    }
+
+    fn open_submenus_on_hover(&self) {
+        let imp = self.imp();
+        let popover =
+            gtk::PopoverMenu::from_model_full(&*imp.primary_menu, gtk::PopoverMenuFlags::NESTED);
+        imp.library_menu_button.set_popover(Some(&popover));
+    }
+
+    fn forget_recent_libraries(&self, kept: &[String]) {
+        let before = self.recent_library_paths();
+        let open = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.root().to_string_lossy().into_owned());
+        let after: Vec<String> = before
+            .iter()
+            .filter(|path| kept.contains(path) || Some(*path) == open.as_ref())
+            .cloned()
+            .collect();
+        let removed = before.len() - after.len();
+        if removed == 0 {
+            return;
+        }
+        self.store_recent_libraries(&after);
+        self.offer_to_restore_recent_libraries(&recent_removal_text(removed), before);
+    }
+
+    fn forget_recent_library(&self, path: &str) {
+        let before = self.recent_library_paths();
+        self.store_recent_libraries(&recent_libraries::without(&before, path));
+        let name = library_display_name(Path::new(path));
+        self.offer_to_restore_recent_libraries(
+            &gettext("“{name}” removed from the recent libraries").replace("{name}", &name),
+            before,
+        );
+    }
+
+    fn offer_to_restore_recent_libraries(&self, message: &str, before: Vec<String>) {
+        let toast = adw::Toast::new(message);
+        toast.set_button_label(Some(&gettext("_Undo")));
+        toast.connect_button_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.store_recent_libraries(&before)
+        ));
+        self.imp().toast_overlay.add_toast(toast);
+    }
+
+    fn follow_welcome_recent_list(&self) {
+        self.imp()
+            .welcome_recent_list
+            .connect_row_activated(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, row| {
+                    let path = usize::try_from(row.index()).ok().and_then(|index| {
+                        window
+                            .imp()
+                            .welcome_recent_paths
+                            .borrow()
+                            .get(index)
+                            .cloned()
+                    });
+                    if let Some(path) = path {
+                        window.open_recent_library(&path);
+                    }
+                }
+            ));
+    }
+
+    fn show_welcome_recent_libraries(&self, paths: &[String]) {
+        let imp = self.imp();
+        imp.welcome_recent_list.remove_all();
+        for (path, label) in paths.iter().zip(recent_libraries::labels(paths)) {
+            let row = welcome_recent_row(&label, Path::new(path));
+            row.add_suffix(&self.forget_button(path));
+            row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
+            imp.welcome_recent_list.append(&row);
+        }
+        imp.welcome_recent_paths.replace(paths.to_vec());
+        imp.welcome_recent_box.set_visible(!paths.is_empty());
+    }
+
+    fn forget_button(&self, path: &str) -> gtk::Button {
+        let button = gtk::Button::builder()
+            .icon_name("window-close-symbolic")
+            .tooltip_text(gettext("Remove From the List, the Library Is Kept"))
+            .valign(gtk::Align::Center)
+            .css_classes(["flat", "circular"])
+            .build();
+        let path = path.to_owned();
+        button.connect_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.forget_recent_library(&path)
+        ));
+        button
+    }
+
+    fn open_recent_library(&self, path: &str) {
+        let root = PathBuf::from(path);
+        if self.is_showing_library_at(&root) {
+            return;
+        }
+        match Library::open(&root) {
+            Ok(library) => self.show_library(library),
+            Err(error) => {
+                if matches!(
+                    error,
+                    LibraryError::NotFound(_) | LibraryError::NotALibrary(_)
+                ) {
+                    self.store_recent_libraries(&recent_libraries::without(
+                        &self.recent_library_paths(),
+                        path,
+                    ));
+                }
+                self.show_opening_error(&root, &error);
+            }
+        }
     }
 
     fn close_library(&self) {
@@ -1019,6 +1250,7 @@ impl PigouneWindow {
         imp.asset_grid.show_assets(&[]);
         imp.asset_grid.forget_thumbnails();
         settings::store_string(self.settings(), settings::LAST_LIBRARY_PATH, "");
+        self.refresh_recent_libraries();
         imp.window_title.set_title("Pigoune");
         imp.stack.set_visible_child_name(WELCOME_PAGE);
         imp.import_button.set_visible(false);
@@ -2969,6 +3201,44 @@ impl PigouneWindow {
         settings::store_int(settings, settings::WINDOW_HEIGHT, height);
         settings::store_bool(settings, settings::WINDOW_MAXIMIZED, self.is_maximized());
     }
+}
+
+fn recent_removal_text(count: usize) -> String {
+    ngettext(
+        "{count} library removed from the recent libraries",
+        "{count} libraries removed from the recent libraries",
+        u32::try_from(count).unwrap_or(u32::MAX),
+    )
+    .replace("{count}", &count.to_string())
+}
+
+fn short_folder(folder: &Path) -> String {
+    let home = glib::home_dir();
+    match folder.strip_prefix(&home) {
+        Ok(inside) if inside.as_os_str().is_empty() => "~".to_owned(),
+        Ok(inside) => format!("~/{}", inside.to_string_lossy()),
+        Err(_) => folder.to_string_lossy().into_owned(),
+    }
+}
+
+fn welcome_recent_row(label: &str, root: &Path) -> adw::ActionRow {
+    let found = root.is_dir();
+    let location = root.parent().map(short_folder).unwrap_or_default();
+    let subtitle = if found {
+        location
+    } else {
+        gettext("Not found in {folder}").replace("{folder}", &location)
+    };
+    let row = adw::ActionRow::builder()
+        .title(label)
+        .subtitle(subtitle)
+        .activatable(true)
+        .build();
+    if !found {
+        row.add_css_class("dim-label");
+    }
+    row.add_prefix(&gtk::Image::from_icon_name("folder-pictures-symbolic"));
+    row
 }
 
 fn natural_size(asset: &PigouneAssetObject) -> (u32, u32) {

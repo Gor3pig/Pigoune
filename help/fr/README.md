@@ -30,7 +30,10 @@ client.
 Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque**. Pigoune
 rouvre la dernière bibliothèque utilisée à chaque démarrage. Quand une bibliothèque est
 ouverte, le menu principal propose **Nouvelle bibliothèque…** et **Ouvrir une bibliothèque…**
-pour passer à une autre.
+pour passer à une autre, et **Bibliothèques récentes** liste les cinq dernières bibliothèques
+ouvertes. La page d'accueil les affiche aussi, pour en rouvrir une d'un clic. Retirez-en une de la liste
+avec sa croix, ou choisissez **Effacer la liste** : seule la liste change, les bibliothèques
+elles-mêmes sont conservées.
 
 ### Importer des ressources
 

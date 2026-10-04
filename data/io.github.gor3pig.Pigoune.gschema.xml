@@ -6,6 +6,11 @@
       <summary>Last opened library</summary>
       <description>Path of the library reopened at startup. Empty when no library was left open.</description>
     </key>
+    <key name="recent-libraries" type="as">
+      <default>[]</default>
+      <summary>Recent libraries</summary>
+      <description>Paths of the libraries opened last, the most recent first.</description>
+    </key>
     <key name="window-width" type="i">
       <default>1100</default>
       <summary>Window width</summary>

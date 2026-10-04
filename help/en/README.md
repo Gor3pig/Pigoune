@@ -28,7 +28,10 @@ libraries as you like, for example one per project or per client.
 
 To open an existing library, choose **Open a Library**. Pigoune reopens the last library you
 used every time it starts. While a library is open, the main menu offers **New Library…** and
-**Open Library…** to switch to another one.
+**Open Library…** to switch to another one, and **Recent Libraries** lists the last five
+libraries you opened. The welcome page shows them too, so you can reopen one in a click. Remove one from the list with
+its cross, or choose **Clear the List**: only the list changes, the libraries themselves are
+kept.
 
 ### Import assets
 
