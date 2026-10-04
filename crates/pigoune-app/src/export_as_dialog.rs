@@ -49,6 +49,8 @@ mod imp {
         #[template_child]
         pub quality_row: TemplateChild<adw::SpinRow>,
         #[template_child]
+        pub transparency_row: TemplateChild<adw::SwitchRow>,
+        #[template_child]
         pub background_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub background_button: TemplateChild<gtk::ColorDialogButton>,
@@ -111,6 +113,7 @@ impl PigouneExportAsDialog {
         imp.reference.set(reference);
         dialog.show_custom(settings.custom);
         imp.icon_sides.set(settings.icon_sides);
+        imp.transparency_row.set_active(settings.keep_transparency);
         dialog.offer_icon_sides();
         imp.background_button
             .set_rgba(&rgba_of(settings.background));
@@ -134,6 +137,7 @@ impl PigouneExportAsDialog {
             quality: byte_of(imp.quality_row.value()),
             background: channels_of(&imp.background_button.rgba()),
             custom: imp.custom.get(),
+            keep_transparency: imp.transparency_row.is_active(),
             icon_sides: imp.icon_sides.get(),
         }
     }
@@ -171,7 +175,10 @@ impl PigouneExportAsDialog {
         imp.dimensions_row.set_visible(!is_icon);
         imp.icon_sides_row.set_visible(is_icon);
         imp.quality_row.set_visible(format.has_quality());
-        imp.background_row.set_visible(!format.keeps_transparency());
+        imp.transparency_row
+            .set_visible(format.keeps_transparency());
+        imp.background_row
+            .set_visible(!format.keeps_transparency() || !imp.transparency_row.is_active());
         imp.export_button
             .set_sensitive(!is_icon || !imp.icon_sides.get().is_empty());
     }
@@ -239,6 +246,11 @@ impl PigouneExportAsDialog {
     }
 
     #[template_callback]
+    fn on_transparency_changed(&self) {
+        self.refresh_rows();
+    }
+
+    #[template_callback]
     fn on_cancel_clicked(&self) {
         self.close();
     }
@@ -255,10 +267,10 @@ impl PigouneExportAsDialog {
 
 fn description(format: TargetFormat) -> String {
     match format {
-        TargetFormat::Png | TargetFormat::Webp => gettext("Lossless, keeps transparency"),
+        TargetFormat::Png | TargetFormat::Webp => gettext("Lossless, supports transparency"),
         TargetFormat::Jpeg => gettext("Small files, no transparency"),
-        TargetFormat::Avif => gettext("Small files, keeps transparency"),
-        TargetFormat::Ico => gettext("One icon file holding several sizes, keeps transparency"),
+        TargetFormat::Avif => gettext("Small files, supports transparency"),
+        TargetFormat::Ico => gettext("One icon file holding several sizes"),
     }
 }
 

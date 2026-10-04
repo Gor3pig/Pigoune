@@ -160,7 +160,9 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   fichiers existants ne sont jamais écrasés.
 - **Convertissez-les** avec **Exporter au format…** dans le menu du clic droit : choisissez PNG,
   JPEG, WebP, AVIF ou ICO, puis un dossier. JPEG et AVIF proposent un réglage de qualité ; le
-  JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes.
+  JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes ;
+  les autres formats gardent la transparence, sauf si vous désactivez **Garder la
+  transparence** pour utiliser aussi une couleur de fond.
   Choisissez la largeur et la hauteur, en pixels ou en pourcentage ; 100 % garde la taille
   d'origine. Cadenas fermé, les proportions sont gardées : changer un côté ajuste l'autre, et
   plusieurs images de formes différentes tiennent chacune dans la largeur et la hauteur

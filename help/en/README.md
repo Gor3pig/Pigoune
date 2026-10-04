@@ -140,8 +140,9 @@ a tag in the details panel works the same way.
 - **Export** them to a folder with **Export To…** in the right-click menu. Existing files are
   never overwritten.
 - **Convert** them with **Export As…** in the right-click menu: choose PNG, JPEG, WebP, AVIF or
-  ICO, then a folder. JPEG and AVIF offer a quality setting; JPEG has no transparency, so a
-  background color fills the transparent areas. Choose the width and height, in pixels or as
+  ICO, then a folder. JPEG and AVIF offer a quality setting. JPEG has no transparency, so a
+  background color fills the transparent areas; the other formats keep transparency unless
+  you turn off **Keep Transparency** to use a background color too. Choose the width and height, in pixels or as
   a percentage; 100% keeps the original size. With the padlock closed, proportions are kept:
   changing one side updates the other, and several images of different shapes each fit
   inside the given width and height. Open it to stretch an image freely. SVG images stay

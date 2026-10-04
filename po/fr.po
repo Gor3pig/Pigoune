@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 16:25+0200\n"
+"POT-Creation-Date: 2026-10-04 16:30+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -1440,7 +1440,7 @@ msgid "Zoom In"
 msgstr "Zoom avant"
 
 #: crates/pigoune-app/ui/asset-preview.blp:127
-#: crates/pigoune-app/ui/export-as-dialog.blp:222
+#: crates/pigoune-app/ui/export-as-dialog.blp:228
 msgid "Background"
 msgstr "Fond"
 
@@ -2021,25 +2021,29 @@ msgstr "Qualité"
 msgid "A higher quality makes larger files"
 msgstr "Une meilleure qualité donne des fichiers plus lourds"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:223
+#: crates/pigoune-app/ui/export-as-dialog.blp:222
+msgid "Keep Transparency"
+msgstr "Garder la transparence"
+
+#: crates/pigoune-app/ui/export-as-dialog.blp:229
 msgid "Fills the transparent areas"
 msgstr "Remplit les zones transparentes"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:258
-msgid "Lossless, keeps transparency"
-msgstr "Sans perte, garde la transparence"
+#: crates/pigoune-app/src/export_as_dialog.rs:270
+msgid "Lossless, supports transparency"
+msgstr "Sans perte, gère la transparence"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:259
+#: crates/pigoune-app/src/export_as_dialog.rs:271
 msgid "Small files, no transparency"
 msgstr "Fichiers légers, sans transparence"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:260
-msgid "Small files, keeps transparency"
-msgstr "Fichiers légers, garde la transparence"
+#: crates/pigoune-app/src/export_as_dialog.rs:272
+msgid "Small files, supports transparency"
+msgstr "Fichiers légers, gère la transparence"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:261
-msgid "One icon file holding several sizes, keeps transparency"
-msgstr "Un seul fichier d’icône avec plusieurs tailles, garde la transparence"
+#: crates/pigoune-app/src/export_as_dialog.rs:273
+msgid "One icon file holding several sizes"
+msgstr "Un seul fichier d’icône avec plusieurs tailles"
 
 #: crates/pigoune-app/src/conversion_report.rs:12
 #, rust-format
@@ -2081,6 +2085,9 @@ msgstr ""
 #: crates/pigoune-app/src/conversion_report.rs:58
 msgid "the conversion failed"
 msgstr "la conversion a échoué"
+
+#~ msgid "Small files, keeps transparency"
+#~ msgstr "Fichiers légers, garde la transparence"
 
 #~ msgid "Original Size"
 #~ msgstr "Taille d’origine"

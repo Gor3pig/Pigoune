@@ -71,7 +71,14 @@ pub struct ConversionSettings {
     pub quality: u8,
     pub background: [u8; 3],
     pub custom: CustomSize,
+    pub keep_transparency: bool,
     pub icon_sides: IconSides,
+}
+
+impl ConversionSettings {
+    fn is_transparent(&self) -> bool {
+        self.format.keeps_transparency() && self.keep_transparency
+    }
 }
 
 impl Default for ConversionSettings {
@@ -81,6 +88,7 @@ impl Default for ConversionSettings {
             quality: DEFAULT_QUALITY,
             background: WHITE,
             custom: CustomSize::default(),
+            keep_transparency: true,
             icon_sides: IconSides::default(),
         }
     }
@@ -110,7 +118,7 @@ pub async fn convert(
 ) -> Result<Converted, ConversionError> {
     if settings.format == TargetFormat::Ico {
         return Ok(Converted {
-            bytes: icon(source, settings.icon_sides).await?,
+            bytes: icon(source, settings).await?,
             name_suffix: None,
         });
     }
@@ -123,20 +131,23 @@ pub async fn convert(
     })
 }
 
-async fn icon(source: &Source<'_>, sides: IconSides) -> Result<Vec<u8>, ConversionError> {
+async fn icon(
+    source: &Source<'_>,
+    settings: ConversionSettings,
+) -> Result<Vec<u8>, ConversionError> {
     let original = if source.is_vector {
         None
     } else {
         Some(load(source.file, source.natural.0.max(source.natural.1)).await?)
     };
     let mut pictures = Vec::new();
-    for side in sides.sides() {
+    for side in settings.icon_sides.sides() {
         let image = match &original {
             Some(original) if original.width().max(original.height()) < side => continue,
             Some(original) => shrunk(original.clone(), side).await?,
             None => load(source.file, side).await?,
         };
-        let png = encode_png(image.centered_on_square(side)).await?;
+        let png = encode_png(image.centered_on_square(side), settings).await?;
         pictures.push((
             Dimensions::new(side, side).ok_or(ConversionError::EncodingFailed)?,
             png,
@@ -192,8 +203,13 @@ async fn encode(
     settings: ConversionSettings,
 ) -> Result<Vec<u8>, ConversionError> {
     let (width, height) = (image.width(), image.height());
-    let (memory_format, pixels) = if settings.format.keeps_transparency() {
+    let (memory_format, pixels) = if settings.is_transparent() {
         (glycin::MemoryFormat::R8g8b8a8, image.into_pixels())
+    } else if settings.format.keeps_transparency() {
+        (
+            glycin::MemoryFormat::R8g8b8a8,
+            opaque(image.pixels(), settings.background),
+        )
     } else {
         (
             glycin::MemoryFormat::R8g8b8,
@@ -216,10 +232,13 @@ async fn encode(
     Ok(encoded.data_full())
 }
 
-async fn encode_png(image: RgbaImage) -> Result<Vec<u8>, ConversionError> {
+async fn encode_png(
+    image: RgbaImage,
+    settings: ConversionSettings,
+) -> Result<Vec<u8>, ConversionError> {
     let settings = ConversionSettings {
         format: TargetFormat::Png,
-        ..ConversionSettings::default()
+        ..settings
     };
     encode(image, settings).await
 }
@@ -233,6 +252,15 @@ fn straight_rgba(texture: &gdk::Texture) -> Vec<u8> {
         .chunks(stride)
         .flat_map(|row| &row[..row_length.min(row.len())])
         .copied()
+        .collect()
+}
+
+fn opaque(rgba: &[u8], background: [u8; 3]) -> Vec<u8> {
+    flattened(rgba, background)
+        .as_chunks::<3>()
+        .0
+        .iter()
+        .flat_map(|[red, green, blue]| [*red, *green, *blue, u8::MAX])
         .collect()
 }
 
@@ -265,6 +293,7 @@ mod tests {
 
     use super::{
         ConversionError, ConversionSettings, Converted, Source, TargetFormat, convert, flattened,
+        straight_rgba,
     };
     use crate::export_size::{CustomSize, SizeUnit};
     use crate::icon_sides::IconSides;
@@ -410,6 +439,65 @@ mod tests {
             converted("navy-tile.bmp", (8, 8), settings).err(),
             Some(ConversionError::TooSmallForIcon)
         );
+    }
+
+    fn first_pixel(encoded: Vec<u8>) -> [u8; 4] {
+        let context = glib::MainContext::new();
+        context
+            .with_thread_default(|| {
+                context.block_on(async {
+                    let mut image = glycin::Loader::new_vec(encoded)
+                        .load()
+                        .await
+                        .expect("encoded image loads");
+                    let frame = image.next_frame().await.expect("frame decoded");
+                    let pixels = straight_rgba(&frame.texture());
+                    [pixels[0], pixels[1], pixels[2], pixels[3]]
+                })
+            })
+            .expect("context available")
+    }
+
+    fn without_transparency(format: TargetFormat) -> ConversionSettings {
+        ConversionSettings {
+            keep_transparency: false,
+            background: [255, 255, 0],
+            ..settings(format)
+        }
+    }
+
+    #[test]
+    fn transparency_is_kept_by_default() {
+        let converted =
+            converted("dark-circle.svg", (24, 24), settings(TargetFormat::Png)).expect("converted");
+        assert_eq!(first_pixel(converted.bytes)[3], 0);
+    }
+
+    #[test]
+    fn transparent_areas_can_take_the_background_color() {
+        for format in [TargetFormat::Png, TargetFormat::Webp] {
+            let converted = converted("dark-circle.svg", (24, 24), without_transparency(format))
+                .expect("converted");
+            assert_eq!(
+                first_pixel(converted.bytes),
+                [255, 255, 0, 255],
+                "{}",
+                format.name()
+            );
+        }
+    }
+
+    #[test]
+    fn an_icon_without_transparency_fills_its_margins() {
+        let converted = converted(
+            "dark-circle.svg",
+            (24, 24),
+            without_transparency(TargetFormat::Ico),
+        )
+        .expect("converted");
+        let size = Dimensions::new(16, 16).expect("valid size");
+        let single = pigoune_core::single_size_icon(&converted.bytes, size).expect("size found");
+        assert_eq!(first_pixel(single), [255, 255, 0, 255]);
     }
 
     #[test]

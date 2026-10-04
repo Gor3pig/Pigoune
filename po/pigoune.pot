@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 16:25+0200\n"
+"POT-Creation-Date: 2026-10-04 16:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1338,7 +1338,7 @@ msgid "Zoom In"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:127
-#: crates/pigoune-app/ui/export-as-dialog.blp:222
+#: crates/pigoune-app/ui/export-as-dialog.blp:228
 msgid "Background"
 msgstr ""
 
@@ -1912,24 +1912,28 @@ msgstr ""
 msgid "A higher quality makes larger files"
 msgstr ""
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:223
+#: crates/pigoune-app/ui/export-as-dialog.blp:222
+msgid "Keep Transparency"
+msgstr ""
+
+#: crates/pigoune-app/ui/export-as-dialog.blp:229
 msgid "Fills the transparent areas"
 msgstr ""
 
-#: crates/pigoune-app/src/export_as_dialog.rs:258
-msgid "Lossless, keeps transparency"
+#: crates/pigoune-app/src/export_as_dialog.rs:270
+msgid "Lossless, supports transparency"
 msgstr ""
 
-#: crates/pigoune-app/src/export_as_dialog.rs:259
+#: crates/pigoune-app/src/export_as_dialog.rs:271
 msgid "Small files, no transparency"
 msgstr ""
 
-#: crates/pigoune-app/src/export_as_dialog.rs:260
-msgid "Small files, keeps transparency"
+#: crates/pigoune-app/src/export_as_dialog.rs:272
+msgid "Small files, supports transparency"
 msgstr ""
 
-#: crates/pigoune-app/src/export_as_dialog.rs:261
-msgid "One icon file holding several sizes, keeps transparency"
+#: crates/pigoune-app/src/export_as_dialog.rs:273
+msgid "One icon file holding several sizes"
 msgstr ""
 
 #: crates/pigoune-app/src/conversion_report.rs:12

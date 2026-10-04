@@ -218,6 +218,12 @@ template $PigouneExportAsDialog: Adw.Dialog {
           };
         }
 
+        Adw.SwitchRow transparency_row {
+          title: _("Keep Transparency");
+          active: true;
+          notify::active => $on_transparency_changed() swapped;
+        }
+
         Adw.ActionRow background_row {
           title: _("Background");
           subtitle: _("Fills the transparent areas");
