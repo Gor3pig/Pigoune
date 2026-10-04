@@ -17,6 +17,7 @@ mod collection_name_dialog;
 mod collection_places;
 mod collection_sort;
 mod config;
+mod conversion_memory;
 mod conversion_report;
 mod drag_content;
 mod drag_icon;

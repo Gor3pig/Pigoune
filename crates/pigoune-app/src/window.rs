@@ -19,6 +19,7 @@ use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_places::SharedCollection;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
+use crate::conversion_memory;
 use crate::conversion_report;
 use crate::drop_message;
 use crate::error_messages;
@@ -128,7 +129,6 @@ mod imp {
     use crate::asset_grid::PigouneAssetGrid;
     use crate::asset_preview::PigouneAssetPreview;
     use crate::grid_header::PigouneGridHeader;
-    use crate::image_conversion::ConversionSettings;
     use crate::sidebar::PigouneSidebar;
 
     use super::{
@@ -183,7 +183,6 @@ mod imp {
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
-        pub conversion_settings: Cell<ConversionSettings>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
@@ -1454,13 +1453,13 @@ impl PigouneWindow {
             return;
         }
         let dialog = PigouneExportAsDialog::new(
-            self.imp().conversion_settings.get(),
+            conversion_memory::load(self.settings()),
             natural_size(&assets[0]),
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 move |settings| {
-                    window.imp().conversion_settings.set(settings);
+                    conversion_memory::store(window.settings(), &settings);
                     let assets = assets.clone();
                     glib::spawn_future_local(async move {
                         window.convert_into_folder(&assets, settings).await;

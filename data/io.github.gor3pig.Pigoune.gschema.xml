@@ -113,5 +113,64 @@
       <summary>Thumbnail size</summary>
       <description>Side of the thumbnails in the library grid, in pixels.</description>
     </key>
+    <key name="export-format" type="s">
+      <choices>
+        <choice value="png"/>
+        <choice value="jpeg"/>
+        <choice value="webp"/>
+        <choice value="avif"/>
+        <choice value="ico"/>
+      </choices>
+      <default>"png"</default>
+      <summary>Export format</summary>
+      <description>Format last chosen to export resources converted.</description>
+    </key>
+    <key name="export-quality" type="i">
+      <range min="1" max="100"/>
+      <default>90</default>
+      <summary>Export quality</summary>
+      <description>Quality of JPEG and AVIF exports.</description>
+    </key>
+    <key name="export-background" type="s">
+      <default>"#ffffff"</default>
+      <summary>Export background color</summary>
+      <description>Color that fills transparent areas when an export has no transparency.</description>
+    </key>
+    <key name="export-keep-transparency" type="b">
+      <default>true</default>
+      <summary>Keep transparency in exports</summary>
+      <description>Whether PNG, WebP, AVIF and ICO exports keep transparent areas.</description>
+    </key>
+    <key name="export-size-unit" type="s">
+      <choices>
+        <choice value="pixels"/>
+        <choice value="percent"/>
+      </choices>
+      <default>"percent"</default>
+      <summary>Export size unit</summary>
+      <description>Whether the export width and height are in pixels or a percentage of the original.</description>
+    </key>
+    <key name="export-width" type="d">
+      <range min="1" max="32768"/>
+      <default>100</default>
+      <summary>Export width</summary>
+      <description>Width of converted exports, in the export size unit.</description>
+    </key>
+    <key name="export-height" type="d">
+      <range min="1" max="32768"/>
+      <default>100</default>
+      <summary>Export height</summary>
+      <description>Height of converted exports, in the export size unit.</description>
+    </key>
+    <key name="export-keep-proportions" type="b">
+      <default>true</default>
+      <summary>Keep proportions in exports</summary>
+      <description>Whether changing the export width or height updates the other side.</description>
+    </key>
+    <key name="export-icon-sizes" type="ai">
+      <default>[16, 32, 48, 256]</default>
+      <summary>Icon export sizes</summary>
+      <description>Sizes, in pixels, gathered in an exported ICO file.</description>
+    </key>
   </schema>
 </schemalist>

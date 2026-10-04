@@ -169,7 +169,8 @@ détails. Un clic sur une collection l'ouvre dans la barre latérale et met la r
   indiquées. Ouvrez-le pour étirer librement une image. Un SVG reste net à toutes les
   tailles ; une image en pixels agrandie devient floue. Un fichier redimensionné porte sa
   taille dans son nom, par exemple `logo-512x384.png`. Pour l'ICO, cochez les tailles à inclure (16, 32, 48 et 256 par défaut) :
-  elles vont toutes dans un seul fichier d'icône. L'original reste intact dans la
+  elles vont toutes dans un seul fichier d'icône. Pigoune retient vos derniers choix pour le
+  prochain export. L'original reste intact dans la
   bibliothèque, et les fichiers existants ne sont jamais écrasés.
 - **Ouvrez** une ressource dans une autre application, un logiciel de retouche par exemple,
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre

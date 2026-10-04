@@ -29,6 +29,10 @@ impl IconSides {
         }
     }
 
+    pub fn none() -> Self {
+        Self(0)
+    }
+
     pub fn is_empty(self) -> bool {
         self.0 == 0
     }

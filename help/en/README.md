@@ -148,7 +148,8 @@ a tag in the details panel works the same way.
   inside the given width and height. Open it to stretch an image freely. SVG images stay
   sharp at any size; an enlarged pixel image becomes blurry. A resized file carries its size
   in its name, such as `logo-512x384.png`. For ICO, tick the sizes to include (16, 32, 48 and 256 by default): they all
-  go into a single icon file. The original stays untouched in the library, and existing files
+  go into a single icon file. Pigoune remembers your last choices for the next export. The
+  original stays untouched in the library, and existing files
   are never overwritten.
 - **Open** an asset in another application, such as an image editor, with **Open With…** in
   the right-click menu. The application receives a copy: your library stays untouched, so
