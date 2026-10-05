@@ -4,7 +4,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
-use gtk::{gdk, gio, glib};
+use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
     CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ImportError, ImportSummary,
@@ -36,6 +36,7 @@ use crate::import_report::{self, Destination};
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
+use crate::preview_flight::Flight;
 use crate::recent_libraries;
 use crate::settings;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
@@ -57,6 +58,8 @@ const EMPTY_PAGE: &str = "empty";
 const ASSETS_PAGE: &str = "assets";
 const MAIN_PAGE: &str = "main";
 const PREVIEW_PAGE: &str = "preview";
+const OPENING_FLIGHT_MILLISECONDS: u32 = 250;
+const CLOSING_FLIGHT_MILLISECONDS: u32 = 200;
 const CREATE_LIBRARY_ACTION: &str = "win.create-library";
 const OPEN_LIBRARY_ACTION: &str = "win.open-library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
@@ -164,6 +167,7 @@ mod imp {
     use crate::asset_preview::PigouneAssetPreview;
     use crate::flatpak_updates::FlatpakUpdates;
     use crate::grid_header::PigouneGridHeader;
+    use crate::preview_flight::PigounePreviewFlight;
     use crate::query_pills::PigouneQueryPills;
     use crate::sidebar::PigouneSidebar;
     use crate::update_news::UpdateNews;
@@ -232,6 +236,8 @@ mod imp {
         pub window_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_preview: TemplateChild<PigouneAssetPreview>,
+        #[template_child]
+        pub preview_flight: TemplateChild<PigounePreviewFlight>,
         #[template_child]
         pub sidebar: TemplateChild<PigouneSidebar>,
         #[template_child]
@@ -389,6 +395,7 @@ mod imp {
             PigouneAssetGrid::ensure_type();
             PigouneAssetDetails::ensure_type();
             PigouneAssetPreview::ensure_type();
+            PigounePreviewFlight::ensure_type();
             PigouneSidebar::ensure_type();
             PigouneGridHeader::ensure_type();
             PigouneQueryPills::ensure_type();
@@ -3310,17 +3317,91 @@ impl PigouneWindow {
             .and_then(|index| u32::try_from(index).ok())
             .unwrap_or(0);
         imp.browsing_selection.set(browsing_selection);
+        let flight_start = imp
+            .asset_grid
+            .thumbnail_bounds(start.id(), &*imp.preview_flight);
+        let thumbnail = imp.asset_grid.thumbnails().remembered(start.id());
         self.lend_details_to_preview(true);
         imp.window_stack.set_visible_child_name(PREVIEW_PAGE);
         imp.asset_preview.set_actionable(!self.is_showing_trash());
         imp.asset_preview
             .open(items, position, imp.asset_grid.thumbnails());
+        if let (Some(start), Some(texture)) = (flight_start, thumbnail) {
+            self.fly_into_preview(start, texture);
+        }
+    }
+
+    fn fly_into_preview(&self, start: graphene::Rect, texture: gdk::Texture) {
+        let imp = self.imp();
+        let preview = imp.asset_preview.get();
+        let flight = imp.preview_flight.get();
+        preview.hide_image(true);
+        let landing = glib::clone!(
+            #[weak]
+            preview,
+            #[weak]
+            flight,
+            #[upgrade_or]
+            None,
+            move || preview.image_bounds(&flight)
+        );
+        imp.preview_flight.fly(
+            Flight {
+                texture,
+                from: Box::new(move || Some(start)),
+                to: Box::new(landing),
+                milliseconds: OPENING_FLIGHT_MILLISECONDS,
+            },
+            glib::clone!(
+                #[weak]
+                preview,
+                move || preview.hide_image(false)
+            ),
+        );
+    }
+
+    fn fly_back_to_grid(&self, last: &PigouneAssetObject) {
+        let imp = self.imp();
+        let preview = imp.asset_preview.get();
+        let flight = imp.preview_flight.get();
+        let (Some(start), Some(texture)) = (preview.image_bounds(&flight), preview.shown_texture())
+        else {
+            return;
+        };
+        preview.hide_image(true);
+        let grid = imp.asset_grid.get();
+        let id = last.id();
+        let landing = glib::clone!(
+            #[weak]
+            grid,
+            #[weak]
+            flight,
+            #[upgrade_or]
+            None,
+            move || grid.thumbnail_bounds(id, &flight)
+        );
+        imp.preview_flight.fly(
+            Flight {
+                texture,
+                from: Box::new(move || Some(start)),
+                to: Box::new(landing),
+                milliseconds: CLOSING_FLIGHT_MILLISECONDS,
+            },
+            glib::clone!(
+                #[weak]
+                preview,
+                move || preview.hide_image(false)
+            ),
+        );
     }
 
     fn leave_preview(&self, last: Option<&PigouneAssetObject>) {
         let imp = self.imp();
         if imp.window_stack.visible_child_name().as_deref() != Some(PREVIEW_PAGE) {
             return;
+        }
+        if let Some(last) = last {
+            self.fly_back_to_grid(last);
         }
         imp.window_stack.set_visible_child_name(MAIN_PAGE);
         self.lend_details_to_preview(false);

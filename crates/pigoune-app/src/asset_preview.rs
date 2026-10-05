@@ -4,7 +4,7 @@ use std::time::Duration;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
-use gtk::{gdk, gio, glib};
+use gtk::{gdk, gio, glib, graphene};
 
 use pigoune_core::{Asset, AssetFormat, Dimensions};
 
@@ -317,6 +317,32 @@ impl PigouneAssetPreview {
         self.imp().on_shown.replace(Some(Box::new(callback)));
     }
 
+    pub fn shown_texture(&self) -> Option<gdk::Texture> {
+        self.imp().zoom_view.texture()
+    }
+
+    pub fn image_bounds(&self, target: &impl IsA<gtk::Widget>) -> Option<graphene::Rect> {
+        let zoom_view = self.imp().zoom_view.get();
+        if zoom_view.width() == 0 || !zoom_view.is_mapped() {
+            return None;
+        }
+        let bounds = zoom_view.image_bounds();
+        let origin =
+            zoom_view.compute_point(target, &graphene::Point::new(bounds.x(), bounds.y()))?;
+        Some(graphene::Rect::new(
+            origin.x(),
+            origin.y(),
+            bounds.width(),
+            bounds.height(),
+        ))
+    }
+
+    pub fn hide_image(&self, hidden: bool) {
+        self.imp()
+            .zoom_view
+            .set_opacity(if hidden { 0.0 } else { 1.0 });
+    }
+
     pub fn hold_details(&self, details: Option<&gtk::Widget>) {
         self.imp().details_slot.set_child(details);
     }
@@ -332,10 +358,10 @@ impl PigouneAssetPreview {
     pub fn close(&self) {
         self.set_fullscreen(false);
         let last = self.imp().showing.borrow().clone();
-        self.forget_selection();
         if let Some(on_closed) = self.imp().on_closed.borrow().as_ref() {
             on_closed(last);
         }
+        self.forget_selection();
     }
 
     #[template_callback]

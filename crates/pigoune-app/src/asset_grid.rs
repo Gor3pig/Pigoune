@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use adw::subclass::prelude::*;
 use gtk::prelude::*;
-use gtk::{gdk, gio, glib};
+use gtk::{gdk, gio, glib, graphene};
 
 use pigoune_core::AssetId;
 
@@ -297,6 +297,29 @@ impl PigouneAssetGrid {
         let everything = gtk::Bitset::new_range(0, selection.n_items());
         selection.set_selection(&chosen, &everything);
         self.follow_selection_later();
+    }
+
+    pub fn thumbnail_bounds(
+        &self,
+        id: AssetId,
+        target: &impl IsA<gtk::Widget>,
+    ) -> Option<graphene::Rect> {
+        let grid_view = self.imp().grid_view.get();
+        let visible_area = grid_view.compute_bounds(target)?;
+        let mut cell = grid_view.first_child();
+        while let Some(current) = cell {
+            let tile = current
+                .first_child()
+                .and_downcast::<PigouneAssetTile>()
+                .filter(|tile| tile.asset().is_some_and(|asset| asset.id() == id));
+            if let Some(tile) = tile {
+                return tile
+                    .drawn_thumbnail(target)
+                    .filter(|bounds| visible_area.contains_rect(bounds));
+            }
+            cell = current.next_sibling();
+        }
+        None
     }
 
     pub fn reveal_asset(&self, id: AssetId) {

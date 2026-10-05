@@ -28,269 +28,275 @@ template $PigouneWindow: Adw.ApplicationWindow {
   }
 
   content: Adw.ToastOverlay toast_overlay {
-    child: Stack window_stack {
-      transition-type: crossfade;
-      hhomogeneous: false;
+    child: Overlay {
+      [overlay]
+      $PigounePreviewFlight preview_flight {}
 
-      StackPage {
-        name: "main";
+      child: Stack window_stack {
+        transition-type: crossfade;
+        transition-duration: 220;
+        hhomogeneous: false;
 
-        child: Gtk.Stack stack {
-          transition-type: crossfade;
-          hhomogeneous: false;
-          vhomogeneous: false;
+        StackPage {
+          name: "main";
 
-          StackPage {
-            name: "welcome";
+          child: Gtk.Stack stack {
+            transition-type: crossfade;
+            hhomogeneous: false;
+            vhomogeneous: false;
 
-            child: Adw.ToolbarView {
-              [top]
-              Adw.HeaderBar {
-                [end]
-                MenuButton {
-                  primary: true;
-                  icon-name: "open-menu-symbolic";
-                  tooltip-text: _("Main Menu");
-                  menu-model: welcome_menu;
-                }
-              }
+            StackPage {
+              name: "welcome";
 
-              content: Adw.StatusPage {
-                icon-name: "io.github.gor3pig.Pigoune";
-                title: _("Welcome to Pigoune");
-                description: _("All your graphic assets, organized and within reach.");
-
-                styles [
-                  "icon-dropshadow",
-                ]
-
-                child: Box {
-                  orientation: vertical;
-                  spacing: 12;
-                  halign: center;
-
-                  Button {
-                    label: _("_New Library…");
-                    use-underline: true;
-                    halign: center;
-                    action-name: "win.create-library";
-
-                    styles [
-                      "pill",
-                      "suggested-action",
-                    ]
-                  }
-
-                  Button {
-                    label: _("_Open Library…");
-                    use-underline: true;
-                    halign: center;
-                    action-name: "win.open-library";
-
-                    styles [
-                      "pill",
-                    ]
-                  }
-
-                  Box welcome_recent_box {
-                    orientation: vertical;
-                    spacing: 6;
-                    margin-top: 24;
-                    width-request: 380;
-                    visible: false;
-
-                    Box {
-                      Label {
-                        label: _("Recent Libraries");
-                        xalign: 0;
-
-                        styles [
-                          "heading",
-                        ]
-                      }
-
-                      Label welcome_recent_count {
-                        xalign: 0;
-                        hexpand: true;
-                        margin-start: 8;
-
-                        styles [
-                          "dim-label",
-                          "numeric",
-                        ]
-                      }
-
-                      Button {
-                        label: _("Clear the List");
-                        action-name: "win.clear-recent-libraries";
-
-                        styles [
-                          "flat",
-                          "caption",
-                        ]
-                      }
-                    }
-
-                    ScrolledWindow {
-                      hscrollbar-policy: never;
-                      propagate-natural-height: true;
-                      max-content-height: 166;
-
-                      child: ListBox welcome_recent_list {
-                        selection-mode: none;
-
-                        styles [
-                          "boxed-list",
-                        ]
-                      };
-                    }
-                  }
-                };
-              };
-            };
-          }
-
-          StackPage {
-            name: "library";
-
-            child: Adw.OverlaySplitView sidebar_split {
-              min-sidebar-width: 320;
-              max-sidebar-width: 320;
-
-              sidebar: Adw.ToolbarView {
+              child: Adw.ToolbarView {
                 [top]
                 Adw.HeaderBar {
-                  title-widget: Adw.WindowTitle window_title {
-                    title: "Pigoune";
-                  };
-
-                  [start]
-                  MenuButton import_button {
-                    icon-name: "list-add-symbolic";
-                    tooltip-text: _("Import");
-                    menu-model: import_menu;
-                  }
-
                   [end]
-                  MenuButton library_menu_button {
+                  MenuButton {
                     primary: true;
                     icon-name: "open-menu-symbolic";
                     tooltip-text: _("Main Menu");
-                    menu-model: primary_menu;
+                    menu-model: welcome_menu;
                   }
                 }
 
-                content: $PigouneSidebar sidebar {};
-              };
+                content: Adw.StatusPage {
+                  icon-name: "io.github.gor3pig.Pigoune";
+                  title: _("Welcome to Pigoune");
+                  description: _("All your graphic assets, organized and within reach.");
 
-              content: Adw.OverlaySplitView details_split {
-                sidebar-position: end;
-                min-sidebar-width: 320;
-                max-sidebar-width: 320;
+                  styles [
+                    "icon-dropshadow",
+                  ]
 
-                content: Adw.ToolbarView {
-                  [top]
-                  $PigouneGridHeader grid_header {}
+                  child: Box {
+                    orientation: vertical;
+                    spacing: 12;
+                    halign: center;
 
-                  [top]
-                  Adw.Banner update_banner {}
-
-                  [top]
-                  $PigouneQueryPills query_pills {}
-
-                  content: Overlay drop_area {
-                    [overlay]
-                    Adw.StatusPage drop_hint {
-                      visible: false;
-                      can-target: false;
-                      icon-name: "insert-image-symbolic";
-                      description: _("Images are copied into the library. The originals are not modified.");
+                    Button {
+                      label: _("_New Library…");
+                      use-underline: true;
+                      halign: center;
+                      action-name: "win.create-library";
 
                       styles [
-                        "drop-hint",
+                        "pill",
+                        "suggested-action",
                       ]
                     }
 
-                    child: Gtk.Stack library_stack {
-                      StackPage {
-                        name: "empty";
+                    Button {
+                      label: _("_Open Library…");
+                      use-underline: true;
+                      halign: center;
+                      action-name: "win.open-library";
 
-                        child: Adw.StatusPage {
-                          icon-name: "folder-pictures-symbolic";
-                          title: _("Your Library Is Empty");
-                          description: _("Imported icons, logos and illustrations will appear here.");
+                      styles [
+                        "pill",
+                      ]
+                    }
+
+                    Box welcome_recent_box {
+                      orientation: vertical;
+                      spacing: 6;
+                      margin-top: 24;
+                      width-request: 380;
+                      visible: false;
+
+                      Box {
+                        Label {
+                          label: _("Recent Libraries");
+                          xalign: 0;
+
+                          styles [
+                            "heading",
+                          ]
+                        }
+
+                        Label welcome_recent_count {
+                          xalign: 0;
+                          hexpand: true;
+                          margin-start: 8;
+
+                          styles [
+                            "dim-label",
+                            "numeric",
+                          ]
+                        }
+
+                        Button {
+                          label: _("Clear the List");
+                          action-name: "win.clear-recent-libraries";
+
+                          styles [
+                            "flat",
+                            "caption",
+                          ]
+                        }
+                      }
+
+                      ScrolledWindow {
+                        hscrollbar-policy: never;
+                        propagate-natural-height: true;
+                        max-content-height: 166;
+
+                        child: ListBox welcome_recent_list {
+                          selection-mode: none;
+
+                          styles [
+                            "boxed-list",
+                          ]
+                        };
+                      }
+                    }
+                  };
+                };
+              };
+            }
+
+            StackPage {
+              name: "library";
+
+              child: Adw.OverlaySplitView sidebar_split {
+                min-sidebar-width: 320;
+                max-sidebar-width: 320;
+
+                sidebar: Adw.ToolbarView {
+                  [top]
+                  Adw.HeaderBar {
+                    title-widget: Adw.WindowTitle window_title {
+                      title: "Pigoune";
+                    };
+
+                    [start]
+                    MenuButton import_button {
+                      icon-name: "list-add-symbolic";
+                      tooltip-text: _("Import");
+                      menu-model: import_menu;
+                    }
+
+                    [end]
+                    MenuButton library_menu_button {
+                      primary: true;
+                      icon-name: "open-menu-symbolic";
+                      tooltip-text: _("Main Menu");
+                      menu-model: primary_menu;
+                    }
+                  }
+
+                  content: $PigouneSidebar sidebar {};
+                };
+
+                content: Adw.OverlaySplitView details_split {
+                  sidebar-position: end;
+                  min-sidebar-width: 320;
+                  max-sidebar-width: 320;
+
+                  content: Adw.ToolbarView {
+                    [top]
+                    $PigouneGridHeader grid_header {}
+
+                    [top]
+                    Adw.Banner update_banner {}
+
+                    [top]
+                    $PigouneQueryPills query_pills {}
+
+                    content: Overlay drop_area {
+                      [overlay]
+                      Adw.StatusPage drop_hint {
+                        visible: false;
+                        can-target: false;
+                        icon-name: "insert-image-symbolic";
+                        description: _("Images are copied into the library. The originals are not modified.");
+
+                        styles [
+                          "drop-hint",
+                        ]
+                      }
+
+                      child: Gtk.Stack library_stack {
+                        StackPage {
+                          name: "empty";
+
+                          child: Adw.StatusPage {
+                            icon-name: "folder-pictures-symbolic";
+                            title: _("Your Library Is Empty");
+                            description: _("Imported icons, logos and illustrations will appear here.");
+
+                            child: Box {
+                              orientation: vertical;
+                              spacing: 12;
+                              halign: center;
+
+                              Button {
+                                label: _("Import _Files…");
+                                use-underline: true;
+                                action-name: "win.import-files";
+
+                                styles [
+                                  "pill",
+                                  "suggested-action",
+                                ]
+                              }
+
+                              Button {
+                                label: _("Import a F_older…");
+                                use-underline: true;
+                                action-name: "win.import-folder";
+
+                                styles [
+                                  "pill",
+                                ]
+                              }
+                            };
+                          };
+                        }
+
+                        StackPage {
+                          name: "assets";
 
                           child: Box {
                             orientation: vertical;
-                            spacing: 12;
-                            halign: center;
 
-                            Button {
-                              label: _("Import _Files…");
-                              use-underline: true;
-                              action-name: "win.import-files";
-
-                              styles [
-                                "pill",
-                                "suggested-action",
-                              ]
+                            Adw.Banner trash_banner {
+                              title: _("Resources in the trash are deleted for good only when it is emptied.");
+                              button-label: _("_Empty Trash…");
+                              action-name: "win.empty-trash";
                             }
 
-                            Button {
-                              label: _("Import a F_older…");
-                              use-underline: true;
-                              action-name: "win.import-folder";
-
-                              styles [
-                                "pill",
-                              ]
+                            $PigouneAssetGrid asset_grid {
+                              vexpand: true;
                             }
                           };
-                        };
-                      }
-
-                      StackPage {
-                        name: "assets";
-
-                        child: Box {
-                          orientation: vertical;
-
-                          Adw.Banner trash_banner {
-                            title: _("Resources in the trash are deleted for good only when it is emptied.");
-                            button-label: _("_Empty Trash…");
-                            action-name: "win.empty-trash";
-                          }
-
-                          $PigouneAssetGrid asset_grid {
-                            vexpand: true;
-                          }
-                        };
-                      }
+                        }
+                      };
                     };
                   };
-                };
 
-                sidebar: Adw.ToolbarView details_view {
-                  [top]
-                  Adw.HeaderBar {
-                    title-widget: Adw.WindowTitle {
-                      title: _("Details");
-                    };
-                  }
+                  sidebar: Adw.ToolbarView details_view {
+                    [top]
+                    Adw.HeaderBar {
+                      title-widget: Adw.WindowTitle {
+                        title: _("Details");
+                      };
+                    }
 
-                  content: $PigouneAssetDetails asset_details {};
+                    content: $PigouneAssetDetails asset_details {};
+                  };
                 };
               };
-            };
-          }
-        };
-      }
+            }
+          };
+        }
 
-      StackPage {
-        name: "preview";
+        StackPage {
+          name: "preview";
 
-        child: $PigouneAssetPreview asset_preview {};
-      }
+          child: $PigouneAssetPreview asset_preview {};
+        }
+      };
     };
   };
 }

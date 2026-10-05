@@ -127,6 +127,28 @@ impl PigouneZoomView {
         self.fit_to_view();
     }
 
+    pub fn texture(&self) -> Option<gdk::Texture> {
+        self.imp().texture.borrow().clone()
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "drawing coordinates fit easily in f32"
+    )]
+    pub fn image_bounds(&self) -> graphene::Rect {
+        let imp = self.imp();
+        let zoom = imp.zoom.get();
+        let image = imp.image.get();
+        let center = imp.center.get();
+        let view_center = self.view_center();
+        graphene::Rect::new(
+            (view_center.x - center.x * zoom) as f32,
+            (view_center.y - center.y * zoom) as f32,
+            (image.width * zoom) as f32,
+            (image.height * zoom) as f32,
+        )
+    }
+
     pub fn set_shows_bounds(&self, shows_bounds: bool) {
         self.imp().shows_bounds.set(shows_bounds);
         self.queue_draw();
@@ -268,10 +290,6 @@ impl PigouneZoomView {
         }
     }
 
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "drawing coordinates are far below the limits of f32"
-    )]
     fn draw(&self, snapshot: &gtk::Snapshot) {
         let imp = self.imp();
         let Some(texture) = imp.texture.borrow().clone() else {
@@ -279,14 +297,7 @@ impl PigouneZoomView {
         };
         let zoom = imp.zoom.get();
         let image = imp.image.get();
-        let center = imp.center.get();
-        let view_center = self.view_center();
-        let bounds = graphene::Rect::new(
-            (view_center.x - center.x * zoom) as f32,
-            (view_center.y - center.y * zoom) as f32,
-            (image.width * zoom) as f32,
-            (image.height * zoom) as f32,
-        );
+        let bounds = self.image_bounds();
         let filter = if zoom_math::shows_sharp_pixels(
             zoom,
             image.width,

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
-use gtk::{gdk, glib};
+use gtk::{gdk, glib, graphene};
 
 use crate::animation;
 use crate::asset_facts;
@@ -197,6 +197,27 @@ impl PigouneAssetTile {
             }
         ));
         imp.loading.replace(Some(loading));
+    }
+
+    #[expect(
+        clippy::cast_precision_loss,
+        reason = "thumbnail sides are small enough to be exact in f32"
+    )]
+    pub fn drawn_thumbnail(&self, target: &impl IsA<gtk::Widget>) -> Option<graphene::Rect> {
+        let picture = self.imp().picture.get();
+        let paintable = picture.paintable()?;
+        let space = picture.compute_bounds(target)?;
+        let width = paintable.intrinsic_width().max(1) as f32;
+        let height = paintable.intrinsic_height().max(1) as f32;
+        let scale = (space.width() / width)
+            .min(space.height() / height)
+            .min(1.0);
+        Some(graphene::Rect::new(
+            space.x() + (space.width() - width * scale) / 2.0,
+            space.y() + (space.height() - height * scale) / 2.0,
+            width * scale,
+            height * scale,
+        ))
     }
 
     pub fn asset(&self) -> Option<PigouneAssetObject> {
