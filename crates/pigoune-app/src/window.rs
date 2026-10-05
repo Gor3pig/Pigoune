@@ -3625,7 +3625,7 @@ impl PigouneWindow {
                 "Add this tag to resources from the details panel, or drop files on it.",
             )));
         } else if let AssetView::Smart(_) = view {
-            page.set_icon_name(Some("smart-collection-symbolic"));
+            page.set_icon_name(Some("media-playlist-shuffle-symbolic"));
             page.set_title(&gettext("No Resource in “{name}”").replace("{name}", view_name));
             page.set_description(Some(&gettext(
                 "No resource matches this smart collection yet. Matching resources appear here by themselves.",

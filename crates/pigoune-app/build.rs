@@ -6,7 +6,6 @@ use std::process::Command;
 const UI_SOURCE_DIR: &str = "ui";
 const STYLESHEET_NAME: &str = "style.css";
 const ICONS_SOURCE_DIR: &str = "../../data/icons";
-const SYMBOLIC_ICONS_SOURCE_DIR: &str = "icons";
 const PO_SOURCE_DIR: &str = "../../po";
 const GETTEXT_PACKAGE: &str = "pigoune";
 const DATA_SOURCE_DIR: &str = "../../data";
@@ -20,7 +19,6 @@ fn main() {
     compile_blueprints(&staging_dir.join("ui"));
     stage_stylesheet(&staging_dir);
     stage_application_icons(&staging_dir.join("icons"));
-    stage_symbolic_icons(&staging_dir.join("icons/scalable/actions"));
     stage_translated_metainfo(&staging_dir);
     compile_development_translations(&out_dir.join("locale"));
     compile_development_settings_schema(&out_dir.join("schemas"));
@@ -33,7 +31,6 @@ fn main() {
 
     println!("cargo::rerun-if-changed={UI_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={ICONS_SOURCE_DIR}");
-    println!("cargo::rerun-if-changed={SYMBOLIC_ICONS_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={PO_SOURCE_DIR}");
     println!("cargo::rerun-if-changed={DATA_SOURCE_DIR}/io.github.gor3pig.Pigoune.gschema.xml");
     println!("cargo::rerun-if-changed={DATA_SOURCE_DIR}/{METAINFO_TEMPLATE}");
@@ -75,15 +72,6 @@ fn stage_application_icons(output_dir: &Path) {
             target_dir.join("io.github.gor3pig.Pigoune.png"),
         )
         .expect("official icon exists");
-    }
-}
-
-fn stage_symbolic_icons(output_dir: &Path) {
-    fs::create_dir_all(output_dir).expect("symbolic icon output directory can be created");
-    for entry in fs::read_dir(SYMBOLIC_ICONS_SOURCE_DIR).expect("symbolic icons directory exists") {
-        let path = entry.expect("symbolic icon entry is readable").path();
-        let name = path.file_name().expect("symbolic icon has a name");
-        fs::copy(&path, output_dir.join(name)).expect("symbolic icon can be staged");
     }
 }
 

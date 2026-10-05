@@ -20,7 +20,7 @@ use crate::sidebar_row::PigouneSidebarRow;
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
-const SMART_COLLECTION_ICON: &str = "smart-collection-symbolic";
+const SMART_COLLECTION_ICON: &str = "media-playlist-shuffle-symbolic";
 const TRASH_ICON: &str = "user-trash-symbolic";
 const DRAG_OVER: &str = "drag-over";
 const HEADER_MEASURE_DELAY: std::time::Duration = std::time::Duration::from_millis(50);
