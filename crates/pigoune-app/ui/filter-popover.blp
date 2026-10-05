@@ -10,25 +10,7 @@ template $PigouneFilterPopover: Popover {
     margin-end: 6;
     width-request: 260;
 
-    Label {
-      label: _("Type");
-      xalign: 0;
-
-      styles [
-        "heading",
-      ]
-    }
-
-    FlowBox formats_box {
-      selection-mode: none;
-      min-children-per-line: 3;
-      max-children-per-line: 3;
-      homogeneous: true;
-    }
-
-    CheckButton favorites_check {
-      label: _("Favorites Only");
-    }
+    $PigouneFilterChoices choices {}
 
     Button clear_button {
       label: _("_Clear Filters");

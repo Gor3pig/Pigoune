@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 
 use super::{
-    AssetCommand, AssetError, CollectionCommand, CollectionError, Library, TagCommand, TagError,
+    AssetCommand, AssetError, CollectionCommand, CollectionError, Library, SmartCollectionCommand,
+    SmartCollectionError, TagCommand, TagError,
 };
 
 pub const HISTORY_LIMIT: usize = 100;
@@ -11,6 +12,7 @@ pub enum Change {
     Asset(AssetCommand),
     Collection(CollectionCommand),
     Tag(TagCommand),
+    SmartCollection(SmartCollectionCommand),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,6 +26,8 @@ pub enum UndoError {
     Collection(#[from] CollectionError),
     #[error(transparent)]
     Tag(#[from] TagError),
+    #[error(transparent)]
+    SmartCollection(#[from] SmartCollectionError),
 }
 
 #[derive(Debug, Default)]
@@ -93,6 +97,9 @@ impl Library {
             Change::Tag(command) => {
                 self.run_tag_command(&command)?;
             }
+            Change::SmartCollection(command) => {
+                self.run_smart_collection_command(&command)?;
+            }
         }
         Ok(Some(entry.done))
     }
@@ -104,6 +111,7 @@ impl Change {
             Self::Asset(command) => command.changes_nothing(),
             Self::Collection(command) => command.changes_nothing(),
             Self::Tag(command) => command.changes_nothing(),
+            Self::SmartCollection(_) => false,
         }
     }
 }

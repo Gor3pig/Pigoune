@@ -12,6 +12,7 @@ crates/pigoune-app/src/import_progress_dialog.rs
 crates/pigoune-app/src/import_report.rs
 crates/pigoune-app/ui/grid-header.blp
 crates/pigoune-app/ui/filter-popover.blp
+crates/pigoune-app/src/filter_choices.rs
 crates/pigoune-app/ui/asset-details.blp
 crates/pigoune-app/src/asset_facts.rs
 crates/pigoune-app/ui/asset-preview.blp
@@ -39,4 +40,6 @@ crates/pigoune-app/src/conversion_report.rs
 crates/pigoune-app/src/preferences_dialog.rs
 crates/pigoune-app/ui/library-info-dialog.blp
 crates/pigoune-app/src/library_info_dialog.rs
+crates/pigoune-app/ui/smart-collection-dialog.blp
+crates/pigoune-app/src/smart_collection_dialog.rs
 crates/pigoune-app/src/chart_slices.rs

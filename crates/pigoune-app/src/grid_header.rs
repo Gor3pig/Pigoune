@@ -34,6 +34,7 @@ mod imp {
         pub filter_button: TemplateChild<gtk::MenuButton>,
         #[template_child]
         pub filter_popover: TemplateChild<PigouneFilterPopover>,
+
         #[property(get, set)]
         pub compact: Cell<bool>,
         #[property(get, set = Self::set_narrow)]

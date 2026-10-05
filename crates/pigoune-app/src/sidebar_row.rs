@@ -7,7 +7,7 @@ use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetView, CollectionId};
 
 use crate::collection_drop::{self, CollectionDrop, DropZone};
-use crate::drag_content::{DraggedAssets, DraggedCollection};
+use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 
@@ -32,6 +32,7 @@ mod imp {
         pub label: OnceCell<gtk::Label>,
         pub count: OnceCell<gtk::Label>,
         pub header_buttons: OnceCell<gtk::Box>,
+        pub smart_header_buttons: OnceCell<gtk::Box>,
         pub hash: OnceCell<gtk::Label>,
         pub menu: OnceCell<gtk::PopoverMenu>,
         pub item: RefCell<Option<PigouneSidebarItem>>,
@@ -91,6 +92,8 @@ impl PigouneSidebarRow {
                 .unwrap_or_default(),
         );
         part(&imp.header_buttons).set_visible(item.entry() == SidebarEntry::CollectionsHeader);
+        part(&imp.smart_header_buttons)
+            .set_visible(item.entry() == SidebarEntry::SmartCollectionsHeader);
         imp.item.replace(Some(item.clone()));
     }
 
@@ -127,18 +130,37 @@ impl PigouneSidebarRow {
                 .css_classes(["flat"])
                 .build(),
         );
+        let smart_header_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        smart_header_buttons.append(
+            &gtk::MenuButton::builder()
+                .icon_name("view-sort-descending-symbolic")
+                .tooltip_text(gettext("Sort Smart Collections"))
+                .menu_model(&smart_collection_sort_menu())
+                .css_classes(["flat"])
+                .build(),
+        );
+        smart_header_buttons.append(
+            &gtk::Button::builder()
+                .icon_name("list-add-symbolic")
+                .tooltip_text(gettext("New Smart Collection"))
+                .action_name("win.new-smart-collection")
+                .css_classes(["flat"])
+                .build(),
+        );
         let menu = gtk::PopoverMenu::builder().has_arrow(false).build();
         self.append(&icon);
         self.append(&hash);
         self.append(&label);
         self.append(&count);
         self.append(&header_buttons);
+        self.append(&smart_header_buttons);
         self.append(&menu);
         set_part(&imp.icon, icon);
         set_part(&imp.hash, hash);
         set_part(&imp.label, label);
         set_part(&imp.count, count);
         set_part(&imp.header_buttons, header_buttons);
+        set_part(&imp.smart_header_buttons, smart_header_buttons);
         set_part(&imp.menu, menu);
         self.open_menu_on_secondary_click();
         self.accept_drops();
@@ -152,6 +174,7 @@ impl PigouneSidebarRow {
         drop_target.set_types(&[
             DraggedAssets::static_type(),
             DraggedCollection::static_type(),
+            DraggedSmartCollection::static_type(),
             gdk::FileList::static_type(),
         ]);
         drop_target.connect_enter(glib::clone!(
@@ -234,12 +257,20 @@ impl PigouneSidebarRow {
     }
 
     fn follow_pointer(&self, target: &gtk::DropTarget, y: f64) {
-        let carries_collection = target.current_drop().is_some_and(|drop| {
-            drop.formats()
-                .contains_type(DraggedCollection::static_type())
-        });
-        let zone = if carries_collection && self.view().is_some() {
-            collection_drop::zone_at(y, f64::from(self.height()))
+        let carries = |kind: glib::Type| {
+            target
+                .current_drop()
+                .is_some_and(|drop| drop.formats().contains_type(kind))
+        };
+        let height = f64::from(self.height());
+        let zone = if carries(DraggedSmartCollection::static_type()) {
+            if y < height / 2.0 {
+                DropZone::Before
+            } else {
+                DropZone::After
+            }
+        } else if carries(DraggedCollection::static_type()) && self.view().is_some() {
+            collection_drop::zone_at(y, height)
         } else {
             DropZone::Into
         };
@@ -257,6 +288,9 @@ impl PigouneSidebarRow {
             .borrow()
             .as_ref()
             .map(PigouneSidebarItem::entry);
+        if offered.contains_type(DraggedSmartCollection::static_type()) {
+            return matches!(entry, Some(SidebarEntry::View(AssetView::Smart(_))));
+        }
         if offered.contains_type(DraggedCollection::static_type()) {
             return matches!(
                 entry,
@@ -271,7 +305,12 @@ impl PigouneSidebarRow {
                 offered.contains_type(DraggedAssets::static_type())
             }
             Some(SidebarEntry::View(_)) => !offered.contains_type(DraggedAssets::static_type()),
-            Some(SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader) | None => false,
+            Some(
+                SidebarEntry::CollectionsHeader
+                | SidebarEntry::SmartCollectionsHeader
+                | SidebarEntry::TagsHeader,
+            )
+            | None => false,
         }
     }
 
@@ -282,6 +321,14 @@ impl PigouneSidebarRow {
         else {
             return false;
         };
+        if let Ok(dragged) = value.get::<DraggedSmartCollection>() {
+            let Some(AssetView::Smart(target)) = self.view() else {
+                return false;
+            };
+            let after = self.imp().drop_zone.get() == DropZone::After;
+            sidebar.smart_collection_dropped(dragged.0, target, after);
+            return true;
+        }
         if let Ok(dragged) = value.get::<DraggedCollection>() {
             let Some(drop) = self.collection_drop() else {
                 return false;
@@ -353,6 +400,9 @@ impl PigouneSidebarRow {
                 AssetView::Collection(id) => Some(gdk::ContentProvider::for_value(
                     &DraggedCollection(id).to_value(),
                 )),
+                AssetView::Smart(id) => Some(gdk::ContentProvider::for_value(
+                    &DraggedSmartCollection(id).to_value(),
+                )),
                 _ => None,
             }
         ));
@@ -364,6 +414,14 @@ impl PigouneSidebarRow {
             }
         ));
         self.add_controller(source);
+    }
+
+    pub fn entry(&self) -> Option<SidebarEntry> {
+        self.imp()
+            .item
+            .borrow()
+            .as_ref()
+            .map(PigouneSidebarItem::entry)
     }
 
     pub fn view(&self) -> Option<AssetView> {
@@ -413,6 +471,7 @@ impl PigouneSidebarRow {
         let model = match self.view() {
             Some(AssetView::Collection(id)) => collection_menu(id),
             Some(AssetView::Tag(id)) => tag_menu(&id.to_string()),
+            Some(AssetView::Smart(id)) => smart_collection_menu(&id.to_string()),
             _ => return false,
         };
         let menu = part(&self.imp().menu);
@@ -454,6 +513,19 @@ fn tag_menu(tag: &str) -> gio::Menu {
     menu
 }
 
+fn smart_collection_menu(collection: &str) -> gio::Menu {
+    let menu = gio::Menu::new();
+    menu.append(
+        Some(&gettext("Edit…")),
+        Some(&format!("win.edit-smart-collection::{collection}")),
+    );
+    menu.append(
+        Some(&gettext("Delete…")),
+        Some(&format!("win.delete-smart-collection::{collection}")),
+    );
+    menu
+}
+
 fn collection_menu(collection: CollectionId) -> gio::Menu {
     let menu = gio::Menu::new();
     menu.append(
@@ -490,6 +562,29 @@ fn collection_sort_menu() -> gio::Menu {
     );
     let menu = gio::Menu::new();
     menu.append_section(Some(&gettext("Sort Collections By")), &criteria);
+    menu.append_section(None, &direction);
+    menu
+}
+
+fn smart_collection_sort_menu() -> gio::Menu {
+    let criteria = gio::Menu::new();
+    for (label, target) in [
+        (gettext("Name"), "name"),
+        (gettext("Date Created"), "created"),
+        (gettext("Custom Order"), "custom"),
+    ] {
+        criteria.append(
+            Some(&label),
+            Some(&format!("win.smart-collection-sort::{target}")),
+        );
+    }
+    let direction = gio::Menu::new();
+    direction.append(
+        Some(&gettext("Reverse Order")),
+        Some("win.smart-collection-sort-reversed"),
+    );
+    let menu = gio::Menu::new();
+    menu.append_section(Some(&gettext("Sort Smart Collections By")), &criteria);
     menu.append_section(None, &direction);
     menu
 }

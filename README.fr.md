@@ -52,8 +52,8 @@ automatiquement.
 <td width="50%" valign="top">
 
 ### Organiser
-Collections imbriquées, tags, favoris, ainsi qu'une note, une source, une licence et un auteur
-pour chaque ressource.
+Collections imbriquées, collections intelligentes qui se remplissent toutes seules, tags,
+favoris, ainsi qu'une note, une source, une licence et un auteur pour chaque ressource.
 
 </td>
 </tr>

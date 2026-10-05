@@ -88,6 +88,26 @@
       <summary>Reverse collection order</summary>
       <description>Whether the natural direction of the collection sort criterion is reversed.</description>
     </key>
+    <key name="smart-collection-sort" type="s">
+      <choices>
+        <choice value="name"/>
+        <choice value="created"/>
+        <choice value="custom"/>
+      </choices>
+      <default>"name"</default>
+      <summary>Smart collection sort criterion</summary>
+      <description>How smart collections are ordered in the sidebar.</description>
+    </key>
+    <key name="smart-collection-sort-reversed" type="b">
+      <default>false</default>
+      <summary>Reverse smart collection order</summary>
+      <description>Whether the natural direction of the smart collection sort criterion is reversed.</description>
+    </key>
+    <key name="show-smart-collections" type="b">
+      <default>true</default>
+      <summary>Show smart collections</summary>
+      <description>Whether the sidebar shows the smart collections section.</description>
+    </key>
     <key name="show-counts" type="b">
       <default>true</default>
       <summary>Show resource counts</summary>

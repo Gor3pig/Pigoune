@@ -26,6 +26,10 @@ pub fn present(
         ("show_names_row", settings::SHOW_NAMES),
         ("animate_on_hover_row", settings::ANIMATE_ON_HOVER),
         ("show_counts_row", settings::SHOW_COUNTS),
+        (
+            "show_smart_collections_row",
+            settings::SHOW_SMART_COLLECTIONS,
+        ),
         ("confirm_empty_trash_row", settings::CONFIRM_EMPTY_TRASH),
         ("auto_empty_trash_row", settings::AUTO_EMPTY_TRASH),
     ] {

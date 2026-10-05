@@ -109,6 +109,9 @@ These rules keep the code base consistent. `check.sh` enforces most of them.
   documentation.
 - **The core holds the rules.** `pigoune-core` knows nothing about GTK. Every change to a
   library goes through it and is covered by tests. The application only displays and asks.
+- **Filters are shared.** A new filter goes into `AssetFilter`, `filter_choices.rs` and the
+  `smart_collections` table together, so that the Filters popover and smart collections stay
+  identical.
 - **Every user interface string is translatable**, written in American English, and every file
   that contains translatable strings is listed in `po/POTFILES.in`. If you add or change
   strings, update the French translation too (see [po/README.md](po/README.md)), or say in

@@ -120,6 +120,30 @@ Pour savoir où une ressource est rangée, regardez **Rangée dans**, en bas du 
 détails. Un clic sur une collection l'ouvre dans la barre latérale et met la ressource en
 évidence. Un clic sur un tag du panneau de détails fonctionne de la même façon.
 
+### Les collections intelligentes
+
+Une collection intelligente est une recherche enregistrée qui se tient à jour toute seule :
+elle affiche toujours les ressources qui correspondent à ses critères, y compris celles que vous
+importez plus tard. Par exemple, *tous mes SVG favoris* ou *tout ce qui parle de logo dans la
+collection Clients*.
+
+- **Créez-en une** avec le bouton **+** à côté de **Collections intelligentes** dans la barre
+  latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
+  l'entrée sélectionnée dans la barre latérale. Donnez-lui un nom, puis choisissez des mots à
+  rechercher, des types ou **Favoris uniquement** : il faut au moins un critère.
+- **Mots à rechercher** fonctionne comme le champ de recherche : chaque mot doit apparaître
+  dans le nom, les tags, la note, la source, la licence ou l'auteur.
+- **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher
+  à l'intérieur.
+- **Modifiez** son nom ou ses critères avec **Modifier…** dans son menu du clic droit, ou avec
+  <kbd>F2</kbd>. **Supprimer…** ne supprime que la recherche enregistrée : les ressources
+  restent dans la bibliothèque.
+- **Réorganisez** les collections intelligentes en les faisant glisser dans la barre latérale,
+  ou triez-les par nom ou par date de création avec le bouton à côté de leur titre.
+
+On ne peut pas déposer de ressources sur une collection intelligente, puisque son contenu suit
+ses critères.
+
 ## Regarder vos ressources
 
 - Changez la taille des vignettes avec le curseur au-dessus de la grille, ou avec
@@ -240,6 +264,9 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
 - **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
   distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
 - **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
+- **Collections intelligentes** : désactivez-la pour masquer la section des collections
+  intelligentes de la barre latérale. Vos collections intelligentes sont conservées et
+  reviennent quand vous la réactivez.
 - **Confirmer avant de vider la corbeille**.
 - **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
   30 jours dans la corbeille.

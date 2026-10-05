@@ -23,7 +23,9 @@ pub fn describe(
             describe_collection(hovered, current_view, to, &subject, library)?
         }
         AssetView::Tag(tag) => describe_tag(&hovered.assets, tag, &subject, library)?,
-        AssetView::All | AssetView::Favorites | AssetView::Unclassified => return None,
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Smart(_) => {
+            return None;
+        }
     };
     Some(markup)
 }

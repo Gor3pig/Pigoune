@@ -5,7 +5,9 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
-use pigoune_core::{AssetId, AssetView, CollectionId, Tag, ViewCounts};
+use pigoune_core::{
+    AssetId, AssetView, CollectionId, SmartCollection, SmartCollectionId, Tag, ViewCounts,
+};
 
 use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::CollectionDrop;
@@ -18,14 +20,18 @@ const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
 const COLLECTION_ICON: &str = "folder-symbolic";
+const SMART_COLLECTION_ICON: &str = "smart-collection-symbolic";
 const TRASH_ICON: &str = "user-trash-symbolic";
 const DRAG_OVER: &str = "drag-over";
+const HEADER_MEASURE_DELAY: std::time::Duration = std::time::Duration::from_millis(50);
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
 type AssetsHoveredCallback = Box<dyn Fn(Option<HoveredDrop>)>;
+type WidthNeededCallback = Box<dyn Fn(Option<i32>)>;
+type SmartCollectionDroppedCallback = Box<dyn Fn(SmartCollectionId, SmartCollectionId, bool)>;
 
 pub struct HoveredDrop {
     pub view: AssetView,
@@ -40,6 +46,8 @@ pub struct SidebarContent {
     pub selected: AssetView,
     pub reveal: Vec<CollectionId>,
     pub tags: Vec<Tag>,
+    pub smart_collections: Vec<SmartCollection>,
+    pub show_smart_collections: bool,
 }
 
 mod imp {
@@ -50,7 +58,8 @@ mod imp {
 
     use super::{
         AssetsDroppedCallback, AssetsHoveredCallback, CollectionDroppedCallback,
-        FilesDroppedCallback, ViewChangedCallback,
+        FilesDroppedCallback, SmartCollectionDroppedCallback, ViewChangedCallback,
+        WidthNeededCallback,
     };
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -64,6 +73,9 @@ mod imp {
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
         pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
         pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
+        pub on_width_needed: RefCell<Option<WidthNeededCallback>>,
+        pub shows_smart_collections: Cell<bool>,
+        pub on_smart_collection_dropped: RefCell<Option<SmartCollectionDroppedCallback>>,
     }
 
     #[glib::object_subclass]
@@ -161,6 +173,81 @@ impl PigouneSidebar {
         }
     }
 
+    pub fn connect_smart_collection_dropped(
+        &self,
+        callback: impl Fn(SmartCollectionId, SmartCollectionId, bool) + 'static,
+    ) {
+        self.imp()
+            .on_smart_collection_dropped
+            .replace(Some(Box::new(callback)));
+    }
+
+    pub fn smart_collection_dropped(
+        &self,
+        dragged: SmartCollectionId,
+        target: SmartCollectionId,
+        after: bool,
+    ) {
+        if let Some(on_dropped) = self.imp().on_smart_collection_dropped.borrow().as_ref() {
+            on_dropped(dragged, target, after);
+        }
+    }
+
+    pub fn connect_width_needed(&self, callback: impl Fn(Option<i32>) + 'static) {
+        self.imp().on_width_needed.replace(Some(Box::new(callback)));
+    }
+
+    fn measure_headers_soon(&self) {
+        let sidebar = self.downgrade();
+        glib::timeout_add_local_once(HEADER_MEASURE_DELAY, move || {
+            if let Some(sidebar) = sidebar.upgrade() {
+                sidebar.measure_headers();
+            }
+        });
+    }
+
+    fn measure_headers(&self) {
+        if !self.imp().shows_smart_collections.get() {
+            self.width_needed(None);
+            return;
+        }
+        let Some(header) = self.smart_collections_header() else {
+            return;
+        };
+        if header.width() == 0 {
+            self.measure_headers_soon();
+            return;
+        }
+        let (_, natural, _, _) = header.measure(gtk::Orientation::Horizontal, -1);
+        let surroundings = self.width() - header.width();
+        self.width_needed(Some(surroundings + natural));
+    }
+
+    fn width_needed(&self, width: Option<i32>) {
+        if let Some(on_width_needed) = self.imp().on_width_needed.borrow().as_ref() {
+            on_width_needed(width);
+        }
+    }
+
+    fn smart_collections_header(&self) -> Option<PigouneSidebarRow> {
+        let mut child = self.imp().list_view.first_child();
+        while let Some(row) = child {
+            let header = row
+                .first_child()
+                .and_downcast::<gtk::TreeExpander>()
+                .and_then(|expander| expander.child())
+                .and_downcast::<PigouneSidebarRow>()
+                .filter(|sidebar_row| {
+                    sidebar_row.entry() == Some(SidebarEntry::SmartCollectionsHeader)
+                });
+            if header.is_some() {
+                return header;
+            }
+            child = row.next_sibling();
+        }
+        None
+    }
+
     pub fn show_content(&self, content: &SidebarContent) {
         let imp = self.imp();
         let mut expanded = self.expanded_collections();
@@ -206,6 +293,24 @@ impl PigouneSidebar {
         for item in collection_items(&content.tree, None, counts) {
             root.append(&item);
         }
+        if content.show_smart_collections {
+            root.append(&PigouneSidebarItem::new(SidebarItemData {
+                entry: SidebarEntry::SmartCollectionsHeader,
+                label: gettext("Smart Collections"),
+                icon_name: "",
+                count: None,
+                children: None,
+            }));
+        }
+        for collection in &content.smart_collections {
+            root.append(&view_item(
+                AssetView::Smart(collection.id),
+                collection.name.clone(),
+                SMART_COLLECTION_ICON,
+                counts,
+                None,
+            ));
+        }
         if !content.tags.is_empty() {
             root.append(&PigouneSidebarItem::new(SidebarItemData {
                 entry: SidebarEntry::TagsHeader,
@@ -244,6 +349,9 @@ impl PigouneSidebar {
         let position = position_of(&tree_model, content.selected).unwrap_or(0);
         selection.set_selected(position);
         imp.rebuilding.set(false);
+        imp.shows_smart_collections
+            .set(content.show_smart_collections);
+        self.measure_headers_soon();
     }
 
     pub fn point_out(&self, view: AssetView) {
@@ -311,6 +419,12 @@ impl PigouneSidebar {
                         ("win.rename-collection", id.to_string())
                     }
                     (gdk::Key::F2, Some(AssetView::Tag(id))) => ("win.rename-tag", id.to_string()),
+                    (gdk::Key::F2, Some(AssetView::Smart(id))) => {
+                        ("win.edit-smart-collection", id.to_string())
+                    }
+                    (gdk::Key::Delete, Some(AssetView::Smart(id))) => {
+                        ("win.delete-smart-collection", id.to_string())
+                    }
                     (gdk::Key::Delete, Some(AssetView::Collection(id))) => {
                         ("win.delete-collection", id.to_string())
                     }
@@ -603,6 +717,7 @@ fn collection_of(row: &gtk::TreeListRow) -> Option<CollectionId> {
         | AssetView::Favorites
         | AssetView::Unclassified
         | AssetView::Tag(_)
+        | AssetView::Smart(_)
         | AssetView::Trash => None,
     }
 }

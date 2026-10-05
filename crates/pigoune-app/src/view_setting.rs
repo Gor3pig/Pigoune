@@ -1,4 +1,4 @@
-use pigoune_core::{AssetView, CollectionId, TagId};
+use pigoune_core::{AssetView, CollectionId, SmartCollectionId, TagId};
 
 const ALL: &str = "all";
 const UNCLASSIFIED: &str = "unclassified";
@@ -6,6 +6,7 @@ const FAVORITES: &str = "favorites";
 const TRASH: &str = "trash";
 const COLLECTION_PREFIX: &str = "collection:";
 const TAG_PREFIX: &str = "tag:";
+const SMART_PREFIX: &str = "smart:";
 
 pub fn to_setting(view: AssetView) -> String {
     match view {
@@ -15,6 +16,7 @@ pub fn to_setting(view: AssetView) -> String {
         AssetView::Trash => TRASH.to_owned(),
         AssetView::Collection(id) => format!("{COLLECTION_PREFIX}{id}"),
         AssetView::Tag(id) => format!("{TAG_PREFIX}{id}"),
+        AssetView::Smart(id) => format!("{SMART_PREFIX}{id}"),
     }
 }
 
@@ -31,6 +33,12 @@ pub fn from_setting(value: &str) -> AssetView {
     if let Some(tag) = value.strip_prefix(TAG_PREFIX).and_then(TagId::parse) {
         return AssetView::Tag(tag);
     }
+    if let Some(smart) = value
+        .strip_prefix(SMART_PREFIX)
+        .and_then(SmartCollectionId::parse)
+    {
+        return AssetView::Smart(smart);
+    }
     value
         .strip_prefix(COLLECTION_PREFIX)
         .and_then(CollectionId::parse)
@@ -39,7 +47,7 @@ pub fn from_setting(value: &str) -> AssetView {
 
 #[cfg(test)]
 mod tests {
-    use pigoune_core::{AssetView, CollectionId, TagId};
+    use pigoune_core::{AssetView, CollectionId, SmartCollectionId, TagId};
 
     use super::{from_setting, to_setting};
 
@@ -53,6 +61,9 @@ mod tests {
             AssetView::Trash,
             AssetView::Collection(collection),
             AssetView::Tag(TagId::parse("00000000-0000-7000-8000-000000000009").expect("id")),
+            AssetView::Smart(
+                SmartCollectionId::parse("00000000-0000-7000-8000-00000000000b").expect("id"),
+            ),
         ] {
             assert_eq!(from_setting(&to_setting(view)), view);
         }

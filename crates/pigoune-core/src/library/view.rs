@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{CollectionId, Library, LibraryError, TagId};
+use super::{CollectionId, Library, LibraryError, SmartCollectionId, TagId};
 
 pub const SUBTREE: &str = "WITH RECURSIVE subtree(id) AS (
         SELECT id FROM collections WHERE id = ?1 AND trashed_at_unix_ms IS NULL
@@ -16,6 +16,8 @@ const IN_SUBTREE: &str = "id IN (SELECT asset_id FROM asset_collections
 const FAVORITE: &str = "is_favorite = 1";
 
 const EVERYTHING: &str = "1 = 1";
+
+const NOTHING: &str = "1 = 0";
 
 const NOT_TRASHED: &str = "trashed_at_unix_ms IS NULL";
 
@@ -35,6 +37,7 @@ pub enum AssetView {
     Unclassified,
     Collection(CollectionId),
     Tag(TagId),
+    Smart(SmartCollectionId),
     Trash,
 }
 
@@ -46,6 +49,7 @@ pub struct ViewCounts {
     pub trash: usize,
     pub collections: HashMap<CollectionId, usize>,
     pub tags: HashMap<TagId, usize>,
+    pub smart_collections: HashMap<SmartCollectionId, usize>,
 }
 
 impl ViewCounts {
@@ -57,6 +61,7 @@ impl ViewCounts {
             AssetView::Unclassified => self.unclassified,
             AssetView::Collection(id) => self.collections.get(&id).copied().unwrap_or(0),
             AssetView::Tag(id) => self.tags.get(&id).copied().unwrap_or(0),
+            AssetView::Smart(id) => self.smart_collections.get(&id).copied().unwrap_or(0),
             AssetView::Trash => self.trash,
         }
     }
@@ -81,6 +86,7 @@ pub fn filter(view: AssetView) -> ViewFilter {
         AssetView::Unclassified => (IN_NO_COLLECTION, None),
         AssetView::Collection(id) => (IN_SUBTREE, Some(id.to_string())),
         AssetView::Tag(id) => (WITH_TAG, Some(id.to_string())),
+        AssetView::Smart(_) => (NOTHING, None),
     };
     let trash_state = if view == AssetView::Trash {
         TRASHED
@@ -140,8 +146,18 @@ impl Library {
             })?
             .collect::<Result<_, _>>()?;
 
+        let smart_collections = self
+            .smart_collections()?
+            .into_iter()
+            .map(|collection| {
+                let total = self.smart_collection_assets(collection.id)?.len();
+                Ok((collection.id, total))
+            })
+            .collect::<Result<_, LibraryError>>()?;
+
         Ok(ViewCounts {
             tags,
+            smart_collections,
             all: count(&filter(AssetView::All).clause())?,
             favorites: count(&filter(AssetView::Favorites).clause())?,
             unclassified: count(&filter(AssetView::Unclassified).clause())?,

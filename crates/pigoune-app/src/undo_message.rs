@@ -1,7 +1,7 @@
 use gettextrs::{gettext, ngettext};
 use pigoune_core::{
-    AssetCommand, AssetId, Change, CollectionCommand, CollectionId, Library, TagCommand, TagId,
-    TextField,
+    AssetCommand, AssetId, Change, CollectionCommand, CollectionId, Library,
+    SmartCollectionCommand, SmartCollectionId, TagCommand, TagId, TextField,
 };
 
 pub fn describe(change: &Change, library: &Library) -> String {
@@ -10,6 +10,7 @@ pub fn describe(change: &Change, library: &Library) -> String {
         Change::Asset(command) => describe_asset(command, &names),
         Change::Collection(command) => describe_collection(command, &names),
         Change::Tag(command) => describe_tag(command, &names),
+        Change::SmartCollection(command) => describe_smart_collection(command, &names),
     };
     described.unwrap_or_else(|| gettext("Last change undone"))
 }
@@ -194,6 +195,27 @@ fn describe_tag(command: &TagCommand, names: &Names) -> Option<String> {
     Some(text)
 }
 
+fn describe_smart_collection(command: &SmartCollectionCommand, names: &Names) -> Option<String> {
+    let text = match command {
+        SmartCollectionCommand::Create { collection } => named(
+            &gettext("Creating the smart collection “{name}” undone"),
+            &collection.name,
+        ),
+        SmartCollectionCommand::Update { collection } => named(
+            &gettext("Changes to the smart collection “{name}” undone"),
+            &names.smart_collection(collection.id)?,
+        ),
+        SmartCollectionCommand::Arrange { .. } => {
+            gettext("Reordering the smart collections undone")
+        }
+        SmartCollectionCommand::Delete { id } => named(
+            &gettext("Deleting the smart collection “{name}” undone"),
+            &names.smart_collection(*id)?,
+        ),
+    };
+    Some(text)
+}
+
 fn describe_tag_batch(commands: &[TagCommand], names: &Names) -> Option<String> {
     let added = commands
         .iter()
@@ -240,6 +262,10 @@ impl Names<'_> {
 
     fn collection(&self, id: CollectionId) -> Option<String> {
         Some(self.0.collection(id).ok()??.name)
+    }
+
+    fn smart_collection(&self, id: SmartCollectionId) -> Option<String> {
+        Some(self.0.smart_collection(id).ok()??.name)
     }
 
     fn tag(&self, id: TagId) -> Option<String> {

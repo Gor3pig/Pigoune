@@ -28,16 +28,20 @@ crates/
 ### `pigoune-core`
 
 Everything that touches a library lives here: creating and opening libraries, the database
-schema and its migrations, importing files and folders, duplicates, collections, tags,
-favorites, metadata, search and filters, the trash, export and undo.
+schema and its migrations, importing files and folders, duplicates, collections, smart
+collections, tags, favorites, metadata, search and filters, the trash, export and undo.
 
 - **Commands and undo.** Every change goes through a command (`AssetCommand`,
-  `CollectionCommand`, `TagCommand`). Applying a command returns its exact inverse, which the
+  `CollectionCommand`, `TagCommand`, `SmartCollectionCommand`). Applying a command returns its exact inverse, which the
   history keeps to undo it later. This is what makes <kbd>Ctrl</kbd>+<kbd>Z</kbd> reliable.
 - **All or nothing.** Each command runs in a SQLite transaction, so a failure never leaves a
   library half changed.
 - **Explicit errors.** Errors are typed (`LibraryError`, `ImportError`, `CollectionError`, ...)
   so that the application can turn each of them into a clear message.
+- **Smart collections** are saved searches: a scope (All, Favorites, Unclassified, a
+  collection or a tag) and an `AssetFilter` (words, formats, favorites only). Their content is
+  computed when they are shown, so new imports appear by themselves. `AssetView::Smart` lets
+  the rest of the code treat them like any other view.
 - **Tests** live in `crates/pigoune-core/tests/` and work on real temporary libraries, with
   sample images in `tests/fixtures/`.
 
@@ -50,6 +54,12 @@ to change it.
   which ties the sidebar, the grid, the details panel and the preview together.
 - Each widget has its own module (`sidebar.rs`, `asset_grid.rs`, `asset_details.rs`,
   `asset_preview.rs`, ...) and, when it has a fixed layout, a Blueprint file in `ui/`.
+- **Filters are defined once.** `filter_choices.rs` builds the filter checkboxes used both by
+  the Filters popover and by the smart collection window. A new filter is added there, to
+  `AssetFilter` in the core, and to the `smart_collections` table, so that smart collections
+  can always save every filter.
+- Symbolic icons missing from the GNOME icon theme come from the GNOME Icon Library (CC0), with
+  their drawing unchanged, in `crates/pigoune-app/icons/`; `build.rs` adds them to the resources.
 - Small pure helpers (sorting, layout math, text formatting) sit in their own modules with unit
   tests, for example `asset_sort.rs`, `grid_columns.rs`, `tag_cloud.rs` or `asset_facts.rs`.
 - Inside Flatpak, folders chosen in the file chooser arrive as document portal paths
@@ -83,7 +93,8 @@ My logos.pigoune/
   files from `migrations/`, or a Rust step when existing files must be read again (format 2
   looks for animated PNG and WebP among assets imported earlier). Format 3 records the bucketed
   paths, then moves the folders and thumbnails into their buckets; every opening finishes moves
-  left behind by an interruption. A library created by a newer
+  left behind by an interruption. Format 4 adds the `smart_collections` table. A library created
+  by a newer
   version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.

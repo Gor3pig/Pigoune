@@ -107,6 +107,26 @@ To find out where an asset is stored, look at **Stored In** at the bottom of the
 panel. Clicking a collection there opens it in the sidebar and highlights the asset. Clicking
 a tag in the details panel works the same way.
 
+### Smart collections
+
+A smart collection is a saved search that keeps itself up to date: it always shows the assets
+that match its criteria, including the ones you import later. For example, *all my favorite
+SVG files* or *everything about logos in the Clients collection*.
+
+- **Create** one with the **+** button next to **Smart Collections** in the sidebar. The window
+  is filled in with the search and the filters in use, and with the entry selected in the
+  sidebar. Give it a name, then choose words to find, types or **Favorites Only**: at least
+  one criterion is needed.
+- **Words to Find** works like the search field: every word must appear somewhere in the name,
+  tags, note, source, license or author.
+- **Open** it from the sidebar to see its assets. You can still search inside it.
+- **Change** its name or criteria with **Edit…** in its right-click menu, or with
+  <kbd>F2</kbd>. **Delete…** only deletes the saved search: the assets stay in the library.
+- **Reorder** smart collections by dragging them in the sidebar, or sort them by name or
+  creation date with the button next to their title.
+
+Assets cannot be dropped onto a smart collection, since its content follows its criteria.
+
 ## Looking at assets
 
 - Change the thumbnail size with the slider above the grid, or with
@@ -209,6 +229,8 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
 - **Play Animations on Hover**: turn it off if moving thumbnails distract you; animations still
   play in the details panel and the preview.
 - **Show Resource Counts** next to each entry of the sidebar.
+- **Smart Collections**: turn it off to hide the smart collections section of the sidebar.
+  Your smart collections are kept and come back when you turn it on again.
 - **Confirm Before Emptying the Trash**.
 - **Empty the Trash Automatically**: assets are deleted for good after 30 days in the trash.
 - **Thumbnails**, under **Storage**, shows the space taken by the thumbnails of the open

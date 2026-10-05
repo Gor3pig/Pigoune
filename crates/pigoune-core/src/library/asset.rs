@@ -50,6 +50,9 @@ impl Library {
     }
 
     pub fn visible_assets_in(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
+        if let AssetView::Smart(id) = view {
+            return self.smart_collection_assets(id);
+        }
         let filter = view::filter(view);
         let clause = filter.clause();
         let mut statement = self.connection.prepare(&format!(
@@ -64,6 +67,12 @@ impl Library {
     }
 
     pub fn view_contains(&self, view: AssetView, asset: AssetId) -> Result<bool, LibraryError> {
+        if let AssetView::Smart(id) = view {
+            return Ok(self
+                .smart_collection_assets(id)?
+                .iter()
+                .any(|candidate| candidate.id == asset));
+        }
         let filter = view::filter(view);
         let clause = filter.clause();
         Ok(self

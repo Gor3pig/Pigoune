@@ -19,6 +19,8 @@ mod overview;
 mod records;
 mod schema;
 mod search;
+mod smart_collection;
+mod smart_collection_command;
 mod staging;
 mod storage;
 mod tag;
@@ -45,7 +47,7 @@ pub use collection::{Collection, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use error::{CollectionError, ImportError, LibraryError};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
-pub use id::{AssetId, CollectionId, TagId};
+pub use id::{AssetId, CollectionId, SmartCollectionId, TagId};
 pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
@@ -54,6 +56,8 @@ pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
 pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
 pub use search::AssetFilter;
+pub use smart_collection::{SmartCollection, can_be_saved_from};
+pub use smart_collection_command::{SmartCollectionCommand, SmartCollectionError};
 pub use storage::{FormatShare, StorageUse};
 pub use tag::Tag;
 pub use tag_command::{TagCommand, TagError};

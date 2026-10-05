@@ -8,10 +8,11 @@ use gtk::{gdk, gio, glib};
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
     CollectionId, CollectionPath, CollectionRemoval, ImportError, ImportSummary, Library,
-    LibraryError, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
-    library_display_name,
+    LibraryError, SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag,
+    TagCommand, TagError, TagId, TextField, UndoError, can_be_saved_from, library_display_name,
 };
 
+use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::clipboard_content;
@@ -34,6 +35,10 @@ use crate::preferences_dialog;
 use crate::recent_libraries;
 use crate::settings;
 use crate::sidebar::{HoveredDrop, SidebarContent};
+use crate::smart_collection_dialog::{
+    PigouneSmartCollectionDialog, SmartCollectionDraft, free_name,
+};
+use crate::smart_collection_sort::{self, SmartCollectionCriterion, SmartCollectionOrder};
 use crate::tag_editor::SharedTag;
 use crate::thumbnails::THUMBNAIL_PIXELS;
 use crate::undo_message;
@@ -68,6 +73,9 @@ const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
 const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
 const EMPTY_TRASH_RESPONSE: &str = "empty";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
+const NEW_SMART_COLLECTION_ACTION: &str = "win.new-smart-collection";
+const EDIT_SMART_COLLECTION_ACTION: &str = "win.edit-smart-collection";
+const DELETE_SMART_COLLECTION_ACTION: &str = "win.delete-smart-collection";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const PREFERENCES_ACTION: &str = "win.preferences";
@@ -83,7 +91,7 @@ const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
-const OPEN_LIBRARY_ACTIONS: [&str; 15] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 18] = [
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
     UNDO_ACTION,
@@ -99,6 +107,9 @@ const OPEN_LIBRARY_ACTIONS: [&str; 15] = [
     TOGGLE_FAVORITE_ACTION,
     RENAME_TAG_ACTION,
     DELETE_TAG_ACTION,
+    NEW_SMART_COLLECTION_ACTION,
+    EDIT_SMART_COLLECTION_ACTION,
+    DELETE_SMART_COLLECTION_ACTION,
 ];
 
 const IMAGE_MIME_TYPES: [&str; 11] = [
@@ -116,6 +127,8 @@ const IMAGE_MIME_TYPES: [&str; 11] = [
 ];
 
 const CLOSE_RESPONSE: &str = "close";
+const SIDEBAR_MIN_WIDTH: f64 = 200.0;
+const SIDEBAR_MAX_WIDTH: f64 = 280.0;
 const DEFAULT_VECTOR_EXPORT_PIXELS: u32 = 512;
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
 const RETRY_RESPONSE: &str = "retry";
@@ -145,14 +158,16 @@ mod imp {
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
         CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
-        DELETE_COLLECTION_ACTION, DELETE_TAG_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
+        DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION, DELETE_TAG_ACTION,
+        EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
         EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION, IMPORT_FILES_ACTION,
-        IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
-        PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
-        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
-        SELECT_ALL_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
-        UNDO_ACTION, collection_parameter, tag_parameter,
+        IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
+        NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
+        OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
+        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
+        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
+        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION,
+        collection_parameter, smart_collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -214,6 +229,30 @@ mod imp {
         pub filters: RefCell<AssetFilter>,
         pub hovered_drop: Cell<Option<(AssetView, bool)>>,
         pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
+    }
+
+    fn install_smart_collection_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
+        class.install_action(NEW_SMART_COLLECTION_ACTION, None, |window, _, _| {
+            window.ask_new_smart_collection();
+        });
+        class.install_action(
+            EDIT_SMART_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(collection) = smart_collection_parameter(parameter) {
+                    window.ask_smart_collection_changes(collection);
+                }
+            },
+        );
+        class.install_action(
+            DELETE_SMART_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(collection) = smart_collection_parameter(parameter) {
+                    window.ask_smart_collection_deletion(collection);
+                }
+            },
+        );
     }
 
     fn install_asset_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
@@ -340,6 +379,7 @@ mod imp {
                     }
                 },
             );
+            install_smart_collection_actions(class);
             class.install_action(
                 DELETE_TAG_ACTION,
                 Some(glib::VariantTy::STRING),
@@ -699,12 +739,7 @@ impl PigouneWindow {
 
     fn apply_filters(&self) {
         let imp = self.imp();
-        let choice = imp.grid_header.filter_popover().choice();
-        let filters = AssetFilter {
-            text: String::new(),
-            formats: choice.formats,
-            favorites_only: choice.favorites_only,
-        };
+        let filters = imp.grid_header.filter_popover().choice();
         imp.grid_header.show_filter_count(filters.chosen_filters());
         imp.filters.replace(filters);
         self.refresh_grid();
@@ -783,12 +818,17 @@ impl PigouneWindow {
         for key in [
             settings::COLLECTION_SORT,
             settings::COLLECTION_SORT_REVERSED,
+            settings::SMART_COLLECTION_SORT,
+            settings::SMART_COLLECTION_SORT_REVERSED,
         ] {
             self.add_action(&settings.create_action(key));
         }
         for key in [
             settings::COLLECTION_SORT,
             settings::COLLECTION_SORT_REVERSED,
+            settings::SMART_COLLECTION_SORT,
+            settings::SMART_COLLECTION_SORT_REVERSED,
+            settings::SHOW_SMART_COLLECTIONS,
             settings::SHOW_COUNTS,
         ] {
             settings.connect_changed(
@@ -813,6 +853,18 @@ impl PigouneWindow {
             self,
             move |dragged, drop| window.drop_collection(dragged, drop)
         ));
+        self.imp()
+            .sidebar
+            .connect_smart_collection_dropped(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |dragged, target, after| window.drop_smart_collection(dragged, target, after)
+            ));
+        self.imp().sidebar.connect_width_needed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |needed| window.fit_sidebar(needed)
+        ));
         self.imp().sidebar.connect_assets_hovered(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -833,6 +885,7 @@ impl PigouneWindow {
                     AssetView::All
                     | AssetView::Favorites
                     | AssetView::Unclassified
+                    | AssetView::Smart(_)
                     | AssetView::Trash => ImportTarget::Nowhere,
                 };
                 glib::spawn_future_local(async move {
@@ -871,6 +924,68 @@ impl PigouneWindow {
         }
     }
 
+    fn drop_smart_collection(
+        &self,
+        dragged: SmartCollectionId,
+        target: SmartCollectionId,
+        after: bool,
+    ) {
+        let order = self.smart_collection_order();
+        let mut collections = match self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(Library::smart_collections)
+        {
+            Some(Ok(collections)) => collections,
+            Some(Err(error)) => {
+                self.show_library_error(&error);
+                return;
+            }
+            None => return,
+        };
+        order.sort(&mut collections, |name: &str| {
+            glib::FilenameCollationKey::from(name)
+        });
+        let shown: Vec<SmartCollectionId> =
+            collections.iter().map(|collection| collection.id).collect();
+        let arranged = smart_collection_sort::reordered(&shown, dragged, target, after);
+        let custom_order_shown =
+            order.criterion == SmartCollectionCriterion::Custom && !order.reversed;
+        if arranged == shown && custom_order_shown {
+            return;
+        }
+        if let Err(message) =
+            self.change_smart_collection(&SmartCollectionCommand::Arrange { order: arranged })
+        {
+            self.show_smart_collection_error(&message);
+            return;
+        }
+        if !custom_order_shown {
+            let settings = self.settings();
+            settings::store_bool(settings, settings::SMART_COLLECTION_SORT_REVERSED, false);
+            settings::store_string(settings, settings::SMART_COLLECTION_SORT, "custom");
+        }
+    }
+
+    fn fit_sidebar(&self, needed: Option<i32>) {
+        let split = &self.imp().sidebar_split;
+        let needed = f64::from(needed.unwrap_or(0));
+        split.set_min_sidebar_width(needed.max(SIDEBAR_MIN_WIDTH));
+        split.set_max_sidebar_width(needed.max(SIDEBAR_MAX_WIDTH));
+    }
+
+    fn smart_collection_order(&self) -> SmartCollectionOrder {
+        let settings = self.settings();
+        SmartCollectionOrder {
+            criterion: SmartCollectionCriterion::from_setting(
+                &settings.string(settings::SMART_COLLECTION_SORT),
+            ),
+            reversed: settings.boolean(settings::SMART_COLLECTION_SORT_REVERSED),
+        }
+    }
+
     fn target_collection(&self) -> Option<CollectionId> {
         match self.imp().current_view.get() {
             AssetView::Collection(id) => Some(id),
@@ -878,6 +993,7 @@ impl PigouneWindow {
             | AssetView::Favorites
             | AssetView::Unclassified
             | AssetView::Tag(_)
+            | AssetView::Smart(_)
             | AssetView::Trash => None,
         }
     }
@@ -2036,6 +2152,7 @@ impl PigouneWindow {
         if self.apply_asset_command(&command) {
             asset.set_display_name(name.trim());
             self.imp().asset_grid.resort();
+            self.refresh_smart_collection_counts();
         } else {
             asset.notify_display_name();
         }
@@ -2049,6 +2166,20 @@ impl PigouneWindow {
         };
         if self.apply_asset_command(&command) {
             asset.set_text(field, value.trim());
+            self.refresh_smart_collection_counts();
+        }
+    }
+
+    fn refresh_smart_collection_counts(&self) {
+        let has_smart_collections = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.smart_collections().ok())
+            .is_some_and(|collections| !collections.is_empty());
+        if has_smart_collections {
+            self.refresh_sidebar();
         }
     }
 
@@ -2299,7 +2430,10 @@ impl PigouneWindow {
             AssetView::Trash => self.set_trashed(assets, true),
             AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
             AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified => {}
+            AssetView::All
+            | AssetView::Favorites
+            | AssetView::Unclassified
+            | AssetView::Smart(_) => {}
         }
     }
 
@@ -2580,6 +2714,208 @@ impl PigouneWindow {
         alert.present(Some(self));
     }
 
+    fn current_filter(&self) -> AssetFilter {
+        let imp = self.imp();
+        AssetFilter {
+            text: imp.search_query.borrow().clone(),
+            ..imp.filters.borrow().clone()
+        }
+    }
+
+    fn ask_new_smart_collection(&self) {
+        let current = self.imp().current_view.get();
+        let (scope, filter) = if can_be_saved_from(current) {
+            (current, self.current_filter())
+        } else {
+            (AssetView::All, AssetFilter::default())
+        };
+        let scope_name = self.scope_name(scope);
+        let wanted = if filter.narrows() {
+            suggested_smart_collection_name(&filter)
+        } else {
+            gettext("New Smart Collection")
+        };
+        let taken: Vec<String> = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.smart_collections().ok())
+            .unwrap_or_default()
+            .into_iter()
+            .map(|collection| collection.name)
+            .collect();
+        let name = free_name(&wanted, &taken);
+        let dialog = PigouneSmartCollectionDialog::new(
+            &SmartCollectionDraft {
+                title: &gettext("New Smart Collection"),
+                confirm_label: &gettext("_Create"),
+                scope_name: &scope_name,
+                name: &name,
+                filter: &filter,
+            },
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move |name, filter| window.create_smart_collection(name, scope, filter)
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn scope_name(&self, scope: AssetView) -> String {
+        match scope {
+            AssetView::All => gettext("All"),
+            AssetView::Favorites => gettext("Favorites"),
+            AssetView::Unclassified => gettext("Unclassified"),
+            AssetView::Collection(_)
+            | AssetView::Tag(_)
+            | AssetView::Smart(_)
+            | AssetView::Trash => self
+                .imp()
+                .library
+                .borrow()
+                .as_ref()
+                .map(|library| view_name(library, scope))
+                .unwrap_or_default(),
+        }
+    }
+
+    fn create_smart_collection(
+        &self,
+        name: &str,
+        scope: AssetView,
+        filter: &AssetFilter,
+    ) -> Result<(), String> {
+        let created =
+            self.change_library(|library| library.create_smart_collection(name, scope, filter));
+        match created {
+            Some(Ok(id)) => {
+                self.reset_search();
+                let view = AssetView::Smart(id);
+                self.imp().current_view.set(view);
+                self.remember_view(view);
+                self.refresh_assets();
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_smart_collection(&error)),
+            None => Ok(()),
+        }
+    }
+
+    fn ask_smart_collection_changes(&self, id: SmartCollectionId) {
+        let Some(collection) = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.smart_collection(id).ok().flatten())
+        else {
+            return;
+        };
+        let scope = collection.scope;
+        let created_at_unix_ms = collection.created_at_unix_ms;
+        let position = collection.position;
+        let dialog = PigouneSmartCollectionDialog::new(
+            &SmartCollectionDraft {
+                title: &gettext("Edit Smart Collection"),
+                confirm_label: &gettext("_Save"),
+                scope_name: &self.scope_name(scope),
+                name: &collection.name,
+                filter: &collection.filter,
+            },
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move |name, filter| {
+                    window.change_smart_collection(&SmartCollectionCommand::Update {
+                        collection: SmartCollection {
+                            id,
+                            name: name.to_owned(),
+                            scope,
+                            filter: filter.clone(),
+                            position,
+                            created_at_unix_ms,
+                        },
+                    })
+                }
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn smart_collection_name(&self, collection: SmartCollectionId) -> Option<String> {
+        Some(
+            self.imp()
+                .library
+                .borrow()
+                .as_ref()?
+                .smart_collection(collection)
+                .ok()??
+                .name,
+        )
+    }
+
+    fn change_smart_collection(&self, command: &SmartCollectionCommand) -> Result<(), String> {
+        let changed =
+            self.change_library(|library| library.apply_smart_collection_command(command));
+        match changed {
+            Some(Ok(_)) => {
+                self.refresh_assets();
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_smart_collection(&error)),
+            None => Ok(()),
+        }
+    }
+
+    fn ask_smart_collection_deletion(&self, collection: SmartCollectionId) {
+        let Some(name) = self.smart_collection_name(collection) else {
+            return;
+        };
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Delete the Smart Collection “{name}”?").replace("{name}", &name)),
+            Some(&gettext(
+                "Only the saved search is deleted. The resources it shows stay in the library.",
+            )),
+        );
+        alert.add_responses(&[
+            (CLOSE_RESPONSE, &gettext("_Cancel")),
+            (DELETE_RESPONSE, &gettext("_Delete")),
+        ]);
+        alert.set_response_appearance(DELETE_RESPONSE, adw::ResponseAppearance::Destructive);
+        alert.set_close_response(CLOSE_RESPONSE);
+        alert.connect_response(
+            Some(DELETE_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| {
+                    let deleted = window.change_smart_collection(&SmartCollectionCommand::Delete {
+                        id: collection,
+                    });
+                    if let Err(message) = deleted {
+                        window.show_smart_collection_error(&message);
+                    }
+                }
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn show_smart_collection_error(&self, message: &str) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Unable to Change the Smart Collection")),
+            Some(message),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
     fn ask_tag_deletion(&self, tag: TagId) {
         let Some(name) = self.tag_name(tag) else {
             return;
@@ -2701,9 +3037,10 @@ impl PigouneWindow {
                 library.visible_collections()?,
                 library.view_counts()?,
                 library.tags()?,
+                library.smart_collections()?,
             ))
         });
-        let (collections, counts, tags) = match read {
+        let (collections, counts, tags, mut smart_collections) = match read {
             Some(Ok(read)) => read,
             Some(Err(error)) => {
                 self.show_library_error(&error);
@@ -2711,9 +3048,20 @@ impl PigouneWindow {
             }
             None => return,
         };
+        let show_smart_collections = self.settings().boolean(settings::SHOW_SMART_COLLECTIONS);
+        if !show_smart_collections {
+            smart_collections.clear();
+        }
+        self.smart_collection_order()
+            .sort(&mut smart_collections, |name: &str| {
+                glib::FilenameCollationKey::from(name)
+            });
         let still_exists = match imp.current_view.get() {
             AssetView::Collection(id) => collections.iter().any(|collection| collection.id == id),
             AssetView::Tag(id) => tags.iter().any(|tag| tag.id == id),
+            AssetView::Smart(id) => smart_collections
+                .iter()
+                .any(|collection| collection.id == id),
             AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {
                 true
             }
@@ -2731,6 +3079,8 @@ impl PigouneWindow {
             selected: imp.current_view.get(),
             reveal,
             tags,
+            smart_collections,
+            show_smart_collections,
         });
         self.refresh_selected_collections();
     }
@@ -2893,10 +3243,7 @@ impl PigouneWindow {
         let imp = self.imp();
         let view = imp.current_view.get();
         let previously_selected = self.selected_ids();
-        let filter = AssetFilter {
-            text: imp.search_query.borrow().clone(),
-            ..imp.filters.borrow().clone()
-        };
+        let filter = self.current_filter();
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
                 asset_objects(library, view, &filter)?,
@@ -2988,7 +3335,9 @@ impl PigouneWindow {
             AssetView::Favorites => Some(gettext("Favorites")),
             AssetView::Unclassified => Some(gettext("Unclassified")),
             AssetView::Trash => Some(gettext("Trash")),
-            AssetView::Collection(_) | AssetView::Tag(_) => Some(view_name.to_owned()),
+            AssetView::Collection(_) | AssetView::Tag(_) | AssetView::Smart(_) => {
+                Some(view_name.to_owned())
+            }
         };
         let description = match scope {
             _ if filter.chosen_filters() > 0 => {
@@ -3027,6 +3376,12 @@ impl PigouneWindow {
             page.set_title(&gettext("No Resource Tagged “{name}”").replace("{name}", view_name));
             page.set_description(Some(&gettext(
                 "Add this tag to resources from the details panel, or drop files on it.",
+            )));
+        } else if let AssetView::Smart(_) = view {
+            page.set_icon_name(Some("smart-collection-symbolic"));
+            page.set_title(&gettext("No Resource in “{name}”").replace("{name}", view_name));
+            page.set_description(Some(&gettext(
+                "No resource matches this smart collection yet. Matching resources appear here by themselves.",
             )));
         } else if view == AssetView::Favorites {
             page.set_title(&gettext("No Favorites"));
@@ -3360,6 +3715,26 @@ fn tag_parameter(parameter: Option<&glib::Variant>) -> Option<TagId> {
     TagId::parse(&parameter?.get::<String>()?)
 }
 
+fn smart_collection_parameter(parameter: Option<&glib::Variant>) -> Option<SmartCollectionId> {
+    SmartCollectionId::parse(&parameter?.get::<String>()?)
+}
+
+fn suggested_smart_collection_name(filter: &AssetFilter) -> String {
+    let text = filter.text.trim();
+    if !text.is_empty() {
+        return text.to_owned();
+    }
+    if !filter.formats.is_empty() {
+        return filter
+            .formats
+            .iter()
+            .map(|format| asset_facts::format_name(*format))
+            .collect::<Vec<_>>()
+            .join(", ");
+    }
+    gettext("Favorites")
+}
+
 #[derive(Debug, Clone, Copy)]
 enum ImportTarget {
     Nowhere,
@@ -3436,6 +3811,11 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .ok()
             .and_then(|tags| tags.into_iter().find(|tag| tag.id == id))
             .map_or_else(|| library.name(), |tag| tag.name),
+        AssetView::Smart(id) => library
+            .smart_collection(id)
+            .ok()
+            .flatten()
+            .map_or_else(|| library.name(), |collection| collection.name),
         AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {
             library.name()
         }

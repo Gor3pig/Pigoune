@@ -7,6 +7,7 @@ use pigoune_core::AssetView;
 pub enum SidebarEntry {
     View(AssetView),
     CollectionsHeader,
+    SmartCollectionsHeader,
     TagsHeader,
 }
 
@@ -67,14 +68,18 @@ impl PigouneSidebarItem {
     pub fn is_header(&self) -> bool {
         matches!(
             self.entry(),
-            SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader
+            SidebarEntry::CollectionsHeader
+                | SidebarEntry::SmartCollectionsHeader
+                | SidebarEntry::TagsHeader
         )
     }
 
     pub fn view(&self) -> Option<AssetView> {
         match self.entry() {
             SidebarEntry::View(view) => Some(view),
-            SidebarEntry::CollectionsHeader | SidebarEntry::TagsHeader => None,
+            SidebarEntry::CollectionsHeader
+            | SidebarEntry::SmartCollectionsHeader
+            | SidebarEntry::TagsHeader => None,
         }
     }
 
@@ -97,6 +102,9 @@ impl PigouneSidebarItem {
     pub fn spoken_label(&self) -> String {
         let name = match self.view() {
             Some(AssetView::Tag(_)) => gettext("Tag {name}").replace("{name}", self.label()),
+            Some(AssetView::Smart(_)) => {
+                gettext("Smart collection {name}").replace("{name}", self.label())
+            }
             _ => self.label().to_owned(),
         };
         let Some(count) = self.count() else {

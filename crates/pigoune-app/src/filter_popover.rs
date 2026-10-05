@@ -1,36 +1,22 @@
-use std::cell::Cell;
-use std::rc::Rc;
-
 use adw::subclass::prelude::*;
 use gtk::glib;
 use gtk::prelude::*;
-use pigoune_core::AssetFormat;
-
-use crate::asset_facts;
-
-type ChangedCallback = Rc<dyn Fn()>;
+use pigoune_core::AssetFilter;
 
 mod imp {
-    use std::cell::{Cell, RefCell};
-
     use adw::subclass::prelude::*;
     use gtk::glib;
-    use pigoune_core::AssetFormat;
+    use gtk::prelude::*;
 
-    use super::ChangedCallback;
+    use crate::filter_choices::PigouneFilterChoices;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/filter-popover.ui")]
     pub struct PigouneFilterPopover {
         #[template_child]
-        pub formats_box: TemplateChild<gtk::FlowBox>,
-        #[template_child]
-        pub favorites_check: TemplateChild<gtk::CheckButton>,
+        pub choices: TemplateChild<PigouneFilterChoices>,
         #[template_child]
         pub clear_button: TemplateChild<gtk::Button>,
-        pub format_checks: RefCell<Vec<(AssetFormat, gtk::CheckButton)>>,
-        pub quiet: Cell<bool>,
-        pub on_changed: RefCell<Option<ChangedCallback>>,
     }
 
     #[glib::object_subclass]
@@ -40,6 +26,7 @@ mod imp {
         type ParentType = gtk::Popover;
 
         fn class_init(class: &mut Self::Class) {
+            PigouneFilterChoices::ensure_type();
             class.bind_template();
         }
 
@@ -48,13 +35,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for PigouneFilterPopover {
-        fn constructed(&self) {
-            self.parent_constructed();
-            self.obj().set_up();
-        }
-    }
-
+    impl ObjectImpl for PigouneFilterPopover {}
     impl WidgetImpl for PigouneFilterPopover {}
     impl PopoverImpl for PigouneFilterPopover {}
 }
@@ -66,88 +47,26 @@ glib::wrapper! {
             gtk::ShortcutManager;
 }
 
-pub struct FilterChoice {
-    pub formats: Vec<AssetFormat>,
-    pub favorites_only: bool,
-}
-
 impl PigouneFilterPopover {
-    pub fn connect_changed(&self, callback: impl Fn() + 'static) {
-        self.imp().on_changed.replace(Some(Rc::new(callback)));
-    }
-
-    pub fn choice(&self) -> FilterChoice {
+    pub fn connect_changed(&self, callback: impl Fn() + Clone + 'static) {
         let imp = self.imp();
-        FilterChoice {
-            formats: checked(&imp.format_checks.borrow()),
-            favorites_only: imp.favorites_check.is_active(),
-        }
-    }
-
-    pub fn clear(&self) {
-        let imp = self.imp();
-        self.quietly(|| {
-            for (_, check) in imp.format_checks.borrow().iter() {
-                check.set_active(false);
-            }
-            imp.favorites_check.set_active(false);
-        });
-    }
-
-    fn set_up(&self) {
-        let imp = self.imp();
-        let checks = AssetFormat::ALL
-            .into_iter()
-            .map(|format| {
-                let check = gtk::CheckButton::with_label(asset_facts::format_name(format));
-                self.notify_on_toggle(&check);
-                imp.formats_box.append(&check);
-                (format, check)
-            })
-            .collect();
-        imp.format_checks.replace(checks);
-        self.notify_on_toggle(&imp.favorites_check);
+        imp.choices.connect_changed(callback.clone());
         imp.clear_button.connect_clicked(glib::clone!(
             #[weak(rename_to = popover)]
             self,
             move |_| {
                 popover.clear();
-                popover.changed();
+                callback();
             }
         ));
     }
 
-    fn notify_on_toggle(&self, check: &gtk::CheckButton) {
-        check.connect_toggled(glib::clone!(
-            #[weak(rename_to = popover)]
-            self,
-            move |_| {
-                if !popover.imp().quiet.get() {
-                    popover.changed();
-                }
-            }
-        ));
+    #[must_use]
+    pub fn choice(&self) -> AssetFilter {
+        self.imp().choices.chosen("")
     }
 
-    fn quietly(&self, change: impl FnOnce()) {
-        let quiet: &Cell<bool> = &self.imp().quiet;
-        quiet.set(true);
-        change();
-        quiet.set(false);
+    pub fn clear(&self) {
+        self.imp().choices.clear();
     }
-
-    fn changed(&self) {
-        let callback = self.imp().on_changed.borrow().clone();
-        if let Some(callback) = callback {
-            callback();
-        }
-    }
-}
-
-fn checked<T: Copy>(checks: &[(T, gtk::CheckButton)]) -> Vec<T> {
-    checks
-        .iter()
-        .filter(|(_, check)| check.is_active())
-        .map(|(value, _)| *value)
-        .collect()
 }

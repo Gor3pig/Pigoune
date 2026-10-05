@@ -1,5 +1,7 @@
 use gettextrs::gettext;
-use pigoune_core::{AssetError, CollectionError, LibraryError, TagError, UndoError};
+use pigoune_core::{
+    AssetError, CollectionError, LibraryError, SmartCollectionError, TagError, UndoError,
+};
 
 pub fn describe(error: &LibraryError) -> String {
     match error {
@@ -63,6 +65,24 @@ pub fn describe_undo(error: &UndoError) -> String {
         UndoError::Asset(error) => describe_asset(error),
         UndoError::Collection(error) => describe_collection(error),
         UndoError::Tag(error) => describe_tag(error),
+        UndoError::SmartCollection(error) => describe_smart_collection(error),
+    }
+}
+
+pub fn describe_smart_collection(error: &SmartCollectionError) -> String {
+    match error {
+        SmartCollectionError::InvalidName => gettext("Enter a name for the smart collection."),
+        SmartCollectionError::NameTaken(_) => {
+            gettext("Another smart collection already has this name.")
+        }
+        SmartCollectionError::NotFound(_) => gettext("This smart collection no longer exists."),
+        SmartCollectionError::OutdatedOrder => {
+            gettext("The smart collections changed in the meantime. Try again.")
+        }
+        SmartCollectionError::InvalidScope => {
+            gettext("A smart collection cannot be saved from this view.")
+        }
+        SmartCollectionError::Library(error) => describe(error),
     }
 }
 

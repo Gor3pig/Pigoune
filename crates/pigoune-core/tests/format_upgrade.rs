@@ -2,8 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetId, CACHE_DIR_NAME, CURRENT_FORMAT_VERSION, DATABASE_FILE_NAME,
-    FILES_DIR_NAME, ImportOutcome, Library,
+    AssetCommand, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME, CURRENT_FORMAT_VERSION,
+    DATABASE_FILE_NAME, FILES_DIR_NAME, ImportOutcome, Library,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -11,6 +11,7 @@ use tempfile::TempDir;
 const FORMAT_BEFORE_ANIMATED_PNG_AND_WEBP: u32 = 1;
 const FORMAT_BEFORE_BUCKETS: u32 = 2;
 const THUMBNAIL_PIXELS: u32 = 256;
+const FORMAT_BEFORE_SMART_COLLECTIONS: u32 = 3;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -47,7 +48,14 @@ fn library_as_saved_by_format_1(workspace: &TempDir, names: &[&str]) -> (PathBuf
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_ANIMATED_PNG_AND_WEBP)
         .expect("version updated");
+    forget_smart_collections(&connection);
     (root, ids)
+}
+
+fn forget_smart_collections(connection: &Connection) {
+    connection
+        .execute_batch("DROP TABLE smart_collections")
+        .expect("smart collections forgotten");
 }
 
 fn is_animated(library: &Library, id: AssetId) -> bool {
@@ -121,10 +129,12 @@ impl FlatLibrary {
         for (id, name) in flat.ids.iter().zip(names) {
             flat.flatten(*id, name);
         }
-        Connection::open(flat.root.join(DATABASE_FILE_NAME))
-            .expect("database opens")
+        let connection =
+            Connection::open(flat.root.join(DATABASE_FILE_NAME)).expect("database opens");
+        connection
             .pragma_update(None, "user_version", FORMAT_BEFORE_BUCKETS)
             .expect("version updated");
+        forget_smart_collections(&connection);
         flat
     }
 
@@ -261,4 +271,36 @@ fn a_trashed_resource_is_sorted_too_and_can_be_deleted_for_good() {
     assert!(flat.top_level_assets().is_empty());
     assert!(!flat.bucketed_folder(id).exists());
     assert!(!library.thumbnail_file(id, THUMBNAIL_PIXELS).exists());
+}
+
+#[test]
+fn a_format_3_library_gains_smart_collections() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_SMART_COLLECTIONS)
+        .expect("version updated");
+    forget_smart_collections(&connection);
+    drop(connection);
+
+    let mut library = Library::open(&root).expect("library opens");
+    let id = library
+        .create_smart_collection("Everything", AssetView::All, &AssetFilter::default())
+        .expect("smart collection saved");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    let shown: Vec<AssetId> = library
+        .visible_assets_in(AssetView::Smart(id))
+        .expect("assets listed")
+        .iter()
+        .map(|asset| asset.id)
+        .collect();
+    assert_eq!(shown, vec![red]);
 }
