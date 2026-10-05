@@ -189,6 +189,21 @@ fn empty_groups_are_ignored() {
 }
 
 #[test]
+fn words_beyond_the_limit_are_ignored() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.import("dark-circle.svg", None);
+
+    assert_eq!(
+        fixture.found(
+            AssetView::All,
+            "dot, qx1, qx2, qx3, qx4, qx5, qx6, qx7, circle"
+        ),
+        [dot]
+    );
+}
+
+#[test]
 fn a_word_cannot_span_two_fields() {
     let mut fixture = Fixture::new();
     let dot = fixture.import("red-dot.png", None);

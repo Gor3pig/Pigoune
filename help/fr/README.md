@@ -123,6 +123,8 @@ bibliothèque.
   reliées par **et** ou **ou**. Cliquez sur **et** ou **ou** pour l'inverser, ou sur la croix
   d'une pastille pour retirer un mot. Les mêmes pastilles apparaissent sous **Mots à
   rechercher** dans la fenêtre des collections intelligentes.
+- Une recherche utilise 8 mots au maximum : les suivants sont ignorés, et les pastilles
+  l'indiquent.
 
 Le bouton **Filtres** ne garde que certains formats, ou seulement vos favoris.
 
@@ -140,9 +142,9 @@ collection Clients*.
 - **Créez-en une** avec le bouton **+** à côté de **Collections intelligentes** dans la barre
   latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
   l'entrée sélectionnée dans la barre latérale. Donnez-lui un nom, puis choisissez des mots à
-  rechercher, des types ou **Favoris uniquement** : il faut au moins un critère.
-- **Mots à rechercher** fonctionne comme le champ de recherche : les espaces exigent chaque
-  mot, les virgules acceptent l'un ou l'autre groupe de mots.
+  rechercher, des types ou **Favoris seulement** : il faut au moins un critère.
+- **Mots à rechercher** fonctionne comme le champ de recherche : ses mots apparaissent en
+  pastilles reliées par **et** ou **ou**, et un clic entre deux mots l'inverse.
 - **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher
   à l'intérieur.
 - **Modifiez** son nom ou ses critères avec **Modifier…** dans son menu du clic droit, ou avec

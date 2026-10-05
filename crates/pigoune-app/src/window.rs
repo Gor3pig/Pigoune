@@ -3279,7 +3279,7 @@ impl PigouneWindow {
                     self.describe_empty_view(view, &view_name);
                 }
                 imp.asset_grid.show_nothing(assets.is_empty());
-                imp.grid_header
+                imp.query_pills
                     .show_result_count(searching.then_some(assets.len()));
                 imp.asset_grid.show_assets(&assets);
                 if !previously_selected.is_empty() {

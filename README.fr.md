@@ -62,7 +62,8 @@ favoris, ainsi qu'une note, une source, une licence et un auteur pour chaque res
 
 ### Retrouver
 Recherche instantanée et filtres par type ou par favori, même parmi des milliers de
-ressources. Un clic sur une collection ou un tag vous montre où se trouve la ressource.
+ressources, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
+collection ou un tag vous montre où se trouve la ressource.
 
 </td>
 <td width="50%" valign="top">

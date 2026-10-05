@@ -107,6 +107,7 @@ the entry selected in the sidebar. Select **All** to search the whole library.
 - With two words or more, they appear as pills under the search field, joined by **and** or
   **or**. Click **and** or **or** to switch it, or the cross of a pill to remove a word. The
   same pills appear under **Words to Find** in the smart collection window.
+- A search uses at most 8 words; the next ones are ignored, and the pills say so.
 
 The **Filters** button keeps only some formats, or only your favorites.
 
@@ -124,8 +125,8 @@ SVG files* or *everything about logos in the Clients collection*.
   is filled in with the search and the filters in use, and with the entry selected in the
   sidebar. Give it a name, then choose words to find, types or **Favorites Only**: at least
   one criterion is needed.
-- **Words to Find** works like the search field: spaces require every word, commas accept any
-  group of words.
+- **Words to Find** works like the search field: its words appear as pills joined by **and** or
+  **or**, and a click between two words switches it.
 - **Open** it from the sidebar to see its assets. You can still search inside it.
 - **Change** its name or criteria with **Edit…** in its right-click menu, or with
   <kbd>F2</kbd>. **Delete…** only deletes the saved search: the assets stay in the library.

@@ -8,6 +8,7 @@ use crate::media::AssetFormat;
 
 const FIELD_SEPARATOR: char = '\n';
 const ALTERNATIVE_SEPARATOR: char = ',';
+pub const MAX_QUERY_WORDS: usize = 8;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AssetFilter {
@@ -82,6 +83,24 @@ impl Library {
 
 #[must_use]
 pub fn query_groups(query: &str) -> Vec<Vec<String>> {
+    let mut remaining = MAX_QUERY_WORDS;
+    all_query_groups(query)
+        .into_iter()
+        .map(|words| {
+            let kept: Vec<String> = words.into_iter().take(remaining).collect();
+            remaining -= kept.len();
+            kept
+        })
+        .filter(|words| !words.is_empty())
+        .collect()
+}
+
+#[must_use]
+pub fn query_word_count(query: &str) -> usize {
+    all_query_groups(query).iter().map(Vec::len).sum()
+}
+
+fn all_query_groups(query: &str) -> Vec<Vec<String>> {
     query
         .split(ALTERNATIVE_SEPARATOR)
         .map(|group| {
@@ -146,7 +165,10 @@ fn comparable(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{comparable, query_groups, query_text, search_groups, search_words};
+    use super::{
+        MAX_QUERY_WORDS, comparable, query_groups, query_text, query_word_count, search_groups,
+        search_words,
+    };
 
     #[test]
     fn case_and_accents_are_ignored() {
@@ -186,6 +208,18 @@ mod tests {
             query_groups("Logo Rouge, Chèvre")
         );
         assert_eq!(query_text(&[]), "");
+    }
+
+    #[test]
+    fn only_the_first_words_of_a_long_query_are_kept() {
+        let query = "un deux trois, quatre cinq six, sept huit neuf dix";
+        let kept: usize = query_groups(query).iter().map(Vec::len).sum();
+        assert_eq!(kept, MAX_QUERY_WORDS);
+        assert_eq!(query_word_count(query), 10);
+        assert_eq!(
+            query_groups(query).last().map(Vec::as_slice),
+            Some(["sept".to_owned(), "huit".to_owned()].as_slice())
+        );
     }
 
     #[test]

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 10:33+0200\n"
+"POT-Creation-Date: 2026-10-05 10:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -641,7 +641,7 @@ msgstr ""
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:51
 #: crates/pigoune-app/src/window.rs:565
-#: crates/pigoune-app/ui/grid-header.blp:128
+#: crates/pigoune-app/ui/grid-header.blp:117
 #: crates/pigoune-app/ui/collection-name-dialog.blp:49
 #: crates/pigoune-app/src/sidebar_row.rs:549
 #: crates/pigoune-app/src/sidebar_row.rs:572
@@ -788,26 +788,26 @@ msgid "Choose a Location"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:566
-#: crates/pigoune-app/ui/grid-header.blp:134
+#: crates/pigoune-app/ui/grid-header.blp:123
 #: crates/pigoune-app/src/filter_choices.rs:94
 msgid "Type"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:567
-#: crates/pigoune-app/ui/grid-header.blp:140
+#: crates/pigoune-app/ui/grid-header.blp:129
 #: crates/pigoune-app/ui/asset-details.blp:207
 msgid "Dimensions"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:568
-#: crates/pigoune-app/ui/grid-header.blp:146
+#: crates/pigoune-app/ui/grid-header.blp:135
 #: crates/pigoune-app/ui/asset-details.blp:216
 #: crates/pigoune-app/ui/library-info-dialog.blp:91
 msgid "Size"
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:569
-#: crates/pigoune-app/ui/grid-header.blp:122
+#: crates/pigoune-app/ui/grid-header.blp:111
 msgid "Date Added"
 msgstr ""
 
@@ -1471,8 +1471,8 @@ msgid "Search Resources"
 msgstr ""
 
 #: crates/pigoune-app/ui/grid-header.blp:29
-#: crates/pigoune-app/src/grid_header.rs:97
-#: crates/pigoune-app/ui/smart-collection-dialog.blp:94
+#: crates/pigoune-app/src/grid_header.rs:82
+#: crates/pigoune-app/ui/smart-collection-dialog.blp:93
 msgid "Filters"
 msgstr ""
 
@@ -1480,28 +1480,28 @@ msgstr ""
 msgid "Filter the Resources"
 msgstr ""
 
-#: crates/pigoune-app/ui/grid-header.blp:57
+#: crates/pigoune-app/ui/grid-header.blp:46
 msgid "Show Details"
 msgstr ""
 
-#: crates/pigoune-app/ui/grid-header.blp:64
+#: crates/pigoune-app/ui/grid-header.blp:53
 msgid "Larger Thumbnails"
 msgstr ""
 
-#: crates/pigoune-app/ui/grid-header.blp:78
-#: crates/pigoune-app/ui/grid-header.blp:88
+#: crates/pigoune-app/ui/grid-header.blp:67
+#: crates/pigoune-app/ui/grid-header.blp:77
 msgid "Thumbnail Size"
 msgstr ""
 
-#: crates/pigoune-app/ui/grid-header.blp:96
+#: crates/pigoune-app/ui/grid-header.blp:85
 msgid "Smaller Thumbnails"
 msgstr ""
 
-#: crates/pigoune-app/ui/grid-header.blp:119
+#: crates/pigoune-app/ui/grid-header.blp:108
 msgid "Sort By"
 msgstr ""
 
-#: crates/pigoune-app/ui/grid-header.blp:154
+#: crates/pigoune-app/ui/grid-header.blp:143
 #: crates/pigoune-app/src/sidebar_row.rs:560
 #: crates/pigoune-app/src/sidebar_row.rs:583
 msgid "Reverse Order"
@@ -1515,26 +1515,38 @@ msgstr ""
 msgid "Favorites Only"
 msgstr ""
 
-#: crates/pigoune-app/src/query_pills.rs:105
+#: crates/pigoune-app/src/query_pills.rs:80
+#, rust-format
+msgid "{count} result"
+msgid_plural "{count} results"
+msgstr[0] ""
+msgstr[1] ""
+
+#: crates/pigoune-app/src/query_pills.rs:137
+#, rust-format
+msgid "{max} words at most: the next ones are ignored"
+msgstr ""
+
+#: crates/pigoune-app/src/query_pills.rs:155
 #, rust-format
 msgid "Remove “{word}” From the Search"
 msgstr ""
 
-#: crates/pigoune-app/src/query_pills.rs:121
+#: crates/pigoune-app/src/query_pills.rs:171
 msgctxt "search connector"
 msgid "or"
 msgstr ""
 
-#: crates/pigoune-app/src/query_pills.rs:122
+#: crates/pigoune-app/src/query_pills.rs:172
 msgid "Require Both Words"
 msgstr ""
 
-#: crates/pigoune-app/src/query_pills.rs:127
+#: crates/pigoune-app/src/query_pills.rs:177
 msgctxt "search connector"
 msgid "and"
 msgstr ""
 
-#: crates/pigoune-app/src/query_pills.rs:128
+#: crates/pigoune-app/src/query_pills.rs:178
 msgid "Accept Either Word"
 msgstr ""
 
@@ -2240,22 +2252,15 @@ msgid_plural "Adding {count} tags undone"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/src/grid_header.rs:100
+#: crates/pigoune-app/src/grid_header.rs:85
 #, rust-format
 msgid "Filters ({count})"
 msgstr ""
 
-#: crates/pigoune-app/src/grid_header.rs:115
+#: crates/pigoune-app/src/grid_header.rs:100
 #, rust-format
 msgid "Sort: {criterion}"
 msgstr ""
-
-#: crates/pigoune-app/src/grid_header.rs:131
-#, rust-format
-msgid "{count} result"
-msgid_plural "{count} results"
-msgstr[0] ""
-msgstr[1] ""
 
 #: crates/pigoune-app/src/drop_message.rs:20
 #, rust-format
@@ -2618,15 +2623,17 @@ msgstr ""
 msgid "Words to Find"
 msgstr ""
 
-#: crates/pigoune-app/ui/smart-collection-dialog.blp:80
-msgid ""
-"Separate words with spaces to require them all, with commas to accept any of "
-"them. The name, tags, note, source, license and author are searched, "
-"whatever the case and accents."
+#: crates/pigoune-app/ui/smart-collection-dialog.blp:110
+msgid "Choose at least one criterion: words to find, a type or favorites only."
 msgstr ""
 
-#: crates/pigoune-app/ui/smart-collection-dialog.blp:111
-msgid "Choose at least one criterion: a text, a type or the favorites."
+#: crates/pigoune-app/src/smart_collection_dialog.rs:96
+#, rust-format
+msgid ""
+"Words joined by “and” must all be found, words joined by “or” are "
+"alternatives: click between two words to switch. Up to {max} words are "
+"searched in the name, tags, note, source, license and author, whatever the "
+"case and accents."
 msgstr ""
 
 #: crates/pigoune-app/src/chart_slices.rs:59

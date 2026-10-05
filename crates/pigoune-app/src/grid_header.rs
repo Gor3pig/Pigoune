@@ -1,5 +1,5 @@
 use adw::subclass::prelude::*;
-use gettextrs::{gettext, ngettext};
+use gettextrs::gettext;
 
 use crate::filter_popover::PigouneFilterPopover;
 use gtk::glib;
@@ -23,8 +23,6 @@ mod imp {
         #[template_child]
         pub search_entry: TemplateChild<gtk::SearchEntry>,
         #[template_child]
-        pub result_count: TemplateChild<gtk::Label>,
-        #[template_child]
         pub size_adjustment: TemplateChild<gtk::Adjustment>,
         #[template_child]
         pub sort_button: TemplateChild<gtk::MenuButton>,
@@ -37,21 +35,8 @@ mod imp {
 
         #[property(get, set)]
         pub compact: Cell<bool>,
-        #[property(get, set = Self::set_narrow)]
+        #[property(get, set)]
         pub narrow: Cell<bool>,
-        pub result_count_shown: Cell<bool>,
-    }
-
-    impl PigouneGridHeader {
-        fn set_narrow(&self, narrow: bool) {
-            self.narrow.set(narrow);
-            self.update_result_count_visibility();
-        }
-
-        pub fn update_result_count_visibility(&self) {
-            self.result_count
-                .set_visible(self.result_count_shown.get() && !self.narrow.get());
-        }
     }
 
     #[glib::object_subclass]
@@ -118,22 +103,5 @@ impl PigouneGridHeader {
 
     pub fn size_adjustment(&self) -> gtk::Adjustment {
         self.imp().size_adjustment.get()
-    }
-
-    pub fn show_result_count(&self, count: Option<usize>) {
-        let imp = self.imp();
-        let label = &imp.result_count;
-        imp.result_count_shown.set(count.is_some());
-        imp.update_result_count_visibility();
-        if let Some(count) = count {
-            label.set_label(
-                &ngettext(
-                    "{count} result",
-                    "{count} results",
-                    u32::try_from(count).unwrap_or(u32::MAX),
-                )
-                .replace("{count}", &count.to_string()),
-            );
-        }
     }
 }

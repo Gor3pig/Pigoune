@@ -55,7 +55,7 @@ pub use layout::{
 pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
 pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
-pub use search::{AssetFilter, query_groups, query_text};
+pub use search::{AssetFilter, MAX_QUERY_WORDS, query_groups, query_text, query_word_count};
 pub use smart_collection::{SmartCollection, can_be_saved_from};
 pub use smart_collection_command::{SmartCollectionCommand, SmartCollectionError};
 pub use storage::{FormatShare, StorageUse};

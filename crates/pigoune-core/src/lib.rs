@@ -8,10 +8,10 @@ pub use library::{
     CollectionId, CollectionPath, CollectionRemoval, DATABASE_FILE_NAME, FILES_DIR_NAME,
     FormatShare, HISTORY_LIMIT, ImportControl, ImportEnding, ImportError, ImportOutcome,
     ImportProgress, ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION, Library, LibraryError,
-    LibraryOverview, LibraryRecords, SmartCollection, SmartCollectionCommand, SmartCollectionError,
-    SmartCollectionId, StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField,
-    UndoError, ViewCounts, can_be_saved_from, library_display_name, oldest_compatible_version,
-    query_groups, query_text,
+    LibraryOverview, LibraryRecords, MAX_QUERY_WORDS, SmartCollection, SmartCollectionCommand,
+    SmartCollectionError, SmartCollectionId, StorageUse, TRASH_RETENTION, Tag, TagCommand,
+    TagError, TagId, TextField, UndoError, ViewCounts, can_be_saved_from, library_display_name,
+    oldest_compatible_version, query_groups, query_text, query_word_count,
 };
 pub use media::{
     AnimationTiming, AssetFormat, Dimensions, animation_timing, icon_from_pngs, single_size_icon,

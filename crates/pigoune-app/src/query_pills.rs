@@ -2,16 +2,16 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gettextrs::{gettext, pgettext};
+use gettextrs::{gettext, ngettext, pgettext};
 use gtk::glib;
-use pigoune_core::{query_groups, query_text};
+use pigoune_core::{MAX_QUERY_WORDS, query_groups, query_text, query_word_count};
 
 type QueryChangedCallback = Rc<dyn Fn(String)>;
 
 const MINIMUM_WORDS: usize = 2;
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
 
     use adw::prelude::*;
     use adw::subclass::prelude::*;
@@ -22,7 +22,10 @@ mod imp {
     #[derive(Default)]
     pub struct PigouneQueryPills {
         pub wrap: adw::WrapBox,
+        pub count_label: gtk::Label,
         pub groups: RefCell<Vec<Vec<String>>>,
+        pub result_count: Cell<Option<usize>>,
+        pub truncated: Cell<bool>,
         pub on_query_changed: RefCell<Option<QueryChangedCallback>>,
     }
 
@@ -39,7 +42,14 @@ mod imp {
             let pills = self.obj();
             self.wrap.set_child_spacing(6);
             self.wrap.set_line_spacing(6);
-            pills.set_child(Some(&self.wrap));
+            self.wrap.set_hexpand(true);
+            self.count_label.add_css_class("dim-label");
+            self.count_label.add_css_class("numeric");
+            self.count_label.set_valign(gtk::Align::Center);
+            let row = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+            row.append(&self.wrap);
+            row.append(&self.count_label);
+            pills.set_child(Some(&row));
             pills.add_css_class("query-pills");
             pills.set_visible(false);
         }
@@ -60,12 +70,41 @@ impl PigouneQueryPills {
         self.imp().on_query_changed.replace(Some(Rc::new(callback)));
     }
 
+    pub fn show_result_count(&self, count: Option<usize>) {
+        let imp = self.imp();
+        imp.result_count.set(count);
+        imp.count_label.set_visible(count.is_some());
+        if let Some(count) = count {
+            imp.count_label.set_label(
+                &ngettext(
+                    "{count} result",
+                    "{count} results",
+                    u32::try_from(count).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &count.to_string()),
+            );
+        }
+        self.update_visibility();
+    }
+
+    fn word_count(&self) -> usize {
+        self.imp().groups.borrow().iter().map(Vec::len).sum()
+    }
+
+    fn update_visibility(&self) {
+        let shows_words = self.word_count() >= MINIMUM_WORDS;
+        self.set_visible(shows_words || self.imp().result_count.get().is_some());
+    }
+
     pub fn show_query(&self, query: &str) {
+        let imp = self.imp();
         let groups = query_groups(query);
-        if *self.imp().groups.borrow() == groups {
+        let truncated = query_word_count(query) > MAX_QUERY_WORDS;
+        if *imp.groups.borrow() == groups && imp.truncated.get() == truncated {
             return;
         }
-        self.imp().groups.replace(groups);
+        imp.groups.replace(groups);
+        imp.truncated.set(truncated);
         self.rebuild();
     }
 
@@ -73,9 +112,8 @@ impl PigouneQueryPills {
         let wrap = &self.imp().wrap;
         wrap.remove_all();
         let groups = self.imp().groups.borrow().clone();
-        let words: usize = groups.iter().map(Vec::len).sum();
-        self.set_visible(words >= MINIMUM_WORDS);
-        if words < MINIMUM_WORDS {
+        self.update_visibility();
+        if self.word_count() < MINIMUM_WORDS {
             return;
         }
         for (group_index, group) in groups.iter().enumerate() {
@@ -91,6 +129,18 @@ impl PigouneQueryPills {
                     wrap.append(&self.connector(place, last_word));
                 }
             }
+        }
+        if self.imp().truncated.get() {
+            wrap.append(
+                &gtk::Label::builder()
+                    .label(
+                        gettext("{max} words at most: the next ones are ignored")
+                            .replace("{max}", &MAX_QUERY_WORDS.to_string()),
+                    )
+                    .css_classes(["dim-label", "caption"])
+                    .valign(gtk::Align::Center)
+                    .build(),
+            );
         }
     }
 
@@ -154,6 +204,7 @@ impl PigouneQueryPills {
     fn change(&self, change: impl FnOnce(&[Vec<String>]) -> Vec<Vec<String>>) {
         let changed = change(&self.imp().groups.borrow());
         self.imp().groups.replace(changed.clone());
+        self.imp().truncated.set(false);
         let callback = self.imp().on_query_changed.borrow().clone();
         if let Some(callback) = callback {
             callback(query_text(&changed));

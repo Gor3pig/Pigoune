@@ -1,7 +1,8 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
+use gettextrs::gettext;
 use gtk::glib;
-use pigoune_core::AssetFilter;
+use pigoune_core::{AssetFilter, MAX_QUERY_WORDS};
 
 type SubmitCallback = Box<dyn Fn(&str, &AssetFilter) -> Result<(), String>>;
 
@@ -37,6 +38,8 @@ mod imp {
         pub choices: TemplateChild<PigouneFilterChoices>,
         #[template_child]
         pub text_pills: TemplateChild<PigouneQueryPills>,
+        #[template_child]
+        pub search_help: TemplateChild<gtk::Label>,
         #[template_child]
         pub hint_label: TemplateChild<gtk::Label>,
         #[template_child]
@@ -88,6 +91,12 @@ impl PigouneSmartCollectionDialog {
         imp.scope_row.set_subtitle(draft.scope_name);
         imp.name_row.set_text(draft.name);
         imp.text_row.set_text(&draft.filter.text);
+        imp.search_help.set_label(
+            &gettext(
+                "Words joined by “and” must all be found, words joined by “or” are alternatives: click between two words to switch. Up to {max} words are searched in the name, tags, note, source, license and author, whatever the case and accents.",
+            )
+            .replace("{max}", &MAX_QUERY_WORDS.to_string()),
+        );
         imp.text_pills.show_query(&draft.filter.text);
         imp.text_pills.connect_query_changed(glib::clone!(
             #[weak]
