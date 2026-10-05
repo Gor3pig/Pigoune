@@ -79,6 +79,10 @@ fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<Str
             &collection.name,
         ),
         CollectionCommand::Delete { .. } => return None,
+        CollectionCommand::Restyle { id, .. } => named(
+            &gettext("Customizing the collection “{name}” undone"),
+            &names.collection(*id)?,
+        ),
         CollectionCommand::Rename { id, .. } => named(
             &gettext("Renaming undone, the collection is named “{name}” again"),
             &names.collection(*id)?,

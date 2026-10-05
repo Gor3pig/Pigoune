@@ -2,7 +2,9 @@ use std::collections::HashSet;
 
 use rusqlite::{Connection, OptionalExtension, params};
 
-use super::collection::{self, Collection, ensure_name_is_free, is_usable_collection, valid_name};
+use super::collection::{
+    self, Collection, CollectionLook, ensure_name_is_free, is_usable_collection, valid_name,
+};
 use super::{AssetId, Change, CollectionError, CollectionId, Library, LibraryError, clock};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,6 +18,10 @@ pub enum CollectionCommand {
     Rename {
         id: CollectionId,
         name: String,
+    },
+    Restyle {
+        id: CollectionId,
+        look: CollectionLook,
     },
     Move {
         id: CollectionId,
@@ -104,6 +110,7 @@ fn apply(
         CollectionCommand::Create { collection } => create(connection, collection),
         CollectionCommand::Delete { id } => delete(connection, *id),
         CollectionCommand::Rename { id, name } => rename(connection, *id, name),
+        CollectionCommand::Restyle { id, look } => restyle(connection, *id, look),
         CollectionCommand::Move { id, parent } => move_into(connection, *id, *parent),
         CollectionCommand::Arrange { parent, order } => arrange(connection, *parent, order),
         CollectionCommand::Trash { id } => trash(connection, *id),
@@ -194,6 +201,32 @@ fn rename(
         params![id, name],
     )?;
     Ok(CollectionCommand::Rename { id, name: old_name })
+}
+
+fn restyle(
+    connection: &Connection,
+    id: CollectionId,
+    look: &CollectionLook,
+) -> Result<CollectionCommand, CollectionError> {
+    usable(connection, id)?;
+    if !look.is_valid() {
+        return Err(CollectionError::InvalidLook);
+    }
+    let previous = connection.query_row(
+        "SELECT icon, color FROM collections WHERE id = ?1",
+        [id],
+        |row| {
+            Ok(CollectionLook {
+                icon: row.get(0)?,
+                color: row.get(1)?,
+            })
+        },
+    )?;
+    connection.execute(
+        "UPDATE collections SET icon = ?2, color = ?3 WHERE id = ?1",
+        params![id, look.icon, look.color],
+    )?;
+    Ok(CollectionCommand::Restyle { id, look: previous })
 }
 
 fn move_into(

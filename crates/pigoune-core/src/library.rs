@@ -43,7 +43,7 @@ pub use asset_command::{AssetCommand, AssetError, TextField};
 pub use batch_import::{
     ImportControl, ImportEnding, ImportProgress, ImportSummary, LARGE_FILE_BYTES,
 };
-pub use collection::{Collection, CollectionPath};
+pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use error::{CollectionError, ImportError, LibraryError};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};

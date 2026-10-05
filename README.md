@@ -50,8 +50,8 @@ image is checked before it comes in, and duplicates are recognized automatically
 <td width="50%" valign="top">
 
 ### Organize
-Nested collections, smart collections that fill themselves, tags and favorites, plus a note, a
-source, a license and an author for each asset.
+Nested collections with their own icon and color, smart collections that fill themselves, tags
+and favorites, plus a note, a source, a license and an author for each asset.
 
 </td>
 </tr>

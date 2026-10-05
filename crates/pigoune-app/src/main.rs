@@ -14,6 +14,8 @@ mod clipboard_content;
 mod collection_choice;
 mod collection_chooser;
 mod collection_drop;
+mod collection_look_dialog;
+mod collection_looks;
 mod collection_name_dialog;
 mod collection_places;
 mod collection_sort;

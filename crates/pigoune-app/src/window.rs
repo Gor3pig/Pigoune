@@ -7,9 +7,10 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
-    CollectionId, CollectionPath, CollectionRemoval, ImportError, ImportSummary, Library,
-    LibraryError, SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag,
-    TagCommand, TagError, TagId, TextField, UndoError, can_be_saved_from, library_display_name,
+    CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ImportError, ImportSummary,
+    Library, LibraryError, SmartCollection, SmartCollectionCommand, SmartCollectionId,
+    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, can_be_saved_from,
+    library_display_name,
 };
 
 use crate::asset_facts;
@@ -18,6 +19,7 @@ use crate::background_import::{self, FinishedImport};
 use crate::clipboard_content;
 use crate::collection_chooser;
 use crate::collection_drop::{self, CollectionDrop};
+use crate::collection_look_dialog::PigouneCollectionLookDialog;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_places::SharedCollection;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
@@ -63,6 +65,7 @@ const SHRINK_THUMBNAILS_ACTION: &str = "win.shrink-thumbnails";
 const NEW_COLLECTION_ACTION: &str = "win.new-collection";
 const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
 const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
+const CUSTOMIZE_COLLECTION_ACTION: &str = "win.customize-collection";
 const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
 const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
@@ -94,7 +97,7 @@ const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
-const OPEN_LIBRARY_ACTIONS: [&str; 18] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 19] = [
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
     UNDO_ACTION,
@@ -106,6 +109,7 @@ const OPEN_LIBRARY_ACTIONS: [&str; 18] = [
     NEW_COLLECTION_ACTION,
     NEW_SUBCOLLECTION_ACTION,
     RENAME_COLLECTION_ACTION,
+    CUSTOMIZE_COLLECTION_ACTION,
     DELETE_COLLECTION_ACTION,
     TOGGLE_FAVORITE_ACTION,
     RENAME_TAG_ACTION,
@@ -166,10 +170,10 @@ mod imp {
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
         CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
-        DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION, DELETE_TAG_ACTION,
-        EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
-        EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION, IMPORT_FILES_ACTION,
-        IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
+        CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
+        DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
+        ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
         NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
         OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
         REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
@@ -243,6 +247,48 @@ mod imp {
         pub filters: RefCell<AssetFilter>,
         pub hovered_drop: Cell<Option<(AssetView, bool)>>,
         pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
+    }
+
+    fn install_collection_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
+        class.install_action(
+            DELETE_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(id) = collection_parameter(parameter) {
+                    window.ask_collection_deletion(id);
+                }
+            },
+        );
+        class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
+            window.ask_new_collection(None);
+        });
+        class.install_action(
+            NEW_SUBCOLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(parent) = collection_parameter(parameter) {
+                    window.ask_new_collection(Some(parent));
+                }
+            },
+        );
+        class.install_action(
+            RENAME_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(id) = collection_parameter(parameter) {
+                    window.ask_collection_name(id);
+                }
+            },
+        );
+        class.install_action(
+            CUSTOMIZE_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(id) = collection_parameter(parameter) {
+                    window.ask_collection_look(id);
+                }
+            },
+        );
     }
 
     fn install_smart_collection_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
@@ -405,36 +451,7 @@ mod imp {
                 },
             );
             install_asset_actions(class);
-            class.install_action(
-                DELETE_COLLECTION_ACTION,
-                Some(glib::VariantTy::STRING),
-                |window, _, parameter| {
-                    if let Some(id) = collection_parameter(parameter) {
-                        window.ask_collection_deletion(id);
-                    }
-                },
-            );
-            class.install_action(NEW_COLLECTION_ACTION, None, |window, _, _| {
-                window.ask_new_collection(None);
-            });
-            class.install_action(
-                NEW_SUBCOLLECTION_ACTION,
-                Some(glib::VariantTy::STRING),
-                |window, _, parameter| {
-                    if let Some(parent) = collection_parameter(parameter) {
-                        window.ask_new_collection(Some(parent));
-                    }
-                },
-            );
-            class.install_action(
-                RENAME_COLLECTION_ACTION,
-                Some(glib::VariantTy::STRING),
-                |window, _, parameter| {
-                    if let Some(id) = collection_parameter(parameter) {
-                        window.ask_collection_name(id);
-                    }
-                },
-            );
+            install_collection_actions(class);
         }
 
         fn instance_init(object: &glib::subclass::InitializingObject<Self>) {
@@ -3364,6 +3381,47 @@ impl PigouneWindow {
             ),
         );
         dialog.present(Some(self));
+    }
+
+    fn ask_collection_look(&self, id: CollectionId) {
+        let collection = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.collection(id).ok().flatten());
+        let Some(collection) = collection else {
+            return;
+        };
+        let dialog = PigouneCollectionLookDialog::new(
+            &collection.name,
+            &collection.look,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or]
+                Ok(()),
+                move |look| window.restyle_collection(id, look)
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn restyle_collection(&self, id: CollectionId, look: &CollectionLook) -> Result<(), String> {
+        let restyled = self.change_library(|library| {
+            library.apply_collection_command(&CollectionCommand::Restyle {
+                id,
+                look: look.clone(),
+            })
+        });
+        match restyled {
+            Some(Ok(_)) => {
+                self.refresh_sidebar();
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_collection(&error)),
+            None => Ok(()),
+        }
     }
 
     fn rename_collection(&self, id: CollectionId, name: &str) -> Result<(), String> {

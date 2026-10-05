@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME, CURRENT_FORMAT_VERSION,
-    DATABASE_FILE_NAME, FILES_DIR_NAME, ImportOutcome, Library,
+    CollectionCommand, CollectionLook, DATABASE_FILE_NAME, FILES_DIR_NAME, ImportOutcome, Library,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -12,6 +12,7 @@ const FORMAT_BEFORE_ANIMATED_PNG_AND_WEBP: u32 = 1;
 const FORMAT_BEFORE_BUCKETS: u32 = 2;
 const THUMBNAIL_PIXELS: u32 = 256;
 const FORMAT_BEFORE_SMART_COLLECTIONS: u32 = 3;
+const FORMAT_BEFORE_COLLECTION_LOOKS: u32 = 4;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -49,6 +50,7 @@ fn library_as_saved_by_format_1(workspace: &TempDir, names: &[&str]) -> (PathBuf
         .pragma_update(None, "user_version", FORMAT_BEFORE_ANIMATED_PNG_AND_WEBP)
         .expect("version updated");
     forget_smart_collections(&connection);
+    forget_collection_looks(&connection);
     (root, ids)
 }
 
@@ -56,6 +58,15 @@ fn forget_smart_collections(connection: &Connection) {
     connection
         .execute_batch("DROP TABLE smart_collections")
         .expect("smart collections forgotten");
+}
+
+fn forget_collection_looks(connection: &Connection) {
+    connection
+        .execute_batch(
+            "ALTER TABLE collections DROP COLUMN icon;
+             ALTER TABLE collections DROP COLUMN color;",
+        )
+        .expect("collection looks forgotten");
 }
 
 fn is_animated(library: &Library, id: AssetId) -> bool {
@@ -135,6 +146,7 @@ impl FlatLibrary {
             .pragma_update(None, "user_version", FORMAT_BEFORE_BUCKETS)
             .expect("version updated");
         forget_smart_collections(&connection);
+        forget_collection_looks(&connection);
         flat
     }
 
@@ -285,6 +297,7 @@ fn a_format_3_library_gains_smart_collections() {
         .pragma_update(None, "user_version", FORMAT_BEFORE_SMART_COLLECTIONS)
         .expect("version updated");
     forget_smart_collections(&connection);
+    forget_collection_looks(&connection);
     drop(connection);
 
     let mut library = Library::open(&root).expect("library opens");
@@ -303,4 +316,49 @@ fn a_format_3_library_gains_smart_collections() {
         .map(|asset| asset.id)
         .collect();
     assert_eq!(shown, vec![red]);
+}
+
+#[test]
+fn a_format_4_library_keeps_its_collections_and_gains_their_looks() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let logos = library
+        .create_collection("Logos", None)
+        .expect("collection is created");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_COLLECTION_LOOKS)
+        .expect("version updated");
+    forget_collection_looks(&connection);
+    drop(connection);
+
+    let mut library = Library::open(&root).expect("library opens");
+    let before = library
+        .collection(logos)
+        .expect("collection is read")
+        .expect("collection exists");
+    let look = CollectionLook {
+        icon: Some("emote-love".to_owned()),
+        color: Some("pink".to_owned()),
+    };
+    library
+        .apply_collection_command(&CollectionCommand::Restyle {
+            id: logos,
+            look: look.clone(),
+        })
+        .expect("collection is restyled");
+    let after = library
+        .collection(logos)
+        .expect("collection is read")
+        .expect("collection exists");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert_eq!(before.name, "Logos");
+    assert_eq!(before.look, CollectionLook::default());
+    assert_eq!(after.look, look);
 }

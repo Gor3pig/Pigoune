@@ -1,0 +1,165 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneCollectionLookDialog: Adw.Dialog {
+  content-width: 420;
+  default-widget: save_button;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      show-start-title-buttons: false;
+      show-end-title-buttons: false;
+
+      [start]
+      Button {
+        label: _("_Cancel");
+        use-underline: true;
+        clicked => $on_cancel_clicked() swapped;
+      }
+
+      [end]
+      Button save_button {
+        label: _("_Save");
+        use-underline: true;
+        clicked => $on_save_clicked() swapped;
+
+        styles [
+          "suggested-action",
+        ]
+      }
+    }
+
+    content: ScrolledWindow {
+      hscrollbar-policy: never;
+      propagate-natural-height: true;
+
+      child: Box {
+        orientation: vertical;
+        spacing: 18;
+        margin-top: 12;
+        margin-bottom: 24;
+        margin-start: 12;
+        margin-end: 12;
+
+        Box {
+          orientation: vertical;
+          spacing: 6;
+
+          Label {
+            label: _("Preview");
+            xalign: 0;
+
+            styles [
+              "heading",
+            ]
+          }
+
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ActionRow preview_row {
+              [prefix]
+              Image preview_icon {}
+
+              [suffix]
+              Button {
+                label: _("_Default");
+                use-underline: true;
+                valign: center;
+                tooltip-text: _("Use the Gray Folder Again");
+                clicked => $on_default_clicked() swapped;
+
+                styles [
+                  "flat",
+                ]
+              }
+            }
+          }
+        }
+
+        Box {
+          orientation: vertical;
+          spacing: 6;
+
+          Label color_title {
+            label: _("Color");
+            xalign: 0;
+
+            styles [
+              "heading",
+            ]
+          }
+
+          FlowBox color_box {
+            selection-mode: none;
+            homogeneous: true;
+            min-children-per-line: 10;
+            max-children-per-line: 10;
+            column-spacing: 2;
+            row-spacing: 2;
+
+            styles [
+              "card",
+              "collection-look-choices",
+            ]
+          }
+        }
+
+        Box {
+          orientation: vertical;
+          spacing: 6;
+
+          Label icon_title {
+            label: _("Icon");
+            xalign: 0;
+
+            styles [
+              "heading",
+            ]
+          }
+
+          FlowBox icon_box {
+            selection-mode: none;
+            homogeneous: true;
+            min-children-per-line: 6;
+            max-children-per-line: 8;
+            column-spacing: 4;
+            row-spacing: 4;
+
+            styles [
+              "card",
+              "collection-look-choices",
+            ]
+          }
+
+          Label icon_name_label {
+            xalign: 0;
+            margin-start: 6;
+
+            styles [
+              "dim-label",
+              "caption",
+            ]
+          }
+        }
+
+        Label error_label {
+          visible: false;
+          wrap: true;
+          xalign: 0;
+          margin-start: 6;
+          margin-end: 6;
+
+          styles [
+            "error",
+          ]
+        }
+      };
+    };
+  };
+}

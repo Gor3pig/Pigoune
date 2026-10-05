@@ -59,8 +59,11 @@ can also drop files directly onto a collection or a tag in the sidebar.
 
 Collections work like folders, and can contain other collections. Create one with the **+**
 button next to **Collections** in the sidebar. Right-click a collection to create a
-sub-collection, rename it (<kbd>F2</kbd>) or delete it.
+sub-collection, rename it (<kbd>F2</kbd>), customize it or delete it.
 
+- **Customize** a collection to give it its own icon and color in the sidebar: right-click it,
+  choose **Customize…**, pick a color and an icon, then **Save**. **Default** brings back the
+  gray folder.
 - **Move** assets into a collection by dragging them onto it from the grid.
 - **Add** them to a collection while keeping them where they are by holding <kbd>Ctrl</kbd>
   while dragging, or with **Add to a Collection…** in the right-click menu. An asset can belong
@@ -212,8 +215,8 @@ good.
 
 Most changes can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd> or with the **Undo** button of
 the message that appears after an action: trashing, moving, tags, favorites, renaming, notes
-and credits, but also creating, renaming, moving or deleting a collection, and creating,
-editing, reordering or deleting a smart collection. Imports cannot be undone, and emptying the
+and credits, but also creating, renaming, customizing, moving or deleting a collection, and
+creating, editing, reordering or deleting a smart collection. Imports cannot be undone, and emptying the
 trash clears the undo history. Creating a collection is only undone while it is still empty:
 once assets are imported into it, use **Delete…** instead.
 

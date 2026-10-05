@@ -422,3 +422,117 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
   background-image: conic-gradient(#cccccc 25%, #ffffff 0 50%, #cccccc 0 75%, #ffffff 0);
   background-size: 16px 16px;
 }
+
+.collection-blue {
+  color: oklab(from var(--accent-blue) var(--standalone-color-oklab));
+}
+
+.collection-teal {
+  color: oklab(from var(--accent-teal) var(--standalone-color-oklab));
+}
+
+.collection-green {
+  color: oklab(from var(--accent-green) var(--standalone-color-oklab));
+}
+
+.collection-yellow {
+  color: oklab(from var(--accent-yellow) var(--standalone-color-oklab));
+}
+
+.collection-orange {
+  color: oklab(from var(--accent-orange) var(--standalone-color-oklab));
+}
+
+.collection-red {
+  color: oklab(from var(--accent-red) var(--standalone-color-oklab));
+}
+
+.collection-pink {
+  color: oklab(from var(--accent-pink) var(--standalone-color-oklab));
+}
+
+.collection-purple {
+  color: oklab(from var(--accent-purple) var(--standalone-color-oklab));
+}
+
+.collection-slate {
+  color: oklab(from var(--accent-slate) var(--standalone-color-oklab));
+}
+
+.collection-look-choices {
+  padding: 8px;
+}
+
+.collection-swatch {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 9999px;
+}
+
+.collection-swatch > image {
+  opacity: 0;
+}
+
+.collection-swatch:checked > image {
+  opacity: 1;
+}
+
+.collection-swatch.swatch-default {
+  background-color: var(--sidebar-bg-color);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+}
+.collection-swatch.swatch-blue {
+  background-color: var(--accent-blue);
+  color: white;
+}
+
+.collection-swatch.swatch-teal {
+  background-color: var(--accent-teal);
+  color: white;
+}
+
+.collection-swatch.swatch-green {
+  background-color: var(--accent-green);
+  color: white;
+}
+
+.collection-swatch.swatch-yellow {
+  background-color: var(--accent-yellow);
+  color: white;
+}
+
+.collection-swatch.swatch-orange {
+  background-color: var(--accent-orange);
+  color: white;
+}
+
+.collection-swatch.swatch-red {
+  background-color: var(--accent-red);
+  color: white;
+}
+
+.collection-swatch.swatch-pink {
+  background-color: var(--accent-pink);
+  color: white;
+}
+
+.collection-swatch.swatch-purple {
+  background-color: var(--accent-purple);
+  color: white;
+}
+
+.collection-swatch.swatch-slate {
+  background-color: var(--accent-slate);
+  color: white;
+}
+
+.collection-icon-choice {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.collection-icon-choice:checked {
+  box-shadow: inset 0 0 0 2px var(--accent-color);
+}

@@ -118,7 +118,7 @@ impl CollectionTree {
 
 #[cfg(test)]
 mod tests {
-    use pigoune_core::{Collection, CollectionId};
+    use pigoune_core::{Collection, CollectionId, CollectionLook};
 
     use super::{CollectionCriterion, CollectionOrder, CollectionTree};
 
@@ -135,6 +135,7 @@ mod tests {
             parent,
             position,
             created_at_unix_ms: i64::from(number),
+            look: CollectionLook::default(),
         }
     }
 

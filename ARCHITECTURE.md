@@ -102,9 +102,10 @@ My logos.pigoune/
   files from `migrations/`, or a Rust step when existing files must be read again (format 2
   looks for animated PNG and WebP among assets imported earlier). Format 3 records the bucketed
   paths, then moves the folders and thumbnails into their buckets; every opening finishes moves
-  left behind by an interruption. Format 4 adds the `smart_collections` table. A library created
-  by a newer
-  version of Pigoune is refused with a clear message.
+  left behind by an interruption. Format 4 adds the `smart_collections` table. Format 5 adds
+  the icon and color of each collection, stored as plain names (`emote-love`, `pink`) that the
+  app turns into a GNOME icon and accent color, falling back to the gray folder for a name it
+  does not know. A library created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.
 - A library is locked while it is open, so that two windows cannot write to it at once.

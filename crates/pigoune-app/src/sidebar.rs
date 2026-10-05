@@ -11,6 +11,7 @@ use pigoune_core::{
 
 use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::CollectionDrop;
+use crate::collection_looks;
 use crate::collection_sort::CollectionTree;
 use crate::found_flash;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
@@ -19,7 +20,6 @@ use crate::sidebar_row::PigouneSidebarRow;
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
-const COLLECTION_ICON: &str = "folder-symbolic";
 const SMART_COLLECTION_ICON: &str = "smart-collection-symbolic";
 const TRASH_ICON: &str = "user-trash-symbolic";
 const DRAG_OVER: &str = "drag-over";
@@ -283,24 +283,18 @@ impl PigouneSidebar {
             counts,
             None,
         ));
-        root.append(&PigouneSidebarItem::new(SidebarItemData {
-            entry: SidebarEntry::CollectionsHeader,
-            label: gettext("Collections"),
-            icon_name: "",
-            count: None,
-            children: None,
-        }));
+        root.append(&header_item(
+            SidebarEntry::CollectionsHeader,
+            gettext("Collections"),
+        ));
         for item in collection_items(&content.tree, None, counts) {
             root.append(&item);
         }
         if content.show_smart_collections {
-            root.append(&PigouneSidebarItem::new(SidebarItemData {
-                entry: SidebarEntry::SmartCollectionsHeader,
-                label: gettext("Smart Collections"),
-                icon_name: "",
-                count: None,
-                children: None,
-            }));
+            root.append(&header_item(
+                SidebarEntry::SmartCollectionsHeader,
+                gettext("Smart Collections"),
+            ));
         }
         for collection in &content.smart_collections {
             root.append(&view_item(
@@ -312,13 +306,7 @@ impl PigouneSidebar {
             ));
         }
         if !content.tags.is_empty() {
-            root.append(&PigouneSidebarItem::new(SidebarItemData {
-                entry: SidebarEntry::TagsHeader,
-                label: gettext("Tags"),
-                icon_name: "",
-                count: None,
-                children: None,
-            }));
+            root.append(&header_item(SidebarEntry::TagsHeader, gettext("Tags")));
             for tag in &content.tags {
                 root.append(&view_item(
                     AssetView::Tag(tag.id),
@@ -660,6 +648,17 @@ impl Default for PigouneSidebar {
     }
 }
 
+fn header_item(entry: SidebarEntry, label: String) -> PigouneSidebarItem {
+    PigouneSidebarItem::new(SidebarItemData {
+        entry,
+        label,
+        icon_name: "",
+        color_class: None,
+        count: None,
+        children: None,
+    })
+}
+
 fn view_item(
     view: AssetView,
     label: String,
@@ -671,6 +670,7 @@ fn view_item(
         entry: SidebarEntry::View(view),
         label,
         icon_name,
+        color_class: None,
         count: counts.map(|counts| counts.of(view)),
         children,
     })
@@ -692,13 +692,15 @@ fn collection_items(
                 }
                 store
             });
-            view_item(
-                AssetView::Collection(collection.id),
-                collection.name.clone(),
-                COLLECTION_ICON,
-                counts,
-                store,
-            )
+            let view = AssetView::Collection(collection.id);
+            PigouneSidebarItem::new(SidebarItemData {
+                entry: SidebarEntry::View(view),
+                label: collection.name.clone(),
+                icon_name: collection_looks::icon_name(&collection.look),
+                color_class: collection_looks::color_class(&collection.look),
+                count: counts.map(|counts| counts.of(view)),
+                children: store,
+            })
         })
         .collect()
 }

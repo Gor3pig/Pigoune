@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetId, AssetView, CollectionCommand, CollectionError, CollectionId, CollectionRemoval,
-    DATABASE_FILE_NAME, ImportOutcome, Library,
+    AssetId, AssetView, CollectionCommand, CollectionError, CollectionId, CollectionLook,
+    CollectionRemoval, DATABASE_FILE_NAME, ImportOutcome, Library,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -72,6 +72,14 @@ impl Fixture {
             .expect("collection is read")
             .expect("collection exists")
             .name
+    }
+
+    fn look_of(&self, id: CollectionId) -> CollectionLook {
+        self.library
+            .collection(id)
+            .expect("collection is read")
+            .expect("collection exists")
+            .look
     }
 
     fn parent_of(&self, id: CollectionId) -> Option<CollectionId> {
@@ -211,6 +219,10 @@ fn deleting_an_empty_collection_then_recreating_it_restores_it_exactly() {
     let mut fixture = Fixture::new();
     let logos = fixture.collection("Logos", None);
     fixture.collection("Marques", None);
+    fixture.apply(&CollectionCommand::Restyle {
+        id: logos,
+        look: heart_in_pink(),
+    });
     let before = fixture.snapshot();
 
     let recreation = fixture.apply(&CollectionCommand::Delete { id: logos });
@@ -218,6 +230,7 @@ fn deleting_an_empty_collection_then_recreating_it_restores_it_exactly() {
 
     fixture.apply(&recreation);
     assert_eq!(fixture.snapshot(), before);
+    assert_eq!(fixture.look_of(logos), heart_in_pink());
 }
 
 #[test]
@@ -234,6 +247,74 @@ fn a_collection_with_resources_or_sub_collections_is_not_deleted_for_good() {
     assert!(matches!(with_resources, CollectionError::NotEmpty(name) if name == "Logos"));
     assert!(matches!(with_children, CollectionError::NotEmpty(name) if name == "Icônes"));
     assert_eq!(fixture.visible().len(), 3);
+}
+
+fn heart_in_pink() -> CollectionLook {
+    CollectionLook {
+        icon: Some("emote-love".to_owned()),
+        color: Some("pink".to_owned()),
+    }
+}
+
+#[test]
+fn a_new_collection_has_the_default_look() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos", None);
+
+    assert_eq!(fixture.look_of(logos), CollectionLook::default());
+}
+
+#[test]
+fn restyling_can_be_undone() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos", None);
+
+    let inverse = fixture.apply(&CollectionCommand::Restyle {
+        id: logos,
+        look: heart_in_pink(),
+    });
+    assert_eq!(fixture.look_of(logos), heart_in_pink());
+
+    fixture.apply(&inverse);
+    assert_eq!(fixture.look_of(logos), CollectionLook::default());
+}
+
+#[test]
+fn restyling_refuses_keys_that_are_not_plain_names() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos", None);
+
+    for key in ["", "Pink", "pink color", "rose\u{e9}", &"a".repeat(49)] {
+        for look in [
+            CollectionLook {
+                icon: Some(key.to_owned()),
+                color: None,
+            },
+            CollectionLook {
+                icon: None,
+                color: Some(key.to_owned()),
+            },
+        ] {
+            let refused = fixture.refused(&CollectionCommand::Restyle { id: logos, look });
+            assert!(matches!(refused, CollectionError::InvalidLook), "{key:?}");
+        }
+    }
+    assert_eq!(fixture.look_of(logos), CollectionLook::default());
+}
+
+#[test]
+fn a_restyled_collection_keeps_its_look_through_the_trash() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos", None);
+    fixture.apply(&CollectionCommand::Restyle {
+        id: logos,
+        look: heart_in_pink(),
+    });
+
+    let restore = fixture.apply(&CollectionCommand::Trash { id: logos });
+    fixture.apply(&restore);
+
+    assert_eq!(fixture.look_of(logos), heart_in_pink());
 }
 
 #[test]

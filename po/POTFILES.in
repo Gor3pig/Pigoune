@@ -23,6 +23,9 @@ crates/pigoune-app/ui/asset-grid.blp
 crates/pigoune-app/src/asset_tile.rs
 crates/pigoune-app/src/sidebar_item.rs
 crates/pigoune-app/ui/collection-name-dialog.blp
+crates/pigoune-app/ui/collection-look-dialog.blp
+crates/pigoune-app/src/collection_look_dialog.rs
+crates/pigoune-app/src/collection_looks.rs
 crates/pigoune-app/ui/preferences-dialog.blp
 crates/pigoune-app/ui/shortcuts-dialog.blp
 crates/pigoune-app/src/sidebar_row.rs

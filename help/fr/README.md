@@ -66,8 +66,11 @@ tag de la barre latérale.
 Les collections fonctionnent comme des dossiers et peuvent contenir d'autres collections.
 Créez-en une avec le bouton **+** à côté de **Collections**, dans la barre latérale. Un clic
 droit sur une collection permet d'y créer une sous-collection, de la renommer
-(<kbd>F2</kbd>) ou de la supprimer.
+(<kbd>F2</kbd>), de la personnaliser ou de la supprimer.
 
+- **Personnalisez** une collection pour lui donner sa propre icône et sa propre couleur dans la
+  barre latérale : clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis
+  **Enregistrer**. **Par défaut** remet le dossier gris.
 - **Déplacez** des ressources dans une collection en les glissant dessus depuis la grille.
 - **Ajoutez-les** à une collection sans les retirer de leur place en maintenant
   <kbd>Ctrl</kbd> pendant le glisser, ou avec **Ajouter à une collection…** dans le menu du
@@ -241,11 +244,11 @@ dans le menu du clic droit ou dans le panneau de détails, ou pour la vider déf
 
 La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
 **Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,
-favoris, renommage, notes et crédits, mais aussi création, renommage, déplacement ou
-suppression d'une collection, et création, modification, réorganisation ou suppression d'une
-collection intelligente. Les imports ne s'annulent pas, et vider la corbeille efface
-l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle est
-vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**.
+favoris, renommage, notes et crédits, mais aussi création, renommage, personnalisation,
+déplacement ou suppression d'une collection, et création, modification, réorganisation ou
+suppression d'une collection intelligente. Les imports ne s'annulent pas, et vider la corbeille
+efface l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle
+est vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**.
 
 ## Votre bibliothèque
 

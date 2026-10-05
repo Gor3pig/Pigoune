@@ -140,6 +140,7 @@ impl CollectionCommand {
             Self::Create { .. }
             | Self::Delete { .. }
             | Self::Rename { .. }
+            | Self::Restyle { .. }
             | Self::Move { .. }
             | Self::Arrange { .. }
             | Self::Trash { .. } => false,

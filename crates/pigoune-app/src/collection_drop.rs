@@ -110,7 +110,7 @@ fn placed(
 
 #[cfg(test)]
 mod tests {
-    use pigoune_core::{Collection, CollectionCommand, CollectionId};
+    use pigoune_core::{Collection, CollectionCommand, CollectionId, CollectionLook};
 
     use super::{CollectionDrop, DropPlan, DropZone, plan, zone_at};
     use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
@@ -126,6 +126,7 @@ mod tests {
             parent: parent.map(id),
             position: 0,
             created_at_unix_ms: i64::from(number),
+            look: CollectionLook::default(),
         }
     }
 

@@ -13,6 +13,33 @@ pub struct Collection {
     pub parent: Option<CollectionId>,
     pub position: i64,
     pub created_at_unix_ms: i64,
+    pub look: CollectionLook,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CollectionLook {
+    pub icon: Option<String>,
+    pub color: Option<String>,
+}
+
+const MAX_LOOK_KEY_CHARS: usize = 48;
+
+impl CollectionLook {
+    #[must_use]
+    pub fn is_valid(&self) -> bool {
+        [&self.icon, &self.color]
+            .into_iter()
+            .flatten()
+            .all(|key| is_look_key(key))
+    }
+}
+
+fn is_look_key(key: &str) -> bool {
+    !key.is_empty()
+        && key.len() <= MAX_LOOK_KEY_CHARS
+        && key.chars().all(|character| {
+            character.is_ascii_lowercase() || character.is_ascii_digit() || character == '-'
+        })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,7 +48,8 @@ pub struct CollectionPath {
     pub names: Vec<String>,
 }
 
-pub(super) const COLLECTION_COLUMNS: &str = "id, name, parent_id, position, created_at_unix_ms";
+pub(super) const COLLECTION_COLUMNS: &str =
+    "id, name, parent_id, position, created_at_unix_ms, icon, color";
 
 impl Library {
     pub fn create_collection(
@@ -37,6 +65,7 @@ impl Library {
                 parent,
                 position: next_position(&self.connection, parent)?,
                 created_at_unix_ms: clock::now_unix_ms(),
+                look: CollectionLook::default(),
             },
         })?;
         Ok(id)
@@ -140,6 +169,7 @@ pub fn insert_collection(
         parent,
         position: next_position(connection, parent)?,
         created_at_unix_ms: clock::now_unix_ms(),
+        look: CollectionLook::default(),
     };
     insert(connection, &collection)?;
     Ok(collection.id)
@@ -147,14 +177,16 @@ pub fn insert_collection(
 
 pub fn insert(connection: &Connection, collection: &Collection) -> Result<(), LibraryError> {
     connection.execute(
-        "INSERT INTO collections (id, parent_id, name, position, created_at_unix_ms)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO collections (id, parent_id, name, position, created_at_unix_ms, icon, color)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         params![
             collection.id,
             collection.parent,
             collection.name,
             collection.position,
-            collection.created_at_unix_ms
+            collection.created_at_unix_ms,
+            collection.look.icon,
+            collection.look.color
         ],
     )?;
     Ok(())
@@ -202,6 +234,10 @@ pub(super) fn collection_from_row(row: &Row) -> rusqlite::Result<Collection> {
         parent: row.get("parent_id")?,
         position: row.get("position")?,
         created_at_unix_ms: row.get("created_at_unix_ms")?,
+        look: CollectionLook {
+            icon: row.get("icon")?,
+            color: row.get("color")?,
+        },
     })
 }
 

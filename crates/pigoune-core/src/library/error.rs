@@ -61,6 +61,8 @@ pub enum CollectionError {
     AssetNotFound(AssetId),
     #[error("the collection {0} is no longer empty")]
     NotEmpty(String),
+    #[error("this icon or color cannot be used for a collection")]
+    InvalidLook,
     #[error(transparent)]
     Library(#[from] LibraryError),
 }

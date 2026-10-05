@@ -7,6 +7,7 @@ use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetView, CollectionId};
 
 use crate::collection_drop::{self, CollectionDrop, DropZone};
+use crate::collection_look_dialog;
 use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
@@ -74,6 +75,7 @@ impl PigouneSidebarRow {
         let is_tag = matches!(item.view(), Some(AssetView::Tag(_)));
         let icon = part(&imp.icon);
         icon.set_icon_name(Some(item.icon_name()));
+        collection_look_dialog::set_tint(icon.upcast_ref(), item.color_class());
         icon.set_visible(!is_header && !is_tag);
         part(&imp.hash).set_visible(is_tag);
         let label = part(&imp.label);
@@ -535,6 +537,10 @@ fn collection_menu(collection: CollectionId) -> gio::Menu {
     menu.append(
         Some(&gettext("Rename…")),
         Some(&format!("win.rename-collection::{collection}")),
+    );
+    menu.append(
+        Some(&gettext("Customize…")),
+        Some(&format!("win.customize-collection::{collection}")),
     );
     menu.append(
         Some(&gettext("Delete…")),

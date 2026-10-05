@@ -52,6 +52,9 @@ pub fn describe_collection(error: &CollectionError) -> String {
             "The collection “{name}” is no longer empty, so creating it is not undone. Use “Delete…” to remove it.",
         )
         .replace("{name}", name),
+        CollectionError::InvalidLook => {
+            gettext("This icon or color cannot be used for a collection.")
+        }
         CollectionError::Library(error) => describe(error),
     }
 }

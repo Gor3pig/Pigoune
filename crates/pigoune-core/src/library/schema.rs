@@ -4,7 +4,7 @@ use rusqlite::{Connection, ErrorCode};
 
 use super::{LibraryError, animation_recheck, buckets};
 
-pub const CURRENT_FORMAT_VERSION: u32 = 4;
+pub const CURRENT_FORMAT_VERSION: u32 = 5;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 
 enum Migration {
@@ -14,7 +14,7 @@ enum Migration {
 }
 
 const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] =
-    ["1.0", "1.4", "1.5", "1.6"];
+    ["1.0", "1.4", "1.5", "1.6", "1.7"];
 
 #[must_use]
 pub fn oldest_compatible_version(format_version: u32) -> Option<&'static str> {
@@ -27,6 +27,7 @@ const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::RecheckAnimations,
     Migration::RecordBucketedPaths,
     Migration::Statements(include_str!("migrations/v4.sql")),
+    Migration::Statements(include_str!("migrations/v5.sql")),
 ];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
@@ -122,6 +123,7 @@ mod tests {
         assert_eq!(oldest_compatible_version(2), Some("1.4"));
         assert_eq!(oldest_compatible_version(3), Some("1.5"));
         assert_eq!(oldest_compatible_version(4), Some("1.6"));
+        assert_eq!(oldest_compatible_version(5), Some("1.7"));
         assert!(oldest_compatible_version(CURRENT_FORMAT_VERSION).is_some());
         assert_eq!(oldest_compatible_version(0), None);
         assert_eq!(oldest_compatible_version(CURRENT_FORMAT_VERSION + 1), None);

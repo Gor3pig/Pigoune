@@ -15,6 +15,7 @@ pub struct SidebarItemData {
     pub entry: SidebarEntry,
     pub label: String,
     pub icon_name: &'static str,
+    pub color_class: Option<&'static str>,
     pub count: Option<usize>,
     pub children: Option<gio::ListStore>,
 }
@@ -89,6 +90,10 @@ impl PigouneSidebarItem {
 
     pub fn icon_name(&self) -> &'static str {
         self.data().icon_name
+    }
+
+    pub fn color_class(&self) -> Option<&'static str> {
+        self.data().color_class
     }
 
     pub fn count(&self) -> Option<usize> {
