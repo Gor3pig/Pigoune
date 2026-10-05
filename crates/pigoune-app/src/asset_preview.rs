@@ -749,6 +749,32 @@ impl PigouneAssetPreview {
             }
         ));
         self.imp().surface.add_controller(click);
+        let panel_click = gtk::GestureClick::new();
+        panel_click.set_propagation_phase(gtk::PropagationPhase::Capture);
+        panel_click.connect_end(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, _| {
+                glib::idle_add_local_once(glib::clone!(
+                    #[weak]
+                    preview,
+                    move || preview.leave_panel_controls()
+                ));
+            }
+        ));
+        self.imp().details_slot.add_controller(panel_click);
+    }
+
+    fn leave_panel_controls(&self) {
+        let focus = self.root().and_then(|root| root.focus());
+        let Some(focus) = focus else {
+            return;
+        };
+        let in_panel = focus.is_ancestor(&*self.imp().details_slot);
+        let typing = focus.is::<gtk::Text>() || focus.is::<gtk::TextView>();
+        if in_panel && !typing {
+            self.grab_focus();
+        }
     }
 
     fn follow_fullscreen(&self) {
