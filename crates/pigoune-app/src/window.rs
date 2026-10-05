@@ -476,7 +476,6 @@ mod imp {
             self.obj().set_library_actions_enabled(false);
             self.obj().accept_dropped_files();
             self.obj().follow_welcome_recent_list();
-            self.obj().open_submenus_on_hover();
             self.obj().follow_page_height();
             self.obj().watch_for_updates();
         }
@@ -1448,13 +1447,6 @@ impl PigouneWindow {
                 }
             ));
         self.set_height_request(WELCOME_MINIMUM_HEIGHT);
-    }
-
-    fn open_submenus_on_hover(&self) {
-        let imp = self.imp();
-        let popover =
-            gtk::PopoverMenu::from_model_full(&*imp.primary_menu, gtk::PopoverMenuFlags::NESTED);
-        imp.library_menu_button.set_popover(Some(&popover));
     }
 
     fn forget_recent_libraries(&self, kept: &[String]) {
