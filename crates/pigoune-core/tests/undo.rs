@@ -285,29 +285,51 @@ fn a_refused_undo_is_forgotten_and_changes_nothing() {
         name: "Point".to_owned(),
     });
     let logos = fixture.collection("Logos");
-    fixture
-        .library
-        .apply_collection_command(&CollectionCommand::Rename {
-            id: logos,
-            name: "Marques".to_owned(),
-        })
-        .expect("collection is renamed");
-    fixture.collection("Logos");
+    let square = fixture.import("green-square.webp", Some(logos));
 
     let refused = fixture.library.undo();
 
     assert!(matches!(
         refused,
-        Err(UndoError::Collection(CollectionError::NameTaken(_)))
+        Err(UndoError::Collection(CollectionError::NotEmpty(name))) if name == "Logos"
     ));
-    let renamed = fixture
-        .library
-        .collection(logos)
-        .expect("read")
-        .expect("collection exists");
-    assert_eq!(renamed.name, "Marques");
+    assert!(fixture.library.collection(logos).expect("read").is_some());
+    assert_eq!(fixture.shown(AssetView::Collection(logos)), vec![square]);
     assert!(fixture.undo().is_some());
     assert_eq!(fixture.name_of(dot), "red-dot");
+}
+
+#[test]
+fn undoing_a_creation_removes_the_empty_collection() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos");
+
+    let undone = fixture.undo();
+
+    assert!(matches!(
+        undone,
+        Some(Change::Collection(CollectionCommand::Create { collection }))
+            if collection.id == logos && collection.name == "Logos"
+    ));
+    assert!(fixture.library.collection(logos).expect("read").is_none());
+    assert!(!fixture.library.can_undo());
+}
+
+#[test]
+fn creations_are_undone_from_the_latest_sub_collection() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos");
+    let brands = fixture
+        .library
+        .create_collection("Marques", Some(logos))
+        .expect("sub-collection is created");
+
+    fixture.undo();
+    assert!(fixture.library.collection(brands).expect("read").is_none());
+    assert!(fixture.library.collection(logos).expect("read").is_some());
+
+    fixture.undo();
+    assert!(fixture.library.collection(logos).expect("read").is_none());
 }
 
 #[test]

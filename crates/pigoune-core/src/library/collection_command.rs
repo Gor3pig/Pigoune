@@ -2,11 +2,17 @@ use std::collections::HashSet;
 
 use rusqlite::{Connection, OptionalExtension, params};
 
-use super::collection::{self, ensure_name_is_free, is_usable_collection, valid_name};
+use super::collection::{self, Collection, ensure_name_is_free, is_usable_collection, valid_name};
 use super::{AssetId, Change, CollectionError, CollectionId, Library, LibraryError, clock};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CollectionCommand {
+    Create {
+        collection: Collection,
+    },
+    Delete {
+        id: CollectionId,
+    },
     Rename {
         id: CollectionId,
         name: String,
@@ -95,6 +101,8 @@ fn apply(
     command: &CollectionCommand,
 ) -> Result<CollectionCommand, CollectionError> {
     match command {
+        CollectionCommand::Create { collection } => create(connection, collection),
+        CollectionCommand::Delete { id } => delete(connection, *id),
         CollectionCommand::Rename { id, name } => rename(connection, *id, name),
         CollectionCommand::Move { id, parent } => move_into(connection, *id, *parent),
         CollectionCommand::Arrange { parent, order } => arrange(connection, *parent, order),
@@ -122,6 +130,55 @@ fn apply(
             Ok(CollectionCommand::Batch(inverses))
         }
     }
+}
+
+fn create(
+    connection: &Connection,
+    collection: &Collection,
+) -> Result<CollectionCommand, CollectionError> {
+    let name = valid_name(&collection.name)?;
+    if let Some(parent) = collection.parent
+        && !is_usable_collection(connection, parent)?
+    {
+        return Err(CollectionError::NotFound(parent));
+    }
+    ensure_name_is_free(connection, collection.parent, name, None)?;
+    collection::insert(
+        connection,
+        &Collection {
+            name: name.to_owned(),
+            ..collection.clone()
+        },
+    )?;
+    Ok(CollectionCommand::Delete { id: collection.id })
+}
+
+fn delete(connection: &Connection, id: CollectionId) -> Result<CollectionCommand, CollectionError> {
+    usable(connection, id)?;
+    let existing = connection.query_row(
+        &format!(
+            "SELECT {} FROM collections WHERE id = ?1",
+            collection::COLLECTION_COLUMNS
+        ),
+        [id],
+        collection::collection_from_row,
+    )?;
+    if holds_anything(connection, id)? {
+        return Err(CollectionError::NotEmpty(existing.name));
+    }
+    connection.execute("DELETE FROM collections WHERE id = ?1", [id])?;
+    Ok(CollectionCommand::Create {
+        collection: existing,
+    })
+}
+
+fn holds_anything(connection: &Connection, id: CollectionId) -> Result<bool, LibraryError> {
+    Ok(connection.query_row(
+        "SELECT EXISTS (SELECT 1 FROM asset_collections WHERE collection_id = ?1)
+             OR EXISTS (SELECT 1 FROM collections WHERE parent_id = ?1)",
+        [id],
+        |row| row.get(0),
+    )?)
 }
 
 fn rename(

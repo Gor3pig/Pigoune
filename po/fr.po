@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 18:23+0200\n"
+"POT-Creation-Date: 2026-10-05 18:30+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -134,9 +134,9 @@ msgid ""
 "search the whole library, and showing or hiding tags and smart collections "
 "in the sidebar."
 msgstr ""
-"Nouvelles préférences : fond des vignettes, étiquettes de format, ouverture par "
-"double-clic, recherche dans toute la bibliothèque, et affichage ou non des "
-"tags et des collections intelligentes dans la barre latérale."
+"Nouvelles préférences : fond des vignettes, étiquettes de format, ouverture "
+"par double-clic, recherche dans toute la bibliothèque, et affichage ou non "
+"des tags et des collections intelligentes dans la barre latérale."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:95
 msgid "The details panel keeps the same width whatever the selected asset."
@@ -572,7 +572,9 @@ msgstr "Rechercher dans toute la bibliothèque"
 msgid ""
 "Whether searches and filters look in the whole library, except in the trash "
 "and smart collections."
-msgstr "Indique si la recherche et les filtres regardent dans toute la bibliothèque, sauf dans la corbeille et les collections intelligentes."
+msgstr ""
+"Indique si la recherche et les filtres regardent dans toute la bibliothèque, "
+"sauf dans la corbeille et les collections intelligentes."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:140
 msgid "Show tags"
@@ -963,44 +965,51 @@ msgid "The collections changed in the meantime. Please try again."
 msgstr "Les collections ont changé entre-temps. Veuillez réessayer."
 
 #: crates/pigoune-app/src/error_messages.rs:50
-#: crates/pigoune-app/src/error_messages.rs:57
-#: crates/pigoune-app/src/error_messages.rs:93
+#: crates/pigoune-app/src/error_messages.rs:61
+#: crates/pigoune-app/src/error_messages.rs:97
 msgid "This resource no longer exists."
 msgstr "Cette ressource n’existe plus."
 
-#: crates/pigoune-app/src/error_messages.rs:58
+#: crates/pigoune-app/src/error_messages.rs:52
+#, rust-format
+msgid ""
+"The collection “{name}” is no longer empty, so creating it is not undone. "
+"Use “Delete…” to remove it."
+msgstr "La collection « {name} » n’est plus vide : sa création n’est pas annulée. Utilisez « Supprimer… » pour l’enlever."
+
+#: crates/pigoune-app/src/error_messages.rs:62
 msgid "Enter a name for the resource."
 msgstr "Saisissez un nom pour la ressource."
 
-#: crates/pigoune-app/src/error_messages.rs:74
+#: crates/pigoune-app/src/error_messages.rs:78
 msgid "Enter a name for the smart collection."
 msgstr "Saisissez un nom pour la collection intelligente."
 
-#: crates/pigoune-app/src/error_messages.rs:76
+#: crates/pigoune-app/src/error_messages.rs:80
 msgid "Another smart collection already has this name."
 msgstr "Une autre collection intelligente porte déjà ce nom."
 
-#: crates/pigoune-app/src/error_messages.rs:78
+#: crates/pigoune-app/src/error_messages.rs:82
 msgid "This smart collection no longer exists."
 msgstr "Cette collection intelligente n’existe plus."
 
-#: crates/pigoune-app/src/error_messages.rs:80
+#: crates/pigoune-app/src/error_messages.rs:84
 msgid "The smart collections changed in the meantime. Try again."
 msgstr "Les collections intelligentes ont changé entre-temps. Réessayez."
 
-#: crates/pigoune-app/src/error_messages.rs:83
+#: crates/pigoune-app/src/error_messages.rs:87
 msgid "A smart collection cannot be saved from this view."
 msgstr "Impossible d’enregistrer une collection intelligente depuis cette vue."
 
-#: crates/pigoune-app/src/error_messages.rs:91
+#: crates/pigoune-app/src/error_messages.rs:95
 msgid "Enter a name for the tag."
 msgstr "Saisissez un nom pour le tag."
 
-#: crates/pigoune-app/src/error_messages.rs:92
+#: crates/pigoune-app/src/error_messages.rs:96
 msgid "This tag no longer exists."
 msgstr "Ce tag n’existe plus."
 
-#: crates/pigoune-app/src/error_messages.rs:94
+#: crates/pigoune-app/src/error_messages.rs:98
 msgid "Another tag already has this name."
 msgstr "Un autre tag porte déjà ce nom."
 
@@ -2193,7 +2202,9 @@ msgstr "Rechercher dans toute la bibliothèque"
 msgid ""
 "Searches and filters look everywhere, except in the trash and smart "
 "collections"
-msgstr "La recherche et les filtres regardent partout, sauf dans la corbeille et les collections intelligentes"
+msgstr ""
+"La recherche et les filtres regardent partout, sauf dans la corbeille et les "
+"collections intelligentes"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:81
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:74
@@ -2226,7 +2237,9 @@ msgstr "Afficher les collections intelligentes"
 msgid ""
 "Each smart collection appears in the sidebar, filled with the resources "
 "matching its criteria"
-msgstr "Chaque collection intelligente apparaît dans la barre latérale, remplie des ressources qui correspondent à ses critères"
+msgstr ""
+"Chaque collection intelligente apparaît dans la barre latérale, remplie des "
+"ressources qui correspondent à ses critères"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:100
 msgid "Storage"
@@ -2529,98 +2542,103 @@ msgstr "Modification de l’auteur de « {name} » annulée"
 
 #: crates/pigoune-app/src/undo_message.rs:78
 #, rust-format
+msgid "Creating the collection “{name}” undone"
+msgstr "Création de la collection « {name} » annulée"
+
+#: crates/pigoune-app/src/undo_message.rs:83
+#, rust-format
 msgid "Renaming undone, the collection is named “{name}” again"
 msgstr "Renommage annulé, la collection s’appelle à nouveau « {name} »"
 
-#: crates/pigoune-app/src/undo_message.rs:82
+#: crates/pigoune-app/src/undo_message.rs:87
 #, rust-format
 msgid "Deleting the collection “{name}” undone"
 msgstr "Suppression de la collection « {name} » annulée"
 
-#: crates/pigoune-app/src/undo_message.rs:89
+#: crates/pigoune-app/src/undo_message.rs:94
 #, rust-format
 msgid "Adding {count} resource to “{name}” undone"
 msgid_plural "Adding {count} resources to “{name}” undone"
 msgstr[0] "Ajout de {count} ressource à « {name} » annulé"
 msgstr[1] "Ajout de {count} ressources à « {name} » annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:100
+#: crates/pigoune-app/src/undo_message.rs:105
 #, rust-format
 msgid "Removing {count} resource from “{name}” undone"
 msgid_plural "Removing {count} resources from “{name}” undone"
 msgstr[0] "Retrait de {count} ressource de « {name} » annulé"
 msgstr[1] "Retrait de {count} ressources de « {name} » annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:111
+#: crates/pigoune-app/src/undo_message.rs:116
 #, rust-format
 msgid "Moving {count} resource to “{name}” undone"
 msgid_plural "Moving {count} resources to “{name}” undone"
 msgstr[0] "Déplacement de {count} ressource vers « {name} » annulé"
 msgstr[1] "Déplacement de {count} ressources vers « {name} » annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:129
+#: crates/pigoune-app/src/undo_message.rs:134
 #, rust-format
 msgid "Moving the collection “{name}” undone"
 msgstr "Déplacement de la collection « {name} » annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:132
+#: crates/pigoune-app/src/undo_message.rs:137
 msgid "Change of the collection order undone"
 msgstr "Changement de l’ordre des collections annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:157
+#: crates/pigoune-app/src/undo_message.rs:162
 #, rust-format
 msgid "Adding the tag “{name}” undone"
 msgstr "Ajout du tag « {name} » annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:162
+#: crates/pigoune-app/src/undo_message.rs:167
 #, rust-format
 msgid "Adding the tag “{name}” to {count} resource undone"
 msgid_plural "Adding the tag “{name}” to {count} resources undone"
 msgstr[0] "Ajout du tag « {name} » à {count} ressource annulé"
 msgstr[1] "Ajout du tag « {name} » à {count} ressources annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:173
+#: crates/pigoune-app/src/undo_message.rs:178
 #, rust-format
 msgid "Removing the tag “{name}” from {count} resource undone"
 msgid_plural "Removing the tag “{name}” from {count} resources undone"
 msgstr[0] "Retrait du tag « {name} » de {count} ressource annulé"
 msgstr[1] "Retrait du tag « {name} » de {count} ressources annulé"
 
-#: crates/pigoune-app/src/undo_message.rs:181
+#: crates/pigoune-app/src/undo_message.rs:186
 #, rust-format
 msgid "Renaming undone, the tag is named “{name}” again"
 msgstr "Renommage annulé, le tag s’appelle à nouveau « {name} »"
 
-#: crates/pigoune-app/src/undo_message.rs:185
+#: crates/pigoune-app/src/undo_message.rs:190
 #, rust-format
 msgid "Merging the tag “{name}” undone"
 msgstr "Fusion du tag « {name} » annulée"
 
-#: crates/pigoune-app/src/undo_message.rs:189
+#: crates/pigoune-app/src/undo_message.rs:194
 #, rust-format
 msgid "Deleting the tag “{name}” undone"
 msgstr "Suppression du tag « {name} » annulée"
 
-#: crates/pigoune-app/src/undo_message.rs:201
+#: crates/pigoune-app/src/undo_message.rs:206
 #, rust-format
 msgid "Creating the smart collection “{name}” undone"
 msgstr "Création de la collection intelligente « {name} » annulée"
 
-#: crates/pigoune-app/src/undo_message.rs:205
+#: crates/pigoune-app/src/undo_message.rs:210
 #, rust-format
 msgid "Changes to the smart collection “{name}” undone"
 msgstr "Modifications de la collection intelligente « {name} » annulées"
 
-#: crates/pigoune-app/src/undo_message.rs:209
+#: crates/pigoune-app/src/undo_message.rs:214
 msgid "Reordering the smart collections undone"
 msgstr "Réorganisation des collections intelligentes annulée"
 
-#: crates/pigoune-app/src/undo_message.rs:212
+#: crates/pigoune-app/src/undo_message.rs:217
 #, rust-format
 msgid "Deleting the smart collection “{name}” undone"
 msgstr "Suppression de la collection intelligente « {name} » annulée"
 
-#: crates/pigoune-app/src/undo_message.rs:228
+#: crates/pigoune-app/src/undo_message.rs:233
 #, rust-format
 msgid "Adding {count} tag undone"
 msgid_plural "Adding {count} tags undone"

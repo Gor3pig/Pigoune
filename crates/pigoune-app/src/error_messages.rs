@@ -48,6 +48,10 @@ pub fn describe_collection(error: &CollectionError) -> String {
             gettext("The collections changed in the meantime. Please try again.")
         }
         CollectionError::AssetNotFound(_) => gettext("This resource no longer exists."),
+        CollectionError::NotEmpty(name) => gettext(
+            "The collection “{name}” is no longer empty, so creating it is not undone. Use “Delete…” to remove it.",
+        )
+        .replace("{name}", name),
         CollectionError::Library(error) => describe(error),
     }
 }

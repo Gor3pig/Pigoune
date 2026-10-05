@@ -207,6 +207,36 @@ fn a_new_collection_goes_after_its_siblings() {
 }
 
 #[test]
+fn deleting_an_empty_collection_then_recreating_it_restores_it_exactly() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos", None);
+    fixture.collection("Marques", None);
+    let before = fixture.snapshot();
+
+    let recreation = fixture.apply(&CollectionCommand::Delete { id: logos });
+    assert_eq!(fixture.visible().len(), 1);
+
+    fixture.apply(&recreation);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn a_collection_with_resources_or_sub_collections_is_not_deleted_for_good() {
+    let mut fixture = Fixture::new();
+    let logos = fixture.collection("Logos", None);
+    fixture.asset_in("red-dot.png", Some(logos));
+    let icons = fixture.collection("Icônes", None);
+    fixture.collection("Petites", Some(icons));
+
+    let with_resources = fixture.refused(&CollectionCommand::Delete { id: logos });
+    let with_children = fixture.refused(&CollectionCommand::Delete { id: icons });
+
+    assert!(matches!(with_resources, CollectionError::NotEmpty(name) if name == "Logos"));
+    assert!(matches!(with_children, CollectionError::NotEmpty(name) if name == "Icônes"));
+    assert_eq!(fixture.visible().len(), 3);
+}
+
+#[test]
 fn renaming_can_be_undone() {
     let mut fixture = Fixture::new();
     let tech = fixture.collection("Tech", None);

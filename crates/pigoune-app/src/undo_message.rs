@@ -74,6 +74,11 @@ fn text_change(field: TextField) -> String {
 
 fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<String> {
     let text = match command {
+        CollectionCommand::Create { collection } => named(
+            &gettext("Creating the collection “{name}” undone"),
+            &collection.name,
+        ),
+        CollectionCommand::Delete { .. } => return None,
         CollectionCommand::Rename { id, .. } => named(
             &gettext("Renaming undone, the collection is named “{name}” again"),
             &names.collection(*id)?,

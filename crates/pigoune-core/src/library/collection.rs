@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
-use super::{AssetId, CollectionError, CollectionId, Library, LibraryError, clock};
+use super::{
+    AssetId, CollectionCommand, CollectionError, CollectionId, Library, LibraryError, clock,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Collection {
@@ -19,7 +21,7 @@ pub struct CollectionPath {
     pub names: Vec<String>,
 }
 
-const COLLECTION_COLUMNS: &str = "id, name, parent_id, position, created_at_unix_ms";
+pub(super) const COLLECTION_COLUMNS: &str = "id, name, parent_id, position, created_at_unix_ms";
 
 impl Library {
     pub fn create_collection(
@@ -27,15 +29,17 @@ impl Library {
         name: &str,
         parent: Option<CollectionId>,
     ) -> Result<CollectionId, CollectionError> {
-        let name = valid_name(name)?;
-        if let Some(parent) = parent
-            && !is_usable_collection(&self.connection, parent)?
-        {
-            return Err(CollectionError::NotFound(parent));
-        }
-        ensure_name_is_free(&self.connection, parent, name, None)?;
-
-        Ok(insert_collection(&self.connection, name, parent)?)
+        let id = CollectionId::generate();
+        self.apply_collection_command(&CollectionCommand::Create {
+            collection: Collection {
+                id,
+                name: name.to_owned(),
+                parent,
+                position: next_position(&self.connection, parent)?,
+                created_at_unix_ms: clock::now_unix_ms(),
+            },
+        })?;
+        Ok(id)
     }
 
     pub fn collection(&self, id: CollectionId) -> Result<Option<Collection>, LibraryError> {
@@ -130,19 +134,30 @@ pub fn insert_collection(
     name: &str,
     parent: Option<CollectionId>,
 ) -> Result<CollectionId, LibraryError> {
-    let id = CollectionId::generate();
+    let collection = Collection {
+        id: CollectionId::generate(),
+        name: name.to_owned(),
+        parent,
+        position: next_position(connection, parent)?,
+        created_at_unix_ms: clock::now_unix_ms(),
+    };
+    insert(connection, &collection)?;
+    Ok(collection.id)
+}
+
+pub fn insert(connection: &Connection, collection: &Collection) -> Result<(), LibraryError> {
     connection.execute(
         "INSERT INTO collections (id, parent_id, name, position, created_at_unix_ms)
          VALUES (?1, ?2, ?3, ?4, ?5)",
         params![
-            id,
-            parent,
-            name,
-            next_position(connection, parent)?,
-            clock::now_unix_ms()
+            collection.id,
+            collection.parent,
+            collection.name,
+            collection.position,
+            collection.created_at_unix_ms
         ],
     )?;
-    Ok(id)
+    Ok(())
 }
 
 pub fn next_position(
@@ -180,7 +195,7 @@ pub fn ensure_name_is_free(
     }
 }
 
-fn collection_from_row(row: &Row) -> rusqlite::Result<Collection> {
+pub(super) fn collection_from_row(row: &Row) -> rusqlite::Result<Collection> {
     Ok(Collection {
         id: row.get("id")?,
         name: row.get("name")?,

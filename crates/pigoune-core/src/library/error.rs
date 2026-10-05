@@ -59,6 +59,8 @@ pub enum CollectionError {
     OutdatedOrder,
     #[error("the resource {0} does not exist")]
     AssetNotFound(AssetId),
+    #[error("the collection {0} is no longer empty")]
+    NotEmpty(String),
     #[error(transparent)]
     Library(#[from] LibraryError),
 }

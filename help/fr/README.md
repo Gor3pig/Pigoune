@@ -241,10 +241,11 @@ dans le menu du clic droit ou dans le panneau de détails, ou pour la vider déf
 
 La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
 **Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,
-favoris, renommage, notes et crédits, mais aussi renommage, déplacement ou suppression d'une
-collection, et création, modification, réorganisation ou suppression d'une collection
-intelligente. Les imports ne s'annulent pas, et vider la corbeille
-efface l'historique des annulations.
+favoris, renommage, notes et crédits, mais aussi création, renommage, déplacement ou
+suppression d'une collection, et création, modification, réorganisation ou suppression d'une
+collection intelligente. Les imports ne s'annulent pas, et vider la corbeille efface
+l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle est
+vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**.
 
 ## Votre bibliothèque
 

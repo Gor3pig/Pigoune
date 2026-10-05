@@ -137,9 +137,12 @@ impl CollectionCommand {
                 assets,
                 ..
             } => collections.is_empty() && assets.is_empty(),
-            Self::Rename { .. } | Self::Move { .. } | Self::Arrange { .. } | Self::Trash { .. } => {
-                false
-            }
+            Self::Create { .. }
+            | Self::Delete { .. }
+            | Self::Rename { .. }
+            | Self::Move { .. }
+            | Self::Arrange { .. }
+            | Self::Trash { .. } => false,
             Self::Batch(commands) => commands.iter().all(Self::changes_nothing),
         }
     }
