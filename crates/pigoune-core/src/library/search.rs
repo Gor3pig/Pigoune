@@ -4,7 +4,7 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
 use super::{Asset, AssetId, AssetView, Library, LibraryError};
-use crate::media::{AssetColor, AssetFormat};
+use crate::media::{AssetColor, AssetFormat, Rgb};
 
 const FIELD_SEPARATOR: char = '\n';
 const ALTERNATIVE_SEPARATOR: char = ',';
@@ -16,6 +16,7 @@ pub struct AssetFilter {
     pub formats: Vec<AssetFormat>,
     pub favorites_only: bool,
     pub colors: Vec<AssetColor>,
+    pub custom_color: Option<Rgb>,
 }
 
 impl AssetFilter {
@@ -29,7 +30,10 @@ impl AssetFilter {
 
     #[must_use]
     pub fn chosen_filters(&self) -> usize {
-        self.formats.len() + self.colors.len() + usize::from(self.favorites_only)
+        self.formats.len()
+            + self.colors.len()
+            + usize::from(self.custom_color.is_some())
+            + usize::from(self.favorites_only)
     }
 
     #[must_use]
@@ -40,14 +44,27 @@ impl AssetFilter {
     fn keeps(&self, asset: &Asset, groups: &[Vec<String>], tags: &[String]) -> bool {
         (self.formats.is_empty() || self.formats.contains(&asset.format))
             && (!self.favorites_only || asset.is_favorite)
-            && (self.colors.is_empty()
-                || asset.colors.iter().any(|color| self.colors.contains(color)))
+            && self.keeps_colors_of(asset)
             && (groups.is_empty() || {
                 let text = searchable_text(asset, tags);
                 groups
                     .iter()
                     .any(|words| words.iter().all(|word| text.contains(word.as_str())))
             })
+    }
+}
+
+impl AssetFilter {
+    fn keeps_colors_of(&self, asset: &Asset) -> bool {
+        if self.colors.is_empty() && self.custom_color.is_none() {
+            return true;
+        }
+        asset.colors.iter().any(|color| {
+            self.colors.contains(&color.family)
+                || self
+                    .custom_color
+                    .is_some_and(|custom| custom.is_close_to(color.average))
+        })
     }
 }
 

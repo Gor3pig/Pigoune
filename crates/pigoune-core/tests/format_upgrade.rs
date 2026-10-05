@@ -2,8 +2,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME, CURRENT_FORMAT_VERSION,
-    CollectionCommand, CollectionLook, DATABASE_FILE_NAME, FILES_DIR_NAME, ImportOutcome, Library,
+    AssetColor, AssetCommand, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME,
+    CURRENT_FORMAT_VERSION, CollectionCommand, CollectionLook, DATABASE_FILE_NAME, DominantColor,
+    FILES_DIR_NAME, ImportOutcome, Library, Rgb,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -14,6 +15,7 @@ const THUMBNAIL_PIXELS: u32 = 256;
 const FORMAT_BEFORE_SMART_COLLECTIONS: u32 = 3;
 const FORMAT_BEFORE_COLLECTION_LOOKS: u32 = 4;
 const FORMAT_BEFORE_COLORS: u32 = 5;
+const FORMAT_BEFORE_COLOR_AVERAGES: u32 = 6;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -69,9 +71,16 @@ fn forget_asset_colors(connection: &Connection) {
 }
 
 fn forget_smart_collection_colors(connection: &Connection) {
+    forget_custom_colors(connection);
     connection
         .execute_batch("ALTER TABLE smart_collections DROP COLUMN colors;")
         .expect("smart collection colors forgotten");
+}
+
+fn forget_custom_colors(connection: &Connection) {
+    connection
+        .execute_batch("ALTER TABLE smart_collections DROP COLUMN custom_color;")
+        .expect("custom colors forgotten");
 }
 
 fn forget_collection_looks(connection: &Connection) {
@@ -411,4 +420,36 @@ fn a_format_5_library_analyses_the_colors_of_its_resources_again() {
         .expect("read")
         .expect("smart collection kept");
     assert!(saved.filter.colors.is_empty());
+}
+
+#[test]
+fn a_format_6_library_analyses_its_colors_again_to_learn_their_averages() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    library
+        .record_colors(
+            red,
+            &[DominantColor {
+                family: AssetColor::Red,
+                average: Rgb::new(0xe0, 0x1b, 0x24),
+            }],
+        )
+        .expect("colors recorded");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_COLOR_AVERAGES)
+        .expect("version updated");
+    forget_custom_colors(&connection);
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert_eq!(library.assets_awaiting_colors(10).expect("listed"), [red]);
 }

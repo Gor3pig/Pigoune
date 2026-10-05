@@ -2,7 +2,7 @@ use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::view::AssetView;
 use super::{Asset, AssetFilter, CollectionId, Library, LibraryError, SmartCollectionId, TagId};
-use crate::media::{AssetFormat, colors_from_text, colors_text};
+use crate::media::{AssetFormat, Rgb, families_from_text, families_text};
 
 const SCOPE_ALL: &str = "all";
 const SCOPE_FAVORITES: &str = "favorites";
@@ -11,7 +11,8 @@ const SCOPE_COLLECTION: &str = "collection:";
 const SCOPE_TAG: &str = "tag:";
 const FORMAT_SEPARATOR: char = ',';
 const COLUMNS: &str =
-    "id, name, scope, search_text, formats, favorites_only, position, created_at_unix_ms, colors";
+    "id, name, scope, search_text, formats, favorites_only, position, created_at_unix_ms, colors,
+     custom_color";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SmartCollection {
@@ -81,8 +82,8 @@ pub fn insert(connection: &Connection, collection: &SmartCollection) -> Result<(
     connection.execute(
         "INSERT INTO smart_collections
              (id, name, normalized_name, scope, search_text, formats, favorites_only, position,
-              created_at_unix_ms, colors)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+              created_at_unix_ms, colors, custom_color)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
         params![
             collection.id,
             collection.name,
@@ -93,7 +94,8 @@ pub fn insert(connection: &Connection, collection: &SmartCollection) -> Result<(
             collection.filter.favorites_only,
             collection.position,
             collection.created_at_unix_ms,
-            colors_text(&collection.filter.colors),
+            families_text(&collection.filter.colors),
+            collection.filter.custom_color.map(Rgb::hex),
         ],
     )?;
     Ok(())
@@ -114,7 +116,10 @@ fn smart_collection_from_row(row: &Row<'_>) -> rusqlite::Result<SmartCollection>
             text: row.get(3)?,
             formats: formats_from_text(&formats),
             favorites_only: row.get(5)?,
-            colors: colors_from_text(&row.get::<_, String>(8)?),
+            colors: families_from_text(&row.get::<_, String>(8)?),
+            custom_color: row
+                .get::<_, Option<String>>(9)?
+                .and_then(|text| Rgb::from_hex(&text)),
         },
         position: row.get(6)?,
         created_at_unix_ms: row.get(7)?,

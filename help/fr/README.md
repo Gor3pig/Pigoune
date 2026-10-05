@@ -143,11 +143,13 @@ bibliothèque.
 La recherche ne regarde pas le format : pour ne garder que les SVG, par exemple, utilisez le
 bouton **Filtres**, qui garde aussi, au choix, seulement vos favoris.
 
-**Filtres** propose aussi douze couleurs. Pigoune note les couleurs principales de chaque
+**Filtres** propose aussi treize couleurs. Pigoune note les couleurs principales de chaque
 ressource, jusqu'à trois qui couvrent chacune au moins 15 % de l'image visible, sans compter
 les zones transparentes. Choisissez rouge et bleu pour voir les ressources surtout rouges ou
-bleues. Les couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG
-rouges. À la première ouverture d'une bibliothèque avec Pigoune 1.7, ses ressources sont
+bleues. La dernière pastille, arc-en-ciel, ouvre le sélecteur de couleur de GNOME pour choisir
+n'importe quelle couleur, par exemple la couleur exacte d'une charte graphique : Pigoune garde
+alors les ressources dont une couleur principale en est proche. Un nouveau clic la retire. Les
+couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rouges. À la première ouverture d'une bibliothèque avec Pigoune 1.7, ses ressources sont
 analysées en arrière-plan pendant que vous continuez à travailler ; une ressource pas encore
 analysée ne correspond à aucune couleur.
 

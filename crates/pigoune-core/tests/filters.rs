@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use pigoune_core::{
     AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionId,
-    ImportOutcome, Library,
+    DominantColor, ImportOutcome, Library, Rgb,
 };
 use tempfile::TempDir;
 
@@ -41,7 +41,18 @@ impl Fixture {
             .expect("favorite is set");
     }
 
-    fn color(&mut self, asset: AssetId, colors: &[AssetColor]) {
+    fn color(&mut self, asset: AssetId, families: &[AssetColor]) {
+        let colors: Vec<DominantColor> = families
+            .iter()
+            .map(|family| DominantColor {
+                family: *family,
+                average: Rgb::new(0, 0, 0),
+            })
+            .collect();
+        self.paint(asset, &colors);
+    }
+
+    fn paint(&mut self, asset: AssetId, colors: &[DominantColor]) {
         self.library
             .record_colors(asset, colors)
             .expect("colors are recorded");
@@ -132,6 +143,7 @@ fn filters_combine_with_the_text_and_the_view() {
         formats: vec![AssetFormat::Svg],
         favorites_only: true,
         colors: Vec::new(),
+        custom_color: None,
     };
 
     assert_eq!(
@@ -158,9 +170,10 @@ fn the_chosen_filters_are_counted_without_the_text() {
         formats: vec![AssetFormat::Png, AssetFormat::Svg],
         favorites_only: true,
         colors: vec![AssetColor::Blue],
+        custom_color: Some(Rgb::new(0, 0, 0)),
     };
 
-    assert_eq!(filter.chosen_filters(), 4);
+    assert_eq!(filter.chosen_filters(), 5);
     assert_eq!(AssetFilter::text("logo").chosen_filters(), 0);
     assert!(AssetFilter::text("logo").narrows());
     assert!(!AssetFilter::text("   ").narrows());
@@ -259,4 +272,69 @@ fn colors_add_up_with_the_other_filters() {
     assert_eq!(fixture.found(AssetView::All, &filter), [svg]);
     assert_eq!(filter.chosen_filters(), 2);
     assert!(colors(&[AssetColor::Red]).narrows());
+}
+
+fn custom(hex: &str) -> AssetFilter {
+    AssetFilter {
+        custom_color: Rgb::from_hex(hex),
+        ..AssetFilter::default()
+    }
+}
+
+fn average(family: AssetColor, hex: &str) -> DominantColor {
+    DominantColor {
+        family,
+        average: Rgb::from_hex(hex).expect("valid color"),
+    }
+}
+
+#[test]
+fn a_custom_color_keeps_resources_with_a_close_main_color() {
+    let mut fixture = Fixture::new();
+    let bright = fixture.import("red-dot.png", None);
+    let coral = fixture.import("navy-tile.bmp", None);
+    let brick = fixture.import("teal-column.tiff", None);
+    fixture.paint(
+        bright,
+        &[
+            average(AssetColor::Red, "e01b24"),
+            average(AssetColor::White, "ffffff"),
+        ],
+    );
+    fixture.paint(coral, &[average(AssetColor::Red, "f66151")]);
+    fixture.paint(
+        brick,
+        &[
+            average(AssetColor::Gray, "5e5c64"),
+            average(AssetColor::Red, "b5482f"),
+        ],
+    );
+
+    assert_eq!(
+        fixture.found(AssetView::All, &custom("c0392b")),
+        sorted(vec![bright, brick])
+    );
+}
+
+#[test]
+fn a_custom_color_adds_up_with_the_chosen_swatches() {
+    let mut fixture = Fixture::new();
+    let brick = fixture.import("red-dot.png", None);
+    let navy = fixture.import("navy-tile.bmp", None);
+    let teal = fixture.import("teal-column.tiff", None);
+    fixture.paint(brick, &[average(AssetColor::Red, "b5482f")]);
+    fixture.paint(navy, &[average(AssetColor::Blue, "1a3a6b")]);
+    fixture.paint(teal, &[average(AssetColor::Teal, "2190a4")]);
+    let filter = AssetFilter {
+        colors: vec![AssetColor::Teal],
+        custom_color: Rgb::from_hex("c0392b"),
+        ..AssetFilter::default()
+    };
+
+    assert_eq!(
+        fixture.found(AssetView::All, &filter),
+        sorted(vec![brick, teal])
+    );
+    assert_eq!(filter.chosen_filters(), 2);
+    assert!(custom("c0392b").narrows());
 }

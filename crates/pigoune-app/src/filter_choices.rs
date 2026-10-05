@@ -7,21 +7,24 @@ use gtk::glib;
 use gtk::prelude::*;
 use pigoune_core::{AssetColor, AssetFilter, AssetFormat};
 
+use crate::custom_color_swatch::{self, CustomColorSwatch};
 use crate::{asset_colors, asset_facts};
 
-const COLORS_PER_LINE: u32 = 6;
+const COLORS_PER_LINE: u32 = 7;
 const CHECKMARK_ICON: &str = "object-select-symbolic";
 
 type ChangedCallback = Rc<dyn Fn()>;
 
 mod imp {
     use std::cell::{Cell, OnceCell, RefCell};
+    use std::rc::Rc;
 
     use adw::subclass::prelude::*;
     use gtk::glib;
     use pigoune_core::{AssetColor, AssetFormat};
 
     use super::ChangedCallback;
+    use crate::custom_color_swatch::CustomColorSwatch;
 
     #[derive(Default)]
     pub struct PigouneFilterChoices {
@@ -29,6 +32,7 @@ mod imp {
         pub favorites_check: OnceCell<gtk::CheckButton>,
         pub color_buttons: RefCell<Vec<(AssetColor, gtk::ToggleButton)>>,
         pub color_names: OnceCell<gtk::Label>,
+        pub custom_swatch: OnceCell<Rc<CustomColorSwatch>>,
         pub quiet: Cell<bool>,
         pub on_changed: RefCell<Option<ChangedCallback>>,
     }
@@ -76,6 +80,7 @@ impl PigouneFilterChoices {
                 .collect(),
             favorites_only: self.favorites_check().is_active(),
             colors: self.chosen_colors(),
+            custom_color: self.custom_swatch().color(),
         }
     }
 
@@ -98,6 +103,7 @@ impl PigouneFilterChoices {
             for (color, button) in self.imp().color_buttons.borrow().iter() {
                 button.set_active(filter.colors.contains(color));
             }
+            self.custom_swatch().set_color(filter.custom_color);
         });
         self.show_color_names();
     }
@@ -165,6 +171,19 @@ impl PigouneFilterChoices {
             })
             .collect();
         imp.color_buttons.replace(buttons);
+        let custom = CustomColorSwatch::new();
+        swatches.append(custom.button());
+        custom.connect_changed(glib::clone!(
+            #[weak(rename_to = choices)]
+            self,
+            move || {
+                choices.show_color_names();
+                choices.changed();
+            }
+        ));
+        if imp.custom_swatch.set(custom).is_err() {
+            unreachable!("filter choices are built once");
+        }
         let names = gtk::Label::builder()
             .xalign(0.0)
             .wrap(true)
@@ -206,13 +225,26 @@ impl PigouneFilterChoices {
         let Some(label) = self.imp().color_names.get() else {
             return;
         };
-        let names: Vec<String> = self
+        let mut names: Vec<String> = self
             .chosen_colors()
             .into_iter()
             .map(asset_colors::color_name)
             .collect();
+        if let Some(color) = self.custom_swatch().color() {
+            names.push(
+                gettext("Custom {code}").replace("{code}", &custom_color_swatch::code_of(color)),
+            );
+        }
         label.set_label(&names.join(", "));
         label.set_visible(!names.is_empty());
+    }
+
+    fn custom_swatch(&self) -> Rc<CustomColorSwatch> {
+        self.imp()
+            .custom_swatch
+            .get()
+            .cloned()
+            .expect("filter choices are built at construction")
     }
 
     fn favorites_check(&self) -> gtk::CheckButton {

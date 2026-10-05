@@ -106,10 +106,12 @@ My logos.pigoune/
   the icon and color of each collection, stored as plain names (`emote-love`, `pink`) that the
   app turns into a GNOME icon and accent color, falling back to the gray folder for a name it
   does not know. Format 6 adds the main colors of each asset and the colors of each smart
-  collection. `dominant_colors` in the core sorts the visible pixels of a thumbnail into twelve
-  color families; the app analyzes assets with no colors yet in the background, one batch at a
-  time, after opening a library and after each import. A library created by a newer version of
-  Pigoune is refused with a clear message.
+  collection. `dominant_colors` in the core sorts the visible pixels of a thumbnail into
+  thirteen color families and keeps the average color of each; format 7 analyzes every asset
+  again to record these averages, and lets a smart collection save a custom color, matched
+  when it is close to an average as the eye sees it (OKLab distance). The app analyzes assets
+  with no colors yet in the background, one batch at a time, after opening a library and after
+  each import. A library created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.
 - A library is locked while it is open, so that two windows cannot write to it at once.

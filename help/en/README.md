@@ -127,10 +127,12 @@ the entry selected in the sidebar. Select **All** to search the whole library.
 The search does not look at the format: to keep only SVG files, for example, use the
 **Filters** button, which can also keep only your favorites.
 
-**Filters** also offers twelve colors. Pigoune notes the main colors of each asset, up to
+**Filters** also offers thirteen colors. Pigoune notes the main colors of each asset, up to
 three that each cover at least 15% of the visible picture, transparent areas left aside. Pick
-red and blue to see the assets that are mainly red or blue. Colors add up with types and
-favorites: red and SVG show the red SVG files. When a library is opened with Pigoune 1.7 for
+red and blue to see the assets that are mainly red or blue. The last, rainbow swatch opens the
+GNOME color chooser to pick any color, for example the exact color of a brand: Pigoune then
+keeps the assets with a main color close to it. Click it again to remove it. Colors add up
+with types and favorites: red and SVG show the red SVG files. When a library is opened with Pigoune 1.7 for
 the first time, its assets are analyzed in the background while you keep working; an asset
 not analyzed yet matches no color.
 

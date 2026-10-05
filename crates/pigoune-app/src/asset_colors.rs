@@ -17,6 +17,7 @@ pub fn color_name(color: AssetColor) -> String {
         AssetColor::Purple => pgettext("resource color", "Purple"),
         AssetColor::Pink => pgettext("resource color", "Pink"),
         AssetColor::Brown => pgettext("resource color", "Brown"),
+        AssetColor::Beige => pgettext("resource color", "Beige"),
         AssetColor::Black => pgettext("resource color", "Black"),
         AssetColor::Gray => pgettext("resource color", "Gray"),
         AssetColor::White => pgettext("resource color", "White"),

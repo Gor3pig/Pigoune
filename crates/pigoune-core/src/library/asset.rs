@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
-use crate::media::{self, AnimationTiming, AssetColor, AssetFormat, Dimensions, colors_from_text};
+use crate::media::{
+    self, AnimationTiming, AssetFormat, Dimensions, DominantColor, dominant_from_text,
+};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{OptionalExtension, Row, params};
 
@@ -31,7 +33,7 @@ pub struct Asset {
     pub source_url: String,
     pub license: String,
     pub author: String,
-    pub colors: Vec<AssetColor>,
+    pub colors: Vec<DominantColor>,
 }
 
 impl Library {
@@ -119,11 +121,11 @@ impl Library {
     pub fn record_colors(
         &mut self,
         id: AssetId,
-        colors: &[AssetColor],
+        colors: &[DominantColor],
     ) -> Result<(), LibraryError> {
         self.connection.execute(
             "UPDATE assets SET colors = ?2 WHERE id = ?1",
-            params![id, media::colors_text(colors)],
+            params![id, media::dominant_text(colors)],
         )?;
         Ok(())
     }
@@ -154,7 +156,7 @@ fn asset_from_row(row: &Row) -> rusqlite::Result<Asset> {
         author: row.get("author")?,
         colors: row
             .get::<_, Option<String>>("colors")?
-            .map(|text| colors_from_text(&text))
+            .map(|text| dominant_from_text(&text))
             .unwrap_or_default(),
     })
 }

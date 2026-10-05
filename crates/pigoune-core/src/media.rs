@@ -5,6 +5,7 @@ mod frame_timing;
 mod gif;
 mod ico;
 mod png;
+mod rgb;
 mod svg;
 mod webp;
 
@@ -13,10 +14,14 @@ use std::io::Read;
 use std::path::Path;
 use std::time::Duration;
 
-pub use color::{AssetColor, colors_from_text, colors_text, dominant_colors};
+pub use color::{
+    AssetColor, DominantColor, dominant_colors, dominant_from_text, dominant_text,
+    families_from_text, families_text,
+};
 pub use dimensions::Dimensions;
 pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};
+pub use rgb::Rgb;
 
 const HEADER_LENGTH: u64 = 512;
 

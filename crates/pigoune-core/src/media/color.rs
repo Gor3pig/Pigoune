@@ -1,7 +1,10 @@
+use super::rgb::Rgb;
+
 const CHANNELS: usize = 4;
 const CODE_SEPARATOR: char = ',';
+const AVERAGE_SEPARATOR: char = '#';
 const VISIBLE_ALPHA: u8 = 128;
-const MIN_SHARE_PERCENT: usize = 15;
+const MIN_SHARE_PERCENT: u64 = 15;
 const MAX_COLORS: usize = 3;
 const BYTE_MAX: f64 = 255.0;
 const GRAY_SATURATION: f64 = 0.15;
@@ -12,6 +15,8 @@ const DARKEST_HUE_LIGHTNESS: f64 = 0.12;
 const LIGHTEST_HUE_LIGHTNESS: f64 = 0.94;
 const BROWN_LIGHTNESS: f64 = 0.45;
 const PINK_LIGHTNESS: f64 = 0.7;
+const BEIGE_LIGHTNESS: f64 = 0.7;
+const BEIGE_CHROMA: f64 = 0.3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum AssetColor {
@@ -24,13 +29,20 @@ pub enum AssetColor {
     Purple,
     Pink,
     Brown,
+    Beige,
     Black,
     Gray,
     White,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DominantColor {
+    pub family: AssetColor,
+    pub average: Rgb,
+}
+
 impl AssetColor {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 13] = [
         Self::Red,
         Self::Orange,
         Self::Yellow,
@@ -40,6 +52,7 @@ impl AssetColor {
         Self::Purple,
         Self::Pink,
         Self::Brown,
+        Self::Beige,
         Self::Black,
         Self::Gray,
         Self::White,
@@ -57,6 +70,7 @@ impl AssetColor {
             Self::Purple => "purple",
             Self::Pink => "pink",
             Self::Brown => "brown",
+            Self::Beige => "beige",
             Self::Black => "black",
             Self::Gray => "gray",
             Self::White => "white",
@@ -77,42 +91,96 @@ impl AssetColor {
 }
 
 #[must_use]
-pub fn colors_text(colors: &[AssetColor]) -> String {
-    colors
+pub fn families_text(families: &[AssetColor]) -> String {
+    families
         .iter()
-        .map(|color| color.code())
+        .map(|family| family.code())
         .collect::<Vec<_>>()
         .join(&CODE_SEPARATOR.to_string())
 }
 
 #[must_use]
-pub fn colors_from_text(text: &str) -> Vec<AssetColor> {
+pub fn families_from_text(text: &str) -> Vec<AssetColor> {
     text.split(CODE_SEPARATOR)
         .filter_map(AssetColor::from_code)
         .collect()
 }
 
 #[must_use]
-pub fn dominant_colors(rgba: &[u8]) -> Vec<AssetColor> {
-    let mut counts = [0_usize; AssetColor::ALL.len()];
-    let mut visible = 0_usize;
+pub fn dominant_text(colors: &[DominantColor]) -> String {
+    colors
+        .iter()
+        .map(|color| {
+            format!(
+                "{}{AVERAGE_SEPARATOR}{}",
+                color.family.code(),
+                color.average.hex()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(&CODE_SEPARATOR.to_string())
+}
+
+#[must_use]
+pub fn dominant_from_text(text: &str) -> Vec<DominantColor> {
+    text.split(CODE_SEPARATOR)
+        .filter_map(|part| {
+            let (family, average) = part.split_once(AVERAGE_SEPARATOR)?;
+            Some(DominantColor {
+                family: AssetColor::from_code(family)?,
+                average: Rgb::from_hex(average)?,
+            })
+        })
+        .collect()
+}
+
+#[derive(Clone, Copy, Default)]
+struct Tally {
+    pixels: u64,
+    red: u64,
+    green: u64,
+    blue: u64,
+}
+
+impl Tally {
+    fn add(&mut self, red: u8, green: u8, blue: u8) {
+        self.pixels += 1;
+        self.red += u64::from(red);
+        self.green += u64::from(green);
+        self.blue += u64::from(blue);
+    }
+
+    fn average(&self) -> Rgb {
+        let mean = |sum: u64| u8::try_from(sum / self.pixels.max(1)).unwrap_or(u8::MAX);
+        Rgb::new(mean(self.red), mean(self.green), mean(self.blue))
+    }
+}
+
+#[must_use]
+pub fn dominant_colors(rgba: &[u8]) -> Vec<DominantColor> {
+    let mut tallies = [Tally::default(); AssetColor::ALL.len()];
+    let mut visible = 0_u64;
     for [red, green, blue, alpha] in rgba.as_chunks::<CHANNELS>().0 {
         if *alpha < VISIBLE_ALPHA {
             continue;
         }
         visible += 1;
-        counts[color_of(*red, *green, *blue).index()] += 1;
+        tallies[color_of(*red, *green, *blue).index()].add(*red, *green, *blue);
     }
-    let mut ranked: Vec<(AssetColor, usize)> = AssetColor::ALL
+    let minimum = visible * MIN_SHARE_PERCENT;
+    let mut ranked: Vec<(AssetColor, Tally)> = AssetColor::ALL
         .into_iter()
-        .zip(counts)
-        .filter(|(_, count)| *count > 0 && count * 100 >= visible * MIN_SHARE_PERCENT)
+        .zip(tallies)
+        .filter(|(_, tally)| tally.pixels > 0 && tally.pixels * 100 >= minimum)
         .collect();
-    ranked.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
+    ranked.sort_by_key(|(_, tally)| std::cmp::Reverse(tally.pixels));
     ranked
         .into_iter()
         .take(MAX_COLORS)
-        .map(|(color, _)| color)
+        .map(|(family, tally)| DominantColor {
+            family,
+            average: tally.average(),
+        })
         .collect()
 }
 
@@ -138,6 +206,9 @@ pub fn color_of(red: u8, green: u8, blue: u8) -> AssetColor {
         return AssetColor::White;
     }
     let hue = hue_of(red, green, blue, brightest, chroma);
+    if (20.0..65.0).contains(&hue) && lightness > BEIGE_LIGHTNESS && chroma < BEIGE_CHROMA {
+        return AssetColor::Beige;
+    }
     family_of(hue, lightness)
 }
 
@@ -187,7 +258,10 @@ fn family_of(hue: f64, lightness: f64) -> AssetColor {
 
 #[cfg(test)]
 mod tests {
-    use super::{AssetColor, color_of, colors_from_text, colors_text, dominant_colors};
+    use super::{
+        AssetColor, DominantColor, Rgb, color_of, dominant_colors, dominant_from_text,
+        dominant_text, families_from_text, families_text,
+    };
 
     fn hex(value: u32) -> AssetColor {
         let [_, red, green, blue] = value.to_be_bytes();
@@ -201,12 +275,21 @@ mod tests {
             .collect()
     }
 
+    fn families(rgba: &[u8]) -> Vec<AssetColor> {
+        dominant_colors(rgba)
+            .into_iter()
+            .map(|color| color.family)
+            .collect()
+    }
+
     #[test]
     fn the_gnome_palette_falls_into_its_own_families() {
         assert_eq!(hex(0x00e0_1b24), AssetColor::Red);
         assert_eq!(hex(0x00f6_6151), AssetColor::Red);
         assert_eq!(hex(0x00ff_7800), AssetColor::Orange);
+        assert_eq!(hex(0x00ff_be6f), AssetColor::Orange);
         assert_eq!(hex(0x00f6_d32d), AssetColor::Yellow);
+        assert_eq!(hex(0x00f9_f06b), AssetColor::Yellow);
         assert_eq!(hex(0x0033_d17a), AssetColor::Green);
         assert_eq!(hex(0x0021_90a4), AssetColor::Teal);
         assert_eq!(hex(0x0035_84e4), AssetColor::Blue);
@@ -216,6 +299,13 @@ mod tests {
         assert_eq!(hex(0x001e_1e1e), AssetColor::Black);
         assert_eq!(hex(0x009a_9996), AssetColor::Gray);
         assert_eq!(hex(0x00ff_ffff), AssetColor::White);
+    }
+
+    #[test]
+    fn cream_sand_and_paper_tones_are_beige() {
+        assert_eq!(hex(0x00f5_f5dc), AssetColor::Beige);
+        assert_eq!(hex(0x00e8_d5b0), AssetColor::Beige);
+        assert_eq!(hex(0x00ff_fdd0), AssetColor::Beige);
     }
 
     #[test]
@@ -241,27 +331,59 @@ mod tests {
     }
 
     #[test]
-    fn colors_are_stored_as_text_and_read_back() {
-        let colors = [AssetColor::Red, AssetColor::White];
+    fn families_are_stored_as_text_and_read_back() {
+        let chosen = [AssetColor::Red, AssetColor::Beige];
 
-        assert_eq!(colors_text(&colors), "red,white");
-        assert_eq!(colors_from_text("red,white"), colors);
-        assert_eq!(colors_from_text("red,gold"), [AssetColor::Red]);
-        assert!(colors_from_text("").is_empty());
+        assert_eq!(families_text(&chosen), "red,beige");
+        assert_eq!(families_from_text("red,beige"), chosen);
+        assert_eq!(families_from_text("red,gold"), [AssetColor::Red]);
+        assert!(families_from_text("").is_empty());
+    }
+
+    #[test]
+    fn main_colors_are_stored_with_their_average() {
+        let colors = [
+            DominantColor {
+                family: AssetColor::Red,
+                average: Rgb::new(0xc0, 0x39, 0x2b),
+            },
+            DominantColor {
+                family: AssetColor::White,
+                average: Rgb::new(0xff, 0xff, 0xff),
+            },
+        ];
+
+        assert_eq!(dominant_text(&colors), "red#c0392b,white#ffffff");
+        assert_eq!(dominant_from_text("red#c0392b,white#ffffff"), colors);
+        assert!(dominant_from_text("red,white").is_empty());
+        assert!(dominant_from_text("").is_empty());
     }
 
     #[test]
     fn a_logo_keeps_its_main_colors_from_the_largest() {
         let logo = picture(&[([255, 255, 255, 255], 30), ([224, 27, 36, 255], 60)]);
 
-        assert_eq!(dominant_colors(&logo), [AssetColor::Red, AssetColor::White]);
+        assert_eq!(families(&logo), [AssetColor::Red, AssetColor::White]);
+    }
+
+    #[test]
+    fn each_main_color_keeps_the_average_of_its_pixels() {
+        let shades = picture(&[([200, 20, 20, 255], 50), ([220, 40, 40, 255], 50)]);
+
+        assert_eq!(
+            dominant_colors(&shades),
+            [DominantColor {
+                family: AssetColor::Red,
+                average: Rgb::new(210, 30, 30),
+            }]
+        );
     }
 
     #[test]
     fn transparent_pixels_do_not_count() {
         let icon = picture(&[([0, 0, 0, 0], 900), ([30, 30, 30, 255], 100)]);
 
-        assert_eq!(dominant_colors(&icon), [AssetColor::Black]);
+        assert_eq!(families(&icon), [AssetColor::Black]);
         assert!(dominant_colors(&picture(&[([255, 0, 0, 0], 50)])).is_empty());
     }
 
@@ -270,11 +392,8 @@ mod tests {
         let below = picture(&[([53, 132, 228, 255], 86), ([246, 211, 45, 255], 14)]);
         let enough = picture(&[([53, 132, 228, 255], 85), ([246, 211, 45, 255], 15)]);
 
-        assert_eq!(dominant_colors(&below), [AssetColor::Blue]);
-        assert_eq!(
-            dominant_colors(&enough),
-            [AssetColor::Blue, AssetColor::Yellow]
-        );
+        assert_eq!(families(&below), [AssetColor::Blue]);
+        assert_eq!(families(&enough), [AssetColor::Blue, AssetColor::Yellow]);
     }
 
     #[test]
@@ -287,7 +406,7 @@ mod tests {
         ]);
 
         assert_eq!(
-            dominant_colors(&flag),
+            families(&flag),
             [AssetColor::White, AssetColor::Blue, AssetColor::Red]
         );
     }

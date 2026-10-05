@@ -23,6 +23,7 @@ mod collection_sort;
 mod config;
 mod conversion_memory;
 mod conversion_report;
+mod custom_color_swatch;
 mod drag_content;
 mod drag_icon;
 mod drop_message;

@@ -1320,11 +1320,12 @@ impl PigouneWindow {
             .as_ref()
             .and_then(|library| library.smart_collections().ok())
             .is_some_and(|collections| {
-                collections
-                    .iter()
-                    .any(|collection| !collection.filter.colors.is_empty())
+                collections.iter().any(|collection| {
+                    !collection.filter.colors.is_empty() || collection.filter.custom_color.is_some()
+                })
             });
         let colors_shown = !imp.filters.borrow().colors.is_empty()
+            || imp.filters.borrow().custom_color.is_some()
             || matches!(imp.current_view.get(), AssetView::Smart(_));
         if smart_collections_use_colors {
             self.refresh_sidebar();
