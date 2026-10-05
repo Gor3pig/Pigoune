@@ -9,16 +9,17 @@ maintainer of the repository.
    release notes to `data/io.github.gor3pig.Pigoune.metainfo.xml.in`, with their French
    translation.
 2. Point the screenshot URLs in the metainfo at the new tag.
-3. Commit, tag the commit with `vX.Y.Z` and push the tag.
+3. Commit with the title `Release version X.Y.Z`, tag the commit with `vX.Y.Z` and push the
+   tag.
 4. The release workflow builds the Flatpak package from the tag and attaches it to a draft
    release. Write the release notes there, following the layout below, then publish it.
 5. Publishing the release starts the `Website` workflow, which puts the package in the signed
    Flatpak repository at `https://gor3pig.github.io/Pigoune/repo/`. Installed copies of
    Pigoune then offer the update. This run starts from the release tag, which is why the
    `github-pages` environment accepts deployments from `main` and from `v*` tags. GitHub Pages
-   ignores a deployment whose build version it has already seen, and the push of the release
-   commit to `main` may already have published the website from the same commit, so each
-   deployment gets a build version made of the commit and the run number.
+   ignores a second deployment of the same commit, so pushing the release commit to `main`
+   does not publish the website: its title must start with `Release version`, and the
+   website is published once, when the release is.
 
 ## The Flatpak repository
 
