@@ -1,7 +1,9 @@
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
-use pigoune_core::AssetView;
+use pigoune_core::{AssetView, TagId};
+
+use crate::sidebar_tag_cloud::TagPill;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SidebarEntry {
@@ -9,6 +11,7 @@ pub enum SidebarEntry {
     CollectionsHeader,
     SmartCollectionsHeader,
     TagsHeader,
+    TagCloud,
 }
 
 pub struct SidebarItemData {
@@ -17,6 +20,9 @@ pub struct SidebarItemData {
     pub icon_name: &'static str,
     pub color_class: Option<&'static str>,
     pub count: Option<usize>,
+    pub folded: bool,
+    pub tag_pills: Vec<TagPill>,
+    pub selected_tag: Option<TagId>,
     pub children: Option<gio::ListStore>,
 }
 
@@ -80,7 +86,8 @@ impl PigouneSidebarItem {
             SidebarEntry::View(view) => Some(view),
             SidebarEntry::CollectionsHeader
             | SidebarEntry::SmartCollectionsHeader
-            | SidebarEntry::TagsHeader => None,
+            | SidebarEntry::TagsHeader
+            | SidebarEntry::TagCloud => None,
         }
     }
 
@@ -98,6 +105,22 @@ impl PigouneSidebarItem {
 
     pub fn count(&self) -> Option<usize> {
         self.data().count
+    }
+
+    pub fn folded(&self) -> bool {
+        self.data().folded
+    }
+
+    pub fn is_tag_cloud(&self) -> bool {
+        self.entry() == SidebarEntry::TagCloud
+    }
+
+    pub fn tag_pills(&self) -> Vec<TagPill> {
+        self.data().tag_pills.clone()
+    }
+
+    pub fn selected_tag(&self) -> Option<TagId> {
+        self.data().selected_tag
     }
 
     pub fn children(&self) -> Option<gio::ListStore> {

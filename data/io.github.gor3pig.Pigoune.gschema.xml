@@ -73,6 +73,21 @@
       <summary>Show pixel grid</summary>
       <description>Whether thin lines separate the pixels of a picture zoomed to 800% or more in the detailed preview.</description>
     </key>
+    <key name="sidebar-collections-expanded" type="b">
+      <default>true</default>
+      <summary>Collections section expanded</summary>
+      <description>Whether the Collections section of the sidebar is expanded.</description>
+    </key>
+    <key name="sidebar-smart-collections-expanded" type="b">
+      <default>true</default>
+      <summary>Smart collections section expanded</summary>
+      <description>Whether the Smart Collections section of the sidebar is expanded.</description>
+    </key>
+    <key name="sidebar-tags-expanded" type="b">
+      <default>true</default>
+      <summary>Tags section expanded</summary>
+      <description>Whether the Tags section of the sidebar is expanded.</description>
+    </key>
     <key name="details-organization-expanded" type="b">
       <default>true</default>
       <summary>Organization section expanded</summary>

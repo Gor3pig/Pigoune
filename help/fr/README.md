@@ -78,7 +78,10 @@ droit sur une collection permet d'y créer une sous-collection, de la renommer
 - **Retirez-les** de la collection affichée avec **Retirer de la collection** dans le menu du
   clic droit. Elles restent dans la bibliothèque et dans leurs autres collections.
 - **Réorganisez** les collections en les glissant dans la barre latérale, ou triez-les par nom
-  ou par date de création avec le bouton de tri à côté de **Collections**.
+  ou par date de création avec le bouton **⋯** à côté de **Collections**.
+- **Repliez** une section de la barre latérale (Collections, Collections intelligentes ou Tags)
+  d'un clic sur son titre, ou avec <kbd>Entrée</kbd> quand le titre a le focus du clavier.
+  Pigoune retient les sections repliées.
 - **Non classés** regroupe les ressources qui n'appartiennent à aucune collection.
 
 Quand vous supprimez une collection, ses sous-collections le sont aussi, et les ressources qui
@@ -89,9 +92,10 @@ autre collection y restent.
 
 Les tags décrivent vos ressources avec les mots de votre choix. Ajoutez-en depuis le panneau
 de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
-droit, ou glissez des ressources sur un tag de la barre latérale. Cliquez sur un tag de la barre latérale pour voir toutes ses ressources, ou
-faites un clic droit pour le renommer ou le supprimer. Renommer un tag avec le nom d'un autre
-les fusionne.
+droit, ou glissez des ressources sur un tag de la barre latérale. La barre latérale montre les
+tags en pastilles avec leur nombre de ressources : cliquez sur l'une d'elles pour voir toutes ses
+ressources, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
+**+ N autres** affiche la suite. Renommer un tag avec le nom d'un autre les fusionne.
 
 ### Les favoris
 
@@ -181,7 +185,7 @@ collection Clients*.
   <kbd>F2</kbd>. **Supprimer…** ne supprime que la recherche enregistrée : les ressources
   restent dans la bibliothèque.
 - **Réorganisez** les collections intelligentes en les faisant glisser dans la barre latérale,
-  ou triez-les par nom ou par date de création avec le bouton à côté de leur titre.
+  ou triez-les par nom ou par date de création avec le bouton **⋯** à côté de leur titre.
 
 On ne peut pas déposer de ressources sur une collection intelligente, puisque son contenu suit
 ses critères.
@@ -254,8 +258,9 @@ ses critères.
 
 Appuyez sur <kbd>Suppr</kbd>, ou choisissez **Mettre à la corbeille** dans le menu du clic
 droit, pour envoyer des ressources à la corbeille. Rien n'est perdu tant que vous ne la videz
-pas : ouvrez **Corbeille** dans la barre latérale pour restaurer des ressources, avec **Restaurer**
-dans le menu du clic droit ou dans le panneau de détails, ou pour la vider définitivement.
+pas : ouvrez **Corbeille**, en bas de la barre latérale, pour restaurer des ressources, avec
+**Restaurer** dans le menu du clic droit ou dans le panneau de détails, ou pour la vider
+définitivement.
 
 La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
 **Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,

@@ -2,14 +2,30 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneSidebar: Adw.Bin {
-  child: ScrolledWindow {
-    hscrollbar-policy: never;
+  child: Box {
+    orientation: vertical;
 
-    child: ListView list_view {
+    ScrolledWindow {
+      hscrollbar-policy: never;
+      vexpand: true;
+
+      child: ListView list_view {
+        tab-behavior: item;
+
+        styles [
+          "navigation-sidebar",
+        ]
+      };
+    }
+
+    Separator {}
+
+    ListView trash_view {
       tab-behavior: item;
+
       styles [
         "navigation-sidebar",
       ]
-    };
+    }
   };
 }

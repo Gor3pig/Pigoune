@@ -38,7 +38,8 @@ use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
 use crate::recent_libraries;
 use crate::settings;
-use crate::sidebar::{HoveredDrop, SidebarContent};
+use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
+use crate::sidebar_item::SidebarEntry;
 use crate::smart_collection_dialog::{
     PigouneSmartCollectionDialog, SmartCollectionDraft, free_name,
 };
@@ -136,8 +137,6 @@ const IMAGE_MIME_TYPES: [&str; 11] = [
 ];
 
 const CLOSE_RESPONSE: &str = "close";
-const SIDEBAR_MIN_WIDTH: f64 = 200.0;
-const SIDEBAR_MAX_WIDTH: f64 = 280.0;
 const DEFAULT_VECTOR_EXPORT_PIXELS: u32 = 512;
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
 const RETRY_RESPONSE: &str = "retry";
@@ -858,6 +857,9 @@ impl PigouneWindow {
             settings::SHOW_SMART_COLLECTIONS,
             settings::SHOW_TAGS,
             settings::SHOW_COUNTS,
+            settings::SIDEBAR_COLLECTIONS_EXPANDED,
+            settings::SIDEBAR_SMART_COLLECTIONS_EXPANDED,
+            settings::SIDEBAR_TAGS_EXPANDED,
         ] {
             settings.connect_changed(
                 Some(key),
@@ -888,10 +890,10 @@ impl PigouneWindow {
                 self,
                 move |dragged, target, after| window.drop_smart_collection(dragged, target, after)
             ));
-        self.imp().sidebar.connect_width_needed(glib::clone!(
+        self.imp().sidebar.connect_section_toggled(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |needed| window.fit_sidebar(needed)
+            move |entry| window.toggle_sidebar_section(entry)
         ));
         self.imp().sidebar.connect_assets_hovered(glib::clone!(
             #[weak(rename_to = window)]
@@ -921,6 +923,17 @@ impl PigouneWindow {
                 });
             }
         ));
+    }
+
+    fn toggle_sidebar_section(&self, entry: SidebarEntry) {
+        let key = match entry {
+            SidebarEntry::CollectionsHeader => settings::SIDEBAR_COLLECTIONS_EXPANDED,
+            SidebarEntry::SmartCollectionsHeader => settings::SIDEBAR_SMART_COLLECTIONS_EXPANDED,
+            SidebarEntry::TagsHeader => settings::SIDEBAR_TAGS_EXPANDED,
+            SidebarEntry::View(_) | SidebarEntry::TagCloud => return,
+        };
+        let settings = self.settings();
+        let _ = settings.set_boolean(key, !settings.boolean(key));
     }
 
     fn show_view(&self, view: AssetView) {
@@ -995,13 +1008,6 @@ impl PigouneWindow {
             settings::store_bool(settings, settings::SMART_COLLECTION_SORT_REVERSED, false);
             settings::store_string(settings, settings::SMART_COLLECTION_SORT, "custom");
         }
-    }
-
-    fn fit_sidebar(&self, needed: Option<i32>) {
-        let split = &self.imp().sidebar_split;
-        let needed = f64::from(needed.unwrap_or(0));
-        split.set_min_sidebar_width(needed.max(SIDEBAR_MIN_WIDTH));
-        split.set_max_sidebar_width(needed.max(SIDEBAR_MAX_WIDTH));
     }
 
     fn bind_grid_settings(&self, settings: &gio::Settings) {
@@ -3357,6 +3363,15 @@ impl PigouneWindow {
             tags,
             smart_collections,
             show_smart_collections,
+            folded: FoldedSections {
+                collections: !self
+                    .settings()
+                    .boolean(settings::SIDEBAR_COLLECTIONS_EXPANDED),
+                smart_collections: !self
+                    .settings()
+                    .boolean(settings::SIDEBAR_SMART_COLLECTIONS_EXPANDED),
+                tags: !self.settings().boolean(settings::SIDEBAR_TAGS_EXPANDED),
+            },
         });
         self.refresh_selected_collections();
     }

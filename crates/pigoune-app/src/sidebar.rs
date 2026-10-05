@@ -6,7 +6,7 @@ use gettextrs::gettext;
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{
-    AssetId, AssetView, CollectionId, SmartCollection, SmartCollectionId, Tag, ViewCounts,
+    AssetId, AssetView, CollectionId, SmartCollection, SmartCollectionId, Tag, TagId, ViewCounts,
 };
 
 use crate::asset_grid::MENU_KEYS;
@@ -16,6 +16,7 @@ use crate::collection_sort::CollectionTree;
 use crate::found_flash;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
+use crate::sidebar_tag_cloud::{PigouneSidebarTagCloud, TagPill};
 
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
@@ -23,15 +24,14 @@ const FAVORITES_ICON: &str = "starred-symbolic";
 const SMART_COLLECTION_ICON: &str = "media-playlist-shuffle-symbolic";
 const TRASH_ICON: &str = "user-trash-symbolic";
 const DRAG_OVER: &str = "drag-over";
-const HEADER_MEASURE_DELAY: std::time::Duration = std::time::Duration::from_millis(50);
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
 type AssetsHoveredCallback = Box<dyn Fn(Option<HoveredDrop>)>;
-type WidthNeededCallback = Box<dyn Fn(Option<i32>)>;
 type SmartCollectionDroppedCallback = Box<dyn Fn(SmartCollectionId, SmartCollectionId, bool)>;
+type SectionToggledCallback = Box<dyn Fn(SidebarEntry)>;
 
 pub struct HoveredDrop {
     pub view: AssetView,
@@ -48,6 +48,14 @@ pub struct SidebarContent {
     pub tags: Vec<Tag>,
     pub smart_collections: Vec<SmartCollection>,
     pub show_smart_collections: bool,
+    pub folded: FoldedSections,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct FoldedSections {
+    pub collections: bool,
+    pub smart_collections: bool,
+    pub tags: bool,
 }
 
 mod imp {
@@ -58,8 +66,8 @@ mod imp {
 
     use super::{
         AssetsDroppedCallback, AssetsHoveredCallback, CollectionDroppedCallback,
-        FilesDroppedCallback, SmartCollectionDroppedCallback, ViewChangedCallback,
-        WidthNeededCallback,
+        FilesDroppedCallback, SectionToggledCallback, SmartCollectionDroppedCallback,
+        ViewChangedCallback,
     };
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -67,14 +75,17 @@ mod imp {
     pub struct PigouneSidebar {
         #[template_child]
         pub list_view: TemplateChild<gtk::ListView>,
+        #[template_child]
+        pub trash_view: TemplateChild<gtk::ListView>,
+        pub on_section_toggled: RefCell<Option<SectionToggledCallback>>,
+        pub refocused_header: Cell<Option<super::SidebarEntry>>,
+        pub chosen_tag: Cell<Option<pigoune_core::TagId>>,
         pub rebuilding: Cell<bool>,
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
         pub on_files_dropped: RefCell<Option<FilesDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
         pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
         pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
-        pub on_width_needed: RefCell<Option<WidthNeededCallback>>,
-        pub shows_smart_collections: Cell<bool>,
         pub on_smart_collection_dropped: RefCell<Option<SmartCollectionDroppedCallback>>,
     }
 
@@ -101,6 +112,7 @@ mod imp {
             sidebar.act_on_keys();
             sidebar.skip_headers_with_arrows();
             sidebar.quiet_hover_while_dragging();
+            sidebar.toggle_sections_on_activation();
         }
     }
 
@@ -193,59 +205,35 @@ impl PigouneSidebar {
         }
     }
 
-    pub fn connect_width_needed(&self, callback: impl Fn(Option<i32>) + 'static) {
-        self.imp().on_width_needed.replace(Some(Box::new(callback)));
+    pub fn connect_section_toggled(&self, callback: impl Fn(SidebarEntry) + 'static) {
+        self.imp()
+            .on_section_toggled
+            .replace(Some(Box::new(callback)));
     }
 
-    fn measure_headers_soon(&self) {
-        let sidebar = self.downgrade();
-        glib::timeout_add_local_once(HEADER_MEASURE_DELAY, move || {
-            if let Some(sidebar) = sidebar.upgrade() {
-                sidebar.measure_headers();
+    pub fn section_toggled(&self, entry: SidebarEntry) {
+        if self.focus_is_inside() {
+            self.imp().refocused_header.set(Some(entry));
+        }
+        if let Some(on_section_toggled) = self.imp().on_section_toggled.borrow().as_ref() {
+            on_section_toggled(entry);
+        }
+    }
+
+    fn toggle_sections_on_activation(&self) {
+        self.imp().list_view.connect_activate(glib::clone!(
+            #[weak(rename_to = sidebar)]
+            self,
+            move |list_view, position| {
+                let header = list_view
+                    .model()
+                    .and_then(|model| item_at(model.item(position)))
+                    .filter(PigouneSidebarItem::is_header);
+                if let Some(header) = header {
+                    sidebar.section_toggled(header.entry());
+                }
             }
-        });
-    }
-
-    fn measure_headers(&self) {
-        if !self.imp().shows_smart_collections.get() {
-            self.width_needed(None);
-            return;
-        }
-        let Some(header) = self.smart_collections_header() else {
-            return;
-        };
-        if header.width() == 0 {
-            self.measure_headers_soon();
-            return;
-        }
-        let (_, natural, _, _) = header.measure(gtk::Orientation::Horizontal, -1);
-        let surroundings = self.width() - header.width();
-        self.width_needed(Some(surroundings + natural));
-    }
-
-    fn width_needed(&self, width: Option<i32>) {
-        if let Some(on_width_needed) = self.imp().on_width_needed.borrow().as_ref() {
-            on_width_needed(width);
-        }
-    }
-
-    fn smart_collections_header(&self) -> Option<PigouneSidebarRow> {
-        let mut child = self.imp().list_view.first_child();
-        while let Some(row) = child {
-            let header = row
-                .first_child()
-                .and_downcast::<gtk::TreeExpander>()
-                .and_then(|expander| expander.child())
-                .and_downcast::<PigouneSidebarRow>()
-                .filter(|sidebar_row| {
-                    sidebar_row.entry() == Some(SidebarEntry::SmartCollectionsHeader)
-                });
-            if header.is_some() {
-                return header;
-            }
-            child = row.next_sibling();
-        }
-        None
+        ));
     }
 
     pub fn show_content(&self, content: &SidebarContent) {
@@ -255,94 +243,138 @@ impl PigouneSidebar {
         let counts = content.show_counts.then_some(&content.counts);
 
         let root = gio::ListStore::new::<PigouneSidebarItem>();
-        root.append(&view_item(
-            AssetView::All,
-            gettext("All"),
-            ALL_ICON,
-            counts,
-            None,
+        for (view, label, icon) in [
+            (AssetView::All, gettext("All"), ALL_ICON),
+            (AssetView::Favorites, gettext("Favorites"), FAVORITES_ICON),
+            (
+                AssetView::Unclassified,
+                gettext("Unclassified"),
+                UNCLASSIFIED_ICON,
+            ),
+        ] {
+            root.append(&view_item(view, label, icon, counts, None));
+        }
+        let folded = content.folded;
+        let chosen_tag = match content.selected {
+            AssetView::Tag(id) => Some(id),
+            _ => None,
+        };
+        imp.chosen_tag.set(chosen_tag);
+        let collections = collection_items(&content.tree, None, counts);
+        root.append(&header_item(
+            SidebarEntry::CollectionsHeader,
+            gettext("Collections"),
+            folded.collections.then_some(0),
         ));
-        root.append(&view_item(
-            AssetView::Favorites,
-            gettext("Favorites"),
-            FAVORITES_ICON,
-            counts,
-            None,
-        ));
-        root.append(&view_item(
-            AssetView::Unclassified,
-            gettext("Unclassified"),
-            UNCLASSIFIED_ICON,
-            counts,
-            None,
-        ));
-        root.append(&view_item(
+        if !folded.collections {
+            for item in collections {
+                root.append(&item);
+            }
+        }
+        if content.show_smart_collections {
+            root.append(&header_item(
+                SidebarEntry::SmartCollectionsHeader,
+                gettext("Smart Collections"),
+                folded.smart_collections.then_some(0),
+            ));
+            if !folded.smart_collections {
+                for collection in &content.smart_collections {
+                    root.append(&view_item(
+                        AssetView::Smart(collection.id),
+                        collection.name.clone(),
+                        SMART_COLLECTION_ICON,
+                        counts,
+                        None,
+                    ));
+                }
+            }
+        }
+        if !content.tags.is_empty() {
+            root.append(&header_item(
+                SidebarEntry::TagsHeader,
+                gettext("Tags"),
+                folded.tags.then_some(content.tags.len()),
+            ));
+            if !folded.tags {
+                root.append(&tag_cloud_item(&content.tags, counts, chosen_tag));
+            }
+        }
+        let trash = gio::ListStore::new::<PigouneSidebarItem>();
+        trash.append(&view_item(
             AssetView::Trash,
             gettext("Trash"),
             TRASH_ICON,
             counts,
             None,
         ));
-        root.append(&header_item(
-            SidebarEntry::CollectionsHeader,
-            gettext("Collections"),
-        ));
-        for item in collection_items(&content.tree, None, counts) {
-            root.append(&item);
-        }
-        if content.show_smart_collections {
-            root.append(&header_item(
-                SidebarEntry::SmartCollectionsHeader,
-                gettext("Smart Collections"),
-            ));
-        }
-        for collection in &content.smart_collections {
-            root.append(&view_item(
-                AssetView::Smart(collection.id),
-                collection.name.clone(),
-                SMART_COLLECTION_ICON,
-                counts,
-                None,
-            ));
-        }
-        if !content.tags.is_empty() {
-            root.append(&header_item(SidebarEntry::TagsHeader, gettext("Tags")));
-            for tag in &content.tags {
-                root.append(&view_item(
-                    AssetView::Tag(tag.id),
-                    tag.name.clone(),
-                    "",
-                    counts,
-                    None,
-                ));
-            }
-        }
 
-        let tree_model = gtk::TreeListModel::new(root, false, false, |item| {
-            item.downcast_ref::<PigouneSidebarItem>()
-                .and_then(PigouneSidebarItem::children)
-                .map(Cast::upcast)
-        });
+        let tree_model = tree_of(root);
+        let selection = self.selection_of(&tree_model);
+        let trash_selection = self.selection_of(&tree_of(trash));
+
+        imp.rebuilding.set(true);
+        imp.list_view.set_model(Some(&selection));
+        imp.trash_view.set_model(Some(&trash_selection));
+        expand(&tree_model, &expanded);
+        if content.selected == AssetView::Trash {
+            selection.set_selected(gtk::INVALID_LIST_POSITION);
+            trash_selection.set_selected(0);
+        } else if chosen_tag.is_some() {
+            selection.set_selected(gtk::INVALID_LIST_POSITION);
+            trash_selection.set_selected(gtk::INVALID_LIST_POSITION);
+        } else {
+            let position =
+                position_of(&tree_model, content.selected).unwrap_or(gtk::INVALID_LIST_POSITION);
+            selection.set_selected(position);
+            trash_selection.set_selected(gtk::INVALID_LIST_POSITION);
+        }
+        imp.rebuilding.set(false);
+        if let Some(header) = imp.refocused_header.take()
+            && let Some(position) = position_of_entry(&tree_model, header)
+        {
+            imp.list_view
+                .scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
+        }
+    }
+
+    fn selection_of(&self, tree_model: &gtk::TreeListModel) -> gtk::SingleSelection {
         let selection = gtk::SingleSelection::new(Some(tree_model.clone()));
         selection.set_autoselect(false);
+        selection.set_can_unselect(true);
         selection.connect_selected_item_notify(glib::clone!(
             #[weak(rename_to = sidebar)]
             self,
             move |selection| sidebar.announce_selection(selection)
         ));
-
-        imp.rebuilding.set(true);
-        imp.list_view.set_model(Some(&selection));
-        expand(&tree_model, &expanded);
-        let position = position_of(&tree_model, content.selected).unwrap_or(0);
-        selection.set_selected(position);
-        imp.rebuilding.set(false);
-        imp.shows_smart_collections
-            .set(content.show_smart_collections);
-        self.measure_headers_soon();
+        selection
     }
 
     pub fn point_out(&self, view: AssetView) {
+        if let AssetView::Tag(tag) = view {
+            let sidebar = self.downgrade();
+            found_flash::flash_once_shown(move || {
+                sidebar.upgrade().is_none_or(|sidebar| {
+                    sidebar
+                        .tag_cloud()
+                        .and_then(|cloud| cloud.pill_of(tag))
+                        .filter(WidgetExt::is_mapped)
+                        .is_some_and(|pill| {
+                            found_flash::flash(pill.upcast_ref());
+                            true
+                        })
+                })
+            });
+            return;
+        }
+        if view == AssetView::Trash {
+            let sidebar = self.downgrade();
+            found_flash::flash_once_shown(move || {
+                sidebar
+                    .upgrade()
+                    .is_none_or(|sidebar| Self::flash_row_of(&sidebar.imp().trash_view, view))
+            });
+            return;
+        }
         let Some(position) = self
             .tree_model()
             .and_then(|tree_model| position_of(&tree_model, view))
@@ -356,12 +388,12 @@ impl PigouneSidebar {
         found_flash::flash_once_shown(move || {
             sidebar
                 .upgrade()
-                .is_none_or(|sidebar| sidebar.flash_row_of(view))
+                .is_none_or(|sidebar| Self::flash_row_of(&sidebar.imp().list_view, view))
         });
     }
 
-    fn flash_row_of(&self, view: AssetView) -> bool {
-        let mut child = self.imp().list_view.first_child();
+    fn flash_row_of(list: &gtk::ListView, view: AssetView) -> bool {
+        let mut child = list.first_child();
         while let Some(row) = child {
             let shows_view = row
                 .first_child()
@@ -386,9 +418,62 @@ impl PigouneSidebar {
         let Some(view) = item_at(selection.selected_item()).and_then(|item| item.view()) else {
             return;
         };
+        self.unselect_other_list(selection);
+        imp.chosen_tag.set(None);
+        if let Some(cloud) = self.tag_cloud() {
+            cloud.highlight(None);
+        }
         if let Some(on_view_changed) = imp.on_view_changed.borrow().as_ref() {
             on_view_changed(view);
         }
+    }
+
+    pub fn choose_tag(&self, tag: TagId) {
+        let imp = self.imp();
+        imp.chosen_tag.set(Some(tag));
+        imp.rebuilding.set(true);
+        for list in [&*imp.list_view, &*imp.trash_view] {
+            if let Some(selection) = list.model().and_downcast::<gtk::SingleSelection>() {
+                selection.set_selected(gtk::INVALID_LIST_POSITION);
+            }
+        }
+        imp.rebuilding.set(false);
+        if let Some(cloud) = self.tag_cloud() {
+            cloud.highlight(Some(tag));
+        }
+        if let Some(on_view_changed) = imp.on_view_changed.borrow().as_ref() {
+            on_view_changed(AssetView::Tag(tag));
+        }
+    }
+
+    fn tag_cloud(&self) -> Option<PigouneSidebarTagCloud> {
+        let mut child = self.imp().list_view.first_child();
+        while let Some(row) = child {
+            let cloud = row
+                .first_child()
+                .and_downcast::<gtk::TreeExpander>()
+                .and_then(|expander| expander.child())
+                .and_downcast::<PigouneSidebarRow>()
+                .and_then(|sidebar_row| sidebar_row.tag_cloud());
+            if cloud.is_some() {
+                return cloud;
+            }
+            child = row.next_sibling();
+        }
+        None
+    }
+
+    fn unselect_other_list(&self, chosen: &gtk::SingleSelection) {
+        let imp = self.imp();
+        imp.rebuilding.set(true);
+        for list in [&*imp.list_view, &*imp.trash_view] {
+            if let Some(other) = list.model().and_downcast::<gtk::SingleSelection>()
+                && &other != chosen
+            {
+                other.set_selected(gtk::INVALID_LIST_POSITION);
+            }
+        }
+        imp.rebuilding.set(false);
     }
 
     fn act_on_keys(&self) {
@@ -445,19 +530,21 @@ impl PigouneSidebar {
     }
 
     fn quiet_hover_while_dragging(&self) {
-        let list_view = self.imp().list_view.get();
-        let motion = gtk::DropControllerMotion::new();
-        motion.connect_enter(glib::clone!(
-            #[weak]
-            list_view,
-            move |_, _, _| list_view.add_css_class(DRAG_OVER)
-        ));
-        motion.connect_leave(glib::clone!(
-            #[weak]
-            list_view,
-            move |_| list_view.remove_css_class(DRAG_OVER)
-        ));
-        list_view.add_controller(motion);
+        let imp = self.imp();
+        for list_view in [imp.list_view.get(), imp.trash_view.get()] {
+            let motion = gtk::DropControllerMotion::new();
+            motion.connect_enter(glib::clone!(
+                #[weak]
+                list_view,
+                move |_, _, _| list_view.add_css_class(DRAG_OVER)
+            ));
+            motion.connect_leave(glib::clone!(
+                #[weak]
+                list_view,
+                move |_| list_view.remove_css_class(DRAG_OVER)
+            ));
+            list_view.add_controller(motion);
+        }
     }
 
     fn skip_headers_with_arrows(&self) {
@@ -485,6 +572,12 @@ impl PigouneSidebar {
         self.imp().list_view.add_controller(keys);
     }
 
+    fn focus_is_inside(&self) -> bool {
+        self.root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| focus.is_ancestor(&*self.imp().list_view))
+    }
+
     fn focus_is_on_an_entry(&self) -> bool {
         self.root()
             .and_then(|root| root.focus())
@@ -505,26 +598,40 @@ impl PigouneSidebar {
         else {
             return;
         };
-        let current = selection.selected();
-        if current == gtk::INVALID_LIST_POSITION {
+        let Some(current) = self.focused_position().or_else(|| {
+            Some(selection.selected()).filter(|selected| *selected != gtk::INVALID_LIST_POSITION)
+        }) else {
             return;
+        };
+        let target = i64::from(current) + step;
+        let Ok(target) = u32::try_from(target) else {
+            return;
+        };
+        let Some(item) = item_at(selection.item(target)) else {
+            return;
+        };
+        let flags = if item.is_header() || item.is_tag_cloud() {
+            gtk::ListScrollFlags::FOCUS
+        } else {
+            gtk::ListScrollFlags::FOCUS | gtk::ListScrollFlags::SELECT
+        };
+        self.imp().list_view.scroll_to(target, flags, None);
+    }
+
+    fn focused_position(&self) -> Option<u32> {
+        let focus = self.root()?.focus()?;
+        if !focus.is_ancestor(&*self.imp().list_view) {
+            return None;
         }
-        let entries = i64::from(selection.n_items());
-        let mut position = i64::from(current) + step;
-        while (0..entries).contains(&position) {
-            let Ok(target) = u32::try_from(position) else {
-                return;
-            };
-            if item_at(selection.item(target)).is_some_and(|item| !item.is_header()) {
-                self.imp().list_view.scroll_to(
-                    target,
-                    gtk::ListScrollFlags::FOCUS | gtk::ListScrollFlags::SELECT,
-                    None,
-                );
-                return;
-            }
-            position += step;
-        }
+        let expander = focus
+            .first_child()
+            .and_downcast::<gtk::TreeExpander>()
+            .or_else(|| {
+                focus
+                    .ancestor(gtk::TreeExpander::static_type())
+                    .and_downcast()
+            })?;
+        Some(expander.list_row()?.position())
     }
 
     fn selected_tree_row(&self) -> Option<gtk::TreeListRow> {
@@ -572,12 +679,16 @@ impl PigouneSidebar {
     }
 
     fn selected_view(&self) -> Option<AssetView> {
-        let selection = self
-            .imp()
-            .list_view
-            .model()
-            .and_downcast::<gtk::SingleSelection>()?;
-        item_at(selection.selected_item())?.view()
+        let imp = self.imp();
+        if let Some(tag) = imp.chosen_tag.get() {
+            return Some(AssetView::Tag(tag));
+        }
+        [&*imp.list_view, &*imp.trash_view]
+            .into_iter()
+            .find_map(|list| {
+                let selection = list.model().and_downcast::<gtk::SingleSelection>()?;
+                item_at(selection.selected_item())?.view()
+            })
     }
 
     fn expanded_collections(&self) -> HashSet<CollectionId> {
@@ -624,12 +735,13 @@ impl PigouneSidebar {
                 return;
             };
             let is_header = item.is_header();
-            list_item.set_selectable(!is_header);
-            list_item.set_activatable(!is_header);
+            list_item.set_selectable(!is_header && !item.is_tag_cloud());
+            list_item.set_activatable(is_header);
             let spoken_label = item.spoken_label();
-            list_item.set_focusable(!is_header);
             list_item.set_accessible_label(&spoken_label);
-            expander.set_focusable(!is_header);
+            if is_header {
+                expander.update_state(&[gtk::accessible::State::Expanded(Some(!item.folded()))]);
+            }
             expander.set_list_row(Some(&row));
             expander.set_indent_for_icon(collection_of(&row).is_some());
             if let Some(row) = expander.child().and_downcast::<PigouneSidebarRow>() {
@@ -639,6 +751,7 @@ impl PigouneSidebar {
             expander.update_property(&[gtk::accessible::Property::Label(&spoken_label)]);
         });
         self.imp().list_view.set_factory(Some(&factory));
+        self.imp().trash_view.set_factory(Some(&factory));
     }
 }
 
@@ -648,14 +761,25 @@ impl Default for PigouneSidebar {
     }
 }
 
-fn header_item(entry: SidebarEntry, label: String) -> PigouneSidebarItem {
+fn header_item(entry: SidebarEntry, label: String, folded: Option<usize>) -> PigouneSidebarItem {
     PigouneSidebarItem::new(SidebarItemData {
         entry,
         label,
         icon_name: "",
         color_class: None,
-        count: None,
+        count: folded,
+        folded: folded.is_some(),
+        tag_pills: Vec::new(),
+        selected_tag: None,
         children: None,
+    })
+}
+
+fn tree_of(root: gio::ListStore) -> gtk::TreeListModel {
+    gtk::TreeListModel::new(root, false, false, |item| {
+        item.downcast_ref::<PigouneSidebarItem>()
+            .and_then(PigouneSidebarItem::children)
+            .map(Cast::upcast)
     })
 }
 
@@ -672,6 +796,9 @@ fn view_item(
         icon_name,
         color_class: None,
         count: counts.map(|counts| counts.of(view)),
+        folded: false,
+        tag_pills: Vec::new(),
+        selected_tag: None,
         children,
     })
 }
@@ -699,6 +826,9 @@ fn collection_items(
                 icon_name: collection_looks::icon_name(&collection.look),
                 color_class: collection_looks::color_class(&collection.look),
                 count: counts.map(|counts| counts.of(view)),
+                folded: false,
+                tag_pills: Vec::new(),
+                selected_tag: None,
                 children: store,
             })
         })
@@ -743,5 +873,39 @@ fn position_of(tree_model: &gtk::TreeListModel, view: AssetView) -> Option<u32> 
             .and_then(|row| row.item().and_downcast::<PigouneSidebarItem>())
             .and_then(|item| item.view())
             == Some(view)
+    })
+}
+
+fn position_of_entry(tree_model: &gtk::TreeListModel, entry: SidebarEntry) -> Option<u32> {
+    (0..tree_model.n_items()).find(|position| {
+        tree_model
+            .row(*position)
+            .and_then(|row| row.item().and_downcast::<PigouneSidebarItem>())
+            .is_some_and(|item| item.entry() == entry)
+    })
+}
+
+fn tag_cloud_item(
+    tags: &[Tag],
+    counts: Option<&ViewCounts>,
+    chosen: Option<TagId>,
+) -> PigouneSidebarItem {
+    PigouneSidebarItem::new(SidebarItemData {
+        entry: SidebarEntry::TagCloud,
+        label: gettext("Tags"),
+        icon_name: "",
+        color_class: None,
+        count: None,
+        folded: false,
+        tag_pills: tags
+            .iter()
+            .map(|tag| TagPill {
+                id: tag.id,
+                name: tag.name.clone(),
+                count: counts.map(|counts| counts.of(AssetView::Tag(tag.id))),
+            })
+            .collect(),
+        selected_tag: chosen,
+        children: None,
     })
 }

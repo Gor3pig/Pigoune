@@ -7,7 +7,7 @@ template $PigouneWindow: Adw.ApplicationWindow {
   height-request: 294;
 
   Adw.Breakpoint {
-    condition ("max-width: 1120sp")
+    condition ("max-width: 1180sp")
 
     setters {
       details_split.collapsed: true;
@@ -154,8 +154,8 @@ template $PigouneWindow: Adw.ApplicationWindow {
             name: "library";
 
             child: Adw.OverlaySplitView sidebar_split {
-              min-sidebar-width: 200;
-              max-sidebar-width: 280;
+              min-sidebar-width: 320;
+              max-sidebar-width: 320;
 
               sidebar: Adw.ToolbarView {
                 [top]

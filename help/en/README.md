@@ -71,7 +71,10 @@ sub-collection, rename it (<kbd>F2</kbd>), customize it or delete it.
 - **Remove** them from the collection you are looking at with **Remove from the Collection** in
   the right-click menu. They stay in the library and in their other collections.
 - **Reorder** collections by dragging them in the sidebar, or sort them by name or creation
-  date with the sort button next to **Collections**.
+  date with the **⋯** button next to **Collections**.
+- **Fold** a section of the sidebar (Collections, Smart Collections or Tags) with a click on
+  its title, or with <kbd>Enter</kbd> when the title has the keyboard focus. Pigoune remembers
+  which sections are folded.
 - **Unclassified** lists the assets that belong to no collection.
 
 When you delete a collection, its sub-collections are deleted too, and the assets that only
@@ -81,9 +84,9 @@ belonged to them go to the trash. Assets that also belong to another collection 
 
 Tags describe assets with words of your choice. Add them from the details panel with the
 **+** button next to the tags, with **Add a Tag…** in the right-click menu, or drag assets onto
-a tag in the sidebar. Click a tag in the
-sidebar to see all its assets, or right-click it to rename or delete it. Renaming a tag to the
-name of another one merges them.
+a tag in the sidebar. The sidebar shows tags as pills with their number of assets: click one
+to see all its assets, or right-click it to rename or delete it. Beyond twelve tags, **+ N
+others** shows the rest. Renaming a tag to the name of another one merges them.
 
 ### Favorites
 
@@ -160,7 +163,7 @@ SVG files* or *everything about logos in the Clients collection*.
 - **Change** its name or criteria with **Edit…** in its right-click menu, or with
   <kbd>F2</kbd>. **Delete…** only deletes the saved search: the assets stay in the library.
 - **Reorder** smart collections by dragging them in the sidebar, or sort them by name or
-  creation date with the button next to their title.
+  creation date with the **⋯** button next to their title.
 
 Assets cannot be dropped onto a smart collection, since its content follows its criteria.
 
@@ -222,9 +225,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 ## Trash and undo
 
 Press <kbd>Delete</kbd>, or choose **Move to Trash** in the right-click menu, to send assets
-to the trash. Nothing is lost until you empty it: open **Trash** in the sidebar to restore
-assets, with **Restore** in the right-click menu or in the details panel, or to empty it for
-good.
+to the trash. Nothing is lost until you empty it: open **Trash** at the bottom of the sidebar
+to restore assets, with **Restore** in the right-click menu or in the details panel, or to
+empty it for good.
 
 Most changes can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd> or with the **Undo** button of
 the message that appears after an action: trashing, moving, tags, favorites, renaming, notes

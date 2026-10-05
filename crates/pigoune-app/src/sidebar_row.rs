@@ -11,12 +11,16 @@ use crate::collection_look_dialog;
 use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
+use crate::sidebar_tag_cloud::PigouneSidebarTagCloud;
 
 const DROP_HIGHLIGHT: &str = "drop-highlight";
 const DROP_BEFORE: &str = "drop-before";
 const DROP_AFTER: &str = "drop-after";
 const DROP_TARGET_ROW: &str = "drop-target-row";
 const SIDEBAR_ROW: &str = "sidebar-row";
+const FOLDED_ICON: &str = "pan-end-symbolic";
+const UNFOLDED_ICON: &str = "pan-down-symbolic";
+const MORE_ICON: &str = "view-more-symbolic";
 
 mod imp {
     use std::cell::{Cell, OnceCell, RefCell};
@@ -29,6 +33,8 @@ mod imp {
 
     #[derive(Default)]
     pub struct PigouneSidebarRow {
+        pub fold_arrow: OnceCell<gtk::Image>,
+        pub tag_cloud: OnceCell<crate::sidebar_tag_cloud::PigouneSidebarTagCloud>,
         pub icon: OnceCell<gtk::Image>,
         pub label: OnceCell<gtk::Label>,
         pub count: OnceCell<gtk::Label>,
@@ -69,10 +75,57 @@ impl PigouneSidebarRow {
         glib::Object::builder().property("spacing", 12).build()
     }
 
+    pub fn tag_cloud(&self) -> Option<PigouneSidebarTagCloud> {
+        self.imp()
+            .tag_cloud
+            .get()
+            .filter(|cloud| cloud.is_visible())
+            .cloned()
+    }
+
+    fn show_tag_cloud(&self, item: &PigouneSidebarItem) {
+        let imp = self.imp();
+        let cloud = imp.tag_cloud.get_or_init(|| {
+            let cloud = PigouneSidebarTagCloud::default();
+            cloud.set_hexpand(true);
+            self.append(&cloud);
+            cloud
+        });
+        cloud.set_visible(true);
+        cloud.show_tags(item.tag_pills(), item.selected_tag());
+    }
+
     pub fn show(&self, item: &PigouneSidebarItem) {
         let imp = self.imp();
+        let is_cloud = item.is_tag_cloud();
+        for part in [
+            part(&imp.fold_arrow).upcast::<gtk::Widget>(),
+            part(&imp.icon).upcast(),
+            part(&imp.label).upcast(),
+            part(&imp.count).upcast(),
+        ] {
+            part.set_visible(!is_cloud);
+        }
+        if is_cloud {
+            part(&imp.hash).set_visible(false);
+            part(&imp.header_buttons).set_visible(false);
+            part(&imp.smart_header_buttons).set_visible(false);
+            self.show_tag_cloud(item);
+            imp.item.replace(Some(item.clone()));
+            return;
+        }
+        if let Some(cloud) = imp.tag_cloud.get() {
+            cloud.set_visible(false);
+        }
         let is_header = item.is_header();
         let is_tag = matches!(item.view(), Some(AssetView::Tag(_)));
+        let fold_arrow = part(&imp.fold_arrow);
+        fold_arrow.set_visible(is_header);
+        fold_arrow.set_icon_name(Some(if item.folded() {
+            FOLDED_ICON
+        } else {
+            UNFOLDED_ICON
+        }));
         let icon = part(&imp.icon);
         icon.set_icon_name(Some(item.icon_name()));
         collection_look_dialog::set_tint(icon.upcast_ref(), item.color_class());
@@ -86,7 +139,7 @@ impl PigouneSidebarRow {
             label.set_css_classes(&[]);
         }
         let count = part(&imp.count);
-        count.set_visible(item.count().is_some());
+        count.set_visible(item.count().is_some_and(|count| count > 0));
         count.set_label(
             &item
                 .count()
@@ -101,6 +154,10 @@ impl PigouneSidebarRow {
 
     fn build(&self) {
         let imp = self.imp();
+        let fold_arrow = gtk::Image::builder()
+            .css_classes(["dim-label"])
+            .visible(false)
+            .build();
         let icon = gtk::Image::new();
         let hash = gtk::Label::builder()
             .label("#")
@@ -118,10 +175,10 @@ impl PigouneSidebarRow {
         let header_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         header_buttons.append(
             &gtk::MenuButton::builder()
-                .icon_name("view-sort-descending-symbolic")
+                .icon_name(MORE_ICON)
                 .tooltip_text(gettext("Sort Collections"))
                 .menu_model(&collection_sort_menu())
-                .css_classes(["flat"])
+                .css_classes(["flat", "sidebar-header-button"])
                 .build(),
         );
         header_buttons.append(
@@ -129,16 +186,16 @@ impl PigouneSidebarRow {
                 .icon_name("list-add-symbolic")
                 .tooltip_text(gettext("New Collection"))
                 .action_name("win.new-collection")
-                .css_classes(["flat"])
+                .css_classes(["flat", "sidebar-header-button"])
                 .build(),
         );
         let smart_header_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         smart_header_buttons.append(
             &gtk::MenuButton::builder()
-                .icon_name("view-sort-descending-symbolic")
+                .icon_name(MORE_ICON)
                 .tooltip_text(gettext("Sort Smart Collections"))
                 .menu_model(&smart_collection_sort_menu())
-                .css_classes(["flat"])
+                .css_classes(["flat", "sidebar-header-button"])
                 .build(),
         );
         smart_header_buttons.append(
@@ -146,10 +203,11 @@ impl PigouneSidebarRow {
                 .icon_name("list-add-symbolic")
                 .tooltip_text(gettext("New Smart Collection"))
                 .action_name("win.new-smart-collection")
-                .css_classes(["flat"])
+                .css_classes(["flat", "sidebar-header-button"])
                 .build(),
         );
         let menu = gtk::PopoverMenu::builder().has_arrow(false).build();
+        self.append(&fold_arrow);
         self.append(&icon);
         self.append(&hash);
         self.append(&label);
@@ -157,6 +215,7 @@ impl PigouneSidebarRow {
         self.append(&header_buttons);
         self.append(&smart_header_buttons);
         self.append(&menu);
+        set_part(&imp.fold_arrow, fold_arrow);
         set_part(&imp.icon, icon);
         set_part(&imp.hash, hash);
         set_part(&imp.label, label);
@@ -165,6 +224,7 @@ impl PigouneSidebarRow {
         set_part(&imp.smart_header_buttons, smart_header_buttons);
         set_part(&imp.menu, menu);
         self.open_menu_on_secondary_click();
+        self.fold_on_header_click();
         self.accept_drops();
         self.offer_collection_drag();
     }
@@ -310,7 +370,8 @@ impl PigouneSidebarRow {
             Some(
                 SidebarEntry::CollectionsHeader
                 | SidebarEntry::SmartCollectionsHeader
-                | SidebarEntry::TagsHeader,
+                | SidebarEntry::TagsHeader
+                | SidebarEntry::TagCloud,
             )
             | None => false,
         }
@@ -430,6 +491,42 @@ impl PigouneSidebarRow {
         self.imp().item.borrow().as_ref()?.view()
     }
 
+    fn fold_on_header_click(&self) {
+        let click = gtk::GestureClick::new();
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            move |gesture, _, x, y| {
+                let Some(entry) = row.entry().filter(|_| row.is_header()) else {
+                    return;
+                };
+                if row.is_on_a_button(x, y) {
+                    return;
+                }
+                gesture.set_state(gtk::EventSequenceState::Claimed);
+                if let Some(sidebar) = row.sidebar() {
+                    sidebar.section_toggled(entry);
+                }
+            }
+        ));
+        self.add_controller(click);
+    }
+
+    fn is_on_a_button(&self, x: f64, y: f64) -> bool {
+        self.pick(x, y, gtk::PickFlags::DEFAULT)
+            .is_some_and(|target| {
+                target.is::<gtk::Button>() || target.ancestor(gtk::Button::static_type()).is_some()
+            })
+    }
+
+    fn is_header(&self) -> bool {
+        self.imp()
+            .item
+            .borrow()
+            .as_ref()
+            .is_some_and(PigouneSidebarItem::is_header)
+    }
+
     fn open_menu_on_secondary_click(&self) {
         let click = gtk::GestureClick::builder()
             .button(gdk::BUTTON_SECONDARY)
@@ -502,7 +599,7 @@ fn set_part<Widget>(cell: &std::cell::OnceCell<Widget>, widget: Widget) {
     }
 }
 
-fn tag_menu(tag: &str) -> gio::Menu {
+pub fn tag_menu(tag: &str) -> gio::Menu {
     let menu = gio::Menu::new();
     menu.append(
         Some(&gettext("Rename…")),
@@ -595,7 +692,7 @@ fn smart_collection_sort_menu() -> gio::Menu {
     menu
 }
 
-fn control_is_held(widget: &impl IsA<gtk::Widget>) -> bool {
+pub fn control_is_held(widget: &impl IsA<gtk::Widget>) -> bool {
     widget
         .display()
         .default_seat()
