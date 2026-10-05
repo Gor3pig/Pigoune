@@ -18,6 +18,6 @@ mkdir -p "$output/images"
 cp -r "$repository"/website/{index.html,404.html,sitemap.xml,style.css,script.js,language.js,pigoune.flatpakref,pigoune.flatpakrepo,pigoune.gpg,fr} "$output/"
 cp "$repository/data/icons/pigoune-64x64.png" "$repository/data/icons/pigoune-256x256.png" "$output/images/"
 cp "$repository/data/screenshots/01.png" "$output/images/share.png"
-for screenshot in "$repository"/data/screenshots/0[1-5].png; do
+for screenshot in "$repository"/data/screenshots/0[1-7].png; do
     to_webp "$screenshot" "$output/images/$(basename "$screenshot" .png).webp"
 done
