@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 01:05+0200\n"
+"POT-Creation-Date: 2026-10-06 01:29+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -862,7 +862,7 @@ msgid "_Open Library…"
 msgstr "_Ouvrir une bibliothèque…"
 
 #: crates/pigoune-app/ui/window.blp:109
-#: crates/pigoune-app/ui/preferences-dialog.blp:15
+#: crates/pigoune-app/ui/preferences-dialog.blp:20
 msgid "Recent Libraries"
 msgstr "Bibliothèques récentes"
 
@@ -1562,7 +1562,7 @@ msgid "Unable to Change the Favorites"
 msgstr "Impossible de modifier les favoris"
 
 #: crates/pigoune-app/src/window.rs:3825 crates/pigoune-app/src/sidebar.rs:305
-#: crates/pigoune-app/ui/preferences-dialog.blp:116
+#: crates/pigoune-app/ui/preferences-dialog.blp:38
 msgid "Trash"
 msgstr "Corbeille"
 
@@ -2069,8 +2069,8 @@ msgid "{seconds}.{tenths} s"
 msgstr "{seconds},{tenths} s"
 
 #: crates/pigoune-app/src/asset_facts.rs:136
-#: crates/pigoune-app/src/library_info_dialog.rs:606
-#: crates/pigoune-app/src/library_info_dialog.rs:612
+#: crates/pigoune-app/src/library_info_dialog.rs:620
+#: crates/pigoune-app/src/library_info_dialog.rs:626
 msgid "Unknown date"
 msgstr "Inconnue"
 
@@ -2213,6 +2213,7 @@ msgid "Tags"
 msgstr "Tags"
 
 #: crates/pigoune-app/ui/asset-grid.blp:31
+#: crates/pigoune-app/ui/preferences-dialog.blp:132
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:30
 msgid "Resources"
 msgstr "Ressources"
@@ -2511,188 +2512,183 @@ msgctxt "collection color"
 msgid "Blue"
 msgstr "Bleu"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:7
+#: crates/pigoune-app/ui/preferences-dialog.blp:8
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:171
+msgid "General"
+msgstr "Général"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:12
 msgid "Opening"
 msgstr "Ouverture"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:10
+#: crates/pigoune-app/ui/preferences-dialog.blp:15
 msgid "Reopen the Last Library"
 msgstr "Rouvrir la dernière bibliothèque"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:11
-msgid "At startup, the library left open last time opens again"
-msgstr ""
-"Au lancement, la bibliothèque laissée ouverte la dernière fois se rouvre"
-
 #: crates/pigoune-app/ui/preferences-dialog.blp:16
-msgid ""
-"How many libraries the menu and the welcome page offer, 0 to turn them off"
-msgstr ""
-"Nombre de bibliothèques proposées par le menu et l’accueil, 0 pour les "
-"désactiver"
+msgid "At startup"
+msgstr "Au démarrage"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:27
+#: crates/pigoune-app/ui/preferences-dialog.blp:21
+msgid "Offered in the menu and on the welcome page, 0 to hide them"
+msgstr "Proposées dans le menu et sur l’accueil, 0 pour les masquer"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:32
 msgid "Reopen the Last Entry"
 msgstr "Rouvrir la dernière entrée"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:28
-msgid "A library opens on the entry selected last time instead of All"
-msgstr ""
-"Une bibliothèque s’ouvre sur la dernière entrée sélectionnée plutôt que sur "
-"« Tout »"
-
 #: crates/pigoune-app/ui/preferences-dialog.blp:33
-msgid "Grid"
-msgstr "Grille"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:36
-msgid "Show Resource Names"
-msgstr "Afficher le nom des ressources"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:37
-msgid "The name of each resource appears under its thumbnail"
-msgstr "Le nom de chaque ressource apparaît sous sa vignette"
+msgid "Instead of All"
+msgstr "Plutôt que « Tout »"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:41
-msgid "Play Animations on Hover"
-msgstr "Animer les vignettes au survol"
+msgid "Confirm Before Emptying the Trash"
+msgstr "Confirmer avant de vider la corbeille"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:42
-msgid "Animated thumbnails play when the pointer is over them"
-msgstr "Les vignettes animées s’animent quand le pointeur les survole"
+msgid "A question is asked before resources are deleted for good"
+msgstr "Une question est posée avant de supprimer définitivement des ressources"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:46
-msgid "Show Formats"
-msgstr "Afficher les formats"
+msgid "Empty the Trash Automatically"
+msgstr "Vider automatiquement la corbeille"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:47
-msgid "A badge shows the format of each resource on its thumbnail"
-msgstr "Une étiquette indique le format de chaque ressource sur sa vignette"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:51
-msgid "Thumbnail Background"
-msgstr "Fond des vignettes"
+msgid "After 30 days"
+msgstr "Après 30 jours"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:52
-msgid "A plain background helps to see white or black images"
-msgstr "Un fond uni aide à voir les images blanches ou noires"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:56
-msgid "Default"
-msgstr "Par défaut"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:57
-msgid "White"
-msgstr "Blanc"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:58
-msgid "Gray"
-msgstr "Gris"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:59
-msgid "Black"
-msgstr "Noir"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:60
-msgid "Checkerboard"
-msgstr "Damier"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:66
-msgid "Open Resources on Double-Click"
-msgstr "Ouvrir les ressources au double-clic"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:67
-msgid ""
-"A double-click opens the resource in its default application instead of the "
-"preview"
-msgstr ""
-"Un double-clic ouvre la ressource dans son application par défaut au lieu de "
-"l’aperçu"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:72
-msgctxt "preferences group"
-msgid "Search"
-msgstr "Recherche"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:75
-msgid "Search the Whole Library"
-msgstr "Rechercher dans toute la bibliothèque"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:76
-msgid ""
-"Searches and filters look everywhere, except in the trash and smart "
-"collections"
-msgstr ""
-"La recherche et les filtres regardent partout, sauf dans la corbeille et les "
-"collections intelligentes"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:81
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:74
-msgid "Sidebar"
-msgstr "Barre latérale"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:84
-msgid "Show Resource Counts"
-msgstr "Afficher le nombre de ressources"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:85
-msgid "The number of resources appears next to each entry"
-msgstr "Le nombre de ressources apparaît à côté de chaque entrée"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:89
-msgid "Show Tags"
-msgstr "Afficher les tags"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:90
-msgid "Each tag appears in the sidebar to show its resources in one click"
-msgstr ""
-"Chaque tag apparaît dans la barre latérale pour afficher ses ressources en "
-"un clic"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:94
-msgid "Show Smart Collections"
-msgstr "Afficher les collections intelligentes"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:95
-msgid ""
-"Each smart collection appears in the sidebar, filled with the resources "
-"matching its criteria"
-msgstr ""
-"Chaque collection intelligente apparaît dans la barre latérale, remplie des "
-"ressources qui correspondent à ses critères"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:100
 #: crates/pigoune-app/ui/library-info-dialog.blp:205
 msgid "Storage"
 msgstr "Stockage"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:104
+#: crates/pigoune-app/ui/preferences-dialog.blp:53
+msgid ""
+"Thumbnails are small copies of the images that keep the grid fast. Clearing "
+"them is safe: they are made again when needed."
+msgstr "Les vignettes sont des copies réduites des images qui rendent la grille rapide. Les vider est sans danger : elles sont recréées au besoin."
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:57
 msgid "Thumbnails"
 msgstr "Vignettes"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:108
+#: crates/pigoune-app/ui/preferences-dialog.blp:61
 msgid "_Clear"
 msgstr "_Vider"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:119
-msgid "Confirm Before Emptying the Trash"
-msgstr "Confirmer avant de vider la corbeille"
+#: crates/pigoune-app/ui/preferences-dialog.blp:70
+msgid "Display"
+msgstr "Affichage"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:120
-msgid "A confirmation is asked before resources are deleted for good"
-msgstr ""
-"Une confirmation est demandée avant de supprimer définitivement des "
-"ressources"
+#: crates/pigoune-app/ui/preferences-dialog.blp:74
+msgid "Grid"
+msgstr "Grille"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:124
-msgid "Empty the Trash Automatically"
-msgstr "Vider automatiquement la corbeille"
+#: crates/pigoune-app/ui/preferences-dialog.blp:77
+msgid "Show Resource Names"
+msgstr "Afficher le nom des ressources"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:125
-msgid "Resources are deleted for good after 30 days in the trash"
-msgstr ""
-"Les ressources sont supprimées définitivement après 30 jours dans la "
-"corbeille"
+#: crates/pigoune-app/ui/preferences-dialog.blp:78
+msgid "Under each thumbnail"
+msgstr "Sous chaque vignette"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:82
+msgid "Show Formats"
+msgstr "Afficher les formats"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:83
+msgid "A badge such as SVG or PNG on each thumbnail"
+msgstr "Une étiquette comme SVG ou PNG sur chaque vignette"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:87
+msgid "Thumbnail Background"
+msgstr "Fond des vignettes"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:88
+msgid "Helps to see white or black images"
+msgstr "Aide à voir les images blanches ou noires"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:92
+msgid "Default"
+msgstr "Par défaut"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:93
+msgid "White"
+msgstr "Blanc"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:94
+msgid "Gray"
+msgstr "Gris"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:95
+msgid "Black"
+msgstr "Noir"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:96
+msgid "Checkerboard"
+msgstr "Damier"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:102
+msgid "Play Animations on Hover"
+msgstr "Animer les vignettes au survol"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:103
+msgid "Animated images move when the pointer is over them"
+msgstr "Les images animées bougent sous le pointeur"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:108
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:74
+msgid "Sidebar"
+msgstr "Barre latérale"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:111
+msgid "Show Resource Counts"
+msgstr "Afficher le nombre de ressources"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:112
+msgid "Next to each entry of the sidebar"
+msgstr "À côté de chaque entrée de la barre latérale"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:116
+msgid "Show Tags"
+msgstr "Afficher les tags"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:117
+msgid "A section to open each tag in one click"
+msgstr "Une section pour ouvrir chaque tag en un clic"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:121
+msgid "Show Smart Collections"
+msgstr "Afficher les collections intelligentes"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:122
+msgid "A section for the collections that fill themselves"
+msgstr "Une section pour les collections qui se remplissent seules"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:128
+msgid "Behavior"
+msgstr "Comportement"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:135
+msgid "Open Resources on Double-Click"
+msgstr "Ouvrir les ressources au double-clic"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:136
+msgid "In the default application instead of the preview"
+msgstr "Dans l’application choisie par défaut, plutôt que dans l’aperçu"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:141
+msgctxt "preferences group"
+msgid "Search"
+msgstr "Recherche"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:144
+msgid "Search the Whole Library"
+msgstr "Rechercher dans toute la bibliothèque"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:145
+msgid "Except in the trash and smart collections"
+msgstr "Sauf dans la corbeille et les collections intelligentes"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:14
 msgid "Open a Library"
@@ -2770,10 +2766,6 @@ msgstr "Mettre en pause ou relancer l’animation"
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:165
 msgid "Close the Preview"
 msgstr "Fermer l’aperçu"
-
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:171
-msgid "General"
-msgstr "Général"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:174
 msgid "Show Keyboard Shortcuts"
@@ -3381,17 +3373,17 @@ msgstr "Couleur personnalisée {code}"
 msgid "Custom Color"
 msgstr "Couleur personnalisée"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:143
+#: crates/pigoune-app/src/preferences_dialog.rs:145
 #, rust-format
 msgid "{size} freed, thumbnails are made again when needed"
 msgstr "{size} libérés, les vignettes sont recréées au besoin"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:148
+#: crates/pigoune-app/src/preferences_dialog.rs:150
 #, rust-format
 msgid "Unable to clear the thumbnails: {reason}"
 msgstr "Impossible de vider les vignettes : {reason}"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:158
+#: crates/pigoune-app/src/preferences_dialog.rs:160
 #, rust-format
 msgid "{size} used by “{name}”"
 msgstr "{size} utilisés par « {name} »"
@@ -3478,99 +3470,99 @@ msgid_plural "Favorites"
 msgstr[0] "Favori"
 msgstr[1] "Favoris"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:347
+#: crates/pigoune-app/src/library_info_dialog.rs:348
 #, rust-format
 msgid "{count} animated"
 msgid_plural "{count} animated"
 msgstr[0] "{count} animée"
 msgstr[1] "{count} animées"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:349
+#: crates/pigoune-app/src/library_info_dialog.rs:353
 #, rust-format
 msgid "{count} SVG"
 msgstr "{count} SVG"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:351
+#: crates/pigoune-app/src/library_info_dialog.rs:355
 #, rust-format
 msgid "{count} in the trash"
 msgid_plural "{count} in the trash"
 msgstr[0] "{count} dans la corbeille"
 msgstr[1] "{count} dans la corbeille"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:397
+#: crates/pigoune-app/src/library_info_dialog.rs:404
 #, rust-format
 msgid "Resources {size}"
 msgstr "Ressources {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:398
+#: crates/pigoune-app/src/library_info_dialog.rs:409
 #, rust-format
 msgid "Thumbnails {size}"
 msgstr "Vignettes {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:399
+#: crates/pigoune-app/src/library_info_dialog.rs:411
 #, rust-format
 msgid "Database {size}"
 msgstr "Base de données {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:400
+#: crates/pigoune-app/src/library_info_dialog.rs:412
 #, rust-format
 msgid "Trash {size}"
 msgstr "Corbeille {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:418
+#: crates/pigoune-app/src/library_info_dialog.rs:432
 #, rust-format
 msgid "Other files {size}"
 msgstr "Autres fichiers {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:448
+#: crates/pigoune-app/src/library_info_dialog.rs:462
 msgid "Location copied"
 msgstr "Emplacement copié"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:498
+#: crates/pigoune-app/src/library_info_dialog.rs:512
 msgid "Heaviest"
 msgstr "La plus lourde"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:499
+#: crates/pigoune-app/src/library_info_dialog.rs:513
 msgid "Largest"
 msgstr "La plus grande"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:500
+#: crates/pigoune-app/src/library_info_dialog.rs:514
 msgid "Newest"
 msgstr "La plus récente"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:501
+#: crates/pigoune-app/src/library_info_dialog.rs:515
 msgid "Oldest"
 msgstr "La plus ancienne"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:511
+#: crates/pigoune-app/src/library_info_dialog.rs:525
 #, rust-format
 msgid "added on {date}"
 msgstr "ajoutée le {date}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:529
+#: crates/pigoune-app/src/library_info_dialog.rs:543
 #, rust-format
 msgid "{percent} %"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:580
+#: crates/pigoune-app/src/library_info_dialog.rs:594
 #, rust-format
 msgid "{free} free of {size}"
 msgstr "{free} libres sur {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:587
+#: crates/pigoune-app/src/library_info_dialog.rs:601
 #, rust-format
 msgid "Pigoune {version} or later"
 msgstr "Pigoune {version} ou plus récent"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:595
+#: crates/pigoune-app/src/library_info_dialog.rs:609
 msgid "Removable disk"
 msgstr "Disque amovible"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:597
+#: crates/pigoune-app/src/library_info_dialog.rs:611
 msgid "Internal disk"
 msgstr "Disque interne"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:611
+#: crates/pigoune-app/src/library_info_dialog.rs:625
 msgid "%B %-d, %Y"
 msgstr "%-d %B %Y"
 
@@ -3639,6 +3631,38 @@ msgstr "La mise à jour n’a pas pu être installée, réessayez depuis Logicie
 #: crates/pigoune-app/src/update_banner.rs:36
 msgid "Close and reopen Pigoune to use the new version"
 msgstr "Fermez puis rouvrez Pigoune pour utiliser la nouvelle version"
+
+#~ msgid "At startup, the library left open last time opens again"
+#~ msgstr ""
+#~ "Au lancement, la bibliothèque laissée ouverte la dernière fois se rouvre"
+
+#~ msgid "A library opens on the entry selected last time instead of All"
+#~ msgstr ""
+#~ "Une bibliothèque s’ouvre sur la dernière entrée sélectionnée plutôt que "
+#~ "sur « Tout »"
+
+#~ msgid "The name of each resource appears under its thumbnail"
+#~ msgstr "Le nom de chaque ressource apparaît sous sa vignette"
+
+#~ msgid "The number of resources appears next to each entry"
+#~ msgstr "Le nombre de ressources apparaît à côté de chaque entrée"
+
+#~ msgid "Each tag appears in the sidebar to show its resources in one click"
+#~ msgstr ""
+#~ "Chaque tag apparaît dans la barre latérale pour afficher ses ressources "
+#~ "en un clic"
+
+#~ msgid ""
+#~ "Each smart collection appears in the sidebar, filled with the resources "
+#~ "matching its criteria"
+#~ msgstr ""
+#~ "Chaque collection intelligente apparaît dans la barre latérale, remplie "
+#~ "des ressources qui correspondent à ses critères"
+
+#~ msgid "Resources are deleted for good after 30 days in the trash"
+#~ msgstr ""
+#~ "Les ressources sont supprimées définitivement après 30 jours dans la "
+#~ "corbeille"
 
 #~ msgid "Animated"
 #~ msgid_plural "Animated"

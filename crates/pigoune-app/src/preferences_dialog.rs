@@ -6,6 +6,7 @@ use gtk::{gio, glib};
 
 use crate::settings;
 
+const PAGES: [&str; 3] = ["general_page", "display_page", "behaviour_page"];
 const RESOURCE: &str = "/io/github/gor3pig/Pigoune/ui/preferences-dialog.ui";
 
 pub struct ThumbnailStorage {
@@ -49,16 +50,17 @@ pub fn present(
     if let Some(row) = builder.object::<adw::ComboRow>("tile_background_row") {
         follow_tile_background(&row, settings);
     }
-    let (Some(dialog), Some(page)) = (
-        builder.object::<adw::PreferencesDialog>("dialog"),
-        builder.object::<adw::PreferencesPage>("page"),
-    ) else {
+    let Some(dialog) = builder.object::<adw::PreferencesDialog>("dialog") else {
         return;
     };
+    let pages: Vec<adw::PreferencesPage> = PAGES
+        .iter()
+        .filter_map(|page| builder.object::<adw::PreferencesPage>(*page))
+        .collect();
     if let Some(thumbnails) = thumbnails {
         offer_thumbnail_cleaning(&builder, &dialog, thumbnails);
     }
-    dialog.connect_map(move |dialog| fit_to_content(dialog, &page));
+    dialog.connect_map(move |dialog| fit_to_content(dialog, &pages));
     dialog.present(Some(parent));
 }
 
@@ -162,11 +164,14 @@ fn show_thumbnail_bytes(
     button.set_sensitive(bytes > 0);
 }
 
-fn fit_to_content(dialog: &adw::PreferencesDialog, page: &adw::PreferencesPage) {
+fn fit_to_content(dialog: &adw::PreferencesDialog, pages: &[adw::PreferencesPage]) {
     let width = dialog.content_width();
-    let content = descendant::<gtk::Viewport>(page.upcast_ref()).map_or(0, |viewport| {
-        viewport.measure(gtk::Orientation::Vertical, width).1
-    });
+    let content = pages
+        .iter()
+        .filter_map(|page| descendant::<gtk::Viewport>(page.upcast_ref()))
+        .map(|viewport| viewport.measure(gtk::Orientation::Vertical, width).1)
+        .max()
+        .unwrap_or(0);
     let header = descendant::<adw::HeaderBar>(dialog.upcast_ref()).map_or(0, |header| {
         header.measure(gtk::Orientation::Vertical, width).1
     });

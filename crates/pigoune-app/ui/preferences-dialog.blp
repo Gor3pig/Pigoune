@@ -2,18 +2,23 @@ using Gtk 4.0;
 using Adw 1;
 
 Adw.PreferencesDialog dialog {
-  Adw.PreferencesPage page {
+  search-enabled: true;
+
+  Adw.PreferencesPage general_page {
+    title: _("General");
+    icon-name: "emblem-system-symbolic";
+
     Adw.PreferencesGroup {
       title: _("Opening");
 
       Adw.SwitchRow reopen_last_library_row {
         title: _("Reopen the Last Library");
-        subtitle: _("At startup, the library left open last time opens again");
+        subtitle: _("At startup");
       }
 
       Adw.SpinRow recent_libraries_row {
         title: _("Recent Libraries");
-        subtitle: _("How many libraries the menu and the welcome page offer, 0 to turn them off");
+        subtitle: _("Offered in the menu and on the welcome page, 0 to hide them");
 
         adjustment: Adjustment {
           lower: 0;
@@ -25,79 +30,29 @@ Adw.PreferencesDialog dialog {
 
       Adw.SwitchRow restore_last_view_row {
         title: _("Reopen the Last Entry");
-        subtitle: _("A library opens on the entry selected last time instead of All");
+        subtitle: _("Instead of All");
       }
     }
 
     Adw.PreferencesGroup {
-      title: _("Grid");
+      title: _("Trash");
 
-      Adw.SwitchRow show_names_row {
-        title: _("Show Resource Names");
-        subtitle: _("The name of each resource appears under its thumbnail");
+      Adw.SwitchRow confirm_empty_trash_row {
+        title: _("Confirm Before Emptying the Trash");
+        subtitle: _("A question is asked before resources are deleted for good");
       }
 
-      Adw.SwitchRow animate_on_hover_row {
-        title: _("Play Animations on Hover");
-        subtitle: _("Animated thumbnails play when the pointer is over them");
-      }
-
-      Adw.SwitchRow show_formats_row {
-        title: _("Show Formats");
-        subtitle: _("A badge shows the format of each resource on its thumbnail");
-      }
-
-      Adw.ComboRow tile_background_row {
-        title: _("Thumbnail Background");
-        subtitle: _("A plain background helps to see white or black images");
-
-        model: StringList {
-          strings [
-            _("Default"),
-            _("White"),
-            _("Gray"),
-            _("Black"),
-            _("Checkerboard"),
-          ]
-        };
-      }
-
-      Adw.SwitchRow double_click_opens_row {
-        title: _("Open Resources on Double-Click");
-        subtitle: _("A double-click opens the resource in its default application instead of the preview");
-      }
-    }
-
-    Adw.PreferencesGroup {
-      title: C_("preferences group", "Search");
-
-      Adw.SwitchRow search_everywhere_row {
-        title: _("Search the Whole Library");
-        subtitle: _("Searches and filters look everywhere, except in the trash and smart collections");
-      }
-    }
-
-    Adw.PreferencesGroup {
-      title: _("Sidebar");
-
-      Adw.SwitchRow show_counts_row {
-        title: _("Show Resource Counts");
-        subtitle: _("The number of resources appears next to each entry");
-      }
-
-      Adw.SwitchRow show_tags_row {
-        title: _("Show Tags");
-        subtitle: _("Each tag appears in the sidebar to show its resources in one click");
-      }
-
-      Adw.SwitchRow show_smart_collections_row {
-        title: _("Show Smart Collections");
-        subtitle: _("Each smart collection appears in the sidebar, filled with the resources matching its criteria");
+      Adw.SwitchRow auto_empty_trash_row {
+        title: _("Empty the Trash Automatically");
+        subtitle: _("After 30 days");
       }
     }
 
     Adw.PreferencesGroup storage_group {
       title: _("Storage");
+      description: _(
+        "Thumbnails are small copies of the images that keep the grid fast. Clearing them is safe: they are made again when needed."
+      );
       visible: false;
 
       Adw.ActionRow thumbnails_row {
@@ -111,18 +66,85 @@ Adw.PreferencesDialog dialog {
         }
       }
     }
+  }
+
+  Adw.PreferencesPage display_page {
+    title: _("Display");
+    icon-name: "view-grid-symbolic";
 
     Adw.PreferencesGroup {
-      title: _("Trash");
+      title: _("Grid");
 
-      Adw.SwitchRow confirm_empty_trash_row {
-        title: _("Confirm Before Emptying the Trash");
-        subtitle: _("A confirmation is asked before resources are deleted for good");
+      Adw.SwitchRow show_names_row {
+        title: _("Show Resource Names");
+        subtitle: _("Under each thumbnail");
       }
 
-      Adw.SwitchRow auto_empty_trash_row {
-        title: _("Empty the Trash Automatically");
-        subtitle: _("Resources are deleted for good after 30 days in the trash");
+      Adw.SwitchRow show_formats_row {
+        title: _("Show Formats");
+        subtitle: _("A badge such as SVG or PNG on each thumbnail");
+      }
+
+      Adw.ComboRow tile_background_row {
+        title: _("Thumbnail Background");
+        subtitle: _("Helps to see white or black images");
+
+        model: StringList {
+          strings [
+            _("Default"),
+            _("White"),
+            _("Gray"),
+            _("Black"),
+            _("Checkerboard"),
+          ]
+        };
+      }
+
+      Adw.SwitchRow animate_on_hover_row {
+        title: _("Play Animations on Hover");
+        subtitle: _("Animated images move when the pointer is over them");
+      }
+    }
+
+    Adw.PreferencesGroup {
+      title: _("Sidebar");
+
+      Adw.SwitchRow show_counts_row {
+        title: _("Show Resource Counts");
+        subtitle: _("Next to each entry of the sidebar");
+      }
+
+      Adw.SwitchRow show_tags_row {
+        title: _("Show Tags");
+        subtitle: _("A section to open each tag in one click");
+      }
+
+      Adw.SwitchRow show_smart_collections_row {
+        title: _("Show Smart Collections");
+        subtitle: _("A section for the collections that fill themselves");
+      }
+    }
+  }
+
+  Adw.PreferencesPage behaviour_page {
+    title: _("Behavior");
+    icon-name: "input-mouse-symbolic";
+
+    Adw.PreferencesGroup {
+      title: _("Resources");
+
+      Adw.SwitchRow double_click_opens_row {
+        title: _("Open Resources on Double-Click");
+        subtitle: _("In the default application instead of the preview");
+      }
+    }
+
+    Adw.PreferencesGroup {
+      title: C_("preferences group", "Search");
+
+      Adw.SwitchRow search_everywhere_row {
+        title: _("Search the Whole Library");
+        subtitle: _("Except in the trash and smart collections");
       }
     }
   }

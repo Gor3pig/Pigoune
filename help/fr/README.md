@@ -314,7 +314,10 @@ la bibliothèque ouverte, en trois onglets :
 ## Préférences
 
 Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
-<kbd>Ctrl</kbd>+<kbd>,</kbd> :
+<kbd>Ctrl</kbd>+<kbd>,</kbd>. Les réglages sont répartis sur trois pages ; la loupe en haut
+retrouve un réglage par son nom.
+
+**Général**
 
 - **Rouvrir la dernière bibliothèque** : au lancement, Pigoune ouvre la bibliothèque laissée
   ouverte. Désactivez-le pour partir de la page d'accueil et choisir une bibliothèque à chaque
@@ -323,31 +326,37 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
   d'accueil proposent, de 0 à 8. Choisissez 0 pour désactiver la liste.
 - **Rouvrir la dernière entrée** : une bibliothèque s'ouvre sur l'entrée utilisée la dernière
   fois plutôt que sur **Tout**.
+- **Confirmer avant de vider la corbeille**.
+- **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
+  30 jours dans la corbeille.
+- **Vignettes**, dans **Stockage**, indique la place prise par les vignettes de la bibliothèque
+  ouverte. **Vider** la libère ; les vignettes sont recréées quand on en a besoin.
+
+**Affichage**
+
 - **Afficher le nom des ressources** sous chaque vignette de la grille. Quand les noms sont
   masqués, survolez une vignette pour voir son nom.
-- **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
-  distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
 - **Afficher les formats** : une étiquette indique le format de chaque ressource (SVG, PNG…)
   sur sa vignette.
 - **Fond des vignettes** : blanc, gris, noir ou damier derrière les vignettes, pour voir les
   images blanches ou noires et les zones transparentes.
-- **Ouvrir les ressources au double-clic** : un double-clic ouvre la ressource dans son
-  application par défaut au lieu de l'aperçu. La touche <kbd>Espace</kbd> ouvre toujours
-  l'aperçu.
-- **Rechercher dans toute la bibliothèque** : la recherche et les filtres regardent partout,
-  et pas seulement dans l'entrée sélectionnée de la barre latérale, sauf dans la corbeille et
-  dans les collections intelligentes.
+- **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
+  distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
 - **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
 - **Afficher les tags** : désactivez-le pour masquer la section des tags de la barre latérale.
   Les tags restent visibles dans le panneau de détails, et la recherche les trouve toujours.
 - **Afficher les collections intelligentes** : désactivez-le pour masquer la section des
   collections intelligentes de la barre latérale. Vos collections intelligentes sont conservées
   et reviennent quand vous le réactivez.
-- **Confirmer avant de vider la corbeille**.
-- **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
-  30 jours dans la corbeille.
-- **Vignettes**, dans **Stockage**, indique la place prise par les vignettes de la bibliothèque
-  ouverte. **Vider** la libère ; les vignettes sont recréées quand on en a besoin.
+
+**Comportement**
+
+- **Ouvrir les ressources au double-clic** : un double-clic ouvre la ressource dans son
+  application par défaut au lieu de l'aperçu. La touche <kbd>Espace</kbd> ouvre toujours
+  l'aperçu.
+- **Rechercher dans toute la bibliothèque** : la recherche et les filtres regardent partout,
+  et pas seulement dans l'entrée sélectionnée de la barre latérale, sauf dans la corbeille et
+  dans les collections intelligentes.
 
 ## Raccourcis clavier
 
