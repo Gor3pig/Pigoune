@@ -258,12 +258,12 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
 - **Open Resources on Double-Click**: a double-click opens the asset in its default
   application instead of the preview. <kbd>Space</kbd> still opens the preview.
 - **Search the Whole Library**: searches and filters look everywhere instead of only in the
-  collection or tag selected in the sidebar.
+  entry selected in the sidebar, except in the trash and in smart collections.
 - **Show Resource Counts** next to each entry of the sidebar.
-- **Tags**: turn it off to hide the tags section of the sidebar. Tags still appear in the
+- **Show Tags**: turn it off to hide the tags section of the sidebar. Tags still appear in the
   details panel, and searches still find them.
-- **Smart Collections**: turn it off to hide the smart collections section of the sidebar.
-  Your smart collections are kept and come back when you turn it on again.
+- **Show Smart Collections**: turn it off to hide the smart collections section of the
+  sidebar. Your smart collections are kept and come back when you turn it on again.
 - **Confirm Before Emptying the Trash**.
 - **Empty the Trash Automatically**: assets are deleted for good after 30 days in the trash.
 - **Thumbnails**, under **Storage**, shows the space taken by the thumbnails of the open
@@ -285,6 +285,8 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.
 | Rename | <kbd>F2</kbd> |
 | Add to or remove from favorites | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Move to trash | <kbd>Delete</kbd> |
+| Rename or edit the entry selected in the sidebar | <kbd>F2</kbd> |
+| Delete the collection selected in the sidebar | <kbd>Delete</kbd> |
 | Undo | <kbd>Ctrl</kbd>+<kbd>Z</kbd> |
 | Larger / smaller thumbnails | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> |
 | Context menu | <kbd>Menu</kbd> or <kbd>Shift</kbd>+<kbd>F10</kbd> |

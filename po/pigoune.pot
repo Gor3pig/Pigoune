@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 17:58+0200\n"
+"POT-Creation-Date: 2026-10-05 18:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -475,8 +475,8 @@ msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:136
 msgid ""
-"Whether searches and filters ignore the collection or tag selected in the "
-"sidebar."
+"Whether searches and filters look in the whole library, except in the trash "
+"and smart collections."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:140
@@ -1757,17 +1757,17 @@ msgid "%B %-d, %Y at %H:%M"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:136
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
 msgid "Fit to Window"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:18
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:141
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
 msgid "Actual Size"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:23
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:146
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
 msgid "Full Screen"
 msgstr ""
 
@@ -1794,12 +1794,12 @@ msgid "Zoom"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:98
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Zoom Out"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:109
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:126
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:140
 msgid "Zoom In"
 msgstr ""
 
@@ -1833,7 +1833,7 @@ msgid "Icon Size"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:284
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:116
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:130
 msgid "Previous Frame"
 msgstr ""
 
@@ -1843,17 +1843,17 @@ msgid "Pause"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:310
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:121
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:135
 msgid "Next Frame"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:334
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:105
 msgid "Previous Resource"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:353
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:110
 msgid "Next Resource"
 msgstr ""
 
@@ -1876,12 +1876,10 @@ msgid "Collections"
 msgstr ""
 
 #: crates/pigoune-app/src/sidebar.rs:299
-#: crates/pigoune-app/ui/preferences-dialog.blp:94
 msgid "Smart Collections"
 msgstr ""
 
 #: crates/pigoune-app/src/sidebar.rs:317
-#: crates/pigoune-app/ui/preferences-dialog.blp:89
 #: crates/pigoune-app/src/tag_summary.rs:132
 msgid "Tags"
 msgstr ""
@@ -2014,10 +2012,12 @@ msgstr ""
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:76
 msgid ""
-"Searches and filters ignore the collection or tag selected in the sidebar"
+"Searches and filters look everywhere, except in the trash and smart "
+"collections"
 msgstr ""
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:81
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:74
 msgid "Sidebar"
 msgstr ""
 
@@ -2029,14 +2029,22 @@ msgstr ""
 msgid "The number of resources appears next to each entry"
 msgstr ""
 
+#: crates/pigoune-app/ui/preferences-dialog.blp:89
+msgid "Show Tags"
+msgstr ""
+
 #: crates/pigoune-app/ui/preferences-dialog.blp:90
 msgid "Each tag appears in the sidebar to show its resources in one click"
 msgstr ""
 
+#: crates/pigoune-app/ui/preferences-dialog.blp:94
+msgid "Show Smart Collections"
+msgstr ""
+
 #: crates/pigoune-app/ui/preferences-dialog.blp:95
 msgid ""
-"Collections that fill themselves based on your criteria: words, types, "
-"favorites"
+"Each smart collection appears in the sidebar, filled with the resources "
+"matching its criteria"
 msgstr ""
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:100
@@ -2104,55 +2112,63 @@ msgstr ""
 msgid "Undo"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:74
-msgid "View"
-msgstr ""
-
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:77
-msgid "Enlarge Thumbnails"
+msgid "Rename or Edit the Selected Entry"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:82
-msgid "Shrink Thumbnails"
+msgid "Delete the Selected Collection"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:88
+msgid "View"
+msgstr ""
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
+msgid "Enlarge Thumbnails"
+msgstr ""
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
+msgid "Shrink Thumbnails"
+msgstr ""
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:102
 msgid "Detailed Preview"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:101
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:115
 msgid "First Resource"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:106
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:120
 msgid "Last Resource"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:111
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:125
 msgid "Pause or Play the Animation"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:151
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
 msgid "Close the Preview"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:157
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:171
 msgid "General"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:174
 msgid "Show Keyboard Shortcuts"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:179
 msgid "Help"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:170
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:184
 msgid "Preferences"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:175
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:189
 msgid "Quit"
 msgstr ""
 
@@ -2822,7 +2838,7 @@ msgstr ""
 
 #: crates/pigoune-app/src/update_banner.rs:18
 #, rust-format
-msgid "Installing the update… {percent} %"
+msgid "Installing the update… {percent}%"
 msgstr ""
 
 #: crates/pigoune-app/src/update_banner.rs:23

@@ -297,13 +297,14 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
   application par défaut au lieu de l'aperçu. La touche <kbd>Espace</kbd> ouvre toujours
   l'aperçu.
 - **Rechercher dans toute la bibliothèque** : la recherche et les filtres regardent partout,
-  et pas seulement dans la collection ou le tag sélectionné dans la barre latérale.
+  et pas seulement dans l'entrée sélectionnée de la barre latérale, sauf dans la corbeille et
+  dans les collections intelligentes.
 - **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
-- **Tags** : désactivez-la pour masquer la section des tags de la barre latérale. Les tags
-  restent visibles dans le panneau de détails, et la recherche les trouve toujours.
-- **Collections intelligentes** : désactivez-la pour masquer la section des collections
-  intelligentes de la barre latérale. Vos collections intelligentes sont conservées et
-  reviennent quand vous la réactivez.
+- **Afficher les tags** : désactivez-le pour masquer la section des tags de la barre latérale.
+  Les tags restent visibles dans le panneau de détails, et la recherche les trouve toujours.
+- **Afficher les collections intelligentes** : désactivez-le pour masquer la section des
+  collections intelligentes de la barre latérale. Vos collections intelligentes sont conservées
+  et reviennent quand vous le réactivez.
 - **Confirmer avant de vider la corbeille**.
 - **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
   30 jours dans la corbeille.
@@ -326,6 +327,8 @@ Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoun
 | Renommer | <kbd>F2</kbd> |
 | Ajouter aux favoris ou en retirer | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Mettre à la corbeille | <kbd>Suppr</kbd> |
+| Renommer ou modifier l'entrée sélectionnée dans la barre latérale | <kbd>F2</kbd> |
+| Supprimer la collection sélectionnée dans la barre latérale | <kbd>Suppr</kbd> |
 | Annuler | <kbd>Ctrl</kbd>+<kbd>Z</kbd> |
 | Vignettes plus grandes / plus petites | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> |
 | Menu contextuel | <kbd>Menu</kbd> ou <kbd>Maj</kbd>+<kbd>F10</kbd> |

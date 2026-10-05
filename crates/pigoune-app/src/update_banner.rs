@@ -15,7 +15,7 @@ pub fn wording(news: &UpdateNews) -> BannerWording {
             button: Some(gettext("_Update")),
         },
         UpdateNews::Installing(percent) => BannerWording {
-            title: gettext("Installing the update… {percent} %")
+            title: gettext("Installing the update… {percent}%")
                 .replace("{percent}", &percent.to_string()),
             button: None,
         },

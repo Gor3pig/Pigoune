@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 17:58+0200\n"
+"POT-Creation-Date: 2026-10-05 18:23+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -134,7 +134,7 @@ msgid ""
 "search the whole library, and showing or hiding tags and smart collections "
 "in the sidebar."
 msgstr ""
-"Nouvelles préférences : fond des vignettes, badges de format, ouverture par "
+"Nouvelles préférences : fond des vignettes, étiquettes de format, ouverture par "
 "double-clic, recherche dans toute la bibliothèque, et affichage ou non des "
 "tags et des collections intelligentes dans la barre latérale."
 
@@ -570,11 +570,9 @@ msgstr "Rechercher dans toute la bibliothèque"
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:136
 msgid ""
-"Whether searches and filters ignore the collection or tag selected in the "
-"sidebar."
-msgstr ""
-"Indique si la recherche et les filtres ignorent la collection ou le tag "
-"sélectionné dans la barre latérale."
+"Whether searches and filters look in the whole library, except in the trash "
+"and smart collections."
+msgstr "Indique si la recherche et les filtres regardent dans toute la bibliothèque, sauf dans la corbeille et les collections intelligentes."
 
 #: data/io.github.gor3pig.Pigoune.gschema.xml:140
 msgid "Show tags"
@@ -1931,17 +1929,17 @@ msgid "%B %-d, %Y at %H:%M"
 msgstr "%-d %B %Y à %H:%M"
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:136
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
 msgid "Fit to Window"
 msgstr "Ajuster à la fenêtre"
 
 #: crates/pigoune-app/ui/asset-preview.blp:18
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:141
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
 msgid "Actual Size"
 msgstr "Taille réelle (100 %)"
 
 #: crates/pigoune-app/ui/asset-preview.blp:23
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:146
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
 msgid "Full Screen"
 msgstr "Plein écran"
 
@@ -1968,12 +1966,12 @@ msgid "Zoom"
 msgstr "Zoom"
 
 #: crates/pigoune-app/ui/asset-preview.blp:98
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Zoom Out"
 msgstr "Zoom arrière"
 
 #: crates/pigoune-app/ui/asset-preview.blp:109
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:126
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:140
 msgid "Zoom In"
 msgstr "Zoom avant"
 
@@ -2007,7 +2005,7 @@ msgid "Icon Size"
 msgstr "Taille de l’icône"
 
 #: crates/pigoune-app/ui/asset-preview.blp:284
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:116
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:130
 msgid "Previous Frame"
 msgstr "Image précédente"
 
@@ -2017,17 +2015,17 @@ msgid "Pause"
 msgstr "Pause"
 
 #: crates/pigoune-app/ui/asset-preview.blp:310
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:121
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:135
 msgid "Next Frame"
 msgstr "Image suivante"
 
 #: crates/pigoune-app/ui/asset-preview.blp:334
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:105
 msgid "Previous Resource"
 msgstr "Ressource précédente"
 
 #: crates/pigoune-app/ui/asset-preview.blp:353
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:110
 msgid "Next Resource"
 msgstr "Ressource suivante"
 
@@ -2050,12 +2048,10 @@ msgid "Collections"
 msgstr "Collections"
 
 #: crates/pigoune-app/src/sidebar.rs:299
-#: crates/pigoune-app/ui/preferences-dialog.blp:94
 msgid "Smart Collections"
 msgstr "Collections intelligentes"
 
 #: crates/pigoune-app/src/sidebar.rs:317
-#: crates/pigoune-app/ui/preferences-dialog.blp:89
 #: crates/pigoune-app/src/tag_summary.rs:132
 msgid "Tags"
 msgstr "Tags"
@@ -2195,12 +2191,12 @@ msgstr "Rechercher dans toute la bibliothèque"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:76
 msgid ""
-"Searches and filters ignore the collection or tag selected in the sidebar"
-msgstr ""
-"La recherche et les filtres ignorent la collection ou le tag sélectionné "
-"dans la barre latérale"
+"Searches and filters look everywhere, except in the trash and smart "
+"collections"
+msgstr "La recherche et les filtres regardent partout, sauf dans la corbeille et les collections intelligentes"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:81
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:74
 msgid "Sidebar"
 msgstr "Barre latérale"
 
@@ -2212,19 +2208,25 @@ msgstr "Afficher le nombre de ressources"
 msgid "The number of resources appears next to each entry"
 msgstr "Le nombre de ressources apparaît à côté de chaque entrée"
 
+#: crates/pigoune-app/ui/preferences-dialog.blp:89
+msgid "Show Tags"
+msgstr "Afficher les tags"
+
 #: crates/pigoune-app/ui/preferences-dialog.blp:90
 msgid "Each tag appears in the sidebar to show its resources in one click"
 msgstr ""
 "Chaque tag apparaît dans la barre latérale pour afficher ses ressources en "
 "un clic"
 
+#: crates/pigoune-app/ui/preferences-dialog.blp:94
+msgid "Show Smart Collections"
+msgstr "Afficher les collections intelligentes"
+
 #: crates/pigoune-app/ui/preferences-dialog.blp:95
 msgid ""
-"Collections that fill themselves based on your criteria: words, types, "
-"favorites"
-msgstr ""
-"Des collections qui se remplissent toutes seules selon vos critères : mots, "
-"types, favoris"
+"Each smart collection appears in the sidebar, filled with the resources "
+"matching its criteria"
+msgstr "Chaque collection intelligente apparaît dans la barre latérale, remplie des ressources qui correspondent à ses critères"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:100
 msgid "Storage"
@@ -2295,55 +2297,63 @@ msgstr "Ajouter aux favoris ou en retirer"
 msgid "Undo"
 msgstr "Annuler"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:74
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:77
+msgid "Rename or Edit the Selected Entry"
+msgstr "Renommer ou modifier l’entrée sélectionnée"
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:82
+msgid "Delete the Selected Collection"
+msgstr "Supprimer la collection sélectionnée"
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:88
 msgid "View"
 msgstr "Affichage"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:77
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:91
 msgid "Enlarge Thumbnails"
 msgstr "Agrandir les vignettes"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:82
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:96
 msgid "Shrink Thumbnails"
 msgstr "Réduire les vignettes"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:88
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:102
 msgid "Detailed Preview"
 msgstr "Aperçu détaillé"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:101
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:115
 msgid "First Resource"
 msgstr "Première ressource"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:106
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:120
 msgid "Last Resource"
 msgstr "Dernière ressource"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:111
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:125
 msgid "Pause or Play the Animation"
 msgstr "Mettre en pause ou relancer l’animation"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:151
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
 msgid "Close the Preview"
 msgstr "Fermer l’aperçu"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:157
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:171
 msgid "General"
 msgstr "Général"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:174
 msgid "Show Keyboard Shortcuts"
 msgstr "Afficher les raccourcis clavier"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:179
 msgid "Help"
 msgstr "Aide"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:170
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:184
 msgid "Preferences"
 msgstr "Préférences"
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:175
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:189
 msgid "Quit"
 msgstr "Quitter"
 
@@ -3023,8 +3033,8 @@ msgstr "_Mettre à jour"
 
 #: crates/pigoune-app/src/update_banner.rs:18
 #, rust-format
-msgid "Installing the update… {percent} %"
-msgstr "Installation de la mise à jour… {percent} %"
+msgid "Installing the update… {percent}%"
+msgstr "Installation de la mise à jour… {percent} %"
 
 #: crates/pigoune-app/src/update_banner.rs:23
 msgid "The update is installed: restart Pigoune to use it"
@@ -3041,6 +3051,19 @@ msgstr "La mise à jour n’a pas pu être installée, réessayez depuis Logicie
 #: crates/pigoune-app/src/update_banner.rs:36
 msgid "Close and reopen Pigoune to use the new version"
 msgstr "Fermez puis rouvrez Pigoune pour utiliser la nouvelle version"
+
+#~ msgid ""
+#~ "Searches and filters ignore the collection or tag selected in the sidebar"
+#~ msgstr ""
+#~ "La recherche et les filtres ignorent la collection ou le tag sélectionné "
+#~ "dans la barre latérale"
+
+#~ msgid ""
+#~ "Collections that fill themselves based on your criteria: words, types, "
+#~ "favorites"
+#~ msgstr ""
+#~ "Des collections qui se remplissent toutes seules selon vos critères : "
+#~ "mots, types, favoris"
 
 #~ msgid ""
 #~ "Separate words with spaces to require them all, with commas to accept any "

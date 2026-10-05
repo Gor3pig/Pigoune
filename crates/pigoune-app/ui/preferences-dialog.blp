@@ -73,7 +73,7 @@ Adw.PreferencesDialog dialog {
 
       Adw.SwitchRow search_everywhere_row {
         title: _("Search the Whole Library");
-        subtitle: _("Searches and filters ignore the collection or tag selected in the sidebar");
+        subtitle: _("Searches and filters look everywhere, except in the trash and smart collections");
       }
     }
 
@@ -86,13 +86,13 @@ Adw.PreferencesDialog dialog {
       }
 
       Adw.SwitchRow show_tags_row {
-        title: _("Tags");
+        title: _("Show Tags");
         subtitle: _("Each tag appears in the sidebar to show its resources in one click");
       }
 
       Adw.SwitchRow show_smart_collections_row {
-        title: _("Smart Collections");
-        subtitle: _("Collections that fill themselves based on your criteria: words, types, favorites");
+        title: _("Show Smart Collections");
+        subtitle: _("Each smart collection appears in the sidebar, filled with the resources matching its criteria");
       }
     }
 

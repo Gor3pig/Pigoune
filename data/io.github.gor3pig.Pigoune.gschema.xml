@@ -133,7 +133,7 @@
     <key name="search-everywhere" type="b">
       <default>false</default>
       <summary>Search the whole library</summary>
-      <description>Whether searches and filters ignore the collection or tag selected in the sidebar.</description>
+      <description>Whether searches and filters look in the whole library, except in the trash and smart collections.</description>
     </key>
     <key name="show-tags" type="b">
       <default>true</default>

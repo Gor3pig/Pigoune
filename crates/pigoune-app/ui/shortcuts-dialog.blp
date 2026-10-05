@@ -71,6 +71,20 @@ Adw.ShortcutsDialog shortcuts_dialog {
   }
 
   Adw.ShortcutsSection {
+    title: _("Sidebar");
+
+    Adw.ShortcutsItem {
+      title: _("Rename or Edit the Selected Entry");
+      accelerator: "F2";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Delete the Selected Collection");
+      accelerator: "Delete";
+    }
+  }
+
+  Adw.ShortcutsSection {
     title: _("View");
 
     Adw.ShortcutsItem {
