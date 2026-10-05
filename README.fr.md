@@ -81,7 +81,7 @@ WebP, AVIF ou ICO.
 
 ### Admirer
 Grille de vignettes à taille réglable, animations (GIF, PNG, WebP) au survol, et aperçu détaillé
-avec zoom d'une simple pression sur <kbd>Espace</kbd>.
+avec zoom, panneau de détails et bande de vignettes d'une simple pression sur <kbd>Espace</kbd>.
 
 </td>
 <td width="50%" valign="top">

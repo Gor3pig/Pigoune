@@ -77,7 +77,7 @@ export it to a folder, as it is or converted to PNG, JPEG, WebP, AVIF or ICO.
 
 ### Enjoy
 A thumbnail grid with adjustable size, animations (GIF, PNG, WebP) on hover, and a detailed
-preview with zoom at the press of <kbd>Space</kbd>.
+preview with zoom, the details panel and a strip of thumbnails at the press of <kbd>Space</kbd>.
 
 </td>
 <td width="50%" valign="top">
