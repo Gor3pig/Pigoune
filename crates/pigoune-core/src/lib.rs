@@ -11,6 +11,7 @@ pub use library::{
     LibraryOverview, LibraryRecords, SmartCollection, SmartCollectionCommand, SmartCollectionError,
     SmartCollectionId, StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField,
     UndoError, ViewCounts, can_be_saved_from, library_display_name, oldest_compatible_version,
+    query_groups, query_text,
 };
 pub use media::{
     AnimationTiming, AssetFormat, Dimensions, animation_timing, icon_from_pngs, single_size_icon,

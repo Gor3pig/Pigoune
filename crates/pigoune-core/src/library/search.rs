@@ -80,19 +80,43 @@ impl Library {
     }
 }
 
-fn search_groups(query: &str) -> Vec<Vec<String>> {
+#[must_use]
+pub fn query_groups(query: &str) -> Vec<Vec<String>> {
     query
         .split(ALTERNATIVE_SEPARATOR)
-        .map(search_words)
+        .map(|group| {
+            group
+                .split_whitespace()
+                .filter(|word| word.chars().any(char::is_alphanumeric))
+                .map(str::to_owned)
+                .collect::<Vec<_>>()
+        })
         .filter(|words| !words.is_empty())
         .collect()
 }
 
+#[must_use]
+pub fn query_text(groups: &[Vec<String>]) -> String {
+    groups
+        .iter()
+        .filter(|words| !words.is_empty())
+        .map(|words| words.join(" "))
+        .collect::<Vec<_>>()
+        .join(&format!("{ALTERNATIVE_SEPARATOR} "))
+}
+
+fn search_groups(query: &str) -> Vec<Vec<String>> {
+    query_groups(query)
+        .into_iter()
+        .map(|words| words.iter().map(|word| comparable(word)).collect())
+        .collect()
+}
+
+#[cfg(test)]
 fn search_words(query: &str) -> Vec<String> {
-    query
-        .split_whitespace()
-        .filter(|word| word.chars().any(char::is_alphanumeric))
-        .map(comparable)
+    search_groups(&query.replace(ALTERNATIVE_SEPARATOR, " "))
+        .into_iter()
+        .flatten()
         .collect()
 }
 
@@ -122,7 +146,7 @@ fn comparable(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{comparable, search_groups, search_words};
+    use super::{comparable, query_groups, query_text, search_groups, search_words};
 
     #[test]
     fn case_and_accents_are_ignored() {
@@ -139,6 +163,29 @@ mod tests {
     #[test]
     fn lone_symbols_are_not_words() {
         assert_eq!(search_words("logo + chèvre & 2"), ["logo", "chevre", "2"]);
+    }
+
+    #[test]
+    fn a_query_keeps_its_words_as_typed() {
+        assert_eq!(
+            query_groups(" Logo + Rouge ,, Chèvre"),
+            [vec!["Logo", "Rouge"], vec!["Chèvre"]]
+        );
+    }
+
+    #[test]
+    fn groups_become_a_tidy_query_again() {
+        let groups = vec![
+            vec!["Logo".to_owned(), "Rouge".to_owned()],
+            Vec::new(),
+            vec!["Chèvre".to_owned()],
+        ];
+        assert_eq!(query_text(&groups), "Logo Rouge, Chèvre");
+        assert_eq!(
+            query_groups(&query_text(&groups)),
+            query_groups("Logo Rouge, Chèvre")
+        );
+        assert_eq!(query_text(&[]), "");
     }
 
     #[test]

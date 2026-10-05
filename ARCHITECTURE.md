@@ -58,6 +58,9 @@ to change it.
   the Filters popover and by the smart collection window. A new filter is added there, to
   `AssetFilter` in the core, and to the `smart_collections` table, so that smart collections
   can always save every filter.
+- **Search pills.** `query_pills.rs` shows a query as words joined by "and" or "or", under the
+  search field and in the smart collection window. It relies on `query_groups` and
+  `query_text` from the core, which also drive the search, so both always agree.
 - Symbolic icons missing from the GNOME icon theme come from the GNOME Icon Library (CC0), with
   their drawing unchanged, in `crates/pigoune-app/icons/`; `build.rs` adds them to the resources.
 - Small pure helpers (sorting, layout math, text formatting) sit in their own modules with unit

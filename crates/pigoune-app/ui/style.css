@@ -377,3 +377,30 @@ gridview.asset-grid > child:focus:focus-visible .tile-frame {
   outline: 2px solid color-mix(in srgb, var(--accent-color) 50%, transparent);
   outline-offset: 2px;
 }
+
+.query-pills {
+  padding: 6px 12px;
+}
+
+.query-pill {
+  border-radius: 999px;
+  padding-left: 10px;
+  background-color: color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.query-pill-remove {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+}
+
+.query-connector {
+  min-height: 24px;
+  padding: 0 6px;
+  font-size: smaller;
+  font-weight: bold;
+}
+
+.query-or {
+  color: var(--accent-color);
+}

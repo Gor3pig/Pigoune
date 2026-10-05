@@ -22,6 +22,7 @@ mod imp {
 
     use super::SubmitCallback;
     use crate::filter_choices::PigouneFilterChoices;
+    use crate::query_pills::PigouneQueryPills;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/smart-collection-dialog.ui")]
@@ -34,6 +35,8 @@ mod imp {
         pub text_row: TemplateChild<adw::EntryRow>,
         #[template_child]
         pub choices: TemplateChild<PigouneFilterChoices>,
+        #[template_child]
+        pub text_pills: TemplateChild<PigouneQueryPills>,
         #[template_child]
         pub hint_label: TemplateChild<gtk::Label>,
         #[template_child]
@@ -51,6 +54,7 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             PigouneFilterChoices::ensure_type();
+            PigouneQueryPills::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
         }
@@ -84,6 +88,16 @@ impl PigouneSmartCollectionDialog {
         imp.scope_row.set_subtitle(draft.scope_name);
         imp.name_row.set_text(draft.name);
         imp.text_row.set_text(&draft.filter.text);
+        imp.text_pills.show_query(&draft.filter.text);
+        imp.text_pills.connect_query_changed(glib::clone!(
+            #[weak]
+            dialog,
+            move |query| {
+                let text_row = &dialog.imp().text_row;
+                text_row.set_text(&query);
+                text_row.set_position(-1);
+            }
+        ));
         imp.choices.choose(draft.filter);
         imp.choices.connect_changed(glib::clone!(
             #[weak]
@@ -118,7 +132,9 @@ impl PigouneSmartCollectionDialog {
 
     #[template_callback]
     fn on_changed(&self) {
-        self.imp().error_label.set_visible(false);
+        let imp = self.imp();
+        imp.text_pills.show_query(&imp.text_row.text());
+        imp.error_label.set_visible(false);
         self.refresh_confirm_button();
     }
 

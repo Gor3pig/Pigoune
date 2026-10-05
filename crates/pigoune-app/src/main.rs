@@ -43,6 +43,7 @@ mod import_report;
 mod library_info_dialog;
 mod new_library_dialog;
 mod preferences_dialog;
+mod query_pills;
 mod recent_libraries;
 mod ring_chart;
 mod settings;

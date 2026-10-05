@@ -119,6 +119,10 @@ bibliothèque.
 - Les groupes séparés par des **virgules** sont des alternatives : `logo, chèvre, voiture`
   trouve ce qui contient l'un d'eux, et `logo rouge, chèvre` trouve les logos rouges ou les
   chèvres.
+- À partir de deux mots, ils apparaissent sous forme de pastilles sous le champ de recherche,
+  reliées par **et** ou **ou**. Cliquez sur **et** ou **ou** pour l'inverser, ou sur la croix
+  d'une pastille pour retirer un mot. Les mêmes pastilles apparaissent sous **Mots à
+  rechercher** dans la fenêtre des collections intelligentes.
 
 Le bouton **Filtres** ne garde que certains formats, ou seulement vos favoris.
 

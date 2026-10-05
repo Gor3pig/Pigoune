@@ -153,6 +153,7 @@ mod imp {
     use crate::asset_grid::PigouneAssetGrid;
     use crate::asset_preview::PigouneAssetPreview;
     use crate::grid_header::PigouneGridHeader;
+    use crate::query_pills::PigouneQueryPills;
     use crate::sidebar::PigouneSidebar;
 
     use super::{
@@ -220,6 +221,8 @@ mod imp {
         pub details_split: TemplateChild<adw::OverlaySplitView>,
         #[template_child]
         pub grid_header: TemplateChild<PigouneGridHeader>,
+        #[template_child]
+        pub query_pills: TemplateChild<PigouneQueryPills>,
         pub current_view: Cell<AssetView>,
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
@@ -327,6 +330,7 @@ mod imp {
             PigouneAssetPreview::ensure_type();
             PigouneSidebar::ensure_type();
             PigouneGridHeader::ensure_type();
+            PigouneQueryPills::ensure_type();
             class.bind_template();
             class.install_action(CREATE_LIBRARY_ACTION, None, |window, _, _| {
                 window.show_new_library_dialog();
@@ -698,6 +702,14 @@ impl PigouneWindow {
             self,
             move |entry| window.search(&entry.text())
         ));
+        self.imp().query_pills.connect_query_changed(glib::clone!(
+            #[weak]
+            entry,
+            move |query| {
+                entry.set_text(&query);
+                entry.set_position(-1);
+            }
+        ));
         entry.connect_stop_search(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -751,6 +763,7 @@ impl PigouneWindow {
             return;
         }
         imp.search_query.replace(query.to_owned());
+        imp.query_pills.show_query(query);
         self.refresh_grid();
     }
 
@@ -761,6 +774,7 @@ impl PigouneWindow {
         imp.grid_header.filter_popover().clear();
         imp.grid_header.show_filter_count(0);
         imp.grid_header.search_entry().set_text("");
+        imp.query_pills.show_query("");
     }
 
     fn follow_trash_confirmation(&self, settings: &gio::Settings) {

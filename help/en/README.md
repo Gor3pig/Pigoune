@@ -104,6 +104,9 @@ the entry selected in the sidebar. Select **All** to search the whole library.
 - Words separated by **spaces** must all be found: `logo goat` finds what contains both.
 - Groups separated by **commas** are alternatives: `logo, goat, car` finds what contains any
   of them, and `red logo, goat` finds red logos or goats.
+- With two words or more, they appear as pills under the search field, joined by **and** or
+  **or**. Click **and** or **or** to switch it, or the cross of a pill to remove a word. The
+  same pills appear under **Words to Find** in the smart collection window.
 
 The **Filters** button keeps only some formats, or only your favorites.
 
