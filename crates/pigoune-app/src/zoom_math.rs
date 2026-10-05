@@ -4,6 +4,7 @@ pub const LARGEST_ZOOM: f64 = 32.0;
 pub const ACTUAL_SIZE: f64 = 1.0;
 pub const SHARP_PIXELS_FROM: f64 = 2.0;
 pub const PIXEL_GRID_FROM: f64 = 8.0;
+const STRETCH_RESISTANCE: f64 = 0.55;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Size {
@@ -54,6 +55,23 @@ pub fn clamp_center(center: Point, view: Size, image: Size, zoom: f64) -> Point 
 fn clamp_axis(center: f64, view: f64, image: f64, zoom: f64) -> f64 {
     let half_visible = view / zoom / 2.0;
     center.clamp((image - half_visible).min(0.0), half_visible.max(image))
+}
+
+pub fn stretch_center(center: Point, view: Size, image: Size, zoom: f64) -> Point {
+    Point {
+        x: stretch_axis(center.x, view.width, image.width, zoom),
+        y: stretch_axis(center.y, view.height, image.height, zoom),
+    }
+}
+
+fn stretch_axis(center: f64, view: f64, image: f64, zoom: f64) -> f64 {
+    let held = clamp_axis(center, view, image, zoom);
+    let excess = (center - held) * zoom;
+    if excess == 0.0 || view <= 0.0 {
+        return held;
+    }
+    let resisted = view * (1.0 - 1.0 / (excess.abs() * STRETCH_RESISTANCE / view + 1.0));
+    held + resisted.copysign(excess) / zoom
 }
 
 pub fn shows_pixel_grid(zoom: f64, is_vector: bool) -> bool {
@@ -112,6 +130,76 @@ mod tests {
         assert!((allowed_zoom(100.0, 0.5) - LARGEST_ZOOM).abs() < 1e-9);
         assert!((allowed_zoom(0.1, 0.5) - 0.5).abs() < 1e-9);
         assert!((allowed_zoom(0.1, 6.0) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_drag_within_the_limits_is_followed_exactly() {
+        let image = size(400.0, 300.0);
+        let inside = Point { x: 250.0, y: 160.0 };
+        assert_eq!(stretch_center(inside, VIEW, image, 1.0), inside);
+    }
+
+    #[test]
+    fn a_drag_beyond_the_limits_meets_growing_resistance() {
+        let image = size(400.0, 300.0);
+        let limit = clamp_center(
+            Point {
+                x: 10_000.0,
+                y: 150.0,
+            },
+            VIEW,
+            image,
+            1.0,
+        )
+        .x;
+        let little = stretch_center(
+            Point {
+                x: limit + 50.0,
+                y: 150.0,
+            },
+            VIEW,
+            image,
+            1.0,
+        )
+        .x;
+        let far = stretch_center(
+            Point {
+                x: limit + 5_000.0,
+                y: 150.0,
+            },
+            VIEW,
+            image,
+            1.0,
+        )
+        .x;
+        assert!(little > limit && little < limit + 50.0);
+        assert!(far > little && far < limit + VIEW.width);
+    }
+
+    #[test]
+    fn the_stretch_goes_the_way_of_the_drag() {
+        let image = size(400.0, 300.0);
+        let limit = clamp_center(
+            Point {
+                x: -10_000.0,
+                y: 150.0,
+            },
+            VIEW,
+            image,
+            2.0,
+        )
+        .x;
+        let stretched = stretch_center(
+            Point {
+                x: limit - 100.0,
+                y: 150.0,
+            },
+            VIEW,
+            image,
+            2.0,
+        )
+        .x;
+        assert!(stretched < limit && stretched > limit - 100.0);
     }
 
     #[test]

@@ -13,6 +13,7 @@ const BOUNDS_DASH: [f32; 2] = [3.0, 3.0];
 const BOUNDS_OPACITY: f32 = 0.35;
 const PIXEL_GRID_WIDTH: f32 = 1.0;
 const PIXEL_GRID_OPACITY: f32 = 0.15;
+const SPRING_BACK_MILLISECONDS: u32 = 300;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 
@@ -40,6 +41,7 @@ mod imp {
         pub shows_pixel_grid: Cell<bool>,
         pub pinch_start: Cell<f64>,
         pub on_zoom_changed: RefCell<Option<ZoomChangedCallback>>,
+        pub spring: RefCell<Option<adw::TimedAnimation>>,
     }
 
     impl Default for PigouneZoomView {
@@ -61,6 +63,7 @@ mod imp {
                 shows_pixel_grid: Cell::default(),
                 pinch_start: Cell::new(1.0),
                 on_zoom_changed: RefCell::default(),
+                spring: RefCell::default(),
             }
         }
     }
@@ -196,7 +199,39 @@ impl PigouneZoomView {
         self.apply_zoom(new_zoom, center);
     }
 
+    fn stop_spring(&self) {
+        let spring = self.imp().spring.take();
+        if let Some(spring) = spring {
+            spring.pause();
+        }
+    }
+
+    fn spring_back(&self) {
+        let imp = self.imp();
+        let from = imp.center.get();
+        let to = zoom_math::clamp_center(from, self.view_size(), imp.image.get(), imp.zoom.get());
+        if from == to {
+            return;
+        }
+        let target = adw::CallbackAnimationTarget::new(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |progress| {
+                view.imp().center.set(Point {
+                    x: from.x + (to.x - from.x) * progress,
+                    y: from.y + (to.y - from.y) * progress,
+                });
+                view.queue_draw();
+            }
+        ));
+        let spring = adw::TimedAnimation::new(self, 0.0, 1.0, SPRING_BACK_MILLISECONDS, target);
+        spring.set_easing(adw::Easing::EaseOutCubic);
+        imp.spring.replace(Some(spring.clone()));
+        spring.play();
+    }
+
     fn apply_zoom(&self, zoom: f64, center: Point) {
+        self.stop_spring();
         let imp = self.imp();
         let changed = (imp.zoom.get() - zoom).abs() > f64::EPSILON;
         imp.zoom.set(zoom);
@@ -323,6 +358,7 @@ impl PigouneZoomView {
             #[weak(rename_to = view)]
             self,
             move |_, _, _| {
+                view.stop_spring();
                 let imp = view.imp();
                 imp.drag_start.set(imp.center.get());
                 imp.dragging.set(true);
@@ -335,6 +371,7 @@ impl PigouneZoomView {
             move |_, _, _| {
                 view.imp().dragging.set(false);
                 view.update_cursor();
+                view.spring_back();
             }
         ));
         drag.connect_drag_update(glib::clone!(
@@ -347,13 +384,17 @@ impl PigouneZoomView {
                 }
                 let start = imp.drag_start.get();
                 let zoom = imp.zoom.get();
-                view.apply_zoom(
+                let pulled = Point {
+                    x: start.x - offset_x / zoom,
+                    y: start.y - offset_y / zoom,
+                };
+                imp.center.set(zoom_math::stretch_center(
+                    pulled,
+                    view.view_size(),
+                    imp.image.get(),
                     zoom,
-                    Point {
-                        x: start.x - offset_x / zoom,
-                        y: start.y - offset_y / zoom,
-                    },
-                );
+                ));
+                view.queue_draw();
             }
         ));
         self.add_controller(drag);
