@@ -156,7 +156,7 @@ les zones transparentes. Choisissez rouge et bleu pour voir les ressources surto
 bleues. La dernière pastille, arc-en-ciel, ouvre le sélecteur de couleur de GNOME pour choisir
 n'importe quelle couleur, par exemple la couleur exacte d'une charte graphique : Pigoune garde
 alors les ressources dont une couleur principale en est proche. Un nouveau clic la retire. Les
-couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rouges. À la première ouverture d'une bibliothèque avec Pigoune 1.7, ses ressources sont
+couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rouges. À la première ouverture d'une bibliothèque avec Pigoune 2.0, ses ressources sont
 analysées en arrière-plan pendant que vous continuez à travailler ; une ressource pas encore
 analysée ne correspond à aucune couleur.
 

@@ -14,7 +14,7 @@ enum Migration {
 }
 
 const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] =
-    ["1.0", "1.4", "1.5", "1.6", "1.7", "1.7", "1.7"];
+    ["1.0", "1.4", "1.5", "1.6", "2.0", "2.0", "2.0"];
 
 #[must_use]
 pub fn oldest_compatible_version(format_version: u32) -> Option<&'static str> {
@@ -125,9 +125,9 @@ mod tests {
         assert_eq!(oldest_compatible_version(2), Some("1.4"));
         assert_eq!(oldest_compatible_version(3), Some("1.5"));
         assert_eq!(oldest_compatible_version(4), Some("1.6"));
-        assert_eq!(oldest_compatible_version(5), Some("1.7"));
-        assert_eq!(oldest_compatible_version(6), Some("1.7"));
-        assert_eq!(oldest_compatible_version(7), Some("1.7"));
+        assert_eq!(oldest_compatible_version(5), Some("2.0"));
+        assert_eq!(oldest_compatible_version(6), Some("2.0"));
+        assert_eq!(oldest_compatible_version(7), Some("2.0"));
         assert!(oldest_compatible_version(CURRENT_FORMAT_VERSION).is_some());
         assert_eq!(oldest_compatible_version(0), None);
         assert_eq!(oldest_compatible_version(CURRENT_FORMAT_VERSION + 1), None);
