@@ -29,9 +29,12 @@ libraries as you like, for example one per project or per client.
 To open an existing library, choose **Open Library…**. Pigoune reopens the last library you
 used every time it starts. While a library is open, the main menu offers **New Library…** and
 **Open Library…** to switch to another one, and **Recent Libraries** lists the last libraries
-you opened, five by default. The welcome page shows them too, so you can reopen one in a click. Remove one from the list with
-its cross, or choose **Clear the List**: only the list changes, the libraries themselves are
-kept.
+you opened, five by default. The welcome page shows them too, so you can reopen one in a
+click. On the welcome page, remove one from the list with its cross, or choose **Clear the
+List** there or in the menu: only the list changes, the libraries themselves are kept.
+
+**Close Library** in the main menu brings you back to the welcome page. The next time Pigoune
+starts, it opens on the welcome page too.
 
 ### Import assets
 
@@ -62,6 +65,8 @@ sub-collection, rename it (<kbd>F2</kbd>) or delete it.
 - **Add** them to a collection while keeping them where they are by holding <kbd>Ctrl</kbd>
   while dragging, or with **Add to a Collection…** in the right-click menu. An asset can belong
   to several collections.
+- **Remove** them from the collection you are looking at with **Remove from the Collection** in
+  the right-click menu. They stay in the library and in their other collections.
 - **Reorder** collections by dragging them in the sidebar, or sort them by name or creation
   date with the sort button next to **Collections**.
 - **Unclassified** lists the assets that belong to no collection.
@@ -72,7 +77,8 @@ belonged to them go to the trash. Assets that also belong to another collection 
 ### Tags
 
 Tags describe assets with words of your choice. Add them from the details panel with the
-**+** button next to the tags, or drag assets onto a tag in the sidebar. Click a tag in the
+**+** button next to the tags, with **Add a Tag…** in the right-click menu, or drag assets onto
+a tag in the sidebar. Click a tag in the
 sidebar to see all its assets, or right-click it to rename or delete it. Renaming a tag to the
 name of another one merges them.
 
@@ -101,15 +107,22 @@ Click the search field, press <kbd>Ctrl</kbd>+<kbd>F</kbd>, or simply start typi
 searches names, tags, notes, sources, licenses and authors, ignoring case and accents, within
 the entry selected in the sidebar. Select **All** to search the whole library.
 
-- Words separated by **spaces** must all be found: `logo goat` finds what contains both.
-- Groups separated by **commas** are alternatives: `logo, goat, car` finds what contains any
-  of them, and `red logo, goat` finds red logos or goats.
+- **Space means and.** `logo goat` finds the assets that contain *logo* **and** *goat*, even in
+  different places (for example *logo* in the name and *goat* in a tag).
+- **Comma means or.** `logo, goat` finds the ones that contain *logo* **or** *goat*.
+- **Commas cut the search into groups**: an asset is found as soon as it contains all the words
+  of one group. `red logo, goat` finds what contains both *red* and *logo*, or else *goat*.
+- A word can be just part of a word: `cat` also finds *category*.
 - With two words or more, they appear as pills under the search field, joined by **and** or
-  **or**. Click **and** or **or** to switch it, or the cross of a pill to remove a word. The
-  same pills appear under **Words to Find** in the smart collection window.
+  **or**. Clicking an **or** joins the two neighboring groups; clicking an **and** cuts the
+  group in two at that place. In `red logo, goat`, clicking the **or** gives `red logo goat`
+  (all three words are required); clicking the **and** gives `red, logo, goat` (any one is
+  enough). The cross of a pill removes its word. The same pills appear under **Words to Find**
+  in the smart collection window.
 - A search uses at most 8 words; the next ones are ignored, and the pills say so.
 
-The **Filters** button keeps only some formats, or only your favorites.
+The search does not look at the format: to keep only SVG files, for example, use the
+**Filters** button, which can also keep only your favorites.
 
 To find out where an asset is stored, look at **Stored In** at the bottom of the details
 panel. Clicking a collection there opens it in the sidebar and highlights the asset. Clicking
@@ -125,8 +138,8 @@ SVG files* or *everything about logos in the Clients collection*.
   is filled in with the search and the filters in use, and with the entry selected in the
   sidebar. Give it a name, then choose words to find, types or **Favorites Only**: at least
   one criterion is needed.
-- **Words to Find** works like the search field: its words appear as pills joined by **and** or
-  **or**, and a click between two words switches it.
+- **Words to Find** works exactly like the search field: spaces and commas, and pills whose
+  **and** and **or** cut or join the groups.
 - **Open** it from the sidebar to see its assets. You can still search inside it.
 - **Change** its name or criteria with **Edit…** in its right-click menu, or with
   <kbd>F2</kbd>. **Delete…** only deletes the saved search: the assets stay in the library.
@@ -162,7 +175,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - From 800% on, a light grid separates the pixels of pictures, which helps to check icons and
   pixel art; turn it off with **Show Pixel Grid** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Copy**, **Open With…**, **Export To…** and **Export As…** for it.
+  the image offers **Open With…**, **Copy**, **Export To…**, **Export As…** and **Add to
+  Favorites** for it.
 
 ## Reusing assets
 
@@ -193,11 +207,13 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 
 Press <kbd>Delete</kbd>, or choose **Move to Trash** in the right-click menu, to send assets
 to the trash. Nothing is lost until you empty it: open **Trash** in the sidebar to restore
-assets or to empty it for good.
+assets, with **Restore** in the right-click menu or in the details panel, or to empty it for
+good.
 
 Most changes can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd> or with the **Undo** button of
 the message that appears after an action: trashing, moving, tags, favorites, renaming, notes
-and credits. Imports cannot be undone, and emptying the trash clears the undo history.
+and credits, but also renaming, moving or deleting a collection, and creating, editing,
+reordering or deleting a smart collection. Imports cannot be undone, and emptying the trash clears the undo history.
 
 ## Your library
 

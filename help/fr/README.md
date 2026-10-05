@@ -31,9 +31,13 @@ Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque�
 rouvre la dernière bibliothèque utilisée à chaque démarrage. Quand une bibliothèque est
 ouverte, le menu principal propose **Nouvelle bibliothèque…** et **Ouvrir une bibliothèque…**
 pour passer à une autre, et **Bibliothèques récentes** liste les dernières bibliothèques
-ouvertes, cinq par défaut. La page d'accueil les affiche aussi, pour en rouvrir une d'un clic. Retirez-en une de la liste
-avec sa croix, ou choisissez **Effacer la liste** : seule la liste change, les bibliothèques
-elles-mêmes sont conservées.
+ouvertes, cinq par défaut. La page d'accueil les affiche aussi, pour en rouvrir une d'un
+clic. Sur la page d'accueil, retirez-en une de la liste avec sa croix, ou choisissez **Effacer
+la liste**, là ou dans le menu : seule la liste change, les bibliothèques elles-mêmes sont
+conservées.
+
+**Fermer la bibliothèque**, dans le menu principal, ramène à la page d'accueil. Au prochain
+lancement, Pigoune s'ouvre aussi sur la page d'accueil.
 
 ### Importer des ressources
 
@@ -68,6 +72,8 @@ droit sur une collection permet d'y créer une sous-collection, de la renommer
 - **Ajoutez-les** à une collection sans les retirer de leur place en maintenant
   <kbd>Ctrl</kbd> pendant le glisser, ou avec **Ajouter à une collection…** dans le menu du
   clic droit. Une ressource peut appartenir à plusieurs collections.
+- **Retirez-les** de la collection affichée avec **Retirer de la collection** dans le menu du
+  clic droit. Elles restent dans la bibliothèque et dans leurs autres collections.
 - **Réorganisez** les collections en les glissant dans la barre latérale, ou triez-les par nom
   ou par date de création avec le bouton de tri à côté de **Collections**.
 - **Non classés** regroupe les ressources qui n'appartiennent à aucune collection.
@@ -79,8 +85,8 @@ autre collection y restent.
 ### Les tags
 
 Les tags décrivent vos ressources avec les mots de votre choix. Ajoutez-en depuis le panneau
-de détails avec le bouton **+** à côté des tags, ou glissez des ressources sur un tag de la
-barre latérale. Cliquez sur un tag de la barre latérale pour voir toutes ses ressources, ou
+de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
+droit, ou glissez des ressources sur un tag de la barre latérale. Cliquez sur un tag de la barre latérale pour voir toutes ses ressources, ou
 faites un clic droit pour le renommer ou le supprimer. Renommer un tag avec le nom d'un autre
 les fusionne.
 
@@ -114,19 +120,25 @@ licences et les auteurs, sans tenir compte des majuscules ni des accents, dans l
 sélectionnée de la barre latérale. Sélectionnez **Tout** pour chercher dans toute la
 bibliothèque.
 
-- Les mots séparés par des **espaces** doivent tous être trouvés : `logo chèvre` trouve ce qui
-  contient les deux.
-- Les groupes séparés par des **virgules** sont des alternatives : `logo, chèvre, voiture`
-  trouve ce qui contient l'un d'eux, et `logo rouge, chèvre` trouve les logos rouges ou les
-  chèvres.
-- À partir de deux mots, ils apparaissent sous forme de pastilles sous le champ de recherche,
-  reliées par **et** ou **ou**. Cliquez sur **et** ou **ou** pour l'inverser, ou sur la croix
-  d'une pastille pour retirer un mot. Les mêmes pastilles apparaissent sous **Mots à
-  rechercher** dans la fenêtre des collections intelligentes.
+- **Espace = et.** `logo chèvre` trouve les ressources qui contiennent *logo* **et** *chèvre*,
+  même à des endroits différents (par exemple *logo* dans le nom et *chèvre* dans un tag).
+- **Virgule = ou.** `logo, chèvre` trouve celles qui contiennent *logo* **ou** *chèvre*.
+- **Les virgules découpent la recherche en groupes** : une ressource est trouvée dès qu'elle
+  contient tous les mots d'un groupe. `logo rouge, chèvre` trouve ce qui contient à la fois
+  *logo* et *rouge*, ou bien *chèvre*.
+- Un mot peut n'être qu'un morceau de mot : `chat` trouve aussi *château*.
+- À partir de deux mots, ils apparaissent en pastilles sous le champ de recherche, reliées par
+  **et** ou **ou**. Un clic sur un **ou** réunit les deux groupes voisins ; un clic sur un
+  **et** coupe le groupe en deux à cet endroit. Dans `logo rouge, chèvre`, cliquer sur le
+  **ou** donne `logo rouge chèvre` (les trois mots sont exigés) ; cliquer sur le **et** donne
+  `logo, rouge, chèvre` (un seul suffit). La croix d'une pastille retire son mot. Les mêmes
+  pastilles apparaissent sous **Mots à rechercher** dans la fenêtre des collections
+  intelligentes.
 - Une recherche utilise 8 mots au maximum : les suivants sont ignorés, et les pastilles
   l'indiquent.
 
-Le bouton **Filtres** ne garde que certains formats, ou seulement vos favoris.
+La recherche ne regarde pas le format : pour ne garder que les SVG, par exemple, utilisez le
+bouton **Filtres**, qui garde aussi, au choix, seulement vos favoris.
 
 Pour savoir où une ressource est rangée, regardez **Rangée dans**, en bas du panneau de
 détails. Un clic sur une collection l'ouvre dans la barre latérale et met la ressource en
@@ -143,8 +155,8 @@ collection Clients*.
   latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
   l'entrée sélectionnée dans la barre latérale. Donnez-lui un nom, puis choisissez des mots à
   rechercher, des types ou **Favoris seulement** : il faut au moins un critère.
-- **Mots à rechercher** fonctionne comme le champ de recherche : ses mots apparaissent en
-  pastilles reliées par **et** ou **ou**, et un clic entre deux mots l'inverse.
+- **Mots à rechercher** fonctionne exactement comme le champ de recherche : espaces et
+  virgules, et pastilles dont les **et** et les **ou** coupent ou réunissent les groupes.
 - **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher
   à l'intérieur.
 - **Modifiez** son nom ou ses critères avec **Modifier…** dans son menu du clic droit, ou avec
@@ -182,14 +194,14 @@ ses critères.
   <kbd>,</kbd> et <kbd>.</kbd> affichent l'image précédente et suivante.
 - Dans l'aperçu, faites glisser l'image pour en examiner n'importe quelle partie, même un coin
   amené au milieu de l'écran. Un contour en pointillés montre les vrais bords de l'image,
-  marges transparentes comprises ; désactivez-le avec **Afficher les limites de l'image** dans
+  marges transparentes comprises ; désactivez-le avec **Afficher les limites de l’image** dans
   le menu du zoom.
 - À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier
   une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
   du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
-  sur l'image propose **Copier**, **Ouvrir avec…**, **Exporter vers…** et **Exporter au
-  format…** pour elle.
+  sur l'image propose **Ouvrir avec…**, **Copier**, **Exporter vers…**, **Exporter au format…**
+  et **Ajouter aux favoris** pour elle.
 
 ## Réutiliser vos ressources
 
@@ -224,12 +236,14 @@ ses critères.
 
 Appuyez sur <kbd>Suppr</kbd>, ou choisissez **Mettre à la corbeille** dans le menu du clic
 droit, pour envoyer des ressources à la corbeille. Rien n'est perdu tant que vous ne la videz
-pas : ouvrez **Corbeille** dans la barre latérale pour restaurer des ressources ou la vider
-définitivement.
+pas : ouvrez **Corbeille** dans la barre latérale pour restaurer des ressources, avec **Restaurer**
+dans le menu du clic droit ou dans le panneau de détails, ou pour la vider définitivement.
 
 La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
 **Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,
-favoris, renommage, notes et crédits. Les imports ne s'annulent pas, et vider la corbeille
+favoris, renommage, notes et crédits, mais aussi renommage, déplacement ou suppression d'une
+collection, et création, modification, réorganisation ou suppression d'une collection
+intelligente. Les imports ne s'annulent pas, et vider la corbeille
 efface l'historique des annulations.
 
 ## Votre bibliothèque
@@ -256,7 +270,7 @@ animées, de SVG et de ressources dans la corbeille, son emplacement, si ce disq
 sa date de création et les versions de Pigoune capables de l'ouvrir. Des boutons copient son emplacement ou ouvrent
 son dossier. Un graphique en anneau montre comment la place se répartit entre les formats, en
 poids ou en nombre de ressources, et une barre montre la place de la bibliothèque sur son disque
-à côté de l'espace libre. Les **records** désignent la ressource la plus lourde, la plus grande,
+à côté de l'espace libre. Les **Records** désignent la ressource la plus lourde, la plus grande,
 la plus récente et la plus ancienne ; cliquez sur l'une d'elles pour la voir dans la grille.
 
 ## Préférences
