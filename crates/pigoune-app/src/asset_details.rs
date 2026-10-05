@@ -136,6 +136,8 @@ mod imp {
             self.parent_constructed();
             self.obj().save_edits_when_done();
             self.obj().shorten_long_names();
+            self.obj().show_full_name_on_hover();
+            self.obj().finish_renaming_on_outside_clicks();
         }
     }
     impl WidgetImpl for PigouneAssetDetails {}
@@ -150,16 +152,89 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneAssetDetails {
-    fn shorten_long_names(&self) {
+    fn shown_name(&self) -> Option<gtk::Label> {
         let name_label = self.imp().name_label.get();
         let mut pending: Vec<gtk::Widget> = name_label.first_child().into_iter().collect();
         while let Some(widget) = pending.pop() {
-            if let Some(label) = widget.downcast_ref::<gtk::Label>() {
-                label.set_ellipsize(gtk::pango::EllipsizeMode::End);
+            if let Ok(label) = widget.clone().downcast::<gtk::Label>() {
+                return Some(label);
             }
             pending.extend(widget.first_child());
             pending.extend(widget.next_sibling());
         }
+        None
+    }
+
+    fn shorten_long_names(&self) {
+        if let Some(label) = self.shown_name() {
+            label.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        }
+    }
+
+    fn show_full_name_on_hover(&self) {
+        let rename_hint = gettext("Rename");
+        self.imp().name_label.connect_query_tooltip(glib::clone!(
+            #[weak(rename_to = details)]
+            self,
+            #[upgrade_or]
+            false,
+            move |name_label, _, _, _, tooltip| {
+                if name_label.is_editing() {
+                    return false;
+                }
+                let shortened = details
+                    .shown_name()
+                    .is_some_and(|label| label.layout().is_ellipsized());
+                if shortened {
+                    tooltip.set_text(Some(&name_label.text()));
+                } else {
+                    tooltip.set_text(Some(&rename_hint));
+                }
+                true
+            }
+        ));
+    }
+
+    fn finish_renaming_on_outside_clicks(&self) {
+        self.connect_realize(|details| {
+            let Some(root) = details.root() else {
+                return;
+            };
+            let clicks = gtk::GestureClick::builder()
+                .button(0)
+                .propagation_phase(gtk::PropagationPhase::Capture)
+                .build();
+            clicks.connect_pressed(glib::clone!(
+                #[weak]
+                details,
+                move |clicks, _, x, y| {
+                    let name_label = details.imp().name_label.get();
+                    if !name_label.is_editing() {
+                        return;
+                    }
+                    let inside = clicks
+                        .widget()
+                        .and_then(|window| window.pick(x, y, gtk::PickFlags::DEFAULT))
+                        .is_some_and(|picked| picked.is_ancestor(&name_label));
+                    if !inside {
+                        name_label.stop_editing(true);
+                    }
+                }
+            ));
+            root.add_controller(clicks);
+        });
+    }
+
+    fn finish_renaming(&self) {
+        let name_label = &self.imp().name_label;
+        if name_label.is_editing() {
+            name_label.stop_editing(true);
+        }
+    }
+
+    fn save_edits(&self) {
+        self.finish_renaming();
+        self.save_texts();
     }
 
     pub fn connect_renamed(&self, callback: impl Fn(&PigouneAssetObject, String) + 'static) {
@@ -324,7 +399,7 @@ impl PigouneAssetDetails {
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
-        self.save_texts();
+        self.save_edits();
         imp.showing.replace(None);
         let title = match selected {
             [single] => single.display_name(),
@@ -352,7 +427,7 @@ impl PigouneAssetDetails {
         let assets: Vec<&Asset> = selected.iter().map(PigouneAssetObject::asset).collect();
         imp.group_summary
             .set_label(&asset_facts::group_summary_text(&assets));
-        self.save_texts();
+        self.save_edits();
         imp.showing.replace(None);
         imp.preview.set_paintable(None::<&gdk::Paintable>);
         let count = selected.len();
@@ -378,7 +453,7 @@ impl PigouneAssetDetails {
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
-        self.save_texts();
+        self.save_edits();
         imp.showing.replace(selected.cloned());
         if let Some(asset) = selected {
             self.show_texts(asset);
