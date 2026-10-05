@@ -1772,7 +1772,9 @@ impl PigouneWindow {
             Some(&gettext("Add to a Collection…")),
             Some(ADD_TO_COLLECTION_ACTION),
         );
-        if let AssetView::Collection(id) = imp.current_view.get() {
+        if let AssetView::Collection(id) = imp.current_view.get()
+            && self.directly_holds_any(id, &selected)
+        {
             let name = self.collection_name(id).unwrap_or_default();
             let item = gio::MenuItem::new(
                 Some(&gettext("Remove from the Collection “{name}”").replace("{name}", &name)),
@@ -2618,6 +2620,22 @@ impl PigouneWindow {
         if !selected.is_empty() {
             self.apply_collection_change(&command(selected.clone()), &selected);
         }
+    }
+
+    fn directly_holds_any(
+        &self,
+        collection: CollectionId,
+        selected: &[PigouneAssetObject],
+    ) -> bool {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return false;
+        };
+        selected.iter().any(|asset| {
+            library
+                .collections_of(asset.id())
+                .is_ok_and(|collections| collections.contains(&collection))
+        })
     }
 
     fn apply_collection_change(&self, command: &CollectionCommand, assets: &[AssetId]) -> bool {
