@@ -82,6 +82,14 @@ template $PigouneAssetPreview: Adw.Bin {
       }
 
       [end]
+      ToggleButton details_button {
+        icon-name: "sidebar-show-right-symbolic";
+        tooltip-text: _("Show Details");
+        focus-on-click: false;
+        active: bind template.show-details bidirectional;
+      }
+
+      [end]
       MenuButton zoom_button {
         tooltip-text: _("Zoom");
 
@@ -238,160 +246,173 @@ template $PigouneAssetPreview: Adw.Bin {
           icon-name: "document-open-symbolic";
           tooltip-text: _("Open With…");
           action-name: "win.open-with";
+          focus-on-click: false;
         }
 
         Button {
           icon-name: "edit-copy-symbolic";
           tooltip-text: _("Copy");
           action-name: "win.copy-selected";
+          focus-on-click: false;
         }
 
         Button {
           icon-name: "document-send-symbolic";
           tooltip-text: _("Export To…");
           action-name: "win.export-selected";
+          focus-on-click: false;
         }
       }
     }
 
-    content: Overlay {
-      child: Box surface {
-        styles [
-          "preview-surface",
-        ]
+    content: Adw.OverlaySplitView details_split {
+      sidebar-position: end;
+      min-sidebar-width: 320;
+      max-sidebar-width: 320;
+      show-sidebar: false;
+      collapsed: bind template.compact;
 
-        $PigouneZoomView zoom_view {
-          margin-top: 24;
-          margin-bottom: 24;
-          margin-start: 24;
-          margin-end: 24;
+      sidebar: Adw.Bin details_slot {};
+
+      content: Overlay {
+        child: Box surface {
+          styles [
+            "preview-surface",
+          ]
+
+          $PigouneZoomView zoom_view {
+            margin-top: 24;
+            margin-bottom: 24;
+            margin-start: 24;
+            margin-end: 24;
+          }
+
+          PopoverMenu context_menu {
+            has-arrow: false;
+            halign: start;
+          }
+        };
+
+        [overlay]
+        Box icon_sizes {
+          halign: center;
+          valign: end;
+          margin-bottom: 18;
+          visible: false;
+
+          styles [
+            "linked",
+          ]
+
+          accessibility {
+            label: _("Icon Size");
+          }
         }
 
-        PopoverMenu context_menu {
-          has-arrow: false;
+        [overlay]
+        Box animation_controls {
+          halign: center;
+          valign: end;
+          margin-bottom: 18;
+          spacing: 2;
+          visible: false;
+
+          styles [
+            "osd",
+            "animation-controls",
+          ]
+
+          accessibility {
+            label: _("Animation");
+          }
+
+          Button previous_frame_button {
+            icon-name: "media-skip-backward-symbolic";
+            tooltip-text: _("Previous Frame");
+            focus-on-click: false;
+            can-focus: false;
+            clicked => $on_previous_frame_clicked() swapped;
+
+            styles [
+              "flat",
+              "circular",
+            ]
+          }
+
+          Button play_button {
+            icon-name: "media-playback-pause-symbolic";
+            tooltip-text: _("Pause");
+            focus-on-click: false;
+            can-focus: false;
+            clicked => $on_play_clicked() swapped;
+
+            styles [
+              "flat",
+              "circular",
+            ]
+          }
+
+          Button next_frame_button {
+            icon-name: "media-skip-forward-symbolic";
+            tooltip-text: _("Next Frame");
+            focus-on-click: false;
+            can-focus: false;
+            clicked => $on_next_frame_clicked() swapped;
+
+            styles [
+              "flat",
+              "circular",
+            ]
+          }
+
+          Label frame_label {
+            margin-start: 6;
+            margin-end: 10;
+
+            styles [
+              "numeric",
+            ]
+          }
+        }
+
+        [overlay]
+        Button previous_button {
+          icon-name: "go-previous-symbolic";
+          tooltip-text: _("Previous Resource");
           halign: start;
+          valign: center;
+          margin-start: 18;
+          focus-on-click: false;
+          can-focus: false;
+          can-target: false;
+          clicked => $on_previous_clicked() swapped;
+
+          styles [
+            "circular",
+            "osd",
+            "preview-step",
+          ]
+        }
+
+        [overlay]
+        Button next_button {
+          icon-name: "go-next-symbolic";
+          tooltip-text: _("Next Resource");
+          halign: end;
+          valign: center;
+          margin-end: 18;
+          focus-on-click: false;
+          can-focus: false;
+          can-target: false;
+          clicked => $on_next_clicked() swapped;
+
+          styles [
+            "circular",
+            "osd",
+            "preview-step",
+          ]
         }
       };
-
-      [overlay]
-      Box icon_sizes {
-        halign: center;
-        valign: end;
-        margin-bottom: 18;
-        visible: false;
-
-        styles [
-          "linked",
-        ]
-
-        accessibility {
-          label: _("Icon Size");
-        }
-      }
-
-      [overlay]
-      Box animation_controls {
-        halign: center;
-        valign: end;
-        margin-bottom: 18;
-        spacing: 2;
-        visible: false;
-
-        styles [
-          "osd",
-          "animation-controls",
-        ]
-
-        accessibility {
-          label: _("Animation");
-        }
-
-        Button previous_frame_button {
-          icon-name: "media-skip-backward-symbolic";
-          tooltip-text: _("Previous Frame");
-          focus-on-click: false;
-          can-focus: false;
-          clicked => $on_previous_frame_clicked() swapped;
-
-          styles [
-            "flat",
-            "circular",
-          ]
-        }
-
-        Button play_button {
-          icon-name: "media-playback-pause-symbolic";
-          tooltip-text: _("Pause");
-          focus-on-click: false;
-          can-focus: false;
-          clicked => $on_play_clicked() swapped;
-
-          styles [
-            "flat",
-            "circular",
-          ]
-        }
-
-        Button next_frame_button {
-          icon-name: "media-skip-forward-symbolic";
-          tooltip-text: _("Next Frame");
-          focus-on-click: false;
-          can-focus: false;
-          clicked => $on_next_frame_clicked() swapped;
-
-          styles [
-            "flat",
-            "circular",
-          ]
-        }
-
-        Label frame_label {
-          margin-start: 6;
-          margin-end: 10;
-
-          styles [
-            "numeric",
-          ]
-        }
-      }
-
-      [overlay]
-      Button previous_button {
-        icon-name: "go-previous-symbolic";
-        tooltip-text: _("Previous Resource");
-        halign: start;
-        valign: center;
-        margin-start: 18;
-        focus-on-click: false;
-        can-focus: false;
-        can-target: false;
-        clicked => $on_previous_clicked() swapped;
-
-        styles [
-          "circular",
-          "osd",
-          "preview-step",
-        ]
-      }
-
-      [overlay]
-      Button next_button {
-        icon-name: "go-next-symbolic";
-        tooltip-text: _("Next Resource");
-        halign: end;
-        valign: center;
-        margin-end: 18;
-        focus-on-click: false;
-        can-focus: false;
-        can-target: false;
-        clicked => $on_next_clicked() swapped;
-
-        styles [
-          "circular",
-          "osd",
-          "preview-step",
-        ]
-      }
     };
   };
 }

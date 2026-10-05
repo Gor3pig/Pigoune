@@ -227,6 +227,8 @@ mod imp {
         #[template_child]
         pub asset_details: TemplateChild<PigouneAssetDetails>,
         #[template_child]
+        pub details_view: TemplateChild<adw::ToolbarView>,
+        #[template_child]
         pub window_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_preview: TemplateChild<PigouneAssetPreview>,
@@ -534,6 +536,7 @@ impl PigouneWindow {
         for (key, property) in [
             (settings::PREVIEW_BOUNDS, "show-bounds"),
             (settings::PREVIEW_PIXEL_GRID, "show-pixel-grid"),
+            (settings::PREVIEW_DETAILS, "show-details"),
         ] {
             settings
                 .bind(key, &*window.imp().asset_preview, property)
@@ -1586,7 +1589,11 @@ impl PigouneWindow {
         imp.asset_grid.connect_selection_changed(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |selected| window.show_selection(&selected)
+            move |selected| {
+                if !window.is_previewing() {
+                    window.show_selection(&selected);
+                }
+            }
         ));
         imp.asset_details.connect_renamed(glib::clone!(
             #[weak(rename_to = window)]
@@ -2352,10 +2359,18 @@ impl PigouneWindow {
 
     fn targeted_assets(&self) -> Vec<PigouneAssetObject> {
         let imp = self.imp();
-        if imp.window_stack.visible_child_name().as_deref() == Some(PREVIEW_PAGE) {
+        if self.is_previewing() {
             return imp.asset_preview.shown_asset().into_iter().collect();
         }
         imp.asset_grid.selected_assets()
+    }
+
+    fn is_previewing(&self) -> bool {
+        self.imp().window_stack.visible_child_name().as_deref() == Some(PREVIEW_PAGE)
+    }
+
+    fn describe_targets(&self) {
+        self.show_selection(&self.targeted_assets());
     }
 
     fn targeted_ids(&self) -> Vec<AssetId> {
@@ -2432,7 +2447,7 @@ impl PigouneWindow {
 
     fn refresh_selected_tags(&self) {
         let imp = self.imp();
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if selected.is_empty() {
             return;
         }
@@ -2463,7 +2478,7 @@ impl PigouneWindow {
     }
 
     fn add_tags_to_selected(&self, names: Vec<String>) {
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if selected.is_empty() {
             return;
         }
@@ -2482,7 +2497,7 @@ impl PigouneWindow {
 
     fn remove_tag_from_selected(&self, tag: TagId) {
         let imp = self.imp();
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if selected.is_empty() {
             return;
         }
@@ -2571,7 +2586,7 @@ impl PigouneWindow {
 
     fn selected_collections(&self) -> Option<(Vec<SharedCollection>, Vec<CollectionPath>)> {
         let imp = self.imp();
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if selected.is_empty() {
             return None;
         }
@@ -2622,7 +2637,7 @@ impl PigouneWindow {
     }
 
     fn change_selected_collections(&self, command: impl FnOnce(Vec<AssetId>) -> CollectionCommand) {
-        let selected = self.selected_ids();
+        let selected = self.targeted_ids();
         if !selected.is_empty() {
             self.apply_collection_change(&command(selected.clone()), &selected);
         }
@@ -3234,6 +3249,24 @@ impl PigouneWindow {
             self,
             move |last| window.leave_preview(last.as_ref())
         ));
+        imp.asset_preview.connect_shown(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.describe_targets()
+        ));
+    }
+
+    fn lend_details_to_preview(&self, lent: bool) {
+        let imp = self.imp();
+        let details = imp.asset_details.get().upcast::<gtk::Widget>();
+        imp.asset_details.set_beside_preview(lent);
+        if lent {
+            imp.details_view.set_content(None::<&gtk::Widget>);
+            imp.asset_preview.hold_details(Some(&details));
+        } else {
+            imp.asset_preview.hold_details(None);
+            imp.details_view.set_content(Some(&details));
+        }
     }
 
     fn activate_asset(&self, activated: Option<u32>) {
@@ -3277,6 +3310,7 @@ impl PigouneWindow {
             .and_then(|index| u32::try_from(index).ok())
             .unwrap_or(0);
         imp.browsing_selection.set(browsing_selection);
+        self.lend_details_to_preview(true);
         imp.window_stack.set_visible_child_name(PREVIEW_PAGE);
         imp.asset_preview.set_actionable(!self.is_showing_trash());
         imp.asset_preview
@@ -3289,11 +3323,13 @@ impl PigouneWindow {
             return;
         }
         imp.window_stack.set_visible_child_name(MAIN_PAGE);
+        self.lend_details_to_preview(false);
         match last {
             Some(last) if imp.browsing_selection.get() => imp.asset_grid.reveal_asset(last.id()),
             Some(last) => imp.asset_grid.select_asset(last.id()),
             None => imp.asset_grid.reveal_selected(),
         }
+        self.describe_targets();
         imp.asset_grid.focus_selected_later();
     }
 

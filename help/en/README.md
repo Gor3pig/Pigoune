@@ -178,7 +178,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   the scroll wheel or with <kbd>+</kbd> and <kbd>-</kbd>, use <kbd>0</kbd> to fit the window
   and <kbd>1</kbd> for the actual size, and choose a background color with the **Background**
   button of the top bar. The **Open With…**, **Copy** and **Export To…** buttons next to it act
-  on the asset shown. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
+  on the asset shown. The **Show Details** button opens the details panel next to the asset, to
+  tag it, file it or add a note without leaving the preview; Pigoune remembers whether it is
+  open. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
 - Move to the previous or next asset with the arrow keys, with the arrow buttons that appear
   when you move the mouse, or with a two-finger swipe. <kbd>Home</kbd> and <kbd>End</kbd> jump
   to the first and last asset.

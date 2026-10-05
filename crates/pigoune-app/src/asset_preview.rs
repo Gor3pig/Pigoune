@@ -26,6 +26,7 @@ const MOUSE_BACK_BUTTON: u32 = 8;
 const MOUSE_FORWARD_BUTTON: u32 = 9;
 
 type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
+type ShownCallback = Box<dyn Fn(&PigouneAssetObject)>;
 
 mod imp {
     use std::cell::{Cell, RefCell};
@@ -35,7 +36,7 @@ mod imp {
     use gtk::prelude::*;
     use gtk::{gdk, glib};
 
-    use super::ClosedCallback;
+    use super::{ClosedCallback, ShownCallback};
     use crate::animation_player::AnimationPlayer;
     use crate::asset_object::PigouneAssetObject;
     use crate::swipe_steps::SwipeSteps;
@@ -58,6 +59,13 @@ mod imp {
         pub background_popover: TemplateChild<gtk::Popover>,
         #[template_child]
         pub action_buttons: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub details_split: TemplateChild<adw::OverlaySplitView>,
+        #[template_child]
+        pub details_slot: TemplateChild<adw::Bin>,
+        #[property(get, set = Self::set_show_details)]
+        pub show_details: Cell<bool>,
+        pub on_shown: RefCell<Option<ShownCallback>>,
         #[template_child]
         pub surface: TemplateChild<gtk::Box>,
         #[template_child]
@@ -129,6 +137,11 @@ mod imp {
         fn set_show_pixel_grid(&self, show_pixel_grid: bool) {
             self.show_pixel_grid.set(show_pixel_grid);
             self.zoom_view.set_shows_pixel_grid(show_pixel_grid);
+        }
+
+        fn set_show_details(&self, show_details: bool) {
+            self.show_details.set(show_details);
+            self.obj().reveal_details();
         }
 
         fn set_compact(&self, compact: bool) {
@@ -265,6 +278,7 @@ mod imp {
             self.obj().follow_pointer();
             self.obj().listen_to_menu_requests();
             self.obj().listen_to_navigation();
+            self.obj().take_focus_on_click();
         }
     }
     impl WidgetImpl for PigouneAssetPreview {}
@@ -297,6 +311,14 @@ impl PigouneAssetPreview {
         self.show_current();
         self.follow_fullscreen();
         self.grab_focus();
+    }
+
+    pub fn connect_shown(&self, callback: impl Fn(&PigouneAssetObject) + 'static) {
+        self.imp().on_shown.replace(Some(Box::new(callback)));
+    }
+
+    pub fn hold_details(&self, details: Option<&gtk::Widget>) {
+        self.imp().details_slot.set_child(details);
     }
 
     pub fn paused_frame(&self) -> Option<(gdk::Texture, usize)> {
@@ -609,12 +631,41 @@ impl PigouneAssetPreview {
     fn float_header(&self, floating: bool) {
         let imp = self.imp();
         imp.toolbar_view.set_extend_content_to_top_edge(floating);
+        self.reveal_details();
         if floating {
             imp.header_bar.add_css_class(FLOATING_HEADER);
         } else {
             imp.header_bar.remove_css_class(FLOATING_HEADER);
         }
         self.update_controls();
+    }
+
+    fn reveal_details(&self) {
+        let imp = self.imp();
+        let shown = imp.show_details.get() && !self.is_fullscreen();
+        if !shown && self.details_hold_focus() {
+            self.grab_focus();
+        }
+        imp.details_split.set_show_sidebar(shown);
+    }
+
+    fn details_hold_focus(&self) -> bool {
+        let slot = self.imp().details_slot.get();
+        self.root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| focus.is_ancestor(&slot))
+    }
+
+    fn take_focus_on_click(&self) {
+        let click = gtk::GestureClick::new();
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, _, _, _| {
+                preview.grab_focus();
+            }
+        ));
+        self.imp().surface.add_controller(click);
     }
 
     fn follow_fullscreen(&self) {
@@ -764,6 +815,9 @@ impl PigouneAssetPreview {
         imp.zoom_view
             .show_image(remembered.as_ref(), width, height, is_vector);
         imp.showing.replace(Some(asset.clone()));
+        if let Some(on_shown) = imp.on_shown.borrow().as_ref() {
+            on_shown(&asset);
+        }
         self.offer_icon_sizes(&asset);
         self.watch_favorite(&asset);
         self.stop_animation();

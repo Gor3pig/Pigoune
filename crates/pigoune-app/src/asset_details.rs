@@ -40,7 +40,7 @@ const TRASHED_PAGE: &str = "trashed";
 const PREVIEW_PIXELS: u32 = 512;
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
 
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -59,6 +59,9 @@ mod imp {
         pub stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub preview: TemplateChild<gtk::Picture>,
+        #[template_child]
+        pub action_buttons: TemplateChild<gtk::Box>,
+        pub beside_preview: Cell<bool>,
         #[template_child]
         pub name_label: TemplateChild<gtk::EditableLabel>,
         #[template_child]
@@ -501,6 +504,13 @@ impl PigouneAssetDetails {
         imp.stack.set_visible_child_name(GROUP_PAGE);
     }
 
+    pub fn set_beside_preview(&self, beside: bool) {
+        let imp = self.imp();
+        imp.beside_preview.set(beside);
+        imp.preview.set_visible(!beside);
+        imp.action_buttons.set_visible(!beside);
+    }
+
     pub fn show(&self, selected: Option<&PigouneAssetObject>, thumbnails: &Rc<ThumbnailCache>) {
         let imp = self.imp();
         if let Some(loading) = imp.loading.take() {
@@ -511,7 +521,11 @@ impl PigouneAssetDetails {
         if let Some(asset) = selected {
             self.show_texts(asset);
             self.describe(asset);
-            self.show_preview(asset, thumbnails);
+            if imp.beside_preview.get() {
+                imp.preview.set_paintable(None::<&gdk::Paintable>);
+            } else {
+                self.show_preview(asset, thumbnails);
+            }
             imp.stack.set_visible_child_name(ASSET_PAGE);
         } else {
             imp.preview.set_paintable(None::<&gdk::Paintable>);
