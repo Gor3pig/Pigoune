@@ -57,7 +57,7 @@ mod imp {
         #[template_child]
         pub background_popover: TemplateChild<gtk::Popover>,
         #[template_child]
-        pub background_swatches: TemplateChild<gtk::Box>,
+        pub action_buttons: TemplateChild<gtk::Box>,
         #[template_child]
         pub surface: TemplateChild<gtk::Box>,
         #[template_child]
@@ -78,7 +78,7 @@ mod imp {
         pub context_menu: TemplateChild<gtk::PopoverMenu>,
         pub swipe: RefCell<SwipeSteps>,
         pub watched_favorite: RefCell<Option<(PigouneAssetObject, glib::SignalHandlerId)>>,
-        #[property(get, set)]
+        #[property(get, set = Self::set_actionable)]
         pub actionable: Cell<bool>,
         #[template_child]
         pub previous_button: TemplateChild<gtk::Button>,
@@ -135,14 +135,17 @@ mod imp {
             if self.compact.replace(compact) == compact {
                 return;
             }
-            let swatches = self.background_swatches.get();
-            if compact {
-                self.header_bar.remove(&swatches);
-                self.background_popover.set_child(Some(&swatches));
-            } else {
-                self.background_popover.set_child(None::<&gtk::Widget>);
-                self.header_bar.pack_end(&swatches);
-            }
+            self.show_action_buttons();
+        }
+
+        fn set_actionable(&self, actionable: bool) {
+            self.actionable.set(actionable);
+            self.show_action_buttons();
+        }
+
+        fn show_action_buttons(&self) {
+            self.action_buttons
+                .set_visible(!self.compact.get() && self.actionable.get());
         }
     }
 

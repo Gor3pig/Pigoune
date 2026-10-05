@@ -201,8 +201,9 @@ ses critères.
 - Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur une ressource pour ouvrir l'**aperçu
   détaillé**. Zoomez avec la molette ou avec <kbd>+</kbd> et <kbd>-</kbd>, utilisez
   <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, et choisissez
-  une couleur de fond dans la barre du haut. Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd>
-  pour revenir.
+  une couleur de fond avec le bouton **Fond** de la barre du haut. Les boutons **Ouvrir
+  avec…**, **Copier** et **Exporter vers…** placés à côté agissent sur la ressource affichée.
+  Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd> pour revenir.
 - Passez à la ressource précédente ou suivante avec les flèches du clavier, avec les boutons
   fléchés qui apparaissent quand vous bougez la souris, ou par un balayage à deux doigts.
   <kbd>Début</kbd> et <kbd>Fin</kbd> mènent à la première et à la dernière ressource.

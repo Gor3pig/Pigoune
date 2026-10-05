@@ -176,8 +176,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - Animated GIF, PNG and WebP images play when you hover over them.
 - Press <kbd>Space</kbd> or double-click an asset to open the **detailed preview**. Zoom with
   the scroll wheel or with <kbd>+</kbd> and <kbd>-</kbd>, use <kbd>0</kbd> to fit the window
-  and <kbd>1</kbd> for the actual size, and choose a background color from the top bar. Press
-  <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
+  and <kbd>1</kbd> for the actual size, and choose a background color with the **Background**
+  button of the top bar. The **Open With…**, **Copy** and **Export To…** buttons next to it act
+  on the asset shown. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
 - Move to the previous or next asset with the arrow keys, with the arrow buttons that appear
   when you move the mouse, or with a two-finger swipe. <kbd>Home</kbd> and <kbd>End</kbd> jump
   to the first and last asset.
