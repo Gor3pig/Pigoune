@@ -843,6 +843,7 @@ impl PigouneWindow {
             settings::SMART_COLLECTION_SORT,
             settings::SMART_COLLECTION_SORT_REVERSED,
             settings::SHOW_SMART_COLLECTIONS,
+            settings::SHOW_TAGS,
             settings::SHOW_COUNTS,
         ] {
             settings.connect_changed(
@@ -3054,7 +3055,7 @@ impl PigouneWindow {
                 library.smart_collections()?,
             ))
         });
-        let (collections, counts, tags, mut smart_collections) = match read {
+        let (collections, counts, mut tags, mut smart_collections) = match read {
             Some(Ok(read)) => read,
             Some(Err(error)) => {
                 self.show_library_error(&error);
@@ -3062,6 +3063,9 @@ impl PigouneWindow {
             }
             None => return,
         };
+        if !self.settings().boolean(settings::SHOW_TAGS) {
+            tags.clear();
+        }
         let show_smart_collections = self.settings().boolean(settings::SHOW_SMART_COLLECTIONS);
         if !show_smart_collections {
             smart_collections.clear();

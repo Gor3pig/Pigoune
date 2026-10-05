@@ -276,6 +276,8 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
 - **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
   distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
 - **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
+- **Tags** : désactivez-la pour masquer la section des tags de la barre latérale. Les tags
+  restent visibles dans le panneau de détails, et la recherche les trouve toujours.
 - **Collections intelligentes** : désactivez-la pour masquer la section des collections
   intelligentes de la barre latérale. Vos collections intelligentes sont conservées et
   reviennent quand vous la réactivez.

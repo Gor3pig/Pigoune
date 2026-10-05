@@ -21,6 +21,7 @@ pub const COLLECTION_SORT_REVERSED: &str = "collection-sort-reversed";
 pub const SMART_COLLECTION_SORT: &str = "smart-collection-sort";
 pub const SMART_COLLECTION_SORT_REVERSED: &str = "smart-collection-sort-reversed";
 pub const SHOW_SMART_COLLECTIONS: &str = "show-smart-collections";
+pub const SHOW_TAGS: &str = "show-tags";
 pub const SHOW_COUNTS: &str = "show-counts";
 pub const SHOW_NAMES: &str = "show-names";
 pub const RESTORE_LAST_VIEW: &str = "restore-last-view";

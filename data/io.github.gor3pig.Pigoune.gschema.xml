@@ -108,6 +108,11 @@
       <summary>Show smart collections</summary>
       <description>Whether the sidebar shows the smart collections section.</description>
     </key>
+    <key name="show-tags" type="b">
+      <default>true</default>
+      <summary>Show tags</summary>
+      <description>Whether the sidebar shows the tags section.</description>
+    </key>
     <key name="show-counts" type="b">
       <default>true</default>
       <summary>Show resource counts</summary>

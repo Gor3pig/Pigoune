@@ -237,6 +237,8 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
 - **Play Animations on Hover**: turn it off if moving thumbnails distract you; animations still
   play in the details panel and the preview.
 - **Show Resource Counts** next to each entry of the sidebar.
+- **Tags**: turn it off to hide the tags section of the sidebar. Tags still appear in the
+  details panel, and searches still find them.
 - **Smart Collections**: turn it off to hide the smart collections section of the sidebar.
   Your smart collections are kept and come back when you turn it on again.
 - **Confirm Before Emptying the Trash**.
