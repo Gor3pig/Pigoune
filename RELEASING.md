@@ -15,7 +15,10 @@ maintainer of the repository.
 5. Publishing the release starts the `Website` workflow, which puts the package in the signed
    Flatpak repository at `https://gor3pig.github.io/Pigoune/repo/`. Installed copies of
    Pigoune then offer the update. This run starts from the release tag, which is why the
-   `github-pages` environment accepts deployments from `main` and from `v*` tags.
+   `github-pages` environment accepts deployments from `main` and from `v*` tags. GitHub Pages
+   ignores a deployment whose build version it has already seen, and the push of the release
+   commit to `main` may already have published the website from the same commit, so each
+   deployment gets a build version made of the commit and the run number.
 
 ## The Flatpak repository
 

@@ -64,3 +64,5 @@ jobs:
       - name: Publish on GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        env:
+          GITHUB_SHA: ${{ github.sha }}-${{ github.run_id }}
