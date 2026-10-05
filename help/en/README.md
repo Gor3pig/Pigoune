@@ -93,8 +93,11 @@ Mark an asset as a favorite with the star next to its name in the details panel,
 ### Names, notes and credits
 
 Click the name of an asset in the details panel (or press <kbd>F2</kbd>) to rename it. The
-**Information** list also lets you write a note and record the source, the license and the
-author of each asset, which is handy when you reuse it later.
+**Note and Credits** group lets you write a note and record the source, the license and the
+author of each asset, which is handy when you reuse it later. The **File** group below shows
+when the asset was added and the name of the original file. Each group folds and unfolds with
+a click on its title, which also shows a short summary, and Pigoune remembers which ones are
+open. Under the name, **Open With…**, **Copy** and **Export…** act on the asset directly.
 
 ### Several assets at once
 
@@ -136,9 +139,10 @@ with types and favorites: red and SVG show the red SVG files. When a library is 
 the first time, its assets are analyzed in the background while you keep working; an asset
 not analyzed yet matches no color.
 
-To find out where an asset is stored, look at **Stored In** at the bottom of the details
-panel. Clicking a collection there opens it in the sidebar and highlights the asset. Clicking
-a tag in the details panel works the same way.
+To find out where an asset is stored, look at **Collections** in the **Organization** group of
+the details panel. Clicking a collection there opens it in the sidebar and highlights the
+asset. Clicking a tag works the same way. **Detected Colors** shows the main colors Pigoune
+found in the asset; to keep only the assets of a color, use the **Filters** button.
 
 ### Smart collections
 

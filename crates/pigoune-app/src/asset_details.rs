@@ -3,7 +3,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
-use gtk::{gdk, glib};
+use gtk::{gdk, gio, glib};
 use pigoune_core::{AnimationTiming, Asset, CollectionId, Tag, TextField};
 
 use crate::animation;
@@ -11,6 +11,7 @@ use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::collection_places::SharedCollection;
 use crate::group_mosaic;
+use crate::settings;
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -48,6 +49,7 @@ mod imp {
     use super::{RenamedCallback, TextChangedCallback};
     use crate::asset_object::PigouneAssetObject;
     use crate::collection_places::PigouneCollectionPlaces;
+    use crate::color_chips::PigouneColorChips;
     use crate::tag_summary::PigouneTagSummary;
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -90,17 +92,23 @@ mod imp {
         pub group_collection_places: TemplateChild<PigouneCollectionPlaces>,
         pub favorite_bindings: RefCell<Vec<glib::Binding>>,
         #[template_child]
-        pub format_row: TemplateChild<adw::ActionRow>,
+        pub original_value: TemplateChild<gtk::Label>,
         #[template_child]
-        pub dimensions_row: TemplateChild<adw::ActionRow>,
+        pub animation_title: TemplateChild<gtk::Label>,
         #[template_child]
-        pub size_row: TemplateChild<adw::ActionRow>,
+        pub animation_value: TemplateChild<gtk::Label>,
         #[template_child]
-        pub added_row: TemplateChild<adw::ActionRow>,
+        pub color_row: TemplateChild<gtk::ListBoxRow>,
         #[template_child]
-        pub original_row: TemplateChild<adw::ActionRow>,
+        pub organization_row: TemplateChild<adw::ExpanderRow>,
         #[template_child]
-        pub animation_row: TemplateChild<adw::ActionRow>,
+        pub credits_row: TemplateChild<adw::ExpanderRow>,
+        #[template_child]
+        pub file_row: TemplateChild<adw::ExpanderRow>,
+        pub tag_count: std::cell::Cell<usize>,
+        pub collection_count: std::cell::Cell<usize>,
+        #[template_child]
+        pub color_chips: TemplateChild<PigouneColorChips>,
         #[template_child]
         pub summary_label: TemplateChild<gtk::Label>,
         #[template_child]
@@ -109,7 +117,9 @@ mod imp {
         pub group_summary: TemplateChild<gtk::Label>,
         pub group_loading: RefCell<Vec<glib::JoinHandle<()>>>,
         #[template_child]
-        pub embedded_row: TemplateChild<adw::ActionRow>,
+        pub embedded_title: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub embedded_value: TemplateChild<gtk::Label>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
     }
 
@@ -122,6 +132,7 @@ mod imp {
         fn class_init(class: &mut Self::Class) {
             PigouneTagSummary::ensure_type();
             PigouneCollectionPlaces::ensure_type();
+            PigouneColorChips::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
         }
@@ -322,6 +333,7 @@ impl PigouneAssetDetails {
                 on_text_changed(&object, field, typed);
             }
         }
+        self.summarize_credits();
     }
 
     fn typed_texts(&self) -> [(TextField, String); 4] {
@@ -345,6 +357,7 @@ impl PigouneAssetDetails {
         imp.source_row.set_text(&object.source_url());
         imp.license_row.set_text(&object.license());
         imp.author_row.set_text(&object.author());
+        self.summarize_credits();
     }
 
     pub fn tag_editors(&self) -> [PigouneTagEditor; 2] {
@@ -370,8 +383,47 @@ impl PigouneAssetDetails {
         if self.is_showing_group() {
             imp.group_tag_summary.show_tags(current, all);
         } else {
+            imp.tag_count.set(current.len());
             imp.tag_summary.show_tags(current, all);
+            self.summarize_organization();
         }
+    }
+
+    pub fn bind_sections(&self, settings: &gio::Settings) {
+        let imp = self.imp();
+        for (row, key) in [
+            (
+                &*imp.organization_row,
+                settings::DETAILS_ORGANIZATION_EXPANDED,
+            ),
+            (&*imp.credits_row, settings::DETAILS_CREDITS_EXPANDED),
+            (&*imp.file_row, settings::DETAILS_FILE_EXPANDED),
+        ] {
+            settings.bind(key, row, "expanded").build();
+        }
+    }
+
+    fn summarize_organization(&self) {
+        let imp = self.imp();
+        imp.organization_row.set_subtitle(&organization_summary(
+            imp.tag_count.get(),
+            imp.collection_count.get(),
+        ));
+    }
+
+    fn summarize_credits(&self) {
+        let filled: Vec<String> = self
+            .typed_texts()
+            .into_iter()
+            .filter(|(_, text)| !text.trim().is_empty())
+            .map(|(field, _)| field_name(field))
+            .collect();
+        let summary = if filled.is_empty() {
+            gettext("Nothing filled in yet")
+        } else {
+            filled.join(", ")
+        };
+        self.imp().credits_row.set_subtitle(&summary);
     }
 
     pub fn connect_collection_opened(&self, callback: impl Fn(CollectionId) + 'static) {
@@ -384,13 +436,14 @@ impl PigouneAssetDetails {
             .connect_opened(move |collection| callback(collection));
     }
 
-    pub fn show_collections(&self, current: &[SharedCollection], selected: usize) {
+    pub fn show_collections(&self, current: &[SharedCollection]) {
         let imp = self.imp();
         if self.is_showing_group() {
-            imp.group_collection_places
-                .show_collections(current, selected);
+            imp.group_collection_places.show_collections(current);
         } else {
-            imp.collection_places.show_collections(current, selected);
+            imp.collection_count.set(current.len());
+            imp.collection_places.show_collections(current);
+            self.summarize_organization();
         }
     }
 
@@ -496,21 +549,20 @@ impl PigouneAssetDetails {
             .sync_create()
             .build();
         imp.favorite_bindings.replace(vec![icon, tooltip]);
-        imp.format_row
-            .set_subtitle(asset_facts::format_name(asset.format));
-        imp.dimensions_row
-            .set_subtitle(&asset_facts::dimensions_text(asset.dimensions));
-        imp.size_row
-            .set_subtitle(&asset_facts::byte_size_text(asset.byte_size));
-        imp.added_row
-            .set_subtitle(&asset_facts::added_at_text(asset.added_at_unix_ms));
-        imp.original_row.set_subtitle(&asset.original_file_name);
-        imp.animation_row.set_visible(asset.is_animated);
+        let added = asset_facts::added_at_text(asset.added_at_unix_ms);
+        imp.file_row
+            .set_subtitle(&gettext("Added on {date}").replace("{date}", &added));
+        imp.original_value.set_label(&asset.original_file_name);
+        imp.animation_title.set_visible(asset.is_animated);
+        imp.animation_value.set_visible(asset.is_animated);
         self.show_animation(asset, None);
-        imp.embedded_row
-            .set_visible(!asset.embedded_sizes.is_empty());
-        imp.embedded_row
-            .set_subtitle(&asset_facts::embedded_sizes_text(&asset.embedded_sizes));
+        let has_embedded_sizes = !asset.embedded_sizes.is_empty();
+        imp.embedded_title.set_visible(has_embedded_sizes);
+        imp.embedded_value.set_visible(has_embedded_sizes);
+        imp.embedded_value
+            .set_label(&asset_facts::embedded_sizes_text(&asset.embedded_sizes));
+        imp.color_row
+            .set_visible(imp.color_chips.show_colors(&asset.colors));
     }
 
     pub fn show_animation_timing(&self, timing: Option<AnimationTiming>) {
@@ -524,8 +576,8 @@ impl PigouneAssetDetails {
         let imp = self.imp();
         imp.summary_label
             .set_label(&asset_facts::summary_text(asset, timing));
-        imp.animation_row
-            .set_subtitle(&asset_facts::animation_text(asset.format, timing));
+        imp.animation_value
+            .set_label(&asset_facts::animation_text(asset.format, timing));
     }
 
     fn show_preview(&self, object: &PigouneAssetObject, thumbnails: &Rc<ThumbnailCache>) {
@@ -549,6 +601,33 @@ impl PigouneAssetDetails {
             }
         ));
         imp.loading.replace(Some(loading));
+    }
+}
+
+fn organization_summary(tags: usize, collections: usize) -> String {
+    let tags = ngettext(
+        "{count} tag",
+        "{count} tags",
+        u32::try_from(tags).unwrap_or(u32::MAX),
+    )
+    .replace("{count}", &tags.to_string());
+    let collections = ngettext(
+        "{count} collection",
+        "{count} collections",
+        u32::try_from(collections).unwrap_or(u32::MAX),
+    )
+    .replace("{count}", &collections.to_string());
+    gettext("{tags}, {collections}")
+        .replace("{tags}", &tags)
+        .replace("{collections}", &collections)
+}
+
+fn field_name(field: TextField) -> String {
+    match field {
+        TextField::Note => gettext("Note"),
+        TextField::SourceUrl => gettext("Source"),
+        TextField::License => gettext("License"),
+        TextField::Author => gettext("Author"),
     }
 }
 

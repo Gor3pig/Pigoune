@@ -73,6 +73,21 @@
       <summary>Show pixel grid</summary>
       <description>Whether thin lines separate the pixels of a picture zoomed to 800% or more in the detailed preview.</description>
     </key>
+    <key name="details-organization-expanded" type="b">
+      <default>true</default>
+      <summary>Organization section expanded</summary>
+      <description>Whether the Organization section of the details panel is expanded.</description>
+    </key>
+    <key name="details-credits-expanded" type="b">
+      <default>false</default>
+      <summary>Note and credits section expanded</summary>
+      <description>Whether the Note and Credits section of the details panel is expanded.</description>
+    </key>
+    <key name="details-file-expanded" type="b">
+      <default>false</default>
+      <summary>File section expanded</summary>
+      <description>Whether the File section of the details panel is expanded.</description>
+    </key>
     <key name="collection-sort" type="s">
       <choices>
         <choice value="name"/>

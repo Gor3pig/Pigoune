@@ -71,9 +71,35 @@ template $PigouneAssetDetails: Adw.Bin {
             ]
           }
 
-          $PigouneTagSummary group_tag_summary {}
+          ListBox {
+            selection-mode: none;
 
-          $PigouneCollectionPlaces group_collection_places {}
+            styles [
+              "boxed-list",
+            ]
+
+            ListBoxRow {
+              activatable: false;
+
+              child: $PigouneTagSummary group_tag_summary {
+                margin-top: 10;
+                margin-bottom: 10;
+                margin-start: 12;
+                margin-end: 12;
+              };
+            }
+
+            ListBoxRow {
+              activatable: false;
+
+              child: $PigouneCollectionPlaces group_collection_places {
+                margin-top: 10;
+                margin-bottom: 10;
+                margin-start: 12;
+                margin-end: 12;
+              };
+            }
+          }
 
           Button {
             label: _("Move to Trash");
@@ -172,153 +198,307 @@ template $PigouneAssetDetails: Adw.Bin {
             }
           }
 
-          $PigouneTagSummary tag_summary {}
-
           Box {
-            orientation: vertical;
-            spacing: 6;
+            spacing: 8;
+            homogeneous: true;
 
-            Label {
-              label: _("Information");
-              xalign: 0;
+            Button {
+              action-name: "win.open-with";
+              tooltip-text: _("Open With…");
 
-              styles [
-                "heading",
-              ]
-            }
+              child: Box {
+                orientation: vertical;
+                spacing: 4;
 
-            ListBox info_list {
-              selection-mode: none;
+                Image {
+                  icon-name: "document-open-symbolic";
+                }
 
-              styles [
-                "boxed-list",
-              ]
-
-              Adw.ActionRow format_row {
-                title: _("Format");
-                subtitle-selectable: true;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              Adw.ActionRow dimensions_row {
-                title: _("Dimensions");
-                subtitle-selectable: true;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              Adw.ActionRow size_row {
-                title: _("Size");
-                subtitle-selectable: true;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              Adw.ActionRow added_row {
-                title: _("Added");
-                subtitle-selectable: true;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              Adw.ActionRow original_row {
-                title: _("Original File");
-                subtitle-selectable: true;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              Adw.ActionRow animation_row {
-                title: _("Animation");
-                visible: false;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              Adw.ActionRow embedded_row {
-                title: _("Contained Sizes");
-                subtitle-selectable: true;
-                visible: false;
-
-                styles [
-                  "property",
-                ]
-              }
-
-              ListBoxRow {
-                activatable: false;
-
-                child: Box {
-                  orientation: vertical;
-                  spacing: 6;
-                  margin-top: 8;
-                  margin-bottom: 8;
-                  margin-start: 12;
-                  margin-end: 12;
-
-                  Label {
-                    label: _("Note");
-                    xalign: 0;
-
-                    styles [
-                      "caption",
-                      "dim-label",
-                    ]
-                  }
-
-                  TextView note_view {
-                    wrap-mode: word_char;
-                    accepts-tab: false;
-                    height-request: 72;
-
-                    styles [
-                      "note-view",
-                    ]
-                  }
-                };
-              }
-
-              Adw.EntryRow source_row {
-                title: _("Source");
-
-                [suffix]
-                Button open_source_button {
-                  icon-name: "web-browser-symbolic";
-                  tooltip-text: _("Open the Link");
-                  valign: center;
-                  visible: false;
-                  clicked => $on_open_source_clicked() swapped;
+                Label {
+                  label: _("Open With…");
+                  ellipsize: end;
 
                   styles [
-                    "flat",
+                    "caption",
                   ]
                 }
-              }
+              };
+            }
 
-              Adw.EntryRow license_row {
-                title: _("License");
-              }
+            Button {
+              action-name: "win.copy-selected";
+              tooltip-text: _("Copy");
 
-              Adw.EntryRow author_row {
-                title: _("Author");
-              }
+              child: Box {
+                orientation: vertical;
+                spacing: 4;
+
+                Image {
+                  icon-name: "edit-copy-symbolic";
+                }
+
+                Label {
+                  label: _("Copy");
+                  ellipsize: end;
+
+                  styles [
+                    "caption",
+                  ]
+                }
+              };
+            }
+
+            Button {
+              action-name: "win.export-selected";
+              tooltip-text: _("Export To…");
+
+              child: Box {
+                orientation: vertical;
+                spacing: 4;
+
+                Image {
+                  icon-name: "document-send-symbolic";
+                }
+
+                Label {
+                  label: _("Export…");
+                  ellipsize: end;
+
+                  styles [
+                    "caption",
+                  ]
+                }
+              };
             }
           }
 
-          $PigouneCollectionPlaces collection_places {}
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ExpanderRow organization_row {
+              title: _("Organization");
+
+                  ListBoxRow {
+                    activatable: false;
+
+                    child: $PigouneTagSummary tag_summary {
+                      margin-top: 10;
+                      margin-bottom: 10;
+                      margin-start: 12;
+                      margin-end: 12;
+                    };
+                  }
+
+                  ListBoxRow {
+                    activatable: false;
+
+                    child: $PigouneCollectionPlaces collection_places {
+                      margin-top: 10;
+                      margin-bottom: 10;
+                      margin-start: 12;
+                      margin-end: 12;
+                    };
+                  }
+
+                  ListBoxRow color_row {
+                    activatable: false;
+
+                    child: $PigouneColorChips color_chips {
+                      margin-top: 10;
+                      margin-bottom: 10;
+                      margin-start: 12;
+                      margin-end: 12;
+                    };
+                  }
+            }
+          }
+
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ExpanderRow credits_row {
+              title: _("Note and Credits");
+
+                ListBoxRow {
+                  activatable: false;
+
+                  child: Box {
+                    orientation: vertical;
+                    spacing: 6;
+                    margin-top: 8;
+                    margin-bottom: 8;
+                    margin-start: 12;
+                    margin-end: 12;
+
+                    Label {
+                      label: _("Note");
+                      xalign: 0;
+
+                      styles [
+                        "caption",
+                        "dim-label",
+                      ]
+                    }
+
+                    TextView note_view {
+                      wrap-mode: word_char;
+                      accepts-tab: false;
+                      height-request: 72;
+
+                      styles [
+                        "note-view",
+                      ]
+                    }
+                  };
+                }
+
+                Adw.EntryRow source_row {
+                  title: _("Source");
+
+                  [suffix]
+                  Button open_source_button {
+                    icon-name: "web-browser-symbolic";
+                    tooltip-text: _("Open the Link");
+                    valign: center;
+                    visible: false;
+                    clicked => $on_open_source_clicked() swapped;
+
+                    styles [
+                      "flat",
+                    ]
+                  }
+                }
+
+                Adw.EntryRow license_row {
+                  title: _("License");
+                }
+
+                Adw.EntryRow author_row {
+                  title: _("Author");
+                }
+            }
+          }
+
+          ListBox {
+            selection-mode: none;
+
+            styles [
+              "boxed-list",
+            ]
+
+            Adw.ExpanderRow file_row {
+              title: _("File");
+
+                ListBoxRow {
+                  activatable: false;
+
+                  child: Grid {
+                    column-spacing: 14;
+                    row-spacing: 6;
+                    margin-top: 12;
+                    margin-bottom: 12;
+                    margin-start: 12;
+                    margin-end: 12;
+
+                    Label {
+                      label: _("Original File");
+                      xalign: 0;
+                      yalign: 0;
+
+                      layout {
+                        column: 0;
+                        row: 0;
+                      }
+
+                      styles [
+                        "dim-label",
+                      ]
+                    }
+
+                    Label original_value {
+                      xalign: 0;
+                      wrap: true;
+                      wrap-mode: word_char;
+                      selectable: true;
+                      hexpand: true;
+
+                      layout {
+                        column: 1;
+                        row: 0;
+                      }
+                    }
+
+                    Label animation_title {
+                      label: _("Animation");
+                      xalign: 0;
+                      yalign: 0;
+                      visible: false;
+
+                      layout {
+                        column: 0;
+                        row: 1;
+                      }
+
+                      styles [
+                        "dim-label",
+                      ]
+                    }
+
+                    Label animation_value {
+                      xalign: 0;
+                      wrap: true;
+                      wrap-mode: word_char;
+                      selectable: true;
+                      hexpand: true;
+                      visible: false;
+
+                      layout {
+                        column: 1;
+                        row: 1;
+                      }
+                    }
+
+                    Label embedded_title {
+                      label: _("Contained Sizes");
+                      xalign: 0;
+                      yalign: 0;
+                      visible: false;
+
+                      layout {
+                        column: 0;
+                        row: 2;
+                      }
+
+                      styles [
+                        "dim-label",
+                      ]
+                    }
+
+                    Label embedded_value {
+                      xalign: 0;
+                      wrap: true;
+                      wrap-mode: word_char;
+                      selectable: true;
+                      hexpand: true;
+                      visible: false;
+
+                      layout {
+                        column: 1;
+                        row: 2;
+                      }
+                    }
+                  };
+                }
+            }
+          }
         };
       };
     }

@@ -102,9 +102,12 @@ la barre latérale.
 ### Noms, notes et crédits
 
 Cliquez sur le nom d'une ressource dans le panneau de détails (ou appuyez sur <kbd>F2</kbd>)
-pour la renommer. La liste **Informations** permet aussi d'écrire une note et d'indiquer la
+pour la renommer. Le groupe **Note et crédits** permet d'écrire une note et d'indiquer la
 source, la licence et l'auteur de chaque ressource, ce qui est bien pratique au moment de la
-réutiliser.
+réutiliser. Le groupe **Fichier**, en dessous, indique quand la ressource a été ajoutée et le
+nom du fichier d'origine. Chaque groupe se replie et se déplie d'un clic sur son titre, qui
+affiche aussi un court résumé, et Pigoune retient ceux qui sont ouverts. Sous le nom, **Ouvrir
+avec…**, **Copier** et **Exporter…** agissent directement sur la ressource.
 
 ### Plusieurs ressources à la fois
 
@@ -153,9 +156,11 @@ couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rou
 analysées en arrière-plan pendant que vous continuez à travailler ; une ressource pas encore
 analysée ne correspond à aucune couleur.
 
-Pour savoir où une ressource est rangée, regardez **Rangée dans**, en bas du panneau de
-détails. Un clic sur une collection l'ouvre dans la barre latérale et met la ressource en
-évidence. Un clic sur un tag du panneau de détails fonctionne de la même façon.
+Pour savoir où une ressource est rangée, regardez **Collections** dans le groupe
+**Organisation** du panneau de détails. Un clic sur une collection l'ouvre dans la barre
+latérale et met la ressource en évidence. Un clic sur un tag fonctionne de la même façon.
+**Couleurs détectées** montre les couleurs principales trouvées par Pigoune ; pour ne garder
+que les ressources d'une couleur, utilisez le bouton **Filtres**.
 
 ### Les collections intelligentes
 

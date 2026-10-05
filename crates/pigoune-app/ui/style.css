@@ -611,3 +611,86 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
   background-image: conic-gradient(#e01b24, #ff7800, #f6d32d, #33d17a, #2190a4, #3584e4, #9141ac, #d56199, #e01b24);
   color: #ffffff;
 }
+
+.color-dot {
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.color-dot.color-dot-red {
+  background-color: #e01b24;
+}
+
+.color-dot.color-dot-orange {
+  background-color: #ff7800;
+}
+
+.color-dot.color-dot-yellow {
+  background-color: #f6d32d;
+}
+
+.color-dot.color-dot-green {
+  background-color: #33d17a;
+}
+
+.color-dot.color-dot-teal {
+  background-color: #2190a4;
+}
+
+.color-dot.color-dot-blue {
+  background-color: #3584e4;
+}
+
+.color-dot.color-dot-purple {
+  background-color: #9141ac;
+}
+
+.color-dot.color-dot-pink {
+  background-color: #d56199;
+}
+
+.color-dot.color-dot-brown {
+  background-color: #986a44;
+}
+
+.color-dot.color-dot-beige {
+  background-color: #e5d3b3;
+}
+
+.color-dot.color-dot-black {
+  background-color: #1e1e1e;
+}
+
+.color-dot.color-dot-gray {
+  background-color: #9a9996;
+}
+
+.color-dot.color-dot-white {
+  background-color: #ffffff;
+}
+
+.removable-pill {
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-color: color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.removable-pill.partial {
+  border: 1px dashed color-mix(in srgb, currentColor 40%, transparent);
+  background-color: transparent;
+}
+
+.removable-pill > button.removable-pill-main {
+  min-height: 22px;
+  padding: 0 2px 0 9px;
+  border-radius: 9999px;
+  font-size: 0.9em;
+}
+
+.removable-pill-remove {
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+}

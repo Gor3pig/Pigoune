@@ -4,6 +4,7 @@ use gtk::glib;
 use gtk::prelude::*;
 use pigoune_core::Tag;
 
+use crate::removable_pill::removable_pill;
 use crate::tag_cloud::PigouneTagCloud;
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 
@@ -96,7 +97,6 @@ impl PigouneTagSummary {
             .css_classes(["flat", "tag-pill"])
             .build();
         if partial {
-            pill.add_css_class("partial");
             content.append(
                 &gtk::Label::builder()
                     .label(format!("{}/{}", shared.carried_by, shared.out_of))
@@ -120,7 +120,17 @@ impl PigouneTagSummary {
             self,
             move |_| summary.editor().activate_tag(id, &name, partial)
         ));
-        pill.upcast()
+        let removable = removable_pill(
+            &pill,
+            &gettext("Remove the Tag “{name}”").replace("{name}", &tag.name),
+            partial,
+        );
+        removable.remove.connect_clicked(glib::clone!(
+            #[weak(rename_to = summary)]
+            self,
+            move |_| summary.editor().remove(id)
+        ));
+        removable.pill.upcast()
     }
 
     fn build(&self) {
@@ -131,7 +141,7 @@ impl PigouneTagSummary {
         let heading = gtk::Label::builder()
             .label(gettext("Tags"))
             .xalign(0.0)
-            .css_classes(["heading"])
+            .css_classes(["caption", "dim-label"])
             .build();
         let cloud = PigouneTagCloud::default();
         let editor = PigouneTagEditor::default();

@@ -501,6 +501,7 @@ impl PigouneWindow {
             .build();
         window.restore_window_state(&settings);
         window.bind_grid_settings(&settings);
+        window.imp().asset_details.bind_sections(&settings);
         window
             .imp()
             .asset_grid
@@ -2497,9 +2498,8 @@ impl PigouneWindow {
     }
 
     fn refresh_selected_collections(&self) {
-        let selected = self.selected_ids().len();
         if let Some((shared, _)) = self.selected_collections() {
-            self.imp().asset_details.show_collections(&shared, selected);
+            self.imp().asset_details.show_collections(&shared);
         }
     }
 
@@ -2577,9 +2577,13 @@ impl PigouneWindow {
                     }
                 }
             }
-            Ok::<_, LibraryError>((held, library.collection_paths()?))
+            Ok::<_, LibraryError>((
+                held,
+                library.collection_paths()?,
+                library.visible_collections()?,
+            ))
         });
-        if let Some(Ok((held, mut all))) = read {
+        if let Some(Ok((held, mut all, collections))) = read {
             all.sort_by_cached_key(|path| {
                 path.names
                     .iter()
@@ -2590,8 +2594,14 @@ impl PigouneWindow {
                 .iter()
                 .filter_map(|path| {
                     let (_, held_by) = held.iter().find(|(id, _)| *id == path.id)?;
+                    let look = collections
+                        .iter()
+                        .find(|collection| collection.id == path.id)
+                        .map(|collection| collection.look.clone())
+                        .unwrap_or_default();
                     Some(SharedCollection {
                         path: path.clone(),
+                        look,
                         held_by: *held_by,
                         out_of: selected.len(),
                     })

@@ -1,15 +1,21 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gettextrs::{gettext, ngettext};
+use gettextrs::gettext;
 use gtk::glib;
-use pigoune_core::{CollectionId, CollectionPath};
+use pigoune_core::{CollectionId, CollectionLook, CollectionPath};
 
 use crate::collection_choice::path_label;
+use crate::removable_pill::removable_pill;
+use crate::{collection_look_dialog, collection_looks};
+
+const PILL_SPACING: i32 = 4;
+const REMOVE_FROM_COLLECTION_ACTION: &str = "win.remove-from-collection";
 
 type OpenedCallback = Box<dyn Fn(CollectionId)>;
 
 pub struct SharedCollection {
     pub path: CollectionPath,
+    pub look: CollectionLook,
     pub held_by: usize,
     pub out_of: usize,
 }
@@ -24,8 +30,7 @@ mod imp {
 
     #[derive(Default)]
     pub struct PigouneCollectionPlaces {
-        pub heading: OnceCell<gtk::Label>,
-        pub rows: OnceCell<gtk::ListBox>,
+        pub pills: OnceCell<adw::WrapBox>,
         pub empty_label: OnceCell<gtk::Label>,
         pub on_opened: RefCell<Option<OpenedCallback>>,
     }
@@ -59,38 +64,47 @@ impl PigouneCollectionPlaces {
         self.imp().on_opened.replace(Some(Box::new(callback)));
     }
 
-    pub fn show_collections(&self, current: &[SharedCollection], selected: usize) {
+    pub fn show_collections(&self, current: &[SharedCollection]) {
         let imp = self.imp();
-        part(&imp.heading).set_label(&ngettext(
-            "Stored In",
-            "Stored In",
-            u32::try_from(selected).unwrap_or(u32::MAX),
-        ));
-        let rows = part(&imp.rows);
-        rows.remove_all();
+        let pills = part(&imp.pills);
+        pills.remove_all();
         for shared in current {
-            rows.append(&self.row(shared));
+            pills.append(&self.pill(shared));
         }
-        rows.set_visible(!current.is_empty());
+        pills.set_visible(!current.is_empty());
         part(&imp.empty_label).set_visible(current.is_empty());
     }
 
-    fn row(&self, shared: &SharedCollection) -> adw::ActionRow {
-        let row = adw::ActionRow::builder()
-            .title(glib::markup_escape_text(&path_label(&shared.path)))
-            .activatable(true)
+    fn pill(&self, shared: &SharedCollection) -> gtk::Box {
+        let content = gtk::Box::builder().spacing(4).build();
+        let icon = gtk::Image::from_icon_name(collection_looks::icon_name(&shared.look));
+        collection_look_dialog::set_tint(
+            icon.upcast_ref(),
+            collection_looks::color_class(&shared.look),
+        );
+        content.append(&icon);
+        content.append(&gtk::Label::new(Some(&path_label(&shared.path))));
+        let pill = gtk::Button::builder()
+            .child(&content)
+            .css_classes(["flat", "tag-pill"])
             .tooltip_text(gettext("Open the Collection"))
             .build();
-        if shared.held_by < shared.out_of {
-            row.set_subtitle(
+        let partial = shared.held_by < shared.out_of;
+        if partial {
+            content.append(
+                &gtk::Label::builder()
+                    .label(format!("{}/{}", shared.held_by, shared.out_of))
+                    .css_classes(["dim-label", "numeric"])
+                    .build(),
+            );
+            pill.set_tooltip_text(Some(
                 &gettext("On {count} of {total} resources")
                     .replace("{count}", &shared.held_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
-            );
+            ));
         }
-        row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
         let id = shared.path.id;
-        row.connect_activated(glib::clone!(
+        pill.connect_clicked(glib::clone!(
             #[weak(rename_to = places)]
             self,
             move |_| {
@@ -99,7 +113,19 @@ impl PigouneCollectionPlaces {
                 }
             }
         ));
-        row
+        let name = path_label(&shared.path);
+        let removable = removable_pill(
+            &pill,
+            &gettext("Remove from the Collection “{name}”").replace("{name}", &name),
+            partial,
+        );
+        removable
+            .remove
+            .set_action_name(Some(REMOVE_FROM_COLLECTION_ACTION));
+        removable
+            .remove
+            .set_action_target_value(Some(&id.to_string().to_variant()));
+        removable.pill
     }
 
     fn build(&self) {
@@ -108,12 +134,13 @@ impl PigouneCollectionPlaces {
         self.set_spacing(6);
 
         let heading = gtk::Label::builder()
+            .label(gettext("Collections"))
             .xalign(0.0)
-            .css_classes(["heading"])
+            .css_classes(["caption", "dim-label"])
             .build();
-        let rows = gtk::ListBox::builder()
-            .selection_mode(gtk::SelectionMode::None)
-            .css_classes(["boxed-list"])
+        let pills = adw::WrapBox::builder()
+            .child_spacing(PILL_SPACING)
+            .line_spacing(PILL_SPACING)
             .visible(false)
             .build();
         let empty_label = gtk::Label::builder()
@@ -123,10 +150,9 @@ impl PigouneCollectionPlaces {
             .build();
 
         self.append(&heading);
-        self.append(&rows);
+        self.append(&pills);
         self.append(&empty_label);
-        set_part(&imp.heading, heading);
-        set_part(&imp.rows, rows);
+        set_part(&imp.pills, pills);
         set_part(&imp.empty_label, empty_label);
     }
 }

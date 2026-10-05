@@ -178,7 +178,7 @@ impl PigouneTagEditor {
         }
     }
 
-    fn remove(&self, id: TagId) {
+    pub fn remove(&self, id: TagId) {
         if let Some(on_removed) = self.imp().on_removed.borrow().as_ref() {
             on_removed(id);
         }
