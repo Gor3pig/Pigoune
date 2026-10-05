@@ -30,53 +30,89 @@ template $PigouneSmartCollectionDialog: Adw.Dialog {
       }
     }
 
-    content: Box {
-      orientation: vertical;
-      spacing: 18;
-      margin-top: 12;
-      margin-bottom: 24;
-      margin-start: 12;
-      margin-end: 12;
+    content: ScrolledWindow {
+      hscrollbar-policy: never;
+      propagate-natural-height: true;
+      max-content-height: 520;
 
-      ListBox {
-        selection-mode: none;
-
-        styles [
-          "boxed-list",
-        ]
-
-        Adw.EntryRow name_row {
-          title: _("Name");
-          activates-default: true;
-          changed => $on_changed() swapped;
-        }
-      }
-
-      Box {
+      child: Box {
         orientation: vertical;
-        spacing: 6;
+        spacing: 18;
+        margin-top: 12;
+        margin-bottom: 24;
+        margin-start: 12;
+        margin-end: 12;
 
-        Adw.PreferencesGroup {
-          title: _("Shows the Resources");
+        ListBox {
+          selection-mode: none;
 
-          Adw.ActionRow scope_row {
-            title: _("Found In");
+          styles [
+            "boxed-list",
+          ]
 
-            styles [
-              "property",
-            ]
-          }
-
-          Adw.EntryRow text_row {
-            title: _("Words to Find");
+          Adw.EntryRow name_row {
+            title: _("Name");
             activates-default: true;
             changed => $on_changed() swapped;
           }
         }
 
-        $PigouneQueryPills text_pills {}
+        Box {
+          orientation: vertical;
+          spacing: 6;
 
-        Label search_help {
+          Adw.PreferencesGroup {
+            title: _("Shows the Resources");
+
+            Adw.ActionRow scope_row {
+              title: _("Found In");
+
+              styles [
+                "property",
+              ]
+            }
+
+            Adw.EntryRow text_row {
+              title: _("Words to Find");
+              activates-default: true;
+              changed => $on_changed() swapped;
+            }
+          }
+
+          $PigouneQueryPills text_pills {}
+
+          Label search_help {
+            wrap: true;
+            xalign: 0;
+            margin-start: 6;
+            margin-end: 6;
+
+            styles [
+              "dim-label",
+              "caption",
+            ]
+          }
+        }
+
+        Adw.PreferencesGroup {
+          title: _("Filters");
+
+          Adw.Bin {
+            styles [
+              "card",
+            ]
+
+            child: $PigouneFilterChoices choices {
+              margin-top: 12;
+              margin-bottom: 12;
+              margin-start: 12;
+              margin-end: 12;
+            };
+          }
+        }
+
+        Label hint_label {
+          label: _("Choose at least one criterion: words to find, a type, a color or favorites only.");
           wrap: true;
           xalign: 0;
           margin-start: 6;
@@ -84,51 +120,21 @@ template $PigouneSmartCollectionDialog: Adw.Dialog {
 
           styles [
             "dim-label",
-            "caption",
           ]
         }
-      }
 
-      Adw.PreferencesGroup {
-        title: _("Filters");
+        Label error_label {
+          visible: false;
+          wrap: true;
+          xalign: 0;
+          margin-start: 6;
+          margin-end: 6;
 
-        Adw.Bin {
           styles [
-            "card",
+            "error",
           ]
-
-          child: $PigouneFilterChoices choices {
-            margin-top: 12;
-            margin-bottom: 12;
-            margin-start: 12;
-            margin-end: 12;
-          };
         }
-      }
-
-      Label hint_label {
-        label: _("Choose at least one criterion: words to find, a type or favorites only.");
-        wrap: true;
-        xalign: 0;
-        margin-start: 6;
-        margin-end: 6;
-
-        styles [
-          "dim-label",
-        ]
-      }
-
-      Label error_label {
-        visible: false;
-        wrap: true;
-        xalign: 0;
-        margin-start: 6;
-        margin-end: 6;
-
-        styles [
-          "error",
-        ]
-      }
+      };
     };
   };
 }

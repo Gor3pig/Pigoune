@@ -4,7 +4,7 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
 use super::{Asset, AssetId, AssetView, Library, LibraryError};
-use crate::media::AssetFormat;
+use crate::media::{AssetColor, AssetFormat};
 
 const FIELD_SEPARATOR: char = '\n';
 const ALTERNATIVE_SEPARATOR: char = ',';
@@ -15,6 +15,7 @@ pub struct AssetFilter {
     pub text: String,
     pub formats: Vec<AssetFormat>,
     pub favorites_only: bool,
+    pub colors: Vec<AssetColor>,
 }
 
 impl AssetFilter {
@@ -28,7 +29,7 @@ impl AssetFilter {
 
     #[must_use]
     pub fn chosen_filters(&self) -> usize {
-        self.formats.len() + usize::from(self.favorites_only)
+        self.formats.len() + self.colors.len() + usize::from(self.favorites_only)
     }
 
     #[must_use]
@@ -39,6 +40,8 @@ impl AssetFilter {
     fn keeps(&self, asset: &Asset, groups: &[Vec<String>], tags: &[String]) -> bool {
         (self.formats.is_empty() || self.formats.contains(&asset.format))
             && (!self.favorites_only || asset.is_favorite)
+            && (self.colors.is_empty()
+                || asset.colors.iter().any(|color| self.colors.contains(color)))
             && (groups.is_empty() || {
                 let text = searchable_text(asset, tags);
                 groups

@@ -62,8 +62,8 @@ pour chaque ressource.
 <td width="50%" valign="top">
 
 ### Retrouver
-Recherche instantanée et filtres par type ou par favori, même parmi des milliers de
-ressources, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
+Recherche instantanée et filtres par type, par couleur ou par favori, même parmi des milliers
+de ressources, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
 collection ou un tag vous montre où se trouve la ressource.
 
 </td>

@@ -3,6 +3,7 @@ use rusqlite::{Connection, OptionalExtension, params};
 use super::clock::now_unix_ms;
 use super::smart_collection::{self, SmartCollection, can_be_saved_from, normalized};
 use super::{AssetFilter, AssetView, Change, Library, LibraryError, SmartCollectionId};
+use crate::media::colors_text;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SmartCollectionCommand {
@@ -120,7 +121,7 @@ fn update(
     connection.execute(
         "UPDATE smart_collections
          SET name = ?1, normalized_name = ?2, scope = ?3, search_text = ?4, formats = ?5,
-             favorites_only = ?6
+             favorites_only = ?6, colors = ?8
          WHERE id = ?7",
         params![
             name,
@@ -130,6 +131,7 @@ fn update(
             smart_collection::formats_text(&collection.filter.formats),
             collection.filter.favorites_only,
             collection.id,
+            colors_text(&collection.filter.colors),
         ],
     )?;
     Ok(SmartCollectionCommand::Update {

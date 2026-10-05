@@ -1,6 +1,7 @@
 mod animation;
 mod animation_player;
 mod application;
+mod asset_colors;
 mod asset_details;
 mod asset_facts;
 mod asset_grid;

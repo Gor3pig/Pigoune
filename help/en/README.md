@@ -127,6 +127,13 @@ the entry selected in the sidebar. Select **All** to search the whole library.
 The search does not look at the format: to keep only SVG files, for example, use the
 **Filters** button, which can also keep only your favorites.
 
+**Filters** also offers twelve colors. Pigoune notes the main colors of each asset, up to
+three that each cover at least 15% of the visible picture, transparent areas left aside. Pick
+red and blue to see the assets that are mainly red or blue. Colors add up with types and
+favorites: red and SVG show the red SVG files. When a library is opened with Pigoune 1.7 for
+the first time, its assets are analyzed in the background while you keep working; an asset
+not analyzed yet matches no color.
+
 To find out where an asset is stored, look at **Stored In** at the bottom of the details
 panel. Clicking a collection there opens it in the sidebar and highlights the asset. Clicking
 a tag in the details panel works the same way.
@@ -139,8 +146,8 @@ SVG files* or *everything about logos in the Clients collection*.
 
 - **Create** one with the **+** button next to **Smart Collections** in the sidebar. The window
   is filled in with the search and the filters in use, and with the entry selected in the
-  sidebar. Give it a name, then choose words to find, types or **Favorites Only**: at least
-  one criterion is needed.
+  sidebar. Give it a name, then choose words to find, types, colors or **Favorites Only**: at
+  least one criterion is needed.
 - **Words to Find** works exactly like the search field: spaces and commas, and pills whose
   **and** and **or** cut or join the groups.
 - **Open** it from the sidebar to see its assets. You can still search inside it.

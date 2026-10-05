@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionCommand, ImportOutcome,
-    Library, SmartCollection, SmartCollectionCommand, SmartCollectionError, SmartCollectionId,
-    TagCommand,
+    AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionCommand,
+    ImportOutcome, Library, SmartCollection, SmartCollectionCommand, SmartCollectionError,
+    SmartCollectionId, TagCommand,
 };
 use tempfile::TempDir;
 
@@ -330,6 +330,7 @@ fn deleting_keeps_the_resources_and_undo_restores_the_same_collection() {
         text: "red".to_owned(),
         formats: vec![AssetFormat::Png],
         favorites_only: false,
+        colors: vec![AssetColor::Red],
     };
     let id = fixture.save("Reds", AssetView::Favorites, &filter);
     let before = fixture
@@ -369,6 +370,7 @@ fn smart_collections_survive_reopening_the_library() {
         text: "logo".to_owned(),
         formats: vec![AssetFormat::Svg, AssetFormat::Ico],
         favorites_only: true,
+        colors: vec![AssetColor::Blue, AssetColor::White],
     };
     let id = fixture.save("Logos", AssetView::Unclassified, &filter);
     let saved = fixture.library.smart_collection(id).expect("read");

@@ -1,3 +1,4 @@
+mod color;
 mod dimensions;
 mod format;
 mod frame_timing;
@@ -12,6 +13,7 @@ use std::io::Read;
 use std::path::Path;
 use std::time::Duration;
 
+pub use color::{AssetColor, colors_from_text, colors_text, dominant_colors};
 pub use dimensions::Dimensions;
 pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};

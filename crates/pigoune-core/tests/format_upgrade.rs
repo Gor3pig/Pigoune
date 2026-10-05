@@ -13,6 +13,7 @@ const FORMAT_BEFORE_BUCKETS: u32 = 2;
 const THUMBNAIL_PIXELS: u32 = 256;
 const FORMAT_BEFORE_SMART_COLLECTIONS: u32 = 3;
 const FORMAT_BEFORE_COLLECTION_LOOKS: u32 = 4;
+const FORMAT_BEFORE_COLORS: u32 = 5;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -51,6 +52,7 @@ fn library_as_saved_by_format_1(workspace: &TempDir, names: &[&str]) -> (PathBuf
         .expect("version updated");
     forget_smart_collections(&connection);
     forget_collection_looks(&connection);
+    forget_asset_colors(&connection);
     (root, ids)
 }
 
@@ -58,6 +60,18 @@ fn forget_smart_collections(connection: &Connection) {
     connection
         .execute_batch("DROP TABLE smart_collections")
         .expect("smart collections forgotten");
+}
+
+fn forget_asset_colors(connection: &Connection) {
+    connection
+        .execute_batch("ALTER TABLE assets DROP COLUMN colors;")
+        .expect("asset colors forgotten");
+}
+
+fn forget_smart_collection_colors(connection: &Connection) {
+    connection
+        .execute_batch("ALTER TABLE smart_collections DROP COLUMN colors;")
+        .expect("smart collection colors forgotten");
 }
 
 fn forget_collection_looks(connection: &Connection) {
@@ -147,6 +161,7 @@ impl FlatLibrary {
             .expect("version updated");
         forget_smart_collections(&connection);
         forget_collection_looks(&connection);
+        forget_asset_colors(&connection);
         flat
     }
 
@@ -298,6 +313,7 @@ fn a_format_3_library_gains_smart_collections() {
         .expect("version updated");
     forget_smart_collections(&connection);
     forget_collection_looks(&connection);
+    forget_asset_colors(&connection);
     drop(connection);
 
     let mut library = Library::open(&root).expect("library opens");
@@ -332,6 +348,8 @@ fn a_format_4_library_keeps_its_collections_and_gains_their_looks() {
         .pragma_update(None, "user_version", FORMAT_BEFORE_COLLECTION_LOOKS)
         .expect("version updated");
     forget_collection_looks(&connection);
+    forget_asset_colors(&connection);
+    forget_smart_collection_colors(&connection);
     drop(connection);
 
     let mut library = Library::open(&root).expect("library opens");
@@ -361,4 +379,36 @@ fn a_format_4_library_keeps_its_collections_and_gains_their_looks() {
     assert_eq!(before.name, "Logos");
     assert_eq!(before.look, CollectionLook::default());
     assert_eq!(after.look, look);
+}
+
+#[test]
+fn a_format_5_library_analyses_the_colors_of_its_resources_again() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let id = library
+        .create_smart_collection("Everything", AssetView::All, &AssetFilter::default())
+        .expect("smart collection saved");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_COLORS)
+        .expect("version updated");
+    forget_asset_colors(&connection);
+    forget_smart_collection_colors(&connection);
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert_eq!(library.assets_awaiting_colors(10).expect("listed"), [red]);
+    let saved = library
+        .smart_collection(id)
+        .expect("read")
+        .expect("smart collection kept");
+    assert!(saved.filter.colors.is_empty());
 }

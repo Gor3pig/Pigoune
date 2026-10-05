@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
-use crate::media::{self, AnimationTiming, AssetFormat, Dimensions};
+use crate::media::{self, AnimationTiming, AssetColor, AssetFormat, Dimensions, colors_from_text};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{OptionalExtension, Row, params};
 
@@ -10,7 +10,7 @@ const EMBEDDED_SIZES_SEPARATOR: char = ',';
 const ASSET_COLUMNS: &str =
     "id, display_name, original_file_name, stored_path, format, width, height,
     byte_size, content_hash, is_animated, embedded_sizes, added_at_unix_ms, trashed_at_unix_ms,
-    is_favorite, note, source_url, license, author";
+    is_favorite, note, source_url, license, author, colors";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asset {
@@ -31,6 +31,7 @@ pub struct Asset {
     pub source_url: String,
     pub license: String,
     pub author: String,
+    pub colors: Vec<AssetColor>,
 }
 
 impl Library {
@@ -103,6 +104,29 @@ impl Library {
     pub fn thumbnail_file(&self, id: AssetId, pixels: u32) -> PathBuf {
         layout::thumbnail_path(&self.root, id, pixels)
     }
+
+    pub fn assets_awaiting_colors(&self, limit: usize) -> Result<Vec<AssetId>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id FROM assets WHERE colors IS NULL
+             ORDER BY added_at_unix_ms DESC, id DESC LIMIT ?1",
+        )?;
+        let ids = statement
+            .query_map([i64::try_from(limit).unwrap_or(i64::MAX)], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(ids)
+    }
+
+    pub fn record_colors(
+        &mut self,
+        id: AssetId,
+        colors: &[AssetColor],
+    ) -> Result<(), LibraryError> {
+        self.connection.execute(
+            "UPDATE assets SET colors = ?2 WHERE id = ?1",
+            params![id, media::colors_text(colors)],
+        )?;
+        Ok(())
+    }
 }
 
 fn asset_from_row(row: &Row) -> rusqlite::Result<Asset> {
@@ -128,6 +152,10 @@ fn asset_from_row(row: &Row) -> rusqlite::Result<Asset> {
         source_url: row.get("source_url")?,
         license: row.get("license")?,
         author: row.get("author")?,
+        colors: row
+            .get::<_, Option<String>>("colors")?
+            .map(|text| colors_from_text(&text))
+            .unwrap_or_default(),
     })
 }
 

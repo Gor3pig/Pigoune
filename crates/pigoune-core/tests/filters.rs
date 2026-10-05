@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionId, ImportOutcome,
-    Library,
+    AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionId,
+    ImportOutcome, Library,
 };
 use tempfile::TempDir;
 
@@ -39,6 +39,12 @@ impl Fixture {
                 favorite: true,
             })
             .expect("favorite is set");
+    }
+
+    fn color(&mut self, asset: AssetId, colors: &[AssetColor]) {
+        self.library
+            .record_colors(asset, colors)
+            .expect("colors are recorded");
     }
 
     fn found(&self, view: AssetView, filter: &AssetFilter) -> Vec<AssetId> {
@@ -125,6 +131,7 @@ fn filters_combine_with_the_text_and_the_view() {
         text: "circle".to_owned(),
         formats: vec![AssetFormat::Svg],
         favorites_only: true,
+        colors: Vec::new(),
     };
 
     assert_eq!(
@@ -150,10 +157,106 @@ fn the_chosen_filters_are_counted_without_the_text() {
         text: "logo".to_owned(),
         formats: vec![AssetFormat::Png, AssetFormat::Svg],
         favorites_only: true,
+        colors: vec![AssetColor::Blue],
     };
 
-    assert_eq!(filter.chosen_filters(), 3);
+    assert_eq!(filter.chosen_filters(), 4);
     assert_eq!(AssetFilter::text("logo").chosen_filters(), 0);
     assert!(AssetFilter::text("logo").narrows());
     assert!(!AssetFilter::text("   ").narrows());
+}
+
+fn colors(colors: &[AssetColor]) -> AssetFilter {
+    AssetFilter {
+        colors: colors.to_vec(),
+        ..AssetFilter::default()
+    }
+}
+
+#[test]
+fn any_of_the_chosen_colors_is_kept() {
+    let mut fixture = Fixture::new();
+    let red = fixture.import("red-dot.png", None);
+    let navy = fixture.import("navy-tile.bmp", None);
+    let teal = fixture.import("teal-column.tiff", None);
+    fixture.color(red, &[AssetColor::Red, AssetColor::White]);
+    fixture.color(navy, &[AssetColor::Blue]);
+    fixture.color(teal, &[AssetColor::Teal]);
+
+    assert_eq!(
+        fixture.found(AssetView::All, &colors(&[AssetColor::White])),
+        [red]
+    );
+    assert_eq!(
+        fixture.found(
+            AssetView::All,
+            &colors(&[AssetColor::Red, AssetColor::Blue])
+        ),
+        sorted(vec![red, navy])
+    );
+    assert!(
+        fixture
+            .found(AssetView::All, &colors(&[AssetColor::Green]))
+            .is_empty()
+    );
+}
+
+#[test]
+fn a_resource_not_analysed_yet_matches_no_color() {
+    let mut fixture = Fixture::new();
+    let analysed = fixture.import("red-dot.png", None);
+    let waiting = fixture.import("dark-circle.svg", None);
+    fixture.color(analysed, &[AssetColor::Red]);
+
+    assert_eq!(
+        fixture.library.assets_awaiting_colors(10).expect("listed"),
+        [waiting]
+    );
+    assert_eq!(
+        fixture.found(AssetView::All, &colors(&[AssetColor::Red])),
+        [analysed]
+    );
+    assert!(
+        fixture
+            .found(AssetView::All, &colors(&[AssetColor::Black]))
+            .is_empty()
+    );
+}
+
+#[test]
+fn a_resource_without_a_main_color_is_analysed_all_the_same() {
+    let mut fixture = Fixture::new();
+    let clear = fixture.import("red-dot.png", None);
+    fixture.color(clear, &[]);
+
+    assert!(
+        fixture
+            .library
+            .assets_awaiting_colors(10)
+            .expect("listed")
+            .is_empty()
+    );
+    assert!(
+        fixture
+            .found(AssetView::All, &colors(&[AssetColor::Red]))
+            .is_empty()
+    );
+}
+
+#[test]
+fn colors_add_up_with_the_other_filters() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png", None);
+    let svg = fixture.import("dark-circle.svg", None);
+    fixture.color(png, &[AssetColor::Red]);
+    fixture.color(svg, &[AssetColor::Red]);
+    let filter = AssetFilter {
+        formats: vec![AssetFormat::Svg],
+        colors: vec![AssetColor::Red],
+        ..AssetFilter::default()
+    };
+
+    assert_eq!(fixture.found(AssetView::All, &filter), [svg]);
+    assert_eq!(filter.chosen_filters(), 2);
+    assert!(colors(&[AssetColor::Red]).narrows());
 }

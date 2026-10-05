@@ -14,6 +14,7 @@ pub use library::{
     library_display_name, oldest_compatible_version, query_groups, query_text, query_word_count,
 };
 pub use media::{
-    AnimationTiming, AssetFormat, Dimensions, animation_timing, icon_from_pngs, single_size_icon,
+    AnimationTiming, AssetColor, AssetFormat, Dimensions, animation_timing, dominant_colors,
+    icon_from_pngs, single_size_icon,
 };
 pub use raster::{RgbaImage, fitted_within};

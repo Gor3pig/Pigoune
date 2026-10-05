@@ -10,9 +10,10 @@ use pigoune_core::{
     CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ImportError, ImportSummary,
     Library, LibraryError, SmartCollection, SmartCollectionCommand, SmartCollectionId,
     TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, can_be_saved_from,
-    library_display_name,
+    dominant_colors, library_display_name,
 };
 
+use crate::asset_colors;
 use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
@@ -43,7 +44,7 @@ use crate::smart_collection_dialog::{
 };
 use crate::smart_collection_sort::{self, SmartCollectionCriterion, SmartCollectionOrder};
 use crate::tag_editor::SharedTag;
-use crate::thumbnails::THUMBNAIL_PIXELS;
+use crate::thumbnails::{self, THUMBNAIL_PIXELS};
 use crate::undo_message;
 use crate::update_banner;
 use crate::update_news::UpdateNews;
@@ -97,6 +98,7 @@ const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
+const COLOR_BATCH: usize = 50;
 const OPEN_LIBRARY_ACTIONS: [&str; 19] = [
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
@@ -219,6 +221,7 @@ mod imp {
         #[template_child]
         pub update_banner: TemplateChild<adw::Banner>,
         pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
+        pub analysing_colors: Cell<bool>,
         pub update_news: RefCell<Option<UpdateNews>>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
@@ -1254,6 +1257,81 @@ impl PigouneWindow {
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         self.set_library_actions_enabled(true);
+        self.analyse_colors();
+    }
+
+    fn analyse_colors(&self) {
+        if self.imp().analysing_colors.replace(true) {
+            return;
+        }
+        let window = self.clone();
+        glib::spawn_future_local(async move {
+            window.analyse_pending_colors().await;
+            window.imp().analysing_colors.set(false);
+        });
+    }
+
+    async fn analyse_pending_colors(&self) {
+        while let Some(pending) = self.files_awaiting_colors()
+            && !pending.is_empty()
+        {
+            for (id, file, thumbnail_file) in pending {
+                let colors = match thumbnails::thumbnail(&file, &thumbnail_file, self).await {
+                    Some(texture) => dominant_colors(&asset_colors::rgba_pixels(&texture)),
+                    None => Vec::new(),
+                };
+                let recorded = self
+                    .imp()
+                    .library
+                    .borrow_mut()
+                    .as_mut()
+                    .map(|library| library.record_colors(id, &colors));
+                if !matches!(recorded, Some(Ok(()))) {
+                    return;
+                }
+            }
+            self.show_new_colors();
+        }
+    }
+
+    fn files_awaiting_colors(&self) -> Option<Vec<(AssetId, PathBuf, PathBuf)>> {
+        let library = self.imp().library.borrow();
+        let library = library.as_ref()?;
+        let ids = library.assets_awaiting_colors(COLOR_BATCH).ok()?;
+        Some(
+            ids.into_iter()
+                .filter_map(|id| library.asset(id).ok().flatten())
+                .map(|asset| {
+                    (
+                        asset.id,
+                        library.file_of(&asset),
+                        library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
+                    )
+                })
+                .collect(),
+        )
+    }
+
+    fn show_new_colors(&self) {
+        let imp = self.imp();
+        let smart_collections_use_colors = imp
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.smart_collections().ok())
+            .is_some_and(|collections| {
+                collections
+                    .iter()
+                    .any(|collection| !collection.filter.colors.is_empty())
+            });
+        let colors_shown = !imp.filters.borrow().colors.is_empty()
+            || matches!(imp.current_view.get(), AssetView::Smart(_));
+        if smart_collections_use_colors {
+            self.refresh_sidebar();
+        }
+        if colors_shown {
+            self.refresh_assets();
+        }
     }
 
     fn recent_libraries_limit(&self) -> usize {
@@ -3801,6 +3879,7 @@ impl PigouneWindow {
                 self.tag_imported(tag, summary);
             }
             self.refresh_assets();
+            self.analyse_colors();
             let destination = destination_name.as_deref().map(|name| match target {
                 ImportTarget::Tag(_) => Destination::Tag(name),
                 ImportTarget::Collection(_) | ImportTarget::Nowhere => {

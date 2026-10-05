@@ -5,9 +5,12 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::glib;
 use gtk::prelude::*;
-use pigoune_core::{AssetFilter, AssetFormat};
+use pigoune_core::{AssetColor, AssetFilter, AssetFormat};
 
-use crate::asset_facts;
+use crate::{asset_colors, asset_facts};
+
+const COLORS_PER_LINE: u32 = 6;
+const CHECKMARK_ICON: &str = "object-select-symbolic";
 
 type ChangedCallback = Rc<dyn Fn()>;
 
@@ -16,7 +19,7 @@ mod imp {
 
     use adw::subclass::prelude::*;
     use gtk::glib;
-    use pigoune_core::AssetFormat;
+    use pigoune_core::{AssetColor, AssetFormat};
 
     use super::ChangedCallback;
 
@@ -24,6 +27,8 @@ mod imp {
     pub struct PigouneFilterChoices {
         pub format_checks: RefCell<Vec<(AssetFormat, gtk::CheckButton)>>,
         pub favorites_check: OnceCell<gtk::CheckButton>,
+        pub color_buttons: RefCell<Vec<(AssetColor, gtk::ToggleButton)>>,
+        pub color_names: OnceCell<gtk::Label>,
         pub quiet: Cell<bool>,
         pub on_changed: RefCell<Option<ChangedCallback>>,
     }
@@ -70,7 +75,18 @@ impl PigouneFilterChoices {
                 .map(|(format, _)| *format)
                 .collect(),
             favorites_only: self.favorites_check().is_active(),
+            colors: self.chosen_colors(),
         }
+    }
+
+    fn chosen_colors(&self) -> Vec<AssetColor> {
+        self.imp()
+            .color_buttons
+            .borrow()
+            .iter()
+            .filter(|(_, button)| button.is_active())
+            .map(|(color, _)| *color)
+            .collect()
     }
 
     pub fn choose(&self, filter: &AssetFilter) {
@@ -79,7 +95,11 @@ impl PigouneFilterChoices {
                 check.set_active(filter.formats.contains(format));
             }
             self.favorites_check().set_active(filter.favorites_only);
+            for (color, button) in self.imp().color_buttons.borrow().iter() {
+                button.set_active(filter.colors.contains(color));
+            }
         });
+        self.show_color_names();
     }
 
     pub fn clear(&self) {
@@ -115,10 +135,84 @@ impl PigouneFilterChoices {
         self.notify_on_toggle(&favorites);
         self.append(&heading);
         self.append(&formats);
+        self.build_colors();
         self.append(&favorites);
         if imp.favorites_check.set(favorites).is_err() {
             unreachable!("filter choices are built once");
         }
+    }
+
+    fn build_colors(&self) {
+        let imp = self.imp();
+        let heading = gtk::Label::builder()
+            .label(gettext("Color"))
+            .xalign(0.0)
+            .css_classes(["heading"])
+            .build();
+        let swatches = gtk::FlowBox::builder()
+            .selection_mode(gtk::SelectionMode::None)
+            .min_children_per_line(COLORS_PER_LINE)
+            .max_children_per_line(COLORS_PER_LINE)
+            .homogeneous(true)
+            .row_spacing(6)
+            .build();
+        let buttons = AssetColor::ALL
+            .into_iter()
+            .map(|color| {
+                let button = self.color_button(color);
+                swatches.append(&button);
+                (color, button)
+            })
+            .collect();
+        imp.color_buttons.replace(buttons);
+        let names = gtk::Label::builder()
+            .xalign(0.0)
+            .wrap(true)
+            .visible(false)
+            .css_classes(["dim-label", "caption"])
+            .build();
+        self.append(&heading);
+        self.append(&swatches);
+        self.append(&names);
+        if imp.color_names.set(names).is_err() {
+            unreachable!("filter choices are built once");
+        }
+    }
+
+    fn color_button(&self, color: AssetColor) -> gtk::ToggleButton {
+        let name = asset_colors::color_name(color);
+        let button = gtk::ToggleButton::builder()
+            .child(&gtk::Image::from_icon_name(CHECKMARK_ICON))
+            .tooltip_text(&name)
+            .halign(gtk::Align::Center)
+            .css_classes(["collection-swatch", "resource-swatch"])
+            .build();
+        button.add_css_class(&asset_colors::swatch_class(color));
+        button.update_property(&[gtk::accessible::Property::Label(&name)]);
+        button.connect_toggled(glib::clone!(
+            #[weak(rename_to = choices)]
+            self,
+            move |_| {
+                choices.show_color_names();
+                if !choices.imp().quiet.get() {
+                    choices.changed();
+                }
+            }
+        ));
+        button
+    }
+
+    fn show_color_names(&self) {
+        let Some(label) = self.imp().color_names.get() else {
+            return;
+        };
+        let names: Vec<String> = self
+            .chosen_colors()
+            .into_iter()
+            .map(asset_colors::color_name)
+            .collect();
+        label.set_label(&names.join(", "));
+        label.set_visible(!names.is_empty());
     }
 
     fn favorites_check(&self) -> gtk::CheckButton {

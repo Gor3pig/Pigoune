@@ -1,0 +1,2 @@
+ALTER TABLE assets ADD COLUMN colors TEXT;
+ALTER TABLE smart_collections ADD COLUMN colors TEXT NOT NULL DEFAULT '';

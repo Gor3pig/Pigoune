@@ -536,3 +536,68 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
 .collection-icon-choice:checked {
   box-shadow: inset 0 0 0 2px var(--accent-color);
 }
+
+.collection-swatch.resource-swatch-red {
+  background-color: #e01b24;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-orange {
+  background-color: #ff7800;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-yellow {
+  background-color: #f6d32d;
+  color: #1e1e1e;
+}
+
+.collection-swatch.resource-swatch-green {
+  background-color: #33d17a;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-teal {
+  background-color: #2190a4;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-blue {
+  background-color: #3584e4;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-purple {
+  background-color: #9141ac;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-pink {
+  background-color: #d56199;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-brown {
+  background-color: #986a44;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-black {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.collection-swatch.resource-swatch-gray {
+  background-color: #9a9996;
+  color: #1e1e1e;
+}
+
+.collection-swatch.resource-swatch-white {
+  background-color: #ffffff;
+  color: #1e1e1e;
+}
+
+.collection-swatch.resource-swatch-white,
+.collection-swatch.resource-swatch-black {
+  box-shadow: inset 0 0 0 1px var(--border-color);
+}

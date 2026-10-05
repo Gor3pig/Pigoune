@@ -143,6 +143,14 @@ bibliothèque.
 La recherche ne regarde pas le format : pour ne garder que les SVG, par exemple, utilisez le
 bouton **Filtres**, qui garde aussi, au choix, seulement vos favoris.
 
+**Filtres** propose aussi douze couleurs. Pigoune note les couleurs principales de chaque
+ressource, jusqu'à trois qui couvrent chacune au moins 15 % de l'image visible, sans compter
+les zones transparentes. Choisissez rouge et bleu pour voir les ressources surtout rouges ou
+bleues. Les couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG
+rouges. À la première ouverture d'une bibliothèque avec Pigoune 1.7, ses ressources sont
+analysées en arrière-plan pendant que vous continuez à travailler ; une ressource pas encore
+analysée ne correspond à aucune couleur.
+
 Pour savoir où une ressource est rangée, regardez **Rangée dans**, en bas du panneau de
 détails. Un clic sur une collection l'ouvre dans la barre latérale et met la ressource en
 évidence. Un clic sur un tag du panneau de détails fonctionne de la même façon.
@@ -157,7 +165,7 @@ collection Clients*.
 - **Créez-en une** avec le bouton **+** à côté de **Collections intelligentes** dans la barre
   latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
   l'entrée sélectionnée dans la barre latérale. Donnez-lui un nom, puis choisissez des mots à
-  rechercher, des types ou **Favoris seulement** : il faut au moins un critère.
+  rechercher, des types, des couleurs ou **Favoris seulement** : il faut au moins un critère.
 - **Mots à rechercher** fonctionne exactement comme le champ de recherche : espaces et
   virgules, et pastilles dont les **et** et les **ou** coupent ou réunissent les groupes.
 - **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher

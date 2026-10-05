@@ -104,6 +104,7 @@ mod tests {
             source_url: String::new(),
             license: String::new(),
             author: String::new(),
+            colors: Vec::new(),
         }
     }
 
