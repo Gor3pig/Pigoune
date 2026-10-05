@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 21:42+0200\n"
+"POT-Creation-Date: 2026-10-05 08:15+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -77,17 +77,16 @@ msgid "Narrow down your library with search and filters"
 msgstr "Affinez votre bibliothèque avec la recherche et les filtres"
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:36
-msgid "Organize several assets at once with tags and collections"
-msgstr ""
-"Organisez plusieurs ressources à la fois avec les tags et les collections"
+msgid "Look closely at an asset and step through its animation"
+msgstr "Examinez une ressource de près et parcourez son animation"
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:40
-msgid "See the details of an asset at a glance"
-msgstr "Voyez les détails d’une ressource d’un coup d’œil"
+msgid "Convert assets to PNG, JPEG, WebP, AVIF or ICO"
+msgstr "Convertissez vos ressources en PNG, JPEG, WebP, AVIF ou ICO"
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:44
-msgid "Light or dark, Pigoune follows your system style"
-msgstr "Clair ou sombre, Pigoune suit le style de votre système"
+msgid "See what your library holds, in light or dark style"
+msgstr "Découvrez le contenu de votre bibliothèque, en style clair ou sombre"
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:81
 msgid "Pigoune now has its own website and updates itself."
@@ -99,7 +98,8 @@ msgstr "La fenêtre À propos mène au nouveau site web de Pigoune."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:84
 msgid "Pigoune installed from its website updates itself through Software."
-msgstr "Pigoune installé depuis son site web se met à jour tout seul avec Logiciels."
+msgstr ""
+"Pigoune installé depuis son site web se met à jour tout seul avec Logiciels."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:90
 msgid "Libraries ready to grow, and their real location shown in Flatpak."
@@ -2594,6 +2594,16 @@ msgstr "%-d %B %Y"
 #: crates/pigoune-app/src/chart_slices.rs:59
 msgid "Others"
 msgstr "Autres"
+
+#~ msgid "Organize several assets at once with tags and collections"
+#~ msgstr ""
+#~ "Organisez plusieurs ressources à la fois avec les tags et les collections"
+
+#~ msgid "See the details of an asset at a glance"
+#~ msgstr "Voyez les détails d’une ressource d’un coup d’œil"
+
+#~ msgid "Light or dark, Pigoune follows your system style"
+#~ msgstr "Clair ou sombre, Pigoune suit le style de votre système"
 
 #~ msgid "_Create a Library"
 #~ msgstr "_Créer une bibliothèque"
