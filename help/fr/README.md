@@ -339,7 +339,14 @@ Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoun
 Oui. Pigoune travaille sur ses propres copies, rangées dans la bibliothèque.
 
 **Pigoune envoie-t-il quelque chose sur internet ?**
-Non. Pigoune fonctionne entièrement hors ligne, sans compte et sans télémétrie.
+Non. Pigoune fonctionne entièrement hors ligne, sans compte et sans télémétrie. La recherche de
+mises à jour est faite par Flatpak, qui demande seulement au dépôt de Pigoune si une nouvelle
+version existe.
+
+**Comment mettre Pigoune à jour ?**
+Quand une nouvelle version sort, une bannière en haut de la fenêtre l'annonce. Cliquez sur
+**Mettre à jour**, attendez la fin de l'installation, puis cliquez sur **Redémarrer**. Logiciels
+et `flatpak update` l'installent aussi.
 
 **Pourquoi Pigoune dit-il qu'un fichier est illisible ?**
 Le fichier est abîmé, ou n'est pas vraiment dans le format qu'indique son nom. Pigoune vérifie

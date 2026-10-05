@@ -26,6 +26,7 @@ use crate::conversion_report;
 use crate::drop_message;
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
+use crate::flatpak_updates::FlatpakUpdates;
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report::{self, Destination};
@@ -42,6 +43,8 @@ use crate::smart_collection_sort::{self, SmartCollectionCriterion, SmartCollecti
 use crate::tag_editor::SharedTag;
 use crate::thumbnails::THUMBNAIL_PIXELS;
 use crate::undo_message;
+use crate::update_banner;
+use crate::update_news::UpdateNews;
 use crate::view_setting;
 
 const WELCOME_PAGE: &str = "welcome";
@@ -151,10 +154,14 @@ mod imp {
 
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
+    use std::rc::Rc;
+
     use crate::asset_preview::PigouneAssetPreview;
+    use crate::flatpak_updates::FlatpakUpdates;
     use crate::grid_header::PigouneGridHeader;
     use crate::query_pills::PigouneQueryPills;
     use crate::sidebar::PigouneSidebar;
+    use crate::update_news::UpdateNews;
 
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
@@ -205,6 +212,10 @@ mod imp {
         pub library_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub trash_banner: TemplateChild<adw::Banner>,
+        #[template_child]
+        pub update_banner: TemplateChild<adw::Banner>,
+        pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
+        pub update_news: RefCell<Option<UpdateNews>>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
         #[template_child]
@@ -439,6 +450,7 @@ mod imp {
             self.obj().follow_welcome_recent_list();
             self.obj().open_submenus_on_hover();
             self.obj().follow_page_height();
+            self.obj().watch_for_updates();
         }
     }
 
@@ -1527,6 +1539,78 @@ impl PigouneWindow {
             self,
             move |collection| window.go_to_collection(collection)
         ));
+    }
+
+    fn watch_for_updates(&self) {
+        self.imp()
+            .update_banner
+            .connect_button_clicked(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_| window.follow_update_button()
+            ));
+        let watching = self.downgrade();
+        glib::spawn_future_local(async move {
+            let showing = watching.clone();
+            let updates = FlatpakUpdates::watch(move |news| {
+                if let Some(window) = showing.upgrade() {
+                    window.show_update_news(news);
+                }
+            })
+            .await;
+            if let Some(window) = watching.upgrade() {
+                window.imp().flatpak_updates.replace(updates.map(Rc::new));
+            }
+        });
+    }
+
+    fn show_update_news(&self, news: UpdateNews) {
+        self.show_update_wording(&update_banner::wording(&news));
+        self.imp().update_news.replace(Some(news));
+    }
+
+    fn show_update_wording(&self, wording: &update_banner::BannerWording) {
+        let banner = &self.imp().update_banner;
+        banner.set_title(&wording.title);
+        banner.set_button_label(wording.button.as_deref());
+        banner.set_revealed(true);
+    }
+
+    fn follow_update_button(&self) {
+        let imp = self.imp();
+        let Some(updates) = imp.flatpak_updates.borrow().clone() else {
+            return;
+        };
+        let news = imp.update_news.borrow().clone();
+        match news {
+            Some(UpdateNews::Available) => {
+                self.show_update_news(UpdateNews::Installing(0));
+                glib::spawn_future_local(glib::clone!(
+                    #[weak(rename_to = window)]
+                    self,
+                    async move {
+                        if updates.install().await.is_err() {
+                            window.show_update_news(UpdateNews::Failed);
+                        }
+                    }
+                ));
+            }
+            Some(UpdateNews::Installed) => {
+                let restart_by_hand = update_banner::restart_by_hand();
+                glib::spawn_future_local(glib::clone!(
+                    #[weak(rename_to = window)]
+                    self,
+                    async move {
+                        if updates.launch_latest_version().await.is_ok() {
+                            window.close();
+                        } else {
+                            window.show_update_wording(&restart_by_hand);
+                        }
+                    }
+                ));
+            }
+            _ => {}
+        }
     }
 
     fn start_renaming_selected(&self) {

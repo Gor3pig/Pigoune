@@ -68,6 +68,12 @@ to change it.
 - Inside Flatpak, folders chosen in the file chooser arrive as document portal paths
   (`/run/user/<uid>/doc/<id>/...`). `host_path.rs` asks the portal for the real location, which
   is only shown to the user: the library is still opened through the portal path.
+- **Update banner.** Inside Flatpak, `flatpak_updates.rs` asks the Flatpak portal for an update
+  monitor, which checks the repository Pigoune was installed from. Pigoune gets no network
+  access of its own. `update_news.rs` turns the portal signals into a state (available,
+  installing, installed, failed) and `update_banner.rs` words it; the banner installs the
+  update through the portal, then starts the new version with the portal's `Spawn`. Outside
+  Flatpak, nothing is watched.
 - Long tasks (imports, thumbnails) run off the main thread or asynchronously, so that the
   interface never freezes.
 - `build.rs` compiles the Blueprint files, the GResource bundle, the development translations

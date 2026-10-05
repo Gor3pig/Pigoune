@@ -298,7 +298,12 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.
 Yes. Pigoune works on its own copies, stored inside the library.
 
 **Does Pigoune send anything over the internet?**
-No. Pigoune works fully offline, with no account and no telemetry.
+No. Pigoune works fully offline, with no account and no telemetry. Checking for updates is done
+by Flatpak, which only asks the Pigoune repository whether a new version exists.
+
+**How do I update Pigoune?**
+When a new version is out, a banner at the top of the window says so. Click **Update**, wait
+for the installation, then click **Restart**. Software and `flatpak update` install it too.
 
 **Why does Pigoune say a file is unreadable?**
 The file is damaged, or is not really in the format its name suggests. Pigoune checks the
