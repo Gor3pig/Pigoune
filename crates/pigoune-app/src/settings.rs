@@ -17,6 +17,7 @@ pub const PREVIEW_BACKGROUND: &str = "preview-background";
 pub const PREVIEW_BOUNDS: &str = "preview-bounds";
 pub const PREVIEW_PIXEL_GRID: &str = "preview-pixel-grid";
 pub const PREVIEW_DETAILS: &str = "preview-details";
+pub const PREVIEW_STRIP: &str = "preview-strip";
 pub const SIDEBAR_COLLECTIONS_EXPANDED: &str = "sidebar-collections-expanded";
 pub const SIDEBAR_SMART_COLLECTIONS_EXPANDED: &str = "sidebar-smart-collections-expanded";
 pub const SIDEBAR_TAGS_EXPANDED: &str = "sidebar-tags-expanded";

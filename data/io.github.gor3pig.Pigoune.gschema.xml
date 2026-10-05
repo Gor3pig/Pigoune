@@ -68,6 +68,11 @@
       <summary>Show image bounds</summary>
       <description>Whether a dashed outline marks the edges of the resource in the detailed preview.</description>
     </key>
+    <key name="preview-strip" type="b">
+      <default>true</default>
+      <summary>Show the thumbnail strip</summary>
+      <description>Whether a strip of neighboring thumbnails is shown below the resource in the detailed preview.</description>
+    </key>
     <key name="preview-details" type="b">
       <default>false</default>
       <summary>Show details in the preview</summary>

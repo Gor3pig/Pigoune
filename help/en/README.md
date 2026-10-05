@@ -196,6 +196,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   margins included; turn it off with **Show Image Bounds** in the zoom menu.
 - From 800% on, a light grid separates the pixels of pictures, which helps to check icons and
   pixel art; turn it off with **Show Pixel Grid** in the zoom menu.
+- A strip of thumbnails at the bottom of the preview shows the neighboring assets; click one to
+  show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
+  Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
   the image offers **Open With…**, **Copy**, **Export To…**, **Export As…** and **Add to
   Favorites** for it.

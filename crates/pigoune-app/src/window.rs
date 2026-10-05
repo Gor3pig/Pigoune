@@ -544,6 +544,7 @@ impl PigouneWindow {
             (settings::PREVIEW_BOUNDS, "show-bounds"),
             (settings::PREVIEW_PIXEL_GRID, "show-pixel-grid"),
             (settings::PREVIEW_DETAILS, "show-details"),
+            (settings::PREVIEW_STRIP, "show-strip"),
         ] {
             settings
                 .bind(key, &*window.imp().asset_preview, property)

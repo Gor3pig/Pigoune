@@ -224,6 +224,9 @@ ses critères.
 - À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier
   une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
   du zoom.
+- Une bande de vignettes en bas de l'aperçu montre les ressources voisines ; cliquez sur l'une
+  d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
+  désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
   sur l'image propose **Ouvrir avec…**, **Copier**, **Exporter vers…**, **Exporter au format…**
   et **Ajouter aux favoris** pour elle.

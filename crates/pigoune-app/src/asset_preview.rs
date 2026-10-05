@@ -39,6 +39,7 @@ mod imp {
     use super::{ClosedCallback, ShownCallback};
     use crate::animation_player::AnimationPlayer;
     use crate::asset_object::PigouneAssetObject;
+    use crate::preview_strip::PigounePreviewStrip;
     use crate::swipe_steps::SwipeSteps;
     use crate::thumbnails::ThumbnailCache;
     use crate::zoom_view::PigouneZoomView;
@@ -63,6 +64,10 @@ mod imp {
         pub details_split: TemplateChild<adw::OverlaySplitView>,
         #[template_child]
         pub details_slot: TemplateChild<adw::Bin>,
+        #[template_child]
+        pub strip: TemplateChild<PigounePreviewStrip>,
+        #[property(get, set = Self::set_show_strip)]
+        pub show_strip: Cell<bool>,
         #[property(get, set = Self::set_show_details)]
         pub show_details: Cell<bool>,
         pub on_shown: RefCell<Option<ShownCallback>>,
@@ -139,6 +144,11 @@ mod imp {
             self.zoom_view.set_shows_pixel_grid(show_pixel_grid);
         }
 
+        fn set_show_strip(&self, show_strip: bool) {
+            self.show_strip.set(show_strip);
+            self.obj().reveal_strip();
+        }
+
         fn set_show_details(&self, show_details: bool) {
             self.show_details.set(show_details);
             self.obj().reveal_details();
@@ -149,6 +159,7 @@ mod imp {
                 return;
             }
             self.show_action_buttons();
+            self.obj().reveal_strip();
         }
 
         fn set_actionable(&self, actionable: bool) {
@@ -170,6 +181,7 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             PigouneZoomView::ensure_type();
+            PigounePreviewStrip::ensure_type();
             class.bind_template();
             class.install_action("preview.zoom-fit", None, |preview, _, _| {
                 preview.imp().zoom_view.fit_to_view();
@@ -279,6 +291,8 @@ mod imp {
             self.obj().listen_to_menu_requests();
             self.obj().listen_to_navigation();
             self.obj().take_focus_on_click();
+            self.obj().follow_strip();
+            self.obj().refocus_after_menus();
         }
     }
     impl WidgetImpl for PigouneAssetPreview {}
@@ -305,8 +319,10 @@ impl PigouneAssetPreview {
     ) {
         let imp = self.imp();
         self.forget_selection();
+        imp.strip.show_items(&items, Rc::clone(&thumbnails));
         imp.thumbnails.replace(Some(thumbnails));
         imp.items.replace(items);
+        self.reveal_strip();
         imp.position.set(position);
         self.show_current();
         self.follow_fullscreen();
@@ -658,6 +674,7 @@ impl PigouneAssetPreview {
         let imp = self.imp();
         imp.toolbar_view.set_extend_content_to_top_edge(floating);
         self.reveal_details();
+        self.reveal_strip();
         if floating {
             imp.header_bar.add_css_class(FLOATING_HEADER);
         } else {
@@ -673,6 +690,46 @@ impl PigouneAssetPreview {
             self.grab_focus();
         }
         imp.details_split.set_show_sidebar(shown);
+    }
+
+    fn reveal_strip(&self) {
+        let imp = self.imp();
+        let shown = imp.show_strip.get()
+            && !imp.compact.get()
+            && !self.is_fullscreen()
+            && imp.strip.count() > 1;
+        imp.strip.set_visible(shown);
+    }
+
+    fn refocus_after_menus(&self) {
+        let imp = self.imp();
+        let menus = [
+            imp.zoom_button.popover(),
+            Some(imp.background_popover.get().upcast()),
+        ];
+        for menu in menus.into_iter().flatten() {
+            menu.connect_closed(glib::clone!(
+                #[weak(rename_to = preview)]
+                self,
+                move |_| {
+                    glib::idle_add_local_once(glib::clone!(
+                        #[weak]
+                        preview,
+                        move || {
+                            preview.grab_focus();
+                        }
+                    ));
+                }
+            ));
+        }
+    }
+
+    fn follow_strip(&self) {
+        self.imp().strip.connect_chosen(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |position| preview.show_position(position)
+        ));
     }
 
     fn details_hold_focus(&self) -> bool {
@@ -827,6 +884,7 @@ impl PigouneAssetPreview {
             self.close();
             return;
         };
+        imp.strip.point_out(position);
         imp.preview_title.set_title(&asset.display_name());
         imp.preview_title
             .set_subtitle(&subtitle_text(asset.asset(), position, count));

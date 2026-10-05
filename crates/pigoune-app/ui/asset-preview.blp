@@ -36,6 +36,11 @@ menu zoom_menu {
       label: _("Show Pixel Grid");
       action: "win.preview-pixel-grid";
     }
+
+    item {
+      label: _("Show Thumbnail Strip");
+      action: "win.preview-strip";
+    }
   }
 }
 
@@ -274,143 +279,153 @@ template $PigouneAssetPreview: Adw.Bin {
 
       sidebar: Adw.Bin details_slot {};
 
-      content: Overlay {
-        child: Box surface {
-          styles [
-            "preview-surface",
-          ]
+      content: Box {
+        orientation: vertical;
 
-          $PigouneZoomView zoom_view {
-            margin-top: 24;
-            margin-bottom: 24;
-            margin-start: 24;
-            margin-end: 24;
+        Overlay {
+          vexpand: true;
+
+          child: Box surface {
+            styles [
+              "preview-surface",
+            ]
+
+            $PigouneZoomView zoom_view {
+              margin-top: 24;
+              margin-bottom: 24;
+              margin-start: 24;
+              margin-end: 24;
+            }
+
+            PopoverMenu context_menu {
+              has-arrow: false;
+              halign: start;
+            }
+          };
+
+          [overlay]
+          Box icon_sizes {
+            halign: center;
+            valign: end;
+            margin-bottom: 18;
+            visible: false;
+
+            styles [
+              "linked",
+            ]
+
+            accessibility {
+              label: _("Icon Size");
+            }
           }
 
-          PopoverMenu context_menu {
-            has-arrow: false;
+          [overlay]
+          Box animation_controls {
+            halign: center;
+            valign: end;
+            margin-bottom: 18;
+            spacing: 2;
+            visible: false;
+
+            styles [
+              "osd",
+              "animation-controls",
+            ]
+
+            accessibility {
+              label: _("Animation");
+            }
+
+            Button previous_frame_button {
+              icon-name: "media-skip-backward-symbolic";
+              tooltip-text: _("Previous Frame");
+              focus-on-click: false;
+              can-focus: false;
+              clicked => $on_previous_frame_clicked() swapped;
+
+              styles [
+                "flat",
+                "circular",
+              ]
+            }
+
+            Button play_button {
+              icon-name: "media-playback-pause-symbolic";
+              tooltip-text: _("Pause");
+              focus-on-click: false;
+              can-focus: false;
+              clicked => $on_play_clicked() swapped;
+
+              styles [
+                "flat",
+                "circular",
+              ]
+            }
+
+            Button next_frame_button {
+              icon-name: "media-skip-forward-symbolic";
+              tooltip-text: _("Next Frame");
+              focus-on-click: false;
+              can-focus: false;
+              clicked => $on_next_frame_clicked() swapped;
+
+              styles [
+                "flat",
+                "circular",
+              ]
+            }
+
+            Label frame_label {
+              margin-start: 6;
+              margin-end: 10;
+
+              styles [
+                "numeric",
+              ]
+            }
+          }
+
+          [overlay]
+          Button previous_button {
+            icon-name: "go-previous-symbolic";
+            tooltip-text: _("Previous Resource");
             halign: start;
-          }
-        };
+            valign: center;
+            margin-start: 18;
+            focus-on-click: false;
+            can-focus: false;
+            can-target: false;
+            clicked => $on_previous_clicked() swapped;
 
-        [overlay]
-        Box icon_sizes {
-          halign: center;
-          valign: end;
-          margin-bottom: 18;
+            styles [
+              "circular",
+              "osd",
+              "preview-step",
+            ]
+          }
+
+          [overlay]
+          Button next_button {
+            icon-name: "go-next-symbolic";
+            tooltip-text: _("Next Resource");
+            halign: end;
+            valign: center;
+            margin-end: 18;
+            focus-on-click: false;
+            can-focus: false;
+            can-target: false;
+            clicked => $on_next_clicked() swapped;
+
+            styles [
+              "circular",
+              "osd",
+              "preview-step",
+            ]
+          }
+        }
+
+        $PigounePreviewStrip strip {
           visible: false;
-
-          styles [
-            "linked",
-          ]
-
-          accessibility {
-            label: _("Icon Size");
-          }
-        }
-
-        [overlay]
-        Box animation_controls {
-          halign: center;
-          valign: end;
-          margin-bottom: 18;
-          spacing: 2;
-          visible: false;
-
-          styles [
-            "osd",
-            "animation-controls",
-          ]
-
-          accessibility {
-            label: _("Animation");
-          }
-
-          Button previous_frame_button {
-            icon-name: "media-skip-backward-symbolic";
-            tooltip-text: _("Previous Frame");
-            focus-on-click: false;
-            can-focus: false;
-            clicked => $on_previous_frame_clicked() swapped;
-
-            styles [
-              "flat",
-              "circular",
-            ]
-          }
-
-          Button play_button {
-            icon-name: "media-playback-pause-symbolic";
-            tooltip-text: _("Pause");
-            focus-on-click: false;
-            can-focus: false;
-            clicked => $on_play_clicked() swapped;
-
-            styles [
-              "flat",
-              "circular",
-            ]
-          }
-
-          Button next_frame_button {
-            icon-name: "media-skip-forward-symbolic";
-            tooltip-text: _("Next Frame");
-            focus-on-click: false;
-            can-focus: false;
-            clicked => $on_next_frame_clicked() swapped;
-
-            styles [
-              "flat",
-              "circular",
-            ]
-          }
-
-          Label frame_label {
-            margin-start: 6;
-            margin-end: 10;
-
-            styles [
-              "numeric",
-            ]
-          }
-        }
-
-        [overlay]
-        Button previous_button {
-          icon-name: "go-previous-symbolic";
-          tooltip-text: _("Previous Resource");
-          halign: start;
-          valign: center;
-          margin-start: 18;
-          focus-on-click: false;
-          can-focus: false;
-          can-target: false;
-          clicked => $on_previous_clicked() swapped;
-
-          styles [
-            "circular",
-            "osd",
-            "preview-step",
-          ]
-        }
-
-        [overlay]
-        Button next_button {
-          icon-name: "go-next-symbolic";
-          tooltip-text: _("Next Resource");
-          halign: end;
-          valign: center;
-          margin-end: 18;
-          focus-on-click: false;
-          can-focus: false;
-          can-target: false;
-          clicked => $on_next_clicked() swapped;
-
-          styles [
-            "circular",
-            "osd",
-            "preview-step",
-          ]
         }
       };
     };
