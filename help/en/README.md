@@ -101,6 +101,10 @@ Click the search field, press <kbd>Ctrl</kbd>+<kbd>F</kbd>, or simply start typi
 searches names, tags, notes, sources, licenses and authors, ignoring case and accents, within
 the entry selected in the sidebar. Select **All** to search the whole library.
 
+- Words separated by **spaces** must all be found: `logo goat` finds what contains both.
+- Groups separated by **commas** are alternatives: `logo, goat, car` finds what contains any
+  of them, and `red logo, goat` finds red logos or goats.
+
 The **Filters** button keeps only some formats, or only your favorites.
 
 To find out where an asset is stored, look at **Stored In** at the bottom of the details
@@ -117,8 +121,8 @@ SVG files* or *everything about logos in the Clients collection*.
   is filled in with the search and the filters in use, and with the entry selected in the
   sidebar. Give it a name, then choose words to find, types or **Favorites Only**: at least
   one criterion is needed.
-- **Words to Find** works like the search field: every word must appear somewhere in the name,
-  tags, note, source, license or author.
+- **Words to Find** works like the search field: spaces require every word, commas accept any
+  group of words.
 - **Open** it from the sidebar to see its assets. You can still search inside it.
 - **Change** its name or criteria with **Edit…** in its right-click menu, or with
   <kbd>F2</kbd>. **Delete…** only deletes the saved search: the assets stay in the library.

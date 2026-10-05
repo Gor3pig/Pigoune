@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 10:16+0200\n"
+"POT-Creation-Date: 2026-10-05 10:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2597,8 +2597,9 @@ msgstr ""
 
 #: crates/pigoune-app/ui/smart-collection-dialog.blp:78
 msgid ""
-"Works like the search bar: every word must appear in the name, tags, note, "
-"source, license or author, whatever the case and accents."
+"Separate words with spaces to require them all, with commas to accept any of "
+"them. The name, tags, note, source, license and author are searched, "
+"whatever the case and accents."
 msgstr ""
 
 #: crates/pigoune-app/ui/smart-collection-dialog.blp:109

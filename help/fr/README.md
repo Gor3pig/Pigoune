@@ -114,6 +114,12 @@ licences et les auteurs, sans tenir compte des majuscules ni des accents, dans l
 sélectionnée de la barre latérale. Sélectionnez **Tout** pour chercher dans toute la
 bibliothèque.
 
+- Les mots séparés par des **espaces** doivent tous être trouvés : `logo chèvre` trouve ce qui
+  contient les deux.
+- Les groupes séparés par des **virgules** sont des alternatives : `logo, chèvre, voiture`
+  trouve ce qui contient l'un d'eux, et `logo rouge, chèvre` trouve les logos rouges ou les
+  chèvres.
+
 Le bouton **Filtres** ne garde que certains formats, ou seulement vos favoris.
 
 Pour savoir où une ressource est rangée, regardez **Rangée dans**, en bas du panneau de
@@ -131,8 +137,8 @@ collection Clients*.
   latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
   l'entrée sélectionnée dans la barre latérale. Donnez-lui un nom, puis choisissez des mots à
   rechercher, des types ou **Favoris uniquement** : il faut au moins un critère.
-- **Mots à rechercher** fonctionne comme le champ de recherche : chaque mot doit apparaître
-  dans le nom, les tags, la note, la source, la licence ou l'auteur.
+- **Mots à rechercher** fonctionne comme le champ de recherche : les espaces exigent chaque
+  mot, les virgules acceptent l'un ou l'autre groupe de mots.
 - **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher
   à l'intérieur.
 - **Modifiez** son nom ou ses critères avec **Modifier…** dans son menu du clic droit, ou avec

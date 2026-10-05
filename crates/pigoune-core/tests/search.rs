@@ -144,6 +144,51 @@ fn every_word_must_be_found_somewhere() {
 }
 
 #[test]
+fn symbols_between_words_are_ignored() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.import("dark-circle.svg", None);
+    fixture.tag(dot, "rouge");
+
+    assert_eq!(fixture.found(AssetView::All, "dot + rouge"), [dot]);
+    assert_eq!(fixture.found(AssetView::All, "dot & rouge"), [dot]);
+}
+
+#[test]
+fn a_comma_accepts_either_group_of_words() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let svg = fixture.import("dark-circle.svg", None);
+    fixture.import("green-square.webp", None);
+    fixture.tag(dot, "rouge");
+    fixture.tag(svg, "noir");
+
+    assert_eq!(
+        fixture.found(AssetView::All, "rouge, noir"),
+        sorted(vec![dot, svg])
+    );
+    assert_eq!(
+        fixture.found(AssetView::All, "dot rouge, circle"),
+        sorted(vec![dot, svg])
+    );
+    assert_eq!(fixture.found(AssetView::All, "dot noir, circle"), [svg]);
+}
+
+#[test]
+fn empty_groups_are_ignored() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let svg = fixture.import("dark-circle.svg", None);
+
+    assert_eq!(
+        fixture.found(AssetView::All, " , ,"),
+        sorted(vec![dot, svg])
+    );
+    assert_eq!(fixture.found(AssetView::All, "dot,"), [dot]);
+    assert_eq!(fixture.found(AssetView::All, "+"), sorted(vec![dot, svg]));
+}
+
+#[test]
 fn a_word_cannot_span_two_fields() {
     let mut fixture = Fixture::new();
     let dot = fixture.import("red-dot.png", None);

@@ -7,6 +7,7 @@ use super::{Asset, AssetId, AssetView, Library, LibraryError};
 use crate::media::AssetFormat;
 
 const FIELD_SEPARATOR: char = '\n';
+const ALTERNATIVE_SEPARATOR: char = ',';
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AssetFilter {
@@ -31,15 +32,17 @@ impl AssetFilter {
 
     #[must_use]
     pub fn narrows(&self) -> bool {
-        self.chosen_filters() > 0 || !search_words(&self.text).is_empty()
+        self.chosen_filters() > 0 || !search_groups(&self.text).is_empty()
     }
 
-    fn keeps(&self, asset: &Asset, words: &[String], tags: &[String]) -> bool {
+    fn keeps(&self, asset: &Asset, groups: &[Vec<String>], tags: &[String]) -> bool {
         (self.formats.is_empty() || self.formats.contains(&asset.format))
             && (!self.favorites_only || asset.is_favorite)
-            && (words.is_empty() || {
+            && (groups.is_empty() || {
                 let text = searchable_text(asset, tags);
-                words.iter().all(|word| text.contains(word.as_str()))
+                groups
+                    .iter()
+                    .any(|words| words.iter().all(|word| text.contains(word.as_str())))
             })
     }
 }
@@ -54,12 +57,12 @@ impl Library {
         if !filter.narrows() {
             return Ok(assets);
         }
-        let words = search_words(&filter.text);
+        let groups = search_groups(&filter.text);
         let tags = self.tag_names_by_asset()?;
         let no_tags = Vec::new();
         Ok(assets
             .into_iter()
-            .filter(|asset| filter.keeps(asset, &words, tags.get(&asset.id).unwrap_or(&no_tags)))
+            .filter(|asset| filter.keeps(asset, &groups, tags.get(&asset.id).unwrap_or(&no_tags)))
             .collect())
     }
 
@@ -77,8 +80,20 @@ impl Library {
     }
 }
 
+fn search_groups(query: &str) -> Vec<Vec<String>> {
+    query
+        .split(ALTERNATIVE_SEPARATOR)
+        .map(search_words)
+        .filter(|words| !words.is_empty())
+        .collect()
+}
+
 fn search_words(query: &str) -> Vec<String> {
-    query.split_whitespace().map(comparable).collect()
+    query
+        .split_whitespace()
+        .filter(|word| word.chars().any(char::is_alphanumeric))
+        .map(comparable)
+        .collect()
 }
 
 fn searchable_text(asset: &Asset, tags: &[String]) -> String {
@@ -107,7 +122,7 @@ fn comparable(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{comparable, search_words};
+    use super::{comparable, search_groups, search_words};
 
     #[test]
     fn case_and_accents_are_ignored() {
@@ -119,5 +134,18 @@ mod tests {
     fn a_query_is_split_into_comparable_words() {
         assert_eq!(search_words("  Logo   Rouge "), ["logo", "rouge"]);
         assert!(search_words("   ").is_empty());
+    }
+
+    #[test]
+    fn lone_symbols_are_not_words() {
+        assert_eq!(search_words("logo + chèvre & 2"), ["logo", "chevre", "2"]);
+    }
+
+    #[test]
+    fn commas_separate_alternatives() {
+        assert_eq!(
+            search_groups("logo rouge, chèvre,, "),
+            [vec!["logo", "rouge"], vec!["chevre"]]
+        );
     }
 }
