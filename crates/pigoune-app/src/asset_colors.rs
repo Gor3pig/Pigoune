@@ -25,6 +25,25 @@ pub fn color_name(color: AssetColor) -> String {
 }
 
 #[must_use]
+pub fn color_hex(color: AssetColor) -> &'static str {
+    match color {
+        AssetColor::Red => "#e01b24",
+        AssetColor::Orange => "#ff7800",
+        AssetColor::Yellow => "#f6d32d",
+        AssetColor::Green => "#33d17a",
+        AssetColor::Teal => "#2190a4",
+        AssetColor::Blue => "#3584e4",
+        AssetColor::Purple => "#9141ac",
+        AssetColor::Pink => "#d56199",
+        AssetColor::Brown => "#986a44",
+        AssetColor::Beige => "#e5d3b3",
+        AssetColor::Black => "#1e1e1e",
+        AssetColor::Gray => "#9a9996",
+        AssetColor::White => "#ffffff",
+    }
+}
+
+#[must_use]
 pub fn swatch_class(color: AssetColor) -> String {
     format!("resource-swatch-{}", color.code())
 }

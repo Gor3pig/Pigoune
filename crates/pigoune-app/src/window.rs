@@ -1175,6 +1175,7 @@ impl PigouneWindow {
                 shares: library.format_shares()?,
                 storage: library.storage_use()?,
                 records: library.records()?,
+                colors: library.color_shares()?,
             })
         });
         let shown = shown.map(|report| {

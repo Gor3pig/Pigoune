@@ -9,213 +9,296 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
     width-request: 520;
 
     [top]
-    Adw.HeaderBar {}
+    Adw.HeaderBar {
+      title-widget: Adw.ViewSwitcher {
+        stack: pages;
+        policy: wide;
+      };
+    }
 
     content: Adw.ToastOverlay toast_overlay {
-      child: ScrolledWindow {
-        hscrollbar-policy: never;
-        propagate-natural-height: true;
+      child: Adw.ViewStack pages {
+        vhomogeneous: true;
+        hhomogeneous: true;
 
-        child: Box {
-          orientation: vertical;
-          spacing: 24;
-          margin-top: 12;
-          margin-bottom: 24;
-          margin-start: 24;
-          margin-end: 24;
+        Adw.ViewStackPage {
+          name: "overview";
+          title: _("Overview");
+          icon-name: "view-grid-symbolic";
 
-          Label name_label {
-            wrap: true;
-            justify: center;
+          child: ScrolledWindow {
+            hscrollbar-policy: never;
+            propagate-natural-height: true;
 
-            styles [
-              "title-1",
-            ]
-          }
+            child: Box {
+              orientation: vertical;
+              spacing: 18;
+              margin-top: 12;
+              margin-bottom: 24;
+              margin-start: 24;
+              margin-end: 24;
 
-          Grid figures_grid {
-            column-homogeneous: true;
-            column-spacing: 12;
-            row-spacing: 12;
-          }
+              Box {
+                orientation: vertical;
+                spacing: 2;
 
-          Box chart_box {
-            orientation: vertical;
-            spacing: 18;
+                Label name_label {
+                  wrap: true;
+                  justify: center;
 
-            Box {
+                  styles [
+                    "title-2",
+                  ]
+                }
+
+                Label place_label {
+                  ellipsize: middle;
+                  justify: center;
+
+                  styles [
+                    "caption",
+                    "dim-label",
+                  ]
+                }
+              }
+
+              Grid figures_grid {
+                column-homogeneous: true;
+                column-spacing: 12;
+                row-spacing: 12;
+              }
+
+              Box records_box {
+                orientation: vertical;
+                spacing: 6;
+
+                Label {
+                  label: _("Records");
+                  xalign: 0;
+
+                  styles [
+                    "heading",
+                  ]
+                }
+
+                ListBox records_list {
+                  selection-mode: none;
+                  row-activated => $on_record_activated() swapped;
+
+                  styles [
+                    "boxed-list",
+                  ]
+                }
+              }
+            };
+          };
+        }
+
+        Adw.ViewStackPage {
+          name: "content";
+          title: _("Content");
+          icon-name: "image-x-generic-symbolic";
+
+          child: ScrolledWindow {
+            hscrollbar-policy: never;
+            propagate-natural-height: true;
+
+            child: Box {
+              orientation: vertical;
               spacing: 24;
-              halign: center;
+              margin-top: 12;
+              margin-bottom: 24;
+              margin-start: 24;
+              margin-end: 24;
 
-              Overlay {
-                valign: center;
+              Box chart_box {
+                orientation: vertical;
+                spacing: 18;
 
-                child: $PigouneRingChart ring_chart {};
-
-                [overlay]
                 Box {
-                  orientation: vertical;
+                  spacing: 24;
                   halign: center;
-                  valign: center;
 
-                  Label total_label {
-                    styles [
-                      "title-3",
-                      "numeric",
-                    ]
+                  Overlay {
+                    valign: center;
+
+                    child: $PigouneRingChart ring_chart {};
+
+                    [overlay]
+                    Box {
+                      orientation: vertical;
+                      halign: center;
+                      valign: center;
+
+                      Label total_label {
+                        styles [
+                          "title-3",
+                          "numeric",
+                        ]
+                      }
+
+                      Label total_caption {
+                        styles [
+                          "caption",
+                          "dim-label",
+                        ]
+                      }
+                    }
                   }
 
-                  Label total_caption {
-                    styles [
-                      "caption",
-                      "dim-label",
-                    ]
+                  Grid legend_grid {
+                    valign: center;
+                    column-spacing: 12;
+                    row-spacing: 6;
+                  }
+                }
+
+                Adw.ToggleGroup measure_toggles {
+                  halign: center;
+                  active-name: "weight";
+                  notify::active-name => $on_measure_changed() swapped;
+
+                  Adw.Toggle {
+                    name: "weight";
+                    label: _("Size");
+                  }
+
+                  Adw.Toggle {
+                    name: "count";
+                    label: _("Number");
                   }
                 }
               }
 
-              Grid legend_grid {
-                valign: center;
-                column-spacing: 12;
-                row-spacing: 6;
-              }
-            }
-
-            Adw.ToggleGroup measure_toggles {
-              halign: center;
-              active-name: "weight";
-              notify::active-name => $on_measure_changed() swapped;
-
-              Adw.Toggle {
-                name: "weight";
-                label: _("Size");
+              Adw.WrapBox counts_box {
+                child-spacing: 6;
+                line-spacing: 6;
+                align: 0.5;
               }
 
-              Adw.Toggle {
-                name: "count";
-                label: _("Number");
+              Box colors_box {
+                orientation: vertical;
+                spacing: 8;
+
+                Label {
+                  label: _("Detected Colors");
+                  xalign: 0;
+
+                  styles [
+                    "heading",
+                  ]
+                }
+
+                $PigouneStackedBar colors_bar {}
+
+                Adw.WrapBox colors_legend {
+                  child-spacing: 6;
+                  line-spacing: 6;
+                }
               }
-            }
+            };
+          };
+        }
 
-            Label storage_label {
-              wrap: true;
-              justify: center;
+        Adw.ViewStackPage {
+          name: "storage";
+          title: _("Storage");
+          icon-name: "drive-harddisk-symbolic";
 
-              styles [
-                "caption",
-                "dim-label",
-              ]
-            }
-          }
+          child: ScrolledWindow {
+            hscrollbar-policy: never;
+            propagate-natural-height: true;
 
-          Box records_box {
-            orientation: vertical;
-            spacing: 6;
+            child: Box {
+              orientation: vertical;
+              spacing: 24;
+              margin-top: 12;
+              margin-bottom: 24;
+              margin-start: 24;
+              margin-end: 24;
 
-            Label {
-              label: _("Records");
-              xalign: 0;
+              Box disk_box {
+                orientation: vertical;
+                spacing: 8;
 
-              styles [
-                "heading",
-              ]
-            }
+                Label {
+                  label: _("Disk Space");
+                  xalign: 0;
 
-            ListBox records_list {
-              selection-mode: none;
-              row-activated => $on_record_activated() swapped;
+                  styles [
+                    "heading",
+                  ]
+                }
 
-              styles [
-                "boxed-list",
-              ]
-            }
-          }
+                $PigouneStackedBar disk_bar {}
 
-          Box disk_box {
-            orientation: vertical;
-            spacing: 6;
+                Adw.WrapBox disk_legend {
+                  child-spacing: 14;
+                  line-spacing: 4;
+                }
+              }
 
-            Label {
-              label: _("Disk Space");
-              xalign: 0;
-
-              styles [
-                "heading",
-              ]
-            }
-
-            $PigouneStackedBar disk_bar {}
-
-            Label disk_label {
-              xalign: 0;
-              wrap: true;
-              use-markup: true;
-
-              styles [
-                "caption",
-              ]
-            }
-          }
-
-          ListBox {
-            selection-mode: none;
-
-            styles [
-              "boxed-list",
-            ]
-
-            Adw.ActionRow location_row {
-              title: _("Location");
-              subtitle-selectable: true;
-
-              [suffix]
-              Button {
-                icon-name: "edit-copy-symbolic";
-                tooltip-text: _("Copy the Location");
-                valign: center;
-                clicked => $on_copy_location_clicked() swapped;
+              ListBox {
+                selection-mode: none;
 
                 styles [
-                  "flat",
+                  "boxed-list",
                 ]
+
+                Adw.ActionRow location_row {
+                  title: _("Location");
+                  subtitle-selectable: true;
+
+                  [suffix]
+                  Button {
+                    icon-name: "edit-copy-symbolic";
+                    tooltip-text: _("Copy the Location");
+                    valign: center;
+                    clicked => $on_copy_location_clicked() swapped;
+
+                    styles [
+                      "flat",
+                    ]
+                  }
+
+                  [suffix]
+                  Button {
+                    icon-name: "folder-open-symbolic";
+                    tooltip-text: _("Open the Folder");
+                    valign: center;
+                    clicked => $on_open_folder_clicked() swapped;
+
+                    styles [
+                      "flat",
+                    ]
+                  }
+                }
+
+                Adw.ActionRow disk_row {
+                  title: _("Disk");
+                }
+
+                Adw.ActionRow created_row {
+                  title: _("Created");
+                }
+
+                Adw.ActionRow format_row {
+                  title: _("Compatibility");
+
+                  [suffix]
+                  Image {
+                    icon-name: "object-select-symbolic";
+                    valign: center;
+
+                    styles [
+                      "success",
+                    ]
+                  }
+                }
               }
-
-              [suffix]
-              Button {
-                icon-name: "folder-open-symbolic";
-                tooltip-text: _("Open the Folder");
-                valign: center;
-                clicked => $on_open_folder_clicked() swapped;
-
-                styles [
-                  "flat",
-                ]
-              }
-            }
-
-            Adw.ActionRow disk_row {
-              title: _("Disk");
-            }
-
-            Adw.ActionRow created_row {
-              title: _("Created");
-            }
-
-            Adw.ActionRow format_row {
-              title: _("Compatibility");
-
-              [suffix]
-              Image {
-                icon-name: "object-select-symbolic";
-                valign: center;
-
-                styles [
-                  "success",
-                ]
-              }
-            }
-          }
-        };
+            };
+          };
+        }
       };
     };
   };

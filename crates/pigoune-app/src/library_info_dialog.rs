@@ -6,19 +6,24 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{
-    Asset, AssetId, FormatShare, LibraryOverview, LibraryRecords, StorageUse,
+    Asset, AssetId, ColorShare, FormatShare, LibraryOverview, LibraryRecords, StorageUse,
     oldest_compatible_version,
 };
 
+use crate::asset_colors;
 use crate::asset_facts;
+use crate::color_chips;
 use crate::config::VERSION;
 use crate::host_path;
 use crate::thumbnails;
 
 use crate::chart_slices::{self, Measure, Slice};
 
-const FIGURES_PER_ROW: i32 = 4;
-const LIBRARY_COLOR: &str = "#3584e4";
+const SMALL_FIGURES: i32 = 3;
+const RESOURCES_COLOR: &str = "#3584e4";
+const THUMBNAILS_COLOR: &str = "#9141ac";
+const DATABASE_COLOR: &str = "#e66100";
+const TRASH_COLOR: &str = "#c01c28";
 const OTHER_FILES_COLOR: &str = "#9a9996";
 const FREE_SPACE_COLOR: &str = "rgba(154, 153, 150, 0.25)";
 const COUNT_TOGGLE: &str = "count";
@@ -33,6 +38,7 @@ pub struct LibraryReport {
     pub shares: Vec<FormatShare>,
     pub storage: StorageUse,
     pub records: LibraryRecords,
+    pub colors: Vec<ColorShare>,
 }
 
 mod imp {
@@ -55,6 +61,8 @@ mod imp {
         #[template_child]
         pub name_label: TemplateChild<gtk::Label>,
         #[template_child]
+        pub place_label: TemplateChild<gtk::Label>,
+        #[template_child]
         pub figures_grid: TemplateChild<gtk::Grid>,
         #[template_child]
         pub chart_box: TemplateChild<gtk::Box>,
@@ -69,7 +77,13 @@ mod imp {
         #[template_child]
         pub measure_toggles: TemplateChild<adw::ToggleGroup>,
         #[template_child]
-        pub storage_label: TemplateChild<gtk::Label>,
+        pub counts_box: TemplateChild<adw::WrapBox>,
+        #[template_child]
+        pub colors_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub colors_bar: TemplateChild<PigouneStackedBar>,
+        #[template_child]
+        pub colors_legend: TemplateChild<adw::WrapBox>,
         #[template_child]
         pub records_box: TemplateChild<gtk::Box>,
         #[template_child]
@@ -79,7 +93,7 @@ mod imp {
         #[template_child]
         pub disk_bar: TemplateChild<PigouneStackedBar>,
         #[template_child]
-        pub disk_label: TemplateChild<gtk::Label>,
+        pub disk_legend: TemplateChild<adw::WrapBox>,
         #[template_child]
         pub location_row: TemplateChild<adw::ActionRow>,
         #[template_child]
@@ -134,6 +148,7 @@ impl PigouneLibraryInfoDialog {
             shares,
             storage,
             records,
+            colors,
         } = report;
         let (name, root, overview) = (name.as_str(), root.as_path(), &overview);
         let dialog: Self = glib::Object::new();
@@ -145,19 +160,15 @@ impl PigouneLibraryInfoDialog {
         imp.chart_box.set_visible(overview.resources > 0);
         imp.shares.replace(shares);
         imp.storage.replace(Some(storage));
-        imp.storage_label.set_label(&storage_text(&storage));
         dialog.show_measure(Measure::Weight);
-        dialog.show_disk_space(root, storage.total());
+        dialog.show_disk_space(root, &storage);
+        dialog.show_colors(&colors);
         imp.name_label.set_label(name);
-        let figures = figures(overview);
-        let count = i32::try_from(figures.len()).unwrap_or(0);
-        for (position, (amount, caption)) in (0..).zip(figures) {
-            let (column, row) = centered_cell(position, count);
-            imp.figures_grid
-                .attach(&figure_tile(amount, &caption), column, row, 2, 1);
-        }
-        imp.location_row
-            .set_subtitle(&host_path::shown_path(root).to_string_lossy());
+        let place = host_path::shown_path(root).to_string_lossy().to_string();
+        imp.place_label.set_label(&place);
+        imp.place_label.set_tooltip_text(Some(&place));
+        dialog.show_figures(overview);
+        imp.location_row.set_subtitle(&place);
         imp.disk_row.set_subtitle(&disk_text(root));
         imp.created_row.set_visible(overview.created_at.is_some());
         if let Some(created_at) = overview.created_at {
@@ -305,29 +316,137 @@ impl PigouneLibraryInfoDialog {
         }
     }
 
-    fn show_disk_space(&self, root: &Path, library_bytes: u64) {
+    fn show_figures(&self, overview: &LibraryOverview) {
         let imp = self.imp();
-        let Some((size, free)) = disk_space(root) else {
-            imp.disk_box.set_visible(false);
-            return;
-        };
-        let others = size.saturating_sub(free).saturating_sub(library_bytes);
-        imp.disk_bar.set_parts(
-            [
-                (library_bytes, LIBRARY_COLOR),
-                (others, OTHER_FILES_COLOR),
-                (free, FREE_SPACE_COLOR),
-            ]
-            .into_iter()
-            .map(|(bytes, color)| (fraction(chart_slices::ratio(bytes, size)), rgba(color)))
-            .collect(),
+        let amount = |count: usize| u32::try_from(count).unwrap_or(u32::MAX);
+        let main = figure_tile(
+            overview.resources,
+            &ngettext("Resource", "Resources", amount(overview.resources)),
         );
-        let text = disk_text_markup(library_bytes, others, free, size);
-        imp.disk_label.set_markup(&text);
-        imp.disk_bar
-            .update_property(&[gtk::accessible::Property::Label(&disk_plain_text(
-                free, size,
-            ))]);
+        main.add_css_class("main-figure");
+        imp.figures_grid.attach(&main, 0, 0, SMALL_FIGURES, 1);
+        let small = [
+            (
+                overview.collections,
+                ngettext("Collection", "Collections", amount(overview.collections)),
+            ),
+            (
+                overview.tags,
+                ngettext("Tag", "Tags", amount(overview.tags)),
+            ),
+            (
+                overview.favorites,
+                ngettext("Favorite", "Favorites", amount(overview.favorites)),
+            ),
+        ];
+        for (column, (count, caption)) in (0..).zip(small) {
+            imp.figures_grid
+                .attach(&figure_tile(count, &caption), column, 1, 1, 1);
+        }
+        let counts = [
+            ngettext(
+                "{count} animated",
+                "{count} animated",
+                amount(overview.animated),
+            )
+            .replace("{count}", &overview.animated.to_string()),
+            gettext("{count} SVG").replace("{count}", &overview.vectors.to_string()),
+            ngettext(
+                "{count} in the trash",
+                "{count} in the trash",
+                amount(overview.in_trash),
+            )
+            .replace("{count}", &overview.in_trash.to_string()),
+        ];
+        for text in counts {
+            let pill = gtk::Label::builder()
+                .label(text)
+                .css_classes(["tag-pill", "numeric"])
+                .build();
+            imp.counts_box.append(&pill);
+        }
+    }
+
+    fn show_colors(&self, colors: &[ColorShare]) {
+        let imp = self.imp();
+        imp.colors_box.set_visible(!colors.is_empty());
+        let total: usize = colors.iter().map(|share| share.count).sum();
+        imp.colors_bar.set_parts(
+            colors
+                .iter()
+                .map(|share| {
+                    (
+                        fraction(chart_slices::ratio(share.count as u64, total as u64)),
+                        rgba(asset_colors::color_hex(share.color)),
+                    )
+                })
+                .collect(),
+        );
+        let description = colors
+            .iter()
+            .map(|share| format!("{} {}", asset_colors::color_name(share.color), share.count))
+            .collect::<Vec<_>>()
+            .join(", ");
+        imp.colors_bar
+            .update_property(&[gtk::accessible::Property::Label(&description)]);
+        for share in colors {
+            imp.colors_legend
+                .append(&color_chips::pill(share.color, Some(share.count)));
+        }
+    }
+
+    fn show_disk_space(&self, root: &Path, storage: &StorageUse) {
+        let imp = self.imp();
+        let library_parts = [
+            (
+                storage.resources,
+                RESOURCES_COLOR,
+                gettext("Resources {size}"),
+            ),
+            (
+                storage.thumbnails,
+                THUMBNAILS_COLOR,
+                gettext("Thumbnails {size}"),
+            ),
+            (storage.database, DATABASE_COLOR, gettext("Database {size}")),
+            (storage.trash, TRASH_COLOR, gettext("Trash {size}")),
+        ];
+        let disk = disk_space(root);
+        let whole = disk.map_or(storage.total(), |(size, _)| size);
+        let mut parts: Vec<(u64, &str)> = library_parts
+            .iter()
+            .map(|(bytes, color, _)| (*bytes, *color))
+            .collect();
+        for (bytes, color, text) in &library_parts {
+            imp.disk_legend.append(&legend_item(
+                color,
+                &text.replace("{size}", &glib::format_size(*bytes)),
+            ));
+        }
+        if let Some((size, free)) = disk {
+            let others = size.saturating_sub(free).saturating_sub(storage.total());
+            parts.push((others, OTHER_FILES_COLOR));
+            parts.push((free, FREE_SPACE_COLOR));
+            imp.disk_legend.append(&legend_item(
+                OTHER_FILES_COLOR,
+                &gettext("Other files {size}").replace("{size}", &glib::format_size(others)),
+            ));
+            let free_text = gtk::Label::builder()
+                .label(disk_plain_text(free, size))
+                .css_classes(["caption", "dim-label"])
+                .build();
+            imp.disk_legend.append(&free_text);
+            imp.disk_bar
+                .update_property(&[gtk::accessible::Property::Label(&disk_plain_text(
+                    free, size,
+                ))]);
+        }
+        imp.disk_bar.set_parts(
+            parts
+                .into_iter()
+                .map(|(bytes, color)| (fraction(chart_slices::ratio(bytes, whole)), rgba(color)))
+                .collect(),
+        );
     }
 
     fn root(&self) -> PathBuf {
@@ -353,44 +472,6 @@ impl PigouneLibraryInfoDialog {
             |_| {},
         );
     }
-}
-
-fn figures(overview: &LibraryOverview) -> Vec<(usize, String)> {
-    let amount = |count: usize| u32::try_from(count).unwrap_or(u32::MAX);
-    vec![
-        (
-            overview.resources,
-            ngettext("Resource", "Resources", amount(overview.resources)),
-        ),
-        (
-            overview.collections,
-            ngettext("Collection", "Collections", amount(overview.collections)),
-        ),
-        (
-            overview.tags,
-            ngettext("Tag", "Tags", amount(overview.tags)),
-        ),
-        (
-            overview.favorites,
-            ngettext("Favorite", "Favorites", amount(overview.favorites)),
-        ),
-        (
-            overview.animated,
-            ngettext("Animated", "Animated", amount(overview.animated)),
-        ),
-        (overview.vectors, gettext("SVG")),
-        (
-            overview.in_trash,
-            ngettext("In the Trash", "In the Trash", amount(overview.in_trash)),
-        ),
-    ]
-}
-
-fn centered_cell(position: i32, count: i32) -> (i32, i32) {
-    let row = position / FIGURES_PER_ROW;
-    let in_row = (count - row * FIGURES_PER_ROW).min(FIGURES_PER_ROW);
-    let offset = FIGURES_PER_ROW - in_row;
-    (offset + 2 * (position % FIGURES_PER_ROW), row)
 }
 
 fn figure_tile(count: usize, caption: &str) -> gtk::Widget {
@@ -450,16 +531,6 @@ impl RecordKind {
     }
 }
 
-fn storage_text(storage: &StorageUse) -> String {
-    [
-        gettext("Resources {size}").replace("{size}", &glib::format_size(storage.resources)),
-        gettext("Trash {size}").replace("{size}", &glib::format_size(storage.trash)),
-        gettext("Thumbnails {size}").replace("{size}", &glib::format_size(storage.thumbnails)),
-        gettext("Database {size}").replace("{size}", &glib::format_size(storage.database)),
-    ]
-    .join(" · ")
-}
-
 fn chart_description(slices: &[Slice]) -> String {
     slices
         .iter()
@@ -490,6 +561,18 @@ fn dot(color: &str) -> gtk::Widget {
     label.upcast()
 }
 
+fn legend_item(color: &str, text: &str) -> gtk::Widget {
+    let item = gtk::Box::builder().spacing(6).build();
+    item.append(&dot(color));
+    item.append(
+        &gtk::Label::builder()
+            .label(text)
+            .css_classes(["caption"])
+            .build(),
+    );
+    item.upcast()
+}
+
 fn legend_cell(text: &str, align: gtk::Align, classes: &[&str]) -> gtk::Widget {
     let label = gtk::Label::builder().label(text).halign(align).build();
     for class in classes {
@@ -505,27 +588,6 @@ fn disk_space(root: &Path) -> Option<(u64, u64)> {
     let size = info.attribute_uint64("filesystem::size");
     let free = info.attribute_uint64("filesystem::free");
     (size > 0).then_some((size, free.min(size)))
-}
-
-fn disk_text_markup(library: u64, others: u64, free: u64, size: u64) -> String {
-    let legend = |color: &str, text: String| {
-        format!(
-            "<span foreground=\"{color}\">●</span> {}",
-            glib::markup_escape_text(&text)
-        )
-    };
-    [
-        legend(
-            LIBRARY_COLOR,
-            gettext("This library {size}").replace("{size}", &glib::format_size(library)),
-        ),
-        legend(
-            OTHER_FILES_COLOR,
-            gettext("Other files {size}").replace("{size}", &glib::format_size(others)),
-        ),
-        glib::markup_escape_text(&disk_plain_text(free, size)).to_string(),
-    ]
-    .join("    ")
 }
 
 fn disk_plain_text(free: u64, size: u64) -> String {
@@ -562,18 +624,4 @@ fn day_of(unix_seconds: i64) -> String {
     glib::DateTime::from_unix_local(unix_seconds)
         .and_then(|date| date.format(&gettext("%B %-d, %Y")))
         .map_or_else(|_| gettext("Unknown date"), |text| text.to_string())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::centered_cell;
-
-    #[test]
-    fn a_shorter_last_row_of_figures_is_centered() {
-        let cells: Vec<(i32, i32)> = (0..7).map(|position| centered_cell(position, 7)).collect();
-        assert_eq!(
-            cells,
-            [(0, 0), (2, 0), (4, 0), (6, 0), (1, 1), (3, 1), (5, 1)]
-        );
-    }
 }

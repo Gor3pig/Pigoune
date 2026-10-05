@@ -295,13 +295,21 @@ la gardez dans un dossier synchronisé (Nextcloud, Syncthing…), fermez Pigoune
 ordinateur avant de l'ouvrir sur un autre.
 
 Choisissez **Informations sur la bibliothèque** dans le menu principal pour voir ce que contient
-la bibliothèque ouverte : le nombre de ressources, de collections, de tags, de favoris, d'images
-animées, de SVG et de ressources dans la corbeille, son emplacement, si ce disque est amovible,
-sa date de création et les versions de Pigoune capables de l'ouvrir. Des boutons copient son emplacement ou ouvrent
-son dossier. Un graphique en anneau montre comment la place se répartit entre les formats, en
-poids ou en nombre de ressources, et une barre montre la place de la bibliothèque sur son disque
-à côté de l'espace libre. Les **Records** désignent la ressource la plus lourde, la plus grande,
-la plus récente et la plus ancienne ; cliquez sur l'une d'elles pour la voir dans la grille.
+la bibliothèque ouverte, en trois onglets :
+
+- **Aperçu** montre le nom et l'emplacement de la bibliothèque, le nombre de ressources, de
+  collections, de tags et de favoris, et les **Records** : la ressource la plus lourde, la plus
+  grande, la plus récente et la plus ancienne ; cliquez sur l'une d'elles pour la voir dans la
+  grille.
+- **Contenu** montre dans un graphique en anneau comment la place se répartit entre les formats,
+  en poids ou en nombre de ressources, le nombre d'images animées, de SVG et de ressources dans la
+  corbeille, et les couleurs détectées avec le nombre de ressources dont chacune est une couleur
+  principale.
+- **Stockage** montre dans une seule barre la place de la bibliothèque sur son disque, répartie
+  entre les ressources, les vignettes, la base de données et la corbeille, à côté des autres
+  fichiers et de l'espace libre. En dessous : son emplacement, avec des boutons pour le copier ou
+  ouvrir son dossier, si ce disque est amovible, sa date de création et les versions de Pigoune
+  capables de l'ouvrir.
 
 ## Préférences
 

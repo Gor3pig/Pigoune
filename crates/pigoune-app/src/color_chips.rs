@@ -50,23 +50,9 @@ impl PigouneColorChips {
         let pills = self.pills();
         pills.remove_all();
         for color in colors {
-            pills.append(&Self::pill(color.family));
+            pills.append(&pill(color.family, None));
         }
         !colors.is_empty()
-    }
-
-    fn pill(color: AssetColor) -> gtk::Box {
-        let dot = gtk::Box::builder()
-            .css_classes(["color-dot", &format!("color-dot-{}", color.code())])
-            .valign(gtk::Align::Center)
-            .build();
-        let pill = gtk::Box::builder()
-            .spacing(6)
-            .css_classes(["tag-pill", "color-chip"])
-            .build();
-        pill.append(&dot);
-        pill.append(&gtk::Label::new(Some(&asset_colors::color_name(color))));
-        pill
     }
 
     fn pills(&self) -> adw::WrapBox {
@@ -101,4 +87,26 @@ impl Default for PigouneColorChips {
     fn default() -> Self {
         glib::Object::new()
     }
+}
+
+pub fn pill(color: AssetColor, count: Option<usize>) -> gtk::Box {
+    let dot = gtk::Box::builder()
+        .css_classes(["color-dot", &format!("color-dot-{}", color.code())])
+        .valign(gtk::Align::Center)
+        .build();
+    let pill = gtk::Box::builder()
+        .spacing(6)
+        .css_classes(["tag-pill", "color-chip"])
+        .build();
+    pill.append(&dot);
+    pill.append(&gtk::Label::new(Some(&asset_colors::color_name(color))));
+    if let Some(count) = count {
+        pill.append(
+            &gtk::Label::builder()
+                .label(count.to_string())
+                .css_classes(["dim-label", "numeric"])
+                .build(),
+        );
+    }
+    pill
 }

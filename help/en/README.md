@@ -258,13 +258,20 @@ folder while Pigoune is closed.
 A library can only be open in one Pigoune window at a time. If you keep a library in a synced
 folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening it on another.
 
-Choose **Library Information** in the main menu to see what the open library holds: the
-number of assets, collections, tags, favorites, animated images, SVG images and assets in the
-trash, where the library is stored, whether that disk is removable, when the library was
-created and which versions of Pigoune can open it. Buttons copy its location or open its folder.
-A ring chart shows how the space is shared between formats, by size or by number of assets,
-and a bar shows the room the library takes on its disk next to the free space. **Records** name
-the heaviest, the largest, the newest and the oldest asset; click one to see it in the grid.
+Choose **Library Information** in the main menu to see what the open library holds, in three
+tabs:
+
+- **Overview** shows the name and location of the library, the number of assets, collections,
+  tags and favorites, and the **Records**: the heaviest, the largest, the newest and the oldest
+  asset; click one to see it in the grid.
+- **Content** shows how the space is shared between formats in a ring chart, by size or by
+  number of assets, the number of animated images, SVG images and assets in the trash, and the
+  detected colors with the number of assets where each one is a main color.
+- **Storage** shows in a single bar what the library takes on its disk, split between the
+  assets, the thumbnails, the database and the trash, next to the other files and the free
+  space. Below are where the library is stored, with buttons to copy its location or open its
+  folder, whether that disk is removable, when the library was created and which versions of
+  Pigoune can open it.
 
 ## Preferences
 

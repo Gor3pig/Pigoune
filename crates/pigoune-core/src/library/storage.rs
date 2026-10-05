@@ -1,13 +1,20 @@
+use std::collections::BTreeMap;
 use std::fs;
 
 use super::{Library, LibraryError, layout};
-use crate::media::AssetFormat;
+use crate::media::{self, AssetColor, AssetFormat};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FormatShare {
     pub format: AssetFormat,
     pub count: usize,
     pub bytes: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ColorShare {
+    pub color: AssetColor,
+    pub count: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +47,31 @@ impl Library {
             })
         })?;
         Ok(shares.collect::<Result<_, _>>()?)
+    }
+
+    pub fn color_shares(&self) -> Result<Vec<ColorShare>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT colors FROM assets
+             WHERE trashed_at_unix_ms IS NULL AND colors IS NOT NULL",
+        )?;
+        let mut counts: BTreeMap<AssetColor, usize> = BTreeMap::new();
+        for colors in statement.query_map([], |row| row.get::<_, String>(0))? {
+            let mut families: Vec<AssetColor> = media::dominant_from_text(&colors?)
+                .into_iter()
+                .map(|dominant| dominant.family)
+                .collect();
+            families.sort_unstable();
+            families.dedup();
+            for family in families {
+                *counts.entry(family).or_default() += 1;
+            }
+        }
+        let mut shares: Vec<ColorShare> = counts
+            .into_iter()
+            .map(|(color, count)| ColorShare { color, count })
+            .collect();
+        shares.sort_by_key(|share| std::cmp::Reverse(share.count));
+        Ok(shares)
     }
 
     pub fn storage_use(&self) -> Result<StorageUse, LibraryError> {

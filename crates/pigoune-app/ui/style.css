@@ -749,3 +749,7 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
   background: none;
   box-shadow: inset 0 0 0 2px var(--accent-bg-color);
 }
+
+.figure-tile.main-figure {
+  padding: 14px 6px;
+}
