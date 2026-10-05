@@ -135,6 +135,7 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().save_edits_when_done();
+            self.obj().shorten_long_names();
         }
     }
     impl WidgetImpl for PigouneAssetDetails {}
@@ -149,6 +150,18 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneAssetDetails {
+    fn shorten_long_names(&self) {
+        let name_label = self.imp().name_label.get();
+        let mut pending: Vec<gtk::Widget> = name_label.first_child().into_iter().collect();
+        while let Some(widget) = pending.pop() {
+            if let Some(label) = widget.downcast_ref::<gtk::Label>() {
+                label.set_ellipsize(gtk::pango::EllipsizeMode::End);
+            }
+            pending.extend(widget.first_child());
+            pending.extend(widget.next_sibling());
+        }
+    }
+
     pub fn connect_renamed(&self, callback: impl Fn(&PigouneAssetObject, String) + 'static) {
         self.imp().on_renamed.replace(Some(Box::new(callback)));
     }
