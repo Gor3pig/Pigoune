@@ -111,12 +111,14 @@ session.
 
 ### 2. Installer Pigoune
 
-Ouvrez [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) avec Logiciels, qui installe Pigoune ainsi que l'environnement
-GNOME dont il a besoin depuis Flathub, ou lancez cette commande :
+Ouvrez [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) avec Logiciels, qui installe Pigoune depuis son propre
+dépôt, ou lancez cette commande :
 
 ```sh
 flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 ```
+
+L'environnement GNOME dont Pigoune a besoin est téléchargé automatiquement depuis Flathub.
 
 ### 3. Rester à jour
 

@@ -106,12 +106,14 @@ ship Flatpak already. On Ubuntu and a few others, set it up first by following t
 
 ### 2. Install Pigoune
 
-Open [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) with Software, which installs Pigoune along with the GNOME
-runtime it needs from Flathub, or run this command:
+Open [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) with Software, which installs Pigoune from its own
+repository, or run this command:
 
 ```sh
 flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 ```
+
+The GNOME runtime that Pigoune needs is downloaded automatically from Flathub.
 
 ### 3. Stay up to date
 
