@@ -70,18 +70,19 @@ impl PigouneQueryPills {
         self.imp().on_query_changed.replace(Some(Rc::new(callback)));
     }
 
-    pub fn show_result_count(&self, count: Option<usize>) {
+    pub fn show_result_count(&self, count: Option<usize>, place: &str) {
         let imp = self.imp();
         imp.result_count.set(count);
         imp.count_label.set_visible(count.is_some());
         if let Some(count) = count {
             imp.count_label.set_label(
                 &ngettext(
-                    "{count} result",
-                    "{count} results",
+                    "{count} result in {place}",
+                    "{count} results in {place}",
                     u32::try_from(count).unwrap_or(u32::MAX),
                 )
-                .replace("{count}", &count.to_string()),
+                .replace("{count}", &count.to_string())
+                .replace("{place}", place),
             );
         }
         self.update_visibility();

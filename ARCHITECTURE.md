@@ -136,6 +136,10 @@ Importing a folder recreates its tree as nested collections.
   plain CSS classes, so they also work when system animations are turned off.
 - **Adaptive layout.** Breakpoints collapse the details panel, then the sidebar, on narrow
   windows.
+- **Search field width.** `search_space.rs` holds the search field and the Filters button and
+  shares the room it is given during layout: two thirds of the spare width go to the field, up
+  to a maximum, and the rest stays empty so that the window can still be dragged by its header.
+  Sizing during layout, like `square_space.rs`, avoids any flicker while resizing.
 
 ## Website
 

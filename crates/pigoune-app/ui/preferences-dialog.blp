@@ -41,6 +41,40 @@ Adw.PreferencesDialog dialog {
         title: _("Play Animations on Hover");
         subtitle: _("Animated thumbnails play when the pointer is over them");
       }
+
+      Adw.SwitchRow show_formats_row {
+        title: _("Show Formats");
+        subtitle: _("A badge shows the format of each resource on its thumbnail");
+      }
+
+      Adw.ComboRow tile_background_row {
+        title: _("Thumbnail Background");
+        subtitle: _("A plain background helps to see white or black images");
+
+        model: StringList {
+          strings [
+            _("Default"),
+            _("White"),
+            _("Gray"),
+            _("Black"),
+            _("Checkerboard"),
+          ]
+        };
+      }
+
+      Adw.SwitchRow double_click_opens_row {
+        title: _("Open Resources on Double-Click");
+        subtitle: _("A double-click opens the resource in its default application instead of the preview");
+      }
+    }
+
+    Adw.PreferencesGroup {
+      title: C_("preferences group", "Search");
+
+      Adw.SwitchRow search_everywhere_row {
+        title: _("Search the Whole Library");
+        subtitle: _("Searches and filters ignore the collection or tag selected in the sidebar");
+      }
     }
 
     Adw.PreferencesGroup {

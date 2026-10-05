@@ -275,6 +275,15 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
   masqués, survolez une vignette pour voir son nom.
 - **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
   distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
+- **Afficher les formats** : une étiquette indique le format de chaque ressource (SVG, PNG…)
+  sur sa vignette.
+- **Fond des vignettes** : blanc, gris, noir ou damier derrière les vignettes, pour voir les
+  images blanches ou noires et les zones transparentes.
+- **Ouvrir les ressources au double-clic** : un double-clic ouvre la ressource dans son
+  application par défaut au lieu de l'aperçu. La touche <kbd>Espace</kbd> ouvre toujours
+  l'aperçu.
+- **Rechercher dans toute la bibliothèque** : la recherche et les filtres regardent partout,
+  et pas seulement dans la collection ou le tag sélectionné dans la barre latérale.
 - **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
 - **Tags** : désactivez-la pour masquer la section des tags de la barre latérale. Les tags
   restent visibles dans le panneau de détails, et la recherche les trouve toujours.

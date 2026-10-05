@@ -46,6 +46,8 @@ mod preferences_dialog;
 mod query_pills;
 mod recent_libraries;
 mod ring_chart;
+mod search_space;
+mod search_width;
 mod settings;
 mod sidebar;
 mod sidebar_item;

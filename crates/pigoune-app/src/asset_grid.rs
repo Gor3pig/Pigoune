@@ -54,6 +54,10 @@ mod imp {
         pub show_names: Cell<bool>,
         #[property(get, set, default = true)]
         pub animate_on_hover: Cell<bool>,
+        #[property(get, set)]
+        pub show_formats: Cell<bool>,
+        #[property(get, set = Self::set_tile_background)]
+        pub tile_background: RefCell<String>,
         #[property(get, set = Self::set_sort_criterion)]
         pub sort_criterion: RefCell<String>,
         #[property(get, set = Self::set_sort_reversed)]
@@ -78,6 +82,8 @@ mod imp {
                 tile_size: Cell::new(DEFAULT_TILE_SIZE),
                 show_names: Cell::new(true),
                 animate_on_hover: Cell::new(true),
+                show_formats: Cell::default(),
+                tile_background: RefCell::default(),
                 sort_criterion: RefCell::default(),
                 sort_reversed: Cell::default(),
                 sort_order: Rc::default(),
@@ -114,6 +120,15 @@ mod imp {
                 return;
             }
             self.obj().resort();
+        }
+
+        fn set_tile_background(&self, background: String) {
+            self.grid_view.add_css_class(&format!("tiles-{background}"));
+            let previous = self.tile_background.replace(background);
+            if previous != *self.tile_background.borrow() {
+                self.grid_view
+                    .remove_css_class(&format!("tiles-{previous}"));
+            }
         }
 
         fn set_tile_size(&self, size: i32) {
@@ -792,6 +807,9 @@ impl PigouneAssetGrid {
                         .sync_create()
                         .build();
                     grid.bind_property("animate-on-hover", &tile, "animates-on-hover")
+                        .sync_create()
+                        .build();
+                    grid.bind_property("show-formats", &tile, "shows-format")
                         .sync_create()
                         .build();
                     grid.make_draggable(&tile);

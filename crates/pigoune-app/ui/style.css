@@ -404,3 +404,21 @@ gridview.asset-grid > child:focus:focus-visible .tile-frame {
 .query-or {
   color: var(--accent-color);
 }
+
+gridview.asset-grid.tiles-white > child .tile-frame {
+  background-color: #ffffff;
+}
+
+gridview.asset-grid.tiles-grey > child .tile-frame {
+  background-color: #808080;
+}
+
+gridview.asset-grid.tiles-black > child .tile-frame {
+  background-color: #000000;
+}
+
+gridview.asset-grid.tiles-checkerboard > child .tile-frame {
+  background-color: #ffffff;
+  background-image: conic-gradient(#cccccc 25%, #ffffff 0 50%, #cccccc 0 75%, #ffffff 0);
+  background-size: 16px 16px;
+}

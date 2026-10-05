@@ -68,6 +68,15 @@ mod imp {
         pub description: RefCell<String>,
         #[property(get, set)]
         pub animates_on_hover: Cell<bool>,
+        #[property(get, set = Self::set_shows_format)]
+        pub shows_format: Cell<bool>,
+    }
+
+    impl PigouneAssetTile {
+        fn set_shows_format(&self, shows: bool) {
+            self.shows_format.set(shows);
+            self.obj().show_badge();
+        }
     }
 
     #[glib::object_subclass]
@@ -129,12 +138,29 @@ impl PigouneAssetTile {
         self.imp().favorite_badge.get()
     }
 
+    fn show_badge(&self) {
+        let imp = self.imp();
+        let shown = imp.asset.borrow().clone();
+        let Some(shown) = shown else {
+            imp.animation_badge.set_visible(false);
+            return;
+        };
+        let asset = shown.asset();
+        let label = if asset.is_animated {
+            asset_facts::animation_badge_text(asset.format)
+        } else {
+            asset_facts::format_name(asset.format)
+        };
+        imp.animation_badge.set_label(label);
+        imp.animation_badge
+            .set_visible(asset.is_animated || imp.shows_format.get());
+    }
+
     pub fn show_asset(&self, asset: &PigouneAssetObject, cache: &Rc<ThumbnailCache>) {
         let imp = self.imp();
         self.follow_name(asset);
-        imp.animation_badge.set_visible(asset.asset().is_animated);
-        imp.animation_badge
-            .set_label(asset_facts::animation_badge_text(asset.asset().format));
+        imp.asset.replace(Some(asset.clone()));
+        self.show_badge();
         self.unbind_favorite();
         let binding = asset
             .bind_property("favorite", &*imp.favorite_badge, "visible")

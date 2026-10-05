@@ -14,6 +14,8 @@ pub struct ThumbnailStorage {
     pub clear: Rc<dyn Fn() -> Result<(), String>>,
 }
 
+const TILE_BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checkerboard"];
+
 pub fn present(
     parent: &impl IsA<gtk::Widget>,
     settings: &gio::Settings,
@@ -27,6 +29,9 @@ pub fn present(
         ("animate_on_hover_row", settings::ANIMATE_ON_HOVER),
         ("show_counts_row", settings::SHOW_COUNTS),
         ("show_tags_row", settings::SHOW_TAGS),
+        ("show_formats_row", settings::SHOW_FORMATS),
+        ("double_click_opens_row", settings::DOUBLE_CLICK_OPENS),
+        ("search_everywhere_row", settings::SEARCH_EVERYWHERE),
         (
             "show_smart_collections_row",
             settings::SHOW_SMART_COLLECTIONS,
@@ -40,6 +45,9 @@ pub fn present(
     }
     if let Some(row) = builder.object::<adw::SpinRow>("recent_libraries_row") {
         follow_recent_libraries_limit(&row, settings);
+    }
+    if let Some(row) = builder.object::<adw::ComboRow>("tile_background_row") {
+        follow_tile_background(&row, settings);
     }
     let (Some(dialog), Some(page)) = (
         builder.object::<adw::PreferencesDialog>("dialog"),
@@ -65,6 +73,28 @@ fn follow_recent_libraries_limit(row: &adw::SpinRow, settings: &gio::Settings) {
                 settings::RECENT_LIBRARIES_LIMIT,
                 whole_number(row.value()),
             );
+        }
+    ));
+}
+
+fn follow_tile_background(row: &adw::ComboRow, settings: &gio::Settings) {
+    let current = settings.string(settings::TILE_BACKGROUND);
+    let position = TILE_BACKGROUNDS
+        .iter()
+        .position(|background| *background == current.as_str())
+        .and_then(|index| u32::try_from(index).ok())
+        .unwrap_or(0);
+    row.set_selected(position);
+    row.connect_selected_notify(glib::clone!(
+        #[strong]
+        settings,
+        move |row| {
+            let chosen = usize::try_from(row.selected())
+                .ok()
+                .and_then(|index| TILE_BACKGROUNDS.get(index))
+                .copied()
+                .unwrap_or(TILE_BACKGROUNDS[0]);
+            settings::store_string(&settings, settings::TILE_BACKGROUND, chosen);
         }
     ));
 }

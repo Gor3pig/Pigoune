@@ -468,27 +468,7 @@ impl PigouneWindow {
             .property("application", application)
             .build();
         window.restore_window_state(&settings);
-        settings
-            .bind(
-                settings::THUMBNAIL_SIZE,
-                &*window.imp().asset_grid,
-                "tile-size",
-            )
-            .build();
-        settings
-            .bind(
-                settings::SHOW_NAMES,
-                &*window.imp().asset_grid,
-                "show-names",
-            )
-            .build();
-        settings
-            .bind(
-                settings::ANIMATE_ON_HOVER,
-                &*window.imp().asset_grid,
-                "animate-on-hover",
-            )
-            .build();
+        window.bind_grid_settings(&settings);
         window
             .imp()
             .asset_grid
@@ -989,6 +969,48 @@ impl PigouneWindow {
         let needed = f64::from(needed.unwrap_or(0));
         split.set_min_sidebar_width(needed.max(SIDEBAR_MIN_WIDTH));
         split.set_max_sidebar_width(needed.max(SIDEBAR_MAX_WIDTH));
+    }
+
+    fn bind_grid_settings(&self, settings: &gio::Settings) {
+        settings
+            .bind(
+                settings::THUMBNAIL_SIZE,
+                &*self.imp().asset_grid,
+                "tile-size",
+            )
+            .build();
+        settings
+            .bind(settings::SHOW_NAMES, &*self.imp().asset_grid, "show-names")
+            .build();
+        settings
+            .bind(
+                settings::ANIMATE_ON_HOVER,
+                &*self.imp().asset_grid,
+                "animate-on-hover",
+            )
+            .build();
+        settings
+            .bind(
+                settings::SHOW_FORMATS,
+                &*self.imp().asset_grid,
+                "show-formats",
+            )
+            .build();
+        settings
+            .bind(
+                settings::TILE_BACKGROUND,
+                &*self.imp().asset_grid,
+                "tile-background",
+            )
+            .build();
+        settings.connect_changed(
+            Some(settings::SEARCH_EVERYWHERE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| window.refresh_grid()
+            ),
+        );
     }
 
     fn smart_collection_order(&self) -> SmartCollectionOrder {
@@ -2068,6 +2090,10 @@ impl PigouneWindow {
         if self.is_showing_trash() {
             return;
         }
+        self.open_asset(asset, true).await;
+    }
+
+    async fn open_asset(&self, asset: AssetId, choose_application: bool) {
         let prepared = self
             .imp()
             .library
@@ -2083,7 +2109,7 @@ impl PigouneWindow {
             Some(Ok(None)) | None => return,
         };
         let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(copy)));
-        launcher.set_always_ask(true);
+        launcher.set_always_ask(choose_application);
         if let Err(error) = launcher.launch_future(Some(self)).await
             && !is_dismissed(&error)
         {
@@ -2738,9 +2764,16 @@ impl PigouneWindow {
     }
 
     fn ask_new_smart_collection(&self) {
+        let filter = self.current_filter();
         let current = self.imp().current_view.get();
+        let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
+        let current = if everywhere && can_be_saved_from(current) {
+            AssetView::All
+        } else {
+            current
+        };
         let (scope, filter) = if can_be_saved_from(current) {
-            (current, self.current_filter())
+            (current, filter)
         } else {
             (AssetView::All, AssetFilter::default())
         };
@@ -2980,13 +3013,30 @@ impl PigouneWindow {
         imp.asset_grid.connect_preview_requested(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |position| window.open_preview(position)
+            move |position| window.activate_asset(position)
         ));
         imp.asset_preview.connect_closed(glib::clone!(
             #[weak(rename_to = window)]
             self,
             move |last| window.leave_preview(last.as_ref())
         ));
+    }
+
+    fn activate_asset(&self, activated: Option<u32>) {
+        let opens_in_application = self.settings().boolean(settings::DOUBLE_CLICK_OPENS);
+        let asset = activated
+            .filter(|_| opens_in_application && !self.is_showing_trash())
+            .and_then(|position| usize::try_from(position).ok())
+            .and_then(|index| self.imp().asset_grid.visible_assets().get(index).cloned());
+        match asset {
+            Some(asset) => {
+                let window = self.clone();
+                glib::spawn_future_local(async move {
+                    window.open_asset(asset.id(), false).await;
+                });
+            }
+            None => self.open_preview(activated),
+        }
     }
 
     fn open_preview(&self, activated: Option<u32>) {
@@ -3257,11 +3307,46 @@ impl PigouneWindow {
         );
     }
 
+    fn search_place(&self, view: AssetView) -> String {
+        match view {
+            AssetView::All => gettext("the whole library"),
+            AssetView::Trash => gettext("the trash"),
+            AssetView::Favorites
+            | AssetView::Unclassified
+            | AssetView::Collection(_)
+            | AssetView::Tag(_)
+            | AssetView::Smart(_) => gettext("“{name}”").replace("{name}", &self.scope_name(view)),
+        }
+    }
+
+    fn announce_search_place(&self) {
+        let imp = self.imp();
+        let current = imp.current_view.get();
+        let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
+        let searched = if everywhere && can_be_saved_from(current) {
+            AssetView::All
+        } else {
+            current
+        };
+        imp.grid_header.search_entry().set_placeholder_text(Some(
+            &gettext("Search in {place}…").replace("{place}", &self.search_place(searched)),
+        ));
+    }
+
+    fn searched_view(&self, view: AssetView, filter: &AssetFilter) -> AssetView {
+        let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
+        if everywhere && filter.narrows() && can_be_saved_from(view) {
+            AssetView::All
+        } else {
+            view
+        }
+    }
+
     fn refresh_grid(&self) {
         let imp = self.imp();
-        let view = imp.current_view.get();
-        let previously_selected = self.selected_ids();
         let filter = self.current_filter();
+        let view = self.searched_view(imp.current_view.get(), &filter);
+        let previously_selected = self.selected_ids();
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
                 asset_objects(library, view, &filter)?,
@@ -3283,8 +3368,10 @@ impl PigouneWindow {
                     self.describe_empty_view(view, &view_name);
                 }
                 imp.asset_grid.show_nothing(assets.is_empty());
+                let place = self.search_place(view);
                 imp.query_pills
-                    .show_result_count(searching.then_some(assets.len()));
+                    .show_result_count(searching.then_some(assets.len()), &place);
+                self.announce_search_place();
                 imp.asset_grid.show_assets(&assets);
                 if !previously_selected.is_empty() {
                     imp.asset_grid.select_assets(&previously_selected);

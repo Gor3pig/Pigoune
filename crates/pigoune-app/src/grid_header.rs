@@ -13,6 +13,7 @@ mod imp {
     use gtk::prelude::*;
 
     use crate::filter_popover::PigouneFilterPopover;
+    use crate::search_space::PigouneSearchSpace;
 
     #[derive(Default, gtk::CompositeTemplate, glib::Properties)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/grid-header.ui")]
@@ -47,6 +48,7 @@ mod imp {
 
         fn class_init(class: &mut Self::Class) {
             PigouneFilterPopover::ensure_type();
+            PigouneSearchSpace::ensure_type();
             class.bind_template();
         }
 

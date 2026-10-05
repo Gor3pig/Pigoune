@@ -108,6 +108,33 @@
       <summary>Show smart collections</summary>
       <description>Whether the sidebar shows the smart collections section.</description>
     </key>
+    <key name="tile-background" type="s">
+      <choices>
+        <choice value="transparent"/>
+        <choice value="white"/>
+        <choice value="grey"/>
+        <choice value="black"/>
+        <choice value="checkerboard"/>
+      </choices>
+      <default>"transparent"</default>
+      <summary>Thumbnail background</summary>
+      <description>Background shown behind the thumbnails of the grid.</description>
+    </key>
+    <key name="show-formats" type="b">
+      <default>false</default>
+      <summary>Show formats</summary>
+      <description>Whether each thumbnail of the grid shows the format of its resource.</description>
+    </key>
+    <key name="double-click-opens" type="b">
+      <default>false</default>
+      <summary>Open resources on double-click</summary>
+      <description>Whether a double-click opens a resource in its default application instead of the preview.</description>
+    </key>
+    <key name="search-everywhere" type="b">
+      <default>false</default>
+      <summary>Search the whole library</summary>
+      <description>Whether searches and filters ignore the collection or tag selected in the sidebar.</description>
+    </key>
     <key name="show-tags" type="b">
       <default>true</default>
       <summary>Show tags</summary>

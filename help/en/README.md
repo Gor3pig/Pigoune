@@ -236,6 +236,13 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>:
   thumbnail to see its name.
 - **Play Animations on Hover**: turn it off if moving thumbnails distract you; animations still
   play in the details panel and the preview.
+- **Show Formats**: a badge shows the format of each asset (SVG, PNG…) on its thumbnail.
+- **Thumbnail Background**: white, gray, black or a checkerboard behind the thumbnails, to see
+  white or black images and transparent areas.
+- **Open Resources on Double-Click**: a double-click opens the asset in its default
+  application instead of the preview. <kbd>Space</kbd> still opens the preview.
+- **Search the Whole Library**: searches and filters look everywhere instead of only in the
+  collection or tag selected in the sidebar.
 - **Show Resource Counts** next to each entry of the sidebar.
 - **Tags**: turn it off to hide the tags section of the sidebar. Tags still appear in the
   details panel, and searches still find them.
