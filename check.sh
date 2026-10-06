@@ -69,6 +69,8 @@ translatable_files_are_listed() {
     return $missing
 }
 
+FULLY_TRANSLATED_LANGUAGE=fr
+
 translations_are_complete() {
     local workdir language statistics incomplete=0
     workdir=$(mktemp -d)
@@ -79,7 +81,16 @@ translations_are_complete() {
     for language in $(cat po/LINGUAS); do
         msgmerge --quiet --no-fuzzy-matching "po/$language.po" "$workdir/pigoune.pot" \
             --output-file="$workdir/$language.po"
-        statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language.po" 2>&1)
+        if [ "$language" = "$FULLY_TRANSLATED_LANGUAGE" ]; then
+            statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language.po" 2>&1)
+        else
+            msggrep --location='crates/*/*/*' "$workdir/$language.po" --output-file="$workdir/$language-interface.po"
+            statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language-interface.po" 2>&1)
+            if msggrep --location='data/*' "$workdir/$language.po" | msgattrib --translated --no-obsolete | grep -q '^msgid "[^"]'; then
+                statistics="$statistics; only the interface may be translated, not data/"
+                incomplete=1
+            fi
+        fi
         printf '%s: %s\n' "$language" "$statistics"
         if grep -qE 'non traduit|untranslated|approximati|fuzzy' <<<"$statistics"; then
             incomplete=1

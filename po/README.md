@@ -22,6 +22,13 @@ a `<language>.po` file in this folder. Thank you for helping!
    ./check.sh
    ```
 
+## What to translate
+
+French is translated completely: the interface, the application description shown by
+software centers, the launcher and the settings descriptions. The other languages translate
+**only the interface**, the entries that come from `crates/`. Leave the entries that come from
+`data/` empty: `./check.sh` refuses them for any language other than French.
+
 ## Adding a new language
 
 1. Create the file from the template, replacing `de` with your language code:
