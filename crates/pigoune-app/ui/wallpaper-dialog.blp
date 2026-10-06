@@ -14,6 +14,11 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
     setters {
       content_box.orientation: vertical;
+      stage_overlay.height-request: 220;
+      panel.propagate-natural-height: true;
+      window_title.visible: false;
+      foot_box.orientation: vertical;
+      hint_label.xalign: 0;
     }
   }
 
@@ -54,168 +59,178 @@ template $PigouneWallpaperDialog: Adw.Dialog {
       }
     }
 
-    content: Box content_box {
-      Overlay {
-        child: $PigouneWallpaperStage stage {};
+    content: ScrolledWindow {
+      hscrollbar-policy: never;
+      vexpand: true;
 
-        [overlay]
-        Revealer sharpness_revealer {
-          halign: center;
-          valign: start;
-          margin-top: 12;
-          margin-start: 12;
-          margin-end: 12;
-          transition-type: crossfade;
-          can-target: false;
-
-          child: Box {
-            spacing: 8;
-
-            Image {
-              icon-name: "dialog-warning-symbolic";
-            }
-
-            Label sharpness_label {
-              wrap: true;
-            }
-
-            styles [
-              "osd",
-              "wallpaper-notice",
-            ]
-          };
-        }
-      }
-
-      Separator {}
-
-      ScrolledWindow {
-        hscrollbar-policy: never;
-        propagate-natural-height: true;
-        hexpand: false;
-        width-request: 340;
-
-        child: Box {
+      child: Box content_box {
+        Box {
           orientation: vertical;
-          spacing: 18;
-          margin-top: 12;
-          margin-bottom: 12;
-          margin-start: 12;
-          margin-end: 12;
+          hexpand: true;
 
-          Adw.PreferencesGroup screen_group {
-            title: _("Screen");
-          }
+          Overlay stage_overlay {
+            vexpand: true;
+            child: $PigouneWallpaperStage stage {};
 
-          Adw.PreferencesGroup {
-            title: _("Framing");
+            [overlay]
+            Revealer sharpness_revealer {
+              halign: center;
+              valign: start;
+              margin-top: 12;
+              margin-start: 12;
+              margin-end: 12;
+              transition-type: crossfade;
+              can-target: false;
 
-            Box {
-              orientation: vertical;
-              spacing: 12;
+              child: Box {
+                spacing: 8;
 
-              Box {
-                spacing: 6;
-
-                Button {
-                  icon-name: "zoom-out-symbolic";
-                  tooltip-text: _("Zoom Out");
-                  valign: center;
-                  clicked => $on_zoom_out_clicked() swapped;
-
-                  styles [
-                    "flat",
-                    "circular",
-                  ]
+                Image {
+                  icon-name: "dialog-warning-symbolic";
                 }
 
-                Scale zoom_scale {
-                  hexpand: true;
-                  tooltip-text: _("Zoom");
-                  draw-value: false;
-                  value-changed => $on_zoom_scale_changed() swapped;
-
-                  adjustment: Adjustment {
-                    lower: -4.605;
-                    upper: 2.08;
-                    step-increment: 0.05;
-                    page-increment: 0.2;
-                  };
-                }
-
-                Button {
-                  icon-name: "zoom-in-symbolic";
-                  tooltip-text: _("Zoom In");
-                  valign: center;
-                  clicked => $on_zoom_in_clicked() swapped;
-
-                  styles [
-                    "flat",
-                    "circular",
-                  ]
-                }
-
-                Label zoom_label {
-                  tooltip-text: _("100%: one pixel of the image for one pixel of the screen");
-                  width-chars: 6;
-                  xalign: 1;
-
-                  styles [
-                    "numeric",
-                  ]
-                }
-              }
-
-              Box {
-                homogeneous: true;
-
-                Button {
-                  label: _("Fill");
-                  tooltip-text: _("Covers the whole screen, as the desktop does; the edges that go past it are cut");
-                  clicked => $on_fill_clicked() swapped;
-                }
-
-                Button {
-                  label: _("Whole");
-                  tooltip-text: _("Shows the whole image; the rest of the screen is filled as chosen under Empty Space");
-                  clicked => $on_whole_clicked() swapped;
-                }
-
-                Button actual_button {
-                  tooltip-text: _("One pixel of the image for one pixel of the screen, for the sharpest result");
-                  clicked => $on_actual_clicked() swapped;
+                Label sharpness_label {
+                  wrap: true;
                 }
 
                 styles [
-                  "linked",
+                  "osd",
+                  "wallpaper-notice",
+                ]
+              };
+            }
+          }
+
+
+          Box {
+            orientation: vertical;
+            spacing: 12;
+            margin-top: 12;
+            margin-bottom: 12;
+            margin-start: 12;
+            margin-end: 12;
+
+            Box {
+              spacing: 6;
+
+              Button {
+                icon-name: "zoom-out-symbolic";
+                tooltip-text: _("Zoom Out");
+                valign: center;
+                clicked => $on_zoom_out_clicked() swapped;
+
+                styles [
+                  "flat",
+                  "circular",
                 ]
               }
 
-              Box {
-                homogeneous: true;
-                spacing: 6;
+              Scale zoom_scale {
+                hexpand: true;
+                tooltip-text: _("Zoom");
+                draw-value: false;
+                value-changed => $on_zoom_scale_changed() swapped;
 
-                ToggleButton mirror_button {
-                  label: _("Mirror");
-                  tooltip-text: _("Flips the image from left to right, in the wallpaper only");
-                  toggled => $on_mirror_toggled() swapped;
-                }
+                adjustment: Adjustment {
+                  lower: -4.605;
+                  upper: 2.08;
+                  step-increment: 0.05;
+                  page-increment: 0.2;
+                };
+              }
 
-                ToggleButton thirds_button {
-                  label: _("Thirds");
-                  tooltip-text: _("Shows the rule of thirds grid, to place the subject");
-                  toggled => $on_thirds_toggled() swapped;
-                }
+              Button {
+                icon-name: "zoom-in-symbolic";
+                tooltip-text: _("Zoom In");
+                valign: center;
+                clicked => $on_zoom_in_clicked() swapped;
 
-                ToggleButton snap_button {
-                  label: _("Snap");
-                  tooltip-text: _("While dragging, the image snaps to the center and the edges of the screen");
-                  active: true;
-                  toggled => $on_snap_toggled() swapped;
-                }
+                styles [
+                  "flat",
+                  "circular",
+                ]
+              }
+
+              Label zoom_label {
+                tooltip-text: _("100%: one pixel of the image for one pixel of the screen");
+                width-chars: 6;
+                xalign: 1;
+
+                styles [
+                  "numeric",
+                ]
               }
             }
+
+            Box {
+              homogeneous: true;
+
+              Button {
+                label: _("Fill");
+                tooltip-text: _("Covers the whole screen, as the desktop does; the edges that go past it are cut");
+                clicked => $on_fill_clicked() swapped;
+              }
+
+              Button {
+                label: _("Whole");
+                tooltip-text: _("Shows the whole image; the rest of the screen is filled as chosen under Empty Space");
+                clicked => $on_whole_clicked() swapped;
+              }
+
+              Button actual_button {
+                tooltip-text: _("One pixel of the image for one pixel of the screen, for the sharpest result");
+                clicked => $on_actual_clicked() swapped;
+              }
+
+              styles [
+                "linked",
+              ]
+            }
+
+            Box {
+              homogeneous: true;
+              spacing: 6;
+
+              ToggleButton mirror_button {
+                label: _("Mirror");
+                tooltip-text: _("Flips the image from left to right, in the wallpaper only");
+                toggled => $on_mirror_toggled() swapped;
+              }
+
+              ToggleButton thirds_button {
+                label: _("Thirds");
+                tooltip-text: _("Shows the rule of thirds grid, to place the subject");
+                toggled => $on_thirds_toggled() swapped;
+              }
+
+              ToggleButton snap_button {
+                label: _("Snap");
+                tooltip-text: _("While dragging, the image snaps to the center and the edges of the screen");
+                active: true;
+                toggled => $on_snap_toggled() swapped;
+              }
+            }
+
+            Adw.PreferencesGroup screen_group {
+              title: _("Screen");
+            }
           }
+        }
+
+        Separator {}
+
+        ScrolledWindow panel {
+          hscrollbar-policy: never;
+          hexpand: false;
+          width-request: 340;
+
+          child: Box {
+            orientation: vertical;
+            spacing: 18;
+            margin-top: 12;
+            margin-bottom: 12;
+            margin-start: 12;
+            margin-end: 12;
 
           Box {
             orientation: vertical;
@@ -427,12 +442,13 @@ template $PigouneWallpaperDialog: Adw.Dialog {
               notify::selected => $on_desktop_changed() swapped;
             }
           }
-        };
-      }
+          };
+        }
+      };
     };
 
     [bottom]
-    Box {
+    Box foot_box {
       spacing: 12;
       margin-top: 6;
       margin-bottom: 6;

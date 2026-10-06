@@ -403,6 +403,7 @@ impl PigouneWallpaperDialog {
         let imp = self.imp();
         imp.chosen_screen.set(current);
         if screens.len() < MANY_SCREENS {
+            imp.screen_group.set_title("");
             if let Some(screen) = screens.get(current) {
                 imp.screen_group
                     .set_description(Some(&screen_text(screen.size)));

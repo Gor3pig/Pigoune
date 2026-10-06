@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 22:07+0200\n"
+"POT-Creation-Date: 2026-10-06 22:41+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Polish\n"
@@ -916,7 +916,7 @@ msgstr "Nowa biblioteka"
 #: crates/pigoune-app/ui/collection-look-dialog.blp:16
 #: crates/pigoune-app/ui/export-as-dialog.blp:19
 #: crates/pigoune-app/ui/smart-collection-dialog.blp:17
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:32
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:37
 msgid "_Cancel"
 msgstr "_Anuluj"
 
@@ -1943,7 +1943,7 @@ msgstr "Nie udało się wykryć rozmiaru ekranu"
 
 #: crates/pigoune-app/src/filter_choices.rs:269
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:250
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:265
 msgid "Color"
 msgstr "Kolor"
 
@@ -2139,7 +2139,7 @@ msgstr "Rzeczywisty rozmiar"
 
 #: crates/pigoune-app/ui/asset-preview.blp:23
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:160
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:52
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:57
 msgid "Full Screen"
 msgstr "Pełny ekran"
 
@@ -2166,19 +2166,19 @@ msgid "Library"
 msgstr "Biblioteka"
 
 #: crates/pigoune-app/ui/asset-preview.blp:100
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:134
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:130
 msgid "Zoom"
 msgstr "Powiększenie"
 
 #: crates/pigoune-app/ui/asset-preview.blp:112
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:145
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:122
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:118
 msgid "Zoom Out"
 msgstr "Pomniejsz"
 
 #: crates/pigoune-app/ui/asset-preview.blp:123
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:140
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:148
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:144
 msgid "Zoom In"
 msgstr "Powiększ"
 
@@ -2251,7 +2251,7 @@ msgstr ""
 "Nie udało się wczytać tego obrazu: plik może brakować lub być uszkodzony"
 
 #: crates/pigoune-app/src/asset_preview.rs:1122
-#: crates/pigoune-app/src/wallpaper_dialog.rs:671
+#: crates/pigoune-app/src/wallpaper_dialog.rs:672
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent}%"
@@ -3335,7 +3335,6 @@ msgid "Size of My Screen"
 msgstr "Rozmiar mojego ekranu"
 
 #: crates/pigoune-app/ui/export-as-dialog.blp:61
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:111
 msgid "Framing"
 msgstr "Kadrowanie"
 
@@ -3779,27 +3778,23 @@ msgid "Close and reopen Pigoune to use the new version"
 msgstr "Zamknij i ponownie otwórz Pigoune, aby użyć nowej wersji"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:5
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:27
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:32
 msgid "Frame the Wallpaper"
 msgstr "Kadruj tapetę"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:39
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:44
 msgid "_Set as Wallpaper"
 msgstr "_Ustaw jako tapetę"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:107
-msgid "Screen"
-msgstr "Ekran"
-
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:159
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:155
 msgid "100%: one pixel of the image for one pixel of the screen"
 msgstr "100%: jeden piksel obrazu na jeden piksel ekranu"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:173
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:169
 msgid "Fill"
 msgstr "Wypełnij"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:174
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:170
 msgid ""
 "Covers the whole screen, as the desktop does; the edges that go past it are "
 "cut"
@@ -3807,131 +3802,135 @@ msgstr ""
 "Wypełnia cały ekran, tak jak robi to pulpit; wystające krawędzie są "
 "przycinane"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:179
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:175
 msgid "Whole"
 msgstr "Cały"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:180
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:176
 msgid ""
 "Shows the whole image; the rest of the screen is filled as chosen under "
 "Empty Space"
 msgstr ""
 "Pokazuje cały obraz; resztę ekranu wypełnia to, co wybrano w „Puste miejsce”"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:185
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:181
 msgid ""
 "One pixel of the image for one pixel of the screen, for the sharpest result"
 msgstr "Jeden piksel obrazu na jeden piksel ekranu, dla największej ostrości"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:199
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:195
 msgid "Mirror"
 msgstr "Lustro"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:200
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:196
 msgid "Flips the image from left to right, in the wallpaper only"
 msgstr "Odwraca obraz z lewej na prawą, tylko w tapecie"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:205
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:201
 msgid "Thirds"
 msgstr "Trójpodział"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:206
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:202
 msgid "Shows the rule of thirds grid, to place the subject"
 msgstr "Pokazuje siatkę trójpodziału, aby umieścić motyw"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:211
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:207
 msgid "Snap"
 msgstr "Magnes"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:212
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:208
 msgid ""
 "While dragging, the image snaps to the center and the edges of the screen"
 msgstr "Podczas przeciągania obraz przyciąga się do środka i krawędzi ekranu"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:225
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:215
+msgid "Screen"
+msgstr "Ekran"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:240
 msgid "Empty Space"
 msgstr "Puste miejsce"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:234
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:249
 msgid "Visible when the image does not cover the whole screen"
 msgstr "Widoczne, gdy obraz nie zakrywa całego ekranu"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:255
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:270
 msgid "Gradient"
 msgstr "Gradient"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:260
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:275
 msgid "Blur"
 msgstr "Rozmycie"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:265
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:280
 msgid "Mosaic"
 msgstr "Mozaika"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:295
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:310
 msgid "Angle"
 msgstr "Kąt"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:301
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:316
 msgid "Direction of the gradient: 0° goes up, 90° to the right, 180° down"
 msgstr "Kierunek gradientu: 0° w górę, 90° w prawo, 180° w dół"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:331
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:346
 msgid "Start Color"
 msgstr "Kolor początkowy"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:337
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:352
 msgid "Choose the start color"
 msgstr "Wybierz kolor początkowy"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:347
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:362
 msgid "End Color"
 msgstr "Kolor końcowy"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:353
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:368
 msgid "Choose the end color"
 msgstr "Wybierz kolor końcowy"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:369
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:384
 msgid "Swap Colors"
 msgstr "Zamień kolory"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:380
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:395
 msgid "Image"
 msgstr "Obraz"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:386
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:401
 msgid "Darken"
 msgstr "Przyciemnij"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:392
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:407
 msgid "Darkens the whole wallpaper so that icons and bars stay readable"
 msgstr "Przyciemnia całą tapetę, aby ikony i paski pozostały czytelne"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:415
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:430
 msgid "Simulation"
 msgstr "Symulacja"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:418
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:433
 msgid "Desktop Simulation"
 msgstr "Symulacja pulpitu"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:419
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:434
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
 msgstr ""
 "Pokazuje paski pulpitu nad obrazem, aby ocenić kadr. Nie są częścią tapety."
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:425
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:440
 msgid "Desktop"
 msgstr "Pulpit"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:443
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:459
 msgid "Also Add the Edited Version to the Library"
 msgstr "Dodaj także zmienioną wersję do biblioteki"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:444
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:460
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
@@ -3961,7 +3960,7 @@ msgstr "Kolory obrazu lub inny kolor"
 msgid "{angle}°"
 msgstr "{angle}°"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:413
+#: crates/pigoune-app/src/wallpaper_dialog.rs:414
 msgid ""
 "GNOME shows the same wallpaper on every screen: it is prepared for the one "
 "chosen here"
@@ -3969,18 +3968,18 @@ msgstr ""
 "GNOME pokazuje tę samą tapetę na wszystkich ekranach: jest przygotowana dla "
 "wybranego tutaj"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:418
+#: crates/pigoune-app/src/wallpaper_dialog.rs:419
 msgid "Prepare For"
 msgstr "Przygotuj dla"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:601
+#: crates/pigoune-app/src/wallpaper_dialog.rs:602
 msgid ""
 "Full screen simulation: the wallpaper is not set yet. Press Esc to come back."
 msgstr ""
 "Symulacja na pełnym ekranie: tapeta nie jest jeszcze ustawiona. Naciśnij "
 "Esc, aby wrócić."
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:675
+#: crates/pigoune-app/src/wallpaper_dialog.rs:676
 #, rust-format
 msgid "{width} × {height} pixels, the screen where Pigoune is shown"
 msgstr "{width} × {height} pikseli, ekran, na którym wyświetlany jest Pigoune"
