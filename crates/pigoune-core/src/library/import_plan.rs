@@ -11,6 +11,7 @@ pub struct PlannedFile {
 pub struct ImportPlan {
     pub files: Vec<PlannedFile>,
     pub unreadable: Vec<PathBuf>,
+    pub ignored_links: usize,
 }
 
 impl ImportPlan {
@@ -52,6 +53,7 @@ impl ImportPlan {
                     source: entry.path(),
                     folders: folders.to_vec(),
                 }),
+                Ok(kind) if kind.is_symlink() => self.ignored_links += 1,
                 Ok(_) => {}
                 Err(_) => self.unreadable.push(entry.path()),
             }

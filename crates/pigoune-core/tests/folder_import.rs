@@ -207,6 +207,7 @@ fn hidden_entries_are_skipped_without_being_counted() {
 
     assert_eq!(summary.imported.len(), 1);
     assert_eq!(summary.unsupported, 0);
+    assert_eq!(summary.ignored_links, 0);
     assert_eq!(fixture.collection_paths(), ["Marques"]);
     assert_eq!(fixture.placements(), ["Marques/red.png"]);
 }
@@ -229,6 +230,7 @@ fn symbolic_links_inside_a_folder_are_not_followed() {
 
     assert_completed(&summary);
     assert_eq!(summary.imported.len(), 1);
+    assert_eq!(summary.ignored_links, 3);
     assert_eq!(fixture.placements(), ["Marques/red.png"]);
 }
 

@@ -13,6 +13,7 @@ pub fn needs_attention(summary: &ImportSummary) -> bool {
     summary.unsupported > 0
         || summary.large_imported > 0
         || !summary.unreadable.is_empty()
+        || summary.ignored_links > 0
         || !matches!(summary.ending, ImportEnding::Completed)
 }
 
@@ -153,6 +154,14 @@ fn problem_lines(summary: &ImportSummary) -> Vec<String> {
                 "{count} file ignored: not a supported image format",
                 "{count} files ignored: not a supported image format",
                 count_for_plural(summary.unsupported),
+            ),
+        ),
+        (
+            summary.ignored_links,
+            ngettext(
+                "{count} link ignored: links to other files or folders are not followed",
+                "{count} links ignored: links to other files or folders are not followed",
+                count_for_plural(summary.ignored_links),
             ),
         ),
         (

@@ -40,6 +40,7 @@ pub struct ImportSummary {
     pub restored_from_trash: usize,
     pub unsupported: usize,
     pub unreadable: Vec<PathBuf>,
+    pub ignored_links: usize,
     pub ending: ImportEnding,
 }
 
@@ -115,6 +116,7 @@ impl Library {
         let total = plan.files.len();
         let mut summary = ImportSummary {
             unreadable: plan.unreadable,
+            ignored_links: plan.ignored_links,
             ..ImportSummary::default()
         };
         let mut folders = FolderCollections::new(target);

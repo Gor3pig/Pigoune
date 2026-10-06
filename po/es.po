@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 21:20+0200\n"
+"POT-Creation-Date: 2026-10-06 21:43+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Spanish\n"
@@ -1011,7 +1011,7 @@ msgstr ""
 "Esta biblioteca parece dañada. Sus archivos siguen en su carpeta “files”."
 
 #: crates/pigoune-app/src/error_messages.rs:32
-#: crates/pigoune-app/src/import_report.rs:180
+#: crates/pigoune-app/src/import_report.rs:189
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr "Se produjo un error inesperado: {error}"
@@ -1149,9 +1149,9 @@ msgstr "No se puede leer la información de la biblioteca"
 #: crates/pigoune-app/src/window.rs:3103 crates/pigoune-app/src/window.rs:3387
 #: crates/pigoune-app/src/window.rs:3783 crates/pigoune-app/src/window.rs:3999
 #: crates/pigoune-app/src/window.rs:4083 crates/pigoune-app/src/window.rs:4368
-#: crates/pigoune-app/src/import_report.rs:50
-#: crates/pigoune-app/src/import_report.rs:62
-#: crates/pigoune-app/src/import_report.rs:73
+#: crates/pigoune-app/src/import_report.rs:51
+#: crates/pigoune-app/src/import_report.rs:63
+#: crates/pigoune-app/src/import_report.rs:74
 msgid "_Close"
 msgstr "_Cerrar"
 
@@ -1721,23 +1721,23 @@ msgstr[1] "{done} de {total} archivos procesados"
 msgid "Canceling…"
 msgstr "Cancelando…"
 
-#: crates/pigoune-app/src/import_report.rs:28
+#: crates/pigoune-app/src/import_report.rs:29
 msgid "No images to import were found"
 msgstr "No se encontraron imágenes para importar"
 
-#: crates/pigoune-app/src/import_report.rs:42
+#: crates/pigoune-app/src/import_report.rs:43
 msgid "Nothing was imported."
 msgstr "No se importó nada."
 
-#: crates/pigoune-app/src/import_report.rs:59
+#: crates/pigoune-app/src/import_report.rs:60
 msgid "Unable to Import"
 msgstr "No se puede importar"
 
-#: crates/pigoune-app/src/import_report.rs:68
+#: crates/pigoune-app/src/import_report.rs:69
 msgid "Import Stopped Unexpectedly"
 msgstr "La importación se detuvo inesperadamente"
 
-#: crates/pigoune-app/src/import_report.rs:70
+#: crates/pigoune-app/src/import_report.rs:71
 msgid ""
 "The library was closed as a precaution. Open it again: everything imported "
 "so far is safe."
@@ -1745,47 +1745,47 @@ msgstr ""
 "La biblioteca se cerró por precaución. Vuelva a abrirla: todo lo importado "
 "hasta ahora está a salvo."
 
-#: crates/pigoune-app/src/import_report.rs:79
+#: crates/pigoune-app/src/import_report.rs:80
 msgid "Import Finished"
 msgstr "Importación terminada"
 
-#: crates/pigoune-app/src/import_report.rs:80
+#: crates/pigoune-app/src/import_report.rs:81
 msgid "Import Canceled"
 msgstr "Importación cancelada"
 
-#: crates/pigoune-app/src/import_report.rs:81
+#: crates/pigoune-app/src/import_report.rs:82
 msgid "Import Interrupted"
 msgstr "Importación interrumpida"
 
-#: crates/pigoune-app/src/import_report.rs:89
+#: crates/pigoune-app/src/import_report.rs:90
 #, rust-format
 msgid "{count} resource imported into “{collection}”"
 msgid_plural "{count} resources imported into “{collection}”"
 msgstr[0] "{count} recurso importado en “{collection}”"
 msgstr[1] "{count} recursos importados en “{collection}”"
 
-#: crates/pigoune-app/src/import_report.rs:95
+#: crates/pigoune-app/src/import_report.rs:96
 #, rust-format
 msgid "{count} resource imported with the tag “{tag}”"
 msgid_plural "{count} resources imported with the tag “{tag}”"
 msgstr[0] "{count} recurso importado con la etiqueta “{tag}”"
 msgstr[1] "{count} recursos importados con la etiqueta “{tag}”"
 
-#: crates/pigoune-app/src/import_report.rs:101
+#: crates/pigoune-app/src/import_report.rs:102
 #, rust-format
 msgid "{count} resource imported"
 msgid_plural "{count} resources imported"
 msgstr[0] "{count} recurso importado"
 msgstr[1] "{count} recursos importados"
 
-#: crates/pigoune-app/src/import_report.rs:111
+#: crates/pigoune-app/src/import_report.rs:112
 #, rust-format
 msgid "{count} resource already in the library"
 msgid_plural "{count} resources already in the library"
 msgstr[0] "{count} recurso ya está en la biblioteca"
 msgstr[1] "{count} recursos ya están en la biblioteca"
 
-#: crates/pigoune-app/src/import_report.rs:119
+#: crates/pigoune-app/src/import_report.rs:120
 #, rust-format
 msgid "{count} resource already in the library, added to its collection"
 msgid_plural ""
@@ -1794,14 +1794,14 @@ msgstr[0] "{count} recurso ya está en la biblioteca, añadido a su colección"
 msgstr[1] ""
 "{count} recursos ya están en la biblioteca, añadidos a sus colecciones"
 
-#: crates/pigoune-app/src/import_report.rs:127
+#: crates/pigoune-app/src/import_report.rs:128
 #, rust-format
 msgid "{count} resource restored from the trash"
 msgid_plural "{count} resources restored from the trash"
 msgstr[0] "{count} recurso restaurado de la papelera"
 msgstr[1] "{count} recursos restaurados de la papelera"
 
-#: crates/pigoune-app/src/import_report.rs:145
+#: crates/pigoune-app/src/import_report.rs:146
 #, rust-format
 msgid ""
 "{count} large resource imported (over 50 MB): it takes up more disk space "
@@ -1816,25 +1816,33 @@ msgstr[1] ""
 "{count} recursos grandes importados (más de 50 MB): ocupan más espacio en el "
 "disco y sus vistas previas pueden tardar más en aparecer"
 
-#: crates/pigoune-app/src/import_report.rs:153
+#: crates/pigoune-app/src/import_report.rs:154
 #, rust-format
 msgid "{count} file ignored: not a supported image format"
 msgid_plural "{count} files ignored: not a supported image format"
 msgstr[0] "{count} archivo ignorado: no es un formato de imagen compatible"
 msgstr[1] "{count} archivos ignorados: no es un formato de imagen compatible"
 
-#: crates/pigoune-app/src/import_report.rs:161
+#: crates/pigoune-app/src/import_report.rs:162
+#, rust-format
+msgid "{count} link ignored: links to other files or folders are not followed"
+msgid_plural ""
+"{count} links ignored: links to other files or folders are not followed"
+msgstr[0] "{count} enlace ignorado: los enlaces a otros archivos o carpetas no se siguen"
+msgstr[1] "{count} enlaces ignorados: los enlaces a otros archivos o carpetas no se siguen"
+
+#: crates/pigoune-app/src/import_report.rs:170
 #, rust-format
 msgid "{count} file ignored: damaged or unreadable image"
 msgid_plural "{count} files ignored: damaged or unreadable images"
 msgstr[0] "{count} archivo ignorado: imagen dañada o ilegible"
 msgstr[1] "{count} archivos ignorados: imágenes dañadas o ilegibles"
 
-#: crates/pigoune-app/src/import_report.rs:177
+#: crates/pigoune-app/src/import_report.rs:186
 msgid "The destination collection no longer exists."
 msgstr "La colección de destino ya no existe."
 
-#: crates/pigoune-app/src/import_report.rs:204
+#: crates/pigoune-app/src/import_report.rs:213
 msgid "Show Unreadable Files"
 msgstr "Mostrar los archivos ilegibles"
 
@@ -3298,7 +3306,9 @@ msgstr "píxeles"
 
 #: crates/pigoune-app/ui/export-as-dialog.blp:186
 msgid "Too large: 268 million pixels at most (for example 16384 × 16384)"
-msgstr "Demasiado grande: 268 millones de píxeles como máximo (por ejemplo 16384 × 16384)"
+msgstr ""
+"Demasiado grande: 268 millones de píxeles como máximo (por ejemplo 16384 × "
+"16384)"
 
 #: crates/pigoune-app/ui/export-as-dialog.blp:208
 msgid "A pixel image that is enlarged becomes blurry; SVG images stay sharp"

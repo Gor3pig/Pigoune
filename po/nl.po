@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 21:20+0200\n"
+"POT-Creation-Date: 2026-10-06 21:43+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1014,7 +1014,7 @@ msgstr ""
 "‘files’."
 
 #: crates/pigoune-app/src/error_messages.rs:32
-#: crates/pigoune-app/src/import_report.rs:180
+#: crates/pigoune-app/src/import_report.rs:189
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr "Er is een onverwachte fout opgetreden: {error}"
@@ -1152,9 +1152,9 @@ msgstr "Kan de bibliotheekinformatie niet lezen"
 #: crates/pigoune-app/src/window.rs:3103 crates/pigoune-app/src/window.rs:3387
 #: crates/pigoune-app/src/window.rs:3783 crates/pigoune-app/src/window.rs:3999
 #: crates/pigoune-app/src/window.rs:4083 crates/pigoune-app/src/window.rs:4368
-#: crates/pigoune-app/src/import_report.rs:50
-#: crates/pigoune-app/src/import_report.rs:62
-#: crates/pigoune-app/src/import_report.rs:73
+#: crates/pigoune-app/src/import_report.rs:51
+#: crates/pigoune-app/src/import_report.rs:63
+#: crates/pigoune-app/src/import_report.rs:74
 msgid "_Close"
 msgstr "_Sluiten"
 
@@ -1721,23 +1721,23 @@ msgstr[1] "{done} van {total} bestanden verwerkt"
 msgid "Canceling…"
 msgstr "Annuleren…"
 
-#: crates/pigoune-app/src/import_report.rs:28
+#: crates/pigoune-app/src/import_report.rs:29
 msgid "No images to import were found"
 msgstr "Geen afbeeldingen gevonden om te importeren"
 
-#: crates/pigoune-app/src/import_report.rs:42
+#: crates/pigoune-app/src/import_report.rs:43
 msgid "Nothing was imported."
 msgstr "Er is niets geïmporteerd."
 
-#: crates/pigoune-app/src/import_report.rs:59
+#: crates/pigoune-app/src/import_report.rs:60
 msgid "Unable to Import"
 msgstr "Kan niet importeren"
 
-#: crates/pigoune-app/src/import_report.rs:68
+#: crates/pigoune-app/src/import_report.rs:69
 msgid "Import Stopped Unexpectedly"
 msgstr "Het importeren is onverwacht gestopt"
 
-#: crates/pigoune-app/src/import_report.rs:70
+#: crates/pigoune-app/src/import_report.rs:71
 msgid ""
 "The library was closed as a precaution. Open it again: everything imported "
 "so far is safe."
@@ -1745,47 +1745,47 @@ msgstr ""
 "De bibliotheek is uit voorzorg gesloten. Open haar opnieuw: alles wat tot nu "
 "toe is geïmporteerd, is veilig."
 
-#: crates/pigoune-app/src/import_report.rs:79
+#: crates/pigoune-app/src/import_report.rs:80
 msgid "Import Finished"
 msgstr "Importeren voltooid"
 
-#: crates/pigoune-app/src/import_report.rs:80
+#: crates/pigoune-app/src/import_report.rs:81
 msgid "Import Canceled"
 msgstr "Importeren geannuleerd"
 
-#: crates/pigoune-app/src/import_report.rs:81
+#: crates/pigoune-app/src/import_report.rs:82
 msgid "Import Interrupted"
 msgstr "Importeren onderbroken"
 
-#: crates/pigoune-app/src/import_report.rs:89
+#: crates/pigoune-app/src/import_report.rs:90
 #, rust-format
 msgid "{count} resource imported into “{collection}”"
 msgid_plural "{count} resources imported into “{collection}”"
 msgstr[0] "{count} item geïmporteerd in ‘{collection}’"
 msgstr[1] "{count} items geïmporteerd in ‘{collection}’"
 
-#: crates/pigoune-app/src/import_report.rs:95
+#: crates/pigoune-app/src/import_report.rs:96
 #, rust-format
 msgid "{count} resource imported with the tag “{tag}”"
 msgid_plural "{count} resources imported with the tag “{tag}”"
 msgstr[0] "{count} item geïmporteerd met het label ‘{tag}’"
 msgstr[1] "{count} items geïmporteerd met het label ‘{tag}’"
 
-#: crates/pigoune-app/src/import_report.rs:101
+#: crates/pigoune-app/src/import_report.rs:102
 #, rust-format
 msgid "{count} resource imported"
 msgid_plural "{count} resources imported"
 msgstr[0] "{count} item geïmporteerd"
 msgstr[1] "{count} items geïmporteerd"
 
-#: crates/pigoune-app/src/import_report.rs:111
+#: crates/pigoune-app/src/import_report.rs:112
 #, rust-format
 msgid "{count} resource already in the library"
 msgid_plural "{count} resources already in the library"
 msgstr[0] "{count} item staat al in de bibliotheek"
 msgstr[1] "{count} items staan al in de bibliotheek"
 
-#: crates/pigoune-app/src/import_report.rs:119
+#: crates/pigoune-app/src/import_report.rs:120
 #, rust-format
 msgid "{count} resource already in the library, added to its collection"
 msgid_plural ""
@@ -1795,14 +1795,14 @@ msgstr[0] ""
 msgstr[1] ""
 "{count} items staan al in de bibliotheek, toegevoegd aan hun verzamelingen"
 
-#: crates/pigoune-app/src/import_report.rs:127
+#: crates/pigoune-app/src/import_report.rs:128
 #, rust-format
 msgid "{count} resource restored from the trash"
 msgid_plural "{count} resources restored from the trash"
 msgstr[0] "{count} item uit de prullenbak hersteld"
 msgstr[1] "{count} items uit de prullenbak hersteld"
 
-#: crates/pigoune-app/src/import_report.rs:145
+#: crates/pigoune-app/src/import_report.rs:146
 #, rust-format
 msgid ""
 "{count} large resource imported (over 50 MB): it takes up more disk space "
@@ -1817,25 +1817,33 @@ msgstr[1] ""
 "{count} grote items geïmporteerd (meer dan 50 MB): ze nemen meer "
 "schijfruimte in en de voorbeelden kunnen langer duren"
 
-#: crates/pigoune-app/src/import_report.rs:153
+#: crates/pigoune-app/src/import_report.rs:154
 #, rust-format
 msgid "{count} file ignored: not a supported image format"
 msgid_plural "{count} files ignored: not a supported image format"
 msgstr[0] "{count} bestand genegeerd: geen ondersteunde afbeeldingsindeling"
 msgstr[1] "{count} bestanden genegeerd: geen ondersteunde afbeeldingsindeling"
 
-#: crates/pigoune-app/src/import_report.rs:161
+#: crates/pigoune-app/src/import_report.rs:162
+#, rust-format
+msgid "{count} link ignored: links to other files or folders are not followed"
+msgid_plural ""
+"{count} links ignored: links to other files or folders are not followed"
+msgstr[0] "{count} koppeling genegeerd: koppelingen naar andere bestanden of mappen worden niet gevolgd"
+msgstr[1] "{count} koppelingen genegeerd: koppelingen naar andere bestanden of mappen worden niet gevolgd"
+
+#: crates/pigoune-app/src/import_report.rs:170
 #, rust-format
 msgid "{count} file ignored: damaged or unreadable image"
 msgid_plural "{count} files ignored: damaged or unreadable images"
 msgstr[0] "{count} bestand genegeerd: beschadigde of onleesbare afbeelding"
 msgstr[1] "{count} bestanden genegeerd: beschadigde of onleesbare afbeeldingen"
 
-#: crates/pigoune-app/src/import_report.rs:177
+#: crates/pigoune-app/src/import_report.rs:186
 msgid "The destination collection no longer exists."
 msgstr "De doelverzameling bestaat niet meer."
 
-#: crates/pigoune-app/src/import_report.rs:204
+#: crates/pigoune-app/src/import_report.rs:213
 msgid "Show Unreadable Files"
 msgstr "Onleesbare bestanden tonen"
 
