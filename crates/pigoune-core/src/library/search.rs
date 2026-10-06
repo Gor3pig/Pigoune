@@ -204,11 +204,32 @@ fn searchable_text(asset: &Asset, tags: &[String]) -> String {
     text
 }
 
-fn comparable(text: &str) -> String {
-    text.nfd()
+#[must_use]
+pub fn comparable(text: &str) -> String {
+    let mut plain = String::with_capacity(text.len());
+    for character in text
+        .nfd()
         .filter(|character| !is_combining_mark(*character))
         .flat_map(char::to_lowercase)
-        .collect()
+    {
+        match special_letter(character) {
+            Some(letters) => plain.push_str(letters),
+            None => plain.push(character),
+        }
+    }
+    plain
+}
+
+fn special_letter(character: char) -> Option<&'static str> {
+    match character {
+        'œ' => Some("oe"),
+        'æ' => Some("ae"),
+        'ß' => Some("ss"),
+        'ø' => Some("o"),
+        'ł' => Some("l"),
+        'đ' => Some("d"),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -222,6 +243,15 @@ mod tests {
     fn case_and_accents_are_ignored() {
         assert_eq!(comparable("Élève À L'École"), "eleve a l'ecole");
         assert_eq!(comparable("ÇA"), "ca");
+    }
+
+    #[test]
+    fn ligatures_and_special_letters_become_plain_letters() {
+        assert_eq!(comparable("Cœur ŒUF Sœur"), "coeur oeuf soeur");
+        assert_eq!(
+            comparable("Æon Straße Ørsted Łódź Đorđe"),
+            "aeon strasse orsted lodz dorde"
+        );
     }
 
     #[test]

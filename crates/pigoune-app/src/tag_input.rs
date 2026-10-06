@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use pigoune_core::{Tag, TagId};
+use pigoune_core::{Tag, TagId, comparable};
 
 const SEPARATOR: char = ',';
 const MOST_SUGGESTIONS: usize = 8;
@@ -39,16 +39,17 @@ pub fn with_last_fragment_replaced(text: &str, name: &str) -> String {
 }
 
 pub fn suggestions<'a>(all: &'a [Tag], typed: &str, already: &[TagId]) -> Vec<&'a Tag> {
-    let typed = typed.trim().to_lowercase();
+    let typed = typed.trim();
     if typed.is_empty() {
         return Vec::new();
     }
+    let wanted = comparable(typed);
     let candidates = all.iter().filter(|tag| !already.contains(&tag.id));
     let (mut starting, mut containing): (Vec<&Tag>, Vec<&Tag>) = candidates
-        .filter(|tag| tag.name.to_lowercase().contains(&typed))
-        .partition(|tag| tag.name.to_lowercase().starts_with(&typed));
+        .filter(|tag| comparable(&tag.name).contains(&wanted))
+        .partition(|tag| comparable(&tag.name).starts_with(&wanted));
     starting.append(&mut containing);
-    starting.retain(|tag| tag.name.to_lowercase() != typed);
+    starting.retain(|tag| tag.name.to_lowercase() != typed.to_lowercase());
     starting.truncate(MOST_SUGGESTIONS);
     starting
 }
@@ -121,5 +122,15 @@ mod tests {
         );
         assert_eq!(names(suggestions(&all, "LOGO", &[])), ["Logos animés"]);
         assert!(suggestions(&all, "  ", &[]).is_empty());
+    }
+
+    #[test]
+    fn suggestions_ignore_accents_and_ligatures_but_keep_distinct_names() {
+        let all = [tag(1, "Étoile"), tag(2, "Cœur"), tag(3, "etoile")];
+        let names = |found: Vec<&Tag>| found.iter().map(|tag| tag.name.clone()).collect::<Vec<_>>();
+        assert_eq!(names(suggestions(&all, "eto", &[])), ["Étoile", "etoile"]);
+        assert_eq!(names(suggestions(&all, "etoile", &[])), ["Étoile"]);
+        assert_eq!(names(suggestions(&all, "coeur", &[])), ["Cœur"]);
+        assert_eq!(names(suggestions(&all, "cœ", &[])), ["Cœur"]);
     }
 }

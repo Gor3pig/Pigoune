@@ -132,6 +132,20 @@ fn accents_and_case_do_not_matter() {
 }
 
 #[test]
+fn ligatures_are_found_with_their_plain_letters() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.set_text(dot, TextField::Note, "Un cœur pour ma sœur");
+    fixture.tag(dot, "Œuvre");
+
+    assert_eq!(fixture.found(AssetView::All, "coeur"), [dot]);
+    assert_eq!(fixture.found(AssetView::All, "CŒUR"), [dot]);
+    assert_eq!(fixture.found(AssetView::All, "soeur"), [dot]);
+    assert_eq!(fixture.found(AssetView::All, "oeuvre"), [dot]);
+    assert!(fixture.found(AssetView::All, "ceur").is_empty());
+}
+
+#[test]
 fn every_word_must_be_found_somewhere() {
     let mut fixture = Fixture::new();
     let dot = fixture.import("red-dot.png", None);

@@ -1,4 +1,4 @@
-use pigoune_core::{CollectionId, CollectionPath};
+use pigoune_core::{CollectionId, CollectionPath, comparable};
 
 const PATH_SEPARATOR: &str = " › ";
 
@@ -11,10 +11,10 @@ pub fn choices<'a>(
     typed: &str,
     held_by_all: &[CollectionId],
 ) -> Vec<&'a CollectionPath> {
-    let typed = typed.trim().to_lowercase();
+    let typed = comparable(typed.trim());
     all.iter()
         .filter(|path| !held_by_all.contains(&path.id))
-        .filter(|path| path_label(path).to_lowercase().contains(&typed))
+        .filter(|path| comparable(&path_label(path)).contains(&typed))
         .collect()
 }
 
@@ -59,5 +59,14 @@ mod tests {
             labels(choices(&all, "", &[all[1].id])),
             ["Icônes", "Marques › Tech"]
         );
+    }
+
+    #[test]
+    fn choices_ignore_accents_and_ligatures() {
+        let all = [path(1, &["Icônes"]), path(2, &["Cœurs"])];
+        let labels =
+            |found: Vec<&CollectionPath>| found.into_iter().map(path_label).collect::<Vec<_>>();
+        assert_eq!(labels(choices(&all, "icones", &[])), ["Icônes"]);
+        assert_eq!(labels(choices(&all, "coeurs", &[])), ["Cœurs"]);
     }
 }
