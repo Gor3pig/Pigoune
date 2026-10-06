@@ -56,6 +56,7 @@ mod preview_strip;
 mod query_pills;
 mod recent_libraries;
 mod relaunch;
+mod release_notes;
 mod removable_pill;
 mod ring_chart;
 mod search_space;

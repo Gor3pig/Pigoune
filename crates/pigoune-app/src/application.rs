@@ -5,6 +5,7 @@ use gtk::{gio, glib};
 use crate::config::{APP_ID, RESOURCE_BASE_PATH, VERSION};
 use crate::help_url;
 use crate::icon_theme;
+use crate::release_notes;
 use crate::settings;
 use crate::window::PigouneWindow;
 
@@ -93,5 +94,25 @@ fn show_about_dialog(application: &adw::Application) {
     dialog.set_license_type(gtk::License::Gpl30);
     dialog.set_copyright("© 2026 Gor3pig");
     dialog.set_translator_credits(&gettext("translator-credits"));
+    show_release_notes_in_french_or_english(&dialog);
     dialog.present(application.active_window().as_ref());
+}
+
+fn show_release_notes_in_french_or_english(dialog: &adw::AboutDialog) {
+    let path = format!("{RESOURCE_BASE_PATH}/metainfo.xml");
+    let Ok(bytes) = gio::resources_lookup_data(&path, gio::ResourceLookupFlags::NONE) else {
+        return;
+    };
+    let Ok(metainfo) = std::str::from_utf8(&bytes) else {
+        return;
+    };
+    let languages: Vec<String> = glib::language_names()
+        .iter()
+        .map(ToString::to_string)
+        .collect();
+    let french = release_notes::is_french(&languages);
+    if let Some(notes) = release_notes::release_notes(metainfo, VERSION, french) {
+        dialog.set_release_notes(&notes);
+        dialog.set_release_notes_version(VERSION);
+    }
 }
