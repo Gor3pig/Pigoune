@@ -17,6 +17,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
       stage_overlay.height-request: 220;
       panel.propagate-natural-height: true;
       window_title.visible: false;
+      full_screen_button.visible: false;
       foot_box.orientation: vertical;
       hint_label.xalign: 0;
     }
@@ -52,7 +53,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
       }
 
       [end]
-      Button {
+      Button full_screen_button {
         icon-name: "view-fullscreen-symbolic";
         tooltip-text: _("Full Screen");
         clicked => $on_full_screen_clicked() swapped;
@@ -72,35 +73,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
             vexpand: true;
             child: $PigouneWallpaperStage stage {};
 
-            [overlay]
-            Revealer sharpness_revealer {
-              halign: center;
-              valign: start;
-              margin-top: 12;
-              margin-start: 12;
-              margin-end: 12;
-              transition-type: crossfade;
-              can-target: false;
-
-              child: Box {
-                spacing: 8;
-
-                Image {
-                  icon-name: "dialog-warning-symbolic";
-                }
-
-                Label sharpness_label {
-                  wrap: true;
-                }
-
-                styles [
-                  "osd",
-                  "wallpaper-notice",
-                ]
-              };
-            }
           }
-
 
           Box {
             orientation: vertical;
@@ -208,6 +181,31 @@ template $PigouneWallpaperDialog: Adw.Dialog {
                 tooltip-text: _("While dragging, the image snaps to the center and the edges of the screen");
                 active: true;
                 toggled => $on_snap_toggled() swapped;
+              }
+            }
+
+            Box legend_box {
+              spacing: 6;
+              visible: false;
+
+              Image legend_icon {
+                icon-name: "dialog-warning-symbolic";
+                valign: start;
+                visible: false;
+
+                styles [
+                  "warning",
+                ]
+              }
+
+              Label legend_label {
+                xalign: 0;
+                wrap: true;
+                hexpand: true;
+
+                styles [
+                  "caption",
+                ]
               }
             }
 
@@ -456,8 +454,13 @@ template $PigouneWallpaperDialog: Adw.Dialog {
       margin-end: 12;
 
       CheckButton add_check {
-        label: _("Also Add the Edited Version to the Library");
         tooltip-text: _("The framed image, at the size of the screen, becomes a new resource. The original image stays untouched.");
+
+        child: Label {
+          label: _("Also Add the Edited Version to the Library");
+          wrap: true;
+          xalign: 0;
+        };
       }
 
       Label hint_label {

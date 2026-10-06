@@ -32,6 +32,8 @@ const WHITE: Rgb = Rgb::new(255, 255, 255);
 const SHARPNESS_TOLERANCE: f64 = 0.005;
 const FULL_SCREEN_STYLE: &str = "wallpaper-full-screen";
 const NOTICE_STYLE: &str = "wallpaper-notice";
+const DIM_STYLE: &str = "dim-label";
+const WARNING_STYLE: &str = "warning";
 const SIMULATION_ICON: &str = "view-fullscreen-symbolic";
 const NOTICE_MARGIN: i32 = 24;
 const NOTICE_DURATION: Duration = Duration::from_secs(4);
@@ -104,9 +106,12 @@ mod imp {
         #[template_child]
         pub screen_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
-        pub sharpness_revealer: TemplateChild<gtk::Revealer>,
+        pub legend_box: TemplateChild<gtk::Box>,
         #[template_child]
-        pub sharpness_label: TemplateChild<gtk::Label>,
+        pub legend_icon: TemplateChild<gtk::Image>,
+        #[template_child]
+        pub legend_label: TemplateChild<gtk::Label>,
+        pub legend_text: RefCell<String>,
         #[template_child]
         pub actual_button: TemplateChild<gtk::Button>,
         #[template_child]
@@ -234,13 +239,10 @@ impl PigouneWallpaperDialog {
         let scale = imp.stage.framing().scale;
         imp.zoom_label.set_label(&percent_text(scale));
         let enlarged = !imp.is_vector.get() && scale > ACTUAL_SCALE + SHARPNESS_TOLERANCE;
-        if enlarged {
-            imp.sharpness_label.set_label(
-                &gettext("Image enlarged to {percent}: it will look blurry on this screen")
-                    .replace("{percent}", &percent_text(scale)),
-            );
-        }
-        imp.sharpness_revealer.set_reveal_child(enlarged);
+        self.show_legend(enlarged.then(|| {
+            gettext("Image enlarged to {percent}: it will look blurry on this screen")
+                .replace("{percent}", &percent_text(scale))
+        }));
         imp.showing_zoom.set(true);
         imp.zoom_scale.set_value(scale.ln());
         imp.showing_zoom.set(false);
@@ -399,15 +401,31 @@ impl PigouneWallpaperDialog {
         imp.stage.set_shows_bar(imp.bar_row.is_active());
     }
 
+    fn show_legend(&self, warning: Option<String>) {
+        let imp = self.imp();
+        let warned = warning.is_some();
+        let text = warning.unwrap_or_else(|| imp.legend_text.borrow().clone());
+        imp.legend_label.set_label(&text);
+        imp.legend_icon.set_visible(warned);
+        if warned {
+            imp.legend_label.remove_css_class(DIM_STYLE);
+            imp.legend_label.add_css_class(WARNING_STYLE);
+        } else {
+            imp.legend_label.remove_css_class(WARNING_STYLE);
+            imp.legend_label.add_css_class(DIM_STYLE);
+        }
+        imp.legend_box.set_visible(!text.is_empty());
+    }
+
     fn offer_screens(&self, screens: &[ScreenChoice], current: usize) {
         let imp = self.imp();
         imp.chosen_screen.set(current);
         if screens.len() < MANY_SCREENS {
-            imp.screen_group.set_title("");
+            imp.screen_group.set_visible(false);
             if let Some(screen) = screens.get(current) {
-                imp.screen_group
-                    .set_description(Some(&screen_text(screen.size)));
+                imp.legend_text.replace(screen_text(screen.size));
             }
+            self.show_legend(None);
             return;
         }
         imp.screen_group.set_description(Some(&gettext(
