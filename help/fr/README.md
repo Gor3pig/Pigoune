@@ -237,7 +237,7 @@ ses critères.
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
-  sur l'image propose **Ouvrir avec…**, **Définir comme fond d'écran…**, **Copier**,
+  sur l'image propose **Ouvrir avec…**, **Cadrer et définir comme fond d'écran…**, **Copier**,
   **Exporter vers…**, **Exporter au format…** et **Ajouter aux favoris** pour elle.
 
 ## Réutiliser vos ressources
@@ -273,8 +273,8 @@ ses critères.
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
   importez-les si vous voulez les garder.
-- **Utilisez une image comme fond d'écran** avec **Définir comme fond d'écran…** dans le menu du
-  clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel à la
+- **Utilisez une image comme fond d'écran** avec **Cadrer et définir comme fond d'écran…** dans
+  le menu du clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel à la
   résolution réelle de l'écran où se trouve Pigoune, par exemple 1920 × 1080, avec l'image
   cadrée comme GNOME le ferait. Faites glisser l'image pour la déplacer, zoomez avec la molette,
   le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la avec les flèches (<kbd>Maj</kbd> pour

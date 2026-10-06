@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 14:48+0200\n"
+"POT-Creation-Date: 2026-10-06 14:56+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Polish\n"
@@ -1151,8 +1151,8 @@ msgstr "Otwórz za pomocą…"
 
 #: crates/pigoune-app/src/window.rs:1810
 #: crates/pigoune-app/src/asset_preview.rs:1118
-msgid "Set as Wallpaper…"
-msgstr "Ustaw jako tapetę…"
+msgid "Frame and Set as Wallpaper…"
+msgstr "Kadruj i ustaw jako tapetę…"
 
 #: crates/pigoune-app/src/window.rs:1816
 #: crates/pigoune-app/src/sidebar_row.rs:605
@@ -3701,13 +3701,16 @@ msgstr "100%: jeden piksel obrazu na jeden piksel ekranu"
 msgid ""
 "Covers the whole screen, as the desktop does; the edges that go past it are "
 "cut"
-msgstr "Wypełnia cały ekran, tak jak robi to pulpit; wystające krawędzie są przycinane"
+msgstr ""
+"Wypełnia cały ekran, tak jak robi to pulpit; wystające krawędzie są "
+"przycinane"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:141
 msgid ""
 "Shows the whole image; the rest of the screen is filled as chosen under "
 "Empty Space"
-msgstr "Pokazuje cały obraz; resztę ekranu wypełnia to, co wybrano w „Puste miejsce”"
+msgstr ""
+"Pokazuje cały obraz; resztę ekranu wypełnia to, co wybrano w „Puste miejsce”"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:147
 msgid ""
@@ -3738,7 +3741,8 @@ msgstr "Symulacja pulpitu"
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
-msgstr "Pokazuje paski pulpitu nad obrazem, aby ocenić kadr. Nie są częścią tapety."
+msgstr ""
+"Pokazuje paski pulpitu nad obrazem, aby ocenić kadr. Nie są częścią tapety."
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:199
 msgid "Desktop"
@@ -3752,13 +3756,17 @@ msgstr "Dodaj także zmienioną wersję do biblioteki"
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
-msgstr "Skadrowany obraz w rozmiarze ekranu staje się nowym zasobem. Oryginalny obraz pozostaje nienaruszony."
+msgstr ""
+"Skadrowany obraz w rozmiarze ekranu staje się nowym zasobem. Oryginalny "
+"obraz pozostaje nienaruszony."
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:117
 msgid ""
 "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to "
 "adjust it"
-msgstr "Przeciągnij obraz, aby go przesunąć, użyj kółka myszy, aby powiększyć, i strzałek, aby go dopasować"
+msgstr ""
+"Przeciągnij obraz, aby go przesunąć, użyj kółka myszy, aby powiększyć, i "
+"strzałek, aby go dopasować"
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:282
 #, rust-format

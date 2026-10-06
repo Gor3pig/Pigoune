@@ -209,7 +209,7 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
   Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Open With…**, **Set as Wallpaper…**, **Copy**, **Export To…**, **Export
+  the image offers **Open With…**, **Frame and Set as Wallpaper…**, **Copy**, **Export To…**, **Export
   As…** and **Add to Favorites** for it.
 
 ## Reusing assets
@@ -241,8 +241,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - **Open** an asset in another application, such as an image editor, with **Open With…** in
   the right-click menu. The application receives a copy: your library stays untouched, so
   save your changes under a new name and import them if you want to keep them.
-- **Set an image as your wallpaper** with **Set as Wallpaper…** in the right-click menu of the
-  grid or of the preview. A large window shows a virtual screen at the real resolution of the
+- **Set an image as your wallpaper** with **Frame and Set as Wallpaper…** in the right-click
+  menu of the grid or of the preview. A large window shows a virtual screen at the real resolution of the
   screen Pigoune is shown on, for example 1920 × 1080, with the image framed the way GNOME
   would. Drag the image to move it, zoom with the mouse wheel, the slider or <kbd>+</kbd> and
   <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd> moves further). **Fill the

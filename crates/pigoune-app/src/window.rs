@@ -1807,7 +1807,7 @@ impl PigouneWindow {
         if selected.len() == 1 && !self.is_showing_trash() {
             viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
             viewing.append(
-                Some(&gettext("Set as Wallpaper…")),
+                Some(&gettext("Frame and Set as Wallpaper…")),
                 Some(SET_WALLPAPER_ACTION),
             );
         }

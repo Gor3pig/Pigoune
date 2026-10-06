@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 14:48+0200\n"
+"POT-Creation-Date: 2026-10-06 14:56+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -1314,8 +1314,8 @@ msgstr "Ouvrir avec…"
 
 #: crates/pigoune-app/src/window.rs:1810
 #: crates/pigoune-app/src/asset_preview.rs:1118
-msgid "Set as Wallpaper…"
-msgstr "Définir comme fond d’écran…"
+msgid "Frame and Set as Wallpaper…"
+msgstr "Cadrer et définir comme fond d’écran…"
 
 #: crates/pigoune-app/src/window.rs:1816
 #: crates/pigoune-app/src/sidebar_row.rs:605
@@ -3828,18 +3828,22 @@ msgstr "100 % : un pixel de l’image pour un pixel de l’écran"
 msgid ""
 "Covers the whole screen, as the desktop does; the edges that go past it are "
 "cut"
-msgstr "Couvre tout l’écran, comme le fait le bureau ; les bords qui dépassent sont coupés"
+msgstr ""
+"Couvre tout l’écran, comme le fait le bureau ; les bords qui dépassent sont "
+"coupés"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:141
 msgid ""
 "Shows the whole image; the rest of the screen is filled as chosen under "
 "Empty Space"
-msgstr "Montre toute l’image ; le reste de l’écran est rempli selon Espace vide"
+msgstr ""
+"Montre toute l’image ; le reste de l’écran est rempli selon Espace vide"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:147
 msgid ""
 "One pixel of the image for one pixel of the screen, for the sharpest result"
-msgstr "Un pixel de l’image pour un pixel de l’écran, pour une netteté maximale"
+msgstr ""
+"Un pixel de l’image pour un pixel de l’écran, pour une netteté maximale"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:155
 msgid "Empty Space"
@@ -3865,7 +3869,9 @@ msgstr "Simulation du bureau"
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
-msgstr "Montre les barres de votre bureau par-dessus l’image, pour juger du cadrage. Elles ne font pas partie du fond d’écran."
+msgstr ""
+"Montre les barres de votre bureau par-dessus l’image, pour juger du cadrage. "
+"Elles ne font pas partie du fond d’écran."
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:199
 msgid "Desktop"
@@ -3879,13 +3885,17 @@ msgstr "Ajouter aussi à la bibliothèque la version modifiée"
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
-msgstr "L’image cadrée, à la taille de l’écran, devient une nouvelle ressource. L’image d’origine reste intacte."
+msgstr ""
+"L’image cadrée, à la taille de l’écran, devient une nouvelle ressource. "
+"L’image d’origine reste intacte."
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:117
 msgid ""
 "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to "
 "adjust it"
-msgstr "Glissez l’image pour la déplacer, utilisez la molette pour zoomer et les flèches pour l’ajuster"
+msgstr ""
+"Glissez l’image pour la déplacer, utilisez la molette pour zoomer et les "
+"flèches pour l’ajuster"
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:282
 #, rust-format

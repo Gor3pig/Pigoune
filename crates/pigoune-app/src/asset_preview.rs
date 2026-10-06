@@ -1115,7 +1115,7 @@ fn context_menu_model(favorite: bool) -> gio::MenuModel {
     let viewing = gio::Menu::new();
     viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
     viewing.append(
-        Some(&gettext("Set as Wallpaper…")),
+        Some(&gettext("Frame and Set as Wallpaper…")),
         Some("win.set-wallpaper"),
     );
     let sharing = gio::Menu::new();

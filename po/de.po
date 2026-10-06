@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 14:48+0200\n"
+"POT-Creation-Date: 2026-10-06 14:56+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1160,8 +1160,8 @@ msgstr "Öffnen mit …"
 
 #: crates/pigoune-app/src/window.rs:1810
 #: crates/pigoune-app/src/asset_preview.rs:1118
-msgid "Set as Wallpaper…"
-msgstr "Als Hintergrundbild festlegen …"
+msgid "Frame and Set as Wallpaper…"
+msgstr "Zuschneiden und als Hintergrundbild festlegen …"
 
 #: crates/pigoune-app/src/window.rs:1816
 #: crates/pigoune-app/src/sidebar_row.rs:605
@@ -3695,13 +3695,17 @@ msgstr "100 %: ein Bildpixel pro Bildschirmpixel"
 msgid ""
 "Covers the whole screen, as the desktop does; the edges that go past it are "
 "cut"
-msgstr "Bedeckt den ganzen Bildschirm wie die Arbeitsumgebung; überstehende Ränder werden abgeschnitten"
+msgstr ""
+"Bedeckt den ganzen Bildschirm wie die Arbeitsumgebung; überstehende Ränder "
+"werden abgeschnitten"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:141
 msgid ""
 "Shows the whole image; the rest of the screen is filled as chosen under "
 "Empty Space"
-msgstr "Zeigt das ganze Bild; der Rest des Bildschirms wird wie unter „Leerer Bereich“ gewählt gefüllt"
+msgstr ""
+"Zeigt das ganze Bild; der Rest des Bildschirms wird wie unter „Leerer "
+"Bereich“ gewählt gefüllt"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:147
 msgid ""
@@ -3732,7 +3736,9 @@ msgstr "Arbeitsumgebung simulieren"
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
-msgstr "Zeigt die Leisten Ihrer Arbeitsumgebung über dem Bild, um den Zuschnitt zu beurteilen. Sie sind nicht Teil des Hintergrundbilds."
+msgstr ""
+"Zeigt die Leisten Ihrer Arbeitsumgebung über dem Bild, um den Zuschnitt zu "
+"beurteilen. Sie sind nicht Teil des Hintergrundbilds."
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:199
 msgid "Desktop"
@@ -3746,13 +3752,17 @@ msgstr "Bearbeitete Version auch zur Bibliothek hinzufügen"
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
-msgstr "Das zugeschnittene Bild in Bildschirmgröße wird eine neue Ressource. Das Originalbild bleibt unverändert."
+msgstr ""
+"Das zugeschnittene Bild in Bildschirmgröße wird eine neue Ressource. Das "
+"Originalbild bleibt unverändert."
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:117
 msgid ""
 "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to "
 "adjust it"
-msgstr "Ziehen Sie das Bild, um es zu verschieben; zoomen Sie mit dem Mausrad und justieren Sie es mit den Pfeiltasten"
+msgstr ""
+"Ziehen Sie das Bild, um es zu verschieben; zoomen Sie mit dem Mausrad und "
+"justieren Sie es mit den Pfeiltasten"
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:282
 #, rust-format
