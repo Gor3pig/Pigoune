@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 21:49+0200\n"
+"POT-Creation-Date: 2026-10-06 21:57+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -1910,13 +1910,17 @@ msgstr "Formato"
 msgid "Fits My Screen"
 msgstr "Cabe na minha tela"
 
-#: crates/pigoune-app/src/filter_choices.rs:263
+#: crates/pigoune-app/src/filter_choices.rs:256
+msgid "The size of your screen could not be detected"
+msgstr "Não foi possível detectar o tamanho da sua tela"
+
+#: crates/pigoune-app/src/filter_choices.rs:269
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:250
 msgid "Color"
 msgstr "Cor"
 
-#: crates/pigoune-app/src/filter_choices.rs:344
+#: crates/pigoune-app/src/filter_choices.rs:350
 #, rust-format
 msgid "Custom {code}"
 msgstr "Personalizada {code}"
@@ -2210,11 +2214,14 @@ msgstr "Reproduzir"
 
 #: crates/pigoune-app/src/asset_preview.rs:1027
 msgid "The full-size image could not be loaded: showing its thumbnail"
-msgstr "Não foi possível carregar a imagem em tamanho real: mostrando a miniatura"
+msgstr ""
+"Não foi possível carregar a imagem em tamanho real: mostrando a miniatura"
 
 #: crates/pigoune-app/src/asset_preview.rs:1029
 msgid "This image could not be loaded: its file may be missing or damaged"
-msgstr "Não foi possível carregar esta imagem: o arquivo pode estar ausente ou danificado"
+msgstr ""
+"Não foi possível carregar esta imagem: o arquivo pode estar ausente ou "
+"danificado"
 
 #: crates/pigoune-app/src/asset_preview.rs:1122
 #: crates/pigoune-app/src/wallpaper_dialog.rs:671

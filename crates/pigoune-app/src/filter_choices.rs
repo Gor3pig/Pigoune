@@ -251,10 +251,16 @@ impl PigouneFilterChoices {
             return;
         };
         let screen = screen_size::screen_of(self);
-        if let Some(screen) = screen {
-            label.set_label(&screen_size::at_least(screen));
+        label.set_label(&match screen {
+            Some(screen) => screen_size::at_least(screen),
+            None => gettext("The size of your screen could not be detected"),
+        });
+        label.set_visible(true);
+        let check = self.fits_screen_check();
+        if screen.is_none() {
+            check.set_active(false);
         }
-        label.set_visible(screen.is_some());
+        check.set_sensitive(screen.is_some());
     }
 
     fn build_colors(&self) {

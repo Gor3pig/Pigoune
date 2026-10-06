@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 21:49+0200\n"
+"POT-Creation-Date: 2026-10-06 21:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1870,13 +1870,17 @@ msgstr ""
 msgid "Fits My Screen"
 msgstr ""
 
-#: crates/pigoune-app/src/filter_choices.rs:263
+#: crates/pigoune-app/src/filter_choices.rs:256
+msgid "The size of your screen could not be detected"
+msgstr ""
+
+#: crates/pigoune-app/src/filter_choices.rs:269
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:250
 msgid "Color"
 msgstr ""
 
-#: crates/pigoune-app/src/filter_choices.rs:344
+#: crates/pigoune-app/src/filter_choices.rs:350
 #, rust-format
 msgid "Custom {code}"
 msgstr ""

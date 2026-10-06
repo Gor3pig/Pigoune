@@ -217,10 +217,24 @@ fn insert_asset(
 }
 
 fn display_name_of(original_file_name: &str) -> String {
-    Path::new(original_file_name).file_stem().map_or_else(
+    let name = Path::new(original_file_name).file_stem().map_or_else(
         || original_file_name.to_owned(),
         |stem| stem.to_string_lossy().into_owned(),
-    )
+    );
+    let single_line: String = name
+        .chars()
+        .map(|character| {
+            if character.is_control() {
+                ' '
+            } else {
+                character
+            }
+        })
+        .collect();
+    match single_line.trim() {
+        "" => name,
+        shown => shown.to_owned(),
+    }
 }
 
 #[cfg(test)]
@@ -236,5 +250,13 @@ mod tests {
         assert_eq!(display_name_of("logo.final.png"), "logo.final");
         assert_eq!(display_name_of("README"), "README");
         assert_eq!(display_name_of(".hidden.png"), ".hidden");
+    }
+
+    #[test]
+    fn control_characters_in_a_file_name_become_spaces() {
+        assert_eq!(display_name_of("line\nbreak.png"), "line break");
+        assert_eq!(display_name_of("tab\there.png"), "tab here");
+        assert_eq!(display_name_of("\nlogo\n.png"), "logo");
+        assert_eq!(display_name_of("\n.png"), "\n");
     }
 }
