@@ -7,6 +7,15 @@ pub const ACTUAL_SCALE: f64 = 1.0;
 pub const BLUR_SHARE: f64 = 0.03;
 pub const BLUR_BRIGHTNESS: f64 = 0.85;
 
+pub const LARGEST_DARKNESS: f64 = 0.6;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Look {
+    pub backdrop: Backdrop,
+    pub mirrored: bool,
+    pub darkness: f64,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Backdrop {
     Color([u8; 3]),

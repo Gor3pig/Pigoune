@@ -37,7 +37,7 @@ use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
 use crate::preview_flight::Flight;
 use crate::recent_libraries;
-use crate::screen_size;
+use crate::screen_size::{self, ScreenChoice};
 use crate::settings;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
 use crate::sidebar_item::SidebarEntry;
@@ -2382,11 +2382,17 @@ impl PigouneWindow {
         if self.is_showing_trash() {
             return;
         }
-        let Some(screen) = screen_size::screen_of(self)
-            .or_else(|| Dimensions::new(FALLBACK_SCREEN.0, FALLBACK_SCREEN.1))
-        else {
-            return;
-        };
+        let (mut screens, current) = screen_size::screens_of(self);
+        if screens.is_empty() {
+            let Some(size) = Dimensions::new(FALLBACK_SCREEN.0, FALLBACK_SCREEN.1) else {
+                return;
+            };
+            screens.push(ScreenChoice {
+                name: String::new(),
+                size,
+                scale: 1.0,
+            });
+        }
         let source = WallpaperSource {
             file: asset.file().to_path_buf(),
             natural: natural_size(asset),
@@ -2402,15 +2408,16 @@ impl PigouneWindow {
         let asset = asset.clone();
         let dialog = PigouneWallpaperDialog::new(
             source,
-            screen,
-            screen_size::monitor_scale_of(self),
+            (screens, current),
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 move |choice| {
                     let asset = asset.clone();
                     glib::spawn_future_local(async move {
-                        window.set_prepared_wallpaper(&asset, choice, screen).await;
+                        window
+                            .set_prepared_wallpaper(&asset, choice, choice.screen)
+                            .await;
                     });
                 }
             ),
@@ -2462,7 +2469,7 @@ impl PigouneWindow {
             &source,
             image,
             (screen.width(), screen.height()),
-            (choice.backdrop, choice.mirrored),
+            choice.look,
             |step| progress.show_step(step),
         )
         .await

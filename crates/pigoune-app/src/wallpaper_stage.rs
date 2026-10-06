@@ -50,6 +50,7 @@ mod imp {
         pub shows_bar: Cell<bool>,
         pub margin: Cell<f64>,
         pub mirrored: Cell<bool>,
+        pub darkness: Cell<f64>,
         pub shows_thirds: Cell<bool>,
         pub snaps: Cell<bool>,
         pub guides: Cell<Guides>,
@@ -78,6 +79,7 @@ mod imp {
                 shows_bar: Cell::new(true),
                 margin: Cell::new(crate::desktop_frame::MARGIN),
                 mirrored: Cell::new(false),
+                darkness: Cell::new(0.0),
                 shows_thirds: Cell::new(false),
                 snaps: Cell::new(true),
                 guides: Cell::new(Guides::default()),
@@ -137,6 +139,13 @@ impl PigouneWallpaperStage {
         self.fill_screen();
     }
 
+    pub fn set_screen(&self, screen: Size, monitor_scale: f64) {
+        let imp = self.imp();
+        imp.screen.set(screen);
+        imp.monitor_scale.set(monitor_scale);
+        self.fill_screen();
+    }
+
     pub fn framing(&self) -> Framing {
         self.imp().framing.get()
     }
@@ -151,6 +160,15 @@ impl PigouneWallpaperStage {
 
     pub fn set_mirrored(&self, mirrored: bool) {
         self.imp().mirrored.set(mirrored);
+        self.queue_draw();
+    }
+
+    pub fn darkness(&self) -> f64 {
+        self.imp().darkness.get()
+    }
+
+    pub fn set_darkness(&self, darkness: f64) {
+        self.imp().darkness.set(darkness);
         self.queue_draw();
     }
 
@@ -178,6 +196,7 @@ impl PigouneWallpaperStage {
         imp.backdrop.set(source.backdrop.get());
         imp.shows_bar.set(source.shows_bar.get());
         imp.mirrored.set(source.mirrored.get());
+        imp.darkness.set(source.darkness.get());
         imp.shows_thirds.set(source.shows_thirds.get());
         imp.snaps.set(source.snaps.get());
         self.set_framing(other.framing());
@@ -287,6 +306,13 @@ impl PigouneWallpaperStage {
             mirrored,
             gsk::ScalingFilter::Trilinear,
         );
+        let darkness = imp.darkness.get();
+        if darkness > 0.0 {
+            snapshot.append_color(
+                &gdk::RGBA::new(0.0, 0.0, 0.0, opacity_of(darkness)),
+                &screen_rect,
+            );
+        }
         if imp.shows_thirds.get() {
             draw_thirds(snapshot, &screen_rect);
         }
@@ -527,6 +553,14 @@ fn gradient_ends(area: &graphene::Rect, angle_degrees: f64) -> (graphene::Point,
             (center_y + down * half) as f32,
         ),
     )
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "an opacity between 0 and 1 fits easily in f32"
+)]
+fn opacity_of(darkness: f64) -> f32 {
+    darkness.clamp(0.0, 1.0) as f32
 }
 
 fn rgba_of(channels: [u8; 3]) -> gdk::RGBA {

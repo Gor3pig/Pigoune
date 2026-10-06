@@ -377,6 +377,41 @@ template $PigouneWallpaperDialog: Adw.Dialog {
           }
 
           Adw.PreferencesGroup {
+            title: _("Image");
+
+            Box {
+              spacing: 6;
+
+              Label {
+                label: _("Darken");
+              }
+
+              Scale darkness_scale {
+                hexpand: true;
+                draw-value: false;
+                tooltip-text: _("Darkens the whole wallpaper so that icons and bars stay readable");
+                value-changed => $on_darkness_changed() swapped;
+
+                adjustment: Adjustment {
+                  lower: 0;
+                  upper: 60;
+                  step-increment: 1;
+                  page-increment: 10;
+                };
+              }
+
+              Label darkness_label {
+                width-chars: 5;
+                xalign: 1;
+
+                styles [
+                  "numeric",
+                ]
+              }
+            }
+          }
+
+          Adw.PreferencesGroup {
             title: _("Simulation");
 
             Adw.SwitchRow bar_row {

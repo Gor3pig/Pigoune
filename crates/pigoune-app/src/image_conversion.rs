@@ -9,7 +9,7 @@ use crate::desktop_frame::Frame;
 use crate::export_size::{CustomSize, Framing, ScreenSize};
 use crate::icon_sides::IconSides;
 use crate::thumbnails;
-use crate::wallpaper_framing::{self, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop};
+use crate::wallpaper_framing::{self, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop, Look};
 use crate::zoom_math::Size;
 
 const RGBA_CHANNELS: usize = 4;
@@ -209,13 +209,14 @@ pub async fn wallpaper(
     source: &Source<'_>,
     image: Frame,
     screen: (u32, u32),
-    (backdrop, mirrored): (Backdrop, bool),
+    look: Look,
     on_step: impl Fn(WallpaperStep),
 ) -> Result<Vec<u8>, ConversionError> {
     on_step(WallpaperStep::Loading);
     let vector_side = whole_side(image.width.max(image.height));
     let loaded = load(source, vector_side).await?;
-    let loaded = if mirrored {
+    let backdrop = look.backdrop;
+    let loaded = if look.mirrored {
         gio::spawn_blocking(move || loaded.mirrored())
             .await
             .map_err(|_| ConversionError::EncodingFailed)?
@@ -236,13 +237,26 @@ pub async fn wallpaper(
             framed_over(&loaded, image, screen, &behind).await?
         }
     };
+    let background = match backdrop {
+        Backdrop::Color(color) => color,
+        Backdrop::Gradient(..) | Backdrop::Blur | Backdrop::Mosaic => BLACK,
+    };
+    let solid = RgbaImage::linear_gradient(screen.0, screen.1, (background, background), 0.0);
+    let darkness = look.darkness;
+    let canvas = gio::spawn_blocking(move || {
+        let opaque = canvas.placed_over(&solid, 0, 0);
+        if darkness > 0.0 {
+            opaque.dimmed(1.0 - darkness)
+        } else {
+            opaque
+        }
+    })
+    .await
+    .map_err(|_| ConversionError::EncodingFailed)?;
     let settings = ConversionSettings {
         format: TargetFormat::Png,
         keep_transparency: false,
-        background: match backdrop {
-            Backdrop::Color(color) => color,
-            Backdrop::Gradient(..) | Backdrop::Blur | Backdrop::Mosaic => BLACK,
-        },
+        background,
         ..ConversionSettings::default()
     };
     on_step(WallpaperStep::Saving);

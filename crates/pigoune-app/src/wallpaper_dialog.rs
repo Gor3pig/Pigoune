@@ -11,8 +11,9 @@ use pigoune_core::{AssetColor, Dimensions, Rgb};
 
 use crate::asset_colors;
 use crate::desktop_bars::Desktop;
+use crate::screen_size::{self, ScreenChoice};
 use crate::thumbnails;
-use crate::wallpaper_framing::{ACTUAL_SCALE, Backdrop, Framing};
+use crate::wallpaper_framing::{ACTUAL_SCALE, Backdrop, Framing, LARGEST_DARKNESS, Look};
 use crate::wallpaper_stage::PigouneWallpaperStage;
 use crate::wallpaper_swatches::ColorSwatches;
 use crate::zoom_math::Size;
@@ -25,6 +26,8 @@ const MOSAIC: &str = "mosaic";
 const BLACK: Rgb = Rgb::new(0, 0, 0);
 const CHANNEL_MAX: f32 = 255.0;
 const FULL_TURN: f64 = 360.0;
+const FULL_PERCENT: f64 = 100.0;
+const MANY_SCREENS: usize = 2;
 const WHITE: Rgb = Rgb::new(255, 255, 255);
 const SHARPNESS_TOLERANCE: f64 = 0.005;
 const FULL_SCREEN_STYLE: &str = "wallpaper-full-screen";
@@ -37,9 +40,9 @@ type SetCallback = Box<dyn Fn(WallpaperChoice)>;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WallpaperChoice {
+    pub screen: Dimensions,
     pub framing: Framing,
-    pub mirrored: bool,
-    pub backdrop: Backdrop,
+    pub look: Look,
     pub adds_to_library: bool,
 }
 
@@ -108,6 +111,12 @@ mod imp {
         pub actual_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub mirror_button: TemplateChild<gtk::ToggleButton>,
+        pub screens: RefCell<Vec<crate::screen_size::ScreenChoice>>,
+        pub chosen_screen: Cell<usize>,
+        #[template_child]
+        pub darkness_scale: TemplateChild<gtk::Scale>,
+        #[template_child]
+        pub darkness_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub thirds_button: TemplateChild<gtk::ToggleButton>,
         #[template_child]
@@ -157,8 +166,7 @@ glib::wrapper! {
 impl PigouneWallpaperDialog {
     pub fn new(
         source: WallpaperSource,
-        screen: Dimensions,
-        monitor_scale: f64,
+        (screens, current): (Vec<ScreenChoice>, usize),
         on_set: impl Fn(WallpaperChoice) + 'static,
     ) -> Self {
         let dialog: Self = glib::Object::new();
@@ -167,7 +175,13 @@ impl PigouneWallpaperDialog {
         imp.hint_label.set_label(&gettext(
             "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to adjust it",
         ));
-        imp.screen_group.set_description(Some(&screen_text(screen)));
+        let shown = screens
+            .get(current)
+            .or_else(|| screens.first())
+            .cloned()
+            .expect("at least one screen is offered");
+        dialog.offer_screens(&screens, current);
+        imp.screens.replace(screens);
         imp.actual_button.set_label(&percent_text(1.0));
         imp.is_vector.set(source.is_vector);
         dialog.listen_to_full_screen_key();
@@ -183,27 +197,24 @@ impl PigouneWallpaperDialog {
             .set_selected(u32::try_from(position).unwrap_or(0));
         imp.stage.set_desktop(detected);
         dialog.offer_colors(&source.colors);
+        dialog.on_darkness_changed();
         imp.on_set.replace(Some(Box::new(on_set)));
         imp.stage.connect_changed(glib::clone!(
             #[weak]
             dialog,
             move || dialog.show_zoom()
         ));
-        let screen_size = Size {
-            width: f64::from(screen.width()),
-            height: f64::from(screen.height()),
-        };
         glib::spawn_future_local(glib::clone!(
             #[weak]
             dialog,
             async move {
-                dialog.load(&source, screen_size, monitor_scale).await;
+                dialog.load(&source, &shown).await;
             }
         ));
         dialog
     }
 
-    async fn load(&self, source: &WallpaperSource, screen: Size, monitor_scale: f64) {
+    async fn load(&self, source: &WallpaperSource, screen: &ScreenChoice) {
         let Some(image) = thumbnails::load_detailed(&source.file, SHOWN_VECTOR_PIXELS).await else {
             return;
         };
@@ -213,7 +224,7 @@ impl PigouneWallpaperDialog {
             height: f64::from(source.natural.1.max(1)),
         };
         imp.stage
-            .show(&image.texture, natural, screen, monitor_scale);
+            .show(&image.texture, natural, size_of(screen.size), screen.scale);
         imp.set_button.set_sensitive(true);
         imp.stage.grab_focus();
     }
@@ -388,6 +399,59 @@ impl PigouneWallpaperDialog {
         imp.stage.set_shows_bar(imp.bar_row.is_active());
     }
 
+    fn offer_screens(&self, screens: &[ScreenChoice], current: usize) {
+        let imp = self.imp();
+        imp.chosen_screen.set(current);
+        if screens.len() < MANY_SCREENS {
+            if let Some(screen) = screens.get(current) {
+                imp.screen_group
+                    .set_description(Some(&screen_text(screen.size)));
+            }
+            return;
+        }
+        imp.screen_group.set_description(Some(&gettext(
+            "GNOME shows the same wallpaper on every screen: it is prepared for the one chosen here",
+        )));
+        let labels: Vec<String> = screens.iter().map(screen_size::screen_label).collect();
+        let names: Vec<&str> = labels.iter().map(String::as_str).collect();
+        let row = adw::ComboRow::builder()
+            .title(gettext("Prepare For"))
+            .model(&gtk::StringList::new(&names))
+            .selected(u32::try_from(current).unwrap_or(0))
+            .build();
+        row.connect_selected_notify(glib::clone!(
+            #[weak(rename_to = dialog)]
+            self,
+            move |row| dialog.choose_screen(usize::try_from(row.selected()).unwrap_or(0))
+        ));
+        imp.screen_group.add(&row);
+    }
+
+    fn chosen_screen(&self) -> ScreenChoice {
+        let imp = self.imp();
+        let screens = imp.screens.borrow();
+        screens
+            .get(imp.chosen_screen.get())
+            .or_else(|| screens.first())
+            .cloned()
+            .expect("at least one screen is offered")
+    }
+
+    fn choose_screen(&self, position: usize) {
+        let imp = self.imp();
+        imp.chosen_screen.set(position);
+        let screen = self.chosen_screen();
+        imp.stage.set_screen(size_of(screen.size), screen.scale);
+    }
+
+    #[template_callback]
+    fn on_darkness_changed(&self) {
+        let imp = self.imp();
+        let share = imp.darkness_scale.value() / FULL_PERCENT;
+        imp.darkness_label.set_label(&percent_text(share));
+        imp.stage.set_darkness(share.clamp(0.0, LARGEST_DARKNESS));
+    }
+
     #[template_callback]
     fn on_mirror_toggled(&self) {
         let imp = self.imp();
@@ -494,11 +558,16 @@ impl PigouneWallpaperDialog {
 
     #[template_callback]
     fn on_set_clicked(&self) {
+        let imp = self.imp();
         let choice = WallpaperChoice {
-            framing: self.imp().stage.framing(),
-            mirrored: self.imp().stage.mirrored(),
-            backdrop: self.backdrop(),
-            adds_to_library: self.imp().add_check.is_active(),
+            screen: self.chosen_screen().size,
+            framing: imp.stage.framing(),
+            look: Look {
+                backdrop: self.backdrop(),
+                mirrored: imp.stage.mirrored(),
+                darkness: imp.stage.darkness(),
+            },
+            adds_to_library: imp.add_check.is_active(),
         };
         self.close();
         if let Some(on_set) = self.imp().on_set.borrow().as_ref() {
@@ -589,6 +658,13 @@ fn follow_pointer(window: &gtk::Window, notice: &gtk::Revealer) {
         }
     });
     window.add_controller(motion);
+}
+
+fn size_of(screen: Dimensions) -> Size {
+    Size {
+        width: f64::from(screen.width()),
+        height: f64::from(screen.height()),
+    }
 }
 
 fn percent_text(scale: f64) -> String {

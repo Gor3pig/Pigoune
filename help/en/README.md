@@ -253,6 +253,10 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   the screen, a blue line showing where. What goes past the screen stays visible, faded. When the image is enlarged past 100%, a notice over the screen warns that it
   will look blurry. The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its
   real size, as a simulation that a short notice recalls; <kbd>Esc</kbd> comes back.
+- **Darken**, under **Image**, darkens the whole wallpaper, up to 60%, so that icons and bars
+  stay readable; like **Mirror**, it changes the wallpaper only, never the asset. With several
+  screens, **Prepare For** chooses the one the wallpaper is made for: GNOME shows the same
+  wallpaper on every screen and adapts it to the others.
 - **Desktop Simulation** draws an imitation of the bars of your desktop over the virtual
   screen: GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being
   chosen at first. Turn it off to see the image alone.

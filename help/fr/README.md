@@ -285,6 +285,11 @@ ses critères.
   l'écran, une ligne bleue montrant où. Ce qui dépasse de l'écran reste visible, en pâle. Quand l'image est agrandie au-delà de 100 %, une pastille sur l'écran prévient
   qu'elle sera floue. Le bouton plein écran, ou <kbd>F11</kbd>, montre l'écran virtuel en vraie
   grandeur, comme une simulation que rappelle une courte pastille ; <kbd>Échap</kbd> pour revenir.
+- **Assombrir**, sous **Image**, assombrit tout le fond d'écran, jusqu'à 60 %, pour que les
+  icônes et les barres restent lisibles ; comme **Miroir**, il ne change que le fond d'écran,
+  jamais la ressource. Avec plusieurs écrans, **Préparer pour** choisit celui pour lequel le fond
+  d'écran est fabriqué : GNOME affiche le même fond d'écran sur tous les écrans et l'adapte aux
+  autres.
 - **Simulation du bureau** dessine une imitation des barres de votre bureau sur l'écran
   virtuel : GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez
   étant choisi d'office. Désactivez-la pour voir l'image seule.
