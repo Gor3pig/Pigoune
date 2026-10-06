@@ -65,6 +65,8 @@ mod imp {
         #[template_child]
         pub details_slot: TemplateChild<adw::Bin>,
         #[template_child]
+        pub load_banner: TemplateChild<adw::Banner>,
+        #[template_child]
         pub strip: TemplateChild<PigounePreviewStrip>,
         #[property(get, set = Self::set_show_strip)]
         pub show_strip: Cell<bool>,
@@ -931,6 +933,7 @@ impl PigouneAssetPreview {
         self.offer_icon_sizes(&asset);
         self.watch_favorite(&asset);
         self.stop_animation();
+        imp.load_banner.set_revealed(false);
         self.load(&asset, self.render_pixels(), true);
     }
 
@@ -983,11 +986,19 @@ impl PigouneAssetPreview {
         }
         let file = asset.file().to_path_buf();
         let animated = asset.asset().is_animated.then(|| asset.clone());
+        let has_thumbnail = imp
+            .thumbnails
+            .borrow()
+            .as_ref()
+            .is_some_and(|thumbnails| thumbnails.remembered(asset.id()).is_some());
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = preview)]
             self,
             async move {
                 let Some(detailed) = thumbnails::load_detailed(&file, vector_pixels).await else {
+                    if first_view {
+                        preview.show_load_failure(has_thumbnail);
+                    }
                     return;
                 };
                 if let Some(animated) = animated.as_ref() {
@@ -1008,6 +1019,16 @@ impl PigouneAssetPreview {
             }
         ));
         imp.loading.replace(Some(loading));
+    }
+
+    fn show_load_failure(&self, has_thumbnail: bool) {
+        let banner = &self.imp().load_banner;
+        banner.set_title(&if has_thumbnail {
+            gettext("The full-size image could not be loaded: showing its thumbnail")
+        } else {
+            gettext("This image could not be loaded: its file may be missing or damaged")
+        });
+        banner.set_revealed(true);
     }
 
     fn follow_zoom(&self) {

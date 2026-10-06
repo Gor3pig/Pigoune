@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 21:43+0200\n"
+"POT-Creation-Date: 2026-10-06 21:49+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1190,12 +1190,12 @@ msgstr "Vorschau öffnen"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:253
-#: crates/pigoune-app/src/asset_preview.rs:1116
+#: crates/pigoune-app/src/asset_preview.rs:1137
 msgid "Open With…"
 msgstr "Öffnen mit …"
 
 #: crates/pigoune-app/src/window.rs:1810
-#: crates/pigoune-app/src/asset_preview.rs:1118
+#: crates/pigoune-app/src/asset_preview.rs:1139
 msgid "Frame and Set as Wallpaper…"
 msgstr "Zuschneiden und als Hintergrundbild festlegen …"
 
@@ -1214,33 +1214,33 @@ msgstr "_Wiederherstellen"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:260
-#: crates/pigoune-app/src/asset_preview.rs:1122
+#: crates/pigoune-app/src/asset_preview.rs:1143
 msgid "Copy"
 msgstr "Kopieren"
 
 #: crates/pigoune-app/src/window.rs:1831
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:267
-#: crates/pigoune-app/src/asset_preview.rs:1125
+#: crates/pigoune-app/src/asset_preview.rs:1146
 msgid "Export To…"
 msgstr "Exportieren nach …"
 
 #: crates/pigoune-app/src/window.rs:1833
-#: crates/pigoune-app/src/asset_preview.rs:1126
+#: crates/pigoune-app/src/asset_preview.rs:1147
 msgid "Export As…"
 msgstr "Exportieren als …"
 
 #: crates/pigoune-app/src/window.rs:1838
-#: crates/pigoune-app/src/asset_preview.rs:516
-#: crates/pigoune-app/src/asset_preview.rs:1129
+#: crates/pigoune-app/src/asset_preview.rs:518
+#: crates/pigoune-app/src/asset_preview.rs:1150
 #: crates/pigoune-app/src/asset_details.rs:502
 #: crates/pigoune-app/src/asset_details.rs:560
 msgid "Remove from Favorites"
 msgstr "Aus Favoriten entfernen"
 
 #: crates/pigoune-app/src/window.rs:1840
-#: crates/pigoune-app/src/asset_preview.rs:520
-#: crates/pigoune-app/src/asset_preview.rs:1131
+#: crates/pigoune-app/src/asset_preview.rs:522
+#: crates/pigoune-app/src/asset_preview.rs:1152
 #: crates/pigoune-app/src/asset_details.rs:504
 #: crates/pigoune-app/src/asset_details.rs:562
 msgid "Add to Favorites"
@@ -1848,8 +1848,12 @@ msgstr[1] "{count} Dateien ignoriert: kein unterstütztes Bildformat"
 msgid "{count} link ignored: links to other files or folders are not followed"
 msgid_plural ""
 "{count} links ignored: links to other files or folders are not followed"
-msgstr[0] "{count} Verknüpfung ignoriert: Verknüpfungen zu anderen Dateien oder Ordnern werden nicht verfolgt"
-msgstr[1] "{count} Verknüpfungen ignoriert: Verknüpfungen zu anderen Dateien oder Ordnern werden nicht verfolgt"
+msgstr[0] ""
+"{count} Verknüpfung ignoriert: Verknüpfungen zu anderen Dateien oder Ordnern "
+"werden nicht verfolgt"
+msgstr[1] ""
+"{count} Verknüpfungen ignoriert: Verknüpfungen zu anderen Dateien oder "
+"Ordnern werden nicht verfolgt"
 
 #: crates/pigoune-app/src/import_report.rs:170
 #, rust-format
@@ -2207,7 +2211,7 @@ msgid "Previous Frame"
 msgstr "Vorheriges Bild"
 
 #: crates/pigoune-app/ui/asset-preview.blp:355
-#: crates/pigoune-app/src/asset_preview.rs:964
+#: crates/pigoune-app/src/asset_preview.rs:967
 msgid "Pause"
 msgstr "Pause"
 
@@ -2226,17 +2230,25 @@ msgstr "Vorherige Ressource"
 msgid "Next Resource"
 msgstr "Nächste Ressource"
 
-#: crates/pigoune-app/src/asset_preview.rs:966
+#: crates/pigoune-app/src/asset_preview.rs:969
 msgid "Play"
 msgstr "Abspielen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1101
+#: crates/pigoune-app/src/asset_preview.rs:1027
+msgid "The full-size image could not be loaded: showing its thumbnail"
+msgstr "Das Bild in voller Größe konnte nicht geladen werden: Es wird die Vorschau angezeigt"
+
+#: crates/pigoune-app/src/asset_preview.rs:1029
+msgid "This image could not be loaded: its file may be missing or damaged"
+msgstr "Dieses Bild konnte nicht geladen werden: Die Datei fehlt oder ist beschädigt"
+
+#: crates/pigoune-app/src/asset_preview.rs:1122
 #: crates/pigoune-app/src/wallpaper_dialog.rs:671
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:1165
+#: crates/pigoune-app/src/asset_preview.rs:1186
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} von {count}"
