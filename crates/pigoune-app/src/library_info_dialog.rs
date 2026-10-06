@@ -215,7 +215,7 @@ impl PigouneLibraryInfoDialog {
             async move {
                 let pixels =
                     u32::try_from(RECORD_THUMBNAIL_SIDE * picture.scale_factor()).unwrap_or(1);
-                if let Some(texture) = thumbnails::render(&file, pixels, &picture).await {
+                if let Some(texture) = thumbnails::render(&file, pixels).await {
                     picture.set_paintable(Some(&texture));
                 }
             }

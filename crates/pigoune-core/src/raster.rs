@@ -5,6 +5,7 @@ const ALPHA: usize = 3;
 const LOBES: f64 = 3.0;
 const BYTE_MAX: f64 = 255.0;
 const BLUR_PASSES: usize = 3;
+const LARGEST_AVERAGING_FACTOR: u32 = 64;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RgbaImage {
@@ -61,6 +62,53 @@ impl RgbaImage {
             width,
             height,
             pixels: unpremultiply(&down),
+        }
+    }
+
+    #[must_use]
+    pub fn shrunk_to(&self, width: u32, height: u32) -> Self {
+        let width = width.clamp(1, self.width);
+        let height = height.clamp(1, self.height);
+        let factor = (self.width / (width * 2))
+            .min(self.height / (height * 2))
+            .min(LARGEST_AVERAGING_FACTOR);
+        if factor < 2 {
+            return self.resized(width, height);
+        }
+        self.averaged_by(factor).resized(width, height)
+    }
+
+    fn averaged_by(&self, factor: u32) -> Self {
+        let width = self.width.div_ceil(factor);
+        let height = self.height.div_ceil(factor);
+        let row_length = to_index(self.width);
+        let factor = to_index(factor);
+        let mut pixels = Vec::with_capacity(to_index(width) * to_index(height) * CHANNELS);
+        for block_rows in self.pixels.chunks(row_length * CHANNELS * factor) {
+            for start in (0..row_length).step_by(factor) {
+                let end = (start + factor).min(row_length);
+                let mut sums = [0_u32; CHANNELS];
+                let mut count = 0_u32;
+                for row in block_rows.chunks(row_length * CHANNELS) {
+                    for pixel in row[start * CHANNELS..end * CHANNELS]
+                        .as_chunks::<CHANNELS>()
+                        .0
+                    {
+                        let alpha = u32::from(pixel[ALPHA]);
+                        for channel in 0..ALPHA {
+                            sums[channel] += u32::from(pixel[channel]) * alpha;
+                        }
+                        sums[ALPHA] += alpha;
+                        count += 1;
+                    }
+                }
+                pixels.extend(averaged_pixel(sums, count));
+            }
+        }
+        Self {
+            width,
+            height,
+            pixels,
         }
     }
 
@@ -365,6 +413,24 @@ fn to_index(value: u32) -> usize {
     usize::try_from(value).unwrap_or(usize::MAX)
 }
 
+fn averaged_pixel(sums: [u32; CHANNELS], count: u32) -> [u8; CHANNELS] {
+    let alpha = sums[ALPHA];
+    if alpha == 0 {
+        return [0; CHANNELS];
+    }
+    let color = |sum: u32| to_u8((sum + alpha / 2) / alpha);
+    [
+        color(sums[0]),
+        color(sums[1]),
+        color(sums[2]),
+        to_u8((alpha + count / 2) / count),
+    ]
+}
+
+fn to_u8(value: u32) -> u8 {
+    u8::try_from(value).unwrap_or(u8::MAX)
+}
+
 fn premultiply(pixels: &[u8]) -> Vec<f64> {
     pixels
         .as_chunks::<CHANNELS>()
@@ -543,6 +609,78 @@ mod tests {
                 "{width}x{height}"
             );
         }
+    }
+
+    #[test]
+    fn a_large_image_is_shrunk_to_the_asked_size() {
+        for (source, target) in [
+            ((1000, 400), (250, 100)),
+            ((4000, 3000), (256, 192)),
+            ((513, 777), (50, 76)),
+            ((100, 100), (60, 60)),
+            ((10, 10), (10, 10)),
+        ] {
+            let shrunk = uniform(source.0, source.1, [9, 9, 9, 255]).shrunk_to(target.0, target.1);
+            assert_eq!((shrunk.width(), shrunk.height()), target, "{source:?}");
+        }
+    }
+
+    #[test]
+    fn shrinking_by_averaging_keeps_a_uniform_color_and_its_transparency() {
+        let tinted = [20, 80, 200, 128];
+        let shrunk = uniform(1000, 700, tinted).shrunk_to(100, 70);
+
+        assert!(shrunk.pixels().chunks(4).all(|pixel| pixel == tinted));
+    }
+
+    #[test]
+    fn shrinking_a_half_transparent_image_does_not_darken_its_colors() {
+        let mut pixels = Vec::new();
+        for _ in 0..800 {
+            for column in 0..800 {
+                pixels.extend(if column < 400 {
+                    [255, 0, 0, 255]
+                } else {
+                    [0, 0, 0, 0]
+                });
+            }
+        }
+        let image = RgbaImage::new(800, 800, pixels).expect("valid image");
+
+        let shrunk = image.shrunk_to(100, 100);
+
+        assert!(
+            shrunk
+                .pixels()
+                .chunks(4)
+                .filter(|pixel| pixel[3] > 0)
+                .all(|pixel| pixel[0] >= 250 && pixel[1] <= 5 && pixel[2] <= 5)
+        );
+    }
+
+    #[test]
+    fn shrinking_fast_stays_close_to_the_quality_resampling() {
+        let mut pixels = Vec::new();
+        for row in 0..600_u32 {
+            for column in 0..800_u32 {
+                let value = u8::try_from(u32::midpoint(column * 255 / 799, row * 255 / 599))
+                    .expect("average of two bytes");
+                pixels.extend([value, 255 - value, value / 2, 255]);
+            }
+        }
+        let image = RgbaImage::new(800, 600, pixels).expect("valid image");
+
+        let fast = image.shrunk_to(100, 75);
+        let reference = image.resized(100, 75);
+
+        let largest_gap = fast
+            .pixels()
+            .iter()
+            .zip(reference.pixels())
+            .map(|(fast, reference)| fast.abs_diff(*reference))
+            .max()
+            .expect("pixels compared");
+        assert!(largest_gap <= 4, "{largest_gap}");
     }
 
     #[test]

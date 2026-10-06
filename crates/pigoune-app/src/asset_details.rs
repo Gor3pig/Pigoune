@@ -611,7 +611,7 @@ impl PigouneAssetDetails {
             #[weak(rename_to = details)]
             self,
             async move {
-                if let Some(texture) = thumbnails::render(&file, PREVIEW_PIXELS, &details).await {
+                if let Some(texture) = thumbnails::render(&file, PREVIEW_PIXELS).await {
                     details.imp().preview.set_paintable(Some(&texture));
                 }
             }

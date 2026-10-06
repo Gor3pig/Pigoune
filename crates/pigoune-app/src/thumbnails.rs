@@ -5,15 +5,17 @@ use std::io;
 use std::path::Path;
 
 use gtk::prelude::*;
-use gtk::{gdk, gio, graphene, gsk};
-use pigoune_core::{AssetId, Dimensions};
+use gtk::{gdk, gio, glib};
+use pigoune_core::{AssetId, Dimensions, RgbaImage};
 
+use crate::asset_colors;
 use crate::load_slots::LoadSlots;
 
 pub const THUMBNAIL_PIXELS: u32 = 256;
 const REMEMBERED_THUMBNAILS: usize = 600;
 const MOST_CONCURRENT_LOADS: usize = 4;
 const SVG_MIME_TYPE: &str = "image/svg+xml";
+const RGBA_CHANNELS: usize = 4;
 
 thread_local! {
     static LOAD_SLOTS: LoadSlots = LoadSlots::new(MOST_CONCURRENT_LOADS);
@@ -49,17 +51,13 @@ impl ThumbnailCache {
     }
 }
 
-pub async fn thumbnail(
-    file: &Path,
-    thumbnail_file: &Path,
-    widget: &impl IsA<gtk::Widget>,
-) -> Option<gdk::Texture> {
+pub async fn thumbnail(file: &Path, thumbnail_file: &Path) -> Option<gdk::Texture> {
     let slots = LOAD_SLOTS.with(Clone::clone);
     let _slot = slots.acquire().await;
     if let Some(stored) = load_stored(thumbnail_file).await {
         return Some(stored);
     }
-    let texture = render(file, THUMBNAIL_PIXELS, widget).await?;
+    let texture = render(file, THUMBNAIL_PIXELS).await?;
     store(&texture, thumbnail_file);
     Some(texture)
 }
@@ -74,9 +72,10 @@ async fn load_stored(thumbnail_file: &Path) -> Option<gdk::Texture> {
 }
 
 fn store(texture: &gdk::Texture, thumbnail_file: &Path) {
-    let png = texture.save_to_png_bytes();
+    let texture = texture.clone();
     let thumbnail_file = thumbnail_file.to_path_buf();
     drop(gio::spawn_blocking(move || {
+        let png = texture.save_to_png_bytes();
         let _ = write_atomically(&thumbnail_file, &png);
     }));
 }
@@ -102,11 +101,7 @@ pub fn loader_for(file: &Path) -> glycin::Loader {
     loader
 }
 
-pub async fn render(
-    file: &Path,
-    pixels: u32,
-    widget: &impl IsA<gtk::Widget>,
-) -> Option<gdk::Texture> {
+pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
     let mut image = loader_for(file).load().await.ok()?;
     let details = image.details();
     let (width, height) = if image.mime_type().as_str() == SVG_MIME_TYPE {
@@ -122,7 +117,7 @@ pub async fn render(
     if fits_within(&texture, pixels) {
         return Some(texture);
     }
-    Some(downscale(&texture, width, height, widget).unwrap_or(texture))
+    Some(downscaled(texture, width, height).await)
 }
 
 pub struct DetailedImage {
@@ -173,22 +168,37 @@ fn fits_within(texture: &gdk::Texture, pixels: u32) -> bool {
         && u32::try_from(texture.height()).is_ok_and(|height| height <= pixels)
 }
 
-#[expect(
-    clippy::cast_precision_loss,
-    reason = "thumbnail sides are at most a few hundred pixels"
-)]
-fn downscale(
-    texture: &gdk::Texture,
-    width: u32,
-    height: u32,
-    widget: &impl IsA<gtk::Widget>,
-) -> Option<gdk::Texture> {
-    let renderer = widget.native()?.renderer()?;
-    let bounds = graphene::Rect::new(0.0, 0.0, width as f32, height as f32);
-    let snapshot = gtk::Snapshot::new();
-    snapshot.append_scaled_texture(texture, gsk::ScalingFilter::Trilinear, &bounds);
-    let node = snapshot.to_node()?;
-    Some(renderer.render_texture(node, Some(&bounds)))
+async fn downscaled(texture: gdk::Texture, width: u32, height: u32) -> gdk::Texture {
+    let source = texture.clone();
+    gio::spawn_blocking(move || shrink(&source, width, height))
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(texture)
+}
+
+fn shrink(texture: &gdk::Texture, width: u32, height: u32) -> Option<gdk::Texture> {
+    let image = RgbaImage::new(
+        u32::try_from(texture.width()).ok()?,
+        u32::try_from(texture.height()).ok()?,
+        asset_colors::rgba_pixels(texture),
+    )?;
+    let shrunk = image.shrunk_to(width, height);
+    let stride = usize::try_from(shrunk.width()).ok()? * RGBA_CHANNELS;
+    let (width, height) = (
+        i32::try_from(shrunk.width()).ok()?,
+        i32::try_from(shrunk.height()).ok()?,
+    );
+    Some(
+        gdk::MemoryTexture::new(
+            width,
+            height,
+            gdk::MemoryFormat::R8g8b8a8,
+            &glib::Bytes::from_owned(shrunk.into_pixels()),
+            stride,
+        )
+        .upcast(),
+    )
 }
 
 fn fit_within(width: u32, height: u32, pixels: u32) -> (u32, u32) {
@@ -218,7 +228,8 @@ mod tests {
     use gtk::prelude::*;
     use gtk::{gdk, glib};
 
-    use super::{fit_within, load_stored, scaled_to, write_atomically};
+    use super::{fit_within, load_stored, scaled_to, shrink, write_atomically};
+    use crate::asset_colors;
 
     #[test]
     fn small_images_keep_their_size() {
@@ -256,6 +267,20 @@ mod tests {
             .count();
         fs::remove_dir_all(&workspace).expect("workspace removed");
         assert_eq!(leftovers, 1);
+    }
+
+    #[test]
+    fn a_large_texture_is_shrunk_to_the_asked_size_keeping_its_colors() {
+        let pixels = glib::Bytes::from_owned([20_u8, 80, 200, 255].repeat(600 * 400));
+        let texture: gdk::Texture =
+            gdk::MemoryTexture::new(600, 400, gdk::MemoryFormat::R8g8b8a8, &pixels, 600 * 4)
+                .upcast();
+
+        let shrunk = shrink(&texture, 256, 171).expect("texture shrunk");
+
+        assert_eq!((shrunk.width(), shrunk.height()), (256, 171));
+        let colors = asset_colors::rgba_pixels(&shrunk);
+        assert!(colors.chunks(4).all(|pixel| pixel == [20, 80, 200, 255]));
     }
 
     #[test]

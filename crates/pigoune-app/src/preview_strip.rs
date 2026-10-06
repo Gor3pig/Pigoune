@@ -191,8 +191,7 @@ impl PigounePreviewStrip {
         picture.set_paintable(None::<&gdk::Paintable>);
         let item = item.clone();
         glib::spawn_future_local(async move {
-            let texture =
-                thumbnails::thumbnail(asset.file(), asset.thumbnail_file(), &picture).await;
+            let texture = thumbnails::thumbnail(asset.file(), asset.thumbnail_file()).await;
             let Some(texture) = texture else {
                 return;
             };

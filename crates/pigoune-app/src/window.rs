@@ -1309,7 +1309,7 @@ impl PigouneWindow {
             && !pending.is_empty()
         {
             for (id, file, thumbnail_file) in pending {
-                let colors = match thumbnails::thumbnail(&file, &thumbnail_file, self).await {
+                let colors = match thumbnails::thumbnail(&file, &thumbnail_file).await {
                     Some(texture) => dominant_colors(&asset_colors::rgba_pixels(&texture)),
                     None => Vec::new(),
                 };

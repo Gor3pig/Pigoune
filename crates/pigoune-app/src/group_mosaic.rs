@@ -98,7 +98,7 @@ fn load(
         #[strong]
         cache,
         async move {
-            if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file, &image).await {
+            if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
                 cache.remember(id, texture.clone());
                 image.set_paintable(Some(&texture));
             }
