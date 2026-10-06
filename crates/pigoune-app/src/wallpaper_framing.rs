@@ -4,6 +4,14 @@ use crate::zoom_math::{Point, Size};
 pub const SMALLEST_SCALE: f64 = 0.01;
 pub const LARGEST_SCALE: f64 = 8.0;
 pub const ACTUAL_SCALE: f64 = 1.0;
+pub const BLUR_SHARE: f64 = 0.03;
+pub const BLUR_BRIGHTNESS: f64 = 0.85;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Backdrop {
+    Color([u8; 3]),
+    Blur,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Framing {

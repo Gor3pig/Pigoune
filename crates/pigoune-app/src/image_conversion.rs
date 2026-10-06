@@ -9,13 +9,15 @@ use crate::desktop_frame::Frame;
 use crate::export_size::{CustomSize, Framing, ScreenSize};
 use crate::icon_sides::IconSides;
 use crate::thumbnails;
-use crate::wallpaper_framing;
+use crate::wallpaper_framing::{self, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop};
+use crate::zoom_math::Size;
 
 const RGBA_CHANNELS: usize = 4;
 const OPAQUE: u16 = 255;
 const DEFAULT_QUALITY: u8 = 90;
 const WHITE: [u8; 3] = [255, 255, 255];
 const BLACK: [u8; 3] = [0, 0, 0];
+const BLUR_REDUCTION: u32 = 8;
 const LARGEST_WALLPAPER_SOURCE: f64 = 8192.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,15 +208,18 @@ pub async fn wallpaper(
     source: &Source<'_>,
     image: Frame,
     screen: (u32, u32),
+    backdrop: Backdrop,
     on_step: impl Fn(WallpaperStep),
 ) -> Result<Vec<u8>, ConversionError> {
     on_step(WallpaperStep::Loading);
     let vector_side = whole_side(image.width.max(image.height));
     let loaded = load(source, vector_side).await?;
     on_step(WallpaperStep::Framing);
-    let blank = || {
-        RgbaImage::new(1, 1, vec![0; RGBA_CHANNELS])
-            .map(|pixel| pixel.placed_on(screen.0, screen.1, screen.0, screen.1))
+    let behind = match backdrop {
+        Backdrop::Blur => blurred_backdrop(&loaded, screen).await?,
+        Backdrop::Color(_) => RgbaImage::new(1, 1, vec![0; RGBA_CHANNELS])
+            .ok_or(ConversionError::EncodingFailed)?
+            .placed_on(screen.0, screen.1, screen.0, screen.1),
     };
     let canvas =
         match wallpaper_framing::visible_part((loaded.width(), loaded.height()), image, screen) {
@@ -223,18 +228,51 @@ pub async fn wallpaper(
                 let (target_left, target_top, target_width, target_height) = part.target;
                 let cut = loaded.cropped(left, top, width, height);
                 let sized = resized(cut, target_width, target_height).await?;
-                sized.placed_on(screen.0, screen.1, target_left, target_top)
+                sized.placed_over(&behind, target_left, target_top)
             }
-            None => blank().ok_or(ConversionError::EncodingFailed)?,
+            None => behind,
         };
     let settings = ConversionSettings {
         format: TargetFormat::Png,
         keep_transparency: false,
-        background: BLACK,
+        background: match backdrop {
+            Backdrop::Color(color) => color,
+            Backdrop::Blur => BLACK,
+        },
         ..ConversionSettings::default()
     };
     on_step(WallpaperStep::Saving);
     encode(canvas, settings).await
+}
+
+async fn blurred_backdrop(
+    loaded: &RgbaImage,
+    screen: (u32, u32),
+) -> Result<RgbaImage, ConversionError> {
+    let texture = Size {
+        width: f64::from(loaded.width()),
+        height: f64::from(loaded.height()),
+    };
+    let screen_size = Size {
+        width: f64::from(screen.0),
+        height: f64::from(screen.1),
+    };
+    let cover =
+        wallpaper_framing::Framing::filling(texture, screen_size).image_rect(texture, screen_size);
+    let part = wallpaper_framing::visible_part((loaded.width(), loaded.height()), cover, screen)
+        .ok_or(ConversionError::EncodingFailed)?;
+    let (left, top, width, height) = part.source;
+    let small = resized(
+        loaded.cropped(left, top, width, height),
+        (screen.0 / BLUR_REDUCTION).max(1),
+        (screen.1 / BLUR_REDUCTION).max(1),
+    )
+    .await?;
+    let radius = whole_side(screen_size.width * BLUR_SHARE / f64::from(BLUR_REDUCTION));
+    let blurred = gio::spawn_blocking(move || small.blurred(radius).dimmed(BLUR_BRIGHTNESS))
+        .await
+        .map_err(|_| ConversionError::EncodingFailed)?;
+    resized(blurred, screen.0, screen.1).await
 }
 
 #[expect(

@@ -8,13 +8,15 @@ use pigoune_core::Dimensions;
 
 use crate::desktop_bars::Desktop;
 use crate::thumbnails;
-use crate::wallpaper_framing::Framing;
+use crate::wallpaper_framing::{Backdrop, Framing};
 use crate::zoom_math::Size;
 
 const SHOWN_VECTOR_PIXELS: u32 = 2048;
 const BUTTON_ZOOM_FACTOR: f64 = 1.25;
+const BLUR: &str = "blur";
+const COLOR_CHANNEL_MAX: f32 = 255.0;
 
-type SetCallback = Box<dyn Fn(Framing)>;
+type SetCallback = Box<dyn Fn(Framing, Backdrop)>;
 
 pub struct WallpaperSource {
     pub file: PathBuf,
@@ -45,6 +47,12 @@ mod imp {
         pub zoom_scale: TemplateChild<gtk::Scale>,
         #[template_child]
         pub zoom_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub backdrop_toggles: TemplateChild<adw::ToggleGroup>,
+        #[template_child]
+        pub color_group: TemplateChild<adw::PreferencesGroup>,
+        #[template_child]
+        pub color_button: TemplateChild<gtk::ColorDialogButton>,
         #[template_child]
         pub desktop_row: TemplateChild<adw::ComboRow>,
         #[template_child]
@@ -89,7 +97,7 @@ impl PigouneWallpaperDialog {
         source: WallpaperSource,
         screen: Dimensions,
         monitor_scale: f64,
-        on_set: impl Fn(Framing) + 'static,
+        on_set: impl Fn(Framing, Backdrop) + 'static,
     ) -> Self {
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
@@ -106,6 +114,7 @@ impl PigouneWallpaperDialog {
         imp.desktop_row
             .set_selected(u32::try_from(position).unwrap_or(0));
         imp.stage.set_desktop(detected);
+        imp.color_button.set_rgba(&gtk::gdk::RGBA::BLACK);
         imp.on_set.replace(Some(Box::new(on_set)));
         imp.stage.connect_changed(glib::clone!(
             #[weak]
@@ -188,6 +197,24 @@ impl PigouneWallpaperDialog {
         self.imp().stage.show_actual_size();
     }
 
+    fn backdrop(&self) -> Backdrop {
+        let imp = self.imp();
+        if imp.backdrop_toggles.active_name().as_deref() == Some(BLUR) {
+            return Backdrop::Blur;
+        }
+        let color = imp.color_button.rgba();
+        Backdrop::Color([color.red(), color.green(), color.blue()].map(channel_byte))
+    }
+
+    #[template_callback]
+    fn on_backdrop_changed(&self) {
+        let imp = self.imp();
+        let backdrop = self.backdrop();
+        imp.color_group
+            .set_visible(matches!(backdrop, Backdrop::Color(_)));
+        imp.stage.set_backdrop(backdrop);
+    }
+
     #[template_callback]
     fn on_desktop_changed(&self) {
         let imp = self.imp();
@@ -211,11 +238,21 @@ impl PigouneWallpaperDialog {
     #[template_callback]
     fn on_set_clicked(&self) {
         let framing = self.imp().stage.framing();
+        let backdrop = self.backdrop();
         self.close();
         if let Some(on_set) = self.imp().on_set.borrow().as_ref() {
-            on_set(framing);
+            on_set(framing, backdrop);
         }
     }
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "the channel is rounded and clamped to the range of a byte"
+)]
+fn channel_byte(channel: f32) -> u8 {
+    (channel.clamp(0.0, 1.0) * COLOR_CHANNEL_MAX).round() as u8
 }
 
 fn hint_text(screen: Dimensions) -> String {

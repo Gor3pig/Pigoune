@@ -54,7 +54,7 @@ use crate::update_news::UpdateNews;
 use crate::view_setting;
 use crate::wallpaper;
 use crate::wallpaper_dialog::{PigouneWallpaperDialog, WallpaperSource};
-use crate::wallpaper_framing::Framing;
+use crate::wallpaper_framing::{Backdrop, Framing};
 use crate::wallpaper_progress_dialog::PigouneWallpaperProgressDialog;
 use crate::zoom_math::Size;
 
@@ -2424,13 +2424,13 @@ impl PigouneWindow {
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |framing| {
+                move |framing, backdrop| {
                     let asset = asset.clone();
                     glib::spawn_future_local(async move {
                         let progress = PigouneWallpaperProgressDialog::new();
                         progress.present(Some(&window));
                         let prepared = window
-                            .prepared_wallpaper(&asset, framing, screen, &progress)
+                            .prepared_wallpaper(&asset, (framing, backdrop), screen, &progress)
                             .await;
                         window
                             .apply_wallpaper(prepared, &asset.display_name())
@@ -2446,7 +2446,7 @@ impl PigouneWindow {
     async fn prepared_wallpaper(
         &self,
         asset: &PigouneAssetObject,
-        framing: Framing,
+        (framing, backdrop): (Framing, Backdrop),
         screen: Dimensions,
         progress: &PigouneWallpaperProgressDialog,
     ) -> Result<PathBuf, String> {
@@ -2471,6 +2471,7 @@ impl PigouneWindow {
             &source,
             image,
             (screen.width(), screen.height()),
+            backdrop,
             |step| progress.show_step(step),
         )
         .await

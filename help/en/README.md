@@ -255,7 +255,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   slider or <kbd>+</kbd> and <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd>
   moves further). **Fill the Screen** frames it the way GNOME would, **Whole Image** shows all
   of it and **Actual Size** shows one pixel of the image per pixel of the screen. What goes
-  past the screen stays visible, faded. **Set as Wallpaper** then makes an image exactly the
+  past the screen stays visible, faded. Under **Empty Space**, choose what fills the screen
+  around a smaller image: a **Color**, black at first, or **Blur**, the same image enlarged and
+  blurred behind it. **Set as Wallpaper** then makes an image exactly the
   size of the screen, so the desktop shows exactly what you framed.
 
 ## Trash and undo

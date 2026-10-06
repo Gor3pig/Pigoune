@@ -289,7 +289,9 @@ ses critères.
   déplacer, zoomez avec la molette, le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la
   avec les flèches (<kbd>Maj</kbd> pour aller plus loin). **Remplir l'écran** la cadre comme
   GNOME le ferait, **Image entière** la montre en entier et **Taille réelle** montre un pixel de
-  l'image par pixel de l'écran. Ce qui dépasse de l'écran reste visible, en pâle. **Définir
+  l'image par pixel de l'écran. Ce qui dépasse de l'écran reste visible, en pâle. Sous **Espace
+  vide**, choisissez ce qui remplit l'écran autour d'une image plus petite : une **Couleur**,
+  noire au départ, ou le **Flou**, la même image agrandie et floutée derrière elle. **Définir
   comme fond d'écran** fabrique ensuite une image exactement à la taille de l'écran : le bureau
   montre exactement ce que vous avez cadré.
 

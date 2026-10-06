@@ -4,7 +4,7 @@ use gtk::{gdk, glib, graphene, gsk};
 
 use crate::desktop_bars::{Bars, Desktop};
 use crate::desktop_frame::{self, Frame};
-use crate::wallpaper_framing::{ACTUAL_SCALE, Framing};
+use crate::wallpaper_framing::{ACTUAL_SCALE, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop, Framing};
 use crate::zoom_math::{Point, Size};
 
 const CUT_OPACITY: f64 = 0.3;
@@ -14,6 +14,8 @@ const SMALL_STEP: f64 = 10.0;
 const LARGE_STEP: f64 = 100.0;
 const MOVABLE_CURSOR: &str = "grab";
 const MOVING_CURSOR: &str = "grabbing";
+const GSK_BLUR_PER_DEVIATION: f64 = 2.0;
+const COLOR_CHANNEL_MAX: f32 = 255.0;
 
 type ChangedCallback = Box<dyn Fn()>;
 
@@ -26,7 +28,7 @@ mod imp {
 
     use super::ChangedCallback;
     use crate::desktop_bars::Desktop;
-    use crate::wallpaper_framing::Framing;
+    use crate::wallpaper_framing::{Backdrop, Framing};
     use crate::zoom_math::{Point, Size};
 
     pub struct PigouneWallpaperStage {
@@ -36,6 +38,7 @@ mod imp {
         pub monitor_scale: Cell<f64>,
         pub framing: Cell<Framing>,
         pub desktop: Cell<Desktop>,
+        pub backdrop: Cell<Backdrop>,
         pub shows_bar: Cell<bool>,
         pub drag_start: Cell<Point>,
         pub pointer: Cell<Option<Point>>,
@@ -58,6 +61,7 @@ mod imp {
                     offset: Point { x: 0.0, y: 0.0 },
                 }),
                 desktop: Cell::new(Desktop::Gnome),
+                backdrop: Cell::new(Backdrop::Color([0, 0, 0])),
                 shows_bar: Cell::new(true),
                 drag_start: Cell::new(Point { x: 0.0, y: 0.0 }),
                 pointer: Cell::default(),
@@ -121,6 +125,11 @@ impl PigouneWallpaperStage {
 
     pub fn set_desktop(&self, desktop: Desktop) {
         self.imp().desktop.set(desktop);
+        self.queue_draw();
+    }
+
+    pub fn set_backdrop(&self, backdrop: Backdrop) {
+        self.imp().backdrop.set(backdrop);
         self.queue_draw();
     }
 
@@ -201,8 +210,8 @@ impl PigouneWallpaperStage {
         snapshot.push_opacity(CUT_OPACITY);
         snapshot.append_scaled_texture(&texture, gsk::ScalingFilter::Trilinear, &image_rect);
         snapshot.pop();
-        snapshot.append_color(&gdk::RGBA::BLACK, &screen_rect);
         snapshot.push_clip(&screen_rect);
+        self.draw_backdrop(snapshot, &texture, &screen_rect, scale);
         snapshot.append_scaled_texture(&texture, gsk::ScalingFilter::Trilinear, &image_rect);
         if imp.shows_bar.get() {
             Bars {
@@ -213,6 +222,41 @@ impl PigouneWallpaperStage {
             .draw(snapshot, imp.desktop.get());
         }
         snapshot.pop();
+    }
+
+    fn draw_backdrop(
+        &self,
+        snapshot: &gtk::Snapshot,
+        texture: &gdk::Texture,
+        screen_rect: &graphene::Rect,
+        scale: f64,
+    ) {
+        let imp = self.imp();
+        match imp.backdrop.get() {
+            Backdrop::Color(channels) => {
+                let [red, green, blue] =
+                    channels.map(|channel| f32::from(channel) / COLOR_CHANNEL_MAX);
+                snapshot.append_color(&gdk::RGBA::new(red, green, blue, 1.0), screen_rect);
+            }
+            Backdrop::Blur => {
+                let screen = imp.screen.get();
+                let cover =
+                    Framing::filling(imp.image.get(), screen).image_rect(imp.image.get(), screen);
+                let frame = self.screen_frame();
+                let cover_rect = rect_of(Frame {
+                    x: frame.x + cover.x * scale,
+                    y: frame.y + cover.y * scale,
+                    width: cover.width * scale,
+                    height: cover.height * scale,
+                });
+                snapshot.append_color(&gdk::RGBA::BLACK, screen_rect);
+                snapshot.push_opacity(BLUR_BRIGHTNESS);
+                snapshot.push_blur(screen.width * BLUR_SHARE * scale * GSK_BLUR_PER_DEVIATION);
+                snapshot.append_scaled_texture(texture, gsk::ScalingFilter::Linear, &cover_rect);
+                snapshot.pop();
+                snapshot.pop();
+            }
+        }
     }
 
     fn listen_to_drag(&self) {

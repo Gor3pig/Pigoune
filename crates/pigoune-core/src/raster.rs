@@ -4,6 +4,7 @@ const CHANNELS: usize = 4;
 const ALPHA: usize = 3;
 const LOBES: f64 = 3.0;
 const BYTE_MAX: f64 = 255.0;
+const BLUR_PASSES: usize = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RgbaImage {
@@ -147,6 +148,127 @@ impl RgbaImage {
             pixels,
         }
     }
+
+    #[must_use]
+    pub fn placed_over(&self, canvas: &Self, left: u32, top: u32) -> Self {
+        let mut pixels = canvas.pixels.clone();
+        let canvas_row = to_index(canvas.width) * CHANNELS;
+        let copied_width = to_index(self.width.min(canvas.width.saturating_sub(left)));
+        let copied_rows = to_index(self.height.min(canvas.height.saturating_sub(top)));
+        let row_length = to_index(self.width) * CHANNELS;
+        for (row, source) in self.pixels.chunks(row_length).take(copied_rows).enumerate() {
+            let start = (to_index(top) + row) * canvas_row + to_index(left) * CHANNELS;
+            let target = &mut pixels[start..start + copied_width * CHANNELS];
+            for (below, above) in target.chunks_mut(CHANNELS).zip(source.chunks(CHANNELS)) {
+                blend_over(below, above);
+            }
+        }
+        Self {
+            width: canvas.width,
+            height: canvas.height,
+            pixels,
+        }
+    }
+
+    #[must_use]
+    pub fn blurred(&self, radius: u32) -> Self {
+        let mut values: Vec<f64> = premultiply(&self.pixels);
+        for _ in 0..BLUR_PASSES {
+            values = box_blur_rows(&values, self.width, self.height, radius);
+            values = box_blur_columns(&values, self.width, self.height, radius);
+        }
+        Self {
+            width: self.width,
+            height: self.height,
+            pixels: unpremultiply(&values),
+        }
+    }
+
+    #[must_use]
+    pub fn dimmed(&self, brightness: f64) -> Self {
+        let pixels = self
+            .pixels
+            .chunks(CHANNELS)
+            .flat_map(|pixel| {
+                [
+                    to_byte(f64::from(pixel[0]) * brightness),
+                    to_byte(f64::from(pixel[1]) * brightness),
+                    to_byte(f64::from(pixel[2]) * brightness),
+                    pixel[ALPHA],
+                ]
+            })
+            .collect();
+        Self {
+            width: self.width,
+            height: self.height,
+            pixels,
+        }
+    }
+}
+
+fn blend_over(below: &mut [u8], above: &[u8]) {
+    let alpha = f64::from(above[ALPHA]) / BYTE_MAX;
+    let below_alpha = f64::from(below[ALPHA]) / BYTE_MAX * (1.0 - alpha);
+    let total = alpha + below_alpha;
+    for channel in 0..ALPHA {
+        let mixed = if total > 0.0 {
+            (f64::from(above[channel]) * alpha + f64::from(below[channel]) * below_alpha) / total
+        } else {
+            0.0
+        };
+        below[channel] = to_byte(mixed);
+    }
+    below[ALPHA] = to_byte(total * BYTE_MAX);
+}
+
+fn box_blur_rows(values: &[f64], width: u32, height: u32, radius: u32) -> Vec<f64> {
+    let row_length = to_index(width) * CHANNELS;
+    let mut result = Vec::with_capacity(values.len());
+    for row in values.chunks(row_length).take(to_index(height)) {
+        result.extend(box_blur_line(row, to_index(width), CHANNELS, radius));
+    }
+    result
+}
+
+fn box_blur_columns(values: &[f64], width: u32, height: u32, radius: u32) -> Vec<f64> {
+    let columns = to_index(width);
+    let rows = to_index(height);
+    let mut result = vec![0.0; values.len()];
+    let mut column_values = vec![0.0; rows * CHANNELS];
+    for column in 0..columns {
+        for row in 0..rows {
+            let start = (row * columns + column) * CHANNELS;
+            column_values[row * CHANNELS..(row + 1) * CHANNELS]
+                .copy_from_slice(&values[start..start + CHANNELS]);
+        }
+        let blurred = box_blur_line(&column_values, rows, CHANNELS, radius);
+        for row in 0..rows {
+            let start = (row * columns + column) * CHANNELS;
+            result[start..start + CHANNELS]
+                .copy_from_slice(&blurred[row * CHANNELS..(row + 1) * CHANNELS]);
+        }
+    }
+    result
+}
+
+fn box_blur_line(line: &[f64], length: usize, channels: usize, radius: u32) -> Vec<f64> {
+    let radius = to_index(radius);
+    let window = f64::from(u32::try_from(radius * 2 + 1).unwrap_or(u32::MAX));
+    let at = |index: isize, channel: usize| {
+        let clamped = usize::try_from(index.max(0)).unwrap_or(0).min(length - 1);
+        line[clamped * channels + channel]
+    };
+    let mut result = vec![0.0; length * channels];
+    let reach = isize::try_from(radius).unwrap_or(isize::MAX);
+    for channel in 0..channels {
+        let mut sum: f64 = (-reach..=reach).map(|index| at(index, channel)).sum();
+        for position in 0..length {
+            result[position * channels + channel] = sum / window;
+            let index = isize::try_from(position).unwrap_or(isize::MAX);
+            sum += at(index + reach + 1, channel) - at(index - reach, channel);
+        }
+    }
+    result
 }
 
 #[must_use]
@@ -450,5 +572,44 @@ mod tests {
         assert_eq!(at(2, 1), [0, 0, 0, 0]);
         let outside = uniform(2, 2, red).placed_on(2, 2, 5, 0);
         assert!(outside.pixels().iter().all(|value| *value == 0));
+    }
+
+    #[test]
+    fn a_picture_drawn_over_another_mixes_by_its_transparency() {
+        let canvas = uniform(2, 1, [0, 0, 255, 255]);
+        let half_red = uniform(1, 1, [255, 0, 0, 128]);
+        let mixed = half_red.placed_over(&canvas, 1, 0);
+        assert_eq!(&mixed.pixels()[..4], [0, 0, 255, 255]);
+        let pixel = &mixed.pixels()[4..];
+        assert_eq!(pixel[3], 255);
+        assert!((126..=130).contains(&pixel[0]), "{pixel:?}");
+        assert!((125..=129).contains(&pixel[2]), "{pixel:?}");
+    }
+
+    #[test]
+    fn blurring_spreads_a_bright_point_and_keeps_a_uniform_color() {
+        let blue = [20, 80, 200, 255];
+        assert!(
+            uniform(9, 7, blue)
+                .blurred(2)
+                .pixels()
+                .chunks(4)
+                .all(|pixel| pixel == blue)
+        );
+        let mut pixels = [0, 0, 0, 255].repeat(25);
+        pixels[12 * 4..12 * 4 + 3].copy_from_slice(&[255, 255, 255]);
+        let spread = RgbaImage::new(5, 5, pixels)
+            .expect("valid image")
+            .blurred(1);
+        let at = |x: usize, y: usize| spread.pixels()[(y * 5 + x) * 4];
+        assert!(at(2, 2) < 255);
+        assert!(at(1, 2) > 0);
+        assert!(at(2, 2) >= at(0, 0));
+    }
+
+    #[test]
+    fn dimming_darkens_the_colors_only() {
+        let dimmed = uniform(1, 1, [200, 100, 50, 255]).dimmed(0.5);
+        assert_eq!(dimmed.pixels(), [100, 50, 25, 255]);
     }
 }

@@ -147,6 +147,43 @@ template $PigouneWallpaperDialog: Adw.Dialog {
           }
 
           Adw.PreferencesGroup {
+            title: _("Empty Space");
+
+            Adw.ToggleGroup backdrop_toggles {
+              active-name: "color";
+              homogeneous: true;
+              notify::active-name => $on_backdrop_changed() swapped;
+
+              Adw.Toggle {
+                name: "color";
+                label: _("Color");
+              }
+
+              Adw.Toggle {
+                name: "blur";
+                label: _("Blur");
+              }
+            }
+          }
+
+          Adw.PreferencesGroup color_group {
+            Adw.ActionRow {
+              title: _("Color");
+              activatable-widget: color_button;
+
+              [suffix]
+              ColorDialogButton color_button {
+                valign: center;
+                notify::rgba => $on_backdrop_changed() swapped;
+
+                dialog: ColorDialog {
+                  with-alpha: false;
+                };
+              }
+            }
+          }
+
+          Adw.PreferencesGroup {
             title: _("Desktop");
 
             Adw.SwitchRow bar_row {
