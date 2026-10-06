@@ -233,15 +233,11 @@ ses critères.
 - À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier
   une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
   du zoom.
-- **Voir comme fond d’écran** dans le menu du zoom, ou <kbd>W</kbd>, montre l'image telle
-  qu'elle apparaîtrait sur votre bureau : aux proportions de votre écran, recadrée comme GNOME
-  remplit l'écran, sous une imitation de la barre du haut. Les parties qui seraient coupées
-  restent visibles, en pâle, autour de l'écran. <kbd>W</kbd> ou <kbd>Échap</kbd> pour revenir.
 - Une bande de vignettes en bas de l'aperçu montre les ressources voisines ; cliquez sur l'une
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
-  sur l'image propose **Ouvrir avec…**, **Définir comme fond d'écran…**, **Préparer comme fond d'écran…**, **Copier**,
+  sur l'image propose **Ouvrir avec…**, **Définir comme fond d'écran…**, **Copier**,
   **Exporter vers…**, **Exporter au format…** et **Ajouter aux favoris** pour elle.
 
 ## Réutiliser vos ressources
@@ -278,22 +274,22 @@ ses critères.
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
   importez-les si vous voulez les garder.
 - **Utilisez une image comme fond d'écran** avec **Définir comme fond d'écran…** dans le menu du
-  clic droit de la grille ou de l'aperçu. GNOME montre un aperçu avant de l'appliquer au bureau
-  et à l'écran de verrouillage. Les images que GNOME ne sait pas afficher telles quelles, comme
-  les SVG, lui sont transmises en PNG.
-- **Cadrez vous-même un fond d'écran** avec **Préparer comme fond d'écran…** dans les mêmes
-  menus. Une grande fenêtre montre un écran virtuel à la résolution réelle de l'écran où se
-  trouve Pigoune, par exemple 1920 × 1080, sous une imitation des barres de votre bureau : GNOME,
-  KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez étant choisi
-  d'office. Désactivez **Simulation du bureau** pour voir l'image seule. Faites glisser l'image pour la
-  déplacer, zoomez avec la molette, le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la
-  avec les flèches (<kbd>Maj</kbd> pour aller plus loin). **Remplir l'écran** la cadre comme
-  GNOME le ferait, **Image entière** la montre en entier et **Taille réelle** montre un pixel de
-  l'image par pixel de l'écran. Ce qui dépasse de l'écran reste visible, en pâle. Sous **Espace
-  vide**, choisissez ce qui remplit l'écran autour d'une image plus petite : une **Couleur**,
-  noire au départ, ou le **Flou**, la même image agrandie et floutée derrière elle. **Définir
-  comme fond d'écran** fabrique ensuite une image exactement à la taille de l'écran : le bureau
-  montre exactement ce que vous avez cadré.
+  clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel à la
+  résolution réelle de l'écran où se trouve Pigoune, par exemple 1920 × 1080, avec l'image
+  cadrée comme GNOME le ferait. Faites glisser l'image pour la déplacer, zoomez avec la molette,
+  le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la avec les flèches (<kbd>Maj</kbd> pour
+  aller plus loin). **Remplir l'écran** revient au cadrage de GNOME, **Image entière** la montre
+  en entier et **Taille réelle** montre un pixel de l'image par pixel de l'écran. Ce qui dépasse
+  de l'écran reste visible, en pâle.
+- **Simulation du bureau** dessine une imitation des barres de votre bureau sur l'écran
+  virtuel : GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez
+  étant choisi d'office. Désactivez-la pour voir l'image seule.
+- Sous **Espace vide**, choisissez ce qui remplit l'écran autour d'une image plus petite : une
+  **Couleur**, noire au départ, ou le **Flou**, la même image agrandie et floutée derrière elle.
+- **Définir comme fond d'écran** fabrique une image exactement à la taille de l'écran : le
+  bureau montre exactement ce que vous avez cadré. Une petite fenêtre montre la préparation,
+  puis GNOME vous demande de confirmer. Cochez **Ajouter aussi à la bibliothèque la version
+  modifiée** pour garder cette image comme nouvelle ressource.
 
 ## Corbeille et annulation
 

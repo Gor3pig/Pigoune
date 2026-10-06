@@ -203,18 +203,27 @@ template $PigouneWallpaperDialog: Adw.Dialog {
     };
 
     [bottom]
-    Label hint_label {
-      xalign: 0;
-      wrap: true;
+    Box {
+      spacing: 12;
       margin-top: 6;
       margin-bottom: 6;
       margin-start: 12;
       margin-end: 12;
 
-      styles [
-        "dim-label",
-        "caption",
-      ]
+      CheckButton add_check {
+        label: _("Also Add the Edited Version to the Library");
+      }
+
+      Label hint_label {
+        hexpand: true;
+        xalign: 1;
+        wrap: true;
+
+        styles [
+          "dim-label",
+          "caption",
+        ]
+      }
     }
   };
 }

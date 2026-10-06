@@ -16,7 +16,14 @@ const BUTTON_ZOOM_FACTOR: f64 = 1.25;
 const BLUR: &str = "blur";
 const COLOR_CHANNEL_MAX: f32 = 255.0;
 
-type SetCallback = Box<dyn Fn(Framing, Backdrop)>;
+type SetCallback = Box<dyn Fn(WallpaperChoice)>;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WallpaperChoice {
+    pub framing: Framing,
+    pub backdrop: Backdrop,
+    pub adds_to_library: bool,
+}
 
 pub struct WallpaperSource {
     pub file: PathBuf,
@@ -59,6 +66,8 @@ mod imp {
         pub bar_row: TemplateChild<adw::SwitchRow>,
         #[template_child]
         pub hint_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub add_check: TemplateChild<gtk::CheckButton>,
         pub showing_zoom: Cell<bool>,
         pub on_set: RefCell<Option<SetCallback>>,
     }
@@ -97,7 +106,7 @@ impl PigouneWallpaperDialog {
         source: WallpaperSource,
         screen: Dimensions,
         monitor_scale: f64,
-        on_set: impl Fn(Framing, Backdrop) + 'static,
+        on_set: impl Fn(WallpaperChoice) + 'static,
     ) -> Self {
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
@@ -237,11 +246,14 @@ impl PigouneWallpaperDialog {
 
     #[template_callback]
     fn on_set_clicked(&self) {
-        let framing = self.imp().stage.framing();
-        let backdrop = self.backdrop();
+        let choice = WallpaperChoice {
+            framing: self.imp().stage.framing(),
+            backdrop: self.backdrop(),
+            adds_to_library: self.imp().add_check.is_active(),
+        };
         self.close();
         if let Some(on_set) = self.imp().on_set.borrow().as_ref() {
-            on_set(framing, backdrop);
+            on_set(choice);
         }
     }
 }

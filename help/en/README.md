@@ -205,15 +205,11 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   margins included; turn it off with **Show Image Bounds** in the zoom menu.
 - From 800% on, a light grid separates the pixels of pictures, which helps to check icons and
   pixel art; turn it off with **Show Pixel Grid** in the zoom menu.
-- **Show as Wallpaper** in the zoom menu, or <kbd>W</kbd>, shows the image as it would look on
-  your desktop: at the shape of your screen, cropped the way GNOME fills the screen, under an
-  imitation of the top bar. The parts that would be cut stay visible, faded, around the
-  screen. Press <kbd>W</kbd> or <kbd>Esc</kbd> to come back.
 - A strip of thumbnails at the bottom of the preview shows the neighboring assets; click one to
   show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
   Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Open With…**, **Set as Wallpaper…**, **Prepare as Wallpaper…**, **Copy**, **Export To…**, **Export
+  the image offers **Open With…**, **Set as Wallpaper…**, **Copy**, **Export To…**, **Export
   As…** and **Add to Favorites** for it.
 
 ## Reusing assets
@@ -245,20 +241,21 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   the right-click menu. The application receives a copy: your library stays untouched, so
   save your changes under a new name and import them if you want to keep them.
 - **Set an image as your wallpaper** with **Set as Wallpaper…** in the right-click menu of the
-  grid or of the preview. GNOME shows a preview before applying it to the desktop and the lock
-  screen. Images that GNOME cannot show as they are, such as SVG, are given to it as PNG.
-- **Frame a wallpaper yourself** with **Prepare as Wallpaper…** in the same menus. A large
-  window shows a virtual screen at the real resolution of the screen Pigoune is shown on, for
-  example 1920 × 1080, under an imitation of the bars of your desktop: GNOME, KDE Plasma,
-  Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being chosen at first. Turn off
-  **Desktop Simulation** to see the image alone. Drag the image to move it, zoom with the mouse wheel, the
-  slider or <kbd>+</kbd> and <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd>
-  moves further). **Fill the Screen** frames it the way GNOME would, **Whole Image** shows all
-  of it and **Actual Size** shows one pixel of the image per pixel of the screen. What goes
-  past the screen stays visible, faded. Under **Empty Space**, choose what fills the screen
-  around a smaller image: a **Color**, black at first, or **Blur**, the same image enlarged and
-  blurred behind it. **Set as Wallpaper** then makes an image exactly the
-  size of the screen, so the desktop shows exactly what you framed.
+  grid or of the preview. A large window shows a virtual screen at the real resolution of the
+  screen Pigoune is shown on, for example 1920 × 1080, with the image framed the way GNOME
+  would. Drag the image to move it, zoom with the mouse wheel, the slider or <kbd>+</kbd> and
+  <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd> moves further). **Fill the
+  Screen** comes back to the framing of GNOME, **Whole Image** shows all of it and **Actual
+  Size** shows one pixel of the image per pixel of the screen. What goes past the screen stays
+  visible, faded.
+- **Desktop Simulation** draws an imitation of the bars of your desktop over the virtual
+  screen: GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being
+  chosen at first. Turn it off to see the image alone.
+- Under **Empty Space**, choose what fills the screen around a smaller image: a **Color**,
+  black at first, or **Blur**, the same image enlarged and blurred behind it.
+- **Set as Wallpaper** makes an image exactly the size of the screen, so the desktop shows
+  exactly what you framed; a small window shows the preparation, then GNOME asks you to confirm.
+  Tick **Also Add the Edited Version to the Library** to keep that image as a new asset.
 
 ## Trash and undo
 

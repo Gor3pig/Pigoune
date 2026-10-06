@@ -2,8 +2,6 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{gdk, glib, graphene, gsk};
 
-use crate::desktop_bars::{Bars, Desktop};
-use crate::desktop_frame::{self, Frame};
 use crate::zoom_math::{self, Point, Size};
 
 const WHEEL_ZOOM_FACTOR: f64 = 1.25;
@@ -16,8 +14,6 @@ const BOUNDS_OPACITY: f32 = 0.35;
 const PIXEL_GRID_WIDTH: f32 = 1.0;
 const PIXEL_GRID_OPACITY: f32 = 0.15;
 const SPRING_BACK_MILLISECONDS: u32 = 300;
-const CUT_OPACITY: f64 = 0.28;
-const REFERENCE_SCREEN_HEIGHT: f64 = 1080.0;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 
@@ -43,7 +39,6 @@ mod imp {
         pub dragging: Cell<bool>,
         pub shows_bounds: Cell<bool>,
         pub shows_pixel_grid: Cell<bool>,
-        pub desktop: Cell<Option<Size>>,
         pub pinch_start: Cell<f64>,
         pub on_zoom_changed: RefCell<Option<ZoomChangedCallback>>,
         pub spring: RefCell<Option<adw::TimedAnimation>>,
@@ -66,7 +61,6 @@ mod imp {
                 dragging: Cell::default(),
                 shows_bounds: Cell::default(),
                 shows_pixel_grid: Cell::default(),
-                desktop: Cell::default(),
                 pinch_start: Cell::new(1.0),
                 on_zoom_changed: RefCell::default(),
                 spring: RefCell::default(),
@@ -146,9 +140,6 @@ impl PigouneZoomView {
     )]
     pub fn image_bounds(&self) -> graphene::Rect {
         let imp = self.imp();
-        if let Some(screen) = imp.desktop.get() {
-            return rect_of(self.desktop_image_frame(screen));
-        }
         let zoom = imp.zoom.get();
         let image = imp.image.get();
         let center = imp.center.get();
@@ -163,11 +154,6 @@ impl PigouneZoomView {
 
     pub fn set_shows_bounds(&self, shows_bounds: bool) {
         self.imp().shows_bounds.set(shows_bounds);
-        self.queue_draw();
-    }
-
-    pub fn set_desktop(&self, screen: Option<Size>) {
-        self.imp().desktop.set(screen);
         self.queue_draw();
     }
 
@@ -344,10 +330,6 @@ impl PigouneZoomView {
         let Some(texture) = imp.texture.borrow().clone() else {
             return;
         };
-        if let Some(screen) = imp.desktop.get() {
-            self.draw_desktop(snapshot, &texture, screen);
-            return;
-        }
         let zoom = imp.zoom.get();
         let image = imp.image.get();
         let bounds = self.image_bounds();
@@ -368,32 +350,6 @@ impl PigouneZoomView {
         if imp.shows_bounds.get() {
             draw_bounds(snapshot, &bounds, &self.color());
         }
-    }
-
-    fn desktop_screen_frame(&self, screen: Size) -> Frame {
-        desktop_frame::screen_frame(self.view_size(), screen)
-    }
-
-    fn desktop_image_frame(&self, screen: Size) -> Frame {
-        desktop_frame::covering_frame(self.desktop_screen_frame(screen), self.imp().image.get())
-    }
-
-    fn draw_desktop(&self, snapshot: &gtk::Snapshot, texture: &gdk::Texture, screen: Size) {
-        let screen_rect = rect_of(self.desktop_screen_frame(screen));
-        let image_rect = rect_of(self.desktop_image_frame(screen));
-        snapshot.push_opacity(CUT_OPACITY);
-        snapshot.append_scaled_texture(texture, gsk::ScalingFilter::Trilinear, &image_rect);
-        snapshot.pop();
-        snapshot.append_color(&gdk::RGBA::BLACK, &screen_rect);
-        snapshot.push_clip(&screen_rect);
-        snapshot.append_scaled_texture(texture, gsk::ScalingFilter::Trilinear, &image_rect);
-        snapshot.pop();
-        Bars {
-            widget: self.upcast_ref(),
-            screen: screen_rect,
-            points: f64::from(screen_rect.height()) / REFERENCE_SCREEN_HEIGHT,
-        }
-        .draw(snapshot, Desktop::Gnome);
     }
 
     fn listen_to_drag(&self) {
@@ -513,19 +469,6 @@ impl PigouneZoomView {
         ));
         self.add_controller(double_click);
     }
-}
-
-#[expect(
-    clippy::cast_possible_truncation,
-    reason = "drawing coordinates fit easily in f32"
-)]
-fn rect_of(frame: Frame) -> graphene::Rect {
-    graphene::Rect::new(
-        frame.x as f32,
-        frame.y as f32,
-        frame.width as f32,
-        frame.height as f32,
-    )
 }
 
 fn draw_bounds(snapshot: &gtk::Snapshot, bounds: &graphene::Rect, color: &gdk::RGBA) {
