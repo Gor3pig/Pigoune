@@ -2228,6 +2228,7 @@ impl PigouneWindow {
             conversion_memory::load(self.settings(), natural_size(&assets[0])),
             natural_size(&assets[0]),
             assets.len(),
+            screen_size::screen_of(self),
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,

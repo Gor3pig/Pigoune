@@ -130,6 +130,36 @@ fn rounded(value: f64) -> f64 {
     value.round().max(1.0)
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Framing {
+    Fill,
+    Fit,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScreenSize {
+    pub width: u32,
+    pub height: u32,
+    pub framing: Framing,
+}
+
+impl ScreenSize {
+    pub fn scaled(self, natural: (u32, u32)) -> (u32, u32) {
+        let (width, height) = (f64::from(natural.0.max(1)), f64::from(natural.1.max(1)));
+        let across = f64::from(self.width) / width;
+        let down = f64::from(self.height) / height;
+        let scale = match self.framing {
+            Framing::Fill => across.max(down),
+            Framing::Fit => across.min(down),
+        };
+        let (scaled_width, scaled_height) = (whole(width * scale), whole(height * scale));
+        match self.framing {
+            Framing::Fill => (scaled_width.max(self.width), scaled_height.max(self.height)),
+            Framing::Fit => (scaled_width.min(self.width), scaled_height.min(self.height)),
+        }
+    }
+}
+
 #[expect(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -141,7 +171,7 @@ fn whole(value: f64) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{CustomSize, SizeUnit, whole};
+    use super::{CustomSize, Framing, ScreenSize, SizeUnit, whole};
 
     fn sides(size: CustomSize) -> (u32, u32) {
         (whole(size.width), whole(size.height))
@@ -235,5 +265,27 @@ mod tests {
     fn a_side_is_never_smaller_than_one_pixel() {
         let tiny = CustomSize::default().with_width(1.0, PHOTO);
         assert_eq!(tiny.target((10, 10)), (1, 1));
+    }
+
+    fn screen(framing: Framing) -> ScreenSize {
+        ScreenSize {
+            width: 1920,
+            height: 1080,
+            framing,
+        }
+    }
+
+    #[test]
+    fn filling_the_screen_covers_both_sides() {
+        assert_eq!(screen(Framing::Fill).scaled(PHOTO), (1920, 1440));
+        assert_eq!(screen(Framing::Fill).scaled((1080, 1920)), (1920, 3413));
+        assert_eq!(screen(Framing::Fill).scaled((3840, 2160)), (1920, 1080));
+    }
+
+    #[test]
+    fn fitting_the_screen_keeps_the_whole_image_inside() {
+        assert_eq!(screen(Framing::Fit).scaled(PHOTO), (1440, 1080));
+        assert_eq!(screen(Framing::Fit).scaled((1080, 1920)), (608, 1080));
+        assert_eq!(screen(Framing::Fit).scaled((4000, 1000)), (1920, 480));
     }
 }

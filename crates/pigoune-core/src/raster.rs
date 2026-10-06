@@ -66,18 +66,48 @@ impl RgbaImage {
     #[must_use]
     pub fn centered_on_square(&self, side: u32) -> Self {
         let side = side.max(self.width).max(self.height);
-        let side_length = to_index(side);
-        let mut pixels = vec![0; side_length * side_length * CHANNELS];
-        let left = to_index((side - self.width) / 2);
-        let top = to_index((side - self.height) / 2);
+        self.centered_on(side, side)
+    }
+
+    #[must_use]
+    pub fn centered_on(&self, width: u32, height: u32) -> Self {
+        let width = width.max(self.width);
+        let height = height.max(self.height);
+        let canvas_row = to_index(width) * CHANNELS;
+        let mut pixels = vec![0; canvas_row * to_index(height)];
+        let left = to_index((width - self.width) / 2);
+        let top = to_index((height - self.height) / 2);
         let row_length = to_index(self.width) * CHANNELS;
         for (row, source) in self.pixels.chunks(row_length).enumerate() {
-            let start = ((top + row) * side_length + left) * CHANNELS;
+            let start = (top + row) * canvas_row + left * CHANNELS;
             pixels[start..start + row_length].copy_from_slice(source);
         }
         Self {
-            width: side,
-            height: side,
+            width,
+            height,
+            pixels,
+        }
+    }
+
+    #[must_use]
+    pub fn cropped_to_center(&self, width: u32, height: u32) -> Self {
+        let width = width.clamp(1, self.width);
+        let height = height.clamp(1, self.height);
+        let left = to_index((self.width - width) / 2);
+        let top = to_index((self.height - height) / 2);
+        let source_row = to_index(self.width) * CHANNELS;
+        let row_length = to_index(width) * CHANNELS;
+        let pixels = self
+            .pixels
+            .chunks(source_row)
+            .skip(top)
+            .take(to_index(height))
+            .flat_map(|row| &row[left * CHANNELS..left * CHANNELS + row_length])
+            .copied()
+            .collect();
+        Self {
+            width,
+            height,
             pixels,
         }
     }
@@ -326,5 +356,35 @@ mod tests {
         assert_eq!(at(2, 1), red);
         assert_eq!(at(0, 1), [0, 0, 0, 0]);
         assert_eq!(at(1, 0), [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn a_picture_is_centered_on_a_wider_canvas() {
+        let red = [255, 0, 0, 255];
+        let canvas = uniform(2, 2, red).centered_on(6, 2);
+        assert_eq!((canvas.width(), canvas.height()), (6, 2));
+        let at = |x: usize, y: usize| &canvas.pixels()[(y * 6 + x) * 4..][..4];
+        assert_eq!(at(1, 1), [0, 0, 0, 0]);
+        assert_eq!(at(2, 0), red);
+        assert_eq!(at(3, 1), red);
+        assert_eq!(at(4, 0), [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn cropping_keeps_the_middle_of_the_picture() {
+        let mut pixels = Vec::new();
+        for row in 0..4u8 {
+            for column in 0..4u8 {
+                pixels.extend([row, column, 0, 255]);
+            }
+        }
+        let cropped = RgbaImage::new(4, 4, pixels)
+            .expect("valid image")
+            .cropped_to_center(2, 2);
+        assert_eq!((cropped.width(), cropped.height()), (2, 2));
+        assert_eq!(
+            cropped.pixels(),
+            [1, 1, 0, 255, 1, 2, 0, 255, 2, 1, 0, 255, 2, 2, 0, 255]
+        );
     }
 }

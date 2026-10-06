@@ -2,8 +2,9 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib};
+use pigoune_core::Dimensions;
 
-use crate::export_size::{CustomSize, SizeUnit};
+use crate::export_size::{CustomSize, Framing, ScreenSize, SizeUnit};
 use crate::icon_sides::ICON_SIDES;
 use crate::image_conversion::{ConversionSettings, TargetFormat};
 
@@ -12,6 +13,7 @@ const LARGEST_PIXELS: f64 = 32768.0;
 const LOCKED_ICON: &str = "changes-prevent-symbolic";
 const UNLOCKED_ICON: &str = "changes-allow-symbolic";
 const LARGEST_PERCENT: f64 = 1000.0;
+const FIT: &str = "fit";
 
 type ExportCallback = Box<dyn Fn(ConversionSettings)>;
 
@@ -20,6 +22,7 @@ mod imp {
 
     use adw::subclass::prelude::*;
     use gtk::glib;
+    use pigoune_core::Dimensions;
 
     use super::ExportCallback;
     use crate::export_size::CustomSize;
@@ -32,6 +35,12 @@ mod imp {
         pub format_row: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub export_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub screen_row: TemplateChild<adw::SwitchRow>,
+        #[template_child]
+        pub framing_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
+        pub framing_toggles: TemplateChild<adw::ToggleGroup>,
         #[template_child]
         pub dimensions_row: TemplateChild<gtk::ListBoxRow>,
         #[template_child]
@@ -59,6 +68,7 @@ mod imp {
         pub icon_sides: Cell<IconSides>,
         pub custom: Cell<CustomSize>,
         pub reference: Cell<(u32, u32)>,
+        pub screen: Cell<Option<Dimensions>>,
         pub showing_custom: Cell<bool>,
         pub on_export: RefCell<Option<ExportCallback>>,
     }
@@ -96,10 +106,16 @@ impl PigouneExportAsDialog {
         settings: ConversionSettings,
         reference: (u32, u32),
         resource_count: usize,
+        screen: Option<Dimensions>,
         on_export: impl Fn(ConversionSettings) + 'static,
     ) -> Self {
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
+        imp.screen.set(screen);
+        if let Some(screen) = screen {
+            imp.screen_row
+                .set_subtitle(&format!("{} × {}", screen.width(), screen.height()));
+        }
         imp.several_hint.set_visible(resource_count > 1);
         let names: Vec<&str> = TargetFormat::ALL
             .iter()
@@ -141,8 +157,28 @@ impl PigouneExportAsDialog {
             quality: byte_of(imp.quality_row.value()),
             background: channels_of(&imp.background_button.rgba()),
             custom: imp.custom.get(),
+            screen: self.chosen_screen(),
             keep_transparency: imp.transparency_row.is_active(),
             icon_sides: imp.icon_sides.get(),
+        }
+    }
+
+    fn chosen_screen(&self) -> Option<ScreenSize> {
+        let imp = self.imp();
+        let screen = imp.screen.get()?;
+        let shown = self.format() != TargetFormat::Ico && imp.screen_row.is_active();
+        shown.then(|| ScreenSize {
+            width: screen.width(),
+            height: screen.height(),
+            framing: self.framing(),
+        })
+    }
+
+    fn framing(&self) -> Framing {
+        if self.imp().framing_toggles.active_name().as_deref() == Some(FIT) {
+            Framing::Fit
+        } else {
+            Framing::Fill
         }
     }
 
@@ -176,7 +212,12 @@ impl PigouneExportAsDialog {
         let imp = self.imp();
         let format = self.format();
         let is_icon = format == TargetFormat::Ico;
-        imp.dimensions_row.set_visible(!is_icon);
+        let on_screen = self.chosen_screen().is_some();
+        imp.screen_row
+            .set_visible(!is_icon && imp.screen.get().is_some());
+        imp.framing_row.set_visible(on_screen);
+        imp.framing_row.set_subtitle(&framing_text(self.framing()));
+        imp.dimensions_row.set_visible(!is_icon && !on_screen);
         imp.icon_sides_row.set_visible(is_icon);
         imp.quality_row.set_visible(format.has_quality());
         imp.transparency_row
@@ -251,6 +292,16 @@ impl PigouneExportAsDialog {
     }
 
     #[template_callback]
+    fn on_screen_changed(&self) {
+        self.refresh_rows();
+    }
+
+    #[template_callback]
+    fn on_framing_changed(&self) {
+        self.refresh_rows();
+    }
+
+    #[template_callback]
     fn on_transparency_changed(&self) {
         self.refresh_rows();
     }
@@ -277,6 +328,13 @@ fn several_text(custom: CustomSize) -> String {
             gettext("Each resource fits inside this frame, without being stretched")
         }
         (SizeUnit::Pixels, false) => gettext("Each resource takes exactly this size"),
+    }
+}
+
+fn framing_text(framing: Framing) -> String {
+    match framing {
+        Framing::Fill => gettext("Covers the whole screen; the overflowing edges are cut"),
+        Framing::Fit => gettext("Keeps the whole image, with bands filling the rest"),
     }
 }
 

@@ -52,6 +52,32 @@ template $PigouneExportAsDialog: Adw.Dialog {
           notify::selected => $on_format_changed() swapped;
         }
 
+        Adw.SwitchRow screen_row {
+          title: _("Size of My Screen");
+          notify::active => $on_screen_changed() swapped;
+        }
+
+        Adw.ActionRow framing_row {
+          title: _("Framing");
+
+          [suffix]
+          Adw.ToggleGroup framing_toggles {
+            valign: center;
+            active-name: "fill";
+            notify::active-name => $on_framing_changed() swapped;
+
+            Adw.Toggle {
+              name: "fill";
+              label: _("Fill");
+            }
+
+            Adw.Toggle {
+              name: "fit";
+              label: _("Fit");
+            }
+          }
+        }
+
         ListBoxRow dimensions_row {
           activatable: false;
 

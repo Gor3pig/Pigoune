@@ -5,7 +5,7 @@ use gtk::prelude::*;
 use gtk::{gdk, gio};
 use pigoune_core::{Dimensions, RgbaImage, fitted_within};
 
-use crate::export_size::CustomSize;
+use crate::export_size::{CustomSize, Framing, ScreenSize};
 use crate::icon_sides::IconSides;
 use crate::thumbnails;
 
@@ -71,6 +71,7 @@ pub struct ConversionSettings {
     pub quality: u8,
     pub background: [u8; 3],
     pub custom: CustomSize,
+    pub screen: Option<ScreenSize>,
     pub keep_transparency: bool,
     pub icon_sides: IconSides,
 }
@@ -88,6 +89,7 @@ impl Default for ConversionSettings {
             quality: DEFAULT_QUALITY,
             background: WHITE,
             custom: CustomSize::default(),
+            screen: None,
             keep_transparency: true,
             icon_sides: IconSides::default(),
         }
@@ -138,8 +140,15 @@ pub async fn convert(
         });
     }
     let natural = source.natural_size();
-    let target = settings.custom.target(natural);
-    let image = sized_image(source, target).await?;
+    let (image, target) = if let Some(screen) = settings.screen {
+        (
+            framed_image(source, screen, natural).await?,
+            (screen.width, screen.height),
+        )
+    } else {
+        let target = settings.custom.target(natural);
+        (sized_image(source, target).await?, target)
+    };
     let name_suffix = (target != natural).then(|| format!("{}x{}", target.0, target.1));
     Ok(Converted {
         bytes: encode(image, settings).await?,
@@ -180,6 +189,18 @@ async fn icon(
         .map(|(size, png)| (*size, png.as_slice()))
         .collect();
     pigoune_core::icon_from_pngs(&parts).ok_or(ConversionError::EncodingFailed)
+}
+
+async fn framed_image(
+    source: &Source<'_>,
+    screen: ScreenSize,
+    natural: (u32, u32),
+) -> Result<RgbaImage, ConversionError> {
+    let image = sized_image(source, screen.scaled(natural)).await?;
+    Ok(match screen.framing {
+        Framing::Fill => image.cropped_to_center(screen.width, screen.height),
+        Framing::Fit => image.centered_on(screen.width, screen.height),
+    })
 }
 
 async fn sized_image(
@@ -320,7 +341,7 @@ mod tests {
         ConversionError, ConversionSettings, Converted, Source, TargetFormat, convert, flattened,
         straight_rgba,
     };
-    use crate::export_size::{CustomSize, SizeUnit};
+    use crate::export_size::{CustomSize, Framing, ScreenSize, SizeUnit};
     use crate::icon_sides::IconSides;
 
     const WHITE: [u8; 3] = [255, 255, 255];
@@ -490,6 +511,42 @@ mod tests {
             background: [255, 255, 0],
             ..settings(format)
         }
+    }
+
+    fn on_screen(framing: Framing, format: TargetFormat) -> ConversionSettings {
+        ConversionSettings {
+            screen: Some(ScreenSize {
+                width: 16,
+                height: 9,
+                framing,
+            }),
+            ..without_transparency(format)
+        }
+    }
+
+    #[test]
+    fn filling_the_screen_crops_the_overflowing_edges() {
+        let converted = converted(
+            "teal-column.tiff",
+            (2, 6),
+            on_screen(Framing::Fill, TargetFormat::Png),
+        )
+        .expect("converted");
+        assert_eq!(png_size(&converted.bytes), (16, 9));
+        assert_eq!(converted.name_suffix.as_deref(), Some("16x9"));
+        assert_ne!(first_pixel(converted.bytes), [255, 255, 0, 255]);
+    }
+
+    #[test]
+    fn fitting_the_screen_fills_the_bands_with_the_background() {
+        let converted = converted(
+            "teal-column.tiff",
+            (2, 6),
+            on_screen(Framing::Fit, TargetFormat::Png),
+        )
+        .expect("converted");
+        assert_eq!(png_size(&converted.bytes), (16, 9));
+        assert_eq!(first_pixel(converted.bytes), [255, 255, 0, 255]);
     }
 
     #[test]

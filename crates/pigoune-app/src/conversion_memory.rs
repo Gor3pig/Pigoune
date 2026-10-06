@@ -24,6 +24,7 @@ pub fn load(stored: &gio::Settings, natural: (u32, u32)) -> ConversionSettings {
             },
             natural,
         ),
+        screen: None,
         keep_transparency: stored.boolean(settings::EXPORT_KEEP_TRANSPARENCY),
         icon_sides: icon_sides_of(&stored.get::<Vec<i32>>(settings::EXPORT_ICON_SIZES)),
     }
