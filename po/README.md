@@ -36,6 +36,11 @@ a `<language>.po` file in this folder. Thank you for helping!
 
 3. Translate the file, then run `./check.sh`.
 
+The new language is then offered in **Preferences › General › Interface Language**, and
+Pigoune uses it on its own for people whose system is in that language. If the language list
+shows a code instead of the name of your language, add its name, written in your language,
+to `NATIVE_NAMES` in `crates/pigoune-app/src/languages.rs`.
+
 ## Tips
 
 - Keep placeholders such as `{name}` or `{count}` exactly as they are; only move them where
@@ -43,5 +48,5 @@ a `<language>.po` file in this folder. Thank you for helping!
 - Keep the mnemonic underscore (`_Open`) on a letter of the translated word.
 - Follow the typography of your language (quotes, spaces before punctuation, ...), but use
   plain hyphens `-` rather than long dashes.
-- To try your translation, run Pigoune in your language, for example
-  `LANGUAGE=de cargo run -p pigoune-app`.
+- To try your translation, choose your language in **Preferences › General › Interface
+  Language** and restart Pigoune, or run it with `LANGUAGE=de cargo run -p pigoune-app`.

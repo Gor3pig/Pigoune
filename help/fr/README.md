@@ -319,6 +319,11 @@ retrouve un réglage par son nom.
 
 **Général**
 
+- **Langue de l'interface** : Pigoune suit la langue de votre système ; choisissez une autre des
+  langues dans lesquelles Pigoune est traduit pour l'utiliser à la place. Le changement
+  s'applique au prochain démarrage de Pigoune, et **Redémarrer** dans le message qui apparaît le
+  fait tout de suite. Quelques fenêtres fournies par GNOME, comme celle qui permet de choisir un
+  dossier, peuvent rester dans la langue du système.
 - **Rouvrir la dernière bibliothèque** : au lancement, Pigoune ouvre la bibliothèque laissée
   ouverte. Désactivez-le pour partir de la page d'accueil et choisir une bibliothèque à chaque
   fois.

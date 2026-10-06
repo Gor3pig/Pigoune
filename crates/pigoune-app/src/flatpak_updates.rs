@@ -13,6 +13,7 @@ const PORTAL_INTERFACE: &str = "org.freedesktop.portal.Flatpak";
 const MONITOR_INTERFACE: &str = "org.freedesktop.portal.Flatpak.UpdateMonitor";
 const SANDBOX_INFO: &str = "/.flatpak-info";
 const LAUNCH_COMMAND: &[u8] = b"pigoune\0";
+const REPLACE_OPTION: &[u8] = b"--gapplication-replace\0";
 const STARTING_FOLDER: &[u8] = b"/\0";
 const SPAWN_LATEST_VERSION: u32 = 2;
 
@@ -25,7 +26,7 @@ pub struct FlatpakUpdates {
 
 impl FlatpakUpdates {
     pub async fn watch(on_news: impl Fn(UpdateNews) + 'static) -> Option<Self> {
-        if !Path::new(SANDBOX_INFO).exists() {
+        if !is_sandboxed() {
             return None;
         }
         let connection = gio::bus_get_future(gio::BusType::Session).await.ok()?;
@@ -95,21 +96,33 @@ impl FlatpakUpdates {
     }
 
     pub async fn launch_latest_version(&self) -> Result<(), glib::Error> {
-        let arguments = spawn_arguments();
-        self.connection
-            .call_future(
-                Some(PORTAL_NAME),
-                PORTAL_PATH,
-                PORTAL_INTERFACE,
-                "Spawn",
-                Some(&arguments),
-                None,
-                gio::DBusCallFlags::NONE,
-                -1,
-            )
-            .await
-            .map(|_| ())
+        spawn_latest_version(&self.connection).await
     }
+}
+
+pub fn is_sandboxed() -> bool {
+    Path::new(SANDBOX_INFO).exists()
+}
+
+pub async fn relaunch_in_sandbox() -> Result<(), glib::Error> {
+    let connection = gio::bus_get_future(gio::BusType::Session).await?;
+    spawn_latest_version(&connection).await
+}
+
+async fn spawn_latest_version(connection: &gio::DBusConnection) -> Result<(), glib::Error> {
+    connection
+        .call_future(
+            Some(PORTAL_NAME),
+            PORTAL_PATH,
+            PORTAL_INTERFACE,
+            "Spawn",
+            Some(&spawn_arguments()),
+            None,
+            gio::DBusCallFlags::NONE,
+            -1,
+        )
+        .await
+        .map(|_| ())
 }
 
 fn empty_options() -> glib::Variant {
@@ -127,7 +140,7 @@ fn update_arguments() -> glib::Variant {
 fn spawn_arguments() -> glib::Variant {
     glib::Variant::tuple_from_iter([
         STARTING_FOLDER.to_vec().to_variant(),
-        vec![LAUNCH_COMMAND.to_vec()].to_variant(),
+        vec![LAUNCH_COMMAND.to_vec(), REPLACE_OPTION.to_vec()].to_variant(),
         HashMap::<u32, glib::variant::Handle>::new().to_variant(),
         HashMap::<String, String>::new().to_variant(),
         SPAWN_LATEST_VERSION.to_variant(),

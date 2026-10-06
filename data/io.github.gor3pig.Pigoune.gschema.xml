@@ -51,6 +51,11 @@
       <summary>Reverse sort order</summary>
       <description>Whether the natural direction of the sort criterion is reversed.</description>
     </key>
+    <key name="language" type="s">
+      <default>""</default>
+      <summary>Interface language</summary>
+      <description>Code of the language Pigoune is shown in, or an empty text to follow the language of the system.</description>
+    </key>
     <key name="preview-background" type="s">
       <choices>
         <choice value="transparent"/>

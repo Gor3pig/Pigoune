@@ -47,6 +47,7 @@ mod image_check;
 mod image_conversion;
 mod import_progress_dialog;
 mod import_report;
+mod languages;
 mod library_info_dialog;
 mod new_library_dialog;
 mod preferences_dialog;
@@ -54,6 +55,7 @@ mod preview_flight;
 mod preview_strip;
 mod query_pills;
 mod recent_libraries;
+mod relaunch;
 mod removable_pill;
 mod ring_chart;
 mod search_space;
@@ -88,6 +90,7 @@ use gtk::{gio, glib};
 use crate::config::{GETTEXT_PACKAGE, LOCALEDIR};
 
 fn main() -> glib::ExitCode {
+    languages::apply_chosen_language();
     setup_translations();
 
     gio::resources_register_include!("pigoune.gresource")

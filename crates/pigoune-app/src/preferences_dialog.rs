@@ -4,6 +4,8 @@ use adw::prelude::*;
 use gettextrs::gettext;
 use gtk::{gio, glib};
 
+use crate::languages;
+use crate::relaunch;
 use crate::settings;
 
 const PAGES: [&str; 3] = ["general_page", "display_page", "behaviour_page"];
@@ -60,8 +62,74 @@ pub fn present(
     if let Some(thumbnails) = thumbnails {
         offer_thumbnail_cleaning(&builder, &dialog, thumbnails);
     }
+    if let Some(row) = builder.object::<adw::ComboRow>("language_row") {
+        follow_language(&row, settings, &dialog, application_of(parent));
+    }
     dialog.connect_map(move |dialog| fit_to_content(dialog, &pages));
     dialog.present(Some(parent));
+}
+
+fn application_of(widget: &impl IsA<gtk::Widget>) -> Option<adw::Application> {
+    widget
+        .as_ref()
+        .root()
+        .and_downcast::<gtk::Window>()
+        .and_then(|window| window.application())
+        .and_downcast::<adw::Application>()
+}
+
+fn follow_language(
+    row: &adw::ComboRow,
+    settings: &gio::Settings,
+    dialog: &adw::PreferencesDialog,
+    application: Option<adw::Application>,
+) {
+    let mut codes = vec![String::new()];
+    codes.extend(languages::available());
+    let names: Vec<String> = codes
+        .iter()
+        .map(|code| {
+            if code.is_empty() {
+                gettext("System Language")
+            } else {
+                languages::native_name(code)
+            }
+        })
+        .collect();
+    let model = gtk::StringList::new(&names.iter().map(String::as_str).collect::<Vec<_>>());
+    row.set_model(Some(&model));
+    let current = settings.string(settings::LANGUAGE);
+    let position = codes
+        .iter()
+        .position(|code| *code == current.as_str())
+        .and_then(|index| u32::try_from(index).ok())
+        .unwrap_or(0);
+    row.set_selected(position);
+    let message = gettext("Restart Pigoune to use the new language");
+    let restart = gettext("_Restart");
+    row.connect_selected_notify(glib::clone!(
+        #[strong]
+        settings,
+        #[weak]
+        dialog,
+        move |row| {
+            let chosen = usize::try_from(row.selected())
+                .ok()
+                .and_then(|index| codes.get(index))
+                .cloned()
+                .unwrap_or_default();
+            if chosen == settings.string(settings::LANGUAGE).as_str() {
+                return;
+            }
+            settings::store_string(&settings, settings::LANGUAGE, &chosen);
+            let toast = adw::Toast::new(&message);
+            if let Some(application) = application.clone() {
+                toast.set_button_label(Some(&restart));
+                toast.connect_button_clicked(move |_| relaunch::relaunch(&application));
+            }
+            dialog.add_toast(toast);
+        }
+    ));
 }
 
 fn follow_recent_libraries_limit(row: &adw::SpinRow, settings: &gio::Settings) {

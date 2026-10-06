@@ -12,6 +12,7 @@ pub fn build() -> adw::Application {
     let application = adw::Application::builder()
         .application_id(APP_ID)
         .resource_base_path(RESOURCE_BASE_PATH)
+        .flags(gio::ApplicationFlags::ALLOW_REPLACEMENT)
         .build();
 
     application.connect_startup(|_| icon_theme::keep_gnome_icons());

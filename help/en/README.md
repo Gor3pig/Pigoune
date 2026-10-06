@@ -280,6 +280,11 @@ split into three pages; the magnifier at the top finds a setting by its name.
 
 **General**
 
+- **Interface Language**: Pigoune follows the language of your system; choose another of the
+  languages Pigoune is translated into to use it instead. The change applies the next time
+  Pigoune starts, and **Restart** in the message that appears does it at once. A few windows
+  provided by GNOME, such as the one to choose a folder, may stay in the language of the
+  system.
 - **Reopen the Last Library**: at startup, Pigoune opens the library you left open. Turn it off
   to start from the welcome page and choose a library each time.
 - **Recent Libraries**: how many recent libraries the main menu and the welcome page offer,

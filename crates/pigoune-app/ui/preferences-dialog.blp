@@ -9,6 +9,15 @@ Adw.PreferencesDialog dialog {
     icon-name: "emblem-system-symbolic";
 
     Adw.PreferencesGroup {
+      title: _("Language");
+
+      Adw.ComboRow language_row {
+        title: _("Interface Language");
+        subtitle: _("Applies the next time Pigoune starts");
+      }
+    }
+
+    Adw.PreferencesGroup {
       title: _("Opening");
 
       Adw.SwitchRow reopen_last_library_row {

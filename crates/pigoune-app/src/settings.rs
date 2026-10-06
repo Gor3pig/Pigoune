@@ -13,6 +13,7 @@ pub const THUMBNAIL_SIZE: &str = "thumbnail-size";
 pub const SHOW_DETAILS: &str = "show-details";
 pub const SORT_CRITERION: &str = "sort-criterion";
 pub const SORT_REVERSED: &str = "sort-reversed";
+pub const LANGUAGE: &str = "language";
 pub const PREVIEW_BACKGROUND: &str = "preview-background";
 pub const PREVIEW_BOUNDS: &str = "preview-bounds";
 pub const PREVIEW_PIXEL_GRID: &str = "preview-pixel-grid";
