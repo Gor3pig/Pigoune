@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 14:12+0200\n"
+"POT-Creation-Date: 2026-10-06 14:23+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -3835,13 +3835,13 @@ msgid "Whole Image"
 msgstr "Image entière"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:150
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:159
 msgid "Desktop"
 msgstr "Bureau"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:158
-msgid "Desktop Bar"
-msgstr "Barre du bureau"
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
+msgid "Desktop Simulation"
+msgstr "Simulation du bureau"
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:222
 #, rust-format
@@ -3867,6 +3867,28 @@ msgstr "Cadrage de l’image à la taille de l’écran…"
 #: crates/pigoune-app/src/wallpaper_progress_dialog.rs:60
 msgid "Saving the wallpaper…"
 msgstr "Enregistrement du fond d’écran…"
+
+#: crates/pigoune-app/src/desktop_panels.rs:268
+#: crates/pigoune-app/src/desktop_panels.rs:284
+#: crates/pigoune-app/src/desktop_panels.rs:325
+msgctxt "desktop bar"
+msgid "Applications"
+msgstr "Applications"
+
+#: crates/pigoune-app/src/desktop_panels.rs:286
+msgctxt "desktop bar"
+msgid "Places"
+msgstr "Raccourcis"
+
+#: crates/pigoune-app/src/desktop_panels.rs:288
+msgctxt "desktop bar"
+msgid "System"
+msgstr "Système"
+
+#: crates/pigoune-app/src/desktop_panels.rs:320
+msgctxt "desktop bar"
+msgid "Workspaces"
+msgstr "Bureaux"
 
 #~ msgid "A smart collection cannot be saved from this view."
 #~ msgstr ""

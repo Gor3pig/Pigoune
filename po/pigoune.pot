@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 14:12+0200\n"
+"POT-Creation-Date: 2026-10-06 14:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3612,12 +3612,12 @@ msgid "Whole Image"
 msgstr ""
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:150
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:159
 msgid "Desktop"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:158
-msgid "Desktop Bar"
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
+msgid "Desktop Simulation"
 msgstr ""
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:222
@@ -3641,4 +3641,26 @@ msgstr ""
 
 #: crates/pigoune-app/src/wallpaper_progress_dialog.rs:60
 msgid "Saving the wallpaper…"
+msgstr ""
+
+#: crates/pigoune-app/src/desktop_panels.rs:268
+#: crates/pigoune-app/src/desktop_panels.rs:284
+#: crates/pigoune-app/src/desktop_panels.rs:325
+msgctxt "desktop bar"
+msgid "Applications"
+msgstr ""
+
+#: crates/pigoune-app/src/desktop_panels.rs:286
+msgctxt "desktop bar"
+msgid "Places"
+msgstr ""
+
+#: crates/pigoune-app/src/desktop_panels.rs:288
+msgctxt "desktop bar"
+msgid "System"
+msgstr ""
+
+#: crates/pigoune-app/src/desktop_panels.rs:320
+msgctxt "desktop bar"
+msgid "Workspaces"
 msgstr ""

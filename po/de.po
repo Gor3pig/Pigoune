@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 14:12+0200\n"
+"POT-Creation-Date: 2026-10-06 14:23+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -3702,13 +3702,13 @@ msgid "Whole Image"
 msgstr "Ganzes Bild"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:150
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:159
 msgid "Desktop"
 msgstr "Arbeitsumgebung"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:158
-msgid "Desktop Bar"
-msgstr "Leiste der Arbeitsumgebung"
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
+msgid "Desktop Simulation"
+msgstr "Arbeitsumgebung simulieren"
 
 #: crates/pigoune-app/src/wallpaper_dialog.rs:222
 #, rust-format
@@ -3734,6 +3734,28 @@ msgstr "Bild wird auf den Bildschirm zugeschnitten …"
 #: crates/pigoune-app/src/wallpaper_progress_dialog.rs:60
 msgid "Saving the wallpaper…"
 msgstr "Hintergrundbild wird gespeichert …"
+
+#: crates/pigoune-app/src/desktop_panels.rs:268
+#: crates/pigoune-app/src/desktop_panels.rs:284
+#: crates/pigoune-app/src/desktop_panels.rs:325
+msgctxt "desktop bar"
+msgid "Applications"
+msgstr "Anwendungen"
+
+#: crates/pigoune-app/src/desktop_panels.rs:286
+msgctxt "desktop bar"
+msgid "Places"
+msgstr "Orte"
+
+#: crates/pigoune-app/src/desktop_panels.rs:288
+msgctxt "desktop bar"
+msgid "System"
+msgstr "System"
+
+#: crates/pigoune-app/src/desktop_panels.rs:320
+msgctxt "desktop bar"
+msgid "Workspaces"
+msgstr "Arbeitsflächen"
 
 #~ msgid "A smart collection cannot be saved from this view."
 #~ msgstr ""

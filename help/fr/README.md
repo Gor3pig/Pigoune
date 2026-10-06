@@ -283,8 +283,9 @@ ses critères.
   les SVG, lui sont transmises en PNG.
 - **Cadrez vous-même un fond d'écran** avec **Préparer comme fond d'écran…** dans les mêmes
   menus. Une grande fenêtre montre un écran virtuel à la résolution réelle de l'écran où se
-  trouve Pigoune, par exemple 1920 × 1080, sous une imitation de la barre de votre bureau (GNOME
-  ou KDE Plasma ; l'interrupteur **Barre du bureau** la masque). Faites glisser l'image pour la
+  trouve Pigoune, par exemple 1920 × 1080, sous une imitation des barres de votre bureau : GNOME,
+  KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez étant choisi
+  d'office. Désactivez **Simulation du bureau** pour voir l'image seule. Faites glisser l'image pour la
   déplacer, zoomez avec la molette, le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la
   avec les flèches (<kbd>Maj</kbd> pour aller plus loin). **Remplir l'écran** la cadre comme
   GNOME le ferait, **Image entière** la montre en entier et **Taille réelle** montre un pixel de

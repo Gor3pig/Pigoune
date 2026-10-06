@@ -249,8 +249,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   screen. Images that GNOME cannot show as they are, such as SVG, are given to it as PNG.
 - **Frame a wallpaper yourself** with **Prepare as Wallpaper…** in the same menus. A large
   window shows a virtual screen at the real resolution of the screen Pigoune is shown on, for
-  example 1920 × 1080, under an imitation of the bar of your desktop (GNOME or KDE Plasma; the
-  **Desktop Bar** switch hides it). Drag the image to move it, zoom with the mouse wheel, the
+  example 1920 × 1080, under an imitation of the bars of your desktop: GNOME, KDE Plasma,
+  Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being chosen at first. Turn off
+  **Desktop Simulation** to see the image alone. Drag the image to move it, zoom with the mouse wheel, the
   slider or <kbd>+</kbd> and <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd>
   moves further). **Fill the Screen** frames it the way GNOME would, **Whole Image** shows all
   of it and **Actual Size** shows one pixel of the image per pixel of the screen. What goes

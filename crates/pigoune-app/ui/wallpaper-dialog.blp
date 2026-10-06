@@ -149,15 +149,16 @@ template $PigouneWallpaperDialog: Adw.Dialog {
           Adw.PreferencesGroup {
             title: _("Desktop");
 
-            Adw.ComboRow desktop_row {
-              title: _("Desktop");
-              notify::selected => $on_desktop_changed() swapped;
-            }
-
             Adw.SwitchRow bar_row {
-              title: _("Desktop Bar");
+              title: _("Desktop Simulation");
               active: true;
               notify::active => $on_bar_changed() swapped;
+            }
+
+            Adw.ComboRow desktop_row {
+              title: _("Desktop");
+              visible: bind bar_row.active;
+              notify::selected => $on_desktop_changed() swapped;
             }
           }
         };
