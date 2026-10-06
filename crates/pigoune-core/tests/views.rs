@@ -2,7 +2,8 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetId, AssetView, CollectionCommand, CollectionId, DATABASE_FILE_NAME, ImportOutcome, Library,
+    AssetId, AssetView, CollectionCommand, CollectionId, DATABASE_FILE_NAME, ImportOutcome,
+    Library, TagCommand,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -192,4 +193,43 @@ fn an_empty_collection_counts_zero() {
 
     assert_eq!(counts.of(AssetView::Collection(empty)), 0);
     assert!(fixture.shown(AssetView::Collection(empty)).is_empty());
+}
+
+#[test]
+fn counting_one_view_gives_the_same_number_as_the_full_counts() {
+    let mut sample = sample();
+    sample
+        .fixture
+        .library
+        .apply_tag_command(&TagCommand::Add {
+            assets: vec![sample.in_brands, sample.in_tech],
+            name: "logo".to_owned(),
+        })
+        .expect("tag added");
+    let tag = sample
+        .fixture
+        .library
+        .tag_named("logo")
+        .expect("tag read")
+        .expect("tag exists")
+        .id;
+    let library = &sample.fixture.library;
+    let counts = library.view_counts().expect("counts computed");
+
+    for view in [
+        AssetView::All,
+        AssetView::Favorites,
+        AssetView::Unclassified,
+        AssetView::Trash,
+        AssetView::Collection(sample.brands),
+        AssetView::Collection(sample.tech),
+        AssetView::Collection(sample.fashion),
+        AssetView::Tag(tag),
+    ] {
+        let one = library.view_count(view).expect("one view counted");
+        assert_eq!(one, counts.of(view), "{view:?}");
+        assert_eq!(one, sample.fixture.shown(view).len(), "{view:?}");
+    }
+    assert_eq!(library.view_count(AssetView::All).expect("counted"), 4);
+    assert_eq!(library.view_count(AssetView::Trash).expect("counted"), 1);
 }

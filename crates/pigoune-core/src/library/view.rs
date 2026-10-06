@@ -101,6 +101,20 @@ pub fn filter(view: AssetView) -> ViewFilter {
 }
 
 impl Library {
+    pub fn view_count(&self, view: AssetView) -> Result<usize, LibraryError> {
+        if let AssetView::Smart(id) = view {
+            return Ok(self.smart_collection_assets(id)?.len());
+        }
+        let filter = filter(view);
+        let clause = filter.clause();
+        let total: i64 = self.connection.query_row(
+            &format!("{SUBTREE} SELECT count(*) FROM assets WHERE {clause}"),
+            [filter.parameter],
+            |row| row.get(0),
+        )?;
+        Ok(usize::try_from(total).unwrap_or(0))
+    }
+
     pub fn view_counts(&self) -> Result<ViewCounts, LibraryError> {
         let count = |condition: &str| -> Result<usize, LibraryError> {
             let total: i64 = self.connection.query_row(
@@ -146,18 +160,9 @@ impl Library {
             })?
             .collect::<Result<_, _>>()?;
 
-        let smart_collections = self
-            .smart_collections()?
-            .into_iter()
-            .map(|collection| {
-                let total = self.smart_collection_assets(collection.id)?.len();
-                Ok((collection.id, total))
-            })
-            .collect::<Result<_, LibraryError>>()?;
-
         Ok(ViewCounts {
             tags,
-            smart_collections,
+            smart_collections: self.smart_collection_counts()?,
             all: count(&filter(AssetView::All).clause())?,
             favorites: count(&filter(AssetView::Favorites).clause())?,
             unclassified: count(&filter(AssetView::Unclassified).clause())?,

@@ -1944,8 +1944,8 @@ impl PigouneWindow {
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.view_counts().ok())
-            .map_or(0, |counts| counts.of(AssetView::Trash));
+            .and_then(|library| library.view_count(AssetView::Trash).ok())
+            .unwrap_or(0);
         if count == 0 {
             return;
         }
@@ -3397,8 +3397,8 @@ impl PigouneWindow {
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.view_counts().ok())
-            .map_or(0, |counts| counts.of(AssetView::Tag(tag)));
+            .and_then(|library| library.view_count(AssetView::Tag(tag)).ok())
+            .unwrap_or(0);
         let alert = adw::AlertDialog::new(
             Some(&gettext("Delete the Tag “{name}”?").replace("{name}", &name)),
             Some(
@@ -3725,7 +3725,7 @@ impl PigouneWindow {
         let read = self.imp().library.borrow().as_ref().map(|library| {
             Ok::<_, pigoune_core::CollectionError>((
                 library.removal_of(id)?,
-                library.view_counts()?.of(AssetView::Collection(id)),
+                library.view_count(AssetView::Collection(id))?,
             ))
         });
         let (removal, contained) = match read {
@@ -3919,7 +3919,7 @@ impl PigouneWindow {
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
                 asset_objects(library, view, &filter)?,
-                library.view_counts()?.all,
+                library.view_count(AssetView::All)?,
                 view_name(library, view),
             ))
         });

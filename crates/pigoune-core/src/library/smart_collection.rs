@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::view::AssetView;
@@ -36,6 +38,26 @@ impl Library {
         id: SmartCollectionId,
     ) -> Result<Option<SmartCollection>, LibraryError> {
         find(&self.connection, id)
+    }
+
+    pub(super) fn smart_collection_counts(
+        &self,
+    ) -> Result<HashMap<SmartCollectionId, usize>, LibraryError> {
+        let collections = self.smart_collections()?;
+        if collections.is_empty() {
+            return Ok(HashMap::new());
+        }
+        let assets = self.visible_assets_in(AssetView::All)?;
+        let tags = self.tag_names_by_asset()?;
+        Ok(collections
+            .iter()
+            .map(|collection| {
+                (
+                    collection.id,
+                    collection.filter.count_among(&assets, &tags, self.screen),
+                )
+            })
+            .collect())
     }
 
     pub(super) fn smart_collection_assets(

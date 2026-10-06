@@ -185,6 +185,49 @@ fn the_view_counts_include_each_smart_collection() {
 }
 
 #[test]
+fn every_smart_collection_is_counted_in_one_pass_with_the_right_number() {
+    let mut fixture = Fixture::new();
+    let red = fixture.import("red-dot.png");
+    fixture.import("blinking.png");
+    fixture.import("dark-circle.svg");
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetFavorite {
+            assets: vec![red],
+            favorite: true,
+        })
+        .expect("favorite set");
+    let png = fixture.save("PNG", &formats(&[AssetFormat::Png]));
+    let svg = fixture.save("SVG", &formats(&[AssetFormat::Svg]));
+    let favorites = fixture.save(
+        "Favoris",
+        &AssetFilter {
+            favorites_only: true,
+            ..AssetFilter::default()
+        },
+    );
+    let by_text = fixture.save("Texte", &AssetFilter::text("dark"));
+    let everything = fixture.save("Tout", &AssetFilter::default());
+    let nothing = fixture.save("Rien", &AssetFilter::text("zzzz"));
+
+    let counts = fixture.library.view_counts().expect("counts computed");
+
+    for (id, expected) in [
+        (png, 2),
+        (svg, 1),
+        (favorites, 1),
+        (by_text, 1),
+        (everything, 3),
+        (nothing, 0),
+    ] {
+        let view = AssetView::Smart(id);
+        assert_eq!(counts.of(view), expected, "{view:?}");
+        assert_eq!(fixture.library.view_count(view).expect("counted"), expected);
+        assert_eq!(fixture.shown(view).len(), expected);
+    }
+}
+
+#[test]
 fn trashed_resources_leave_smart_collections() {
     let mut fixture = Fixture::new();
     let red = fixture.import("red-dot.png");

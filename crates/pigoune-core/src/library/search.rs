@@ -62,6 +62,27 @@ impl AssetFilter {
 }
 
 impl AssetFilter {
+    pub(super) fn count_among(
+        &self,
+        assets: &[Asset],
+        tags: &HashMap<AssetId, Vec<String>>,
+        library_screen: Option<Dimensions>,
+    ) -> usize {
+        if !self.narrows() {
+            return assets.len();
+        }
+        let filter = Self {
+            screen: self.screen.or(library_screen),
+            ..self.clone()
+        };
+        let groups = search_groups(&filter.text);
+        let no_tags = Vec::new();
+        assets
+            .iter()
+            .filter(|asset| filter.keeps(asset, &groups, tags.get(&asset.id).unwrap_or(&no_tags)))
+            .count()
+    }
+
     fn keeps_shape_of(&self, asset: &Asset) -> bool {
         self.shapes.is_empty()
             || asset
@@ -115,7 +136,7 @@ impl Library {
             .collect())
     }
 
-    fn tag_names_by_asset(&self) -> Result<HashMap<AssetId, Vec<String>>, LibraryError> {
+    pub(super) fn tag_names_by_asset(&self) -> Result<HashMap<AssetId, Vec<String>>, LibraryError> {
         let mut statement = self.connection.prepare(
             "SELECT asset_tags.asset_id, tags.name FROM asset_tags
              JOIN tags ON tags.id = asset_tags.tag_id",
