@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 13:19+0200\n"
+"POT-Creation-Date: 2026-10-06 13:34+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Italian\n"
@@ -1149,13 +1149,13 @@ msgstr "Apri l'anteprima"
 #: crates/pigoune-app/src/window.rs:1806
 #: crates/pigoune-app/ui/asset-details.blp:207
 #: crates/pigoune-app/ui/asset-details.blp:218
-#: crates/pigoune-app/ui/asset-preview.blp:253
-#: crates/pigoune-app/src/asset_preview.rs:1116
+#: crates/pigoune-app/ui/asset-preview.blp:259
+#: crates/pigoune-app/src/asset_preview.rs:1143
 msgid "Open With…"
 msgstr "Apri con…"
 
 #: crates/pigoune-app/src/window.rs:1808
-#: crates/pigoune-app/src/asset_preview.rs:1118
+#: crates/pigoune-app/src/asset_preview.rs:1145
 msgid "Set as Wallpaper…"
 msgstr "Imposta come sfondo…"
 
@@ -1173,34 +1173,34 @@ msgstr "_Ripristina"
 #: crates/pigoune-app/src/window.rs:1825
 #: crates/pigoune-app/ui/asset-details.blp:230
 #: crates/pigoune-app/ui/asset-details.blp:241
-#: crates/pigoune-app/ui/asset-preview.blp:260
-#: crates/pigoune-app/src/asset_preview.rs:1122
+#: crates/pigoune-app/ui/asset-preview.blp:266
+#: crates/pigoune-app/src/asset_preview.rs:1149
 msgid "Copy"
 msgstr "Copia"
 
 #: crates/pigoune-app/src/window.rs:1829
 #: crates/pigoune-app/ui/asset-details.blp:253
-#: crates/pigoune-app/ui/asset-preview.blp:267
-#: crates/pigoune-app/src/asset_preview.rs:1125
+#: crates/pigoune-app/ui/asset-preview.blp:273
+#: crates/pigoune-app/src/asset_preview.rs:1152
 msgid "Export To…"
 msgstr "Esporta in…"
 
 #: crates/pigoune-app/src/window.rs:1831
-#: crates/pigoune-app/src/asset_preview.rs:1126
+#: crates/pigoune-app/src/asset_preview.rs:1153
 msgid "Export As…"
 msgstr "Esporta come…"
 
 #: crates/pigoune-app/src/window.rs:1836
-#: crates/pigoune-app/src/asset_preview.rs:516
-#: crates/pigoune-app/src/asset_preview.rs:1129
+#: crates/pigoune-app/src/asset_preview.rs:533
+#: crates/pigoune-app/src/asset_preview.rs:1156
 #: crates/pigoune-app/src/asset_details.rs:500
 #: crates/pigoune-app/src/asset_details.rs:558
 msgid "Remove from Favorites"
 msgstr "Rimuovi dai preferiti"
 
 #: crates/pigoune-app/src/window.rs:1838
-#: crates/pigoune-app/src/asset_preview.rs:520
-#: crates/pigoune-app/src/asset_preview.rs:1131
+#: crates/pigoune-app/src/asset_preview.rs:537
+#: crates/pigoune-app/src/asset_preview.rs:1158
 #: crates/pigoune-app/src/asset_details.rs:502
 #: crates/pigoune-app/src/asset_details.rs:560
 msgid "Add to Favorites"
@@ -1828,7 +1828,7 @@ msgid "Filter the Resources"
 msgstr "Filtra le risorse"
 
 #: crates/pigoune-app/ui/grid-header.blp:44
-#: crates/pigoune-app/ui/asset-preview.blp:93
+#: crates/pigoune-app/ui/asset-preview.blp:99
 msgid "Show Details"
 msgstr "Mostra i dettagli"
 
@@ -1978,7 +1978,7 @@ msgid "Original File"
 msgstr "File originale"
 
 #: crates/pigoune-app/ui/asset-details.blp:440
-#: crates/pigoune-app/ui/asset-preview.blp:337
+#: crates/pigoune-app/ui/asset-preview.blp:343
 msgid "Animation"
 msgstr "Animazione"
 
@@ -2066,95 +2066,99 @@ msgstr "Mostra la griglia dei pixel"
 msgid "Show Thumbnail Strip"
 msgstr "Mostra la striscia di miniature"
 
-#: crates/pigoune-app/ui/asset-preview.blp:61
-#: crates/pigoune-app/ui/asset-preview.blp:74
+#: crates/pigoune-app/ui/asset-preview.blp:46
+msgid "Show as Wallpaper"
+msgstr "Mostra come sfondo"
+
+#: crates/pigoune-app/ui/asset-preview.blp:67
+#: crates/pigoune-app/ui/asset-preview.blp:80
 msgid "Back to the Library"
 msgstr "Torna alla libreria"
 
-#: crates/pigoune-app/ui/asset-preview.blp:67
+#: crates/pigoune-app/ui/asset-preview.blp:73
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:6
 msgid "Library"
 msgstr "Libreria"
 
-#: crates/pigoune-app/ui/asset-preview.blp:100
+#: crates/pigoune-app/ui/asset-preview.blp:106
 msgid "Zoom"
 msgstr "Zoom"
 
-#: crates/pigoune-app/ui/asset-preview.blp:112
+#: crates/pigoune-app/ui/asset-preview.blp:118
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Zoom Out"
 msgstr "Riduci"
 
-#: crates/pigoune-app/ui/asset-preview.blp:123
+#: crates/pigoune-app/ui/asset-preview.blp:129
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:140
 msgid "Zoom In"
 msgstr "Ingrandisci"
 
-#: crates/pigoune-app/ui/asset-preview.blp:141
-#: crates/pigoune-app/ui/asset-preview.blp:144
+#: crates/pigoune-app/ui/asset-preview.blp:147
+#: crates/pigoune-app/ui/asset-preview.blp:150
 #: crates/pigoune-app/ui/export-as-dialog.blp:264
 msgid "Background"
 msgstr "Sfondo"
 
-#: crates/pigoune-app/ui/asset-preview.blp:163
+#: crates/pigoune-app/ui/asset-preview.blp:169
 msgid "Transparent Background"
 msgstr "Sfondo trasparente"
 
-#: crates/pigoune-app/ui/asset-preview.blp:179
+#: crates/pigoune-app/ui/asset-preview.blp:185
 msgid "White Background"
 msgstr "Sfondo bianco"
 
-#: crates/pigoune-app/ui/asset-preview.blp:195
+#: crates/pigoune-app/ui/asset-preview.blp:201
 msgid "Gray Background"
 msgstr "Sfondo grigio"
 
-#: crates/pigoune-app/ui/asset-preview.blp:211
+#: crates/pigoune-app/ui/asset-preview.blp:217
 msgid "Black Background"
 msgstr "Sfondo nero"
 
-#: crates/pigoune-app/ui/asset-preview.blp:227
+#: crates/pigoune-app/ui/asset-preview.blp:233
 msgid "Checkerboard Background"
 msgstr "Sfondo a scacchiera"
 
-#: crates/pigoune-app/ui/asset-preview.blp:319
+#: crates/pigoune-app/ui/asset-preview.blp:325
 msgid "Icon Size"
 msgstr "Dimensione dell'icona"
 
-#: crates/pigoune-app/ui/asset-preview.blp:342
+#: crates/pigoune-app/ui/asset-preview.blp:348
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:130
 msgid "Previous Frame"
 msgstr "Fotogramma precedente"
 
-#: crates/pigoune-app/ui/asset-preview.blp:355
-#: crates/pigoune-app/src/asset_preview.rs:964
+#: crates/pigoune-app/ui/asset-preview.blp:361
+#: crates/pigoune-app/src/asset_preview.rs:991
 msgid "Pause"
 msgstr "Pausa"
 
-#: crates/pigoune-app/ui/asset-preview.blp:368
+#: crates/pigoune-app/ui/asset-preview.blp:374
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:135
 msgid "Next Frame"
 msgstr "Fotogramma successivo"
 
-#: crates/pigoune-app/ui/asset-preview.blp:392
+#: crates/pigoune-app/ui/asset-preview.blp:398
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:105
 msgid "Previous Resource"
 msgstr "Risorsa precedente"
 
-#: crates/pigoune-app/ui/asset-preview.blp:411
+#: crates/pigoune-app/ui/asset-preview.blp:417
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:110
 msgid "Next Resource"
 msgstr "Risorsa successiva"
 
-#: crates/pigoune-app/src/asset_preview.rs:966
+#: crates/pigoune-app/src/asset_preview.rs:993
 msgid "Play"
 msgstr "Riproduci"
 
-#: crates/pigoune-app/src/asset_preview.rs:1101
+#: crates/pigoune-app/src/asset_preview.rs:1128
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent}%"
 
-#: crates/pigoune-app/src/asset_preview.rs:1165
+#: crates/pigoune-app/src/asset_preview.rs:1192
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} di {count}"

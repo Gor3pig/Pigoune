@@ -205,6 +205,10 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   margins included; turn it off with **Show Image Bounds** in the zoom menu.
 - From 800% on, a light grid separates the pixels of pictures, which helps to check icons and
   pixel art; turn it off with **Show Pixel Grid** in the zoom menu.
+- **Show as Wallpaper** in the zoom menu, or <kbd>W</kbd>, shows the image as it would look on
+  your desktop: at the shape of your screen, cropped the way GNOME fills the screen, under an
+  imitation of the top bar. The parts that would be cut stay visible, faded, around the
+  screen. Press <kbd>W</kbd> or <kbd>Esc</kbd> to come back.
 - A strip of thumbnails at the bottom of the preview shows the neighboring assets; click one to
   show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
   Strip** in the zoom menu.

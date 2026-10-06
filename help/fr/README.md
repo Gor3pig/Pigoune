@@ -233,6 +233,10 @@ ses critères.
 - À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier
   une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
   du zoom.
+- **Voir comme fond d’écran** dans le menu du zoom, ou <kbd>W</kbd>, montre l'image telle
+  qu'elle apparaîtrait sur votre bureau : aux proportions de votre écran, recadrée comme GNOME
+  remplit l'écran, sous une imitation de la barre du haut. Les parties qui seraient coupées
+  restent visibles, en pâle, autour de l'écran. <kbd>W</kbd> ou <kbd>Échap</kbd> pour revenir.
 - Une bande de vignettes en bas de l'aperçu montre les ressources voisines ; cliquez sur l'une
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.

@@ -11,8 +11,10 @@ use pigoune_core::{Asset, AssetFormat, Dimensions};
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::screen_size;
 use crate::swipe_steps;
 use crate::thumbnails::{self, ThumbnailCache};
+use crate::zoom_math::Size;
 
 const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checkerboard"];
 const SMALLEST_RENDER_PIXELS: u32 = 256;
@@ -112,6 +114,8 @@ mod imp {
         pub show_bounds: Cell<bool>,
         #[property(get, set = Self::set_show_pixel_grid)]
         pub show_pixel_grid: Cell<bool>,
+        #[property(get, set = Self::set_desktop)]
+        pub desktop: Cell<bool>,
         pub items: RefCell<Vec<PigouneAssetObject>>,
         pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
@@ -142,6 +146,19 @@ mod imp {
         fn set_show_pixel_grid(&self, show_pixel_grid: bool) {
             self.show_pixel_grid.set(show_pixel_grid);
             self.zoom_view.set_shows_pixel_grid(show_pixel_grid);
+        }
+
+        fn install_desktop(class: &mut <Self as ObjectSubclass>::Class) {
+            class.install_property_action("preview.desktop", "desktop");
+            class.add_binding(gdk::Key::w, gdk::ModifierType::empty(), |preview| {
+                preview.set_desktop(!preview.desktop());
+                glib::Propagation::Stop
+            });
+        }
+
+        fn set_desktop(&self, desktop: bool) {
+            self.desktop.set(desktop);
+            self.obj().show_desktop();
         }
 
         fn set_show_strip(&self, show_strip: bool) {
@@ -220,8 +237,11 @@ mod imp {
                 });
             }
             class.bind_template_instance_callbacks();
+            Self::install_desktop(class);
             class.add_binding(gdk::Key::Escape, gdk::ModifierType::empty(), |preview| {
-                if preview.is_fullscreen() {
+                if preview.desktop() {
+                    preview.set_desktop(false);
+                } else if preview.is_fullscreen() {
                     preview.set_fullscreen(false);
                 } else {
                     preview.close();
@@ -318,6 +338,7 @@ impl PigouneAssetPreview {
         thumbnails: Rc<ThumbnailCache>,
     ) {
         let imp = self.imp();
+        self.set_desktop(false);
         self.forget_selection();
         imp.strip.show_items(&items, Rc::clone(&thumbnails));
         imp.thumbnails.replace(Some(thumbnails));
@@ -681,6 +702,16 @@ impl PigouneAssetPreview {
             imp.header_bar.remove_css_class(FLOATING_HEADER);
         }
         self.update_controls();
+    }
+
+    fn show_desktop(&self) {
+        let screen = screen_size::screen_of(self)
+            .filter(|_| self.imp().desktop.get())
+            .map(|screen| Size {
+                width: f64::from(screen.width()),
+                height: f64::from(screen.height()),
+            });
+        self.imp().zoom_view.set_desktop(screen);
     }
 
     fn reveal_details(&self) {
