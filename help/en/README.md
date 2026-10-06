@@ -142,6 +142,13 @@ with types and favorites: red and SVG show the red SVG files. When a library is 
 the first time, its assets are analyzed in the background while you keep working; an asset
 not analyzed yet matches no color.
 
+**Shape** keeps the assets in **Landscape**, **Portrait** or **Square** format; pick two
+shapes to see both. An image counts as square when its sides differ by 5% at most.
+**Fits My Screen** keeps the images at least as large as the screen Pigoune is shown on, in
+real pixels and in both directions, for example 1920 × 1080 or larger: they fill the screen
+without being enlarged, so without blur. SVG files are always left aside.
+Together, **Landscape** and **Fits My Screen** find good wallpapers.
+
 To find out where an asset is stored, look at **Collections** in the **Organization** group of
 the details panel. Clicking a collection there opens it in the sidebar and highlights the
 asset. Clicking a tag works the same way. **Detected Colors** shows the main colors Pigoune
@@ -151,12 +158,14 @@ found in the asset; to keep only the assets of a color, use the **Filters** butt
 
 A smart collection is a saved search that keeps itself up to date: it always shows the assets
 that match its criteria, including the ones you import later. For example, *all my favorite
-SVG files* or *everything about logos in the Clients collection*.
+SVG files* or *every landscape image that fits my screen*. It always searches the whole
+library, the trash left aside.
 
 - **Create** one with the **+** button next to **Smart Collections** in the sidebar. The window
-  is filled in with the search and the filters in use, and with the entry selected in the
-  sidebar. Give it a name, then choose words to find, types, colors or **Favorites Only**: at
-  least one criterion is needed.
+  is filled in with the search and the filters in use, and with **Favorites Only** when
+  **Favorites** is open. Give it a name, then choose words to find, types, shapes, colors, **Fits My Screen**
+  or **Favorites Only**: at least one criterion is needed. **Fits My Screen** follows the screen
+  Pigoune is shown on when you open the smart collection.
 - **Words to Find** works exactly like the search field: spaces and commas, and pills whose
   **and** and **or** cut or join the groups.
 - **Open** it from the sidebar to see its assets. You can still search inside it.

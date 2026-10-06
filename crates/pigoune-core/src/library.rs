@@ -35,6 +35,7 @@ use std::path::{Path, PathBuf};
 use rusqlite::{Connection, OpenFlags};
 use uuid::Uuid;
 
+use crate::media::Dimensions;
 use history::History;
 use staging::StagingDir;
 
@@ -56,7 +57,7 @@ pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
 pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
 pub use search::{AssetFilter, MAX_QUERY_WORDS, query_groups, query_text, query_word_count};
-pub use smart_collection::{SmartCollection, can_be_saved_from};
+pub use smart_collection::SmartCollection;
 pub use smart_collection_command::{SmartCollectionCommand, SmartCollectionError};
 pub use storage::{ColorShare, FormatShare, StorageUse};
 pub use tag::Tag;
@@ -69,6 +70,7 @@ pub struct Library {
     root: PathBuf,
     connection: Connection,
     history: History,
+    screen: Option<Dimensions>,
     _exclusive_access: Option<File>,
 }
 
@@ -126,8 +128,13 @@ impl Library {
             root: root.to_path_buf(),
             connection,
             history: History::default(),
+            screen: None,
             _exclusive_access: exclusive_access,
         })
+    }
+
+    pub fn set_screen(&mut self, screen: Option<Dimensions>) {
+        self.screen = screen;
     }
 
     #[must_use]

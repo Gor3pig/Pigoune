@@ -59,7 +59,7 @@ and favorites, plus a note, a source, a license and an author for each asset.
 <td width="50%" valign="top">
 
 ### Find
-Instant search and filters by type, color or favorite, even among thousands of assets, with
+Instant search and filters by type, shape, color or favorite, even among thousands of assets, with
 words combined by "and" or "or" in one click. Clicking a collection or a tag shows you where an asset
 lives.
 

@@ -9,12 +9,11 @@ use pigoune_core::{
     AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
     CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ImportError, ImportSummary,
     Library, LibraryError, SmartCollection, SmartCollectionCommand, SmartCollectionId,
-    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, can_be_saved_from,
-    dominant_colors, library_display_name,
+    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, dominant_colors,
+    library_display_name,
 };
 
 use crate::asset_colors;
-use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::clipboard_content;
@@ -39,6 +38,7 @@ use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::preferences_dialog;
 use crate::preview_flight::Flight;
 use crate::recent_libraries;
+use crate::screen_size;
 use crate::settings;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
 use crate::sidebar_item::SidebarEntry;
@@ -163,7 +163,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::prelude::*;
     use gtk::{gio, glib};
-    use pigoune_core::{AssetFilter, AssetView, ChangeStamp, Library};
+    use pigoune_core::{AssetFilter, AssetView, ChangeStamp, Dimensions, Library};
 
     use crate::asset_details::PigouneAssetDetails;
     use crate::asset_grid::PigouneAssetGrid;
@@ -258,6 +258,7 @@ mod imp {
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
+        pub screen: Cell<Option<Dimensions>>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
@@ -487,6 +488,7 @@ mod imp {
             self.obj().follow_welcome_recent_list();
             self.obj().follow_page_height();
             self.obj().watch_for_updates();
+            self.obj().follow_screen();
         }
     }
 
@@ -1272,6 +1274,8 @@ impl PigouneWindow {
         imp.asset_grid.forget_thumbnails();
         self.forget_undo_toast();
         self.reset_search();
+        let mut library = library;
+        library.set_screen(imp.screen.get());
         imp.library.replace(Some(library));
         self.store_recent_libraries(&recent_libraries::with_opened(
             &self.recent_library_paths(),
@@ -1659,6 +1663,46 @@ impl PigouneWindow {
             self,
             move |collection| window.go_to_collection(collection)
         ));
+    }
+
+    fn follow_screen(&self) {
+        self.connect_realize(|window| {
+            let Some(surface) = window.surface() else {
+                return;
+            };
+            surface.connect_enter_monitor(glib::clone!(
+                #[weak]
+                window,
+                move |_, _| window.update_screen()
+            ));
+        });
+    }
+
+    fn update_screen(&self) {
+        let imp = self.imp();
+        let screen = screen_size::screen_of(self);
+        if imp.screen.replace(screen) == screen {
+            return;
+        }
+        let smart_collections_fit_screen = match imp.library.borrow_mut().as_mut() {
+            Some(library) => {
+                library.set_screen(screen);
+                library.smart_collections().is_ok_and(|collections| {
+                    collections
+                        .iter()
+                        .any(|collection| collection.filter.fits_screen)
+                })
+            }
+            None => return,
+        };
+        let filters_fit_screen = imp.filters.borrow().fits_screen
+            || matches!(imp.current_view.get(), AssetView::Smart(_));
+        if smart_collections_fit_screen {
+            self.refresh_sidebar();
+        }
+        if filters_fit_screen {
+            self.refresh_grid();
+        }
     }
 
     fn watch_for_updates(&self) {
@@ -3084,24 +3128,18 @@ impl PigouneWindow {
 
     fn ask_new_smart_collection(&self) {
         let filter = self.current_filter();
-        let current = self.imp().current_view.get();
-        let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
-        let current = if everywhere && can_be_saved_from(current) {
+        let filter = match self.imp().current_view.get() {
+            AssetView::Trash | AssetView::Smart(_) => AssetFilter::default(),
+            AssetView::Favorites => AssetFilter {
+                favorites_only: true,
+                ..filter
+            },
             AssetView::All
-        } else {
-            current
+            | AssetView::Unclassified
+            | AssetView::Collection(_)
+            | AssetView::Tag(_) => filter,
         };
-        let (scope, filter) = if can_be_saved_from(current) {
-            (current, filter)
-        } else {
-            (AssetView::All, AssetFilter::default())
-        };
-        let scope_name = self.scope_name(scope);
-        let wanted = if filter.narrows() {
-            suggested_smart_collection_name(&filter)
-        } else {
-            gettext("New Smart Collection")
-        };
+        let wanted = gettext("Smart Collection");
         let taken: Vec<String> = self
             .imp()
             .library
@@ -3117,7 +3155,6 @@ impl PigouneWindow {
             &SmartCollectionDraft {
                 title: &gettext("New Smart Collection"),
                 confirm_label: &gettext("_Create"),
-                scope_name: &scope_name,
                 name: &name,
                 filter: &filter,
             },
@@ -3126,7 +3163,7 @@ impl PigouneWindow {
                 self,
                 #[upgrade_or]
                 Ok(()),
-                move |name, filter| window.create_smart_collection(name, scope, filter)
+                move |name, filter| window.create_smart_collection(name, filter)
             ),
         );
         dialog.present(Some(self));
@@ -3150,14 +3187,8 @@ impl PigouneWindow {
         }
     }
 
-    fn create_smart_collection(
-        &self,
-        name: &str,
-        scope: AssetView,
-        filter: &AssetFilter,
-    ) -> Result<(), String> {
-        let created =
-            self.change_library(|library| library.create_smart_collection(name, scope, filter));
+    fn create_smart_collection(&self, name: &str, filter: &AssetFilter) -> Result<(), String> {
+        let created = self.change_library(|library| library.create_smart_collection(name, filter));
         match created {
             Some(Ok(id)) => {
                 self.reset_search();
@@ -3182,14 +3213,12 @@ impl PigouneWindow {
         else {
             return;
         };
-        let scope = collection.scope;
         let created_at_unix_ms = collection.created_at_unix_ms;
         let position = collection.position;
         let dialog = PigouneSmartCollectionDialog::new(
             &SmartCollectionDraft {
                 title: &gettext("Edit Smart Collection"),
                 confirm_label: &gettext("_Save"),
-                scope_name: &self.scope_name(scope),
                 name: &collection.name,
                 filter: &collection.filter,
             },
@@ -3203,7 +3232,6 @@ impl PigouneWindow {
                         collection: SmartCollection {
                             id,
                             name: name.to_owned(),
-                            scope,
                             filter: filter.clone(),
                             position,
                             created_at_unix_ms,
@@ -3787,7 +3815,7 @@ impl PigouneWindow {
         let imp = self.imp();
         let current = imp.current_view.get();
         let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
-        let searched = if everywhere && can_be_saved_from(current) {
+        let searched = if everywhere && reaches_whole_library(current) {
             AssetView::All
         } else {
             current
@@ -3799,7 +3827,7 @@ impl PigouneWindow {
 
     fn searched_view(&self, view: AssetView, filter: &AssetFilter) -> AssetView {
         let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
-        if everywhere && filter.narrows() && can_be_saved_from(view) {
+        if everywhere && filter.narrows() && reaches_whole_library(view) {
             AssetView::All
         } else {
             view
@@ -4285,24 +4313,19 @@ fn tag_parameter(parameter: Option<&glib::Variant>) -> Option<TagId> {
     TagId::parse(&parameter?.get::<String>()?)
 }
 
-fn smart_collection_parameter(parameter: Option<&glib::Variant>) -> Option<SmartCollectionId> {
-    SmartCollectionId::parse(&parameter?.get::<String>()?)
+fn reaches_whole_library(view: AssetView) -> bool {
+    matches!(
+        view,
+        AssetView::All
+            | AssetView::Favorites
+            | AssetView::Unclassified
+            | AssetView::Collection(_)
+            | AssetView::Tag(_)
+    )
 }
 
-fn suggested_smart_collection_name(filter: &AssetFilter) -> String {
-    let text = filter.text.trim();
-    if !text.is_empty() {
-        return text.to_owned();
-    }
-    if !filter.formats.is_empty() {
-        return filter
-            .formats
-            .iter()
-            .map(|format| asset_facts::format_name(*format))
-            .collect::<Vec<_>>()
-            .join(", ");
-    }
-    gettext("Favorites")
+fn smart_collection_parameter(parameter: Option<&glib::Variant>) -> Option<SmartCollectionId> {
+    SmartCollectionId::parse(&parameter?.get::<String>()?)
 }
 
 #[derive(Debug, Clone, Copy)]

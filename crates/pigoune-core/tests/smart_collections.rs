@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionCommand,
-    ImportOutcome, Library, Rgb, SmartCollection, SmartCollectionCommand, SmartCollectionError,
-    SmartCollectionId, TagCommand,
+    AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetShape, AssetView,
+    CollectionCommand, Dimensions, ImportOutcome, Library, Rgb, SmartCollection,
+    SmartCollectionCommand, SmartCollectionError, SmartCollectionId,
 };
 use tempfile::TempDir;
 
@@ -30,15 +30,15 @@ impl Fixture {
         }
     }
 
-    fn save(&mut self, name: &str, scope: AssetView, filter: &AssetFilter) -> SmartCollectionId {
+    fn save(&mut self, name: &str, filter: &AssetFilter) -> SmartCollectionId {
         self.library
-            .create_smart_collection(name, scope, filter)
+            .create_smart_collection(name, filter)
             .expect("smart collection is saved")
     }
 
-    fn refused(&mut self, name: &str, scope: AssetView) -> SmartCollectionError {
+    fn refused(&mut self, name: &str) -> SmartCollectionError {
         self.library
-            .create_smart_collection(name, scope, &AssetFilter::default())
+            .create_smart_collection(name, &AssetFilter::default())
             .expect_err("smart collection is refused")
     }
 
@@ -89,11 +89,7 @@ fn a_smart_collection_shows_the_resources_matching_its_criteria() {
     fixture.import("dark-circle.svg");
     let webp = fixture.import("green-square.webp");
 
-    let id = fixture.save(
-        "Rasters",
-        AssetView::All,
-        &formats(&[AssetFormat::Png, AssetFormat::Webp]),
-    );
+    let id = fixture.save("Rasters", &formats(&[AssetFormat::Png, AssetFormat::Webp]));
 
     assert_eq!(fixture.shown(AssetView::Smart(id)), sorted(vec![png, webp]));
 }
@@ -102,7 +98,7 @@ fn a_smart_collection_shows_the_resources_matching_its_criteria() {
 fn a_resource_imported_later_appears_by_itself() {
     let mut fixture = Fixture::new();
     fixture.import("red-dot.png");
-    let id = fixture.save("Vectors", AssetView::All, &formats(&[AssetFormat::Svg]));
+    let id = fixture.save("Vectors", &formats(&[AssetFormat::Svg]));
     assert!(fixture.shown(AssetView::Smart(id)).is_empty());
 
     let svg = fixture.import("dark-circle.svg");
@@ -111,7 +107,7 @@ fn a_resource_imported_later_appears_by_itself() {
 }
 
 #[test]
-fn search_text_favorites_and_scope_all_narrow_the_result() {
+fn search_text_and_favorites_narrow_the_whole_library() {
     let mut fixture = Fixture::new();
     let red = fixture.import("red-dot.png");
     let blinking = fixture.import("blinking.png");
@@ -124,7 +120,7 @@ fn search_text_favorites_and_scope_all_narrow_the_result() {
         .library
         .apply_collection_command(&CollectionCommand::AddAssets {
             collection,
-            assets: vec![red, circle],
+            assets: vec![circle],
         })
         .expect("assets added");
     fixture
@@ -135,17 +131,19 @@ fn search_text_favorites_and_scope_all_narrow_the_result() {
         })
         .expect("favorites set");
 
-    let in_logos = fixture.save(
-        "Favorite logos",
-        AssetView::Collection(collection),
+    let favorites = fixture.save(
+        "Favorites",
         &AssetFilter {
             favorites_only: true,
             ..AssetFilter::default()
         },
     );
-    let named = fixture.save("Dots", AssetView::All, &AssetFilter::text("dot"));
+    let named = fixture.save("Dots", &AssetFilter::text("dot"));
 
-    assert_eq!(fixture.shown(AssetView::Smart(in_logos)), vec![red]);
+    assert_eq!(
+        fixture.shown(AssetView::Smart(favorites)),
+        sorted(vec![red, blinking])
+    );
     assert_eq!(fixture.shown(AssetView::Smart(named)), vec![red]);
 }
 
@@ -154,7 +152,7 @@ fn a_search_inside_a_smart_collection_narrows_it_further() {
     let mut fixture = Fixture::new();
     let red = fixture.import("red-dot.png");
     fixture.import("blinking.png");
-    let id = fixture.save("PNG", AssetView::All, &formats(&[AssetFormat::Png]));
+    let id = fixture.save("PNG", &formats(&[AssetFormat::Png]));
 
     let found = fixture
         .library
@@ -173,7 +171,7 @@ fn the_view_counts_include_each_smart_collection() {
     fixture.import("red-dot.png");
     fixture.import("blinking.png");
     fixture.import("dark-circle.svg");
-    let id = fixture.save("PNG", AssetView::All, &formats(&[AssetFormat::Png]));
+    let id = fixture.save("PNG", &formats(&[AssetFormat::Png]));
 
     let counts = fixture.library.view_counts().expect("counts computed");
 
@@ -190,7 +188,7 @@ fn the_view_counts_include_each_smart_collection() {
 fn trashed_resources_leave_smart_collections() {
     let mut fixture = Fixture::new();
     let red = fixture.import("red-dot.png");
-    let id = fixture.save("PNG", AssetView::All, &formats(&[AssetFormat::Png]));
+    let id = fixture.save("PNG", &formats(&[AssetFormat::Png]));
 
     fixture
         .library
@@ -204,69 +202,26 @@ fn trashed_resources_leave_smart_collections() {
 }
 
 #[test]
-fn a_smart_collection_whose_tag_is_gone_is_simply_empty() {
-    let mut fixture = Fixture::new();
-    let red = fixture.import("red-dot.png");
-    fixture
-        .library
-        .apply_tag_command(&TagCommand::Add {
-            assets: vec![red],
-            name: "rouge".to_owned(),
-        })
-        .expect("tag added");
-    let tag = fixture
-        .library
-        .tag_named("rouge")
-        .expect("tag read")
-        .expect("tag exists")
-        .id;
-    let id = fixture.save("Red things", AssetView::Tag(tag), &AssetFilter::default());
-    assert_eq!(fixture.shown(AssetView::Smart(id)), vec![red]);
-
-    fixture
-        .library
-        .apply_tag_command(&TagCommand::Delete { tag })
-        .expect("tag deleted");
-
-    assert!(fixture.shown(AssetView::Smart(id)).is_empty());
-}
-
-#[test]
 fn names_are_trimmed_required_and_unique_whatever_the_case() {
     let mut fixture = Fixture::new();
-    fixture.save("  Logos  ", AssetView::All, &AssetFilter::default());
+    fixture.save("  Logos  ", &AssetFilter::default());
 
     assert_eq!(fixture.names(), ["Logos"]);
     assert!(matches!(
-        fixture.refused("   ", AssetView::All),
+        fixture.refused("   "),
         SmartCollectionError::InvalidName
     ));
     assert!(matches!(
-        fixture.refused("LOGOS", AssetView::All),
+        fixture.refused("LOGOS"),
         SmartCollectionError::NameTaken(_)
-    ));
-}
-
-#[test]
-fn the_trash_and_smart_collections_cannot_be_saved_as_a_scope() {
-    let mut fixture = Fixture::new();
-    let id = fixture.save("Everything", AssetView::All, &AssetFilter::default());
-
-    assert!(matches!(
-        fixture.refused("From the trash", AssetView::Trash),
-        SmartCollectionError::InvalidScope
-    ));
-    assert!(matches!(
-        fixture.refused("Nested", AssetView::Smart(id)),
-        SmartCollectionError::InvalidScope
     ));
 }
 
 #[test]
 fn smart_collections_are_listed_by_name() {
     let mut fixture = Fixture::new();
-    fixture.save("zèbres", AssetView::All, &AssetFilter::default());
-    fixture.save("Avions", AssetView::All, &AssetFilter::default());
+    fixture.save("zèbres", &AssetFilter::default());
+    fixture.save("Avions", &AssetFilter::default());
 
     assert_eq!(fixture.names(), ["Avions", "zèbres"]);
 }
@@ -283,7 +238,6 @@ fn update(
             collection: SmartCollection {
                 id,
                 name: name.to_owned(),
-                scope: AssetView::All,
                 filter,
                 position: 0,
                 created_at_unix_ms: 0,
@@ -296,8 +250,8 @@ fn updating_changes_the_name_and_criteria_and_can_be_undone() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png");
     let svg = fixture.import("dark-circle.svg");
-    let id = fixture.save("Logos", AssetView::All, &formats(&[AssetFormat::Png]));
-    fixture.save("Icons", AssetView::All, &AssetFilter::default());
+    let id = fixture.save("Logos", &formats(&[AssetFormat::Png]));
+    fixture.save("Icons", &AssetFilter::default());
 
     let taken =
         update(&mut fixture, id, "icons", formats(&[AssetFormat::Svg])).expect_err("name refused");
@@ -315,7 +269,7 @@ fn updating_changes_the_name_and_criteria_and_can_be_undone() {
 #[test]
 fn an_update_keeps_its_own_name_whatever_the_case() {
     let mut fixture = Fixture::new();
-    let id = fixture.save("Logos", AssetView::All, &AssetFilter::default());
+    let id = fixture.save("Logos", &AssetFilter::default());
 
     update(&mut fixture, id, "LOGOS", AssetFilter::text("logo")).expect("updated");
 
@@ -332,8 +286,9 @@ fn deleting_keeps_the_resources_and_undo_restores_the_same_collection() {
         favorites_only: false,
         colors: vec![AssetColor::Red],
         custom_color: None,
+        ..AssetFilter::default()
     };
-    let id = fixture.save("Reds", AssetView::Favorites, &filter);
+    let id = fixture.save("Reds", &filter);
     let before = fixture
         .library
         .smart_collection(id)
@@ -357,7 +312,7 @@ fn deleting_keeps_the_resources_and_undo_restores_the_same_collection() {
 #[test]
 fn undoing_a_creation_removes_the_smart_collection() {
     let mut fixture = Fixture::new();
-    fixture.save("Logos", AssetView::All, &AssetFilter::default());
+    fixture.save("Logos", &AssetFilter::default());
 
     fixture.library.undo().expect("undo works");
 
@@ -373,8 +328,11 @@ fn smart_collections_survive_reopening_the_library() {
         favorites_only: true,
         colors: vec![AssetColor::Blue, AssetColor::White],
         custom_color: Some(Rgb::new(0xc0, 0x39, 0x2b)),
+        shapes: vec![AssetShape::Portrait, AssetShape::Square],
+        fits_screen: true,
+        screen: None,
     };
-    let id = fixture.save("Logos", AssetView::Unclassified, &filter);
+    let id = fixture.save("Logos", &filter);
     let saved = fixture.library.smart_collection(id).expect("read");
     let root = fixture.library.root().to_path_buf();
     drop(fixture.library);
@@ -400,9 +358,9 @@ fn arranged(fixture: &Fixture) -> Vec<String> {
 #[test]
 fn new_smart_collections_come_last_and_can_be_arranged_with_undo() {
     let mut fixture = Fixture::new();
-    let first = fixture.save("Zèbres", AssetView::All, &AssetFilter::text("z"));
-    let second = fixture.save("Avions", AssetView::All, &AssetFilter::text("a"));
-    let third = fixture.save("Logos", AssetView::All, &AssetFilter::text("l"));
+    let first = fixture.save("Zèbres", &AssetFilter::text("z"));
+    let second = fixture.save("Avions", &AssetFilter::text("a"));
+    let third = fixture.save("Logos", &AssetFilter::text("l"));
     assert_eq!(arranged(&fixture), ["Zèbres", "Avions", "Logos"]);
 
     fixture
@@ -420,8 +378,8 @@ fn new_smart_collections_come_last_and_can_be_arranged_with_undo() {
 #[test]
 fn an_order_that_no_longer_matches_the_library_is_refused() {
     let mut fixture = Fixture::new();
-    let first = fixture.save("Zèbres", AssetView::All, &AssetFilter::text("z"));
-    let second = fixture.save("Avions", AssetView::All, &AssetFilter::text("a"));
+    let first = fixture.save("Zèbres", &AssetFilter::text("z"));
+    let second = fixture.save("Avions", &AssetFilter::text("a"));
 
     for order in [vec![first], vec![first, first], vec![second, first, first]] {
         let refused = fixture
@@ -430,4 +388,25 @@ fn an_order_that_no_longer_matches_the_library_is_refused() {
             .expect_err("order refused");
         assert!(matches!(refused, SmartCollectionError::OutdatedOrder));
     }
+}
+
+#[test]
+fn a_smart_collection_fits_the_screen_the_library_is_shown_on() {
+    let mut fixture = Fixture::new();
+    let small = fixture.import("red-dot.png");
+    let large = fixture.import("navy-tile.bmp");
+    let filter = AssetFilter {
+        fits_screen: true,
+        ..AssetFilter::default()
+    };
+    let id = fixture.save("Wallpapers", &filter);
+
+    fixture.library.set_screen(Dimensions::new(4, 3));
+    assert_eq!(fixture.shown(AssetView::Smart(id)), vec![large]);
+
+    fixture.library.set_screen(Dimensions::new(2, 2));
+    assert_eq!(
+        sorted(fixture.shown(AssetView::Smart(id))),
+        sorted(vec![small, large])
+    );
 }

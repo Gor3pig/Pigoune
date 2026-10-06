@@ -38,10 +38,9 @@ collections, tags, favorites, metadata, search and filters, the trash, export an
   library half changed.
 - **Explicit errors.** Errors are typed (`LibraryError`, `ImportError`, `CollectionError`, ...)
   so that the application can turn each of them into a clear message.
-- **Smart collections** are saved searches: a scope (All, Favorites, Unclassified, a
-  collection or a tag) and an `AssetFilter` (words, formats, favorites only). Their content is
-  computed when they are shown, so new imports appear by themselves. `AssetView::Smart` lets
-  the rest of the code treat them like any other view.
+- **Smart collections** are saved searches over the whole library, the trash left aside: an
+  `AssetFilter` (words, formats, shapes, colors, fitting the screen, favorites only). Their
+  content is computed when they are shown, so new imports appear by themselves. `AssetView::Smart` lets the rest of the code treat them like any other view.
 - **Tests** live in `crates/pigoune-core/tests/` and work on real temporary libraries, with
   sample images in `tests/fixtures/`.
 
@@ -113,7 +112,11 @@ My logos.pigoune/
   again to record these averages, and lets a smart collection save a custom color, matched
   when it is close to an average as the eye sees it (OKLab distance). The app analyzes assets
   with no colors yet in the background, one batch at a time, after opening a library and after
-  each import. A library created by a newer version of Pigoune is refused with a clear message.
+  each import. Format 8 lets a smart collection save shapes (landscape, portrait, square) and
+  "fits my screen", and turns every older smart collection into a search of the whole library
+  (one limited to Favorites keeps "favorites only"); the screen size itself is never saved: the app gives the library the size
+  of the monitor showing its window, in real pixels, and refreshes when it changes. A library
+  created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.
 - A library is locked while it is open, so that two windows cannot write to it at once.

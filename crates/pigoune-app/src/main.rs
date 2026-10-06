@@ -59,6 +59,7 @@ mod relaunch;
 mod release_notes;
 mod removable_pill;
 mod ring_chart;
+mod screen_size;
 mod search_space;
 mod search_width;
 mod settings;

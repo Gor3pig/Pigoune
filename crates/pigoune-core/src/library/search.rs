@@ -4,7 +4,7 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
 use super::{Asset, AssetId, AssetView, Library, LibraryError};
-use crate::media::{AssetColor, AssetFormat, Rgb};
+use crate::media::{AssetColor, AssetFormat, AssetShape, Dimensions, Rgb};
 
 const FIELD_SEPARATOR: char = '\n';
 const ALTERNATIVE_SEPARATOR: char = ',';
@@ -17,6 +17,9 @@ pub struct AssetFilter {
     pub favorites_only: bool,
     pub colors: Vec<AssetColor>,
     pub custom_color: Option<Rgb>,
+    pub shapes: Vec<AssetShape>,
+    pub fits_screen: bool,
+    pub screen: Option<Dimensions>,
 }
 
 impl AssetFilter {
@@ -34,6 +37,8 @@ impl AssetFilter {
             + self.colors.len()
             + usize::from(self.custom_color.is_some())
             + usize::from(self.favorites_only)
+            + self.shapes.len()
+            + usize::from(self.fits_screen)
     }
 
     #[must_use]
@@ -45,6 +50,8 @@ impl AssetFilter {
         (self.formats.is_empty() || self.formats.contains(&asset.format))
             && (!self.favorites_only || asset.is_favorite)
             && self.keeps_colors_of(asset)
+            && self.keeps_shape_of(asset)
+            && self.keeps_size_of(asset)
             && (groups.is_empty() || {
                 let text = searchable_text(asset, tags);
                 groups
@@ -55,6 +62,23 @@ impl AssetFilter {
 }
 
 impl AssetFilter {
+    fn keeps_shape_of(&self, asset: &Asset) -> bool {
+        self.shapes.is_empty()
+            || asset
+                .dimensions
+                .is_some_and(|size| self.shapes.contains(&AssetShape::of(size)))
+    }
+
+    fn keeps_size_of(&self, asset: &Asset) -> bool {
+        let Some(screen) = self.screen.filter(|_| self.fits_screen) else {
+            return true;
+        };
+        asset.format != AssetFormat::Svg
+            && asset.dimensions.is_some_and(|size| {
+                size.width() >= screen.width() && size.height() >= screen.height()
+            })
+    }
+
     fn keeps_colors_of(&self, asset: &Asset) -> bool {
         if self.colors.is_empty() && self.custom_color.is_none() {
             return true;
@@ -78,6 +102,10 @@ impl Library {
         if !filter.narrows() {
             return Ok(assets);
         }
+        let filter = &AssetFilter {
+            screen: filter.screen.or(self.screen),
+            ..filter.clone()
+        };
         let groups = search_groups(&filter.text);
         let tags = self.tag_names_by_asset()?;
         let no_tags = Vec::new();

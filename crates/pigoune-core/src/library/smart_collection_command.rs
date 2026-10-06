@@ -1,9 +1,9 @@
 use rusqlite::{Connection, OptionalExtension, params};
 
 use super::clock::now_unix_ms;
-use super::smart_collection::{self, SmartCollection, can_be_saved_from, normalized};
-use super::{AssetFilter, AssetView, Change, Library, LibraryError, SmartCollectionId};
-use crate::media::{Rgb, families_text};
+use super::smart_collection::{self, SmartCollection, normalized};
+use super::{AssetFilter, Change, Library, LibraryError, SmartCollectionId};
+use crate::media::{Rgb, families_text, shapes_text};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SmartCollectionCommand {
@@ -21,8 +21,6 @@ pub enum SmartCollectionError {
     NameTaken(String),
     #[error("the smart collection {0} does not exist")]
     NotFound(SmartCollectionId),
-    #[error("a smart collection cannot be saved from this view")]
-    InvalidScope,
     #[error("the smart collections to arrange no longer match the library")]
     OutdatedOrder,
     #[error(transparent)]
@@ -39,7 +37,6 @@ impl Library {
     pub fn create_smart_collection(
         &mut self,
         name: &str,
-        scope: AssetView,
         filter: &AssetFilter,
     ) -> Result<SmartCollectionId, SmartCollectionError> {
         let id = SmartCollectionId::generate();
@@ -47,7 +44,6 @@ impl Library {
             collection: SmartCollection {
                 id,
                 name: name.to_owned(),
-                scope,
                 filter: filter.clone(),
                 position: next_position(&self.connection)?,
                 created_at_unix_ms: now_unix_ms(),
@@ -95,9 +91,6 @@ fn create(
     connection: &Connection,
     collection: &SmartCollection,
 ) -> Result<SmartCollectionCommand, SmartCollectionError> {
-    if !can_be_saved_from(collection.scope) {
-        return Err(SmartCollectionError::InvalidScope);
-    }
     let name = valid_name(&collection.name)?;
     ensure_name_is_free(connection, name, None)?;
     let collection = SmartCollection {
@@ -113,26 +106,24 @@ fn update(
     collection: &SmartCollection,
 ) -> Result<SmartCollectionCommand, SmartCollectionError> {
     let existing = existing(connection, collection.id)?;
-    if !can_be_saved_from(collection.scope) {
-        return Err(SmartCollectionError::InvalidScope);
-    }
     let name = valid_name(&collection.name)?;
     ensure_name_is_free(connection, name, Some(collection.id))?;
     connection.execute(
         "UPDATE smart_collections
-         SET name = ?1, normalized_name = ?2, scope = ?3, search_text = ?4, formats = ?5,
-             favorites_only = ?6, colors = ?8, custom_color = ?9
-         WHERE id = ?7",
+         SET name = ?1, normalized_name = ?2, search_text = ?3, formats = ?4, favorites_only = ?5,
+             colors = ?7, custom_color = ?8, shapes = ?9, fits_screen = ?10
+         WHERE id = ?6",
         params![
             name,
             normalized(name),
-            smart_collection::scope_text(collection.scope),
             collection.filter.text,
             smart_collection::formats_text(&collection.filter.formats),
             collection.filter.favorites_only,
             collection.id,
             families_text(&collection.filter.colors),
             collection.filter.custom_color.map(Rgb::hex),
+            shapes_text(&collection.filter.shapes),
+            collection.filter.fits_screen,
         ],
     )?;
     Ok(SmartCollectionCommand::Update {

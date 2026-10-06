@@ -86,9 +86,6 @@ pub fn describe_smart_collection(error: &SmartCollectionError) -> String {
         SmartCollectionError::OutdatedOrder => {
             gettext("The smart collections changed in the meantime. Try again.")
         }
-        SmartCollectionError::InvalidScope => {
-            gettext("A smart collection cannot be saved from this view.")
-        }
         SmartCollectionError::Library(error) => describe(error),
     }
 }

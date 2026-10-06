@@ -2,12 +2,20 @@ use std::time::Duration;
 
 use gettextrs::{gettext, ngettext};
 use gtk::glib;
-use pigoune_core::{AnimationTiming, Asset, AssetFormat, Dimensions};
+use pigoune_core::{AnimationTiming, Asset, AssetFormat, AssetShape, Dimensions};
 
 const MILLISECONDS_PER_SECOND: i64 = 1000;
 const MILLISECONDS_PER_TENTH: u128 = 100;
 const TENTHS_PER_SECOND: u128 = 10;
 pub const SUMMARY_SEPARATOR: &str = " · ";
+
+pub fn shape_name(shape: AssetShape) -> String {
+    match shape {
+        AssetShape::Landscape => gettext("Landscape"),
+        AssetShape::Portrait => gettext("Portrait"),
+        AssetShape::Square => gettext("Square"),
+    }
+}
 
 pub fn format_name(format: AssetFormat) -> &'static str {
     match format {

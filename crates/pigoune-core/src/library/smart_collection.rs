@@ -1,24 +1,20 @@
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use super::view::AssetView;
-use super::{Asset, AssetFilter, CollectionId, Library, LibraryError, SmartCollectionId, TagId};
-use crate::media::{AssetFormat, Rgb, families_from_text, families_text};
+use super::{Asset, AssetFilter, Library, LibraryError, SmartCollectionId};
+use crate::media::{
+    AssetFormat, Rgb, families_from_text, families_text, shapes_from_text, shapes_text,
+};
 
-const SCOPE_ALL: &str = "all";
-const SCOPE_FAVORITES: &str = "favorites";
-const SCOPE_UNCLASSIFIED: &str = "unclassified";
-const SCOPE_COLLECTION: &str = "collection:";
-const SCOPE_TAG: &str = "tag:";
 const FORMAT_SEPARATOR: char = ',';
 const COLUMNS: &str =
-    "id, name, scope, search_text, formats, favorites_only, position, created_at_unix_ms, colors,
-     custom_color";
+    "id, name, search_text, formats, favorites_only, position, created_at_unix_ms, colors, custom_color,
+     shapes, fits_screen";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SmartCollection {
     pub id: SmartCollectionId,
     pub name: String,
-    pub scope: AssetView,
     pub filter: AssetFilter,
     pub position: i64,
     pub created_at_unix_ms: i64,
@@ -47,22 +43,10 @@ impl Library {
         id: SmartCollectionId,
     ) -> Result<Vec<Asset>, LibraryError> {
         match self.smart_collection(id)? {
-            Some(collection) => self.find_assets_in(collection.scope, &collection.filter),
+            Some(collection) => self.find_assets_in(AssetView::All, &collection.filter),
             None => Ok(Vec::new()),
         }
     }
-}
-
-#[must_use]
-pub fn can_be_saved_from(view: AssetView) -> bool {
-    matches!(
-        view,
-        AssetView::All
-            | AssetView::Favorites
-            | AssetView::Unclassified
-            | AssetView::Collection(_)
-            | AssetView::Tag(_)
-    )
 }
 
 pub fn find(
@@ -82,13 +66,12 @@ pub fn insert(connection: &Connection, collection: &SmartCollection) -> Result<(
     connection.execute(
         "INSERT INTO smart_collections
              (id, name, normalized_name, scope, search_text, formats, favorites_only, position,
-              created_at_unix_ms, colors, custom_color)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+              created_at_unix_ms, colors, custom_color, shapes, fits_screen)
+         VALUES (?1, ?2, ?3, 'all', ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         params![
             collection.id,
             collection.name,
             normalized(&collection.name),
-            scope_text(collection.scope),
             collection.filter.text,
             formats_text(&collection.filter.formats),
             collection.filter.favorites_only,
@@ -96,6 +79,8 @@ pub fn insert(connection: &Connection, collection: &SmartCollection) -> Result<(
             collection.created_at_unix_ms,
             families_text(&collection.filter.colors),
             collection.filter.custom_color.map(Rgb::hex),
+            shapes_text(&collection.filter.shapes),
+            collection.filter.fits_screen,
         ],
     )?;
     Ok(())
@@ -106,51 +91,25 @@ pub fn normalized(name: &str) -> String {
 }
 
 fn smart_collection_from_row(row: &Row<'_>) -> rusqlite::Result<SmartCollection> {
-    let scope: String = row.get(2)?;
-    let formats: String = row.get(4)?;
+    let formats: String = row.get(3)?;
     Ok(SmartCollection {
         id: row.get(0)?,
         name: row.get(1)?,
-        scope: scope_from_text(&scope),
         filter: AssetFilter {
-            text: row.get(3)?,
+            text: row.get(2)?,
             formats: formats_from_text(&formats),
-            favorites_only: row.get(5)?,
-            colors: families_from_text(&row.get::<_, String>(8)?),
+            favorites_only: row.get(4)?,
+            colors: families_from_text(&row.get::<_, String>(7)?),
             custom_color: row
-                .get::<_, Option<String>>(9)?
+                .get::<_, Option<String>>(8)?
                 .and_then(|text| Rgb::from_hex(&text)),
+            shapes: shapes_from_text(&row.get::<_, String>(9)?),
+            fits_screen: row.get(10)?,
+            screen: None,
         },
-        position: row.get(6)?,
-        created_at_unix_ms: row.get(7)?,
+        position: row.get(5)?,
+        created_at_unix_ms: row.get(6)?,
     })
-}
-
-pub fn scope_text(scope: AssetView) -> String {
-    match scope {
-        AssetView::Favorites => SCOPE_FAVORITES.to_owned(),
-        AssetView::Unclassified => SCOPE_UNCLASSIFIED.to_owned(),
-        AssetView::Collection(id) => format!("{SCOPE_COLLECTION}{id}"),
-        AssetView::Tag(id) => format!("{SCOPE_TAG}{id}"),
-        AssetView::All | AssetView::Trash | AssetView::Smart(_) => SCOPE_ALL.to_owned(),
-    }
-}
-
-fn scope_from_text(text: &str) -> AssetView {
-    match text {
-        SCOPE_FAVORITES => AssetView::Favorites,
-        SCOPE_UNCLASSIFIED => AssetView::Unclassified,
-        _ => text
-            .strip_prefix(SCOPE_COLLECTION)
-            .and_then(CollectionId::parse)
-            .map(AssetView::Collection)
-            .or_else(|| {
-                text.strip_prefix(SCOPE_TAG)
-                    .and_then(TagId::parse)
-                    .map(AssetView::Tag)
-            })
-            .unwrap_or(AssetView::All),
-    }
 }
 
 pub fn formats_text(formats: &[AssetFormat]) -> String {
@@ -169,25 +128,8 @@ fn formats_from_text(text: &str) -> Vec<AssetFormat> {
 
 #[cfg(test)]
 mod tests {
-    use super::{formats_from_text, formats_text, scope_from_text, scope_text};
-    use crate::library::{AssetView, CollectionId, TagId};
+    use super::{formats_from_text, formats_text};
     use crate::media::AssetFormat;
-
-    #[test]
-    fn every_scope_survives_a_round_trip_through_text() {
-        let collection = CollectionId::parse("00000000-0000-7000-8000-000000000007").expect("id");
-        let tag = TagId::parse("00000000-0000-7000-8000-000000000009").expect("id");
-        for scope in [
-            AssetView::All,
-            AssetView::Favorites,
-            AssetView::Unclassified,
-            AssetView::Collection(collection),
-            AssetView::Tag(tag),
-        ] {
-            assert_eq!(scope_from_text(&scope_text(scope)), scope);
-        }
-        assert_eq!(scope_from_text("nonsense"), AssetView::All);
-    }
 
     #[test]
     fn formats_survive_a_round_trip_through_text() {

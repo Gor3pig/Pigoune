@@ -160,6 +160,13 @@ couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rou
 analysées en arrière-plan pendant que vous continuez à travailler ; une ressource pas encore
 analysée ne correspond à aucune couleur.
 
+**Forme** garde les ressources au format **Paysage**, **Portrait** ou **Carré** ; choisissez-en
+deux pour voir les deux. Une image compte comme carrée quand ses côtés diffèrent de 5 % au plus.
+**Adaptée à mon écran** garde les images au moins aussi grandes que l'écran où se trouve
+Pigoune, en vrais pixels et dans les deux sens, par exemple 1920 × 1080 ou plus : elles
+remplissent l'écran sans être agrandies, donc sans flou. Les SVG sont toujours mis de côté. Ensemble, **Paysage** et **Adaptée à mon écran** trouvent de
+bons fonds d'écran.
+
 Pour savoir où une ressource est rangée, regardez **Collections** dans le groupe
 **Organisation** du panneau de détails. Un clic sur une collection l'ouvre dans la barre
 latérale et met la ressource en évidence. Un clic sur un tag fonctionne de la même façon.
@@ -170,13 +177,15 @@ que les ressources d'une couleur, utilisez le bouton **Filtres**.
 
 Une collection intelligente est une recherche enregistrée qui se tient à jour toute seule :
 elle affiche toujours les ressources qui correspondent à ses critères, y compris celles que vous
-importez plus tard. Par exemple, *tous mes SVG favoris* ou *tout ce qui parle de logo dans la
-collection Clients*.
+importez plus tard. Par exemple, *tous mes SVG favoris* ou *toutes les images en paysage
+adaptées à mon écran*. Elle cherche toujours dans toute la bibliothèque, sauf la corbeille.
 
 - **Créez-en une** avec le bouton **+** à côté de **Collections intelligentes** dans la barre
   latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
-  l'entrée sélectionnée dans la barre latérale. Donnez-lui un nom, puis choisissez des mots à
-  rechercher, des types, des couleurs ou **Favoris seulement** : il faut au moins un critère.
+  **Favoris seulement** quand **Favoris** est ouvert. Donnez-lui un nom, puis choisissez des mots à
+  rechercher, des types, des formes, des couleurs, **Adaptée à mon écran** ou **Favoris
+  seulement** : il faut au moins un critère. **Adaptée à mon écran** suit l'écran où se trouve
+  Pigoune au moment où vous ouvrez la collection intelligente.
 - **Mots à rechercher** fonctionne exactement comme le champ de recherche : espaces et
   virgules, et pastilles dont les **et** et les **ou** coupent ou réunissent les groupes.
 - **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher

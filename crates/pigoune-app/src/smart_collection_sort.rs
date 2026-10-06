@@ -74,7 +74,7 @@ pub fn reordered(
 
 #[cfg(test)]
 mod tests {
-    use pigoune_core::{AssetFilter, AssetView, SmartCollection, SmartCollectionId};
+    use pigoune_core::{AssetFilter, SmartCollection, SmartCollectionId};
 
     use super::{SmartCollectionCriterion, SmartCollectionOrder, reordered};
 
@@ -85,7 +85,6 @@ mod tests {
             ))
             .expect("id"),
             name: name.to_owned(),
-            scope: AssetView::All,
             filter: AssetFilter::default(),
             position: 10 - created_at_unix_ms,
             created_at_unix_ms,

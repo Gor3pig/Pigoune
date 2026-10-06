@@ -16,6 +16,7 @@ const FORMAT_BEFORE_SMART_COLLECTIONS: u32 = 3;
 const FORMAT_BEFORE_COLLECTION_LOOKS: u32 = 4;
 const FORMAT_BEFORE_COLORS: u32 = 5;
 const FORMAT_BEFORE_COLOR_AVERAGES: u32 = 6;
+const FORMAT_BEFORE_SHAPES: u32 = 7;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -78,9 +79,19 @@ fn forget_smart_collection_colors(connection: &Connection) {
 }
 
 fn forget_custom_colors(connection: &Connection) {
+    forget_shapes(connection);
     connection
         .execute_batch("ALTER TABLE smart_collections DROP COLUMN custom_color;")
         .expect("custom colors forgotten");
+}
+
+fn forget_shapes(connection: &Connection) {
+    connection
+        .execute_batch(
+            "ALTER TABLE smart_collections DROP COLUMN shapes;
+             ALTER TABLE smart_collections DROP COLUMN fits_screen;",
+        )
+        .expect("shapes forgotten");
 }
 
 fn forget_collection_looks(connection: &Connection) {
@@ -327,7 +338,7 @@ fn a_format_3_library_gains_smart_collections() {
 
     let mut library = Library::open(&root).expect("library opens");
     let id = library
-        .create_smart_collection("Everything", AssetView::All, &AssetFilter::default())
+        .create_smart_collection("Everything", &AssetFilter::default())
         .expect("smart collection saved");
 
     assert_eq!(
@@ -396,7 +407,7 @@ fn a_format_5_library_analyses_the_colors_of_its_resources_again() {
     let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
     let red = import(&mut library, "red-dot.png");
     let id = library
-        .create_smart_collection("Everything", AssetView::All, &AssetFilter::default())
+        .create_smart_collection("Everything", &AssetFilter::default())
         .expect("smart collection saved");
     let root = library.root().to_path_buf();
     drop(library);
@@ -452,4 +463,98 @@ fn a_format_6_library_analyses_its_colors_again_to_learn_their_averages() {
         CURRENT_FORMAT_VERSION
     );
     assert_eq!(library.assets_awaiting_colors(10).expect("listed"), [red]);
+}
+
+#[test]
+fn a_format_7_library_keeps_its_smart_collections_without_shapes() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let filter = AssetFilter {
+        colors: vec![AssetColor::Red],
+        ..AssetFilter::default()
+    };
+    let id = library
+        .create_smart_collection("Reds", &filter)
+        .expect("smart collection saved");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_SHAPES)
+        .expect("version updated");
+    forget_shapes(&connection);
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    let saved = library
+        .smart_collection(id)
+        .expect("read")
+        .expect("smart collection kept");
+    assert_eq!(saved.filter, filter);
+}
+
+#[test]
+fn a_format_7_smart_collection_now_searches_the_whole_library() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let circle = import(&mut library, "dark-circle.svg");
+    library
+        .apply_asset_command(&AssetCommand::SetFavorite {
+            assets: vec![red],
+            favorite: true,
+        })
+        .expect("favorite set");
+    let logos = library
+        .create_collection("Logos", None)
+        .expect("collection is created");
+    let in_favorites = library
+        .create_smart_collection("Favorites", &AssetFilter::default())
+        .expect("smart collection saved");
+    let in_logos = library
+        .create_smart_collection("Logos", &AssetFilter::default())
+        .expect("smart collection saved");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_SHAPES)
+        .expect("version updated");
+    forget_shapes(&connection);
+    connection
+        .execute(
+            "UPDATE smart_collections SET scope = 'favorites' WHERE id = ?1",
+            [in_favorites],
+        )
+        .expect("scope set");
+    connection
+        .execute(
+            "UPDATE smart_collections SET scope = ?1 WHERE id = ?2",
+            rusqlite::params![format!("collection:{logos}"), in_logos],
+        )
+        .expect("scope set");
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    let favorites = library
+        .smart_collection(in_favorites)
+        .expect("read")
+        .expect("smart collection kept");
+    assert!(favorites.filter.favorites_only);
+    let mut shown: Vec<AssetId> = library
+        .visible_assets_in(AssetView::Smart(in_logos))
+        .expect("listed")
+        .iter()
+        .map(|asset| asset.id)
+        .collect();
+    shown.sort();
+    let mut everything = vec![red, circle];
+    everything.sort();
+    assert_eq!(shown, everything);
 }

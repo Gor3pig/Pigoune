@@ -5,13 +5,14 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::glib;
 use gtk::prelude::*;
-use pigoune_core::{AssetColor, AssetFilter, AssetFormat};
+use pigoune_core::{AssetColor, AssetFilter, AssetFormat, AssetShape};
 
 use crate::custom_color_swatch::{self, CustomColorSwatch};
-use crate::{asset_colors, asset_facts};
+use crate::{asset_colors, asset_facts, screen_size};
 
 const COLORS_PER_LINE: u32 = 7;
 const CHECKMARK_ICON: &str = "object-select-symbolic";
+const SHAPE_OUTLINE_SPACE: i32 = 24;
 
 type ChangedCallback = Rc<dyn Fn()>;
 
@@ -21,7 +22,7 @@ mod imp {
 
     use adw::subclass::prelude::*;
     use gtk::glib;
-    use pigoune_core::{AssetColor, AssetFormat};
+    use pigoune_core::{AssetColor, AssetFormat, AssetShape};
 
     use super::ChangedCallback;
     use crate::custom_color_swatch::CustomColorSwatch;
@@ -30,6 +31,9 @@ mod imp {
     pub struct PigouneFilterChoices {
         pub format_checks: RefCell<Vec<(AssetFormat, gtk::CheckButton)>>,
         pub favorites_check: OnceCell<gtk::CheckButton>,
+        pub shape_buttons: RefCell<Vec<(AssetShape, gtk::ToggleButton)>>,
+        pub fits_screen_check: OnceCell<gtk::CheckButton>,
+        pub screen_label: OnceCell<gtk::Label>,
         pub color_buttons: RefCell<Vec<(AssetColor, gtk::ToggleButton)>>,
         pub color_names: OnceCell<gtk::Label>,
         pub custom_swatch: OnceCell<Rc<CustomColorSwatch>>,
@@ -81,6 +85,15 @@ impl PigouneFilterChoices {
             favorites_only: self.favorites_check().is_active(),
             colors: self.chosen_colors(),
             custom_color: self.custom_swatch().color(),
+            shapes: imp
+                .shape_buttons
+                .borrow()
+                .iter()
+                .filter(|(_, button)| button.is_active())
+                .map(|(shape, _)| *shape)
+                .collect(),
+            fits_screen: self.fits_screen_check().is_active(),
+            screen: None,
         }
     }
 
@@ -104,6 +117,10 @@ impl PigouneFilterChoices {
                 button.set_active(filter.colors.contains(color));
             }
             self.custom_swatch().set_color(filter.custom_color);
+            for (shape, button) in self.imp().shape_buttons.borrow().iter() {
+                button.set_active(filter.shapes.contains(shape));
+            }
+            self.fits_screen_check().set_active(filter.fits_screen);
         });
         self.show_color_names();
     }
@@ -141,11 +158,103 @@ impl PigouneFilterChoices {
         self.notify_on_toggle(&favorites);
         self.append(&heading);
         self.append(&formats);
+        self.build_shapes();
+        self.build_fits_screen();
         self.build_colors();
         self.append(&favorites);
         if imp.favorites_check.set(favorites).is_err() {
             unreachable!("filter choices are built once");
         }
+        self.connect_map(Self::show_screen_size);
+    }
+
+    fn build_shapes(&self) {
+        let heading = gtk::Label::builder()
+            .label(gettext("Shape"))
+            .xalign(0.0)
+            .css_classes(["heading"])
+            .build();
+        let row = gtk::Box::builder().spacing(6).homogeneous(true).build();
+        let buttons = AssetShape::ALL
+            .into_iter()
+            .map(|shape| {
+                let button = self.shape_button(shape);
+                row.append(&button);
+                (shape, button)
+            })
+            .collect();
+        self.imp().shape_buttons.replace(buttons);
+        self.append(&heading);
+        self.append(&row);
+    }
+
+    fn shape_button(&self, shape: AssetShape) -> gtk::ToggleButton {
+        let outline = gtk::Box::builder()
+            .halign(gtk::Align::Center)
+            .valign(gtk::Align::Center)
+            .css_classes(["shape-outline", shape.code()])
+            .build();
+        let frame = gtk::Box::builder()
+            .height_request(SHAPE_OUTLINE_SPACE)
+            .halign(gtk::Align::Center)
+            .build();
+        frame.append(&outline);
+        let content = gtk::Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(4)
+            .build();
+        content.append(&frame);
+        content.append(&gtk::Label::new(Some(&asset_facts::shape_name(shape))));
+        let button = gtk::ToggleButton::builder()
+            .child(&content)
+            .css_classes(["shape-choice"])
+            .build();
+        button.connect_toggled(glib::clone!(
+            #[weak(rename_to = choices)]
+            self,
+            move |_| {
+                if !choices.imp().quiet.get() {
+                    choices.changed();
+                }
+            }
+        ));
+        button
+    }
+
+    fn build_fits_screen(&self) {
+        let imp = self.imp();
+        let size = gtk::Label::builder()
+            .xalign(0.0)
+            .visible(false)
+            .css_classes(["dim-label", "caption"])
+            .build();
+        let text = gtk::Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .build();
+        text.append(
+            &gtk::Label::builder()
+                .label(gettext("Fits My Screen"))
+                .xalign(0.0)
+                .build(),
+        );
+        text.append(&size);
+        let check = gtk::CheckButton::builder().child(&text).build();
+        self.notify_on_toggle(&check);
+        self.append(&check);
+        if imp.fits_screen_check.set(check).is_err() || imp.screen_label.set(size).is_err() {
+            unreachable!("filter choices are built once");
+        }
+    }
+
+    fn show_screen_size(&self) {
+        let Some(label) = self.imp().screen_label.get() else {
+            return;
+        };
+        let screen = screen_size::screen_of(self);
+        if let Some(screen) = screen {
+            label.set_label(&screen_size::at_least(screen));
+        }
+        label.set_visible(screen.is_some());
     }
 
     fn build_colors(&self) {
@@ -242,6 +351,14 @@ impl PigouneFilterChoices {
     fn custom_swatch(&self) -> Rc<CustomColorSwatch> {
         self.imp()
             .custom_swatch
+            .get()
+            .cloned()
+            .expect("filter choices are built at construction")
+    }
+
+    fn fits_screen_check(&self) -> gtk::CheckButton {
+        self.imp()
+            .fits_screen_check
             .get()
             .cloned()
             .expect("filter choices are built at construction")

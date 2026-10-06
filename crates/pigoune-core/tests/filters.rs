@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, CollectionId,
-    DominantColor, ImportOutcome, Library, Rgb,
+    AssetColor, AssetCommand, AssetFilter, AssetFormat, AssetId, AssetShape, AssetView,
+    CollectionId, Dimensions, DominantColor, ImportOutcome, Library, Rgb,
 };
 use tempfile::TempDir;
 
@@ -144,6 +144,7 @@ fn filters_combine_with_the_text_and_the_view() {
         favorites_only: true,
         colors: Vec::new(),
         custom_color: None,
+        ..AssetFilter::default()
     };
 
     assert_eq!(
@@ -171,9 +172,12 @@ fn the_chosen_filters_are_counted_without_the_text() {
         favorites_only: true,
         colors: vec![AssetColor::Blue],
         custom_color: Some(Rgb::new(0, 0, 0)),
+        shapes: vec![AssetShape::Landscape, AssetShape::Square],
+        fits_screen: true,
+        screen: None,
     };
 
-    assert_eq!(filter.chosen_filters(), 5);
+    assert_eq!(filter.chosen_filters(), 8);
     assert_eq!(AssetFilter::text("logo").chosen_filters(), 0);
     assert!(AssetFilter::text("logo").narrows());
     assert!(!AssetFilter::text("   ").narrows());
@@ -337,4 +341,63 @@ fn a_custom_color_adds_up_with_the_chosen_swatches() {
     );
     assert_eq!(filter.chosen_filters(), 2);
     assert!(custom("c0392b").narrows());
+}
+
+fn shapes(shapes: &[AssetShape]) -> AssetFilter {
+    AssetFilter {
+        shapes: shapes.to_vec(),
+        ..AssetFilter::default()
+    }
+}
+
+#[test]
+fn any_of_the_chosen_shapes_is_kept() {
+    let mut fixture = Fixture::new();
+    let landscape = fixture.import("red-dot.png", None);
+    let portrait = fixture.import("teal-column.tiff", None);
+    let square = fixture.import("navy-tile.bmp", None);
+    let nearly_square = fixture.import("dark-circle.svg", None);
+
+    assert_eq!(
+        fixture.found(AssetView::All, &shapes(&[AssetShape::Landscape])),
+        vec![landscape]
+    );
+    assert_eq!(
+        fixture.found(AssetView::All, &shapes(&[AssetShape::Portrait])),
+        vec![portrait]
+    );
+    assert_eq!(
+        fixture.found(
+            AssetView::All,
+            &shapes(&[AssetShape::Square, AssetShape::Portrait])
+        ),
+        sorted(vec![portrait, square, nearly_square])
+    );
+}
+
+fn fitting(screen: Option<Dimensions>) -> AssetFilter {
+    AssetFilter {
+        fits_screen: true,
+        screen,
+        ..AssetFilter::default()
+    }
+}
+
+#[test]
+fn only_images_as_large_as_the_screen_fit_it_never_svg_files() {
+    let mut fixture = Fixture::new();
+    let small = fixture.import("red-dot.png", None);
+    let exact = fixture.import("blue-photo.jpg", None);
+    let larger = fixture.import("navy-tile.bmp", None);
+    let too_narrow = fixture.import("teal-column.tiff", None);
+    let vector = fixture.import("dark-circle.svg", None);
+
+    assert_eq!(
+        fixture.found(AssetView::All, &fitting(Dimensions::new(4, 3))),
+        sorted(vec![exact, larger])
+    );
+    assert_eq!(
+        fixture.found(AssetView::All, &fitting(None)),
+        sorted(vec![small, exact, larger, too_narrow, vector])
+    );
 }

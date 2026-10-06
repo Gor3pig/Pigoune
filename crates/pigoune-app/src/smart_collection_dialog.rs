@@ -9,7 +9,6 @@ type SubmitCallback = Box<dyn Fn(&str, &AssetFilter) -> Result<(), String>>;
 pub struct SmartCollectionDraft<'a> {
     pub title: &'a str,
     pub confirm_label: &'a str,
-    pub scope_name: &'a str,
     pub name: &'a str,
     pub filter: &'a AssetFilter,
 }
@@ -30,8 +29,6 @@ mod imp {
     pub struct PigouneSmartCollectionDialog {
         #[template_child]
         pub name_row: TemplateChild<adw::EntryRow>,
-        #[template_child]
-        pub scope_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub text_row: TemplateChild<adw::EntryRow>,
         #[template_child]
@@ -88,7 +85,6 @@ impl PigouneSmartCollectionDialog {
         let imp = dialog.imp();
         dialog.set_title(draft.title);
         imp.confirm_button.set_label(draft.confirm_label);
-        imp.scope_row.set_subtitle(draft.scope_name);
         imp.name_row.set_text(draft.name);
         imp.text_row.set_text(&draft.filter.text);
         imp.search_help.set_label(

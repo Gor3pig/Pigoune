@@ -753,3 +753,27 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
 .figure-tile.main-figure {
   padding: 14px 6px;
 }
+
+.shape-choice {
+  padding: 8px 4px 6px;
+}
+
+.shape-outline {
+  border: 2px solid currentColor;
+  border-radius: 3px;
+}
+
+.shape-outline.landscape {
+  min-width: 22px;
+  min-height: 12px;
+}
+
+.shape-outline.portrait {
+  min-width: 10px;
+  min-height: 18px;
+}
+
+.shape-outline.square {
+  min-width: 14px;
+  min-height: 14px;
+}
