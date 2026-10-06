@@ -361,6 +361,73 @@ footer nav {
   translate: 0 0;
 }
 
+.journey {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 1.5rem;
+  margin-top: 1.75rem;
+}
+
+.journey article {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.journey .picture {
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--code);
+}
+
+.journey .picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.journey .desktop {
+  padding: 6%;
+}
+
+.journey .desktop img {
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 0 0 5px #2b2b30, 0 8px 18px rgb(0 0 6 / 0.25);
+}
+
+.journey .text {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 1rem 1.15rem 1.2rem;
+}
+
+.journey .step {
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.journey h3,
+.journey p {
+  margin: 0;
+}
+
+.journey p {
+  color: var(--muted);
+}
+
 .zoom {
   display: block;
   cursor: zoom-in;

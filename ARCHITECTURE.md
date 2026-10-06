@@ -75,6 +75,13 @@ to change it.
   installing, installed, failed) and `update_banner.rs` words it; the banner installs the
   update through the portal, then starts the new version with the portal's `Spawn`. Outside
   Flatpak, nothing is watched.
+- **Wallpapers.** `wallpaper_dialog.rs` is the framing window and `wallpaper_stage.rs` its
+  virtual screen, drawn at the real resolution of a monitor listed by `screen_size.rs`. The
+  framing math (fill, whole image, zoom around a point, snapping, the visible part) is pure and
+  tested in `wallpaper_framing.rs`. `desktop_panels.rs` describes the bars of each desktop as a
+  short list of shapes and words, drawn by `desktop_bars.rs`. `image_conversion::wallpaper`
+  makes the final image with the raster operations of the core (crop, place, blur, gradient,
+  tiles, mirror, dim), then `wallpaper.rs` hands it to the Wallpaper portal.
 - Long tasks (imports, thumbnails) run off the main thread or asynchronously, so that the
   interface never freezes.
 - `build.rs` compiles the Blueprint files, the GResource bundle, the development translations
@@ -165,6 +172,8 @@ Importing a folder recreates its tree as nested collections.
 `.github/workflows/website.yml`. `website/build.sh` assembles it with the icon and the
 screenshots from `data/`, so they are never duplicated; the screenshots are converted to WebP
 to keep the pages light, and the first one is kept as a PNG for link previews.
+`website/wallpaper-desktop.png`, the virtual screen cut out of the wallpaper screenshot, is the
+only image kept in `website/` itself.
 
 The same workflow publishes the signed Flatpak repository under `repo/`, rebuilt each time by
 `website/flatpak-repo.sh` from the package of the latest release, so it only holds that

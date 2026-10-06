@@ -74,6 +74,12 @@ Glissez une ressource vers n'importe quelle application, ouvrez-la avec une autr
 dans le presse-papiers ou exportez-la dans un dossier, telle quelle ou convertie en PNG, JPEG,
 WebP, AVIF ou ICO.
 
+### Fonds d'écran
+Cadrez n'importe quelle image sur une copie virtuelle de votre écran, sous les barres de votre
+bureau, comblez le vide avec une couleur, un dégradé, un flou ou une mosaïque, puis appliquez-la :
+votre bureau montre exactement ce que vous avez cadré. Les filtres par forme et par taille
+d'écran trouvent les images adaptées.
+
 </td>
 </tr>
 <tr>

@@ -70,6 +70,11 @@ lives.
 Drag an asset into any application, open it with another one, copy it to the clipboard or
 export it to a folder, as it is or converted to PNG, JPEG, WebP, AVIF or ICO.
 
+### Wallpapers
+Frame any image on a virtual copy of your screen, under the bars of your desktop, fill the gaps
+with a color, a gradient, a blur or a mosaic, and set it: your desktop shows exactly what you
+framed. Filters by shape and by screen size find the images that fit.
+
 </td>
 </tr>
 <tr>
