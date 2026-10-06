@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 16:30+0200\n"
+"POT-Creation-Date: 2026-10-06 21:20+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1187,8 +1187,8 @@ msgid "Open Preview"
 msgstr "Vorschau öffnen"
 
 #: crates/pigoune-app/src/window.rs:1808
-#: crates/pigoune-app/ui/asset-details.blp:207
-#: crates/pigoune-app/ui/asset-details.blp:218
+#: crates/pigoune-app/ui/asset-details.blp:212
+#: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:253
 #: crates/pigoune-app/src/asset_preview.rs:1116
 msgid "Open With…"
@@ -1211,15 +1211,15 @@ msgid "_Restore"
 msgstr "_Wiederherstellen"
 
 #: crates/pigoune-app/src/window.rs:1827
-#: crates/pigoune-app/ui/asset-details.blp:230
-#: crates/pigoune-app/ui/asset-details.blp:241
+#: crates/pigoune-app/ui/asset-details.blp:235
+#: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:260
 #: crates/pigoune-app/src/asset_preview.rs:1122
 msgid "Copy"
 msgstr "Kopieren"
 
 #: crates/pigoune-app/src/window.rs:1831
-#: crates/pigoune-app/ui/asset-details.blp:253
+#: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:267
 #: crates/pigoune-app/src/asset_preview.rs:1125
 msgid "Export To…"
@@ -1233,21 +1233,21 @@ msgstr "Exportieren als …"
 #: crates/pigoune-app/src/window.rs:1838
 #: crates/pigoune-app/src/asset_preview.rs:516
 #: crates/pigoune-app/src/asset_preview.rs:1129
-#: crates/pigoune-app/src/asset_details.rs:500
-#: crates/pigoune-app/src/asset_details.rs:558
+#: crates/pigoune-app/src/asset_details.rs:502
+#: crates/pigoune-app/src/asset_details.rs:560
 msgid "Remove from Favorites"
 msgstr "Aus Favoriten entfernen"
 
 #: crates/pigoune-app/src/window.rs:1840
 #: crates/pigoune-app/src/asset_preview.rs:520
 #: crates/pigoune-app/src/asset_preview.rs:1131
-#: crates/pigoune-app/src/asset_details.rs:502
-#: crates/pigoune-app/src/asset_details.rs:560
+#: crates/pigoune-app/src/asset_details.rs:504
+#: crates/pigoune-app/src/asset_details.rs:562
 msgid "Add to Favorites"
 msgstr "Zu Favoriten hinzufügen"
 
 #: crates/pigoune-app/src/window.rs:1843
-#: crates/pigoune-app/src/tag_editor.rs:200
+#: crates/pigoune-app/src/tag_editor.rs:202
 msgid "Add a Tag…"
 msgstr "Schlagwort hinzufügen …"
 
@@ -1256,7 +1256,7 @@ msgid "Add to a Collection…"
 msgstr "Zu einer Sammlung hinzufügen …"
 
 #: crates/pigoune-app/src/window.rs:1853
-#: crates/pigoune-app/src/collection_places.rs:119
+#: crates/pigoune-app/src/collection_places.rs:122
 #, rust-format
 msgid "Remove from the Collection “{name}”"
 msgstr "Aus der Sammlung „{name}“ entfernen"
@@ -1955,38 +1955,38 @@ msgstr "{name} · {width} × {height}"
 msgid "{width} × {height} or larger"
 msgstr "{width} × {height} oder größer"
 
-#: crates/pigoune-app/src/query_pills.rs:80
+#: crates/pigoune-app/src/query_pills.rs:82
 #, rust-format
 msgid "{count} result in {place}"
 msgid_plural "{count} results in {place}"
 msgstr[0] "{count} Ergebnis in {place}"
 msgstr[1] "{count} Ergebnisse in {place}"
 
-#: crates/pigoune-app/src/query_pills.rs:138
+#: crates/pigoune-app/src/query_pills.rs:140
 #, rust-format
 msgid "{max} words at most: the next ones are ignored"
 msgstr "Höchstens {max} Wörter: die weiteren werden ignoriert"
 
-#: crates/pigoune-app/src/query_pills.rs:156
+#: crates/pigoune-app/src/query_pills.rs:158
 #, rust-format
 msgid "Remove “{word}” From the Search"
 msgstr "„{word}“ aus der Suche entfernen"
 
-#: crates/pigoune-app/src/query_pills.rs:172
+#: crates/pigoune-app/src/query_pills.rs:174
 msgctxt "search connector"
 msgid "or"
 msgstr "oder"
 
-#: crates/pigoune-app/src/query_pills.rs:173
+#: crates/pigoune-app/src/query_pills.rs:175
 msgid "Require Both Words"
 msgstr "Beide Wörter verlangen"
 
-#: crates/pigoune-app/src/query_pills.rs:178
+#: crates/pigoune-app/src/query_pills.rs:180
 msgctxt "search connector"
 msgid "and"
 msgstr "und"
 
-#: crates/pigoune-app/src/query_pills.rs:179
+#: crates/pigoune-app/src/query_pills.rs:181
 msgid "Accept Either Word"
 msgstr "Eines der Wörter genügt"
 
@@ -2002,56 +2002,56 @@ msgstr "Wählen Sie eine Ressource aus, um ihre Details zu sehen."
 msgid "This selection is in the trash."
 msgstr "Diese Auswahl befindet sich im Papierkorb."
 
-#: crates/pigoune-app/ui/asset-details.blp:264
+#: crates/pigoune-app/ui/asset-details.blp:269
 msgid "Export…"
 msgstr "Exportieren …"
 
-#: crates/pigoune-app/ui/asset-details.blp:283
+#: crates/pigoune-app/ui/asset-details.blp:288
 msgid "Organization"
 msgstr "Ordnung"
 
-#: crates/pigoune-app/ui/asset-details.blp:328
+#: crates/pigoune-app/ui/asset-details.blp:333
 msgid "Note and Credits"
 msgstr "Notiz und Nachweise"
 
-#: crates/pigoune-app/ui/asset-details.blp:342
-#: crates/pigoune-app/src/asset_details.rs:641
+#: crates/pigoune-app/ui/asset-details.blp:347
+#: crates/pigoune-app/src/asset_details.rs:643
 msgid "Note"
 msgstr "Notiz"
 
-#: crates/pigoune-app/ui/asset-details.blp:364
-#: crates/pigoune-app/src/asset_details.rs:642
+#: crates/pigoune-app/ui/asset-details.blp:369
+#: crates/pigoune-app/src/asset_details.rs:644
 msgid "Source"
 msgstr "Quelle"
 
-#: crates/pigoune-app/ui/asset-details.blp:369
+#: crates/pigoune-app/ui/asset-details.blp:374
 msgid "Open the Link"
 msgstr "Link öffnen"
 
-#: crates/pigoune-app/ui/asset-details.blp:381
-#: crates/pigoune-app/src/asset_details.rs:643
+#: crates/pigoune-app/ui/asset-details.blp:386
+#: crates/pigoune-app/src/asset_details.rs:645
 msgid "License"
 msgstr "Lizenz"
 
-#: crates/pigoune-app/ui/asset-details.blp:385
-#: crates/pigoune-app/src/asset_details.rs:644
+#: crates/pigoune-app/ui/asset-details.blp:390
+#: crates/pigoune-app/src/asset_details.rs:646
 msgid "Author"
 msgstr "Autor"
 
-#: crates/pigoune-app/ui/asset-details.blp:398
+#: crates/pigoune-app/ui/asset-details.blp:403
 msgid "File"
 msgstr "Datei"
 
-#: crates/pigoune-app/ui/asset-details.blp:412
+#: crates/pigoune-app/ui/asset-details.blp:417
 msgid "Original File"
 msgstr "Originaldatei"
 
-#: crates/pigoune-app/ui/asset-details.blp:440
+#: crates/pigoune-app/ui/asset-details.blp:445
 #: crates/pigoune-app/ui/asset-preview.blp:337
 msgid "Animation"
 msgstr "Animation"
 
-#: crates/pigoune-app/ui/asset-details.blp:470
+#: crates/pigoune-app/ui/asset-details.blp:475
 msgid "Contained Sizes"
 msgstr "Enthaltene Größen"
 
@@ -2165,7 +2165,7 @@ msgstr "Vergrößern"
 
 #: crates/pigoune-app/ui/asset-preview.blp:141
 #: crates/pigoune-app/ui/asset-preview.blp:144
-#: crates/pigoune-app/ui/export-as-dialog.blp:264
+#: crates/pigoune-app/ui/export-as-dialog.blp:276
 msgid "Background"
 msgstr "Hintergrund"
 
@@ -2234,7 +2234,7 @@ msgid "{position} of {count}"
 msgstr "{position} von {count}"
 
 #: crates/pigoune-app/src/sidebar.rs:266
-#: crates/pigoune-app/src/collection_places.rs:137
+#: crates/pigoune-app/src/collection_places.rs:140
 msgid "Collections"
 msgstr "Sammlungen"
 
@@ -2243,7 +2243,7 @@ msgid "Smart Collections"
 msgstr "Intelligente Sammlungen"
 
 #: crates/pigoune-app/src/sidebar.rs:295 crates/pigoune-app/src/sidebar.rs:895
-#: crates/pigoune-app/src/tag_summary.rs:142
+#: crates/pigoune-app/src/tag_summary.rs:144
 msgid "Tags"
 msgstr "Schlagwörter"
 
@@ -2258,7 +2258,7 @@ msgid "favorite"
 msgstr "Favorit"
 
 #: crates/pigoune-app/src/sidebar_item.rs:132
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:373
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:374
 #, rust-format
 msgid "Tag {name}"
 msgstr "Schlagwort {name}"
@@ -2269,7 +2269,7 @@ msgid "Smart collection {name}"
 msgstr "Intelligente Sammlung {name}"
 
 #: crates/pigoune-app/src/sidebar_item.rs:142
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:376
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:377
 #, rust-format
 msgid "{name}, {count} resource"
 msgid_plural "{name}, {count} resources"
@@ -2764,7 +2764,7 @@ msgid "Copy to the Clipboard"
 msgstr "In die Zwischenablage kopieren"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:53
-#: crates/pigoune-app/src/asset_details.rs:189
+#: crates/pigoune-app/src/asset_details.rs:191
 msgid "Rename"
 msgstr "Umbenennen"
 
@@ -2876,20 +2876,20 @@ msgstr "Sammlungen sortieren nach"
 msgid "Sort Smart Collections By"
 msgstr "Intelligente Sammlungen sortieren nach"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:140
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:141
 msgid "Show Fewer"
 msgstr "Weniger anzeigen"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:143
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:144
 #, rust-format
 msgid "+ {count} other"
 msgid_plural "+ {count} others"
 msgstr[0] "+ {count} weiteres"
 msgstr[1] "+ {count} weitere"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:165
-#: crates/pigoune-app/src/tag_editor.rs:144
-#: crates/pigoune-app/src/tag_summary.rs:113
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:166
+#: crates/pigoune-app/src/tag_editor.rs:146
+#: crates/pigoune-app/src/tag_summary.rs:115
 #, rust-format
 msgid "Open the Tag “{name}”"
 msgstr "Das Schlagwort „{name}“ öffnen"
@@ -2959,55 +2959,55 @@ msgctxt "resource color"
 msgid "White"
 msgstr "Weiß"
 
-#: crates/pigoune-app/src/asset_details.rs:425
+#: crates/pigoune-app/src/asset_details.rs:427
 msgid "Nothing filled in yet"
 msgstr "Noch nichts eingetragen"
 
-#: crates/pigoune-app/src/asset_details.rs:463
-#: crates/pigoune-app/src/asset_details.rs:492
+#: crates/pigoune-app/src/asset_details.rs:465
+#: crates/pigoune-app/src/asset_details.rs:494
 #, rust-format
 msgid "{count} resource selected"
 msgid_plural "{count} resources selected"
 msgstr[0] "{count} Ressource ausgewählt"
 msgstr[1] "{count} Ressourcen ausgewählt"
 
-#: crates/pigoune-app/src/asset_details.rs:568
+#: crates/pigoune-app/src/asset_details.rs:570
 #, rust-format
 msgid "Added on {date}"
 msgstr "Hinzugefügt am {date}"
 
-#: crates/pigoune-app/src/asset_details.rs:623
+#: crates/pigoune-app/src/asset_details.rs:625
 #, rust-format
 msgid "{count} tag"
 msgid_plural "{count} tags"
 msgstr[0] "{count} Schlagwort"
 msgstr[1] "{count} Schlagwörter"
 
-#: crates/pigoune-app/src/asset_details.rs:629
+#: crates/pigoune-app/src/asset_details.rs:631
 #, rust-format
 msgid "{count} collection"
 msgid_plural "{count} collections"
 msgstr[0] "{count} Sammlung"
 msgstr[1] "{count} Sammlungen"
 
-#: crates/pigoune-app/src/asset_details.rs:634
+#: crates/pigoune-app/src/asset_details.rs:636
 #, rust-format
 msgid "{tags}, {collections}"
 msgstr "{tags}, {collections}"
 
-#: crates/pigoune-app/src/tag_editor.rs:138
-#: crates/pigoune-app/src/tag_summary.rs:107
+#: crates/pigoune-app/src/tag_editor.rs:140
+#: crates/pigoune-app/src/tag_summary.rs:109
 #, rust-format
 msgid "On {count} of {total} resources. Click to add it to all of them."
 msgstr "Bei {count} von {total} Ressourcen. Klicken, um es allen hinzuzufügen."
 
-#: crates/pigoune-app/src/tag_editor.rs:156
-#: crates/pigoune-app/src/tag_summary.rs:125
+#: crates/pigoune-app/src/tag_editor.rs:158
+#: crates/pigoune-app/src/tag_summary.rs:127
 #, rust-format
 msgid "Remove the Tag “{name}”"
 msgstr "Das Schlagwort „{name}“ entfernen"
 
-#: crates/pigoune-app/src/tag_summary.rs:156
+#: crates/pigoune-app/src/tag_summary.rs:158
 msgid "Edit the Tags"
 msgstr "Schlagwörter bearbeiten"
 
@@ -3018,16 +3018,16 @@ msgid_plural "{count} more tags"
 msgstr[0] "{count} weiteres Schlagwort"
 msgstr[1] "{count} weitere Schlagwörter"
 
-#: crates/pigoune-app/src/collection_places.rs:90
+#: crates/pigoune-app/src/collection_places.rs:92
 msgid "Open the Collection"
 msgstr "Die Sammlung öffnen"
 
-#: crates/pigoune-app/src/collection_places.rs:101
+#: crates/pigoune-app/src/collection_places.rs:104
 #, rust-format
 msgid "On {count} of {total} resources"
 msgstr "Bei {count} von {total} Ressourcen"
 
-#: crates/pigoune-app/src/collection_places.rs:147
+#: crates/pigoune-app/src/collection_places.rs:150
 msgid "In no collection"
 msgstr "In keiner Sammlung"
 
@@ -3328,68 +3328,72 @@ msgstr "Seitenverhältnis beibehalten"
 msgid "pixels"
 msgstr "Pixel"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:196
+#: crates/pigoune-app/ui/export-as-dialog.blp:186
+msgid "Too large: 268 million pixels at most (for example 16384 × 16384)"
+msgstr "Zu groß: höchstens 268 Millionen Pixel (zum Beispiel 16384 × 16384)"
+
+#: crates/pigoune-app/ui/export-as-dialog.blp:208
 msgid "A pixel image that is enlarged becomes blurry; SVG images stay sharp"
 msgstr "Ein vergrößertes Pixelbild wird unscharf; SVG-Bilder bleiben scharf"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:220
+#: crates/pigoune-app/ui/export-as-dialog.blp:232
 msgid "Icon Sizes"
 msgstr "Symbolgrößen"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:225
+#: crates/pigoune-app/ui/export-as-dialog.blp:237
 msgid "Sizes larger than a pixel image are skipped"
 msgstr "Größen über der eines Pixelbilds werden übersprungen"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:245
+#: crates/pigoune-app/ui/export-as-dialog.blp:257
 msgid "Quality"
 msgstr "Qualität"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:246
+#: crates/pigoune-app/ui/export-as-dialog.blp:258
 msgid "A higher quality makes larger files"
 msgstr "Eine höhere Qualität ergibt größere Dateien"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:258
+#: crates/pigoune-app/ui/export-as-dialog.blp:270
 msgid "Keep Transparency"
 msgstr "Transparenz beibehalten"
 
-#: crates/pigoune-app/ui/export-as-dialog.blp:265
+#: crates/pigoune-app/ui/export-as-dialog.blp:277
 msgid "Fills the transparent areas"
 msgstr "Füllt die transparenten Bereiche"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:326
+#: crates/pigoune-app/src/export_as_dialog.rs:336
 msgid "Each resource is resized by this percentage"
 msgstr "Jede Ressource wird um diesen Prozentsatz skaliert"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:328
+#: crates/pigoune-app/src/export_as_dialog.rs:338
 msgid "Each resource fits inside this frame, without being stretched"
 msgstr "Jede Ressource passt in diesen Rahmen, ohne verzerrt zu werden"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:330
+#: crates/pigoune-app/src/export_as_dialog.rs:340
 msgid "Each resource takes exactly this size"
 msgstr "Jede Ressource erhält genau diese Größe"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:336
+#: crates/pigoune-app/src/export_as_dialog.rs:346
 msgid "Covers the whole screen; the overflowing edges are cut"
 msgstr ""
 "Bedeckt den ganzen Bildschirm; überstehende Ränder werden abgeschnitten"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:337
+#: crates/pigoune-app/src/export_as_dialog.rs:347
 msgid "Keeps the whole image, with bands filling the rest"
 msgstr "Behält das ganze Bild, Streifen füllen den Rest"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:343
+#: crates/pigoune-app/src/export_as_dialog.rs:353
 msgid "Lossless, supports transparency"
 msgstr "Verlustfrei, unterstützt Transparenz"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:344
+#: crates/pigoune-app/src/export_as_dialog.rs:354
 msgid "Small files, no transparency"
 msgstr "Kleine Dateien, keine Transparenz"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:345
+#: crates/pigoune-app/src/export_as_dialog.rs:355
 msgid "Small files, supports transparency"
 msgstr "Kleine Dateien, unterstützt Transparenz"
 
-#: crates/pigoune-app/src/export_as_dialog.rs:346
+#: crates/pigoune-app/src/export_as_dialog.rs:356
 msgid "One icon file holding several sizes"
 msgstr "Eine Symboldatei mit mehreren Größen"
 
@@ -3430,10 +3434,14 @@ msgstr ""
 "kleiner als jede gewählte Symbolgröße, und Pixelbilder werden nie vergrößert"
 
 #: crates/pigoune-app/src/conversion_report.rs:58
+msgid "the requested size is too large"
+msgstr "die gewünschte Größe ist zu groß"
+
+#: crates/pigoune-app/src/conversion_report.rs:59
 msgid "the conversion failed"
 msgstr "die Umwandlung ist fehlgeschlagen"
 
-#: crates/pigoune-app/src/conversion_report.rs:64
+#: crates/pigoune-app/src/conversion_report.rs:65
 #, rust-format
 msgid "frame-{number}"
 msgstr "bild-{number}"

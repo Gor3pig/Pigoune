@@ -55,6 +55,7 @@ pub fn reason(error: ConversionError) -> String {
         ConversionError::TooSmallForIcon => {
             gettext("smaller than every chosen icon size, and pixel images are never enlarged")
         }
+        ConversionError::TooLarge => gettext("the requested size is too large"),
         ConversionError::EncodingFailed => gettext("the conversion failed"),
     }
 }

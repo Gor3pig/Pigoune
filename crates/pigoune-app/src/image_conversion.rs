@@ -6,7 +6,7 @@ use gtk::{gdk, gio};
 use pigoune_core::{Dimensions, RgbaImage, fitted_within};
 
 use crate::desktop_frame::Frame;
-use crate::export_size::{CustomSize, Framing, ScreenSize};
+use crate::export_size::{self, CustomSize, Framing, ScreenSize};
 use crate::icon_sides::IconSides;
 use crate::thumbnails;
 use crate::wallpaper_framing::{self, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop, Look};
@@ -107,6 +107,7 @@ impl Default for ConversionSettings {
 pub enum ConversionError {
     Unreadable,
     TooSmallForIcon,
+    TooLarge,
     EncodingFailed,
 }
 
@@ -154,6 +155,9 @@ pub async fn convert(
         )
     } else {
         let target = settings.custom.target(natural);
+        if export_size::exceeds_limit(target, natural) {
+            return Err(ConversionError::TooLarge);
+        }
         (sized_image(source, target).await?, target)
     };
     let name_suffix = (target != natural).then(|| format!("{}x{}", target.0, target.1));

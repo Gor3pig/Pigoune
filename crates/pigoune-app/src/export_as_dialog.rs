@@ -4,7 +4,7 @@ use gettextrs::gettext;
 use gtk::{gdk, glib};
 use pigoune_core::Dimensions;
 
-use crate::export_size::{CustomSize, Framing, ScreenSize, SizeUnit};
+use crate::export_size::{self, CustomSize, Framing, ScreenSize, SizeUnit};
 use crate::icon_sides::ICON_SIDES;
 use crate::image_conversion::{ConversionSettings, TargetFormat};
 
@@ -51,6 +51,8 @@ mod imp {
         pub link_button: TemplateChild<gtk::ToggleButton>,
         #[template_child]
         pub several_hint: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub too_large_hint: TemplateChild<gtk::Label>,
         #[template_child]
         pub unit_dropdown: TemplateChild<gtk::DropDown>,
         #[template_child]
@@ -224,8 +226,15 @@ impl PigouneExportAsDialog {
             .set_visible(format.keeps_transparency());
         imp.background_row
             .set_visible(!format.keeps_transparency() || !imp.transparency_row.is_active());
+        let too_large = !is_icon
+            && !on_screen
+            && export_size::exceeds_limit(
+                imp.custom.get().target(imp.reference.get()),
+                imp.reference.get(),
+            );
+        imp.too_large_hint.set_visible(too_large);
         imp.export_button
-            .set_sensitive(!is_icon || !imp.icon_sides.get().is_empty());
+            .set_sensitive((!is_icon || !imp.icon_sides.get().is_empty()) && !too_large);
     }
 
     fn show_custom(&self, custom: CustomSize) {
@@ -261,6 +270,7 @@ impl PigouneExportAsDialog {
             return;
         }
         self.show_custom(change(imp.custom.get(), imp.reference.get()));
+        self.refresh_rows();
     }
 
     #[template_callback]

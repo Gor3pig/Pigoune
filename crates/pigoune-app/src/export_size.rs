@@ -1,4 +1,11 @@
 const FULL_PERCENT: f64 = 100.0;
+const LARGEST_PIXEL_COUNT: u64 = 16_384 * 16_384;
+
+#[must_use]
+pub fn exceeds_limit(target: (u32, u32), natural: (u32, u32)) -> bool {
+    let pixels = |(width, height): (u32, u32)| u64::from(width) * u64::from(height);
+    pixels(target) > LARGEST_PIXEL_COUNT.max(pixels(natural))
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SizeUnit {
@@ -171,13 +178,27 @@ fn whole(value: f64) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{CustomSize, Framing, ScreenSize, SizeUnit, whole};
+    use super::{CustomSize, Framing, ScreenSize, SizeUnit, exceeds_limit, whole};
 
     fn sides(size: CustomSize) -> (u32, u32) {
         (whole(size.width), whole(size.height))
     }
 
     const PHOTO: (u32, u32) = (800, 600);
+
+    #[test]
+    fn a_size_beyond_the_pixel_limit_is_refused() {
+        assert!(!exceeds_limit((16_384, 16_384), PHOTO));
+        assert!(exceeds_limit((16_385, 16_384), PHOTO));
+        assert!(exceeds_limit((153_600, 96_000), (15_360, 9_600)));
+    }
+
+    #[test]
+    fn the_original_size_is_never_refused() {
+        assert!(!exceeds_limit((30_000, 20_000), (30_000, 20_000)));
+        assert!(!exceeds_limit((15_360, 9_600), (15_360, 9_600)));
+        assert!(!exceeds_limit((100, 100), (30_000, 20_000)));
+    }
 
     fn pixels(width: f64, height: f64, linked: bool) -> CustomSize {
         CustomSize {

@@ -182,6 +182,18 @@ template $PigouneExportAsDialog: Adw.Dialog {
               }
             }
 
+            Label too_large_hint {
+              label: _("Too large: 268 million pixels at most (for example 16384 × 16384)");
+              xalign: 0;
+              wrap: true;
+              visible: false;
+
+              styles [
+                "caption",
+                "error",
+              ]
+            }
+
             Label several_hint {
               xalign: 0;
               wrap: true;
