@@ -119,8 +119,8 @@ The GNOME runtime that Pigoune needs is downloaded automatically from Flathub.
 ### 3. Stay up to date
 
 Pigoune updates itself like your other apps: Software offers each new version, and
-`flatpak update` installs it too. Pigoune also tells you itself: a banner at the top of the
-window offers to install the new version, then to restart. Every update is signed, so only
+`flatpak update` installs it too. If Pigoune stays open, a banner at the top of the window
+also tells you within half an hour and offers to install the new version, then to restart. Every update is signed, so only
 official versions are accepted.
 
 If you installed Pigoune 1.5 or older from a downloaded `.flatpak` file, it does not update

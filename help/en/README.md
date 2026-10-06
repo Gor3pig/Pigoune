@@ -399,8 +399,10 @@ No. Pigoune works fully offline, with no account and no telemetry. Checking for 
 by Flatpak, which only asks the Pigoune repository whether a new version exists.
 
 **How do I update Pigoune?**
-When a new version is out, a banner at the top of the window says so. Click **Update**, wait
-for the installation, then click **Restart**. Software and `flatpak update` install it too.
+Software takes care of it: it offers each new version, and installs it by itself when automatic
+updates are turned on. `flatpak update` installs it too. If Pigoune stays open, a banner at the
+top of the window also says so within half an hour: click **Update**, wait for the
+installation, then click **Restart**.
 
 **Why does Pigoune say a file is unreadable?**
 The file is damaged, or is not really in the format its name suggests. Pigoune checks the

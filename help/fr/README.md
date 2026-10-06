@@ -450,9 +450,10 @@ mises à jour est faite par Flatpak, qui demande seulement au dépôt de Pigoune
 version existe.
 
 **Comment mettre Pigoune à jour ?**
-Quand une nouvelle version sort, une bannière en haut de la fenêtre l'annonce. Cliquez sur
-**Mettre à jour**, attendez la fin de l'installation, puis cliquez sur **Redémarrer**. Logiciels
-et `flatpak update` l'installent aussi.
+Logiciels s'en charge : il propose chaque nouvelle version, et l'installe tout seul si les mises
+à jour automatiques sont activées. `flatpak update` l'installe aussi. Si Pigoune reste ouvert,
+une bannière en haut de la fenêtre l'annonce aussi dans la demi-heure : cliquez sur **Mettre à
+jour**, attendez la fin de l'installation, puis cliquez sur **Redémarrer**.
 
 **Pourquoi Pigoune dit-il qu'un fichier est illisible ?**
 Le fichier est abîmé, ou n'est pas vraiment dans le format qu'indique son nom. Pigoune vérifie

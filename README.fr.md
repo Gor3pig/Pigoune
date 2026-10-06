@@ -125,8 +125,9 @@ L'environnement GNOME dont Pigoune a besoin est téléchargé automatiquement de
 ### 3. Rester à jour
 
 Pigoune se met à jour comme vos autres applications : Logiciels propose chaque nouvelle
-version, et `flatpak update` l'installe aussi. Pigoune vous prévient aussi lui-même : une
-bannière en haut de la fenêtre propose d'installer la nouvelle version, puis de redémarrer.
+version, et `flatpak update` l'installe aussi. Si Pigoune reste ouvert, une bannière en haut de
+la fenêtre vous prévient aussi dans la demi-heure et propose d'installer la nouvelle version,
+puis de redémarrer.
 Chaque mise à jour est signée : seules les versions officielles sont acceptées.
 
 Si vous avez installé Pigoune 1.5 ou plus ancien à partir d'un fichier `.flatpak` téléchargé,
