@@ -16,6 +16,17 @@ pub fn screen_of(widget: &impl IsA<gtk::Widget>) -> Option<Dimensions> {
 }
 
 #[must_use]
+pub fn monitor_scale_of(widget: &impl IsA<gtk::Widget>) -> f64 {
+    let scale = widget
+        .as_ref()
+        .root()
+        .and_then(|root| root.surface())
+        .and_then(|surface| widget.as_ref().display().monitor_at_surface(&surface))
+        .map_or(1.0, |monitor| monitor.scale());
+    if scale > 0.0 { scale } else { 1.0 }
+}
+
+#[must_use]
 pub fn at_least(screen: Dimensions) -> String {
     gettext("{width} × {height} or larger")
         .replace("{width}", &screen.width().to_string())

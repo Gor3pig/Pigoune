@@ -1,0 +1,182 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneWallpaperDialog: Adw.Dialog {
+  title: _("Prepare as Wallpaper");
+  content-width: 1100;
+  content-height: 720;
+  width-request: 360;
+  height-request: 400;
+  default-widget: set_button;
+
+  Adw.Breakpoint {
+    condition ("max-width: 720sp")
+
+    setters {
+      content_box.orientation: vertical;
+    }
+  }
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      show-start-title-buttons: false;
+      show-end-title-buttons: false;
+
+      title-widget: Adw.WindowTitle window_title {
+        title: _("Prepare as Wallpaper");
+      };
+
+      [start]
+      Button {
+        label: _("_Cancel");
+        use-underline: true;
+        clicked => $on_cancel_clicked() swapped;
+      }
+
+      [end]
+      Button set_button {
+        label: _("_Set as Wallpaper");
+        use-underline: true;
+        sensitive: false;
+        clicked => $on_set_clicked() swapped;
+
+        styles [
+          "suggested-action",
+        ]
+      }
+    }
+
+    content: Box content_box {
+      $PigouneWallpaperStage stage {}
+
+      Separator {}
+
+      ScrolledWindow {
+        hscrollbar-policy: never;
+        propagate-natural-height: true;
+        hexpand: false;
+        width-request: 280;
+
+        child: Box {
+          orientation: vertical;
+          spacing: 18;
+          margin-top: 12;
+          margin-bottom: 12;
+          margin-start: 12;
+          margin-end: 12;
+
+          Adw.PreferencesGroup {
+            title: _("Size");
+
+            Box {
+              orientation: vertical;
+              spacing: 12;
+
+              Box {
+                spacing: 6;
+
+                Button {
+                  icon-name: "zoom-out-symbolic";
+                  tooltip-text: _("Zoom Out");
+                  valign: center;
+                  clicked => $on_zoom_out_clicked() swapped;
+
+                  styles [
+                    "flat",
+                    "circular",
+                  ]
+                }
+
+                Scale zoom_scale {
+                  hexpand: true;
+                  draw-value: false;
+                  value-changed => $on_zoom_scale_changed() swapped;
+
+                  adjustment: Adjustment {
+                    lower: -4.605;
+                    upper: 2.08;
+                    step-increment: 0.05;
+                    page-increment: 0.2;
+                  };
+                }
+
+                Button {
+                  icon-name: "zoom-in-symbolic";
+                  tooltip-text: _("Zoom In");
+                  valign: center;
+                  clicked => $on_zoom_in_clicked() swapped;
+
+                  styles [
+                    "flat",
+                    "circular",
+                  ]
+                }
+
+                Label zoom_label {
+                  width-chars: 6;
+                  xalign: 1;
+
+                  styles [
+                    "numeric",
+                  ]
+                }
+              }
+
+              Box {
+                orientation: vertical;
+                spacing: 6;
+                homogeneous: true;
+
+                Button {
+                  label: _("Fill the Screen");
+                  clicked => $on_fill_clicked() swapped;
+                }
+
+                Button {
+                  label: _("Whole Image");
+                  clicked => $on_whole_clicked() swapped;
+                }
+
+                Button {
+                  label: _("Actual Size");
+                  clicked => $on_actual_clicked() swapped;
+                }
+              }
+            }
+          }
+
+          Adw.PreferencesGroup {
+            title: _("Desktop");
+
+            Adw.ComboRow desktop_row {
+              title: _("Desktop");
+              notify::selected => $on_desktop_changed() swapped;
+            }
+
+            Adw.SwitchRow bar_row {
+              title: _("Desktop Bar");
+              active: true;
+              notify::active => $on_bar_changed() swapped;
+            }
+          }
+        };
+      }
+    };
+
+    [bottom]
+    Label hint_label {
+      xalign: 0;
+      wrap: true;
+      margin-top: 6;
+      margin-bottom: 6;
+      margin-start: 12;
+      margin-end: 12;
+
+      styles [
+        "dim-label",
+        "caption",
+      ]
+    }
+  };
+}

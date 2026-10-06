@@ -93,18 +93,54 @@ impl RgbaImage {
     pub fn cropped_to_center(&self, width: u32, height: u32) -> Self {
         let width = width.clamp(1, self.width);
         let height = height.clamp(1, self.height);
-        let left = to_index((self.width - width) / 2);
-        let top = to_index((self.height - height) / 2);
+        self.cropped(
+            (self.width - width) / 2,
+            (self.height - height) / 2,
+            width,
+            height,
+        )
+    }
+
+    #[must_use]
+    pub fn cropped(&self, left: u32, top: u32, width: u32, height: u32) -> Self {
+        let left = left.min(self.width - 1);
+        let top = top.min(self.height - 1);
+        let width = width.clamp(1, self.width - left);
+        let height = height.clamp(1, self.height - top);
         let source_row = to_index(self.width) * CHANNELS;
+        let start = to_index(left) * CHANNELS;
         let row_length = to_index(width) * CHANNELS;
         let pixels = self
             .pixels
             .chunks(source_row)
-            .skip(top)
+            .skip(to_index(top))
             .take(to_index(height))
-            .flat_map(|row| &row[left * CHANNELS..left * CHANNELS + row_length])
+            .flat_map(|row| &row[start..start + row_length])
             .copied()
             .collect();
+        Self {
+            width,
+            height,
+            pixels,
+        }
+    }
+
+    #[must_use]
+    pub fn placed_on(&self, width: u32, height: u32, left: u32, top: u32) -> Self {
+        let width = width.max(1);
+        let height = height.max(1);
+        let canvas_row = to_index(width) * CHANNELS;
+        let mut pixels = vec![0; canvas_row * to_index(height)];
+        let copied_width = to_index(self.width.min(width.saturating_sub(left)));
+        let row_length = to_index(self.width) * CHANNELS;
+        if copied_width > 0 {
+            let copied_rows = to_index(self.height.min(height.saturating_sub(top)));
+            for (row, source) in self.pixels.chunks(row_length).take(copied_rows).enumerate() {
+                let start = (to_index(top) + row) * canvas_row + to_index(left) * CHANNELS;
+                pixels[start..start + copied_width * CHANNELS]
+                    .copy_from_slice(&source[..copied_width * CHANNELS]);
+            }
+        }
         Self {
             width,
             height,
@@ -386,5 +422,33 @@ mod tests {
             cropped.pixels(),
             [1, 1, 0, 255, 1, 2, 0, 255, 2, 1, 0, 255, 2, 2, 0, 255]
         );
+    }
+
+    #[test]
+    fn any_part_of_a_picture_can_be_cut_out() {
+        let mut pixels = Vec::new();
+        for row in 0..3u8 {
+            for column in 0..4u8 {
+                pixels.extend([row, column, 0, 255]);
+            }
+        }
+        let picture = RgbaImage::new(4, 3, pixels).expect("valid image");
+        let corner = picture.cropped(3, 1, 5, 5);
+        assert_eq!((corner.width(), corner.height()), (1, 2));
+        assert_eq!(corner.pixels(), [1, 3, 0, 255, 2, 3, 0, 255]);
+    }
+
+    #[test]
+    fn a_picture_is_placed_on_a_transparent_canvas_and_clipped_at_its_edge() {
+        let red = [255, 0, 0, 255];
+        let canvas = uniform(3, 2, red).placed_on(4, 3, 2, 2);
+        assert_eq!((canvas.width(), canvas.height()), (4, 3));
+        let at = |x: usize, y: usize| &canvas.pixels()[(y * 4 + x) * 4..][..4];
+        assert_eq!(at(2, 2), red);
+        assert_eq!(at(3, 2), red);
+        assert_eq!(at(1, 2), [0, 0, 0, 0]);
+        assert_eq!(at(2, 1), [0, 0, 0, 0]);
+        let outside = uniform(2, 2, red).placed_on(2, 2, 5, 0);
+        assert!(outside.pixels().iter().all(|value| *value == 0));
     }
 }

@@ -7,10 +7,10 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
-    CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ImportError, ImportSummary,
-    Library, LibraryError, SmartCollection, SmartCollectionCommand, SmartCollectionId,
-    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, dominant_colors,
-    library_display_name,
+    CollectionId, CollectionLook, CollectionPath, CollectionRemoval, Dimensions, ImportError,
+    ImportSummary, Library, LibraryError, SmartCollection, SmartCollectionCommand,
+    SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
+    dominant_colors, library_display_name,
 };
 
 use crate::asset_colors;
@@ -53,6 +53,10 @@ use crate::update_banner;
 use crate::update_news::UpdateNews;
 use crate::view_setting;
 use crate::wallpaper;
+use crate::wallpaper_dialog::{PigouneWallpaperDialog, WallpaperSource};
+use crate::wallpaper_framing::Framing;
+use crate::wallpaper_progress_dialog::PigouneWallpaperProgressDialog;
+use crate::zoom_math::Size;
 
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
@@ -78,7 +82,9 @@ const RENAME_TAG_ACTION: &str = "win.rename-tag";
 const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
 const OPEN_WITH_ACTION: &str = "win.open-with";
 const SET_WALLPAPER_ACTION: &str = "win.set-wallpaper";
+const PREPARE_WALLPAPER_ACTION: &str = "win.prepare-wallpaper";
 const WALLPAPER_VECTOR_FRAME: (f64, f64) = (3840.0, 2160.0);
+const FALLBACK_SCREEN: (u32, u32) = (1920, 1080);
 const RENAME_ASSET_ACTION: &str = "win.rename-asset";
 const ADD_TAG_ACTION: &str = "win.add-tag";
 const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
@@ -107,8 +113,9 @@ const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 20] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 21] = [
     SET_WALLPAPER_ACTION,
+    PREPARE_WALLPAPER_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
     UNDO_ACTION,
@@ -186,9 +193,9 @@ mod imp {
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
         NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
         OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
-        SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
+        PREPARE_WALLPAPER_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
+        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
+        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
         TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, smart_collection_parameter,
         tag_parameter,
     };
@@ -365,6 +372,9 @@ mod imp {
         });
         class.install_action_async(SET_WALLPAPER_ACTION, None, |window, _, _| async move {
             window.set_selected_as_wallpaper().await;
+        });
+        class.install_action(PREPARE_WALLPAPER_ACTION, None, |window, _, _| {
+            window.prepare_selected_as_wallpaper();
         });
         class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| window.open_preview(None));
@@ -1808,6 +1818,10 @@ impl PigouneWindow {
                 Some(&gettext("Set as Wallpaper…")),
                 Some(SET_WALLPAPER_ACTION),
             );
+            viewing.append(
+                Some(&gettext("Prepare as Wallpaper…")),
+                Some(PREPARE_WALLPAPER_ACTION),
+            );
         }
         if selected.len() == 1 {
             viewing.append_item(&menu_item(
@@ -2380,9 +2394,94 @@ impl PigouneWindow {
         if self.is_showing_trash() {
             return;
         }
-        let failure =
-            gettext("Unable to set “{name}” as wallpaper").replace("{name}", &asset.display_name());
         let prepared = self.wallpaper_file(asset).await;
+        self.apply_wallpaper(prepared, &asset.display_name()).await;
+    }
+
+    fn prepare_selected_as_wallpaper(&self) {
+        let targeted = self.targeted_assets();
+        let [asset] = targeted.as_slice() else {
+            return;
+        };
+        if self.is_showing_trash() {
+            return;
+        }
+        let Some(screen) = screen_size::screen_of(self)
+            .or_else(|| Dimensions::new(FALLBACK_SCREEN.0, FALLBACK_SCREEN.1))
+        else {
+            return;
+        };
+        let source = WallpaperSource {
+            file: asset.file().to_path_buf(),
+            natural: natural_size(asset),
+            name: asset.display_name(),
+        };
+        let asset = asset.clone();
+        let dialog = PigouneWallpaperDialog::new(
+            source,
+            screen,
+            screen_size::monitor_scale_of(self),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |framing| {
+                    let asset = asset.clone();
+                    glib::spawn_future_local(async move {
+                        let progress = PigouneWallpaperProgressDialog::new();
+                        progress.present(Some(&window));
+                        let prepared = window
+                            .prepared_wallpaper(&asset, framing, screen, &progress)
+                            .await;
+                        window
+                            .apply_wallpaper(prepared, &asset.display_name())
+                            .await;
+                        progress.force_close();
+                    });
+                }
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    async fn prepared_wallpaper(
+        &self,
+        asset: &PigouneAssetObject,
+        framing: Framing,
+        screen: Dimensions,
+        progress: &PigouneWallpaperProgressDialog,
+    ) -> Result<PathBuf, String> {
+        let natural = natural_size(asset);
+        let source = image_conversion::Source {
+            file: asset.file(),
+            is_vector: asset.asset().format == AssetFormat::Svg,
+            natural,
+            still: None,
+        };
+        let image = framing.image_rect(
+            Size {
+                width: f64::from(natural.0),
+                height: f64::from(natural.1),
+            },
+            Size {
+                width: f64::from(screen.width()),
+                height: f64::from(screen.height()),
+            },
+        );
+        let bytes = image_conversion::wallpaper(
+            &source,
+            image,
+            (screen.width(), screen.height()),
+            |step| progress.show_step(step),
+        )
+        .await
+        .map_err(|error| format!("{error:?}"))?;
+        let file = wallpaper_folder()?.join(format!("{}-prepared.png", asset.id()));
+        std::fs::write(&file, bytes).map_err(|error| error.to_string())?;
+        Ok(file)
+    }
+
+    async fn apply_wallpaper(&self, prepared: Result<PathBuf, String>, name: &str) {
+        let failure = gettext("Unable to set “{name}” as wallpaper").replace("{name}", name);
         let result = match prepared {
             Ok(file) => {
                 let window = self.downgrade();
@@ -2441,9 +2540,7 @@ impl PigouneWindow {
         let converted = image_conversion::convert(&source, settings)
             .await
             .map_err(|error| format!("{error:?}"))?;
-        let folder = glib::user_cache_dir().join("pigoune").join("wallpapers");
-        std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
-        let file = folder.join(format!("{}.png", asset.id()));
+        let file = wallpaper_folder()?.join(format!("{}.png", asset.id()));
         std::fs::write(&file, converted.bytes).map_err(|error| error.to_string())?;
         Ok(file)
     }
@@ -4264,6 +4361,12 @@ fn welcome_recent_row(label: &str, root: &Path) -> adw::ActionRow {
     }
     row.add_prefix(&gtk::Image::from_icon_name("folder-pictures-symbolic"));
     row
+}
+
+fn wallpaper_folder() -> Result<PathBuf, String> {
+    let folder = glib::user_cache_dir().join("pigoune").join("wallpapers");
+    std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
+    Ok(folder)
 }
 
 fn natural_size(asset: &PigouneAssetObject) -> (u32, u32) {

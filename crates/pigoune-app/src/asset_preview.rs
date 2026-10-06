@@ -1149,6 +1149,10 @@ fn context_menu_model(favorite: bool) -> gio::MenuModel {
         Some(&gettext("Set as Wallpaper…")),
         Some("win.set-wallpaper"),
     );
+    viewing.append(
+        Some(&gettext("Prepare as Wallpaper…")),
+        Some("win.prepare-wallpaper"),
+    );
     let sharing = gio::Menu::new();
     let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
     copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));

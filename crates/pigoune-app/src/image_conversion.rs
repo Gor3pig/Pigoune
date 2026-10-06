@@ -5,14 +5,18 @@ use gtk::prelude::*;
 use gtk::{gdk, gio};
 use pigoune_core::{Dimensions, RgbaImage, fitted_within};
 
+use crate::desktop_frame::Frame;
 use crate::export_size::{CustomSize, Framing, ScreenSize};
 use crate::icon_sides::IconSides;
 use crate::thumbnails;
+use crate::wallpaper_framing;
 
 const RGBA_CHANNELS: usize = 4;
 const OPAQUE: u16 = 255;
 const DEFAULT_QUALITY: u8 = 90;
 const WHITE: [u8; 3] = [255, 255, 255];
+const BLACK: [u8; 3] = [0, 0, 0];
+const LARGEST_WALLPAPER_SOURCE: f64 = 8192.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TargetFormat {
@@ -189,6 +193,57 @@ async fn icon(
         .map(|(size, png)| (*size, png.as_slice()))
         .collect();
     pigoune_core::icon_from_pngs(&parts).ok_or(ConversionError::EncodingFailed)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WallpaperStep {
+    Loading,
+    Framing,
+    Saving,
+}
+
+pub async fn wallpaper(
+    source: &Source<'_>,
+    image: Frame,
+    screen: (u32, u32),
+    on_step: impl Fn(WallpaperStep),
+) -> Result<Vec<u8>, ConversionError> {
+    on_step(WallpaperStep::Loading);
+    let vector_side = whole_side(image.width.max(image.height));
+    let loaded = load(source, vector_side).await?;
+    on_step(WallpaperStep::Framing);
+    let blank = || {
+        RgbaImage::new(1, 1, vec![0; RGBA_CHANNELS])
+            .map(|pixel| pixel.placed_on(screen.0, screen.1, screen.0, screen.1))
+    };
+    let canvas =
+        match wallpaper_framing::visible_part((loaded.width(), loaded.height()), image, screen) {
+            Some(part) => {
+                let (left, top, width, height) = part.source;
+                let (target_left, target_top, target_width, target_height) = part.target;
+                let cut = loaded.cropped(left, top, width, height);
+                let sized = resized(cut, target_width, target_height).await?;
+                sized.placed_on(screen.0, screen.1, target_left, target_top)
+            }
+            None => blank().ok_or(ConversionError::EncodingFailed)?,
+        };
+    let settings = ConversionSettings {
+        format: TargetFormat::Png,
+        keep_transparency: false,
+        background: BLACK,
+        ..ConversionSettings::default()
+    };
+    on_step(WallpaperStep::Saving);
+    encode(canvas, settings).await
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "the side is rounded and clamped to the largest drawn side"
+)]
+fn whole_side(value: f64) -> u32 {
+    value.round().clamp(1.0, LARGEST_WALLPAPER_SOURCE) as u32
 }
 
 async fn framed_image(

@@ -1,7 +1,8 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gtk::{gdk, glib, graphene, gsk, pango};
+use gtk::{gdk, glib, graphene, gsk};
 
+use crate::desktop_bars::{Bars, Desktop};
 use crate::desktop_frame::{self, Frame};
 use crate::zoom_math::{self, Point, Size};
 
@@ -16,14 +17,7 @@ const PIXEL_GRID_WIDTH: f32 = 1.0;
 const PIXEL_GRID_OPACITY: f32 = 0.15;
 const SPRING_BACK_MILLISECONDS: u32 = 300;
 const CUT_OPACITY: f64 = 0.28;
-const TOP_BAR_SHARE: f64 = 32.0 / 1080.0;
-const TOP_BAR_TEXT_SHARE: f64 = 0.42;
-const TOP_BAR_PADDING_SHARE: f64 = 0.4;
-const WORKSPACES_WIDTH_SHARE: f64 = 1.5;
-const WORKSPACES_HEIGHT_SHARE: f64 = 0.5;
-const WORKSPACES_OPACITY: f32 = 0.2;
-const STATUS_DOT_SHARE: f64 = 0.24;
-const STATUS_DOTS: u32 = 3;
+const REFERENCE_SCREEN_HEIGHT: f64 = 1080.0;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 
@@ -394,63 +388,12 @@ impl PigouneZoomView {
         snapshot.push_clip(&screen_rect);
         snapshot.append_scaled_texture(texture, gsk::ScalingFilter::Trilinear, &image_rect);
         snapshot.pop();
-        self.draw_top_bar(snapshot, &screen_rect);
-    }
-
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "drawing coordinates fit easily in f32"
-    )]
-    fn draw_top_bar(&self, snapshot: &gtk::Snapshot, screen: &graphene::Rect) {
-        let height = f64::from(screen.height()) * TOP_BAR_SHARE;
-        let bar = graphene::Rect::new(screen.x(), screen.y(), screen.width(), height as f32);
-        snapshot.append_color(&gdk::RGBA::BLACK, &bar);
-        let padding = height * TOP_BAR_PADDING_SHARE;
-        let middle = f64::from(bar.y()) + height / 2.0;
-        let workspaces_height = height * WORKSPACES_HEIGHT_SHARE;
-        let workspaces = graphene::Rect::new(
-            (f64::from(bar.x()) + padding) as f32,
-            (middle - workspaces_height / 2.0) as f32,
-            (height * WORKSPACES_WIDTH_SHARE) as f32,
-            workspaces_height as f32,
-        );
-        fill_rounded(
-            snapshot,
-            &workspaces,
-            &gdk::RGBA::WHITE.with_alpha(WORKSPACES_OPACITY),
-        );
-        let dot = height * STATUS_DOT_SHARE;
-        let right = f64::from(bar.x() + bar.width()) - padding;
-        for index in 1..=STATUS_DOTS {
-            let left = right - f64::from(index) * dot * 2.0 + dot;
-            let disc = graphene::Rect::new(
-                left as f32,
-                (middle - dot / 2.0) as f32,
-                dot as f32,
-                dot as f32,
-            );
-            fill_rounded(snapshot, &disc, &gdk::RGBA::WHITE);
+        Bars {
+            widget: self.upcast_ref(),
+            screen: screen_rect,
+            points: f64::from(screen_rect.height()) / REFERENCE_SCREEN_HEIGHT,
         }
-        self.draw_clock(snapshot, &bar, height);
-    }
-
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "font sizes and drawing coordinates fit easily in their types"
-    )]
-    fn draw_clock(&self, snapshot: &gtk::Snapshot, bar: &graphene::Rect, height: f64) {
-        let layout = self.create_pango_layout(Some(&clock_text()));
-        let mut font = pango::FontDescription::from_string("Sans Bold");
-        font.set_absolute_size(height * TOP_BAR_TEXT_SHARE * f64::from(pango::SCALE));
-        layout.set_font_description(Some(&font));
-        let (width, text_height) = layout.pixel_size();
-        snapshot.save();
-        snapshot.translate(&graphene::Point::new(
-            (f64::from(bar.x()) + (f64::from(bar.width()) - f64::from(width)) / 2.0) as f32,
-            (f64::from(bar.y()) + (height - f64::from(text_height)) / 2.0) as f32,
-        ));
-        snapshot.append_layout(&layout, &gdk::RGBA::WHITE);
-        snapshot.restore();
+        .draw(snapshot, Desktop::Gnome);
     }
 
     fn listen_to_drag(&self) {
@@ -582,34 +525,6 @@ fn rect_of(frame: Frame) -> graphene::Rect {
         frame.y as f32,
         frame.width as f32,
         frame.height as f32,
-    )
-}
-
-fn fill_rounded(snapshot: &gtk::Snapshot, rect: &graphene::Rect, color: &gdk::RGBA) {
-    let radius = rect.height() / 2.0;
-    let corner = graphene::Size::new(radius, radius);
-    snapshot.push_rounded_clip(&gsk::RoundedRect::new(
-        *rect, corner, corner, corner, corner,
-    ));
-    snapshot.append_color(color, rect);
-    snapshot.pop();
-}
-
-fn clock_text() -> String {
-    let Ok(now) = glib::DateTime::now_local() else {
-        return String::new();
-    };
-    let part = |format: &str| {
-        now.format(format)
-            .map(|text| text.to_string())
-            .unwrap_or_default()
-    };
-    format!(
-        "{} {} {}  {}",
-        part("%a"),
-        now.day_of_month(),
-        part("%b"),
-        part("%H:%M")
     )
 }
 

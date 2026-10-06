@@ -241,7 +241,7 @@ ses critères.
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
-  sur l'image propose **Ouvrir avec…**, **Définir comme fond d'écran…**, **Copier**,
+  sur l'image propose **Ouvrir avec…**, **Définir comme fond d'écran…**, **Préparer comme fond d'écran…**, **Copier**,
   **Exporter vers…**, **Exporter au format…** et **Ajouter aux favoris** pour elle.
 
 ## Réutiliser vos ressources
@@ -281,6 +281,16 @@ ses critères.
   clic droit de la grille ou de l'aperçu. GNOME montre un aperçu avant de l'appliquer au bureau
   et à l'écran de verrouillage. Les images que GNOME ne sait pas afficher telles quelles, comme
   les SVG, lui sont transmises en PNG.
+- **Cadrez vous-même un fond d'écran** avec **Préparer comme fond d'écran…** dans les mêmes
+  menus. Une grande fenêtre montre un écran virtuel à la résolution réelle de l'écran où se
+  trouve Pigoune, par exemple 1920 × 1080, sous une imitation de la barre de votre bureau (GNOME
+  ou KDE Plasma ; l'interrupteur **Barre du bureau** la masque). Faites glisser l'image pour la
+  déplacer, zoomez avec la molette, le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la
+  avec les flèches (<kbd>Maj</kbd> pour aller plus loin). **Remplir l'écran** la cadre comme
+  GNOME le ferait, **Image entière** la montre en entier et **Taille réelle** montre un pixel de
+  l'image par pixel de l'écran. Ce qui dépasse de l'écran reste visible, en pâle. **Définir
+  comme fond d'écran** fabrique ensuite une image exactement à la taille de l'écran : le bureau
+  montre exactement ce que vous avez cadré.
 
 ## Corbeille et annulation
 

@@ -213,7 +213,7 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
   Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Open With…**, **Set as Wallpaper…**, **Copy**, **Export To…**, **Export
+  the image offers **Open With…**, **Set as Wallpaper…**, **Prepare as Wallpaper…**, **Copy**, **Export To…**, **Export
   As…** and **Add to Favorites** for it.
 
 ## Reusing assets
@@ -247,6 +247,15 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - **Set an image as your wallpaper** with **Set as Wallpaper…** in the right-click menu of the
   grid or of the preview. GNOME shows a preview before applying it to the desktop and the lock
   screen. Images that GNOME cannot show as they are, such as SVG, are given to it as PNG.
+- **Frame a wallpaper yourself** with **Prepare as Wallpaper…** in the same menus. A large
+  window shows a virtual screen at the real resolution of the screen Pigoune is shown on, for
+  example 1920 × 1080, under an imitation of the bar of your desktop (GNOME or KDE Plasma; the
+  **Desktop Bar** switch hides it). Drag the image to move it, zoom with the mouse wheel, the
+  slider or <kbd>+</kbd> and <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd>
+  moves further). **Fill the Screen** frames it the way GNOME would, **Whole Image** shows all
+  of it and **Actual Size** shows one pixel of the image per pixel of the screen. What goes
+  past the screen stays visible, faded. **Set as Wallpaper** then makes an image exactly the
+  size of the screen, so the desktop shows exactly what you framed.
 
 ## Trash and undo
 
