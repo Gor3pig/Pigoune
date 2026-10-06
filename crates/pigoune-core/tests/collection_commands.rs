@@ -842,3 +842,45 @@ fn the_removal_of_a_collection_is_announced_before_it_happens() {
     );
     assert_eq!(fixture.snapshot(), before);
 }
+
+#[test]
+fn restoring_a_collection_whose_name_was_reused_renames_it() {
+    let mut fixture = Fixture::new();
+    let old = fixture.collection("Logos", None);
+    let asset = fixture.asset_in("red-dot.png", Some(old));
+    let restore = fixture.apply(&CollectionCommand::Trash { id: old });
+    let newcomer = fixture.collection("Logos", None);
+
+    fixture.apply(&restore);
+
+    assert_eq!(fixture.name_of(newcomer), "Logos");
+    assert_eq!(fixture.name_of(old), "Logos (2)");
+    assert_eq!(fixture.collections_of(asset), [old]);
+}
+
+#[test]
+fn a_restored_collection_takes_the_first_free_numbered_name() {
+    let mut fixture = Fixture::new();
+    let old = fixture.collection("Logos", None);
+    let restore = fixture.apply(&CollectionCommand::Trash { id: old });
+    fixture.collection("Logos", None);
+    fixture.collection("Logos (2)", None);
+
+    fixture.apply(&restore);
+
+    assert_eq!(fixture.name_of(old), "Logos (3)");
+}
+
+#[test]
+fn restoring_a_collection_without_a_clash_keeps_its_name() {
+    let mut fixture = Fixture::new();
+    let brands = fixture.collection("Marques", None);
+    let tech = fixture.collection("Tech", Some(brands));
+    let restore = fixture.apply(&CollectionCommand::Trash { id: brands });
+    fixture.collection("Autre", None);
+
+    fixture.apply(&restore);
+
+    assert_eq!(fixture.name_of(brands), "Marques");
+    assert_eq!(fixture.name_of(tech), "Tech");
+}

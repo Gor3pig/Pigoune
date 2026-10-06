@@ -3,7 +3,8 @@ use std::collections::HashSet;
 use rusqlite::{Connection, OptionalExtension, params};
 
 use super::collection::{
-    self, Collection, CollectionLook, ensure_name_is_free, is_usable_collection, valid_name,
+    self, Collection, CollectionLook, ensure_name_is_free, find_child_named, is_usable_collection,
+    valid_name,
 };
 use super::{AssetId, Change, CollectionError, CollectionId, Library, LibraryError, clock};
 
@@ -300,6 +301,9 @@ fn set_trashed(
 ) -> Result<CollectionCommand, CollectionError> {
     let moment = trashed.then(clock::now_unix_ms);
     for id in collections {
+        if !trashed {
+            free_the_name_of(connection, *id)?;
+        }
         connection.execute(
             "UPDATE collections SET trashed_at_unix_ms = ?2 WHERE id = ?1",
             params![id, moment],
@@ -316,6 +320,30 @@ fn set_trashed(
         assets: assets.to_vec(),
         trashed: !trashed,
     })
+}
+
+fn free_the_name_of(connection: &Connection, id: CollectionId) -> Result<(), CollectionError> {
+    let (name, parent): (String, Option<CollectionId>) = connection.query_row(
+        "SELECT name, parent_id FROM collections WHERE id = ?1",
+        [id],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
+    if find_child_named(connection, parent, &name)?.is_none() {
+        return Ok(());
+    }
+    let mut number = 2_u32;
+    let free = loop {
+        let candidate = format!("{name} ({number})");
+        if find_child_named(connection, parent, &candidate)?.is_none() {
+            break candidate;
+        }
+        number += 1;
+    };
+    connection.execute(
+        "UPDATE collections SET name = ?2 WHERE id = ?1",
+        params![id, free],
+    )?;
+    Ok(())
 }
 
 fn add_assets(
