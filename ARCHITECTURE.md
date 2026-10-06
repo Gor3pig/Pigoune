@@ -84,6 +84,13 @@ to change it.
   tiles, mirror, dim), then `wallpaper.rs` hands it to the Wallpaper portal.
 - Long tasks (imports, thumbnails) run off the main thread or asynchronously, so that the
   interface never freezes.
+- Thumbnails (`thumbnails.rs`): a tile that appears asks for its thumbnail, and at most four
+  loads run at once (`load_slots.rs`), a tile that leaves the screen giving up its load. A new
+  thumbnail is shrunk on the processor in a background task, `RgbaImage::shrunk_to` in the core
+  averaging whole blocks before the quality filter, and its PNG is encoded in the background
+  too, so scrolling a library without thumbnails does not block the window.
+- The count of a single view comes from `Library::view_count`; `view_counts` is kept for the
+  sidebar, where the smart collections are counted in one pass over the library.
 - `build.rs` compiles the Blueprint files, the GResource bundle, the development translations
   and the settings schema, so that `cargo run` works without installing anything. It also
   merges the translations into the metainfo, which the About window reads to show what is new.

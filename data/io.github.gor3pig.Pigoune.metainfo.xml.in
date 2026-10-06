@@ -24,39 +24,39 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/01.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/02.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/03.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/03.png</image>
       <caption>Look closely at an asset and step through its animation</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/04.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/04.png</image>
       <caption>Convert assets to PNG, JPEG, WebP, AVIF or ICO</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/05.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/05.png</image>
       <caption>See what your library holds, in light or dark style</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/06.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/06.png</image>
       <caption>Combine words with “and” or “or” in one click</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/07.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/07.png</image>
       <caption>Save a search as a smart collection that fills itself</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/08.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/08.png</image>
       <caption>Find the images that fit your screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.2.0/data/screenshots/09.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.3.0/data/screenshots/09.png</image>
       <caption>Frame any image and set it as your wallpaper</caption>
     </screenshot>
   </screenshots>
@@ -92,6 +92,19 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="2.3.0" date="2026-10-07">
+      <description>
+        <p>Much faster on large libraries, a clearer wallpaper window and shorter, simpler tags.</p>
+        <ul>
+          <li>Opening a library and searching are several times faster, and scrolling through thousands of thumbnails stays smooth, even before they have been created.</li>
+          <li>A tag is now a single word of up to 20 characters: a space ends the tag you are typing and a hyphen joins several words. Existing tags are left as they are.</li>
+          <li>The wallpaper framing window is rearranged around the virtual screen, with a discreet note when the image will look blurry.</li>
+          <li>Long names are shortened instead of stretching the panels, and the windows fit the narrowest size even with larger text.</li>
+          <li>The search finds œ and æ when you type oe and ae, and exporting can no longer ask for a size that would crash Pigoune.</li>
+          <li>Pigoune now tells you when an image cannot be loaded and when links were ignored while importing a folder.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.2.0" date="2026-10-06">
       <description>
         <p>Turn your images into wallpapers, framed exactly the way you want.</p>

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 22:41+0200\n"
+"POT-Creation-Date: 2026-10-07 00:36+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -97,330 +97,374 @@ msgid "Frame any image and set it as your wallpaper"
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:97
-msgid "Turn your images into wallpapers, framed exactly the way you want."
+msgid ""
+"Much faster on large libraries, a clearer wallpaper window and shorter, "
+"simpler tags."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:99
+msgid ""
+"Opening a library and searching are several times faster, and scrolling "
+"through thousands of thumbnails stays smooth, even before they have been "
+"created."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:100
+msgid ""
+"A tag is now a single word of up to 20 characters: a space ends the tag you "
+"are typing and a hyphen joins several words. Existing tags are left as they "
+"are."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:101
+msgid ""
+"The wallpaper framing window is rearranged around the virtual screen, with a "
+"discreet note when the image will look blurry."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:102
+msgid ""
+"Long names are shortened instead of stretching the panels, and the windows "
+"fit the narrowest size even with larger text."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:103
+msgid ""
+"The search finds œ and æ when you type oe and ae, and exporting can no "
+"longer ask for a size that would crash Pigoune."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:104
+msgid ""
+"Pigoune now tells you when an image cannot be loaded and when links were "
+"ignored while importing a folder."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:110
+msgid "Turn your images into wallpapers, framed exactly the way you want."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:112
 msgid ""
 "Frame an image on a virtual copy of your screen, under the bars of your "
 "desktop, and set it as your wallpaper."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:100
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:113
 msgid ""
 "Fill the empty space with a color of the image, a gradient, a blur or a "
 "mosaic, and darken or mirror the image if you wish."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:101
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:114
 msgid ""
 "Filter assets by shape and keep only the images that fit your screen, also "
 "in smart collections."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:102
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:115
 msgid ""
 "Libraries opened with Pigoune 2.2 can no longer be opened with older "
 "versions."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:108
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:121
 msgid "Pigoune speaks more languages and looks the same everywhere."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:110
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:123
 msgid ""
 "The interface is now available in German, Spanish, Brazilian Portuguese, "
 "Italian, Dutch and Polish."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:111
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:124
 msgid ""
 "Choose the language of Pigoune in the preferences, or keep the one of your "
 "system."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:112
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:125
 msgid "The icons of Pigoune are the same on every distribution."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:118
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:131
 msgid ""
 "A fresh look for the sidebar, the details and the preview, collections with "
 "their own icon and color, and a search by color."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:120
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:133
 msgid "Each collection can have its own icon and color."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:121
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:134
 msgid "Filter assets by their main colors, or by any color you pick."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:122
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:135
 msgid "The sidebar folds its sections and shows tags as pills."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:123
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:136
 msgid ""
 "The details panel is organized in foldable sections, with quick actions and "
 "the detected colors."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:124
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:137
 msgid ""
 "The preview zooms in from the thumbnail, shows a strip of thumbnails and can "
 "show the details panel next to the asset."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:125
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:138
 msgid "The library information and the preferences are organized in tabs."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:126
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:139
 msgid ""
 "Libraries opened with Pigoune 2.0 can no longer be opened with older "
 "versions."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:132
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:145
 msgid "Update notices and smoother organizing."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:134
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:147
 msgid ""
 "Pigoune tells you when a new version is available and installs it in one "
 "click."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:135
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:148
 msgid "Creating a collection can now be undone."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:136
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:149
 msgid ""
 "A rename in the details panel is confirmed by clicking anywhere else, and "
 "the full name appears when it is shortened."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:137
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:150
 msgid ""
 "The shortcuts window lists the keys of the sidebar, and a few preferences "
 "are worded more clearly."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:143
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:156
 msgid "Smart collections, richer searches and more preferences."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:145
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:158
 msgid ""
 "Create smart collections that fill themselves with the assets matching your "
 "words, types and favorites."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:146
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:159
 msgid ""
 "Search several words at once: words joined by “and” must all be found, words "
 "joined by “or” are alternatives."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:147
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:160
 msgid "The search shows where it looks and how many assets it found."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:148
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:161
 msgid ""
 "New preferences: thumbnail background, format badges, double-click to open, "
 "search the whole library, and showing or hiding tags and smart collections "
 "in the sidebar."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:149
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:162
 msgid "The details panel keeps the same width whatever the selected asset."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:150
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:163
 msgid ""
 "Libraries opened with Pigoune 1.6 can no longer be opened with an older "
 "version, so update Pigoune on all your computers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:156
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:169
 msgid "Pigoune now has its own website and updates itself."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:158
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:171
 msgid "The About window links to the new website of Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:159
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:172
 msgid "Pigoune installed from its website updates itself through Software."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:165
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:178
 msgid "Libraries ready to grow, and their real location shown in Flatpak."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:167
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:180
 msgid ""
 "Assets are now sorted into small subfolders inside a library, so very large "
 "libraries stay easy to handle for file managers, backups, sync tools and USB "
 "drives."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:168
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:181
 msgid ""
 "The welcome page, the recent libraries and the library information show the "
 "real folder of a library instead of a technical path."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:169
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:182
 msgid ""
 "Libraries opened with Pigoune 1.5 can no longer be opened with an older "
 "version, so update Pigoune on all your computers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:175
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:188
 msgid ""
 "A big update, with new formats, conversion and a closer look at your "
 "libraries."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:177
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:190
 msgid ""
 "Import AVIF, JPEG XL, TIFF and BMP images, and play animated PNG and WebP "
 "images."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:178
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:191
 msgid "Pause an animation in the preview and step through it frame by frame."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:179
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:192
 msgid ""
 "Export assets converted to PNG, JPEG, WebP, AVIF or ICO, with size, quality, "
 "background and multi-size icons."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:180
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:193
 msgid ""
 "See the key figures of a library, a chart of the space used by each format, "
 "its disk space and its records."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:181
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:194
 msgid "Reopen recent libraries from the main menu or the welcome page."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:182
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:195
 msgid ""
 "Choose whether to reopen the last library, play animations on hover and how "
 "many recent libraries to keep, and clear the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:183
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:196
 msgid ""
 "Libraries opened with Pigoune 1.4 can no longer be opened with an older "
 "version, so update Pigoune on all your computers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:189
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:202
 msgid "Take a much closer look at your assets in the detailed preview."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:191
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:204
 msgid ""
 "Move between assets with on-screen arrows, a two-finger swipe, Home and End."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:192
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:205
 msgid "See the format, dimensions and size of the shown asset."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:193
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:206
 msgid ""
 "Drag the image freely, zoom with new buttons, and fill the screen with F11."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:194
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:207
 msgid "Spot the real edges of an image and, from 800%, every single pixel."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:195
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:208
 msgid "Star, copy, export or open the shown asset without leaving the preview."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:196
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:209
 msgid "Switch between the sizes stored in an ICO file."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:197
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:210
 msgid "Open any asset in another application with Open With."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:198
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:211
 msgid "Grab the window more easily by the middle of the library header."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:204
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:217
 msgid "Stop the thumbnail grid from flickering while the window is resized."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:209
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:222
 msgid "Give the thumbnail grid a cleaner look."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:211
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:224
 msgid "Thumbnails sit in square frames, evenly spaced across the whole width."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:212
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:225
 msgid "Favorites show a larger yellow star that grows with the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:213
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:226
 msgid "A new preference hides the names under the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:214
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:227
 msgid ""
 "Small images stay sharp, and the lasso shows the selection while it is drawn."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:220
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:233
 msgid "Add a user guide, available from the main menu or with F1."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:225
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:238
 msgid "The first public version of Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:227
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:240
 msgid ""
 "Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with "
 "duplicate detection"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:228
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:241
 msgid ""
 "Organize assets with nested collections, tags, favorites, notes and credits"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:229
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:242
 msgid "Find any asset instantly with search and filters"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:230
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:243
 msgid "Preview assets up close, animated GIFs included"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:231
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:244
 msgid "Reuse assets by dragging, copying or exporting them"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:232
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:245
 msgid "Undo changes and restore assets from the trash"
 msgstr ""
 
@@ -810,96 +854,96 @@ msgstr ""
 msgid "Sizes, in pixels, gathered in an exported ICO file."
 msgstr ""
 
-#: crates/pigoune-app/ui/window.blp:58 crates/pigoune-app/ui/window.blp:183
+#: crates/pigoune-app/ui/window.blp:62 crates/pigoune-app/ui/window.blp:187
 msgid "Main Menu"
 msgstr "Hauptmenü"
 
-#: crates/pigoune-app/ui/window.blp:65
+#: crates/pigoune-app/ui/window.blp:69
 msgid "Welcome to Pigoune"
 msgstr "Willkommen bei Pigoune"
 
-#: crates/pigoune-app/ui/window.blp:66
+#: crates/pigoune-app/ui/window.blp:70
 msgid "All your graphic assets, organized and within reach."
 msgstr "Alle Ihre Grafikressourcen, geordnet und griffbereit."
 
-#: crates/pigoune-app/ui/window.blp:78 crates/pigoune-app/ui/window.blp:321
-#: crates/pigoune-app/ui/window.blp:357
+#: crates/pigoune-app/ui/window.blp:82 crates/pigoune-app/ui/window.blp:325
+#: crates/pigoune-app/ui/window.blp:361
 msgid "_New Library…"
 msgstr "_Neue Bibliothek …"
 
-#: crates/pigoune-app/ui/window.blp:90 crates/pigoune-app/ui/window.blp:326
-#: crates/pigoune-app/ui/window.blp:362
+#: crates/pigoune-app/ui/window.blp:94 crates/pigoune-app/ui/window.blp:330
+#: crates/pigoune-app/ui/window.blp:366
 msgid "_Open Library…"
 msgstr "Bibliothek _öffnen …"
 
-#: crates/pigoune-app/ui/window.blp:109
+#: crates/pigoune-app/ui/window.blp:113
 #: crates/pigoune-app/ui/preferences-dialog.blp:29
 msgid "Recent Libraries"
 msgstr "Zuletzt verwendete Bibliotheken"
 
-#: crates/pigoune-app/ui/window.blp:129 crates/pigoune-app/src/window.rs:1434
+#: crates/pigoune-app/ui/window.blp:133 crates/pigoune-app/src/window.rs:1434
 msgid "Clear the List"
 msgstr "Liste leeren"
 
-#: crates/pigoune-app/ui/window.blp:175
+#: crates/pigoune-app/ui/window.blp:179
 msgid "Import"
 msgstr "Importieren"
 
-#: crates/pigoune-app/ui/window.blp:212
+#: crates/pigoune-app/ui/window.blp:216
 msgid "Images are copied into the library. The originals are not modified."
 msgstr ""
 "Bilder werden in die Bibliothek kopiert. Die Originale werden nicht "
 "verändert."
 
-#: crates/pigoune-app/ui/window.blp:225
+#: crates/pigoune-app/ui/window.blp:229
 msgid "Your Library Is Empty"
 msgstr "Ihre Bibliothek ist leer"
 
-#: crates/pigoune-app/ui/window.blp:226
+#: crates/pigoune-app/ui/window.blp:230
 msgid "Imported icons, logos and illustrations will appear here."
 msgstr "Importierte Symbole, Logos und Illustrationen werden hier angezeigt."
 
-#: crates/pigoune-app/ui/window.blp:234 crates/pigoune-app/ui/window.blp:307
+#: crates/pigoune-app/ui/window.blp:238 crates/pigoune-app/ui/window.blp:311
 msgid "Import _Files…"
 msgstr "_Dateien importieren …"
 
-#: crates/pigoune-app/ui/window.blp:245 crates/pigoune-app/ui/window.blp:312
+#: crates/pigoune-app/ui/window.blp:249 crates/pigoune-app/ui/window.blp:316
 msgid "Import a F_older…"
 msgstr "_Ordner importieren …"
 
-#: crates/pigoune-app/ui/window.blp:264 crates/pigoune-app/src/window.rs:844
+#: crates/pigoune-app/ui/window.blp:268 crates/pigoune-app/src/window.rs:844
 msgid "Resources in the trash are deleted for good only when it is emptied."
 msgstr "Ressourcen im Papierkorb werden erst beim Leeren endgültig gelöscht."
 
-#: crates/pigoune-app/ui/window.blp:265 crates/pigoune-app/src/window.rs:859
+#: crates/pigoune-app/ui/window.blp:269 crates/pigoune-app/src/window.rs:859
 msgid "_Empty Trash…"
 msgstr "Papierkorb _leeren …"
 
-#: crates/pigoune-app/ui/window.blp:282
+#: crates/pigoune-app/ui/window.blp:286
 msgid "Details"
 msgstr "Details"
 
-#: crates/pigoune-app/ui/window.blp:333 crates/pigoune-app/ui/window.blp:381
+#: crates/pigoune-app/ui/window.blp:337 crates/pigoune-app/ui/window.blp:385
 msgid "_Preferences"
 msgstr "_Einstellungen"
 
-#: crates/pigoune-app/ui/window.blp:338 crates/pigoune-app/ui/window.blp:386
+#: crates/pigoune-app/ui/window.blp:342 crates/pigoune-app/ui/window.blp:390
 msgid "_Keyboard Shortcuts"
 msgstr "_Tastenkürzel"
 
-#: crates/pigoune-app/ui/window.blp:343 crates/pigoune-app/ui/window.blp:391
+#: crates/pigoune-app/ui/window.blp:347 crates/pigoune-app/ui/window.blp:395
 msgid "_Help"
 msgstr "_Hilfe"
 
-#: crates/pigoune-app/ui/window.blp:348 crates/pigoune-app/ui/window.blp:396
+#: crates/pigoune-app/ui/window.blp:352 crates/pigoune-app/ui/window.blp:400
 msgid "_About Pigoune"
 msgstr "_Info zu Pigoune"
 
-#: crates/pigoune-app/ui/window.blp:369
+#: crates/pigoune-app/ui/window.blp:373
 msgid "Library _Information"
 msgstr "Bibliotheks_informationen"
 
-#: crates/pigoune-app/ui/window.blp:374
+#: crates/pigoune-app/ui/window.blp:378
 msgid "_Close Library"
 msgstr "Bibliothek _schließen"
 
@@ -917,7 +961,7 @@ msgstr "Neue Bibliothek"
 #: crates/pigoune-app/ui/collection-look-dialog.blp:16
 #: crates/pigoune-app/ui/export-as-dialog.blp:19
 #: crates/pigoune-app/ui/smart-collection-dialog.blp:17
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:37
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:38
 msgid "_Cancel"
 msgstr "_Abbrechen"
 
@@ -941,7 +985,7 @@ msgid "My Library"
 msgstr "Meine Bibliothek"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:58
-#: crates/pigoune-app/ui/library-info-dialog.blp:249
+#: crates/pigoune-app/ui/library-info-dialog.blp:250
 msgid "Location"
 msgstr "Speicherort"
 
@@ -1126,7 +1170,7 @@ msgstr "Abmessungen"
 
 #: crates/pigoune-app/src/window.rs:603
 #: crates/pigoune-app/ui/grid-header.blp:133
-#: crates/pigoune-app/ui/library-info-dialog.blp:163
+#: crates/pigoune-app/ui/library-info-dialog.blp:164
 msgid "Size"
 msgstr "Größe"
 
@@ -1201,12 +1245,12 @@ msgstr "Vorschau öffnen"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:253
-#: crates/pigoune-app/src/asset_preview.rs:1137
+#: crates/pigoune-app/src/asset_preview.rs:1154
 msgid "Open With…"
 msgstr "Öffnen mit …"
 
 #: crates/pigoune-app/src/window.rs:1810
-#: crates/pigoune-app/src/asset_preview.rs:1139
+#: crates/pigoune-app/src/asset_preview.rs:1156
 msgid "Frame and Set as Wallpaper…"
 msgstr "Zuschneiden und als Hintergrundbild festlegen …"
 
@@ -1225,33 +1269,33 @@ msgstr "_Wiederherstellen"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:260
-#: crates/pigoune-app/src/asset_preview.rs:1143
+#: crates/pigoune-app/src/asset_preview.rs:1160
 msgid "Copy"
 msgstr "Kopieren"
 
 #: crates/pigoune-app/src/window.rs:1831
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:267
-#: crates/pigoune-app/src/asset_preview.rs:1146
+#: crates/pigoune-app/src/asset_preview.rs:1163
 msgid "Export To…"
 msgstr "Exportieren nach …"
 
 #: crates/pigoune-app/src/window.rs:1833
-#: crates/pigoune-app/src/asset_preview.rs:1147
+#: crates/pigoune-app/src/asset_preview.rs:1164
 msgid "Export As…"
 msgstr "Exportieren als …"
 
 #: crates/pigoune-app/src/window.rs:1838
-#: crates/pigoune-app/src/asset_preview.rs:518
-#: crates/pigoune-app/src/asset_preview.rs:1150
+#: crates/pigoune-app/src/asset_preview.rs:535
+#: crates/pigoune-app/src/asset_preview.rs:1167
 #: crates/pigoune-app/src/asset_details.rs:502
 #: crates/pigoune-app/src/asset_details.rs:560
 msgid "Remove from Favorites"
 msgstr "Aus Favoriten entfernen"
 
 #: crates/pigoune-app/src/window.rs:1840
-#: crates/pigoune-app/src/asset_preview.rs:522
-#: crates/pigoune-app/src/asset_preview.rs:1152
+#: crates/pigoune-app/src/asset_preview.rs:539
+#: crates/pigoune-app/src/asset_preview.rs:1169
 #: crates/pigoune-app/src/asset_details.rs:504
 #: crates/pigoune-app/src/asset_details.rs:562
 msgid "Add to Favorites"
@@ -1953,7 +1997,7 @@ msgstr "Die Größe Ihres Bildschirms konnte nicht ermittelt werden"
 
 #: crates/pigoune-app/src/filter_choices.rs:269
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:265
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:267
 msgid "Color"
 msgstr "Farbe"
 
@@ -2147,7 +2191,7 @@ msgstr "Originalgröße"
 
 #: crates/pigoune-app/ui/asset-preview.blp:23
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:160
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:57
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:62
 msgid "Full Screen"
 msgstr "Vollbild"
 
@@ -2174,19 +2218,19 @@ msgid "Library"
 msgstr "Bibliothek"
 
 #: crates/pigoune-app/ui/asset-preview.blp:100
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:130
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:107
 msgid "Zoom"
 msgstr "Zoom"
 
 #: crates/pigoune-app/ui/asset-preview.blp:112
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:145
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:118
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:95
 msgid "Zoom Out"
 msgstr "Verkleinern"
 
 #: crates/pigoune-app/ui/asset-preview.blp:123
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:140
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:144
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:121
 msgid "Zoom In"
 msgstr "Vergrößern"
 
@@ -2226,7 +2270,7 @@ msgid "Previous Frame"
 msgstr "Vorheriges Bild"
 
 #: crates/pigoune-app/ui/asset-preview.blp:355
-#: crates/pigoune-app/src/asset_preview.rs:967
+#: crates/pigoune-app/src/asset_preview.rs:984
 msgid "Pause"
 msgstr "Pause"
 
@@ -2245,28 +2289,28 @@ msgstr "Vorherige Ressource"
 msgid "Next Resource"
 msgstr "Nächste Ressource"
 
-#: crates/pigoune-app/src/asset_preview.rs:969
+#: crates/pigoune-app/src/asset_preview.rs:986
 msgid "Play"
 msgstr "Abspielen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1027
+#: crates/pigoune-app/src/asset_preview.rs:1044
 msgid "The full-size image could not be loaded: showing its thumbnail"
 msgstr ""
 "Das Bild in voller Größe konnte nicht geladen werden: Es wird die Vorschau "
 "angezeigt"
 
-#: crates/pigoune-app/src/asset_preview.rs:1029
+#: crates/pigoune-app/src/asset_preview.rs:1046
 msgid "This image could not be loaded: its file may be missing or damaged"
 msgstr ""
 "Dieses Bild konnte nicht geladen werden: Die Datei fehlt oder ist beschädigt"
 
-#: crates/pigoune-app/src/asset_preview.rs:1122
-#: crates/pigoune-app/src/wallpaper_dialog.rs:672
+#: crates/pigoune-app/src/asset_preview.rs:1139
+#: crates/pigoune-app/src/wallpaper_dialog.rs:690
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:1186
+#: crates/pigoune-app/src/asset_preview.rs:1203
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} von {count}"
@@ -2643,7 +2687,7 @@ msgid "After 30 days"
 msgstr "Nach 30 Tagen"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:61
-#: crates/pigoune-app/ui/library-info-dialog.blp:205
+#: crates/pigoune-app/ui/library-info-dialog.blp:206
 msgid "Storage"
 msgstr "Speicher"
 
@@ -3070,7 +3114,7 @@ msgid "In no collection"
 msgstr "In keiner Sammlung"
 
 #: crates/pigoune-app/src/color_chips.rs:70
-#: crates/pigoune-app/ui/library-info-dialog.blp:184
+#: crates/pigoune-app/ui/library-info-dialog.blp:185
 msgid "Detected Colors"
 msgstr "Erkannte Farben"
 
@@ -3550,31 +3594,31 @@ msgstr "Rekorde"
 msgid "Content"
 msgstr "Inhalt"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:168
+#: crates/pigoune-app/ui/library-info-dialog.blp:169
 msgid "Number"
 msgstr "Anzahl"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:225
+#: crates/pigoune-app/ui/library-info-dialog.blp:226
 msgid "Disk Space"
 msgstr "Speicherplatz"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:255
+#: crates/pigoune-app/ui/library-info-dialog.blp:256
 msgid "Copy the Location"
 msgstr "Speicherort kopieren"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:267
+#: crates/pigoune-app/ui/library-info-dialog.blp:268
 msgid "Open the Folder"
 msgstr "Ordner öffnen"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:278
+#: crates/pigoune-app/ui/library-info-dialog.blp:279
 msgid "Disk"
 msgstr "Datenträger"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:282
+#: crates/pigoune-app/ui/library-info-dialog.blp:283
 msgid "Created"
 msgstr "Erstellt"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:286
+#: crates/pigoune-app/ui/library-info-dialog.blp:287
 msgid "Compatibility"
 msgstr "Kompatibilität"
 
@@ -3773,23 +3817,23 @@ msgstr ""
 "Schließen und öffnen Sie Pigoune erneut, um die neue Version zu verwenden"
 
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:5
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:32
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:33
 msgid "Frame the Wallpaper"
 msgstr "Hintergrundbild zuschneiden"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:44
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:49
 msgid "_Set as Wallpaper"
 msgstr "Als Hintergrundbild _festlegen"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:155
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:132
 msgid "100%: one pixel of the image for one pixel of the screen"
 msgstr "100 %: ein Bildpixel pro Bildschirmpixel"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:169
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:146
 msgid "Fill"
 msgstr "Füllen"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:170
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:147
 msgid ""
 "Covers the whole screen, as the desktop does; the edges that go past it are "
 "cut"
@@ -3797,11 +3841,11 @@ msgstr ""
 "Bedeckt den ganzen Bildschirm wie die Arbeitsumgebung; überstehende Ränder "
 "werden abgeschnitten"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:175
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:152
 msgid "Whole"
 msgstr "Ganz"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:176
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:153
 msgid ""
 "Shows the whole image; the rest of the screen is filled as chosen under "
 "Empty Space"
@@ -3809,112 +3853,112 @@ msgstr ""
 "Zeigt das ganze Bild; der Rest des Bildschirms wird wie unter „Leerer "
 "Bereich“ gewählt gefüllt"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:181
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:158
 msgid ""
 "One pixel of the image for one pixel of the screen, for the sharpest result"
 msgstr "Ein Bildpixel pro Bildschirmpixel, für die schärfste Darstellung"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:195
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:172
 msgid "Mirror"
 msgstr "Spiegeln"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:196
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:173
 msgid "Flips the image from left to right, in the wallpaper only"
 msgstr "Spiegelt das Bild von links nach rechts, nur im Hintergrundbild"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:201
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:178
 msgid "Thirds"
 msgstr "Drittel"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:202
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:179
 msgid "Shows the rule of thirds grid, to place the subject"
 msgstr "Zeigt das Drittelraster, um das Motiv zu platzieren"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:207
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:184
 msgid "Snap"
 msgstr "Einrasten"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:208
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:185
 msgid ""
 "While dragging, the image snaps to the center and the edges of the screen"
 msgstr ""
 "Beim Ziehen rastet das Bild an der Mitte und den Rändern des Bildschirms ein"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:215
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:217
 msgid "Screen"
 msgstr "Bildschirm"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:240
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:242
 msgid "Empty Space"
 msgstr "Leerer Bereich"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:249
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:251
 msgid "Visible when the image does not cover the whole screen"
 msgstr "Sichtbar, wenn das Bild nicht den ganzen Bildschirm bedeckt"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:270
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:272
 msgid "Gradient"
 msgstr "Verlauf"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:275
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:277
 msgid "Blur"
 msgstr "Unschärfe"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:280
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:282
 msgid "Mosaic"
 msgstr "Mosaik"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:310
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:312
 msgid "Angle"
 msgstr "Winkel"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:316
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:318
 msgid "Direction of the gradient: 0° goes up, 90° to the right, 180° down"
 msgstr "Richtung des Verlaufs: 0° nach oben, 90° nach rechts, 180° nach unten"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:346
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:348
 msgid "Start Color"
 msgstr "Startfarbe"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:352
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:354
 msgid "Choose the start color"
 msgstr "Startfarbe wählen"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:362
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:364
 msgid "End Color"
 msgstr "Endfarbe"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:368
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:370
 msgid "Choose the end color"
 msgstr "Endfarbe wählen"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:384
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:386
 msgid "Swap Colors"
 msgstr "Farben tauschen"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:395
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:397
 msgid "Image"
 msgstr "Bild"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:401
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:403
 msgid "Darken"
 msgstr "Abdunkeln"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:407
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:409
 msgid "Darkens the whole wallpaper so that icons and bars stay readable"
 msgstr ""
 "Dunkelt das ganze Hintergrundbild ab, damit Symbole und Leisten lesbar "
 "bleiben"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:430
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:432
 msgid "Simulation"
 msgstr "Simulation"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:433
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:435
 msgid "Desktop Simulation"
 msgstr "Arbeitsumgebung simulieren"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:434
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:436
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
@@ -3922,15 +3966,11 @@ msgstr ""
 "Zeigt die Leisten Ihrer Arbeitsumgebung über dem Bild, um den Zuschnitt zu "
 "beurteilen. Sie sind nicht Teil des Hintergrundbilds."
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:440
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:442
 msgid "Desktop"
 msgstr "Arbeitsumgebung"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:459
-msgid "Also Add the Edited Version to the Library"
-msgstr "Bearbeitete Version auch zur Bibliothek hinzufügen"
-
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:460
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:461
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
@@ -3938,7 +3978,11 @@ msgstr ""
 "Das zugeschnittene Bild in Bildschirmgröße wird eine neue Ressource. Das "
 "Originalbild bleibt unverändert."
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:176
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:464
+msgid "Also Add the Edited Version to the Library"
+msgstr "Bearbeitete Version auch zur Bibliothek hinzufügen"
+
+#: crates/pigoune-app/src/wallpaper_dialog.rs:181
 msgid ""
 "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to "
 "adjust it"
@@ -3946,23 +3990,23 @@ msgstr ""
 "Ziehen Sie das Bild, um es zu verschieben; zoomen Sie mit dem Mausrad und "
 "justieren Sie es mit den Pfeiltasten"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:239
+#: crates/pigoune-app/src/wallpaper_dialog.rs:243
 #, rust-format
 msgid "Image enlarged to {percent}: it will look blurry on this screen"
 msgstr ""
 "Bild auf {percent} vergrößert: Es wird auf diesem Bildschirm unscharf "
 "aussehen"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:374
+#: crates/pigoune-app/src/wallpaper_dialog.rs:376
 msgid "Colors of the image, or another color"
 msgstr "Farben des Bildes oder eine andere Farbe"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:379
+#: crates/pigoune-app/src/wallpaper_dialog.rs:381
 #, rust-format
 msgid "{angle}°"
 msgstr "{angle}°"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:414
+#: crates/pigoune-app/src/wallpaper_dialog.rs:432
 msgid ""
 "GNOME shows the same wallpaper on every screen: it is prepared for the one "
 "chosen here"
@@ -3970,18 +4014,18 @@ msgstr ""
 "GNOME zeigt auf allen Bildschirmen dasselbe Hintergrundbild: Es wird für den "
 "hier gewählten vorbereitet"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:419
+#: crates/pigoune-app/src/wallpaper_dialog.rs:437
 msgid "Prepare For"
 msgstr "Vorbereiten für"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:602
+#: crates/pigoune-app/src/wallpaper_dialog.rs:620
 msgid ""
 "Full screen simulation: the wallpaper is not set yet. Press Esc to come back."
 msgstr ""
 "Vollbildsimulation: Das Hintergrundbild ist noch nicht festgelegt. Esc "
 "drücken, um zurückzukehren."
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:676
+#: crates/pigoune-app/src/wallpaper_dialog.rs:694
 #, rust-format
 msgid "{width} × {height} pixels, the screen where Pigoune is shown"
 msgstr ""
