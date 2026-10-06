@@ -93,7 +93,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
         hscrollbar-policy: never;
         propagate-natural-height: true;
         hexpand: false;
-        width-request: 300;
+        width-request: 340;
 
         child: Box {
           orientation: vertical;
@@ -242,7 +242,6 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
             Adw.ToggleGroup backdrop_toggles {
               active-name: "color";
-              homogeneous: true;
               margin-top: 6;
               notify::active-name => $on_backdrop_changed() swapped;
 
@@ -252,32 +251,127 @@ template $PigouneWallpaperDialog: Adw.Dialog {
               }
 
               Adw.Toggle {
+                name: "gradient";
+                label: _("Gradient");
+              }
+
+              Adw.Toggle {
                 name: "blur";
                 label: _("Blur");
               }
+
+              Adw.Toggle {
+                name: "mosaic";
+                label: _("Mosaic");
+              }
             }
 
-            ListBox color_list {
-              selection-mode: none;
+            Box swatches_box {
+              orientation: vertical;
+              spacing: 6;
               margin-top: 6;
 
-              styles [
-                "boxed-list",
-              ]
+              Label swatches_hint {
+                xalign: 0;
+                wrap: true;
 
-              Adw.ActionRow {
-                title: _("Background Color");
-                activatable-widget: color_button;
+                styles [
+                  "dim-label",
+                  "caption",
+                ]
+              }
+            }
 
-                [suffix]
-                ColorDialogButton color_button {
-                  valign: center;
-                  notify::rgba => $on_backdrop_changed() swapped;
+            Box gradient_box {
+              orientation: vertical;
+              spacing: 6;
+              margin-top: 6;
+              visible: false;
 
-                  dialog: ColorDialog {
-                    with-alpha: false;
+              Box {
+                spacing: 6;
+
+                Label {
+                  label: _("Angle");
+                }
+
+                Scale angle_scale {
+                  hexpand: true;
+                  draw-value: false;
+                  tooltip-text: _("Direction of the gradient: 0° goes up, 90° to the right, 180° down");
+                  value-changed => $on_gradient_color_changed() swapped;
+
+                  adjustment: Adjustment {
+                    lower: 0;
+                    upper: 360;
+                    step-increment: 1;
+                    page-increment: 45;
+                    value: 180;
                   };
                 }
+
+                Label angle_label {
+                  width-chars: 4;
+                  xalign: 1;
+
+                  styles [
+                    "numeric",
+                  ]
+                }
+              }
+
+              ListBox {
+                selection-mode: none;
+
+                styles [
+                  "boxed-list",
+                ]
+
+                Adw.ActionRow {
+                  title: _("Start Color");
+                  activatable-widget: top_button;
+
+                  [suffix]
+                  ColorDialogButton top_button {
+                    valign: center;
+                    tooltip-text: _("Choose the start color");
+                    notify::rgba => $on_gradient_color_changed() swapped;
+
+                    dialog: ColorDialog {
+                      with-alpha: false;
+                    };
+                  }
+                }
+
+                Adw.ActionRow {
+                  title: _("End Color");
+                  activatable-widget: bottom_button;
+
+                  [suffix]
+                  ColorDialogButton bottom_button {
+                    valign: center;
+                    tooltip-text: _("Choose the end color");
+                    notify::rgba => $on_gradient_color_changed() swapped;
+
+                    dialog: ColorDialog {
+                      with-alpha: false;
+                    };
+                  }
+                }
+              }
+
+              Button {
+                halign: end;
+                clicked => $on_swap_clicked() swapped;
+
+                child: Adw.ButtonContent {
+                  icon-name: "object-flip-vertical-symbolic";
+                  label: _("Swap Colors");
+                };
+
+                styles [
+                  "flat",
+                ]
               }
             }
           }

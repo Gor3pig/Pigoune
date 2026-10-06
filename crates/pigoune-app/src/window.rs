@@ -2392,6 +2392,12 @@ impl PigouneWindow {
             natural: natural_size(asset),
             name: asset.display_name(),
             is_vector: asset.asset().format == AssetFormat::Svg,
+            colors: asset
+                .asset()
+                .colors
+                .iter()
+                .map(|color| (color.average, asset_colors::color_name(color.family)))
+                .collect(),
         };
         let asset = asset.clone();
         let dialog = PigouneWallpaperDialog::new(

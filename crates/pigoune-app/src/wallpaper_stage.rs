@@ -279,7 +279,7 @@ impl PigouneWallpaperStage {
         );
         snapshot.pop();
         snapshot.push_clip(&screen_rect);
-        self.draw_backdrop(snapshot, &texture, &screen_rect, scale);
+        self.draw_backdrop(snapshot, &texture, (&screen_rect, &image_rect), scale);
         append_image(
             snapshot,
             &texture,
@@ -306,15 +306,37 @@ impl PigouneWallpaperStage {
         &self,
         snapshot: &gtk::Snapshot,
         texture: &gdk::Texture,
-        screen_rect: &graphene::Rect,
+        (screen_rect, image_rect): (&graphene::Rect, &graphene::Rect),
         scale: f64,
     ) {
         let imp = self.imp();
         match imp.backdrop.get() {
             Backdrop::Color(channels) => {
-                let [red, green, blue] =
-                    channels.map(|channel| f32::from(channel) / COLOR_CHANNEL_MAX);
-                snapshot.append_color(&gdk::RGBA::new(red, green, blue, 1.0), screen_rect);
+                snapshot.append_color(&rgba_of(channels), screen_rect);
+            }
+            Backdrop::Gradient(start, end, angle) => {
+                let (from, to) = gradient_ends(screen_rect, f64::from(angle));
+                snapshot.append_linear_gradient(
+                    screen_rect,
+                    &from,
+                    &to,
+                    &[
+                        gsk::ColorStop::new(0.0, rgba_of(start)),
+                        gsk::ColorStop::new(1.0, rgba_of(end)),
+                    ],
+                );
+            }
+            Backdrop::Mosaic => {
+                snapshot.append_color(&gdk::RGBA::BLACK, screen_rect);
+                snapshot.push_repeat(screen_rect, Some(image_rect));
+                append_image(
+                    snapshot,
+                    texture,
+                    image_rect,
+                    imp.mirrored.get(),
+                    gsk::ScalingFilter::Trilinear,
+                );
+                snapshot.pop();
             }
             Backdrop::Blur => {
                 let screen = imp.screen.get();
@@ -482,6 +504,34 @@ impl PigouneWallpaperStage {
         self.change(self.framing().moved(by));
         glib::Propagation::Stop
     }
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "drawing coordinates fit easily in f32"
+)]
+fn gradient_ends(area: &graphene::Rect, angle_degrees: f64) -> (graphene::Point, graphene::Point) {
+    let angle = angle_degrees.to_radians();
+    let (across, down) = (angle.sin(), -angle.cos());
+    let (width, height) = (f64::from(area.width()), f64::from(area.height()));
+    let half = f64::midpoint(width * across.abs(), height * down.abs());
+    let center = area.center();
+    let (center_x, center_y) = (f64::from(center.x()), f64::from(center.y()));
+    (
+        graphene::Point::new(
+            (center_x - across * half) as f32,
+            (center_y - down * half) as f32,
+        ),
+        graphene::Point::new(
+            (center_x + across * half) as f32,
+            (center_y + down * half) as f32,
+        ),
+    )
+}
+
+fn rgba_of(channels: [u8; 3]) -> gdk::RGBA {
+    let [red, green, blue] = channels.map(|channel| f32::from(channel) / COLOR_CHANNEL_MAX);
+    gdk::RGBA::new(red, green, blue, 1.0)
 }
 
 fn append_image(

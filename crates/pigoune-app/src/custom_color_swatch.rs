@@ -265,7 +265,7 @@ fn rgb_of(rgba: &gdk::RGBA) -> Rgb {
     )
 }
 
-fn ink_on(color: Rgb) -> &'static str {
+pub fn ink_on(color: Rgb) -> &'static str {
     let luminance = 0.2126 * f64::from(color.red)
         + 0.7152 * f64::from(color.green)
         + 0.0722 * f64::from(color.blue);

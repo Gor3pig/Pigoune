@@ -185,6 +185,65 @@ impl RgbaImage {
     }
 
     #[must_use]
+    pub fn linear_gradient(
+        width: u32,
+        height: u32,
+        (start, end): ([u8; 3], [u8; 3]),
+        angle_degrees: f64,
+    ) -> Self {
+        let width = width.max(1);
+        let height = height.max(1);
+        let angle = angle_degrees.to_radians();
+        let (across, down) = (angle.sin(), -angle.cos());
+        let (sides_width, sides_height) = (f64::from(width), f64::from(height));
+        let length = (sides_width * across.abs() + sides_height * down.abs()).max(1.0);
+        let mut pixels = Vec::with_capacity(to_index(width) * to_index(height) * CHANNELS);
+        for row in 0..height {
+            for column in 0..width {
+                let x = f64::from(column) + 0.5 - sides_width / 2.0;
+                let y = f64::from(row) + 0.5 - sides_height / 2.0;
+                let share = ((x * across + y * down) / length + 0.5).clamp(0.0, 1.0);
+                let mix = |from: u8, to: u8| {
+                    to_byte(f64::from(from) + (f64::from(to) - f64::from(from)) * share)
+                };
+                pixels.extend([
+                    mix(start[0], end[0]),
+                    mix(start[1], end[1]),
+                    mix(start[2], end[2]),
+                    u8::MAX,
+                ]);
+            }
+        }
+        Self {
+            width,
+            height,
+            pixels,
+        }
+    }
+
+    #[must_use]
+    pub fn tiled(&self, width: u32, height: u32, left: i64, top: i64) -> Self {
+        let width = width.max(1);
+        let height = height.max(1);
+        let tile_width = i64::from(self.width);
+        let tile_height = i64::from(self.height);
+        let mut pixels = Vec::with_capacity(to_index(width) * to_index(height) * CHANNELS);
+        for row in 0..i64::from(height) {
+            let source_row = to_index_i64((row - top).rem_euclid(tile_height));
+            for column in 0..i64::from(width) {
+                let source_column = to_index_i64((column - left).rem_euclid(tile_width));
+                let start = (source_row * to_index(self.width) + source_column) * CHANNELS;
+                pixels.extend_from_slice(&self.pixels[start..start + CHANNELS]);
+            }
+        }
+        Self {
+            width,
+            height,
+            pixels,
+        }
+    }
+
+    #[must_use]
     pub fn mirrored(&self) -> Self {
         let row_length = to_index(self.width) * CHANNELS;
         let pixels = self
@@ -296,6 +355,10 @@ pub fn fitted_within(width: u32, height: u32, longest: u32) -> (u32, u32) {
             .max(1)
     };
     (scale(width), scale(height))
+}
+
+fn to_index_i64(value: i64) -> usize {
+    usize::try_from(value).unwrap_or(0)
 }
 
 fn to_index(value: u32) -> usize {
@@ -636,5 +699,33 @@ mod tests {
             .mirrored();
         let reds: Vec<u8> = flipped.pixels().chunks(4).map(|pixel| pixel[0]).collect();
         assert_eq!(reds, [2, 1, 4, 3]);
+    }
+
+    #[test]
+    fn a_gradient_follows_its_angle() {
+        let red = |image: &RgbaImage, x: usize, y: usize| image.pixels()[(y * 4 + x) * 4];
+        let down = RgbaImage::linear_gradient(4, 4, ([0, 0, 0], [240, 0, 0]), 180.0);
+        assert!(red(&down, 0, 0) < red(&down, 0, 3));
+        assert_eq!(red(&down, 0, 1), red(&down, 3, 1));
+        let right = RgbaImage::linear_gradient(4, 4, ([0, 0, 0], [240, 0, 0]), 90.0);
+        assert!(red(&right, 0, 0) < red(&right, 3, 0));
+        assert_eq!(red(&right, 1, 0), red(&right, 1, 3));
+        let diagonal = RgbaImage::linear_gradient(4, 4, ([0, 0, 0], [240, 0, 0]), 135.0);
+        assert!(red(&diagonal, 0, 0) < red(&diagonal, 3, 3));
+        assert_eq!(red(&diagonal, 3, 0), red(&diagonal, 0, 3));
+        let up = RgbaImage::linear_gradient(1, 2, ([0, 0, 0], [240, 0, 0]), 0.0);
+        assert!(up.pixels()[0] > up.pixels()[4]);
+    }
+
+    #[test]
+    fn tiles_repeat_from_any_origin() {
+        let pixels = vec![1, 0, 0, 255, 2, 0, 0, 255];
+        let tile = RgbaImage::new(2, 1, pixels).expect("valid image");
+        let reds = |image: &RgbaImage| -> Vec<u8> {
+            image.pixels().chunks(4).map(|pixel| pixel[0]).collect()
+        };
+        assert_eq!(reds(&tile.tiled(5, 1, 0, 0)), [1, 2, 1, 2, 1]);
+        assert_eq!(reds(&tile.tiled(5, 1, 1, 0)), [2, 1, 2, 1, 2]);
+        assert_eq!(reds(&tile.tiled(3, 2, -1, 0)), [2, 1, 2, 2, 1, 2]);
     }
 }

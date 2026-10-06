@@ -10,7 +10,9 @@ pub const BLUR_BRIGHTNESS: f64 = 0.85;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Backdrop {
     Color([u8; 3]),
+    Gradient([u8; 3], [u8; 3], u16),
     Blur,
+    Mosaic,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

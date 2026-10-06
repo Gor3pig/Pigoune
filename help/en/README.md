@@ -257,7 +257,13 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   screen: GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being
   chosen at first. Turn it off to see the image alone.
 - Under **Empty Space**, choose what fills the screen around a smaller image: a **Color**,
-  black at first, or **Blur**, the same image enlarged and blurred behind it.
+  black at first, a **Gradient**, **Blur**, the same image enlarged and
+  blurred behind it, or **Mosaic**, the image repeated over the whole screen, handy for
+  patterns. Colors are picked from swatches showing the main colors of the image, black and
+  white, and the rainbow swatch opens the GNOME color chooser. A gradient starts from the two main
+  colors of the image, from top to bottom; **Angle** turns it (0° goes up, 90° to the right,
+  180° down), the **Start Color** and **End Color** buttons open the GNOME color chooser, and
+  **Swap Colors** exchanges them.
 - **Set as Wallpaper** makes an image exactly the size of the screen, so the desktop shows
   exactly what you framed; a small window shows the preparation, then GNOME asks you to confirm.
   Tick **Also Add the Edited Version to the Library** to keep that image as a new asset.

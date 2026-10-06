@@ -289,7 +289,14 @@ ses critères.
   virtuel : GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez
   étant choisi d'office. Désactivez-la pour voir l'image seule.
 - Sous **Espace vide**, choisissez ce qui remplit l'écran autour d'une image plus petite : une
-  **Couleur**, noire au départ, ou le **Flou**, la même image agrandie et floutée derrière elle.
+  **Couleur**, noire au départ, un **Dégradé**, le **Flou**, la même image
+  agrandie et floutée derrière elle, ou la **Mosaïque**, l'image répétée sur tout l'écran,
+  pratique pour les motifs. Les couleurs se choisissent parmi des pastilles qui reprennent les
+  couleurs principales de l'image, le noir et le blanc, et la pastille arc-en-ciel ouvre le
+  sélecteur de couleur de GNOME. Un dégradé part des deux couleurs principales de
+  l'image, du haut vers le bas ; **Angle** le fait tourner (0° vers le haut, 90° vers la droite,
+  180° vers le bas), les boutons **Couleur de début** et **Couleur de fin** ouvrent le sélecteur
+  de couleur de GNOME, et **Inverser les couleurs** les échange.
 - **Définir comme fond d'écran** fabrique une image exactement à la taille de l'écran : le
   bureau montre exactement ce que vous avez cadré. Une petite fenêtre montre la préparation,
   puis GNOME vous demande de confirmer. Cochez **Ajouter aussi à la bibliothèque la version

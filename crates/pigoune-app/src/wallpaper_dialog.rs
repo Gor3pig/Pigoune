@@ -7,24 +7,31 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib};
-use pigoune_core::Dimensions;
+use pigoune_core::{AssetColor, Dimensions, Rgb};
 
+use crate::asset_colors;
 use crate::desktop_bars::Desktop;
 use crate::thumbnails;
 use crate::wallpaper_framing::{ACTUAL_SCALE, Backdrop, Framing};
 use crate::wallpaper_stage::PigouneWallpaperStage;
+use crate::wallpaper_swatches::ColorSwatches;
 use crate::zoom_math::Size;
 
 const SHOWN_VECTOR_PIXELS: u32 = 2048;
 const BUTTON_ZOOM_FACTOR: f64 = 1.25;
+const GRADIENT: &str = "gradient";
 const BLUR: &str = "blur";
+const MOSAIC: &str = "mosaic";
+const BLACK: Rgb = Rgb::new(0, 0, 0);
+const CHANNEL_MAX: f32 = 255.0;
+const FULL_TURN: f64 = 360.0;
+const WHITE: Rgb = Rgb::new(255, 255, 255);
 const SHARPNESS_TOLERANCE: f64 = 0.005;
 const FULL_SCREEN_STYLE: &str = "wallpaper-full-screen";
 const NOTICE_STYLE: &str = "wallpaper-notice";
 const SIMULATION_ICON: &str = "view-fullscreen-symbolic";
 const NOTICE_MARGIN: i32 = 24;
 const NOTICE_DURATION: Duration = Duration::from_secs(4);
-const COLOR_CHANNEL_MAX: f32 = 255.0;
 
 type SetCallback = Box<dyn Fn(WallpaperChoice)>;
 
@@ -41,17 +48,22 @@ pub struct WallpaperSource {
     pub natural: (u32, u32),
     pub name: String,
     pub is_vector: bool,
+    pub colors: Vec<(Rgb, String)>,
 }
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::cell::{Cell, OnceCell, RefCell};
+    use std::rc::Rc;
 
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
 
+    use pigoune_core::Rgb;
+
     use super::SetCallback;
     use crate::wallpaper_stage::PigouneWallpaperStage;
+    use crate::wallpaper_swatches::ColorSwatches;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/wallpaper-dialog.ui")]
@@ -69,7 +81,23 @@ mod imp {
         #[template_child]
         pub backdrop_toggles: TemplateChild<adw::ToggleGroup>,
         #[template_child]
-        pub color_list: TemplateChild<gtk::ListBox>,
+        pub swatches_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub swatches_hint: TemplateChild<gtk::Label>,
+        pub swatches: OnceCell<Rc<ColorSwatches>>,
+        pub color: Cell<Option<Rgb>>,
+        pub gradient: Cell<Option<(Rgb, Rgb)>>,
+        #[template_child]
+        pub gradient_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub top_button: TemplateChild<gtk::ColorDialogButton>,
+        #[template_child]
+        pub bottom_button: TemplateChild<gtk::ColorDialogButton>,
+        pub showing_gradient: Cell<bool>,
+        #[template_child]
+        pub angle_scale: TemplateChild<gtk::Scale>,
+        #[template_child]
+        pub angle_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub screen_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
@@ -85,8 +113,6 @@ mod imp {
         #[template_child]
         pub snap_button: TemplateChild<gtk::ToggleButton>,
         pub is_vector: Cell<bool>,
-        #[template_child]
-        pub color_button: TemplateChild<gtk::ColorDialogButton>,
         #[template_child]
         pub desktop_row: TemplateChild<adw::ComboRow>,
         #[template_child]
@@ -156,7 +182,7 @@ impl PigouneWallpaperDialog {
         imp.desktop_row
             .set_selected(u32::try_from(position).unwrap_or(0));
         imp.stage.set_desktop(detected);
-        imp.color_button.set_rgba(&gtk::gdk::RGBA::BLACK);
+        dialog.offer_colors(&source.colors);
         imp.on_set.replace(Some(Box::new(on_set)));
         imp.stage.connect_changed(glib::clone!(
             #[weak]
@@ -250,21 +276,100 @@ impl PigouneWallpaperDialog {
         self.imp().stage.grab_focus();
     }
 
+    fn offer_colors(&self, image_colors: &[(Rgb, String)]) {
+        let imp = self.imp();
+        let mut colors: Vec<(Rgb, String)> = image_colors.to_vec();
+        for (extra, family) in [(BLACK, AssetColor::Black), (WHITE, AssetColor::White)] {
+            if !colors.iter().any(|(color, _)| *color == extra) {
+                colors.push((extra, asset_colors::color_name(family)));
+            }
+        }
+        let top = image_colors.first().map_or(BLACK, |(color, _)| *color);
+        let bottom = image_colors.get(1).map_or(WHITE, |(color, _)| *color);
+        imp.color.set(Some(BLACK));
+        imp.gradient.set(Some((top, bottom)));
+        let swatches = ColorSwatches::new(&colors);
+        imp.swatches_box.append(swatches.widget());
+        swatches.connect_picked(glib::clone!(
+            #[weak(rename_to = dialog)]
+            self,
+            move |color| dialog.pick_color(color)
+        ));
+        if imp.swatches.set(swatches).is_err() {
+            unreachable!("colors are offered once");
+        }
+        self.on_backdrop_changed();
+    }
+
+    fn pick_color(&self, color: Rgb) {
+        self.imp().color.set(Some(color));
+        self.on_backdrop_changed();
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "the angle is rounded and kept between 0 and 360 degrees"
+    )]
+    fn gradient_angle(&self) -> u16 {
+        self.imp().angle_scale.value().round().clamp(0.0, FULL_TURN) as u16
+    }
+
+    #[template_callback]
+    fn on_gradient_color_changed(&self) {
+        let imp = self.imp();
+        if imp.showing_gradient.get() {
+            return;
+        }
+        imp.gradient.set(Some((
+            rgb_of(&imp.top_button.rgba()),
+            rgb_of(&imp.bottom_button.rgba()),
+        )));
+        self.on_backdrop_changed();
+    }
+
+    #[template_callback]
+    fn on_swap_clicked(&self) {
+        let imp = self.imp();
+        let (top, bottom) = imp.gradient.get().unwrap_or((BLACK, WHITE));
+        imp.gradient.set(Some((bottom, top)));
+        self.on_backdrop_changed();
+    }
+
     fn backdrop(&self) -> Backdrop {
         let imp = self.imp();
-        if imp.backdrop_toggles.active_name().as_deref() == Some(BLUR) {
-            return Backdrop::Blur;
+        let (top, bottom) = imp.gradient.get().unwrap_or((BLACK, WHITE));
+        match imp.backdrop_toggles.active_name().as_deref() {
+            Some(GRADIENT) => {
+                Backdrop::Gradient(channels(top), channels(bottom), self.gradient_angle())
+            }
+            Some(BLUR) => Backdrop::Blur,
+            Some(MOSAIC) => Backdrop::Mosaic,
+            _ => Backdrop::Color(channels(imp.color.get().unwrap_or(BLACK))),
         }
-        let color = imp.color_button.rgba();
-        Backdrop::Color([color.red(), color.green(), color.blue()].map(channel_byte))
     }
 
     #[template_callback]
     fn on_backdrop_changed(&self) {
         let imp = self.imp();
         let backdrop = self.backdrop();
-        imp.color_list
+        let color = imp.color.get().unwrap_or(BLACK);
+        let (top, bottom) = imp.gradient.get().unwrap_or((BLACK, WHITE));
+        imp.swatches_box
             .set_visible(matches!(backdrop, Backdrop::Color(_)));
+        imp.gradient_box
+            .set_visible(matches!(backdrop, Backdrop::Gradient(..)));
+        imp.swatches_hint
+            .set_label(&gettext("Colors of the image, or another color"));
+        if let Some(swatches) = imp.swatches.get() {
+            swatches.show_chosen(&[color]);
+        }
+        imp.angle_label
+            .set_label(&gettext("{angle}°").replace("{angle}", &self.gradient_angle().to_string()));
+        imp.showing_gradient.set(true);
+        imp.top_button.set_rgba(&rgba_of(top));
+        imp.bottom_button.set_rgba(&rgba_of(bottom));
+        imp.showing_gradient.set(false);
         imp.stage.set_backdrop(backdrop);
     }
 
@@ -402,13 +507,23 @@ impl PigouneWallpaperDialog {
     }
 }
 
+fn rgba_of(color: Rgb) -> gdk::RGBA {
+    let [red, green, blue] = channels(color).map(|channel| f32::from(channel) / CHANNEL_MAX);
+    gdk::RGBA::new(red, green, blue, 1.0)
+}
+
 #[expect(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
     reason = "the channel is rounded and clamped to the range of a byte"
 )]
-fn channel_byte(channel: f32) -> u8 {
-    (channel.clamp(0.0, 1.0) * COLOR_CHANNEL_MAX).round() as u8
+fn rgb_of(rgba: &gdk::RGBA) -> Rgb {
+    let byte = |channel: f32| (channel.clamp(0.0, 1.0) * CHANNEL_MAX).round() as u8;
+    Rgb::new(byte(rgba.red()), byte(rgba.green()), byte(rgba.blue()))
+}
+
+fn channels(color: Rgb) -> [u8; 3] {
+    [color.red, color.green, color.blue]
 }
 
 fn full_screen_notice() -> gtk::Revealer {

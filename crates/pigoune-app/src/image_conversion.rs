@@ -18,6 +18,7 @@ const DEFAULT_QUALITY: u8 = 90;
 const WHITE: [u8; 3] = [255, 255, 255];
 const BLACK: [u8; 3] = [0, 0, 0];
 const BLUR_REDUCTION: u32 = 8;
+const LARGEST_TILE_SCREENS: u64 = 4;
 const LARGEST_WALLPAPER_SOURCE: f64 = 8192.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -222,34 +223,82 @@ pub async fn wallpaper(
         loaded
     };
     on_step(WallpaperStep::Framing);
-    let behind = match backdrop {
-        Backdrop::Blur => blurred_backdrop(&loaded, screen).await?,
-        Backdrop::Color(_) => RgbaImage::new(1, 1, vec![0; RGBA_CHANNELS])
-            .ok_or(ConversionError::EncodingFailed)?
-            .placed_on(screen.0, screen.1, screen.0, screen.1),
+    let canvas = match backdrop {
+        Backdrop::Mosaic => mosaic(&loaded, image, screen).await?,
+        Backdrop::Color(_) | Backdrop::Gradient(..) | Backdrop::Blur => {
+            let behind = match backdrop {
+                Backdrop::Blur => blurred_backdrop(&loaded, screen).await?,
+                Backdrop::Gradient(start, end, angle) => {
+                    RgbaImage::linear_gradient(screen.0, screen.1, (start, end), f64::from(angle))
+                }
+                Backdrop::Color(_) | Backdrop::Mosaic => blank(screen)?,
+            };
+            framed_over(&loaded, image, screen, &behind).await?
+        }
     };
-    let canvas =
-        match wallpaper_framing::visible_part((loaded.width(), loaded.height()), image, screen) {
-            Some(part) => {
-                let (left, top, width, height) = part.source;
-                let (target_left, target_top, target_width, target_height) = part.target;
-                let cut = loaded.cropped(left, top, width, height);
-                let sized = resized(cut, target_width, target_height).await?;
-                sized.placed_over(&behind, target_left, target_top)
-            }
-            None => behind,
-        };
     let settings = ConversionSettings {
         format: TargetFormat::Png,
         keep_transparency: false,
         background: match backdrop {
             Backdrop::Color(color) => color,
-            Backdrop::Blur => BLACK,
+            Backdrop::Gradient(..) | Backdrop::Blur | Backdrop::Mosaic => BLACK,
         },
         ..ConversionSettings::default()
     };
     on_step(WallpaperStep::Saving);
     encode(canvas, settings).await
+}
+
+fn blank(screen: (u32, u32)) -> Result<RgbaImage, ConversionError> {
+    Ok(RgbaImage::new(1, 1, vec![0; RGBA_CHANNELS])
+        .ok_or(ConversionError::EncodingFailed)?
+        .placed_on(screen.0, screen.1, screen.0, screen.1))
+}
+
+async fn framed_over(
+    loaded: &RgbaImage,
+    image: Frame,
+    screen: (u32, u32),
+    behind: &RgbaImage,
+) -> Result<RgbaImage, ConversionError> {
+    let Some(part) =
+        wallpaper_framing::visible_part((loaded.width(), loaded.height()), image, screen)
+    else {
+        return Ok(behind.clone());
+    };
+    let (left, top, width, height) = part.source;
+    let (target_left, target_top, target_width, target_height) = part.target;
+    let cut = loaded.cropped(left, top, width, height);
+    let sized = resized(cut, target_width, target_height).await?;
+    Ok(sized.placed_over(behind, target_left, target_top))
+}
+
+async fn mosaic(
+    loaded: &RgbaImage,
+    image: Frame,
+    screen: (u32, u32),
+) -> Result<RgbaImage, ConversionError> {
+    let tile_width = whole_side(image.width);
+    let tile_height = whole_side(image.height);
+    let screen_area = u64::from(screen.0) * u64::from(screen.1);
+    if u64::from(tile_width) * u64::from(tile_height) > screen_area * LARGEST_TILE_SCREENS {
+        return framed_over(loaded, image, screen, &blank(screen)?).await;
+    }
+    let tile = resized(loaded.clone(), tile_width, tile_height).await?;
+    let (left, top) = (whole_offset(image.x), whole_offset(image.y));
+    gio::spawn_blocking(move || tile.tiled(screen.0, screen.1, left, top))
+        .await
+        .map_err(|_| ConversionError::EncodingFailed)
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "the offset is rounded and clamped to a drawn position"
+)]
+fn whole_offset(value: f64) -> i64 {
+    value
+        .round()
+        .clamp(-LARGEST_WALLPAPER_SOURCE, LARGEST_WALLPAPER_SOURCE) as i64
 }
 
 async fn blurred_backdrop(
