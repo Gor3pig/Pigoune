@@ -57,7 +57,9 @@ mod imp {
         #[template_child]
         pub backdrop_toggles: TemplateChild<adw::ToggleGroup>,
         #[template_child]
-        pub color_group: TemplateChild<adw::PreferencesGroup>,
+        pub color_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
+        pub framing_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
         pub color_button: TemplateChild<gtk::ColorDialogButton>,
         #[template_child]
@@ -111,7 +113,11 @@ impl PigouneWallpaperDialog {
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
         imp.window_title.set_subtitle(&source.name);
-        imp.hint_label.set_label(&hint_text(screen));
+        imp.hint_label.set_label(&gettext(
+            "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to adjust it",
+        ));
+        imp.framing_group
+            .set_description(Some(&screen_text(screen)));
         let names: Vec<&str> = Desktop::ALL.iter().map(|desktop| desktop.name()).collect();
         imp.desktop_row
             .set_model(Some(&gtk::StringList::new(&names)));
@@ -183,27 +189,32 @@ impl PigouneWallpaperDialog {
     fn on_zoom_in_clicked(&self) {
         let stage = &self.imp().stage;
         stage.zoom_to(stage.framing().scale * BUTTON_ZOOM_FACTOR, None);
+        self.imp().stage.grab_focus();
     }
 
     #[template_callback]
     fn on_zoom_out_clicked(&self) {
         let stage = &self.imp().stage;
         stage.zoom_to(stage.framing().scale / BUTTON_ZOOM_FACTOR, None);
+        self.imp().stage.grab_focus();
     }
 
     #[template_callback]
     fn on_fill_clicked(&self) {
         self.imp().stage.fill_screen();
+        self.imp().stage.grab_focus();
     }
 
     #[template_callback]
     fn on_whole_clicked(&self) {
         self.imp().stage.show_whole_image();
+        self.imp().stage.grab_focus();
     }
 
     #[template_callback]
     fn on_actual_clicked(&self) {
         self.imp().stage.show_actual_size();
+        self.imp().stage.grab_focus();
     }
 
     fn backdrop(&self) -> Backdrop {
@@ -219,7 +230,7 @@ impl PigouneWallpaperDialog {
     fn on_backdrop_changed(&self) {
         let imp = self.imp();
         let backdrop = self.backdrop();
-        imp.color_group
+        imp.color_row
             .set_visible(matches!(backdrop, Backdrop::Color(_)));
         imp.stage.set_backdrop(backdrop);
     }
@@ -267,8 +278,8 @@ fn channel_byte(channel: f32) -> u8 {
     (channel.clamp(0.0, 1.0) * COLOR_CHANNEL_MAX).round() as u8
 }
 
-fn hint_text(screen: Dimensions) -> String {
-    gettext("Screen: {width} × {height} · Drag to move, scroll to zoom, arrow keys to adjust")
+fn screen_text(screen: Dimensions) -> String {
+    gettext("Screen where Pigoune is shown: {width} × {height} pixels")
         .replace("{width}", &screen.width().to_string())
         .replace("{height}", &screen.height().to_string())
 }

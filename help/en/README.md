@@ -225,11 +225,12 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   turn off **Keep Transparency** to use a background color too. Choose the width and height, in
   pixels or as a percentage; 100% keeps the original size. With the padlock closed, proportions
   are kept: changing one side updates the other, and several images of different shapes each fit
-  inside the given width and height. Open it to stretch an image freely. To make a wallpaper,
-  turn on **Size of My Screen**: each image takes exactly the size of the screen Pigoune is
-  shown on, for example 1920 × 1080. **Fill** covers the whole screen and cuts the edges that
-  overflow, around the center; **Fit** keeps the whole image and fills the bands with the
-  background color, or leaves them transparent when transparency is kept. SVG images stay sharp
+  inside the given width and height. Open it to stretch an image freely. To fit several images
+  to your screen at once, turn on **Size of My Screen**: each image takes exactly the size of
+  the screen Pigoune is shown on, for example 1920 × 1080. **Fill the Screen** covers the whole
+  screen and cuts the edges that overflow, around the center; **Whole Image** keeps the whole
+  image and fills the bands with the background color, or leaves them transparent when
+  transparency is kept. SVG images stay sharp
   at any size; an enlarged pixel image becomes blurry. A resized file carries its size in its
   name, such as `logo-512x384.png`. From the preview, an animation paused on a frame exports
   that frame, named for instance `spinner-frame-3.png`. For ICO, tick the sizes to include (16,

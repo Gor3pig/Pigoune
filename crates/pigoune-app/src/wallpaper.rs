@@ -11,9 +11,20 @@ const PORTAL_PATH: &str = "/org/freedesktop/portal/desktop";
 const WALLPAPER_INTERFACE: &str = "org.freedesktop.portal.Wallpaper";
 const REQUEST_INTERFACE: &str = "org.freedesktop.portal.Request";
 const SET_ON_BOTH: &str = "both";
-const RESPONSE_FAILED: u32 = 2;
+const RESPONSE_APPLIED: u32 = 0;
+const RESPONSE_CANCELLED: u32 = 1;
 
-pub async fn set_wallpaper(file: &Path, on_failure: impl Fn() + 'static) -> Result<(), String> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WallpaperResponse {
+    Applied,
+    Cancelled,
+    Failed,
+}
+
+pub async fn set_wallpaper(
+    file: &Path,
+    on_response: impl Fn(WallpaperResponse) + 'static,
+) -> Result<(), String> {
     let image = File::open(file).map_err(|error| error.to_string())?;
     let descriptors = gio::UnixFDList::new();
     let index = descriptors
@@ -51,9 +62,11 @@ pub async fn set_wallpaper(file: &Path, on_failure: impl Fn() + 'static) -> Resu
         None,
         gio::DBusSignalFlags::NO_MATCH_RULE,
         move |signal| {
-            if response_code(signal.parameters) == Some(RESPONSE_FAILED) {
-                on_failure();
-            }
+            on_response(match response_code(signal.parameters) {
+                Some(RESPONSE_APPLIED) => WallpaperResponse::Applied,
+                Some(RESPONSE_CANCELLED) => WallpaperResponse::Cancelled,
+                _ => WallpaperResponse::Failed,
+            });
             let held = Rc::clone(&held);
             glib::idle_add_local_once(move || {
                 held.take();

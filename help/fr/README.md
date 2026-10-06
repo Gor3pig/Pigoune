@@ -256,11 +256,11 @@ ses critères.
   pourcentage ; 100 % garde la taille d'origine. Cadenas fermé, les proportions sont gardées :
   changer un côté ajuste l'autre, et plusieurs images de formes différentes tiennent chacune
   dans la largeur et la hauteur indiquées. Ouvrez-le pour étirer librement une image. Pour
-  préparer un fond d'écran, activez **Taille de mon écran** : chaque image prend exactement la
-  taille de l'écran où se trouve Pigoune, par exemple 1920 × 1080. **Remplir** couvre tout
-  l'écran et coupe les bords qui dépassent, autour du centre ; **Ajuster** garde toute l'image et
-  remplit les bandes avec la couleur de fond, ou les laisse transparentes quand la transparence
-  est gardée. Un SVG
+  adapter plusieurs images à votre écran d'un coup, activez **Taille de mon écran** : chaque
+  image prend exactement la taille de l'écran où se trouve Pigoune, par exemple 1920 × 1080.
+  **Remplir l'écran** couvre tout l'écran et coupe les bords qui dépassent, autour du centre ;
+  **Image entière** garde toute l'image et remplit les bandes avec la couleur de fond, ou les
+  laisse transparentes quand la transparence est gardée. Un SVG
   reste net à toutes les tailles ; une image en pixels agrandie devient floue. Un fichier
   redimensionné porte sa taille dans son nom, par exemple `logo-512x384.png`. Depuis l'aperçu,
   une animation en pause sur une image exporte cette image, nommée par exemple

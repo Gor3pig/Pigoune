@@ -2,7 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneWallpaperDialog: Adw.Dialog {
-  title: _("Prepare as Wallpaper");
+  title: _("Frame the Wallpaper");
   content-width: 1100;
   content-height: 720;
   width-request: 360;
@@ -24,7 +24,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
       show-end-title-buttons: false;
 
       title-widget: Adw.WindowTitle window_title {
-        title: _("Prepare as Wallpaper");
+        title: _("Frame the Wallpaper");
       };
 
       [start]
@@ -66,8 +66,8 @@ template $PigouneWallpaperDialog: Adw.Dialog {
           margin-start: 12;
           margin-end: 12;
 
-          Adw.PreferencesGroup {
-            title: _("Size");
+          Adw.PreferencesGroup framing_group {
+            title: _("Framing");
 
             Box {
               orientation: vertical;
@@ -90,6 +90,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
                 Scale zoom_scale {
                   hexpand: true;
+                  tooltip-text: _("Zoom");
                   draw-value: false;
                   value-changed => $on_zoom_scale_changed() swapped;
 
@@ -114,6 +115,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
                 }
 
                 Label zoom_label {
+                  tooltip-text: _("100%: one pixel of the image for one pixel of the screen");
                   width-chars: 6;
                   xalign: 1;
 
@@ -130,16 +132,19 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
                 Button {
                   label: _("Fill the Screen");
+                  tooltip-text: _("Covers the whole screen, as the desktop does; the edges that go past it are cut");
                   clicked => $on_fill_clicked() swapped;
                 }
 
                 Button {
                   label: _("Whole Image");
+                  tooltip-text: _("Shows the whole image; the rest of the screen is filled as chosen under Empty Space");
                   clicked => $on_whole_clicked() swapped;
                 }
 
                 Button {
                   label: _("Actual Size");
+                  tooltip-text: _("One pixel of the image for one pixel of the screen, for the sharpest result");
                   clicked => $on_actual_clicked() swapped;
                 }
               }
@@ -148,6 +153,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
           Adw.PreferencesGroup {
             title: _("Empty Space");
+            description: _("Visible when the image does not cover the whole screen");
 
             Adw.ToggleGroup backdrop_toggles {
               active-name: "color";
@@ -164,11 +170,9 @@ template $PigouneWallpaperDialog: Adw.Dialog {
                 label: _("Blur");
               }
             }
-          }
 
-          Adw.PreferencesGroup color_group {
-            Adw.ActionRow {
-              title: _("Color");
+            Adw.ActionRow color_row {
+              title: _("Background Color");
               activatable-widget: color_button;
 
               [suffix]
@@ -184,10 +188,9 @@ template $PigouneWallpaperDialog: Adw.Dialog {
           }
 
           Adw.PreferencesGroup {
-            title: _("Desktop");
-
             Adw.SwitchRow bar_row {
               title: _("Desktop Simulation");
+              subtitle: _("Shows the bars of your desktop over the image, to judge the framing. They are not part of the wallpaper.");
               active: true;
               notify::active => $on_bar_changed() swapped;
             }
@@ -212,6 +215,7 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
       CheckButton add_check {
         label: _("Also Add the Edited Version to the Library");
+        tooltip-text: _("The framed image, at the size of the screen, becomes a new resource. The original image stays untouched.");
       }
 
       Label hint_label {

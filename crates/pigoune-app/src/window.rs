@@ -51,7 +51,7 @@ use crate::undo_message;
 use crate::update_banner;
 use crate::update_news::UpdateNews;
 use crate::view_setting;
-use crate::wallpaper;
+use crate::wallpaper::{self, WallpaperResponse};
 use crate::wallpaper_dialog::{PigouneWallpaperDialog, WallpaperChoice, WallpaperSource};
 use crate::wallpaper_progress_dialog::PigouneWallpaperProgressDialog;
 use crate::zoom_math::Size;
@@ -2422,16 +2422,9 @@ impl PigouneWindow {
         let prepared = self
             .prepared_wallpaper(asset, choice, screen, &progress)
             .await;
-        let to_import = prepared
-            .as_ref()
-            .ok()
-            .filter(|_| choice.adds_to_library)
-            .cloned();
-        self.apply_wallpaper(prepared, &asset.display_name()).await;
+        self.apply_wallpaper(prepared, &asset.display_name(), choice.adds_to_library)
+            .await;
         progress.force_close();
-        if let Some(file) = to_import {
-            self.import_paths(vec![file]).await;
-        }
     }
 
     async fn prepared_wallpaper(
@@ -2479,15 +2472,32 @@ impl PigouneWindow {
         Ok(file)
     }
 
-    async fn apply_wallpaper(&self, prepared: Result<PathBuf, String>, name: &str) {
+    async fn apply_wallpaper(
+        &self,
+        prepared: Result<PathBuf, String>,
+        name: &str,
+        adds_to_library: bool,
+    ) {
         let failure = gettext("Unable to set “{name}” as wallpaper").replace("{name}", name);
         let result = match prepared {
             Ok(file) => {
                 let window = self.downgrade();
                 let later_failure = failure.clone();
-                wallpaper::set_wallpaper(&file, move || {
-                    if let Some(window) = window.upgrade() {
-                        window.show_toast(&later_failure);
+                let kept = adds_to_library.then(|| file.clone());
+                wallpaper::set_wallpaper(&file, move |response| {
+                    let Some(window) = window.upgrade() else {
+                        return;
+                    };
+                    match response {
+                        WallpaperResponse::Applied => {
+                            if let Some(kept) = kept.clone() {
+                                glib::spawn_future_local(async move {
+                                    window.import_paths(vec![kept]).await;
+                                });
+                            }
+                        }
+                        WallpaperResponse::Failed => window.show_toast(&later_failure),
+                        WallpaperResponse::Cancelled => {}
                     }
                 })
                 .await
