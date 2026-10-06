@@ -312,6 +312,9 @@ split into three pages; the magnifier at the top finds a setting by its name.
 - **Search the Whole Library**: searches and filters look everywhere instead of only in the
   entry selected in the sidebar, except in the trash and in smart collections.
 
+Pigoune follows the style and the accent color you choose in GNOME **Settings**, under
+**Appearance**: light or dark style, and the color of selections, switches and highlights.
+
 ## Keyboard shortcuts
 
 Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.

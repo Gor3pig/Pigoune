@@ -358,6 +358,10 @@ retrouve un réglage par son nom.
   et pas seulement dans l'entrée sélectionnée de la barre latérale, sauf dans la corbeille et
   dans les collections intelligentes.
 
+Pigoune suit le style et la couleur d'accentuation choisis dans les **Paramètres** de GNOME,
+rubrique **Apparence** : style clair ou sombre, et couleur des sélections, des interrupteurs et
+des surlignages.
+
 ## Raccourcis clavier
 
 Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoune.
