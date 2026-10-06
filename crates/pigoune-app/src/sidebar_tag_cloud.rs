@@ -8,6 +8,7 @@ use pigoune_core::{AssetView, TagId};
 
 use crate::asset_grid::MENU_KEYS;
 use crate::drag_content::DraggedAssets;
+use crate::shortened_label::name_label;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_row::{control_is_held, tag_menu};
 
@@ -150,7 +151,7 @@ impl PigouneSidebarTagCloud {
 
     fn pill(&self, tag: &TagPill) -> gtk::Button {
         let content = gtk::Box::builder().spacing(6).build();
-        content.append(&gtk::Label::new(Some(&tag.name)));
+        content.append(&name_label(&tag.name));
         if let Some(count) = tag.count.filter(|count| *count > 0) {
             content.append(
                 &gtk::Label::builder()

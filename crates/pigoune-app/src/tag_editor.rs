@@ -4,6 +4,7 @@ use gtk::prelude::*;
 use gtk::{gdk, glib};
 use pigoune_core::{Tag, TagId};
 
+use crate::shortened_label::{name_label, naming};
 use crate::tag_input;
 
 type AddedCallback = Box<dyn Fn(Vec<String>)>;
@@ -121,7 +122,7 @@ impl PigouneTagEditor {
         let partial = shared.carried_by < shared.out_of;
         let chip = gtk::Box::builder().css_classes(["tag-chip"]).build();
         let content = gtk::Box::builder().spacing(4).build();
-        content.append(&gtk::Label::new(Some(&tag.name)));
+        content.append(&name_label(&tag.name));
         let open = gtk::Button::builder()
             .child(&content)
             .css_classes(["flat", "tag-chip-label"])
@@ -134,11 +135,12 @@ impl PigouneTagEditor {
                     .css_classes(["caption", "dim-label", "numeric"])
                     .build(),
             );
-            open.set_tooltip_text(Some(
+            open.set_tooltip_text(Some(&naming(
+                &tag.name,
                 &gettext("On {count} of {total} resources. Click to add it to all of them.")
                     .replace("{count}", &shared.carried_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
-            ));
+            )));
         } else {
             open.set_tooltip_text(Some(
                 &gettext("Open the Tag “{name}”").replace("{name}", &tag.name),
@@ -333,7 +335,8 @@ impl PigouneTagEditor {
         let found =
             tag_input::suggestions(&all, tag_input::fragment_being_typed(&text), &current_ids);
         for tag in &found {
-            let label = gtk::Label::builder().label(&tag.name).xalign(0.0).build();
+            let label = name_label(&tag.name);
+            label.set_xalign(0.0);
             list.append(&label);
         }
         if found.is_empty() || !entry.has_focus() && entry.focus_child().is_none() {

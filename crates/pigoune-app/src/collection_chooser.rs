@@ -144,6 +144,7 @@ impl Chooser {
                 .label(path_label(path))
                 .xalign(0.0)
                 .wrap(true)
+                .wrap_mode(gtk::pango::WrapMode::WordChar)
                 .build();
             self.choices.append(&label);
         }

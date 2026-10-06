@@ -66,6 +66,7 @@ mod screen_size;
 mod search_space;
 mod search_width;
 mod settings;
+mod shortened_label;
 mod sidebar;
 mod sidebar_item;
 mod sidebar_row;

@@ -6,6 +6,7 @@ use pigoune_core::{CollectionId, CollectionLook, CollectionPath};
 
 use crate::collection_choice::path_label;
 use crate::removable_pill::removable_pill;
+use crate::shortened_label::{PATH_CHARS, naming, shortened_label};
 use crate::{collection_look_dialog, collection_looks};
 
 const PILL_SPACING: i32 = 4;
@@ -83,11 +84,12 @@ impl PigouneCollectionPlaces {
             collection_looks::color_class(&shared.look),
         );
         content.append(&icon);
-        content.append(&gtk::Label::new(Some(&path_label(&shared.path))));
+        let full_path = path_label(&shared.path);
+        content.append(&shortened_label(&full_path, PATH_CHARS));
         let pill = gtk::Button::builder()
             .child(&content)
             .css_classes(["flat", "tag-pill"])
-            .tooltip_text(gettext("Open the Collection"))
+            .tooltip_text(naming(&full_path, &gettext("Open the Collection")))
             .build();
         let partial = shared.held_by < shared.out_of;
         if partial {
@@ -97,11 +99,12 @@ impl PigouneCollectionPlaces {
                     .css_classes(["dim-label", "numeric"])
                     .build(),
             );
-            pill.set_tooltip_text(Some(
+            pill.set_tooltip_text(Some(&naming(
+                &full_path,
                 &gettext("On {count} of {total} resources")
                     .replace("{count}", &shared.held_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
-            ));
+            )));
         }
         let id = shared.path.id;
         pill.connect_clicked(glib::clone!(

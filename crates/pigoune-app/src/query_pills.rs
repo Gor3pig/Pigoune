@@ -6,6 +6,8 @@ use gettextrs::{gettext, ngettext, pgettext};
 use gtk::glib;
 use pigoune_core::{MAX_QUERY_WORDS, query_groups, query_text, query_word_count};
 
+use crate::shortened_label::name_label;
+
 type QueryChangedCallback = Rc<dyn Fn(String)>;
 
 const MINIMUM_WORDS: usize = 2;
@@ -150,7 +152,7 @@ impl PigouneQueryPills {
             .spacing(2)
             .css_classes(["query-pill"])
             .build();
-        pill.append(&gtk::Label::new(Some(word)));
+        pill.append(&name_label(word));
         let remove = gtk::Button::builder()
             .icon_name("window-close-symbolic")
             .tooltip_text(gettext("Remove “{word}” From the Search").replace("{word}", word))

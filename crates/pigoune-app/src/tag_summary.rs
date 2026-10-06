@@ -5,6 +5,7 @@ use gtk::prelude::*;
 use pigoune_core::Tag;
 
 use crate::removable_pill::removable_pill;
+use crate::shortened_label::{name_label, naming};
 use crate::tag_cloud::PigouneTagCloud;
 use crate::tag_editor::{PigouneTagEditor, SharedTag};
 
@@ -91,7 +92,7 @@ impl PigouneTagSummary {
         let tag = &shared.tag;
         let partial = shared.carried_by < shared.out_of;
         let content = gtk::Box::builder().spacing(4).build();
-        content.append(&gtk::Label::new(Some(&tag.name)));
+        content.append(&name_label(&tag.name));
         let pill = gtk::Button::builder()
             .child(&content)
             .css_classes(["flat", "tag-pill"])
@@ -103,11 +104,12 @@ impl PigouneTagSummary {
                     .css_classes(["dim-label", "numeric"])
                     .build(),
             );
-            pill.set_tooltip_text(Some(
+            pill.set_tooltip_text(Some(&naming(
+                &tag.name,
                 &gettext("On {count} of {total} resources. Click to add it to all of them.")
                     .replace("{count}", &shared.carried_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
-            ));
+            )));
         } else {
             pill.set_tooltip_text(Some(
                 &gettext("Open the Tag “{name}”").replace("{name}", &tag.name),
