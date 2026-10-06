@@ -60,6 +60,8 @@ mod imp {
         #[template_child]
         pub preview: TemplateChild<gtk::Picture>,
         #[template_child]
+        pub preview_frame: TemplateChild<adw::Clamp>,
+        #[template_child]
         pub action_buttons: TemplateChild<gtk::Box>,
         pub beside_preview: Cell<bool>,
         #[template_child]
@@ -507,7 +509,7 @@ impl PigouneAssetDetails {
     pub fn set_beside_preview(&self, beside: bool) {
         let imp = self.imp();
         imp.beside_preview.set(beside);
-        imp.preview.set_visible(!beside);
+        imp.preview_frame.set_visible(!beside);
         imp.action_buttons.set_visible(!beside);
     }
 

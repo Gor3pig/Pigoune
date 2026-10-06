@@ -153,10 +153,15 @@ template $PigouneAssetDetails: Adw.Bin {
           margin-start: 18;
           margin-end: 18;
 
-          Picture preview {
-            height-request: 240;
-            content-fit: contain;
-            can-shrink: true;
+          Adw.Clamp preview_frame {
+            maximum-size: 284;
+            tightening-threshold: 284;
+
+            Picture preview {
+              height-request: 240;
+              content-fit: contain;
+              can-shrink: true;
+            }
           }
 
           Box {
