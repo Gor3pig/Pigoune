@@ -31,6 +31,7 @@ type SetCallback = Box<dyn Fn(WallpaperChoice)>;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WallpaperChoice {
     pub framing: Framing,
+    pub mirrored: bool,
     pub backdrop: Backdrop,
     pub adds_to_library: bool,
 }
@@ -77,6 +78,12 @@ mod imp {
         pub sharpness_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub actual_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub mirror_button: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub thirds_button: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub snap_button: TemplateChild<gtk::ToggleButton>,
         pub is_vector: Cell<bool>,
         #[template_child]
         pub color_button: TemplateChild<gtk::ColorDialogButton>,
@@ -277,6 +284,27 @@ impl PigouneWallpaperDialog {
     }
 
     #[template_callback]
+    fn on_mirror_toggled(&self) {
+        let imp = self.imp();
+        imp.stage.set_mirrored(imp.mirror_button.is_active());
+        imp.stage.grab_focus();
+    }
+
+    #[template_callback]
+    fn on_thirds_toggled(&self) {
+        let imp = self.imp();
+        imp.stage.set_shows_thirds(imp.thirds_button.is_active());
+        imp.stage.grab_focus();
+    }
+
+    #[template_callback]
+    fn on_snap_toggled(&self) {
+        let imp = self.imp();
+        imp.stage.set_snaps(imp.snap_button.is_active());
+        imp.stage.grab_focus();
+    }
+
+    #[template_callback]
     fn on_full_screen_clicked(&self) {
         self.show_full_screen();
     }
@@ -363,6 +391,7 @@ impl PigouneWallpaperDialog {
     fn on_set_clicked(&self) {
         let choice = WallpaperChoice {
             framing: self.imp().stage.framing(),
+            mirrored: self.imp().stage.mirrored(),
             backdrop: self.backdrop(),
             adds_to_library: self.imp().add_check.is_active(),
         };

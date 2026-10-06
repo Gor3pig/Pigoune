@@ -185,6 +185,21 @@ impl RgbaImage {
     }
 
     #[must_use]
+    pub fn mirrored(&self) -> Self {
+        let row_length = to_index(self.width) * CHANNELS;
+        let pixels = self
+            .pixels
+            .chunks(row_length)
+            .flat_map(|row| row.chunks(CHANNELS).rev().flatten().copied())
+            .collect();
+        Self {
+            width: self.width,
+            height: self.height,
+            pixels,
+        }
+    }
+
+    #[must_use]
     pub fn dimmed(&self, brightness: f64) -> Self {
         let pixels = self
             .pixels
@@ -611,5 +626,15 @@ mod tests {
     fn dimming_darkens_the_colors_only() {
         let dimmed = uniform(1, 1, [200, 100, 50, 255]).dimmed(0.5);
         assert_eq!(dimmed.pixels(), [100, 50, 25, 255]);
+    }
+
+    #[test]
+    fn mirroring_flips_each_row() {
+        let pixels = vec![1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255, 4, 0, 0, 255];
+        let flipped = RgbaImage::new(2, 2, pixels)
+            .expect("valid image")
+            .mirrored();
+        let reds: Vec<u8> = flipped.pixels().chunks(4).map(|pixel| pixel[0]).collect();
+        assert_eq!(reds, [2, 1, 4, 3]);
     }
 }

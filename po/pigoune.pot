@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 15:23+0200\n"
+"POT-Creation-Date: 2026-10-06 15:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1828,7 +1828,7 @@ msgstr ""
 
 #: crates/pigoune-app/src/filter_choices.rs:263
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:227
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:251
 msgid "Color"
 msgstr ""
 
@@ -2110,7 +2110,7 @@ msgid "Play"
 msgstr ""
 
 #: crates/pigoune-app/src/asset_preview.rs:1101
-#: crates/pigoune-app/src/wallpaper_dialog.rs:451
+#: crates/pigoune-app/src/wallpaper_dialog.rs:480
 #, rust-format
 msgid "{percent}%"
 msgstr ""
@@ -3628,67 +3628,92 @@ msgid ""
 "One pixel of the image for one pixel of the screen, for the sharpest result"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:201
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:199
+msgid "Mirror"
+msgstr ""
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:200
+msgid "Flips the image from left to right, in the wallpaper only"
+msgstr ""
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:205
+msgid "Thirds"
+msgstr ""
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:206
+msgid "Shows the rule of thirds grid, to place the subject"
+msgstr ""
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:211
+msgid "Snap"
+msgstr ""
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:212
+msgid ""
+"While dragging, the image snaps to the center and the edges of the screen"
+msgstr ""
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:225
 msgid "Empty Space"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:210
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:234
 msgid "Visible when the image does not cover the whole screen"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:232
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:256
 msgid "Blur"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:245
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:269
 msgid "Background Color"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:262
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:286
 msgid "Simulation"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:265
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:289
 msgid "Desktop Simulation"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:266
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:290
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:272
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:296
 msgid "Desktop"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:290
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:314
 msgid "Also Add the Edited Version to the Library"
 msgstr ""
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:291
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:315
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
 msgstr ""
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:135
+#: crates/pigoune-app/src/wallpaper_dialog.rs:142
 msgid ""
 "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to "
 "adjust it"
 msgstr ""
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:195
+#: crates/pigoune-app/src/wallpaper_dialog.rs:202
 #, rust-format
 msgid "Image enlarged to {percent}: it will look blurry on this screen"
 msgstr ""
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:388
+#: crates/pigoune-app/src/wallpaper_dialog.rs:417
 msgid ""
 "Full screen simulation: the wallpaper is not set yet. Press Esc to come back."
 msgstr ""
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:455
+#: crates/pigoune-app/src/wallpaper_dialog.rs:484
 #, rust-format
 msgid "{width} × {height} pixels, the screen where Pigoune is shown"
 msgstr ""

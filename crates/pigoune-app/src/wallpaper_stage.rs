@@ -4,7 +4,9 @@ use gtk::{gdk, glib, graphene, gsk};
 
 use crate::desktop_bars::{Bars, Desktop};
 use crate::desktop_frame::{self, Frame};
-use crate::wallpaper_framing::{ACTUAL_SCALE, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop, Framing};
+use crate::wallpaper_framing::{
+    ACTUAL_SCALE, BLUR_BRIGHTNESS, BLUR_SHARE, Backdrop, Framing, Guides,
+};
 use crate::zoom_math::{Point, Size};
 
 const CUT_OPACITY: f64 = 0.3;
@@ -16,6 +18,12 @@ const MOVABLE_CURSOR: &str = "grab";
 const MOVING_CURSOR: &str = "grabbing";
 const GSK_BLUR_PER_DEVIATION: f64 = 2.0;
 const COLOR_CHANNEL_MAX: f32 = 255.0;
+const SNAP_PIXELS: f64 = 12.0;
+const THIRDS: [f32; 2] = [1.0 / 3.0, 2.0 / 3.0];
+const GRID_LINE: f32 = 1.0;
+const GRID_OPACITY: f32 = 0.7;
+const GUIDE_LINE: f32 = 2.0;
+const GUIDE_COLOR: (f32, f32, f32) = (0.208, 0.518, 0.894);
 
 type ChangedCallback = Box<dyn Fn()>;
 
@@ -28,7 +36,7 @@ mod imp {
 
     use super::ChangedCallback;
     use crate::desktop_bars::Desktop;
-    use crate::wallpaper_framing::{Backdrop, Framing};
+    use crate::wallpaper_framing::{Backdrop, Framing, Guides};
     use crate::zoom_math::{Point, Size};
 
     pub struct PigouneWallpaperStage {
@@ -41,6 +49,10 @@ mod imp {
         pub backdrop: Cell<Backdrop>,
         pub shows_bar: Cell<bool>,
         pub margin: Cell<f64>,
+        pub mirrored: Cell<bool>,
+        pub shows_thirds: Cell<bool>,
+        pub snaps: Cell<bool>,
+        pub guides: Cell<Guides>,
         pub drag_start: Cell<Point>,
         pub pointer: Cell<Option<Point>>,
         pub on_changed: RefCell<Option<ChangedCallback>>,
@@ -65,6 +77,10 @@ mod imp {
                 backdrop: Cell::new(Backdrop::Color([0, 0, 0])),
                 shows_bar: Cell::new(true),
                 margin: Cell::new(crate::desktop_frame::MARGIN),
+                mirrored: Cell::new(false),
+                shows_thirds: Cell::new(false),
+                snaps: Cell::new(true),
+                guides: Cell::new(Guides::default()),
                 drag_start: Cell::new(Point { x: 0.0, y: 0.0 }),
                 pointer: Cell::default(),
                 on_changed: RefCell::default(),
@@ -129,6 +145,24 @@ impl PigouneWallpaperStage {
         self.change(framing);
     }
 
+    pub fn mirrored(&self) -> bool {
+        self.imp().mirrored.get()
+    }
+
+    pub fn set_mirrored(&self, mirrored: bool) {
+        self.imp().mirrored.set(mirrored);
+        self.queue_draw();
+    }
+
+    pub fn set_shows_thirds(&self, shows_thirds: bool) {
+        self.imp().shows_thirds.set(shows_thirds);
+        self.queue_draw();
+    }
+
+    pub fn set_snaps(&self, snaps: bool) {
+        self.imp().snaps.set(snaps);
+    }
+
     pub fn set_edge_to_edge(&self) {
         self.imp().margin.set(0.0);
         self.queue_draw();
@@ -143,6 +177,9 @@ impl PigouneWallpaperStage {
         imp.desktop.set(source.desktop.get());
         imp.backdrop.set(source.backdrop.get());
         imp.shows_bar.set(source.shows_bar.get());
+        imp.mirrored.set(source.mirrored.get());
+        imp.shows_thirds.set(source.shows_thirds.get());
+        imp.snaps.set(source.snaps.get());
         self.set_framing(other.framing());
     }
 
@@ -231,12 +268,29 @@ impl PigouneWallpaperStage {
             height: image.height * scale,
         });
         let screen_rect = rect_of(frame);
+        let mirrored = imp.mirrored.get();
         snapshot.push_opacity(CUT_OPACITY);
-        snapshot.append_scaled_texture(&texture, gsk::ScalingFilter::Trilinear, &image_rect);
+        append_image(
+            snapshot,
+            &texture,
+            &image_rect,
+            mirrored,
+            gsk::ScalingFilter::Trilinear,
+        );
         snapshot.pop();
         snapshot.push_clip(&screen_rect);
         self.draw_backdrop(snapshot, &texture, &screen_rect, scale);
-        snapshot.append_scaled_texture(&texture, gsk::ScalingFilter::Trilinear, &image_rect);
+        append_image(
+            snapshot,
+            &texture,
+            &image_rect,
+            mirrored,
+            gsk::ScalingFilter::Trilinear,
+        );
+        if imp.shows_thirds.get() {
+            draw_thirds(snapshot, &screen_rect);
+        }
+        self.draw_guides(snapshot, &screen_rect, scale);
         if imp.shows_bar.get() {
             Bars {
                 widget: self.upcast_ref(),
@@ -276,10 +330,40 @@ impl PigouneWallpaperStage {
                 snapshot.append_color(&gdk::RGBA::BLACK, screen_rect);
                 snapshot.push_opacity(BLUR_BRIGHTNESS);
                 snapshot.push_blur(screen.width * BLUR_SHARE * scale * GSK_BLUR_PER_DEVIATION);
-                snapshot.append_scaled_texture(texture, gsk::ScalingFilter::Linear, &cover_rect);
+                append_image(
+                    snapshot,
+                    texture,
+                    &cover_rect,
+                    imp.mirrored.get(),
+                    gsk::ScalingFilter::Linear,
+                );
                 snapshot.pop();
                 snapshot.pop();
             }
+        }
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "drawing coordinates fit easily in f32"
+    )]
+    fn draw_guides(&self, snapshot: &gtk::Snapshot, screen: &graphene::Rect, scale: f64) {
+        let guides = self.imp().guides.get();
+        let (red, green, blue) = GUIDE_COLOR;
+        let color = gdk::RGBA::new(red, green, blue, 1.0);
+        if let Some(across) = guides.across {
+            let x = screen.x() + (across * scale) as f32 - GUIDE_LINE / 2.0;
+            snapshot.append_color(
+                &color,
+                &graphene::Rect::new(x, screen.y(), GUIDE_LINE, screen.height()),
+            );
+        }
+        if let Some(down) = guides.down {
+            let y = screen.y() + (down * scale) as f32 - GUIDE_LINE / 2.0;
+            snapshot.append_color(
+                &color,
+                &graphene::Rect::new(screen.x(), y, screen.width(), GUIDE_LINE),
+            );
         }
     }
 
@@ -298,21 +382,33 @@ impl PigouneWallpaperStage {
             #[weak(rename_to = stage)]
             self,
             move |_, offset_x, offset_y| {
-                let start = stage.imp().drag_start.get();
+                let imp = stage.imp();
+                let start = imp.drag_start.get();
                 let scale = stage.view_scale();
-                stage.change(Framing {
+                let pulled = Framing {
                     offset: Point {
                         x: start.x + offset_x / scale,
                         y: start.y + offset_y / scale,
                     },
                     ..stage.framing()
-                });
+                };
+                let (framing, guides) = if imp.snaps.get() {
+                    pulled.snapped(imp.image.get(), imp.screen.get(), SNAP_PIXELS / scale)
+                } else {
+                    (pulled, Guides::default())
+                };
+                imp.guides.set(guides);
+                stage.change(framing);
             }
         ));
         drag.connect_drag_end(glib::clone!(
             #[weak(rename_to = stage)]
             self,
-            move |_, _, _| stage.set_cursor_from_name(Some(MOVABLE_CURSOR))
+            move |_, _, _| {
+                stage.imp().guides.set(Guides::default());
+                stage.set_cursor_from_name(Some(MOVABLE_CURSOR));
+                stage.queue_draw();
+            }
         ));
         self.add_controller(drag);
     }
@@ -385,6 +481,42 @@ impl PigouneWallpaperStage {
         };
         self.change(self.framing().moved(by));
         glib::Propagation::Stop
+    }
+}
+
+fn append_image(
+    snapshot: &gtk::Snapshot,
+    texture: &gdk::Texture,
+    area: &graphene::Rect,
+    mirrored: bool,
+    filter: gsk::ScalingFilter,
+) {
+    if !mirrored {
+        snapshot.append_scaled_texture(texture, filter, area);
+        return;
+    }
+    let center = area.center();
+    snapshot.save();
+    snapshot.translate(&center);
+    snapshot.scale(-1.0, 1.0);
+    snapshot.translate(&graphene::Point::new(-center.x(), -center.y()));
+    snapshot.append_scaled_texture(texture, filter, area);
+    snapshot.restore();
+}
+
+fn draw_thirds(snapshot: &gtk::Snapshot, screen: &graphene::Rect) {
+    let color = gdk::RGBA::WHITE.with_alpha(GRID_OPACITY);
+    for share in THIRDS {
+        let x = screen.x() + screen.width() * share - GRID_LINE / 2.0;
+        let y = screen.y() + screen.height() * share - GRID_LINE / 2.0;
+        snapshot.append_color(
+            &color,
+            &graphene::Rect::new(x, screen.y(), GRID_LINE, screen.height()),
+        );
+        snapshot.append_color(
+            &color,
+            &graphene::Rect::new(screen.x(), y, screen.width(), GRID_LINE),
+        );
     }
 }
 

@@ -2456,7 +2456,7 @@ impl PigouneWindow {
             &source,
             image,
             (screen.width(), screen.height()),
-            choice.backdrop,
+            (choice.backdrop, choice.mirrored),
             |step| progress.show_step(step),
         )
         .await

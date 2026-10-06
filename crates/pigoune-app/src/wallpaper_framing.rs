@@ -81,6 +81,42 @@ impl Framing {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Guides {
+    pub across: Option<f64>,
+    pub down: Option<f64>,
+}
+
+impl Framing {
+    #[must_use]
+    pub fn snapped(self, image: Size, screen: Size, tolerance: f64) -> (Self, Guides) {
+        let rect = self.image_rect(image, screen);
+        let (shift_x, across) = snap_axis(rect.x, rect.width, screen.width, tolerance);
+        let (shift_y, down) = snap_axis(rect.y, rect.height, screen.height, tolerance);
+        (
+            self.moved(Point {
+                x: shift_x,
+                y: shift_y,
+            }),
+            Guides { across, down },
+        )
+    }
+}
+
+fn snap_axis(start: f64, length: f64, screen: f64, tolerance: f64) -> (f64, Option<f64>) {
+    let center = start + length / 2.0;
+    let candidates = [
+        (screen / 2.0 - center, screen / 2.0),
+        (-start, 0.0),
+        (screen - (start + length), screen),
+    ];
+    candidates
+        .into_iter()
+        .filter(|(shift, _)| shift.abs() <= tolerance)
+        .min_by(|first, second| first.0.abs().total_cmp(&second.0.abs()))
+        .map_or((0.0, None), |(shift, line)| (shift, Some(line)))
+}
+
 fn centered(scale: f64) -> Framing {
     Framing {
         scale,
@@ -131,7 +167,7 @@ fn whole(value: f64) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{Framing, VisiblePart, visible_part};
+    use super::{Framing, Guides, VisiblePart, visible_part};
     use crate::desktop_frame::Frame;
     use crate::zoom_math::{Point, Size};
 
@@ -197,5 +233,35 @@ mod tests {
         );
         let gone = Frame { x: 2000.0, ..rect };
         assert_eq!(visible_part((3840, 2160), gone, (1920, 1080)), None);
+    }
+
+    #[test]
+    fn a_nearby_image_snaps_to_the_center_and_the_edges() {
+        let near_center = Framing {
+            scale: 0.5,
+            offset: Point { x: 6.0, y: -80.0 },
+        };
+        let (snapped, guides) = near_center.snapped(PHOTO, SCREEN, 10.0);
+        assert_eq!(snapped.offset, Point { x: 0.0, y: -80.0 });
+        assert_eq!(
+            guides,
+            Guides {
+                across: Some(960.0),
+                down: None,
+            }
+        );
+        let near_left = Framing {
+            scale: 0.5,
+            offset: Point { x: -205.0, y: 0.0 },
+        };
+        let (snapped, guides) = near_left.snapped(PHOTO, SCREEN, 10.0);
+        assert!(snapped.image_rect(PHOTO, SCREEN).x.abs() < f64::EPSILON);
+        assert_eq!(guides.across, Some(0.0));
+        assert_eq!(guides.down, Some(540.0));
+        let far = Framing {
+            scale: 0.5,
+            offset: Point { x: 100.0, y: 100.0 },
+        };
+        assert_eq!(far.snapped(PHOTO, SCREEN, 10.0), (far, Guides::default()));
     }
 }

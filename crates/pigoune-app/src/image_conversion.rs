@@ -208,12 +208,19 @@ pub async fn wallpaper(
     source: &Source<'_>,
     image: Frame,
     screen: (u32, u32),
-    backdrop: Backdrop,
+    (backdrop, mirrored): (Backdrop, bool),
     on_step: impl Fn(WallpaperStep),
 ) -> Result<Vec<u8>, ConversionError> {
     on_step(WallpaperStep::Loading);
     let vector_side = whole_side(image.width.max(image.height));
     let loaded = load(source, vector_side).await?;
+    let loaded = if mirrored {
+        gio::spawn_blocking(move || loaded.mirrored())
+            .await
+            .map_err(|_| ConversionError::EncodingFailed)?
+    } else {
+        loaded
+    };
     on_step(WallpaperStep::Framing);
     let behind = match backdrop {
         Backdrop::Blur => blurred_backdrop(&loaded, screen).await?,

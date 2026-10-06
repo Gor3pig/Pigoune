@@ -190,6 +190,30 @@ template $PigouneWallpaperDialog: Adw.Dialog {
                   "linked",
                 ]
               }
+
+              Box {
+                homogeneous: true;
+                spacing: 6;
+
+                ToggleButton mirror_button {
+                  label: _("Mirror");
+                  tooltip-text: _("Flips the image from left to right, in the wallpaper only");
+                  toggled => $on_mirror_toggled() swapped;
+                }
+
+                ToggleButton thirds_button {
+                  label: _("Thirds");
+                  tooltip-text: _("Shows the rule of thirds grid, to place the subject");
+                  toggled => $on_thirds_toggled() swapped;
+                }
+
+                ToggleButton snap_button {
+                  label: _("Snap");
+                  tooltip-text: _("While dragging, the image snaps to the center and the edges of the screen");
+                  active: true;
+                  toggled => $on_snap_toggled() swapped;
+                }
+              }
             }
           }
 

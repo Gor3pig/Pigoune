@@ -247,8 +247,10 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   the way GNOME would. Drag the image to move it, zoom with the mouse wheel, the slider or
   <kbd>+</kbd> and <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd> moves
   further). **Fill** comes back to the framing of GNOME, **Whole** shows all of the image and
-  **100%** shows one pixel of the image per pixel of the screen. What goes past the screen stays
-  visible, faded. When the image is enlarged past 100%, a notice over the screen warns that it
+  **100%** shows one pixel of the image per pixel of the screen. **Mirror** flips the image from
+  left to right in the wallpaper only, **Thirds** shows the rule of thirds grid to place the
+  subject, and **Snap**, on at first, makes the dragged image catch the center and the edges of
+  the screen, a blue line showing where. What goes past the screen stays visible, faded. When the image is enlarged past 100%, a notice over the screen warns that it
   will look blurry. The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its
   real size, as a simulation that a short notice recalls; <kbd>Esc</kbd> comes back.
 - **Desktop Simulation** draws an imitation of the bars of your desktop over the virtual

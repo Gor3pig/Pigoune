@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 15:23+0200\n"
+"POT-Creation-Date: 2026-10-06 15:30+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1871,7 +1871,7 @@ msgstr "Past op mijn scherm"
 
 #: crates/pigoune-app/src/filter_choices.rs:263
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:227
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:251
 msgid "Color"
 msgstr "Kleur"
 
@@ -2153,7 +2153,7 @@ msgid "Play"
 msgstr "Afspelen"
 
 #: crates/pigoune-app/src/asset_preview.rs:1101
-#: crates/pigoune-app/src/wallpaper_dialog.rs:451
+#: crates/pigoune-app/src/wallpaper_dialog.rs:480
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent}%"
@@ -3692,31 +3692,56 @@ msgstr ""
 "Eén pixel van de afbeelding per pixel van het scherm, voor het scherpste "
 "resultaat"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:201
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:199
+msgid "Mirror"
+msgstr "Spiegelen"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:200
+msgid "Flips the image from left to right, in the wallpaper only"
+msgstr "Spiegelt de afbeelding van links naar rechts, alleen in de achtergrond"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:205
+msgid "Thirds"
+msgstr "Derden"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:206
+msgid "Shows the rule of thirds grid, to place the subject"
+msgstr "Toont het raster van derden, om het onderwerp te plaatsen"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:211
+msgid "Snap"
+msgstr "Magneet"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:212
+msgid ""
+"While dragging, the image snaps to the center and the edges of the screen"
+msgstr "Tijdens het slepen klikt de afbeelding vast aan het midden en de randen van het scherm"
+
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:225
 msgid "Empty Space"
 msgstr "Lege ruimte"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:210
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:234
 msgid "Visible when the image does not cover the whole screen"
 msgstr "Zichtbaar wanneer de afbeelding niet het hele scherm bedekt"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:232
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:256
 msgid "Blur"
 msgstr "Vervaging"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:245
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:269
 msgid "Background Color"
 msgstr "Achtergrondkleur"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:262
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:286
 msgid "Simulation"
 msgstr "Simulatie"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:265
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:289
 msgid "Desktop Simulation"
 msgstr "Bureaubladsimulatie"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:266
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:290
 msgid ""
 "Shows the bars of your desktop over the image, to judge the framing. They "
 "are not part of the wallpaper."
@@ -3724,15 +3749,15 @@ msgstr ""
 "Toont de balken van uw bureaublad over de afbeelding, om de uitsnede te "
 "beoordelen. Ze maken geen deel uit van de achtergrond."
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:272
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:296
 msgid "Desktop"
 msgstr "Bureaublad"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:290
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:314
 msgid "Also Add the Edited Version to the Library"
 msgstr "De bewerkte versie ook aan de bibliotheek toevoegen"
 
-#: crates/pigoune-app/ui/wallpaper-dialog.blp:291
+#: crates/pigoune-app/ui/wallpaper-dialog.blp:315
 msgid ""
 "The framed image, at the size of the screen, becomes a new resource. The "
 "original image stays untouched."
@@ -3740,7 +3765,7 @@ msgstr ""
 "De uitgesneden afbeelding, op de grootte van het scherm, wordt een nieuw "
 "item. De oorspronkelijke afbeelding blijft ongewijzigd."
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:135
+#: crates/pigoune-app/src/wallpaper_dialog.rs:142
 msgid ""
 "Drag the image to move it, use the mouse wheel to zoom and the arrow keys to "
 "adjust it"
@@ -3748,17 +3773,19 @@ msgstr ""
 "Sleep de afbeelding om ze te verplaatsen, gebruik het muiswiel om te zoomen "
 "en de pijltjestoetsen om ze bij te stellen"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:195
+#: crates/pigoune-app/src/wallpaper_dialog.rs:202
 #, rust-format
 msgid "Image enlarged to {percent}: it will look blurry on this screen"
 msgstr "Afbeelding vergroot tot {percent}: ze zal wazig zijn op dit scherm"
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:388
+#: crates/pigoune-app/src/wallpaper_dialog.rs:417
 msgid ""
 "Full screen simulation: the wallpaper is not set yet. Press Esc to come back."
-msgstr "Simulatie op volledig scherm: de achtergrond is nog niet ingesteld. Druk op Esc om terug te gaan."
+msgstr ""
+"Simulatie op volledig scherm: de achtergrond is nog niet ingesteld. Druk op "
+"Esc om terug te gaan."
 
-#: crates/pigoune-app/src/wallpaper_dialog.rs:455
+#: crates/pigoune-app/src/wallpaper_dialog.rs:484
 #, rust-format
 msgid "{width} × {height} pixels, the screen where Pigoune is shown"
 msgstr "{width} × {height} pixels, het scherm waarop Pigoune wordt getoond"

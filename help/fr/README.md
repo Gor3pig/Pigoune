@@ -279,8 +279,10 @@ ses critères.
   cadrée comme GNOME le ferait. Faites glisser l'image pour la déplacer, zoomez avec la molette,
   le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la avec les flèches (<kbd>Maj</kbd> pour
   aller plus loin). **Remplir** revient au cadrage de GNOME, **Entière** montre toute l'image et
-  **100 %** montre un pixel de l'image par pixel de l'écran. Ce qui dépasse de l'écran reste
-  visible, en pâle. Quand l'image est agrandie au-delà de 100 %, une pastille sur l'écran prévient
+  **100 %** montre un pixel de l'image par pixel de l'écran. **Miroir** retourne l'image de gauche
+  à droite, dans le fond d'écran seulement, **Tiers** affiche la grille des tiers pour placer le
+  sujet, et **Aimant**, actif au départ, accroche l'image glissée au centre et aux bords de
+  l'écran, une ligne bleue montrant où. Ce qui dépasse de l'écran reste visible, en pâle. Quand l'image est agrandie au-delà de 100 %, une pastille sur l'écran prévient
   qu'elle sera floue. Le bouton plein écran, ou <kbd>F11</kbd>, montre l'écran virtuel en vraie
   grandeur, comme une simulation que rappelle une courte pastille ; <kbd>Échap</kbd> pour revenir.
 - **Simulation du bureau** dessine une imitation des barres de votre bureau sur l'écran
