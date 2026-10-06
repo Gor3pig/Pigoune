@@ -4,6 +4,7 @@ use gtk::{gio, glib};
 
 use crate::config::{APP_ID, RESOURCE_BASE_PATH, VERSION};
 use crate::help_url;
+use crate::icon_theme;
 use crate::settings;
 use crate::window::PigouneWindow;
 
@@ -13,6 +14,7 @@ pub fn build() -> adw::Application {
         .resource_base_path(RESOURCE_BASE_PATH)
         .build();
 
+    application.connect_startup(|_| icon_theme::keep_gnome_icons());
     application.connect_startup(install_actions);
     application.connect_activate(present_main_window);
     application

@@ -42,6 +42,7 @@ mod group_mosaic;
 mod help_url;
 mod host_path;
 mod icon_sides;
+mod icon_theme;
 mod image_check;
 mod image_conversion;
 mod import_progress_dialog;

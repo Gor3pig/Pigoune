@@ -61,8 +61,10 @@ to change it.
 - **Search pills.** `query_pills.rs` shows a query as words joined by "and" or "or", under the
   search field and in the smart collection window. It relies on `query_groups` and
   `query_text` from the core, which also drive the search, so both always agree.
-- Every symbolic icon of the interface comes from the GNOME icon theme of the runtime, so
-  Pigoune ships no icon of its own apart from the application icon in `data/icons/`.
+- Every symbolic icon of the interface comes from the GNOME icon theme, Adwaita, so Pigoune
+  ships no icon of its own apart from the application icon in `data/icons/`. `icon_theme.rs`
+  keeps Adwaita even when the system uses another icon theme, so the icons look the same on
+  every distribution and match the screenshots and the user guide.
 - Small pure helpers (sorting, layout math, text formatting) sit in their own modules with unit
   tests, for example `asset_sort.rs`, `grid_columns.rs`, `tag_cloud.rs` or `asset_facts.rs`.
 - Inside Flatpak, folders chosen in the file chooser arrive as document portal paths
