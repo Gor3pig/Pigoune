@@ -2391,6 +2391,7 @@ impl PigouneWindow {
             file: asset.file().to_path_buf(),
             natural: natural_size(asset),
             name: asset.display_name(),
+            is_vector: asset.asset().format == AssetFormat::Svg,
         };
         let asset = asset.clone();
         let dialog = PigouneWallpaperDialog::new(

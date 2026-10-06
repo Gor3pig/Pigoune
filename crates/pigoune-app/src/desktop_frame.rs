@@ -1,6 +1,6 @@
 use crate::zoom_math::Size;
 
-const MARGIN: f64 = 24.0;
+pub const MARGIN: f64 = 24.0;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Frame {
@@ -11,10 +11,10 @@ pub struct Frame {
 }
 
 #[must_use]
-pub fn screen_frame(view: Size, screen: Size) -> Frame {
+pub fn screen_frame(view: Size, screen: Size, margin: f64) -> Frame {
     let room = Size {
-        width: (view.width - 2.0 * MARGIN).max(1.0),
-        height: (view.height - 2.0 * MARGIN).max(1.0),
+        width: (view.width - 2.0 * margin).max(1.0),
+        height: (view.height - 2.0 * margin).max(1.0),
     };
     let scale = (room.width / screen.width.max(1.0)).min(room.height / screen.height.max(1.0));
     centered(view.width / 2.0, view.height / 2.0, screen, scale)
@@ -33,7 +33,7 @@ fn centered(center_x: f64, center_y: f64, size: Size, scale: f64) -> Frame {
 
 #[cfg(test)]
 mod tests {
-    use super::{Frame, screen_frame};
+    use super::{Frame, MARGIN, screen_frame};
     use crate::zoom_math::Size;
 
     const FULL_HD: Size = Size {
@@ -49,6 +49,7 @@ mod tests {
                 height: 1000.0,
             },
             FULL_HD,
+            MARGIN,
         );
         assert_eq!(
             wide,
@@ -65,6 +66,7 @@ mod tests {
                 height: 588.0,
             },
             FULL_HD,
+            MARGIN,
         );
         assert_eq!((tall.width, tall.height), (960.0, 540.0));
         assert_eq!((tall.x, tall.y), (520.0, 24.0));

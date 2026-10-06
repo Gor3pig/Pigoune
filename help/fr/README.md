@@ -274,13 +274,15 @@ ses critères.
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
   importez-les si vous voulez les garder.
 - **Utilisez une image comme fond d'écran** avec **Cadrer et définir comme fond d'écran…** dans
-  le menu du clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel à la
-  résolution réelle de l'écran où se trouve Pigoune, par exemple 1920 × 1080, avec l'image
+  le menu du clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel
+  à la résolution réelle de l'écran où se trouve Pigoune, par exemple 1920 × 1080, avec l'image
   cadrée comme GNOME le ferait. Faites glisser l'image pour la déplacer, zoomez avec la molette,
   le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la avec les flèches (<kbd>Maj</kbd> pour
-  aller plus loin). **Remplir l'écran** revient au cadrage de GNOME, **Image entière** la montre
-  en entier et **Taille réelle** montre un pixel de l'image par pixel de l'écran. Ce qui dépasse
-  de l'écran reste visible, en pâle.
+  aller plus loin). **Remplir** revient au cadrage de GNOME, **Entière** montre toute l'image et
+  **100 %** montre un pixel de l'image par pixel de l'écran. Ce qui dépasse de l'écran reste
+  visible, en pâle. Quand l'image est agrandie au-delà de 100 %, une pastille sur l'écran prévient
+  qu'elle sera floue. Le bouton plein écran, ou <kbd>F11</kbd>, montre l'écran virtuel en vraie
+  grandeur, comme une simulation que rappelle une courte pastille ; <kbd>Échap</kbd> pour revenir.
 - **Simulation du bureau** dessine une imitation des barres de votre bureau sur l'écran
   virtuel : GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez
   étant choisi d'office. Désactivez-la pour voir l'image seule.

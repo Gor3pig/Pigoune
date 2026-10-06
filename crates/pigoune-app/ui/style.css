@@ -777,3 +777,12 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
   min-width: 14px;
   min-height: 14px;
 }
+
+.wallpaper-full-screen {
+  background-color: black;
+}
+
+.wallpaper-notice {
+  padding: 8px 14px;
+  border-radius: 9999px;
+}

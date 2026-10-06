@@ -40,6 +40,7 @@ mod imp {
         pub desktop: Cell<Desktop>,
         pub backdrop: Cell<Backdrop>,
         pub shows_bar: Cell<bool>,
+        pub margin: Cell<f64>,
         pub drag_start: Cell<Point>,
         pub pointer: Cell<Option<Point>>,
         pub on_changed: RefCell<Option<ChangedCallback>>,
@@ -63,6 +64,7 @@ mod imp {
                 desktop: Cell::new(Desktop::Gnome),
                 backdrop: Cell::new(Backdrop::Color([0, 0, 0])),
                 shows_bar: Cell::new(true),
+                margin: Cell::new(crate::desktop_frame::MARGIN),
                 drag_start: Cell::new(Point { x: 0.0, y: 0.0 }),
                 pointer: Cell::default(),
                 on_changed: RefCell::default(),
@@ -123,6 +125,27 @@ impl PigouneWallpaperStage {
         self.imp().framing.get()
     }
 
+    pub fn set_framing(&self, framing: Framing) {
+        self.change(framing);
+    }
+
+    pub fn set_edge_to_edge(&self) {
+        self.imp().margin.set(0.0);
+        self.queue_draw();
+    }
+
+    pub fn copy_from(&self, other: &Self) {
+        let (imp, source) = (self.imp(), other.imp());
+        imp.texture.replace(source.texture.borrow().clone());
+        imp.image.set(source.image.get());
+        imp.screen.set(source.screen.get());
+        imp.monitor_scale.set(source.monitor_scale.get());
+        imp.desktop.set(source.desktop.get());
+        imp.backdrop.set(source.backdrop.get());
+        imp.shows_bar.set(source.shows_bar.get());
+        self.set_framing(other.framing());
+    }
+
     pub fn set_desktop(&self, desktop: Desktop) {
         self.imp().desktop.set(desktop);
         self.queue_draw();
@@ -176,6 +199,7 @@ impl PigouneWallpaperStage {
                 height: f64::from(self.height()),
             },
             self.imp().screen.get(),
+            self.imp().margin.get(),
         )
     }
 
