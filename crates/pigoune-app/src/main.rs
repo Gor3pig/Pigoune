@@ -52,6 +52,7 @@ mod import_progress_dialog;
 mod import_report;
 mod languages;
 mod library_info_dialog;
+mod load_slots;
 mod new_library_dialog;
 mod preferences_dialog;
 mod preview_flight;

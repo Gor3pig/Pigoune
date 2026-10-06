@@ -8,9 +8,16 @@ use gtk::prelude::*;
 use gtk::{gdk, gio, graphene, gsk};
 use pigoune_core::{AssetId, Dimensions};
 
+use crate::load_slots::LoadSlots;
+
 pub const THUMBNAIL_PIXELS: u32 = 256;
 const REMEMBERED_THUMBNAILS: usize = 600;
+const MOST_CONCURRENT_LOADS: usize = 4;
 const SVG_MIME_TYPE: &str = "image/svg+xml";
+
+thread_local! {
+    static LOAD_SLOTS: LoadSlots = LoadSlots::new(MOST_CONCURRENT_LOADS);
+}
 
 #[derive(Default)]
 pub struct ThumbnailCache {
@@ -47,6 +54,8 @@ pub async fn thumbnail(
     thumbnail_file: &Path,
     widget: &impl IsA<gtk::Widget>,
 ) -> Option<gdk::Texture> {
+    let slots = LOAD_SLOTS.with(Clone::clone);
+    let _slot = slots.acquire().await;
     if let Some(stored) = load_stored(thumbnail_file).await {
         return Some(stored);
     }
