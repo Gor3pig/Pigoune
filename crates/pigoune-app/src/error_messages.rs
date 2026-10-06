@@ -1,6 +1,7 @@
 use gettextrs::gettext;
 use pigoune_core::{
-    AssetError, CollectionError, LibraryError, SmartCollectionError, TagError, UndoError,
+    AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, SmartCollectionError, TagError,
+    UndoError,
 };
 
 pub fn describe(error: &LibraryError) -> String {
@@ -93,6 +94,11 @@ pub fn describe_smart_collection(error: &SmartCollectionError) -> String {
 pub fn describe_tag(error: &TagError) -> String {
     match error {
         TagError::InvalidName => gettext("Enter a name for the tag."),
+        TagError::NotOneWord => {
+            gettext("A tag is a single word: join several words with a hyphen.")
+        }
+        TagError::TooLong => gettext("A tag has at most {count} characters.")
+            .replace("{count}", &LONGEST_TAG_NAME.to_string()),
         TagError::NotFound(_) => gettext("This tag no longer exists."),
         TagError::AssetNotFound(_) => gettext("This resource no longer exists."),
         TagError::NameTaken(_) => gettext("Another tag already has this name."),

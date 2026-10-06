@@ -90,8 +90,10 @@ autre collection y restent.
 
 ### Les tags
 
-Les tags décrivent vos ressources avec les mots de votre choix. Ajoutez-en depuis le panneau
-de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
+Un tag est un seul mot de 20 caractères au plus : il décrit une ressource en un mot-clé. Pour
+réunir plusieurs mots, utilisez un tiret (*flat-design*). Une espace ou une virgule termine le
+tag en cours de saisie, ce qui permet d'en saisir plusieurs à la fois. Ajoutez des tags depuis le
+panneau de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
 droit, ou glissez des ressources sur un tag de la barre latérale. La barre latérale montre les
 tags en pastilles avec leur nombre de ressources : cliquez sur l'une d'elles pour voir toutes ses
 ressources, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
@@ -126,8 +128,8 @@ clic dessus l'ajoute à toutes.
 
 Cliquez dans le champ de recherche, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd>, ou commencez
 simplement à taper. Pigoune cherche dans les noms, les tags, les notes, les sources, les
-licences et les auteurs, sans tenir compte des majuscules ni des accents, dans l'entrée
-sélectionnée de la barre latérale. Sélectionnez **Tout** pour chercher dans toute la
+licences et les auteurs, sans tenir compte des majuscules, des accents ni des ligatures (*coeur* trouve
+*cœur*), dans l'entrée sélectionnée de la barre latérale. Sélectionnez **Tout** pour chercher dans toute la
 bibliothèque.
 
 - **Espace = et.** `logo chèvre` trouve les ressources qui contiennent *logo* **et** *chèvre*,

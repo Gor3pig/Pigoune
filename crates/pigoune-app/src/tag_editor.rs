@@ -285,8 +285,8 @@ impl PigouneTagEditor {
     fn on_text_changed(&self) {
         let entry = part(&self.imp().entry);
         let text = entry.text();
-        if text.contains(',') {
-            let (finished, rest) = tag_input::split_finished(&text);
+        let (finished, rest) = tag_input::split_finished(&text);
+        if rest != text.as_str() {
             entry.set_text(&rest);
             entry.set_position(-1);
             if !finished.is_empty()
@@ -354,12 +354,13 @@ impl PigouneTagEditor {
         else {
             return;
         };
-        let entry = part(&self.imp().entry);
-        entry.set_text(&tag_input::with_last_fragment_replaced(
-            &entry.text(),
-            &name,
-        ));
-        self.submit();
+        let imp = self.imp();
+        let entry = part(&imp.entry);
+        part(&imp.popover).popdown();
+        entry.set_text("");
+        if let Some(on_added) = imp.on_added.borrow().as_ref() {
+            on_added(vec![name.to_string()]);
+        }
         entry.grab_focus();
     }
 

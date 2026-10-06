@@ -212,9 +212,9 @@ fn renaming_can_be_undone_and_refuses_a_taken_name() {
 
     let undo = fixture.apply(&TagCommand::Rename {
         tag: red,
-        name: "Rouge vif".to_owned(),
+        name: "Rouge-vif".to_owned(),
     });
-    assert_eq!(fixture.names_of(asset), ["logo", "Rouge vif"]);
+    assert_eq!(fixture.names_of(asset), ["logo", "Rouge-vif"]);
     fixture.apply(&undo);
     assert_eq!(fixture.snapshot(), before);
 
@@ -305,4 +305,102 @@ fn blank_names_trashed_resources_and_unknown_tags_are_refused_without_change() {
         "{unknown:?}"
     );
     assert_eq!(fixture.snapshot(), before);
+}
+
+fn insert_old_tag(fixture: &Fixture, name: &str) -> TagId {
+    let id = TagId::parse("00000000-0000-7000-8000-000000000001").expect("valid id");
+    let connection =
+        Connection::open(fixture.library.root().join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute(
+            "INSERT INTO tags (id, name, normalized_name) VALUES (?1, ?2, ?3)",
+            rusqlite::params![id, name, name.to_lowercase()],
+        )
+        .expect("old tag inserted");
+    id
+}
+
+#[test]
+fn a_new_tag_is_one_word_of_at_most_twenty_characters() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    let add = |name: &str| TagCommand::Add {
+        assets: vec![asset],
+        name: name.to_owned(),
+    };
+
+    fixture.apply(&add("vingt-caracteres-ici"));
+    fixture.apply(&add("d'écran"));
+    fixture.apply(&add("œuvre_2"));
+    let before = fixture.snapshot();
+
+    assert!(matches!(
+        fixture.refused(&add("vingt-et-un-caracteres")),
+        TagError::TooLong
+    ));
+    for name in ["fond d'écran", "deux\tmots", "ligne\nsuivante", "a\u{a0}b"] {
+        assert!(
+            matches!(fixture.refused(&add(name)), TagError::NotOneWord),
+            "{name:?}"
+        );
+    }
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn characters_are_counted_not_bytes() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+
+    fixture.tag(&[asset], &"é".repeat(20));
+    fixture.tag(&[asset], &"猫".repeat(20));
+
+    assert!(matches!(
+        fixture.refused(&TagCommand::Add {
+            assets: vec![asset],
+            name: "é".repeat(21),
+        }),
+        TagError::TooLong
+    ));
+}
+
+#[test]
+fn renaming_must_follow_the_same_rule() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    let red = fixture.tag(&[asset], "rouge");
+    let before = fixture.snapshot();
+
+    for (name, expected_too_long) in [("rouge vif", false), (&"x".repeat(21)[..], true)] {
+        let refused = fixture.refused(&TagCommand::Rename {
+            tag: red,
+            name: name.to_owned(),
+        });
+        assert_eq!(matches!(refused, TagError::TooLong), expected_too_long);
+        assert_eq!(matches!(refused, TagError::NotOneWord), !expected_too_long);
+    }
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn an_old_tag_that_breaks_the_rule_stays_usable() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    let other = fixture.import("dark-circle.svg");
+    let old = insert_old_tag(&fixture, "illustration vectorielle très détaillée");
+
+    let undo = fixture.apply(&TagCommand::Add {
+        assets: vec![asset],
+        name: "Illustration vectorielle très détaillée".to_owned(),
+    });
+    assert_eq!(fixture.shown(old), set(&[asset]));
+    fixture.apply(&TagCommand::Link {
+        tag: old,
+        assets: vec![other],
+    });
+    let recreate = fixture.apply(&TagCommand::Delete { tag: old });
+    fixture.apply(&recreate);
+    fixture.apply(&undo);
+
+    assert_eq!(fixture.shown(old), set(&[other]));
 }

@@ -3,6 +3,8 @@ use rusqlite::{Connection, OptionalExtension, params};
 use super::tag::{self, find_by_name};
 use super::{AssetId, Change, Library, LibraryError, TagId};
 
+pub const LONGEST_TAG_NAME: usize = 20;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TagCommand {
     Add { assets: Vec<AssetId>, name: String },
@@ -19,6 +21,10 @@ pub enum TagCommand {
 pub enum TagError {
     #[error("a tag name cannot be empty")]
     InvalidName,
+    #[error("a tag is a single word")]
+    NotOneWord,
+    #[error("a tag has at most {LONGEST_TAG_NAME} characters")]
+    TooLong,
     #[error("the tag {0} does not exist")]
     NotFound(TagId),
     #[error("the resource {0} does not exist")]
@@ -84,9 +90,11 @@ fn add(connection: &Connection, assets: &[AssetId], name: &str) -> Result<TagCom
     for asset in assets {
         ensure_asset_is_visible(connection, *asset)?;
     }
-    let (tag, created) = match find_by_name(connection, name)? {
-        Some(existing) => (existing.id, false),
-        None => (insert(connection, TagId::generate(), name)?, true),
+    let (tag, created) = if let Some(existing) = find_by_name(connection, name)? {
+        (existing.id, false)
+    } else {
+        ensure_is_a_short_word(name)?;
+        (insert(connection, TagId::generate(), name)?, true)
     };
     let unlink = link(connection, tag, assets)?;
     if created {
@@ -136,6 +144,7 @@ fn unlink(connection: &Connection, tag: TagId, assets: &[AssetId]) -> Result<Tag
 fn rename(connection: &Connection, tag: TagId, name: &str) -> Result<TagCommand, TagError> {
     let old_name = name_of(connection, tag)?;
     let name = valid_name(name)?;
+    ensure_is_a_short_word(name)?;
     if let Some(existing) = find_by_name(connection, name)?
         && existing.id != tag
     {
@@ -192,6 +201,16 @@ fn valid_name(name: &str) -> Result<&str, TagError> {
         Err(TagError::InvalidName)
     } else {
         Ok(name)
+    }
+}
+
+fn ensure_is_a_short_word(name: &str) -> Result<(), TagError> {
+    if name.chars().any(char::is_whitespace) {
+        Err(TagError::NotOneWord)
+    } else if name.chars().count() > LONGEST_TAG_NAME {
+        Err(TagError::TooLong)
+    } else {
+        Ok(())
     }
 }
 

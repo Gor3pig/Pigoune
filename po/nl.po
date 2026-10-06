@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 21:57+0200\n"
+"POT-Creation-Date: 2026-10-06 22:07+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -959,17 +959,17 @@ msgstr "_Kiezen…"
 msgid "translator-credits"
 msgstr "Gor3pig"
 
-#: crates/pigoune-app/src/error_messages.rs:9
+#: crates/pigoune-app/src/error_messages.rs:10
 msgid "This name cannot be used. Avoid “/” and names starting with a dot."
 msgstr ""
 "Deze naam kan niet worden gebruikt. Vermijd ‘/’ en namen die met een punt "
 "beginnen."
 
-#: crates/pigoune-app/src/error_messages.rs:12
+#: crates/pigoune-app/src/error_messages.rs:13
 msgid "A file or folder with this name already exists here."
 msgstr "Hier bestaat al een bestand of map met deze naam."
 
-#: crates/pigoune-app/src/error_messages.rs:15
+#: crates/pigoune-app/src/error_messages.rs:16
 msgid ""
 "The library folder could not be found. It may have been moved, renamed or "
 "deleted, or it may be on a disk that is no longer connected."
@@ -978,11 +978,11 @@ msgstr ""
 "hernoemd of verwijderd, of staat deze op een schijf die niet meer is "
 "aangesloten."
 
-#: crates/pigoune-app/src/error_messages.rs:17
+#: crates/pigoune-app/src/error_messages.rs:18
 msgid "This folder is not a Pigoune library."
 msgstr "Deze map is geen Pigoune-bibliotheek."
 
-#: crates/pigoune-app/src/error_messages.rs:19
+#: crates/pigoune-app/src/error_messages.rs:20
 msgid ""
 "This library was created by a newer version of Pigoune. Update Pigoune to "
 "open it."
@@ -990,66 +990,66 @@ msgstr ""
 "Deze bibliotheek is gemaakt met een nieuwere versie van Pigoune. Werk "
 "Pigoune bij om haar te openen."
 
-#: crates/pigoune-app/src/error_messages.rs:21
+#: crates/pigoune-app/src/error_messages.rs:22
 msgid "This library is already open in another Pigoune window."
 msgstr "Deze bibliotheek is al geopend in een ander Pigoune-venster."
 
-#: crates/pigoune-app/src/error_messages.rs:23
+#: crates/pigoune-app/src/error_messages.rs:24
 msgid ""
 "There is not enough free space on the disk. Free up some space and try again."
 msgstr ""
 "Er is niet genoeg vrije ruimte op de schijf. Maak ruimte vrij en probeer het "
 "opnieuw."
 
-#: crates/pigoune-app/src/error_messages.rs:26
+#: crates/pigoune-app/src/error_messages.rs:27
 msgid ""
 "Pigoune is not allowed to write to this location. Choose another folder."
 msgstr "Pigoune mag niet naar deze locatie schrijven. Kies een andere map."
 
-#: crates/pigoune-app/src/error_messages.rs:29
+#: crates/pigoune-app/src/error_messages.rs:30
 msgid ""
 "This library seems to be damaged. Your files are still in its “files” folder."
 msgstr ""
 "Deze bibliotheek lijkt beschadigd. Je bestanden staan nog in haar map "
 "‘files’."
 
-#: crates/pigoune-app/src/error_messages.rs:32
+#: crates/pigoune-app/src/error_messages.rs:33
 #: crates/pigoune-app/src/import_report.rs:189
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr "Er is een onverwachte fout opgetreden: {error}"
 
-#: crates/pigoune-app/src/error_messages.rs:39
+#: crates/pigoune-app/src/error_messages.rs:40
 msgid "Enter a name for the collection."
 msgstr "Voer een naam in voor de verzameling."
 
-#: crates/pigoune-app/src/error_messages.rs:41
+#: crates/pigoune-app/src/error_messages.rs:42
 #, rust-format
 msgid "A collection named “{name}” already exists here."
 msgstr "Hier bestaat al een verzameling met de naam ‘{name}’."
 
-#: crates/pigoune-app/src/error_messages.rs:43
+#: crates/pigoune-app/src/error_messages.rs:44
 msgid "This collection no longer exists."
 msgstr "Deze verzameling bestaat niet meer."
 
-#: crates/pigoune-app/src/error_messages.rs:45
+#: crates/pigoune-app/src/error_messages.rs:46
 msgid ""
 "A collection cannot be placed inside itself or one of its sub-collections."
 msgstr ""
 "Een verzameling kan niet in zichzelf of in een van haar subverzamelingen "
 "worden geplaatst."
 
-#: crates/pigoune-app/src/error_messages.rs:48
+#: crates/pigoune-app/src/error_messages.rs:49
 msgid "The collections changed in the meantime. Please try again."
 msgstr "De verzamelingen zijn intussen gewijzigd. Probeer het opnieuw."
 
-#: crates/pigoune-app/src/error_messages.rs:50
-#: crates/pigoune-app/src/error_messages.rs:64
-#: crates/pigoune-app/src/error_messages.rs:97
+#: crates/pigoune-app/src/error_messages.rs:51
+#: crates/pigoune-app/src/error_messages.rs:65
+#: crates/pigoune-app/src/error_messages.rs:103
 msgid "This resource no longer exists."
 msgstr "Dit item bestaat niet meer."
 
-#: crates/pigoune-app/src/error_messages.rs:52
+#: crates/pigoune-app/src/error_messages.rs:53
 #, rust-format
 msgid ""
 "The collection “{name}” is no longer empty, so creating it is not undone. "
@@ -1058,40 +1058,49 @@ msgstr ""
 "De verzameling ‘{name}’ is niet meer leeg, dus het aanmaken wordt niet "
 "ongedaan gemaakt. Gebruik ‘Verwijderen…’ om haar te verwijderen."
 
-#: crates/pigoune-app/src/error_messages.rs:56
+#: crates/pigoune-app/src/error_messages.rs:57
 msgid "This icon or color cannot be used for a collection."
 msgstr ""
 "Dit pictogram of deze kleur kan niet voor een verzameling worden gebruikt."
 
-#: crates/pigoune-app/src/error_messages.rs:65
+#: crates/pigoune-app/src/error_messages.rs:66
 msgid "Enter a name for the resource."
 msgstr "Voer een naam in voor het item."
 
-#: crates/pigoune-app/src/error_messages.rs:81
+#: crates/pigoune-app/src/error_messages.rs:82
 msgid "Enter a name for the smart collection."
 msgstr "Voer een naam in voor de slimme verzameling."
 
-#: crates/pigoune-app/src/error_messages.rs:83
+#: crates/pigoune-app/src/error_messages.rs:84
 msgid "Another smart collection already has this name."
 msgstr "Een andere slimme verzameling heeft deze naam al."
 
-#: crates/pigoune-app/src/error_messages.rs:85
+#: crates/pigoune-app/src/error_messages.rs:86
 msgid "This smart collection no longer exists."
 msgstr "Deze slimme verzameling bestaat niet meer."
 
-#: crates/pigoune-app/src/error_messages.rs:87
+#: crates/pigoune-app/src/error_messages.rs:88
 msgid "The smart collections changed in the meantime. Try again."
 msgstr "De slimme verzamelingen zijn intussen gewijzigd. Probeer het opnieuw."
 
-#: crates/pigoune-app/src/error_messages.rs:95
+#: crates/pigoune-app/src/error_messages.rs:96
 msgid "Enter a name for the tag."
 msgstr "Voer een naam in voor het label."
 
-#: crates/pigoune-app/src/error_messages.rs:96
+#: crates/pigoune-app/src/error_messages.rs:98
+msgid "A tag is a single word: join several words with a hyphen."
+msgstr "Een label is één woord: verbind meerdere woorden met een koppelteken."
+
+#: crates/pigoune-app/src/error_messages.rs:100
+#, rust-format
+msgid "A tag has at most {count} characters."
+msgstr "Een label heeft maximaal {count} tekens."
+
+#: crates/pigoune-app/src/error_messages.rs:102
 msgid "This tag no longer exists."
 msgstr "Dit label bestaat niet meer."
 
-#: crates/pigoune-app/src/error_messages.rs:98
+#: crates/pigoune-app/src/error_messages.rs:104
 msgid "Another tag already has this name."
 msgstr "Een ander label heeft deze naam al."
 

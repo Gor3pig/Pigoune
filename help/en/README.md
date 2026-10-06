@@ -82,7 +82,9 @@ belonged to them go to the trash. Assets that also belong to another collection 
 
 ### Tags
 
-Tags describe assets with words of your choice. Add them from the details panel with the
+A tag is a single word of up to 20 characters: it describes assets in one keyword. To join
+several words, use a hyphen (*flat-design*). A space or a comma ends the tag you are typing, so
+you can enter several at once. Add tags from the details panel with the
 **+** button next to the tags, with **Add a Tag…** in the right-click menu, or drag assets onto
 a tag in the sidebar. The sidebar shows tags as pills with their number of assets: click one
 to see all its assets, or right-click it to rename or delete it. Beyond twelve tags, **+ N
@@ -113,8 +115,8 @@ it to add it to all of them.
 ## Finding assets
 
 Click the search field, press <kbd>Ctrl</kbd>+<kbd>F</kbd>, or simply start typing. Pigoune
-searches names, tags, notes, sources, licenses and authors, ignoring case and accents, within
-the entry selected in the sidebar. Select **All** to search the whole library.
+searches names, tags, notes, sources, licenses and authors, ignoring case, accents and ligatures (*coeur* finds
+*cœur*), within the entry selected in the sidebar. Select **All** to search the whole library.
 
 - **Space means and.** `logo goat` finds the assets that contain *logo* **and** *goat*, even in
   different places (for example *logo* in the name and *goat* in a tag).
