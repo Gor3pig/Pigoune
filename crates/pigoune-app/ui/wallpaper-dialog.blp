@@ -42,10 +42,14 @@ template $PigouneWallpaperDialog: Adw.Dialog {
 
       [end]
       Button set_button {
-        label: _("_Set as Wallpaper");
-        use-underline: true;
         sensitive: false;
         clicked => $on_set_clicked() swapped;
+
+        child: Label {
+          label: _("_Set as Wallpaper");
+          use-underline: true;
+          ellipsize: end;
+        };
 
         styles [
           "suggested-action",

@@ -115,9 +115,10 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
                 orientation: vertical;
                 spacing: 18;
 
-                Box {
-                  spacing: 24;
-                  halign: center;
+                Adw.WrapBox {
+                  child-spacing: 24;
+                  line-spacing: 12;
+                  align: 0.5;
 
                   Overlay {
                     valign: center;

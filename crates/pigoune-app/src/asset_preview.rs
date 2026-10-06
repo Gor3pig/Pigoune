@@ -18,6 +18,10 @@ const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checke
 const SMALLEST_RENDER_PIXELS: u32 = 256;
 const LARGEST_VECTOR_PIXELS: u32 = 4096;
 const SHARPEN_DELAY: Duration = Duration::from_millis(200);
+const DETAILS_WIDTH: f64 = 320.0;
+const DETAILS_SHARE: f64 = 0.25;
+const NARROW_DETAILS_MINIMUM: f64 = 200.0;
+const NARROW_DETAILS_SHARE: f64 = 0.8;
 const CONTROLS_DELAY: Duration = Duration::from_secs(2);
 const SHOWN_STEP_BUTTON: &str = "shown";
 const FAVORITE_STYLE: &str = "favorite";
@@ -36,7 +40,10 @@ mod imp {
     use gtk::prelude::*;
     use gtk::{gdk, glib};
 
-    use super::{ClosedCallback, ShownCallback};
+    use super::{
+        ClosedCallback, DETAILS_SHARE, DETAILS_WIDTH, NARROW_DETAILS_MINIMUM, NARROW_DETAILS_SHARE,
+        ShownCallback,
+    };
     use crate::animation_player::AnimationPlayer;
     use crate::asset_object::PigouneAssetObject;
     use crate::preview_strip::PigounePreviewStrip;
@@ -160,6 +167,16 @@ mod imp {
             if self.compact.replace(compact) == compact {
                 return;
             }
+            self.details_split.set_min_sidebar_width(if compact {
+                NARROW_DETAILS_MINIMUM
+            } else {
+                DETAILS_WIDTH
+            });
+            self.details_split.set_sidebar_width_fraction(if compact {
+                NARROW_DETAILS_SHARE
+            } else {
+                DETAILS_SHARE
+            });
             self.show_action_buttons();
             self.obj().reveal_strip();
         }

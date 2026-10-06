@@ -21,6 +21,10 @@ template $PigouneWindow: Adw.ApplicationWindow {
     setters {
       details_split.collapsed: true;
       sidebar_split.collapsed: true;
+      sidebar_split.min-sidebar-width: 200;
+      sidebar_split.sidebar-width-fraction: 0.8;
+      details_split.min-sidebar-width: 200;
+      details_split.sidebar-width-fraction: 0.8;
       grid_header.compact: true;
       grid_header.narrow: true;
       asset_preview.compact: true;
