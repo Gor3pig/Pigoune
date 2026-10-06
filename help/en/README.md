@@ -200,8 +200,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
   Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Open With…**, **Copy**, **Export To…**, **Export As…** and **Add to
-  Favorites** for it.
+  the image offers **Open With…**, **Set as Wallpaper…**, **Copy**, **Export To…**, **Export
+  As…** and **Add to Favorites** for it.
 
 ## Reusing assets
 
@@ -227,6 +227,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - **Open** an asset in another application, such as an image editor, with **Open With…** in
   the right-click menu. The application receives a copy: your library stays untouched, so
   save your changes under a new name and import them if you want to keep them.
+- **Set an image as your wallpaper** with **Set as Wallpaper…** in the right-click menu of the
+  grid or of the preview. GNOME shows a preview before applying it to the desktop and the lock
+  screen. Images that GNOME cannot show as they are, such as SVG, are given to it as PNG.
 
 ## Trash and undo
 

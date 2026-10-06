@@ -1114,6 +1114,10 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
 fn context_menu_model(favorite: bool) -> gio::MenuModel {
     let viewing = gio::Menu::new();
     viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
+    viewing.append(
+        Some(&gettext("Set as Wallpaper…")),
+        Some("win.set-wallpaper"),
+    );
     let sharing = gio::Menu::new();
     let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
     copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));

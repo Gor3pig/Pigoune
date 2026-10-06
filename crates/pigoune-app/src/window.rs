@@ -29,6 +29,7 @@ use crate::conversion_report;
 use crate::drop_message;
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
+use crate::export_size::{CustomSize, SizeUnit};
 use crate::flatpak_updates::FlatpakUpdates;
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
@@ -51,6 +52,7 @@ use crate::undo_message;
 use crate::update_banner;
 use crate::update_news::UpdateNews;
 use crate::view_setting;
+use crate::wallpaper;
 
 const WELCOME_PAGE: &str = "welcome";
 const LIBRARY_PAGE: &str = "library";
@@ -75,6 +77,8 @@ const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
 const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
 const OPEN_WITH_ACTION: &str = "win.open-with";
+const SET_WALLPAPER_ACTION: &str = "win.set-wallpaper";
+const WALLPAPER_VECTOR_FRAME: (f64, f64) = (3840.0, 2160.0);
 const RENAME_ASSET_ACTION: &str = "win.rename-asset";
 const ADD_TAG_ACTION: &str = "win.add-tag";
 const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
@@ -103,7 +107,8 @@ const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 19] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 20] = [
+    SET_WALLPAPER_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
     UNDO_ACTION,
@@ -183,8 +188,9 @@ mod imp {
         OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
         REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
         RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
-        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION,
-        collection_parameter, smart_collection_parameter, tag_parameter,
+        SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
+        TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, smart_collection_parameter,
+        tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -355,6 +361,9 @@ mod imp {
         });
         class.install_action_async(OPEN_WITH_ACTION, None, |window, _, _| async move {
             window.open_selected_with().await;
+        });
+        class.install_action_async(SET_WALLPAPER_ACTION, None, |window, _, _| async move {
+            window.set_selected_as_wallpaper().await;
         });
         class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| window.open_preview(None));
@@ -1751,6 +1760,10 @@ impl PigouneWindow {
         ));
         if selected.len() == 1 && !self.is_showing_trash() {
             viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
+            viewing.append(
+                Some(&gettext("Set as Wallpaper…")),
+                Some(SET_WALLPAPER_ACTION),
+            );
         }
         if selected.len() == 1 {
             viewing.append_item(&menu_item(
@@ -2312,6 +2325,82 @@ impl PigouneWindow {
         {
             self.show_open_with_error(error.message());
         }
+    }
+
+    async fn set_selected_as_wallpaper(&self) {
+        let targeted = self.targeted_assets();
+        let [asset] = targeted.as_slice() else {
+            return;
+        };
+        if self.is_showing_trash() {
+            return;
+        }
+        let failure =
+            gettext("Unable to set “{name}” as wallpaper").replace("{name}", &asset.display_name());
+        let prepared = self.wallpaper_file(asset).await;
+        let result = match prepared {
+            Ok(file) => {
+                let window = self.downgrade();
+                let later_failure = failure.clone();
+                wallpaper::set_wallpaper(&file, move || {
+                    if let Some(window) = window.upgrade() {
+                        window.show_toast(&later_failure);
+                    }
+                })
+                .await
+            }
+            Err(reason) => Err(reason),
+        };
+        if let Err(reason) = result {
+            glib::g_warning!("pigoune", "Unable to set the wallpaper: {reason}");
+            self.show_toast(&failure);
+        }
+    }
+
+    async fn wallpaper_file(&self, asset: &PigouneAssetObject) -> Result<PathBuf, String> {
+        let format = asset.asset().format;
+        if matches!(format, AssetFormat::Jpeg | AssetFormat::Png) {
+            let copy = self
+                .imp()
+                .library
+                .borrow()
+                .as_ref()
+                .map(|library| library.opening_copy(asset.id()));
+            return match copy {
+                Some(Ok(Some(copy))) => Ok(copy),
+                Some(Err(error)) => Err(error_messages::describe(&error)),
+                Some(Ok(None)) | None => Err("no copy".to_owned()),
+            };
+        }
+        let is_vector = format == AssetFormat::Svg;
+        let custom = if is_vector {
+            CustomSize {
+                unit: SizeUnit::Pixels,
+                width: WALLPAPER_VECTOR_FRAME.0,
+                height: WALLPAPER_VECTOR_FRAME.1,
+                linked: true,
+            }
+        } else {
+            CustomSize::default()
+        };
+        let source = image_conversion::Source {
+            file: asset.file(),
+            is_vector,
+            natural: natural_size(asset),
+            still: None,
+        };
+        let settings = ConversionSettings {
+            custom,
+            ..ConversionSettings::default()
+        };
+        let converted = image_conversion::convert(&source, settings)
+            .await
+            .map_err(|error| format!("{error:?}"))?;
+        let folder = glib::user_cache_dir().join("pigoune").join("wallpapers");
+        std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
+        let file = folder.join(format!("{}.png", asset.id()));
+        std::fs::write(&file, converted.bytes).map_err(|error| error.to_string())?;
+        Ok(file)
     }
 
     fn show_open_with_error(&self, details: &str) {

@@ -228,8 +228,8 @@ ses critères.
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
-  sur l'image propose **Ouvrir avec…**, **Copier**, **Exporter vers…**, **Exporter au format…**
-  et **Ajouter aux favoris** pour elle.
+  sur l'image propose **Ouvrir avec…**, **Définir comme fond d'écran…**, **Copier**,
+  **Exporter vers…**, **Exporter au format…** et **Ajouter aux favoris** pour elle.
 
 ## Réutiliser vos ressources
 
@@ -259,6 +259,10 @@ ses critères.
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
   importez-les si vous voulez les garder.
+- **Utilisez une image comme fond d'écran** avec **Définir comme fond d'écran…** dans le menu du
+  clic droit de la grille ou de l'aperçu. GNOME montre un aperçu avant de l'appliquer au bureau
+  et à l'écran de verrouillage. Les images que GNOME ne sait pas afficher telles quelles, comme
+  les SVG, lui sont transmises en PNG.
 
 ## Corbeille et annulation
 

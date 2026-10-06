@@ -80,6 +80,7 @@ mod undo_message;
 mod update_banner;
 mod update_news;
 mod view_setting;
+mod wallpaper;
 mod window;
 mod zoom_math;
 mod zoom_view;
