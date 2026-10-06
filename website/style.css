@@ -395,11 +395,17 @@ footer nav {
 }
 
 .journey .desktop {
-  padding: 6%;
+  position: relative;
 }
 
 .journey .desktop img {
-  object-fit: contain;
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-width: 86%;
+  max-height: 86%;
+  margin: auto;
   border-radius: 6px;
   box-shadow: 0 0 0 5px #2b2b30, 0 8px 18px rgb(0 0 6 / 0.25);
 }
