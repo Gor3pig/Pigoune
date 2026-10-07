@@ -380,6 +380,9 @@ retrouve un réglage par son nom.
   d'accueil proposent, de 0 à 8. Choisissez 0 pour désactiver la liste.
 - **Rouvrir la dernière entrée** : une bibliothèque s'ouvre sur l'entrée utilisée la dernière
   fois plutôt que sur **Tout**.
+- **Afficher les nouveautés après une mise à jour** : au premier démarrage d'une nouvelle
+  version, une courte fenêtre présente ses principales nouveautés. Désactivez-la si vous
+  préférez ne pas la voir ; la fenêtre À propos garde les nouveautés de la version en cours.
 - **Confirmer avant de vider la corbeille**.
 - **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
   30 jours dans la corbeille.

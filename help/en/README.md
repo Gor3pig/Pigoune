@@ -336,6 +336,9 @@ split into three pages; the magnifier at the top finds a setting by its name.
 - **Recent Libraries**: how many recent libraries the main menu and the welcome page offer,
   from 0 to 8. Choose 0 to turn the list off.
 - **Reopen the Last Entry**: a library opens on the entry you used last instead of **All**.
+- **Show What’s New After an Update**: the first time a new version starts, a short window lists
+  its main news. Turn it off if you prefer not to see it; the About window keeps the news of
+  the current version.
 - **Confirm Before Emptying the Trash**.
 - **Empty the Trash Automatically**: assets are deleted for good after 30 days in the trash.
 - **Thumbnails**, under **Storage**, shows the space taken by the thumbnails of the open
