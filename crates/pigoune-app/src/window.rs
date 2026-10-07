@@ -25,6 +25,7 @@ use crate::collection_places::SharedCollection;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::conversion_memory;
 use crate::conversion_report;
+use crate::displayed_view;
 use crate::drop_message;
 use crate::drop_places;
 use crate::error_messages;
@@ -1846,7 +1847,7 @@ impl PigouneWindow {
             Some(&gettext("Add to a Collection…")),
             Some(ADD_TO_COLLECTION_ACTION),
         );
-        if let AssetView::Collection(id) = imp.current_view.get()
+        if let AssetView::Collection(id) = self.displayed_view()
             && self.directly_holds_any(id, &selected)
         {
             let name = self.collection_name(id).unwrap_or_default();
@@ -2758,7 +2759,7 @@ impl PigouneWindow {
         }
         self.refresh_selected_tags();
         self.refresh_sidebar();
-        if imp.current_view.get() == AssetView::Tag(tag) {
+        if self.displayed_view() == AssetView::Tag(tag) {
             for asset in selected {
                 imp.asset_grid.remove_asset(asset);
             }
@@ -2935,7 +2936,7 @@ impl PigouneWindow {
         }
         let text = hovered.and_then(|hovered| {
             let library = imp.library.borrow();
-            drop_message::describe(hovered, imp.current_view.get(), library.as_ref()?)
+            drop_message::describe(hovered, self.displayed_view(), library.as_ref()?)
         });
         imp.asset_grid.show_drag_caption(text.as_deref());
     }
@@ -2955,7 +2956,7 @@ impl PigouneWindow {
 
     fn drop_assets_on_collection(&self, to: CollectionId, assets: &[AssetId], keep_source: bool) {
         let name = self.collection_name(to).unwrap_or_default();
-        let (command, message, count) = match self.imp().current_view.get() {
+        let (command, message, count) = match self.displayed_view() {
             AssetView::Collection(from) if from == to => return,
             AssetView::Collection(from) if !keep_source => (
                 CollectionCommand::MoveAssets {
@@ -3216,7 +3217,7 @@ impl PigouneWindow {
 
     fn drop_assets_leaving_view(&self, assets: &[AssetId]) {
         let imp = self.imp();
-        let view = imp.current_view.get();
+        let view = self.displayed_view();
         let leaving: Vec<AssetId> = imp
             .library
             .borrow()
@@ -4066,7 +4067,7 @@ impl PigouneWindow {
         let imp = self.imp();
         let current = imp.current_view.get();
         let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
-        let searched = if everywhere && reaches_whole_library(current) {
+        let searched = if everywhere && displayed_view::can_widen(current) {
             AssetView::All
         } else {
             current
@@ -4078,11 +4079,11 @@ impl PigouneWindow {
 
     fn searched_view(&self, view: AssetView, filter: &AssetFilter) -> AssetView {
         let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
-        if everywhere && filter.narrows() && reaches_whole_library(view) {
-            AssetView::All
-        } else {
-            view
-        }
+        displayed_view::shown(view, everywhere, filter.narrows())
+    }
+
+    fn displayed_view(&self) -> AssetView {
+        self.searched_view(self.imp().current_view.get(), &self.current_filter())
     }
 
     fn refresh_grid(&self) {
@@ -4154,7 +4155,7 @@ impl PigouneWindow {
                     asset.set_favorite(favorite);
                 }
                 self.refresh_sidebar();
-                if imp.current_view.get() == AssetView::Favorites && !favorite {
+                if self.displayed_view() == AssetView::Favorites && !favorite {
                     for asset in &selected {
                         imp.asset_grid.remove_asset(asset.id());
                     }
@@ -4597,17 +4598,6 @@ fn paths_of(files: &gio::ListModel) -> Vec<PathBuf> {
 
 fn tag_parameter(parameter: Option<&glib::Variant>) -> Option<TagId> {
     TagId::parse(&parameter?.get::<String>()?)
-}
-
-fn reaches_whole_library(view: AssetView) -> bool {
-    matches!(
-        view,
-        AssetView::All
-            | AssetView::Favorites
-            | AssetView::Unclassified
-            | AssetView::Collection(_)
-            | AssetView::Tag(_)
-    )
 }
 
 fn smart_collection_parameter(parameter: Option<&glib::Variant>) -> Option<SmartCollectionId> {

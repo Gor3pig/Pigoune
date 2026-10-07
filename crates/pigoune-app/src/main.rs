@@ -28,6 +28,7 @@ mod custom_color_swatch;
 mod desktop_bars;
 mod desktop_frame;
 mod desktop_panels;
+mod displayed_view;
 mod drag_content;
 mod drag_icon;
 mod drop_message;
