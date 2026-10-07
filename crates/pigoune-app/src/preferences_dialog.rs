@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use adw::prelude::*;
 use gettextrs::gettext;
 use gtk::{gio, glib};
@@ -11,19 +9,9 @@ use crate::settings;
 const PAGES: [&str; 3] = ["general_page", "display_page", "behaviour_page"];
 const RESOURCE: &str = "/io/github/gor3pig/Pigoune/ui/preferences-dialog.ui";
 
-pub struct ThumbnailStorage {
-    pub library_name: String,
-    pub bytes: u64,
-    pub clear: Rc<dyn Fn() -> Result<(), String>>,
-}
-
 const TILE_BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checkerboard"];
 
-pub fn present(
-    parent: &impl IsA<gtk::Widget>,
-    settings: &gio::Settings,
-    thumbnails: Option<ThumbnailStorage>,
-) {
+pub fn present(parent: &impl IsA<gtk::Widget>, settings: &gio::Settings) {
     let builder = gtk::Builder::from_resource(RESOURCE);
     for (row, key) in [
         ("reopen_last_library_row", settings::REOPEN_LAST_LIBRARY),
@@ -60,9 +48,6 @@ pub fn present(
         .iter()
         .filter_map(|page| builder.object::<adw::PreferencesPage>(*page))
         .collect();
-    if let Some(thumbnails) = thumbnails {
-        offer_thumbnail_cleaning(&builder, &dialog, thumbnails);
-    }
     if let Some(row) = builder.object::<adw::ComboRow>("language_row") {
         follow_language(&row, settings, &dialog, application_of(parent));
     }
@@ -176,61 +161,6 @@ fn follow_tile_background(row: &adw::ComboRow, settings: &gio::Settings) {
 )]
 fn whole_number(value: f64) -> i32 {
     value.round() as i32
-}
-
-fn offer_thumbnail_cleaning(
-    builder: &gtk::Builder,
-    dialog: &adw::PreferencesDialog,
-    thumbnails: ThumbnailStorage,
-) {
-    let (Some(group), Some(row), Some(button)) = (
-        builder.object::<adw::PreferencesGroup>("storage_group"),
-        builder.object::<adw::ActionRow>("thumbnails_row"),
-        builder.object::<gtk::Button>("clear_thumbnails_button"),
-    ) else {
-        return;
-    };
-    group.set_visible(true);
-    show_thumbnail_bytes(&row, &button, &thumbnails.library_name, thumbnails.bytes);
-    button.connect_clicked(glib::clone!(
-        #[weak]
-        dialog,
-        #[weak]
-        row,
-        move |button| {
-            let message = match (thumbnails.clear)() {
-                Ok(()) => {
-                    show_thumbnail_bytes(&row, button, &thumbnails.library_name, 0);
-                    freed_text(thumbnails.bytes)
-                }
-                Err(reason) => failure_text(&reason),
-            };
-            dialog.add_toast(adw::Toast::new(&message));
-        }
-    ));
-}
-
-fn freed_text(bytes: u64) -> String {
-    gettext("{size} freed, thumbnails are made again when needed")
-        .replace("{size}", &glib::format_size(bytes))
-}
-
-fn failure_text(reason: &str) -> String {
-    gettext("Unable to clear the thumbnails: {reason}").replace("{reason}", reason)
-}
-
-fn show_thumbnail_bytes(
-    row: &adw::ActionRow,
-    button: &gtk::Button,
-    library_name: &str,
-    bytes: u64,
-) {
-    row.set_subtitle(
-        &gettext("{size} used by “{name}”")
-            .replace("{size}", &glib::format_size(bytes))
-            .replace("{name}", library_name),
-    );
-    button.set_sensitive(bytes > 0);
 }
 
 fn fit_to_content(dialog: &adw::PreferencesDialog, pages: &[adw::PreferencesPage]) {

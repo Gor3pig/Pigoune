@@ -61,25 +61,6 @@ Adw.PreferencesDialog dialog {
         subtitle: _("After 30 days");
       }
     }
-
-    Adw.PreferencesGroup storage_group {
-      title: _("Storage");
-      description: _(
-        "Thumbnails are small copies of the images that keep the grid fast. Clearing them is safe: they are made again when needed."
-      );
-      visible: false;
-
-      Adw.ActionRow thumbnails_row {
-        title: _("Thumbnails");
-
-        [suffix]
-        Button clear_thumbnails_button {
-          label: _("_Clear");
-          use-underline: true;
-          valign: center;
-        }
-      }
-    }
   }
 
   Adw.PreferencesPage display_page {

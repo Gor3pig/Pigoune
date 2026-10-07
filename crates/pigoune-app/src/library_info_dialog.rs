@@ -30,6 +30,7 @@ const COUNT_TOGGLE: &str = "count";
 const RECORD_THUMBNAIL_SIDE: i32 = 40;
 
 type ShowCallback = Box<dyn Fn(AssetId)>;
+type ClearCallback = Box<dyn Fn() -> Result<(), String>>;
 
 pub struct LibraryReport {
     pub name: String,
@@ -99,6 +100,10 @@ mod imp {
         #[template_child]
         pub disk_row: TemplateChild<adw::ActionRow>,
         #[template_child]
+        pub thumbnails_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
+        pub thumbnails_button: TemplateChild<gtk::Button>,
+        #[template_child]
         pub created_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
@@ -107,6 +112,7 @@ mod imp {
         pub storage: RefCell<Option<StorageUse>>,
         pub record_ids: RefCell<Vec<AssetId>>,
         pub on_show: RefCell<Option<super::ShowCallback>>,
+        pub clear_thumbnails: RefCell<Option<super::ClearCallback>>,
     }
 
     #[glib::object_subclass]
@@ -140,7 +146,11 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneLibraryInfoDialog {
-    pub fn new(report: LibraryReport, on_show: impl Fn(AssetId) + 'static) -> Self {
+    pub fn new(
+        report: LibraryReport,
+        on_show: impl Fn(AssetId) + 'static,
+        clear_thumbnails: impl Fn() -> Result<(), String> + 'static,
+    ) -> Self {
         let LibraryReport {
             name,
             root,
@@ -154,6 +164,8 @@ impl PigouneLibraryInfoDialog {
         let dialog: Self = glib::Object::new();
         let imp = dialog.imp();
         imp.on_show.replace(Some(Box::new(on_show)));
+        imp.clear_thumbnails
+            .replace(Some(Box::new(clear_thumbnails)));
         imp.root.replace(root.to_path_buf());
         imp.records_box.set_visible(overview.resources > 1);
         dialog.show_records(&records);
@@ -162,6 +174,7 @@ impl PigouneLibraryInfoDialog {
         imp.storage.replace(Some(storage));
         dialog.show_measure(Measure::Weight);
         dialog.show_disk_space(root, &storage);
+        dialog.show_thumbnail_bytes(storage.thumbnails);
         dialog.show_colors(&colors);
         imp.name_label.set_label(name);
         let place = host_path::shown_path(root).to_string_lossy().to_string();
@@ -453,6 +466,40 @@ impl PigouneLibraryInfoDialog {
         self.imp().root.borrow().clone()
     }
 
+    fn show_thumbnail_bytes(&self, bytes: u64) {
+        let imp = self.imp();
+        imp.thumbnails_row.set_subtitle(&glib::format_size(bytes));
+        imp.thumbnails_button.set_sensitive(bytes > 0);
+    }
+
+    #[template_callback]
+    fn on_clear_thumbnails_clicked(&self) {
+        let imp = self.imp();
+        let Some(storage) = imp.storage.borrow().as_ref().copied() else {
+            return;
+        };
+        let outcome = imp
+            .clear_thumbnails
+            .borrow()
+            .as_ref()
+            .map_or(Ok(()), |clear| clear());
+        let message = match outcome {
+            Ok(()) => {
+                let cleared = StorageUse {
+                    thumbnails: 0,
+                    ..storage
+                };
+                imp.storage.replace(Some(cleared));
+                self.show_thumbnail_bytes(0);
+                imp.disk_legend.remove_all();
+                self.show_disk_space(&self.root(), &cleared);
+                freed_text(storage.thumbnails)
+            }
+            Err(reason) => failure_text(&reason),
+        };
+        imp.toast_overlay.add_toast(adw::Toast::new(&message));
+    }
+
     #[template_callback]
     fn on_copy_location_clicked(&self) {
         self.clipboard()
@@ -472,6 +519,15 @@ impl PigouneLibraryInfoDialog {
             |_| {},
         );
     }
+}
+
+fn freed_text(bytes: u64) -> String {
+    gettext("{size} freed, thumbnails are made again when needed")
+        .replace("{size}", &glib::format_size(bytes))
+}
+
+fn failure_text(reason: &str) -> String {
+    gettext("Unable to clear the thumbnails: {reason}").replace("{reason}", reason)
 }
 
 fn figure_tile(count: usize, caption: &str) -> gtk::Widget {

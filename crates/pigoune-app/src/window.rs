@@ -1151,31 +1151,16 @@ impl PigouneWindow {
         }
     }
 
-    fn thumbnail_storage(&self) -> Option<preferences_dialog::ThumbnailStorage> {
-        let library = self.imp().library.borrow();
-        let library = library.as_ref()?;
-        Some(preferences_dialog::ThumbnailStorage {
-            library_name: library.name(),
-            bytes: library.thumbnail_cache_bytes(),
-            clear: Rc::new(glib::clone!(
-                #[weak(rename_to = window)]
-                self,
-                #[upgrade_or]
-                Ok(()),
-                move || {
-                    window
-                        .imp()
-                        .library
-                        .borrow()
-                        .as_ref()
-                        .map_or(Ok(()), |library| {
-                            library
-                                .clear_thumbnail_cache()
-                                .map_err(|error| error_messages::describe(&error))
-                        })
-                }
-            )),
-        })
+    fn clear_thumbnails(&self) -> Result<(), String> {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map_or(Ok(()), |library| {
+                library
+                    .clear_thumbnail_cache()
+                    .map_err(|error| error_messages::describe(&error))
+            })
     }
 
     fn show_library_info(&self) {
@@ -1199,6 +1184,13 @@ impl PigouneWindow {
                         self,
                         move |id| window.show_in_all(id)
                     ),
+                    glib::clone!(
+                        #[weak(rename_to = window)]
+                        self,
+                        #[upgrade_or]
+                        Ok(()),
+                        move || window.clear_thumbnails()
+                    ),
                 )
             })
         });
@@ -1217,7 +1209,7 @@ impl PigouneWindow {
     }
 
     fn show_preferences(&self) {
-        preferences_dialog::present(self, self.settings(), self.thumbnail_storage());
+        preferences_dialog::present(self, self.settings());
     }
 
     fn settings(&self) -> &gio::Settings {

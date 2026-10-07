@@ -357,8 +357,9 @@ la bibliothèque ouverte, en trois onglets :
 - **Stockage** montre dans une seule barre la place de la bibliothèque sur son disque, répartie
   entre les ressources, les vignettes, la base de données et la corbeille, à côté des autres
   fichiers et de l'espace libre. En dessous : son emplacement, avec des boutons pour le copier ou
-  ouvrir son dossier, si ce disque est amovible, sa date de création et les versions de Pigoune
-  capables de l'ouvrir.
+  ouvrir son dossier, si ce disque est amovible, la place prise par les vignettes, sa date de
+  création et les versions de Pigoune capables de l'ouvrir. **Vider**, à côté des vignettes,
+  libère leur place ; elles sont recréées quand on en a besoin.
 
 ## Préférences
 
@@ -386,8 +387,6 @@ retrouve un réglage par son nom.
 - **Confirmer avant de vider la corbeille**.
 - **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
   30 jours dans la corbeille.
-- **Vignettes**, dans **Stockage**, indique la place prise par les vignettes de la bibliothèque
-  ouverte. **Vider** la libère ; les vignettes sont recréées quand on en a besoin.
 
 **Affichage**
 

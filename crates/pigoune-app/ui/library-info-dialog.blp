@@ -279,6 +279,21 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
                   title: _("Disk");
                 }
 
+                Adw.ActionRow thumbnails_row {
+                  title: _("Thumbnails");
+                  tooltip-text: _(
+                    "Thumbnails are small copies of the images that keep the grid fast. Clearing them is safe: they are made again when needed."
+                  );
+
+                  [suffix]
+                  Button thumbnails_button {
+                    label: _("_Clear");
+                    use-underline: true;
+                    valign: center;
+                    clicked => $on_clear_thumbnails_clicked() swapped;
+                  }
+                }
+
                 Adw.ActionRow created_row {
                   title: _("Created");
                 }

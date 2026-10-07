@@ -316,8 +316,9 @@ tabs:
 - **Storage** shows in a single bar what the library takes on its disk, split between the
   assets, the thumbnails, the database and the trash, next to the other files and the free
   space. Below are where the library is stored, with buttons to copy its location or open its
-  folder, whether that disk is removable, when the library was created and which versions of
-  Pigoune can open it.
+  folder, whether that disk is removable, the space taken by the thumbnails, when the library
+  was created and which versions of Pigoune can open it. **Clear** next to the thumbnails frees
+  their space; they are made again when they are needed.
 
 ## Preferences
 
@@ -341,8 +342,6 @@ split into three pages; the magnifier at the top finds a setting by its name.
   the current version.
 - **Confirm Before Emptying the Trash**.
 - **Empty the Trash Automatically**: assets are deleted for good after 30 days in the trash.
-- **Thumbnails**, under **Storage**, shows the space taken by the thumbnails of the open
-  library. **Clear** frees it; thumbnails are made again when they are needed.
 
 **Display**
 
