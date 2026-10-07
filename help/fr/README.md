@@ -77,7 +77,9 @@ droit sur une collection permet d'y créer une sous-collection, de la renommer
 - **Personnalisez** une collection pour lui donner sa propre icône et sa propre couleur dans la
   barre latérale : clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis
   **Enregistrer**. **Par défaut** remet le dossier gris.
-- **Déplacez** des ressources dans une collection en les glissant dessus depuis la grille.
+- **Déplacez** des ressources dans une collection en les glissant dessus depuis la grille, ou,
+  quand vous êtes dans une collection, avec **Déplacer vers une collection…** dans le menu du
+  clic droit.
 - **Ajoutez-les** à une collection sans les retirer de leur place en maintenant
   <kbd>Ctrl</kbd> pendant le glisser, ou avec **Ajouter à une collection…** dans le menu du
   clic droit. Une ressource peut appartenir à plusieurs collections.

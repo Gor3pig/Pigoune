@@ -69,7 +69,8 @@ sub-collection, rename it (<kbd>F2</kbd>), customize it or delete it.
 - **Customize** a collection to give it its own icon and color in the sidebar: right-click it,
   choose **Customize…**, pick a color and an icon, then **Save**. **Default** brings back the
   gray folder.
-- **Move** assets into a collection by dragging them onto it from the grid.
+- **Move** assets into a collection by dragging them onto it from the grid, or, when you are
+  inside a collection, with **Move to a Collection…** in the right-click menu.
 - **Add** them to a collection while keeping them where they are by holding <kbd>Ctrl</kbd>
   while dragging, or with **Add to a Collection…** in the right-click menu. An asset can belong
   to several collections.

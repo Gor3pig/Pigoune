@@ -21,6 +21,7 @@ struct Chooser {
 
 pub fn present(
     parent: &impl IsA<gtk::Widget>,
+    title: &str,
     all: Vec<CollectionPath>,
     held_by_all: Vec<CollectionId>,
     on_chosen: impl Fn(CollectionId) + 'static,
@@ -62,7 +63,7 @@ pub fn present(
     toolbar.add_top_bar(&adw::HeaderBar::new());
     toolbar.set_content(Some(&content));
     let dialog = adw::Dialog::builder()
-        .title(gettext("Add to a Collection"))
+        .title(title)
         .content_width(340)
         .child(&toolbar)
         .build();

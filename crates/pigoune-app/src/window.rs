@@ -87,6 +87,7 @@ const FALLBACK_SCREEN: (u32, u32) = (1920, 1080);
 const RENAME_ASSET_ACTION: &str = "win.rename-asset";
 const ADD_TAG_ACTION: &str = "win.add-tag";
 const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
+const MOVE_TO_COLLECTION_ACTION: &str = "win.move-to-collection";
 const REMOVE_FROM_COLLECTION_ACTION: &str = "win.remove-from-collection";
 const TRASH_SELECTED_ACTION: &str = "win.trash-selected";
 const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
@@ -191,10 +192,10 @@ mod imp {
         CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
         DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
-        NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
-        OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION,
-        PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, MOVE_TO_COLLECTION_ACTION,
+        NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
+        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
+        PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
         RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
         SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
         TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, smart_collection_parameter,
@@ -392,6 +393,9 @@ mod imp {
         });
         class.install_action(ADD_TO_COLLECTION_ACTION, None, |window, _, _| {
             window.after_menu_closes(super::PigouneWindow::ask_collection_for_selected);
+        });
+        class.install_action(MOVE_TO_COLLECTION_ACTION, None, |window, _, _| {
+            window.after_menu_closes(super::PigouneWindow::ask_collection_to_move_selected);
         });
         class.install_action(
             REMOVE_FROM_COLLECTION_ACTION,
@@ -1853,6 +1857,12 @@ impl PigouneWindow {
             Some(&gettext("Add to a Collection…")),
             Some(ADD_TO_COLLECTION_ACTION),
         );
+        if matches!(self.displayed_view(), AssetView::Collection(_)) {
+            organizing.append(
+                Some(&gettext("Move to a Collection…")),
+                Some(MOVE_TO_COLLECTION_ACTION),
+            );
+        }
         if let AssetView::Collection(id) = self.displayed_view()
             && self.directly_holds_any(id, &selected)
         {
@@ -2800,6 +2810,7 @@ impl PigouneWindow {
             .collect();
         collection_chooser::present(
             self,
+            &gettext("Add to a Collection"),
             all,
             held_by_all,
             glib::clone!(
@@ -2808,6 +2819,30 @@ impl PigouneWindow {
                 move |collection| window.change_selected_collections(|assets| {
                     CollectionCommand::AddAssets { collection, assets }
                 })
+            ),
+        );
+    }
+
+    fn ask_collection_to_move_selected(&self) {
+        let AssetView::Collection(source) = self.displayed_view() else {
+            return;
+        };
+        let assets = self.targeted_ids();
+        let Some((_, all)) = self.selected_collections() else {
+            return;
+        };
+        if assets.is_empty() {
+            return;
+        }
+        collection_chooser::present(
+            self,
+            &gettext("Move to a Collection"),
+            all,
+            vec![source],
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |collection| window.drop_assets_on_collection(collection, &assets, false)
             ),
         );
     }
