@@ -217,7 +217,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
   the image offers **Open With…**, **Frame and Set as Wallpaper…**, **Copy**, **Export To…**, **Export
-  As…** and **Add to Favorites** for it.
+  As…**, **Add to Favorites** and **Move to Trash** for it. <kbd>Delete</kbd> also moves the shown
+  asset to the trash, and the preview goes on with the next one.
 
 ## Reusing assets
 
@@ -284,7 +285,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 Press <kbd>Delete</kbd>, or choose **Move to Trash** in the right-click menu, to send assets
 to the trash. Nothing is lost until you empty it: open **Trash** at the bottom of the sidebar
 to restore assets, with **Restore** in the right-click menu or in the details panel, or to
-empty it for good.
+empty it for good. Assets in the trash can still be copied, exported or opened with another
+application, but not changed.
 
 Most changes can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd> or with the **Undo** button of
 the message that appears after an action: trashing, moving, tags, favorites, renaming, notes

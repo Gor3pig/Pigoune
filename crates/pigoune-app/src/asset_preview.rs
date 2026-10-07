@@ -186,9 +186,19 @@ mod imp {
             self.show_action_buttons();
         }
 
+        fn bind_step_keys(class: &mut <Self as ObjectSubclass>::Class) {
+            class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
+                preview.step(-1);
+                glib::Propagation::Stop
+            });
+            class.add_binding(gdk::Key::Right, gdk::ModifierType::empty(), |preview| {
+                preview.step(1);
+                glib::Propagation::Stop
+            });
+        }
+
         fn show_action_buttons(&self) {
-            self.action_buttons
-                .set_visible(!self.compact.get() && self.actionable.get());
+            self.action_buttons.set_visible(!self.compact.get());
         }
     }
 
@@ -266,6 +276,12 @@ mod imp {
                 preview.show_context_menu(None);
                 glib::Propagation::Stop
             });
+            class.add_binding(gdk::Key::Delete, gdk::ModifierType::empty(), |preview| {
+                if preview.imp().actionable.get() {
+                    let _ = preview.activate_action("win.trash-selected", None);
+                }
+                glib::Propagation::Stop
+            });
             class.add_binding(gdk::Key::Home, gdk::ModifierType::empty(), |preview| {
                 preview.show_position(0);
                 glib::Propagation::Stop
@@ -286,14 +302,7 @@ mod imp {
                 preview.step_frame(1);
                 glib::Propagation::Stop
             });
-            class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
-                preview.step(-1);
-                glib::Propagation::Stop
-            });
-            class.add_binding(gdk::Key::Right, gdk::ModifierType::empty(), |preview| {
-                preview.step(1);
-                glib::Propagation::Stop
-            });
+            Self::bind_step_keys(class);
         }
 
         fn instance_init(object: &glib::subclass::InitializingObject<Self>) {
@@ -388,6 +397,29 @@ impl PigouneAssetPreview {
 
     pub fn shown_asset(&self) -> Option<PigouneAssetObject> {
         self.imp().showing.borrow().clone()
+    }
+
+    pub fn drop_shown(&self) {
+        let imp = self.imp();
+        let position = usize::try_from(imp.position.get()).unwrap_or(usize::MAX);
+        let remaining = {
+            let mut items = imp.items.borrow_mut();
+            if position < items.len() {
+                items.remove(position);
+            }
+            items.clone()
+        };
+        if remaining.is_empty() {
+            imp.showing.replace(None);
+            self.close();
+            return;
+        }
+        if let Some(thumbnails) = imp.thumbnails.borrow().clone() {
+            imp.strip.show_items(&remaining, thumbnails);
+        }
+        let next = position.min(remaining.len() - 1);
+        imp.position.set(u32::try_from(next).unwrap_or(0));
+        self.show_current();
     }
 
     pub fn close(&self) {
@@ -570,9 +602,6 @@ impl PigouneAssetPreview {
         let Some(asset) = imp.showing.borrow().clone() else {
             return;
         };
-        if !imp.actionable.get() {
-            return;
-        }
         let zoom_view = &*imp.zoom_view;
         let (x, y) = point.unwrap_or_else(|| {
             (
@@ -587,8 +616,10 @@ impl PigouneAssetPreview {
             return;
         };
         let pointing_to = gdk::Rectangle::new(inside.x() as i32, inside.y() as i32, 1, 1);
-        imp.context_menu
-            .set_menu_model(Some(&context_menu_model(asset.favorite())));
+        imp.context_menu.set_menu_model(Some(&context_menu_model(
+            asset.favorite(),
+            imp.actionable.get(),
+        )));
         imp.context_menu.set_pointing_to(Some(&pointing_to));
         imp.context_menu.popup();
     }
@@ -1149,30 +1180,39 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
         .filter(|position| *position < count)
 }
 
-fn context_menu_model(favorite: bool) -> gio::MenuModel {
+fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
     let viewing = gio::Menu::new();
     viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
-    viewing.append(
-        Some(&gettext("Frame and Set as Wallpaper…")),
-        Some("win.set-wallpaper"),
-    );
+    if editing {
+        viewing.append(
+            Some(&gettext("Frame and Set as Wallpaper…")),
+            Some("win.set-wallpaper"),
+        );
+    }
     let sharing = gio::Menu::new();
     let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
     copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));
     sharing.append_item(&copy);
     sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
     sharing.append(Some(&gettext("Export As…")), Some("win.export-selected-as"));
-    let organizing = gio::Menu::new();
-    let favorite_label = if favorite {
-        gettext("Remove from Favorites")
-    } else {
-        gettext("Add to Favorites")
-    };
-    organizing.append(Some(&favorite_label), Some("win.toggle-favorite"));
     let menu = gio::Menu::new();
     menu.append_section(None, &viewing);
     menu.append_section(None, &sharing);
-    menu.append_section(None, &organizing);
+    if editing {
+        let organizing = gio::Menu::new();
+        let favorite_label = if favorite {
+            gettext("Remove from Favorites")
+        } else {
+            gettext("Add to Favorites")
+        };
+        organizing.append(Some(&favorite_label), Some("win.toggle-favorite"));
+        let discarding = gio::Menu::new();
+        let trash = gio::MenuItem::new(Some(&gettext("Move to Trash")), Some("win.trash-selected"));
+        trash.set_attribute_value("accel", Some(&"Delete".to_variant()));
+        discarding.append_item(&trash);
+        menu.append_section(None, &organizing);
+        menu.append_section(None, &discarding);
+    }
     menu.upcast()
 }
 

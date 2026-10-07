@@ -1806,23 +1806,20 @@ impl PigouneWindow {
             OPEN_PREVIEW_ACTION,
             Some("space"),
         ));
-        if selected.len() == 1 && !self.is_showing_trash() {
+        let in_trash = self.is_showing_trash();
+        if selected.len() == 1 {
             viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
+        }
+        if selected.len() == 1 && !in_trash {
             viewing.append(
                 Some(&gettext("Frame and Set as Wallpaper…")),
                 Some(SET_WALLPAPER_ACTION),
             );
-        }
-        if selected.len() == 1 {
             viewing.append_item(&menu_item(
                 &gettext("Rename…"),
                 RENAME_ASSET_ACTION,
                 Some("F2"),
             ));
-        }
-        if self.is_showing_trash() {
-            viewing.append(Some(&gettext("_Restore")), Some(RESTORE_SELECTED_ACTION));
-            return viewing.upcast();
         }
         let sharing = gio::Menu::new();
         sharing.append_item(&menu_item(
@@ -1835,6 +1832,15 @@ impl PigouneWindow {
             Some(&gettext("Export As…")),
             Some(EXPORT_SELECTED_AS_ACTION),
         );
+        if in_trash {
+            let restoring = gio::Menu::new();
+            restoring.append(Some(&gettext("_Restore")), Some(RESTORE_SELECTED_ACTION));
+            let menu = gio::Menu::new();
+            menu.append_section(None, &viewing);
+            menu.append_section(None, &sharing);
+            menu.append_section(None, &restoring);
+            return menu.upcast();
+        }
         let organizing = gio::Menu::new();
         let favorite_label = if selected.iter().all(PigouneAssetObject::favorite) {
             gettext("Remove from Favorites")
@@ -1901,9 +1907,19 @@ impl PigouneWindow {
     }
 
     fn trash_selected(&self) {
-        if !self.is_showing_trash() {
-            self.set_trashed(&self.selected_ids(), true);
+        if self.is_showing_trash() {
+            return;
         }
+        let imp = self.imp();
+        if self.is_previewing() {
+            if let Some(shown) = imp.asset_preview.shown_asset()
+                && self.set_trashed(&[shown.id()], true)
+            {
+                imp.asset_preview.drop_shown();
+            }
+            return;
+        }
+        self.set_trashed(&self.selected_ids(), true);
     }
 
     fn restore_selected(&self) {
@@ -1912,14 +1928,14 @@ impl PigouneWindow {
         }
     }
 
-    fn set_trashed(&self, assets: &[AssetId], trashed: bool) {
+    fn set_trashed(&self, assets: &[AssetId], trashed: bool) -> bool {
         if assets.is_empty()
             || !self.apply_asset_command(&AssetCommand::SetTrashed {
                 assets: assets.to_vec(),
                 trashed,
             })
         {
-            return;
+            return false;
         }
         self.refresh_sidebar();
         self.drop_assets_leaving_view(assets);
@@ -1938,6 +1954,7 @@ impl PigouneWindow {
             )
         };
         self.show_undoable_toast(&message.replace("{count}", &count.to_string()));
+        true
     }
 
     fn ask_to_empty_trash(&self) {
@@ -2139,7 +2156,7 @@ impl PigouneWindow {
             return;
         }
         let selected = self.targeted_ids();
-        if selected.is_empty() || self.is_showing_trash() {
+        if selected.is_empty() {
             return;
         }
         let prepared = self.imp().library.borrow().as_ref().map(|library| {
@@ -2224,7 +2241,7 @@ impl PigouneWindow {
 
     async fn export_selected(&self) {
         let selected = self.targeted_ids();
-        if selected.is_empty() || self.is_showing_trash() {
+        if selected.is_empty() {
             return;
         }
         let dialog = gtk::FileDialog::builder()
@@ -2260,7 +2277,7 @@ impl PigouneWindow {
 
     fn export_selected_as(&self) {
         let assets = self.targeted_assets();
-        if assets.is_empty() || self.is_showing_trash() {
+        if assets.is_empty() {
             return;
         }
         let paused_frame = self.paused_preview_frame();
@@ -2382,9 +2399,6 @@ impl PigouneWindow {
         let [asset] = selected[..] else {
             return;
         };
-        if self.is_showing_trash() {
-            return;
-        }
         self.open_asset(asset, true).await;
     }
 
@@ -2946,7 +2960,9 @@ impl PigouneWindow {
             return;
         }
         match target {
-            AssetView::Trash => self.set_trashed(assets, true),
+            AssetView::Trash => {
+                self.set_trashed(assets, true);
+            }
             AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
             AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
             AssetView::Favorites => self.drop_assets_on_favorites(assets),

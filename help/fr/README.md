@@ -246,7 +246,9 @@ ses critères.
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
   sur l'image propose **Ouvrir avec…**, **Cadrer et définir comme fond d'écran…**, **Copier**,
-  **Exporter vers…**, **Exporter au format…** et **Ajouter aux favoris** pour elle.
+  **Exporter vers…**, **Exporter au format…**, **Ajouter aux favoris** et **Mettre à la corbeille** pour
+  elle. <kbd>Suppr</kbd> envoie aussi la ressource affichée à la corbeille, et l'aperçu passe à la
+  suivante.
 
 ## Réutiliser vos ressources
 
@@ -321,7 +323,8 @@ Appuyez sur <kbd>Suppr</kbd>, ou choisissez **Mettre à la corbeille** dans le m
 droit, pour envoyer des ressources à la corbeille. Rien n'est perdu tant que vous ne la videz
 pas : ouvrez **Corbeille**, en bas de la barre latérale, pour restaurer des ressources, avec
 **Restaurer** dans le menu du clic droit ou dans le panneau de détails, ou pour la vider
-définitivement.
+définitivement. Les ressources de la corbeille peuvent encore être copiées, exportées ou ouvertes
+avec une autre application, mais pas modifiées.
 
 La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
 **Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,
