@@ -121,6 +121,9 @@ impl Library {
             None => false,
         };
         savepoint.commit()?;
+        if restored {
+            self.history.forget_trashing_of(existing);
+        }
 
         Ok(if restored {
             ImportOutcome::RestoredFromTrash(existing)

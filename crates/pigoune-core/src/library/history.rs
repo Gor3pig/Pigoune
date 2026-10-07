@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
 use super::{
-    AssetCommand, AssetError, CollectionCommand, CollectionError, Library, SmartCollectionCommand,
-    SmartCollectionError, TagCommand, TagError,
+    AssetCommand, AssetError, AssetId, CollectionCommand, CollectionError, Library,
+    SmartCollectionCommand, SmartCollectionError, TagCommand, TagError,
 };
 
 pub const HISTORY_LIMIT: usize = 100;
@@ -62,6 +62,27 @@ impl History {
 
     pub fn clear(&mut self) {
         self.entries.clear();
+    }
+
+    pub fn forget_trashing_of(&mut self, restored: AssetId) {
+        self.entries.retain_mut(|entry| {
+            let (
+                Change::Asset(AssetCommand::SetTrashed {
+                    assets: trashed,
+                    trashed: true,
+                }),
+                Change::Asset(AssetCommand::SetTrashed {
+                    assets: to_restore,
+                    trashed: false,
+                }),
+            ) = (&mut entry.done, &mut entry.inverse)
+            else {
+                return true;
+            };
+            trashed.retain(|asset| *asset != restored);
+            to_restore.retain(|asset| *asset != restored);
+            !to_restore.is_empty()
+        });
     }
 }
 

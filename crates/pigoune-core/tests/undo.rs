@@ -78,6 +78,10 @@ impl Fixture {
     }
 }
 
+fn sample(name: &str) -> PathBuf {
+    fixture(name)
+}
+
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures")
@@ -465,4 +469,36 @@ fn an_undone_tag_link_names_only_the_resources_that_changed() {
             assets: vec![circle],
         }))
     );
+}
+
+#[test]
+fn an_import_that_restores_a_resource_forgets_its_trashing() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.apply(&trash(&[dot]));
+
+    let outcome = fixture
+        .library
+        .import_file(&sample("red-dot.png"), None)
+        .expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::RestoredFromTrash(dot));
+    assert!(!fixture.library.can_undo());
+    assert_eq!(fixture.undo(), None);
+}
+
+#[test]
+fn an_import_that_restores_one_resource_keeps_the_trashing_of_the_others() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let circle = fixture.import("dark-circle.svg", None);
+    fixture.apply(&trash(&[dot, circle]));
+
+    fixture
+        .library
+        .import_file(&sample("red-dot.png"), None)
+        .expect("import succeeds");
+
+    assert_eq!(fixture.undo(), Some(Change::Asset(trash(&[circle]))));
+    assert_eq!(fixture.shown(AssetView::All), vec![dot, circle]);
 }

@@ -331,7 +331,8 @@ La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou ave
 favoris, renommage, notes et crédits, mais aussi création, renommage, personnalisation,
 déplacement ou suppression d'une collection, et création, modification, réorganisation ou
 suppression d'une collection intelligente. Les imports ne s'annulent pas, et vider la corbeille
-efface l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle
+efface l'historique des annulations. Si un import sort une ressource de la corbeille, sa mise à la
+corbeille précédente ne figure plus dans l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle
 est vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**. Quand une
 annulation n'est plus possible, Pigoune le dit, laisse ce changement tel quel, et le
 <kbd>Ctrl</kbd>+<kbd>Z</kbd> suivant annule le changement d'avant. Un message qui suit une action ne
