@@ -383,3 +383,86 @@ fn a_change_is_undone_by_its_stamp_only_while_it_is_the_latest() {
     assert_eq!(undone, Some(Change::Asset(trash(&[dot]))));
     assert_eq!(fixture.shown(AssetView::Trash), Vec::<AssetId>::new());
 }
+
+#[test]
+fn an_undone_favorite_change_names_only_the_resources_that_changed() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let circle = fixture.import("dark-circle.svg", None);
+    fixture.apply(&AssetCommand::SetFavorite {
+        assets: vec![dot],
+        favorite: true,
+    });
+
+    fixture.apply(&AssetCommand::SetFavorite {
+        assets: vec![dot, circle],
+        favorite: true,
+    });
+
+    assert_eq!(
+        fixture.undo(),
+        Some(Change::Asset(AssetCommand::SetFavorite {
+            assets: vec![circle],
+            favorite: true,
+        }))
+    );
+}
+
+#[test]
+fn an_undone_collection_addition_names_only_the_resources_that_changed() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    let dot = fixture.import("red-dot.png", Some(tech));
+    let circle = fixture.import("dark-circle.svg", None);
+
+    fixture
+        .library
+        .apply_collection_command(&CollectionCommand::AddAssets {
+            collection: tech,
+            assets: vec![dot, circle],
+        })
+        .expect("assets are added");
+
+    assert_eq!(
+        fixture.undo(),
+        Some(Change::Collection(CollectionCommand::AddAssets {
+            collection: tech,
+            assets: vec![circle],
+        }))
+    );
+}
+
+#[test]
+fn an_undone_tag_link_names_only_the_resources_that_changed() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let circle = fixture.import("dark-circle.svg", None);
+    fixture
+        .library
+        .apply_tag_command(&TagCommand::Add {
+            assets: vec![dot],
+            name: "logo".to_owned(),
+        })
+        .expect("tag is added");
+    let tag = fixture
+        .library
+        .tag_named("logo")
+        .expect("tag is read")
+        .expect("tag exists")
+        .id;
+    fixture
+        .library
+        .apply_tag_command(&TagCommand::Link {
+            tag,
+            assets: vec![dot, circle],
+        })
+        .expect("tag is linked");
+
+    assert_eq!(
+        fixture.undo(),
+        Some(Change::Tag(TagCommand::Link {
+            tag,
+            assets: vec![circle],
+        }))
+    );
+}

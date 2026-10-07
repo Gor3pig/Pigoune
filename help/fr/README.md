@@ -329,7 +329,11 @@ favoris, renommage, notes et crédits, mais aussi création, renommage, personna
 déplacement ou suppression d'une collection, et création, modification, réorganisation ou
 suppression d'une collection intelligente. Les imports ne s'annulent pas, et vider la corbeille
 efface l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle
-est vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**.
+est vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**. Quand une
+annulation n'est plus possible, Pigoune le dit, laisse ce changement tel quel, et le
+<kbd>Ctrl</kbd>+<kbd>Z</kbd> suivant annule le changement d'avant. Un message qui suit une action ne
+compte que ce qui a vraiment changé : les ressources déjà dans la collection ou déjà étiquetées
+ne sont pas comptées.
 
 ## Votre bibliothèque
 

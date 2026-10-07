@@ -2119,7 +2119,13 @@ impl PigouneWindow {
                 self.refresh_grid();
                 let alert = adw::AlertDialog::new(
                     Some(&gettext("Unable to Undo")),
-                    Some(&error_messages::describe_undo(&error)),
+                    Some(&format!(
+                        "{}\n\n{}",
+                        error_messages::describe_undo(&error),
+                        gettext(
+                            "This change was left as it is. Ctrl+Z now undoes the change before it."
+                        )
+                    )),
                 );
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
                 alert.present(Some(self));
@@ -2948,8 +2954,8 @@ impl PigouneWindow {
     }
 
     fn drop_assets_on_collection(&self, to: CollectionId, assets: &[AssetId], keep_source: bool) {
-        let count = assets.len();
-        let (command, message) = match self.imp().current_view.get() {
+        let name = self.collection_name(to).unwrap_or_default();
+        let (command, message, count) = match self.imp().current_view.get() {
             AssetView::Collection(from) if from == to => return,
             AssetView::Collection(from) if !keep_source => (
                 CollectionCommand::MoveAssets {
@@ -2960,22 +2966,39 @@ impl PigouneWindow {
                 ngettext(
                     "{count} resource moved to “{name}”",
                     "{count} resources moved to “{name}”",
-                    u32::try_from(count).unwrap_or(u32::MAX),
+                    u32::try_from(assets.len()).unwrap_or(u32::MAX),
                 ),
+                assets.len(),
             ),
-            _ => (
-                CollectionCommand::AddAssets {
-                    collection: to,
-                    assets: assets.to_vec(),
-                },
-                ngettext(
-                    "{count} resource added to “{name}”",
-                    "{count} resources added to “{name}”",
-                    u32::try_from(count).unwrap_or(u32::MAX),
-                ),
-            ),
+            _ => {
+                let fresh = self.assets_outside_collection(to, assets);
+                if fresh.is_empty() {
+                    self.show_toast(
+                        &ngettext(
+                            "{count} resource is already in “{name}”",
+                            "{count} resources are already in “{name}”",
+                            u32::try_from(assets.len()).unwrap_or(u32::MAX),
+                        )
+                        .replace("{count}", &assets.len().to_string())
+                        .replace("{name}", &name),
+                    );
+                    return;
+                }
+                let count = fresh.len();
+                (
+                    CollectionCommand::AddAssets {
+                        collection: to,
+                        assets: fresh,
+                    },
+                    ngettext(
+                        "{count} resource added to “{name}”",
+                        "{count} resources added to “{name}”",
+                        u32::try_from(count).unwrap_or(u32::MAX),
+                    ),
+                    count,
+                )
+            }
         };
-        let name = self.collection_name(to).unwrap_or_default();
         if self.apply_collection_change(&command, assets) {
             self.show_undoable_toast(
                 &message
@@ -2983,6 +3006,42 @@ impl PigouneWindow {
                     .replace("{name}", &name),
             );
         }
+    }
+
+    fn assets_outside_collection(
+        &self,
+        collection: CollectionId,
+        assets: &[AssetId],
+    ) -> Vec<AssetId> {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return Vec::new();
+        };
+        assets
+            .iter()
+            .copied()
+            .filter(|asset| {
+                library
+                    .collections_of(*asset)
+                    .is_ok_and(|held| !held.contains(&collection))
+            })
+            .collect()
+    }
+
+    fn assets_without_tag(&self, tag: TagId, assets: &[AssetId]) -> Vec<AssetId> {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return Vec::new();
+        };
+        assets
+            .iter()
+            .copied()
+            .filter(|asset| {
+                library
+                    .tags_of(*asset)
+                    .is_ok_and(|carried| carried.iter().all(|found| found.id != tag))
+            })
+            .collect()
     }
 
     fn drop_assets_on_favorites(&self, assets: &[AssetId]) {
@@ -3060,11 +3119,22 @@ impl PigouneWindow {
     }
 
     fn drop_assets_on_tag(&self, tag: TagId, assets: &[AssetId]) {
-        let count = assets.len();
-        if !self.apply_tag_command(&TagCommand::Link {
-            tag,
-            assets: assets.to_vec(),
-        }) {
+        let name = self.tag_name(tag).unwrap_or_default();
+        let fresh = self.assets_without_tag(tag, assets);
+        if fresh.is_empty() {
+            self.show_toast(
+                &ngettext(
+                    "{count} resource already has the tag “{name}”",
+                    "{count} resources already have the tag “{name}”",
+                    u32::try_from(assets.len()).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &assets.len().to_string())
+                .replace("{name}", &name),
+            );
+            return;
+        }
+        let count = fresh.len();
+        if !self.apply_tag_command(&TagCommand::Link { tag, assets: fresh }) {
             return;
         }
         self.refresh_selected_tags();
@@ -3077,7 +3147,7 @@ impl PigouneWindow {
                 u32::try_from(count).unwrap_or(u32::MAX),
             )
             .replace("{count}", &count.to_string())
-            .replace("{name}", &self.tag_name(tag).unwrap_or_default()),
+            .replace("{name}", &name),
         );
     }
 
@@ -3849,15 +3919,30 @@ impl PigouneWindow {
     }
 
     fn delete_collection(&self, id: CollectionId, name: &str) {
+        let trashed = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.removal_of(id).ok())
+            .map_or(0, |removal| removal.trashed_assets);
         let deleted = self.change_library(|library| {
             library.apply_collection_command(&CollectionCommand::Trash { id })
         });
         match deleted {
             Some(Ok(_)) => {
                 self.refresh_assets();
-                self.show_undoable_toast(
-                    &gettext("Collection “{name}” deleted").replace("{name}", name),
-                );
+                let text = if trashed == 0 {
+                    gettext("Collection “{name}” deleted")
+                } else {
+                    ngettext(
+                        "Collection “{name}” deleted, {count} resource moved to the trash",
+                        "Collection “{name}” deleted, {count} resources moved to the trash",
+                        u32::try_from(trashed).unwrap_or(u32::MAX),
+                    )
+                    .replace("{count}", &trashed.to_string())
+                };
+                self.show_undoable_toast(&text.replace("{name}", name));
             }
             Some(Err(error)) => self.show_collection_error(&error),
             None => {}

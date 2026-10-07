@@ -48,6 +48,7 @@ impl History {
         if inverse.changes_nothing() || inverse == done {
             return;
         }
+        let done = done.narrowed_to(&inverse);
         if self.entries.len() == HISTORY_LIMIT {
             self.entries.pop_front();
         }
@@ -106,6 +107,54 @@ impl Library {
 }
 
 impl Change {
+    fn narrowed_to(self, inverse: &Change) -> Change {
+        match (self, inverse) {
+            (
+                Self::Asset(AssetCommand::SetFavorite { favorite, .. }),
+                Self::Asset(AssetCommand::SetFavorite { assets, .. }),
+            ) => Self::Asset(AssetCommand::SetFavorite {
+                assets: assets.clone(),
+                favorite,
+            }),
+            (
+                Self::Asset(AssetCommand::SetTrashed { trashed, .. }),
+                Self::Asset(AssetCommand::SetTrashed { assets, .. }),
+            ) => Self::Asset(AssetCommand::SetTrashed {
+                assets: assets.clone(),
+                trashed,
+            }),
+            (
+                Self::Collection(CollectionCommand::AddAssets { collection, .. }),
+                Self::Collection(CollectionCommand::RemoveAssets { assets, .. }),
+            ) => Self::Collection(CollectionCommand::AddAssets {
+                collection,
+                assets: assets.clone(),
+            }),
+            (
+                Self::Collection(CollectionCommand::RemoveAssets { collection, .. }),
+                Self::Collection(CollectionCommand::AddAssets { assets, .. }),
+            ) => Self::Collection(CollectionCommand::RemoveAssets {
+                collection,
+                assets: assets.clone(),
+            }),
+            (
+                Self::Tag(TagCommand::Link { tag, .. }),
+                Self::Tag(TagCommand::Unlink { assets, .. }),
+            ) => Self::Tag(TagCommand::Link {
+                tag,
+                assets: assets.clone(),
+            }),
+            (
+                Self::Tag(TagCommand::Unlink { tag, .. }),
+                Self::Tag(TagCommand::Link { assets, .. }),
+            ) => Self::Tag(TagCommand::Unlink {
+                tag,
+                assets: assets.clone(),
+            }),
+            (done, _) => done,
+        }
+    }
+
     fn changes_nothing(&self) -> bool {
         match self {
             Self::Asset(command) => command.changes_nothing(),

@@ -291,7 +291,10 @@ the message that appears after an action: trashing, moving, tags, favorites, ren
 and credits, but also creating, renaming, customizing, moving or deleting a collection, and
 creating, editing, reordering or deleting a smart collection. Imports cannot be undone, and emptying the
 trash clears the undo history. Creating a collection is only undone while it is still empty:
-once assets are imported into it, use **Delete…** instead.
+once assets are imported into it, use **Delete…** instead. When an undo is no longer possible,
+Pigoune says so, leaves that change as it is, and the next <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the
+change before it. A message that follows an action counts only what really changed: assets that
+were already in the collection or already had the tag are not counted.
 
 ## Your library
 
