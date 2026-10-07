@@ -108,8 +108,8 @@ ressources, ou faites un clic droit pour la renommer ou la supprimer. Au-delà d
 ### Les favoris
 
 Marquez une ressource comme favorite avec l'étoile à côté de son nom, dans le panneau de
-détails, ou appuyez sur <kbd>Ctrl</kbd>+<kbd>D</kbd>. Les favoris ont leur propre entrée dans
-la barre latérale.
+détails, appuyez sur <kbd>Ctrl</kbd>+<kbd>D</kbd>, ou glissez des ressources sur **Favoris** dans
+la barre latérale. Les favoris ont leur propre entrée dans la barre latérale.
 
 ### Noms, notes et crédits
 

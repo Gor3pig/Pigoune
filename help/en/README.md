@@ -98,7 +98,7 @@ others** shows the rest. Renaming a tag to the name of another one merges them.
 ### Favorites
 
 Mark an asset as a favorite with the star next to its name in the details panel, or press
-<kbd>Ctrl</kbd>+<kbd>D</kbd>. Favorites have their own entry in the sidebar.
+<kbd>Ctrl</kbd>+<kbd>D</kbd>, or drag assets onto **Favorites** in the sidebar. Favorites have their own entry in the sidebar.
 
 ### Names, notes and credits
 

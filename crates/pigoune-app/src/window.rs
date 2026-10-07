@@ -6,9 +6,9 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
-    AssetCommand, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand,
-    CollectionId, CollectionLook, CollectionPath, CollectionRemoval, Dimensions, ImportError,
-    ImportSummary, Library, LibraryError, SmartCollection, SmartCollectionCommand,
+    AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp,
+    CollectionCommand, CollectionId, CollectionLook, CollectionPath, CollectionRemoval, Dimensions,
+    ImportError, ImportSummary, Library, LibraryError, SmartCollection, SmartCollectionCommand,
     SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
     dominant_colors, library_display_name,
 };
@@ -2942,10 +2942,8 @@ impl PigouneWindow {
             AssetView::Trash => self.set_trashed(assets, true),
             AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
             AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
-            AssetView::All
-            | AssetView::Favorites
-            | AssetView::Unclassified
-            | AssetView::Smart(_) => {}
+            AssetView::Favorites => self.drop_assets_on_favorites(assets),
+            AssetView::All | AssetView::Unclassified | AssetView::Smart(_) => {}
         }
     }
 
@@ -2985,6 +2983,80 @@ impl PigouneWindow {
                     .replace("{name}", &name),
             );
         }
+    }
+
+    fn drop_assets_on_favorites(&self, assets: &[AssetId]) {
+        let imp = self.imp();
+        let names: Vec<(AssetId, bool, String)> = imp
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| {
+                assets
+                    .iter()
+                    .filter_map(|id| library.asset(*id).ok().flatten())
+                    .map(|asset| (asset.id, asset.is_favorite, asset.display_name))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let fresh: Vec<&(AssetId, bool, String)> =
+            names.iter().filter(|(_, favorite, _)| !favorite).collect();
+        let Some((_, _, first_name)) = fresh.first().copied().or(names.first()) else {
+            return;
+        };
+        if fresh.is_empty() {
+            let text = if names.len() == 1 {
+                gettext("“{name}” is already in the favorites").replace("{name}", first_name)
+            } else {
+                ngettext(
+                    "{count} resource is already in the favorites",
+                    "{count} resources are already in the favorites",
+                    u32::try_from(names.len()).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &names.len().to_string())
+            };
+            self.show_toast(&text);
+            return;
+        }
+        let fresh_ids: Vec<AssetId> = fresh.iter().map(|(id, _, _)| *id).collect();
+        let applied = self.change_library(|library| {
+            library.apply_asset_command(&AssetCommand::SetFavorite {
+                assets: fresh_ids.clone(),
+                favorite: true,
+            })
+        });
+        match applied {
+            Some(Ok(_)) => {
+                for asset in imp.asset_grid.visible_assets() {
+                    if fresh_ids.contains(&asset.id()) {
+                        asset.set_favorite(true);
+                    }
+                }
+                self.refresh_sidebar();
+                let text = if fresh_ids.len() == 1 {
+                    gettext("“{name}” added to the favorites").replace("{name}", first_name)
+                } else {
+                    ngettext(
+                        "{count} resource added to the favorites",
+                        "{count} resources added to the favorites",
+                        u32::try_from(fresh_ids.len()).unwrap_or(u32::MAX),
+                    )
+                    .replace("{count}", &fresh_ids.len().to_string())
+                };
+                self.show_undoable_toast(&text);
+            }
+            Some(Err(error)) => self.show_favorite_error(&error),
+            None => {}
+        }
+    }
+
+    fn show_favorite_error(&self, error: &AssetError) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Unable to Change the Favorites")),
+            Some(&error_messages::describe_asset(error)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
     }
 
     fn drop_assets_on_tag(&self, tag: TagId, assets: &[AssetId]) {
@@ -4009,14 +4081,7 @@ impl PigouneWindow {
                         .show_group(&selected, &imp.asset_grid.thumbnails());
                 }
             }
-            Some(Err(error)) => {
-                let alert = adw::AlertDialog::new(
-                    Some(&gettext("Unable to Change the Favorites")),
-                    Some(&error_messages::describe_asset(&error)),
-                );
-                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
-                alert.present(Some(self));
-            }
+            Some(Err(error)) => self.show_favorite_error(&error),
             None => {}
         }
     }

@@ -23,7 +23,8 @@ pub fn describe(
             describe_collection(hovered, current_view, to, &subject, library)?
         }
         AssetView::Tag(tag) => describe_tag(&hovered.assets, tag, &subject, library)?,
-        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Smart(_) => {
+        AssetView::Favorites => describe_favorites(&hovered.assets, &subject, library),
+        AssetView::All | AssetView::Unclassified | AssetView::Smart(_) => {
             return None;
         }
     };
@@ -76,6 +77,31 @@ fn describe_tag(
         gettext("Apply the tag {name} to {subject}")
     };
     Some(named(&with_subject(&template(&text), subject), &name))
+}
+
+fn describe_favorites(assets: &[AssetId], subject: &str, library: &Library) -> String {
+    let text = if all_favorite(assets, library) {
+        ngettext(
+            "{subject} is already a favorite",
+            "{subject} are already favorites",
+            plural(assets.len()),
+        )
+    } else {
+        ngettext(
+            "Mark {subject} as a favorite",
+            "Mark {subject} as favorites",
+            plural(assets.len()),
+        )
+    };
+    with_subject(&template(&text), subject)
+}
+
+fn all_favorite(assets: &[AssetId], library: &Library) -> bool {
+    assets.iter().all(|asset| {
+        library
+            .asset(*asset)
+            .is_ok_and(|found| found.is_some_and(|found| found.is_favorite))
+    })
 }
 
 fn subject(assets: &[AssetId], library: &Library) -> Option<String> {

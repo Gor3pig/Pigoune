@@ -10,7 +10,7 @@ pub fn accepts_files(view: AssetView) -> bool {
 pub fn accepts_assets(view: AssetView) -> bool {
     matches!(
         view,
-        AssetView::Collection(_) | AssetView::Tag(_) | AssetView::Trash
+        AssetView::Collection(_) | AssetView::Tag(_) | AssetView::Favorites | AssetView::Trash
     )
 }
 
@@ -55,6 +55,7 @@ mod tests {
     fn dragged_assets_go_to_collections_tags_and_the_trash() {
         assert!(accepts_assets(collection()));
         assert!(accepts_assets(tag()));
+        assert!(accepts_assets(AssetView::Favorites));
         assert!(accepts_assets(AssetView::Trash));
     }
 
@@ -62,7 +63,6 @@ mod tests {
     fn dragged_assets_are_refused_by_the_other_views() {
         assert!(!accepts_assets(AssetView::All));
         assert!(!accepts_assets(AssetView::Unclassified));
-        assert!(!accepts_assets(AssetView::Favorites));
         assert!(!accepts_assets(smart()));
     }
 }
