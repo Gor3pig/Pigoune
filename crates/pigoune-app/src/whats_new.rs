@@ -63,33 +63,19 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
-        "2.3.0" => vec![
+        "2.4.0" => vec![
             Point {
-                icon: "power-profile-performance-symbolic",
-                title: gettext("Much Faster"),
+                icon: "dialog-information-symbolic",
+                title: gettext("News After Each Update"),
                 text: gettext(
-                    "Opening a large library and searching take a fraction of the time, and scrolling stays smooth even with thousands of images.",
+                    "This window sums up the main news the first time a new version starts. You can turn it off in the Preferences.",
                 ),
             },
             Point {
-                icon: "user-bookmarks-symbolic",
-                title: gettext("Simpler Tags"),
+                icon: "drive-harddisk-symbolic",
+                title: gettext("Thumbnails Moved"),
                 text: gettext(
-                    "A tag is now one word of up to 20 characters. A space confirms it and a hyphen joins several words.",
-                ),
-            },
-            Point {
-                icon: "preferences-desktop-wallpaper-symbolic",
-                title: gettext("A Clearer Wallpaper Window"),
-                text: gettext(
-                    "The framing window shows your whole screen and warns you when the image would look blurry once enlarged.",
-                ),
-            },
-            Point {
-                icon: "format-text-plaintext-symbolic",
-                title: gettext("Long Names Handled"),
-                text: gettext(
-                    "Long names are shortened instead of stretching the panels, and the windows still fit with larger text.",
+                    "Clearing the thumbnails is now done in the library information, in the Storage tab, next to the space they take.",
                 ),
             },
         ],
