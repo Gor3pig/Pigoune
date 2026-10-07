@@ -17,14 +17,8 @@ pub fn needs_attention(summary: &ImportSummary) -> bool {
         || !matches!(summary.ending, ImportEnding::Completed)
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum Destination<'a> {
-    Collection(&'a str),
-    Tag(&'a str),
-}
-
-pub fn toast_text(summary: &ImportSummary, destination: Option<Destination>) -> String {
-    let lines = outcome_lines(summary, destination);
+pub fn toast_text(summary: &ImportSummary, collection: Option<&str>) -> String {
+    let lines = outcome_lines(summary, collection);
     if lines.is_empty() {
         gettext("No images to import were found")
     } else {
@@ -35,9 +29,9 @@ pub fn toast_text(summary: &ImportSummary, destination: Option<Destination>) -> 
 pub fn summary_dialog(
     summary: &ImportSummary,
     chosen: &[PathBuf],
-    destination: Option<Destination>,
+    collection: Option<&str>,
 ) -> adw::AlertDialog {
-    let mut lines = outcome_lines(summary, destination);
+    let mut lines = outcome_lines(summary, collection);
     lines.extend(problem_lines(summary));
     if lines.is_empty() {
         lines.push(gettext("Nothing was imported."));
@@ -83,21 +77,15 @@ fn heading(ending: &ImportEnding) -> String {
     }
 }
 
-fn outcome_lines(summary: &ImportSummary, destination: Option<Destination>) -> Vec<String> {
+fn outcome_lines(summary: &ImportSummary, collection: Option<&str>) -> Vec<String> {
     let imported = count_for_plural(summary.imported.len());
-    let imported_text = match destination {
-        Some(Destination::Collection(collection)) => ngettext(
+    let imported_text = match collection {
+        Some(collection) => ngettext(
             "{count} resource imported into “{collection}”",
             "{count} resources imported into “{collection}”",
             imported,
         )
         .replace("{collection}", collection),
-        Some(Destination::Tag(tag)) => ngettext(
-            "{count} resource imported with the tag “{tag}”",
-            "{count} resources imported with the tag “{tag}”",
-            imported,
-        )
-        .replace("{tag}", tag),
         None => ngettext(
             "{count} resource imported",
             "{count} resources imported",

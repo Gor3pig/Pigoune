@@ -59,9 +59,11 @@ date et de l'heure ; vous pouvez la renommer ensuite.
 - Vos fichiers d'origine ne sont jamais modifiés ni déplacés. Vous pouvez les supprimer une
   fois importés.
 
-Si une collection ou un tag est sélectionné dans la barre latérale, les fichiers importés y
-vont directement. Vous pouvez aussi déposer des fichiers directement sur une collection ou un
-tag de la barre latérale.
+Les fichiers sont importés dans la vue que vous regardez : **Tout** et **Non classés** les
+gardent sans collection, et une collection sélectionnée les reçoit. Les favoris, les tags, les
+collections intelligentes et la corbeille ne font que montrer des ressources, l'import y est donc
+désactivé. Vous pouvez aussi déposer des fichiers directement sur **Tout**, **Non classés** ou
+une collection de la barre latérale.
 
 ## Organiser
 

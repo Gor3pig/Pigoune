@@ -1,9 +1,7 @@
-use std::path::PathBuf;
-
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::prelude::*;
-use gtk::{gdk, gio, glib};
+use gtk::{gdk, glib};
 use pigoune_core::{AssetView, TagId};
 
 use crate::asset_grid::MENU_KEYS;
@@ -256,7 +254,7 @@ impl PigouneSidebarTagCloud {
         let view = AssetView::Tag(id);
         let target = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::COPY);
         target.set_preload(true);
-        target.set_types(&[DraggedAssets::static_type(), gdk::FileList::static_type()]);
+        target.set_types(&[DraggedAssets::static_type()]);
         let hover = glib::clone!(
             #[weak(rename_to = cloud)]
             self,
@@ -314,15 +312,10 @@ impl PigouneSidebarTagCloud {
         let Some(sidebar) = self.sidebar() else {
             return false;
         };
-        if let Ok(dragged) = value.get::<DraggedAssets>() {
-            sidebar.assets_dropped(view, dragged.0, control_is_held(pill));
-            return true;
-        }
-        let Ok(files) = value.get::<gdk::FileList>() else {
+        let Ok(dragged) = value.get::<DraggedAssets>() else {
             return false;
         };
-        let paths: Vec<PathBuf> = files.files().iter().filter_map(gio::File::path).collect();
-        sidebar.files_dropped(view, paths);
+        sidebar.assets_dropped(view, dragged.0, control_is_held(pill));
         true
     }
 

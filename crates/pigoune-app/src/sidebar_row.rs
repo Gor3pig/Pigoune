@@ -9,6 +9,7 @@ use pigoune_core::{AssetView, CollectionId};
 use crate::collection_drop::{self, CollectionDrop, DropZone};
 use crate::collection_look_dialog;
 use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
+use crate::drop_places;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 use crate::sidebar_tag_cloud::PigouneSidebarTagCloud;
@@ -362,11 +363,13 @@ impl PigouneSidebarRow {
             );
         }
         match entry {
-            Some(SidebarEntry::View(AssetView::Collection(_) | AssetView::Tag(_))) => true,
-            Some(SidebarEntry::View(AssetView::Trash)) => {
-                offered.contains_type(DraggedAssets::static_type())
+            Some(SidebarEntry::View(view)) => {
+                if offered.contains_type(DraggedAssets::static_type()) {
+                    drop_places::accepts_assets(view)
+                } else {
+                    drop_places::accepts_files(view)
+                }
             }
-            Some(SidebarEntry::View(_)) => !offered.contains_type(DraggedAssets::static_type()),
             Some(
                 SidebarEntry::CollectionsHeader
                 | SidebarEntry::SmartCollectionsHeader

@@ -31,6 +31,7 @@ mod desktop_panels;
 mod drag_content;
 mod drag_icon;
 mod drop_message;
+mod drop_places;
 mod error_messages;
 mod export_as_dialog;
 mod export_size;

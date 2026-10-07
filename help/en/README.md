@@ -53,8 +53,10 @@ pasted image is named **Pasted image** followed by the date and time; you can re
 - When you import a folder, its subfolders become collections.
 - Your original files are never modified or moved. You can delete them once they are imported.
 
-If a collection or a tag is selected in the sidebar, imported files go straight into it. You
-can also drop files directly onto a collection or a tag in the sidebar.
+Files are imported into the view you are looking at: **All** and **Unclassified** keep them
+without a collection, and a selected collection receives them. Favorites, tags, smart
+collections and the Trash only show assets, so importing is turned off there. You can also drop
+files directly onto **All**, **Unclassified** or a collection in the sidebar.
 
 ## Organizing
 

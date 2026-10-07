@@ -26,12 +26,13 @@ use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTre
 use crate::conversion_memory;
 use crate::conversion_report;
 use crate::drop_message;
+use crate::drop_places;
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
-use crate::import_report::{self, Destination};
+use crate::import_report;
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::pasted_content::{self, Pasted};
@@ -109,6 +110,7 @@ const PASTE_ACTION: &str = "win.paste";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
+const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
 const OPEN_LIBRARY_ACTIONS: [&str; 21] = [
@@ -236,6 +238,7 @@ mod imp {
         pub update_banner: TemplateChild<adw::Banner>,
         pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
         pub analysing_colors: Cell<bool>,
+        pub library_actions_enabled: Cell<bool>,
         pub update_news: RefCell<Option<UpdateNews>>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
@@ -493,6 +496,7 @@ mod imp {
             self.parent_constructed();
             self.obj().set_library_actions_enabled(false);
             self.obj().accept_dropped_files();
+            self.obj().explain_refused_import_shortcuts();
             self.obj().follow_welcome_recent_list();
             self.obj().follow_page_height();
             self.obj().watch_for_updates();
@@ -938,17 +942,16 @@ impl PigouneWindow {
             #[weak(rename_to = window)]
             self,
             move |view, paths| {
-                let target = match view {
-                    AssetView::Collection(id) => ImportTarget::Collection(id),
-                    AssetView::Tag(id) => ImportTarget::Tag(id),
-                    AssetView::All
-                    | AssetView::Favorites
-                    | AssetView::Unclassified
+                let collection = match view {
+                    AssetView::Collection(id) => Some(id),
+                    AssetView::All | AssetView::Unclassified => None,
+                    AssetView::Favorites
+                    | AssetView::Tag(_)
                     | AssetView::Smart(_)
-                    | AssetView::Trash => ImportTarget::Nowhere,
+                    | AssetView::Trash => return,
                 };
                 glib::spawn_future_local(async move {
-                    window.import_paths_into(paths, target).await;
+                    window.import_paths_into(paths, collection).await;
                 });
             }
         ));
@@ -3095,22 +3098,6 @@ impl PigouneWindow {
         }
     }
 
-    fn tag_imported(&self, tag: TagId, summary: &ImportSummary) {
-        let assets: Vec<_> = summary
-            .imported
-            .iter()
-            .chain(&summary.already_known)
-            .copied()
-            .collect();
-        if assets.is_empty() {
-            return;
-        }
-        let tagged = self.change_library(|library| library.tag_imported(tag, &assets));
-        if let Some(Err(error)) = tagged {
-            self.show_tag_error(&error);
-        }
-    }
-
     fn apply_tag_command(&self, command: &TagCommand) -> bool {
         let applied = self.change_library(|library| library.apply_tag_command(command));
         match applied {
@@ -3539,6 +3526,7 @@ impl PigouneWindow {
         let thumbnail = imp.asset_grid.thumbnails().remembered(start.id());
         self.lend_details_to_preview(true);
         imp.window_stack.set_visible_child_name(PREVIEW_PAGE);
+        self.refresh_import_availability();
         imp.asset_preview.set_actionable(!self.is_showing_trash());
         imp.asset_preview
             .open(items, position, imp.asset_grid.thumbnails());
@@ -3620,6 +3608,7 @@ impl PigouneWindow {
             self.fly_back_to_grid(last);
         }
         imp.window_stack.set_visible_child_name(MAIN_PAGE);
+        self.refresh_import_availability();
         self.lend_details_to_preview(false);
         match last {
             Some(last) if imp.browsing_selection.get() => imp.asset_grid.reveal_asset(last.id()),
@@ -3940,6 +3929,7 @@ impl PigouneWindow {
     }
 
     fn refresh_grid(&self) {
+        self.refresh_import_availability();
         let imp = self.imp();
         let filter = self.current_filter();
         let view = self.searched_view(imp.current_view.get(), &filter);
@@ -4077,7 +4067,7 @@ impl PigouneWindow {
         } else if let AssetView::Tag(_) = view {
             page.set_title(&gettext("No Resource Tagged “{name}”").replace("{name}", view_name));
             page.set_description(Some(&gettext(
-                "Add this tag to resources from the details panel, or drop files on it.",
+                "Add this tag to resources from the details panel, or drag resources onto it.",
             )));
         } else if let AssetView::Smart(_) = view {
             page.set_icon_name(Some("media-playlist-shuffle-symbolic"));
@@ -4116,6 +4106,65 @@ impl PigouneWindow {
         for action in OPEN_LIBRARY_ACTIONS {
             self.action_set_enabled(action, enabled);
         }
+        self.imp().library_actions_enabled.set(enabled);
+        self.refresh_import_availability();
+    }
+
+    fn import_is_possible_here(&self) -> bool {
+        drop_places::accepts_files(self.imp().current_view.get()) && !self.is_previewing()
+    }
+
+    fn refresh_import_availability(&self) {
+        let imp = self.imp();
+        let available = imp.library_actions_enabled.get() && self.import_is_possible_here();
+        for action in IMPORT_ACTIONS {
+            self.action_set_enabled(action, available);
+        }
+        imp.import_button.set_sensitive(available);
+        imp.import_button
+            .set_tooltip_text(Some(&if self.import_is_possible_here() {
+                gettext("Import")
+            } else {
+                self.why_import_is_refused()
+            }));
+    }
+
+    fn why_import_is_refused(&self) -> String {
+        if self.is_previewing() {
+            gettext("Close the preview to import")
+        } else {
+            gettext("Open All, Unclassified or a collection to import")
+        }
+    }
+
+    fn explain_refused_import_shortcuts(&self) {
+        let keys = gtk::EventControllerKey::new();
+        keys.set_propagation_phase(gtk::PropagationPhase::Capture);
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, modifiers| {
+                let imports = match key {
+                    gdk::Key::i | gdk::Key::I => true,
+                    gdk::Key::v | gdk::Key::V => !window.text_has_focus(),
+                    _ => false,
+                };
+                let refused =
+                    window.imp().library.borrow().is_some() && !window.import_is_possible_here();
+                if imports && refused && modifiers.contains(gdk::ModifierType::CONTROL_MASK) {
+                    window.show_toast(&window.why_import_is_refused());
+                }
+                glib::Propagation::Proceed
+            }
+        ));
+        self.add_controller(keys);
+    }
+
+    fn text_has_focus(&self) -> bool {
+        GtkWindowExt::focus(self)
+            .is_some_and(|focus| focus.is::<gtk::Text>() || focus.is::<gtk::TextView>())
     }
 
     fn set_importing(&self, importing: bool) {
@@ -4134,6 +4183,7 @@ impl PigouneWindow {
             false,
             move |_, drop| {
                 window.imp().library.borrow().is_some()
+                    && window.import_is_possible_here()
                     && drop.drag().is_none()
                     && drop.formats().contains_type(gdk::FileList::static_type())
             }
@@ -4210,38 +4260,22 @@ impl PigouneWindow {
     }
 
     async fn import_paths(&self, paths: Vec<PathBuf>) {
-        let target = match self.target_collection() {
-            Some(id) => ImportTarget::Collection(id),
-            None => ImportTarget::Nowhere,
-        };
-        self.import_paths_into(paths, target).await;
+        self.import_paths_into(paths, self.target_collection())
+            .await;
     }
 
-    async fn import_paths_into(&self, paths: Vec<PathBuf>, target: ImportTarget) {
+    async fn import_paths_into(&self, paths: Vec<PathBuf>, collection: Option<CollectionId>) {
         if paths.is_empty() {
             return;
         }
-        let destination_name =
+        let destination_name = collection.and_then(|id| {
             self.imp()
                 .library
                 .borrow()
                 .as_ref()
-                .and_then(|library| match target {
-                    ImportTarget::Collection(id) => {
-                        library.collection(id).ok().flatten().map(|c| c.name)
-                    }
-                    ImportTarget::Tag(id) => library
-                        .tags()
-                        .ok()?
-                        .into_iter()
-                        .find(|tag| tag.id == id)
-                        .map(|tag| tag.name),
-                    ImportTarget::Nowhere => None,
-                });
-        let collection = match target {
-            ImportTarget::Collection(id) => Some(id),
-            ImportTarget::Tag(_) | ImportTarget::Nowhere => None,
-        };
+                .and_then(|library| library.collection(id).ok().flatten())
+                .map(|collection| collection.name)
+        });
         let Some(library) = self.imp().library.take() else {
             return;
         };
@@ -4252,18 +4286,9 @@ impl PigouneWindow {
 
         if let Some(FinishedImport { library, result }) = finished {
             self.imp().library.replace(Some(library));
-            if let (ImportTarget::Tag(tag), Ok(summary)) = (target, &result) {
-                self.tag_imported(tag, summary);
-            }
             self.refresh_assets();
             self.analyse_colors();
-            let destination = destination_name.as_deref().map(|name| match target {
-                ImportTarget::Tag(_) => Destination::Tag(name),
-                ImportTarget::Collection(_) | ImportTarget::Nowhere => {
-                    Destination::Collection(name)
-                }
-            });
-            self.report_import(result, &paths, destination);
+            self.report_import(result, &paths, destination_name.as_deref());
         } else {
             self.close_library();
             import_report::unexpected_stop_dialog().present(Some(self));
@@ -4274,7 +4299,7 @@ impl PigouneWindow {
         &self,
         result: Result<ImportSummary, ImportError>,
         chosen: &[PathBuf],
-        destination: Option<Destination>,
+        destination: Option<&str>,
     ) {
         match result {
             Ok(summary) if import_report::needs_attention(&summary) => {
@@ -4437,13 +4462,6 @@ fn reaches_whole_library(view: AssetView) -> bool {
 
 fn smart_collection_parameter(parameter: Option<&glib::Variant>) -> Option<SmartCollectionId> {
     SmartCollectionId::parse(&parameter?.get::<String>()?)
-}
-
-#[derive(Debug, Clone, Copy)]
-enum ImportTarget {
-    Nowhere,
-    Collection(CollectionId),
-    Tag(TagId),
 }
 
 fn collection_parameter(parameter: Option<&glib::Variant>) -> Option<CollectionId> {
