@@ -40,13 +40,16 @@ starts, it opens on the welcome page too.
 
 Click the **+** button at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>I</kbd>, and
 choose **Import Files…** or **Import a Folder…**. You can also simply drag files or folders
-from Files onto the Pigoune window.
+from Files onto the Pigoune window. Another way: copy files in Files (or copy an image, such as a
+screenshot or an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Pigoune. A
+pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.
 
 - Supported formats are SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF, BMP
   and ICO.
 - Pigoune checks every image before importing it, so damaged files are listed instead of
   added.
-- Duplicates are recognized: a file already in the library is never copied twice.
+- Duplicates are recognized: a file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash; when you import into
+  a collection, it then belongs to that collection only.
 - When you import a folder, its subfolders become collections.
 - Your original files are never modified or moved. You can delete them once they are imported.
 
@@ -381,6 +384,7 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.
 | Detailed preview | <kbd>Space</kbd> |
 | Select all / deselect all | <kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Esc</kbd> |
 | Copy | <kbd>Ctrl</kbd>+<kbd>C</kbd> |
+| Paste files or an image to import | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
 | Rename | <kbd>F2</kbd> |
 | Add to or remove from favorites | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Move to trash | <kbd>Delete</kbd> |

@@ -34,6 +34,7 @@ use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report::{self, Destination};
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
+use crate::pasted_content::{self, Pasted};
 use crate::preferences_dialog;
 use crate::preview_flight::Flight;
 use crate::recent_libraries;
@@ -104,12 +105,13 @@ const WELCOME_MINIMUM_HEIGHT: i32 = 480;
 const LIBRARY_MINIMUM_HEIGHT: i32 = 294;
 const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
+const PASTE_ACTION: &str = "win.paste";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 20] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 21] = [
     SET_WALLPAPER_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
@@ -117,6 +119,7 @@ const OPEN_LIBRARY_ACTIONS: [&str; 20] = [
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
+    PASTE_ACTION,
     ENLARGE_THUMBNAILS_ACTION,
     SHRINK_THUMBNAILS_ACTION,
     NEW_COLLECTION_ACTION,
@@ -187,10 +190,10 @@ mod imp {
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, NEW_COLLECTION_ACTION,
         NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION,
-        OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PREFERENCES_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
-        SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
+        OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION,
+        PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
+        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
+        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
         TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, smart_collection_parameter,
         tag_parameter,
     };
@@ -352,6 +355,9 @@ mod imp {
         });
         class.install_action(COPY_SELECTED_ACTION, None, |window, _, _| {
             window.copy_selected();
+        });
+        class.install_action_async(PASTE_ACTION, None, |window, _, _| async move {
+            window.paste().await;
         });
         class.install_action(SELECT_ALL_ACTION, None, |window, _, _| {
             window.select_all();
@@ -2150,6 +2156,36 @@ impl PigouneWindow {
             Some(Err(error)) => self.show_library_error(&error),
             Some(Ok(_)) | None => {}
         }
+    }
+
+    async fn paste(&self) {
+        if self.paste_typed_text() {
+            return;
+        }
+        match pasted_content::read(&self.clipboard()).await {
+            Pasted::Files(paths) => self.import_paths(paths).await,
+            Pasted::Image(texture) => self.import_pasted_image(&texture).await,
+            Pasted::Nothing => self.show_toast(&gettext("Nothing to paste")),
+        }
+    }
+
+    async fn import_pasted_image(&self, texture: &gdk::Texture) {
+        let png = texture.save_to_png_bytes();
+        let saved = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.save_pasted_image(&pasted_content::image_name(), &png));
+        match saved {
+            Some(Ok(path)) => self.import_paths(vec![path]).await,
+            Some(Err(error)) => self.show_library_error(&error),
+            None => {}
+        }
+    }
+
+    fn paste_typed_text(&self) -> bool {
+        self.activate_on_focused_text("clipboard.paste")
     }
 
     fn copy_typed_text(&self) -> bool {

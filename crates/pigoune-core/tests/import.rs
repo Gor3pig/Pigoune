@@ -481,18 +481,52 @@ fn a_duplicate_in_the_trash_is_restored_with_its_collections() {
 }
 
 #[test]
-fn a_duplicate_in_the_trash_imported_into_a_collection_is_restored_and_added() {
+fn a_duplicate_in_the_trash_imported_into_a_collection_is_restored_there_only() {
     let mut fixture = Fixture::new();
     let tech = fixture.collection("Tech");
+    let logos = fixture.collection("Logos");
+    let source = fixture.sample("red-dot.png");
+    let Ok(ImportOutcome::Imported(id)) = fixture.import_into(&source, tech) else {
+        panic!("first import fails");
+    };
+    fixture.put_in_trash(id);
+
+    let outcome = fixture
+        .import_into(&source, logos)
+        .expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::RestoredFromTrash(id));
+    assert_eq!(fixture.asset(id).trashed_at_unix_ms, None);
+    assert_eq!(fixture.collections_of(id), [logos]);
+}
+
+#[test]
+fn a_duplicate_in_the_trash_imported_into_its_own_collection_stays_there() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech");
+    let source = fixture.sample("red-dot.png");
+    let Ok(ImportOutcome::Imported(id)) = fixture.import_into(&source, tech) else {
+        panic!("first import fails");
+    };
+    fixture.put_in_trash(id);
+
+    let outcome = fixture.import_into(&source, tech).expect("import succeeds");
+
+    assert_eq!(outcome, ImportOutcome::RestoredFromTrash(id));
+    assert_eq!(fixture.collections_of(id), [tech]);
+}
+
+#[test]
+fn a_duplicate_in_the_trash_without_a_collection_is_restored_unclassified() {
+    let mut fixture = Fixture::new();
     let source = fixture.sample("red-dot.png");
     let asset = fixture.import_new(&source);
     fixture.put_in_trash(asset.id);
 
-    let outcome = fixture.import_into(&source, tech).expect("import succeeds");
+    let outcome = fixture.import(&source).expect("import succeeds");
 
     assert_eq!(outcome, ImportOutcome::RestoredFromTrash(asset.id));
-    assert_eq!(fixture.asset(asset.id).trashed_at_unix_ms, None);
-    assert_eq!(fixture.collections_of(asset.id), [tech]);
+    assert!(fixture.collections_of(asset.id).is_empty());
 }
 
 #[test]

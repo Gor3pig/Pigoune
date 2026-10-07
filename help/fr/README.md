@@ -44,13 +44,17 @@ lancement, Pigoune s'ouvre aussi sur la page d'accueil.
 Cliquez sur le bouton **+** en haut de la barre latérale, ou appuyez sur
 <kbd>Ctrl</kbd>+<kbd>I</kbd>, puis choisissez **Importer des fichiers…** ou **Importer un
 dossier…**. Vous pouvez aussi simplement glisser des fichiers ou des dossiers depuis Fichiers
-jusque dans la fenêtre de Pigoune.
+jusque dans la fenêtre de Pigoune. Autre possibilité : copiez des fichiers dans Fichiers (ou copiez
+une image, comme une capture d'écran ou une image d'une page web), puis appuyez sur
+<kbd>Ctrl</kbd>+<kbd>V</kbd> dans Pigoune. Une image collée s'appelle **Image collée** suivie de la
+date et de l'heure ; vous pouvez la renommer ensuite.
 
 - Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF,
   BMP et ICO.
 - Pigoune vérifie chaque image avant de l'importer : un fichier abîmé est signalé au lieu
   d'être ajouté.
-- Les doublons sont reconnus : un fichier déjà présent n'est jamais copié deux fois.
+- Les doublons sont reconnus : un fichier déjà présent n'est jamais copié deux fois. S'il est à la corbeille, l'importer le sort de la corbeille ;
+  si vous importez dans une collection, il n'appartient alors qu'à cette collection.
 - Quand vous importez un dossier, ses sous-dossiers deviennent des collections.
 - Vos fichiers d'origine ne sont jamais modifiés ni déplacés. Vous pouvez les supprimer une
   fois importés.
@@ -431,6 +435,7 @@ Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoun
 | Aperçu détaillé | <kbd>Espace</kbd> |
 | Tout sélectionner / tout désélectionner | <kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Échap</kbd> |
 | Copier | <kbd>Ctrl</kbd>+<kbd>C</kbd> |
+| Coller des fichiers ou une image pour les importer | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
 | Renommer | <kbd>F2</kbd> |
 | Ajouter aux favoris ou en retirer | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Mettre à la corbeille | <kbd>Suppr</kbd> |

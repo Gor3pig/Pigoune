@@ -10,6 +10,7 @@ const THUMBNAILS_DIR_NAME: &str = "thumbnails";
 const EXPORT_DIR_NAME: &str = "export";
 const CLIPBOARD_DIR_NAME: &str = "clipboard";
 const OPENING_DIR_NAME: &str = "open";
+const PASTED_DIR_NAME: &str = "pasted";
 
 const MAX_NAME_BYTES: usize = 200;
 const BUCKET_NAME_LENGTH: usize = 2;
@@ -66,6 +67,10 @@ pub fn export_dir(root: &Path) -> PathBuf {
 
 pub fn clipboard_dir(root: &Path) -> PathBuf {
     root.join(CACHE_DIR_NAME).join(CLIPBOARD_DIR_NAME)
+}
+
+pub fn pasted_dir(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME).join(PASTED_DIR_NAME)
 }
 
 pub fn opening_dir(root: &Path) -> PathBuf {

@@ -396,3 +396,45 @@ fn a_conversion_can_carry_its_size_in_its_name() {
 
     assert_eq!(saved, folder.join("Logo-512.png"));
 }
+
+#[test]
+fn a_pasted_image_is_saved_under_its_name() {
+    let fixture = Fixture::new();
+
+    let saved = fixture
+        .library
+        .save_pasted_image("Pasted image 2026-10-07 14.32.05", b"png bytes")
+        .expect("pasted image is saved");
+
+    assert_eq!(file_name(&saved), "Pasted image 2026-10-07 14.32.05.png");
+    assert_eq!(fs::read(&saved).expect("file is read"), b"png bytes");
+}
+
+#[test]
+fn a_new_pasted_image_replaces_the_previous_one() {
+    let fixture = Fixture::new();
+    let first = fixture
+        .library
+        .save_pasted_image("Pasted image", b"first")
+        .expect("first image is saved");
+
+    let second = fixture
+        .library
+        .save_pasted_image("Pasted image", b"second")
+        .expect("second image is saved");
+
+    assert_eq!(first, second);
+    assert_eq!(fs::read(&second).expect("file is read"), b"second");
+}
+
+#[test]
+fn a_pasted_image_name_cannot_leave_its_folder() {
+    let fixture = Fixture::new();
+
+    let saved = fixture
+        .library
+        .save_pasted_image("../escape", b"png bytes")
+        .expect("pasted image is saved");
+
+    assert_eq!(file_name(&saved), "-escape.png");
+}

@@ -54,6 +54,7 @@ mod languages;
 mod library_info_dialog;
 mod load_slots;
 mod new_library_dialog;
+mod pasted_content;
 mod preferences_dialog;
 mod preview_flight;
 mod preview_strip;

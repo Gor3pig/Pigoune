@@ -18,6 +18,16 @@ impl Library {
         self.fresh_copies(assets, &layout::clipboard_dir(&self.root))
     }
 
+    pub fn save_pasted_image(&self, name: &str, png: &[u8]) -> Result<PathBuf, LibraryError> {
+        let folder = layout::pasted_dir(&self.root);
+        let _ = fs::remove_dir_all(&folder);
+        fs::create_dir_all(&folder)?;
+        let base = export_base_name(name, Some("png")).unwrap_or_else(|| name.to_owned());
+        let (mut file, path) = create_free_file(&folder, &base, Some("png"), &mut HashSet::new())?;
+        file.write_all(png)?;
+        Ok(path)
+    }
+
     pub fn opening_copy(&self, asset: AssetId) -> Result<Option<PathBuf>, LibraryError> {
         let folder = layout::opening_dir(&self.root).join(asset.to_string());
         Ok(self.fresh_copies(&[asset], &folder)?.pop())
@@ -120,6 +130,7 @@ pub fn forget_exports(root: &Path) {
     let _ = fs::remove_dir_all(layout::export_dir(root));
     let _ = fs::remove_dir_all(layout::clipboard_dir(root));
     let _ = fs::remove_dir_all(layout::opening_dir(root));
+    let _ = fs::remove_dir_all(layout::pasted_dir(root));
 }
 
 fn export_base_name(display_name: &str, extension: Option<&str>) -> Option<String> {

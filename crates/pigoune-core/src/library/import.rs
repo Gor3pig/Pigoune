@@ -112,7 +112,11 @@ impl Library {
     ) -> Result<ImportOutcome, ImportError> {
         let savepoint = self.connection.savepoint()?;
         let restored = restore_from_trash(&savepoint, existing)?;
-        let added = match place(&savepoint)? {
+        let target = place(&savepoint)?;
+        if restored && target.is_some() {
+            leave_all_collections(&savepoint, existing)?;
+        }
+        let added = match target {
             Some(collection) => add_to_collection(&savepoint, existing, collection)?,
             None => false,
         };
@@ -146,6 +150,14 @@ fn restore_from_trash(connection: &Connection, id: AssetId) -> Result<bool, Impo
         [id],
     )?;
     Ok(changed > 0)
+}
+
+fn leave_all_collections(connection: &Connection, asset: AssetId) -> Result<(), ImportError> {
+    connection.execute(
+        "DELETE FROM asset_collections WHERE asset_id = ?1",
+        params![asset],
+    )?;
+    Ok(())
 }
 
 fn add_to_collection(
