@@ -99,6 +99,9 @@ To run only the tests of the core library:
 cargo test -p pigoune-core
 ```
 
+If you change how a change is recorded or undone, `random_undo` is the test to watch: it replays
+the same random sequences every time, and a failure names the seed to investigate.
+
 ## Project rules
 
 These rules keep the code base consistent. `check.sh` enforces most of them.

@@ -42,7 +42,11 @@ collections, tags, favorites, metadata, search and filters, the trash, export an
   `AssetFilter` (words, formats, shapes, colors, fitting the screen, favorites only). Their
   content is computed when they are shown, so new imports appear by themselves. `AssetView::Smart` lets the rest of the code treat them like any other view.
 - **Tests** live in `crates/pigoune-core/tests/` and work on real temporary libraries, with
-  sample images in `tests/fixtures/`.
+  sample images in `tests/fixtures/`. `random_undo.rs` plays seeded random sequences of changes
+  (trash, favorites, renames, collections, tags, smart collections) and checks that undoing them
+  all brings the library back to its exact starting state; when it fails, the message gives the
+  seed to replay. `exotic_imports.rs`, `export_edge_cases.rs` and `library_failures.rs` cover
+  odd files, odd names and broken libraries.
 
 ### `pigoune-app`
 
