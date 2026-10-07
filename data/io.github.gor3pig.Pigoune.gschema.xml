@@ -56,6 +56,16 @@
       <summary>Interface language</summary>
       <description>Code of the language Pigoune is shown in, or an empty text to follow the language of the system.</description>
     </key>
+    <key name="last-seen-version" type="s">
+      <default>""</default>
+      <summary>Last version whose news were handled</summary>
+      <description>The version of Pigoune that last started, used to show what is new once after an update.</description>
+    </key>
+    <key name="show-whats-new" type="b">
+      <default>true</default>
+      <summary>Show what is new after an update</summary>
+      <description>Whether a window with the main news opens the first time a new version starts.</description>
+    </key>
     <key name="preview-background" type="s">
       <choices>
         <choice value="transparent"/>

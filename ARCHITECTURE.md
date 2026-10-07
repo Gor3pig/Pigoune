@@ -75,6 +75,11 @@ to change it.
   installing, installed, failed) and `update_banner.rs` words it; the banner installs the
   update through the portal, then starts the new version with the portal's `Spawn`. Outside
   Flatpak, nothing is watched.
+- **What is new.** `whats_new.rs` opens a short window the first time a newer version starts:
+  the last version seen is kept in the settings, and `decide` (pure, tested) tells whether to
+  show it, only remember the version (first installation, preference off, a version without
+  points) or do nothing. The points of the running version live in the code, so they are
+  translated in every language of the interface like the rest of the texts.
 - **Wallpapers.** `wallpaper_dialog.rs` is the framing window and `wallpaper_stage.rs` its
   virtual screen, drawn at the real resolution of a monitor listed by `screen_size.rs`. The
   framing math (fill, whole image, zoom around a point, snapping, the visible part) is pure and

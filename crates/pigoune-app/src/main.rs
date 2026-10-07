@@ -92,6 +92,7 @@ mod wallpaper_framing;
 mod wallpaper_progress_dialog;
 mod wallpaper_stage;
 mod wallpaper_swatches;
+mod whats_new;
 mod window;
 mod zoom_math;
 mod zoom_view;

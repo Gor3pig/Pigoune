@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-07 00:36+0200\n"
+"POT-Creation-Date: 2026-10-07 09:26+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -112,45 +112,61 @@ msgstr "Cadrez n’importe quelle image et faites-en votre fond d’écran"
 msgid ""
 "Much faster on large libraries, a clearer wallpaper window and shorter, "
 "simpler tags."
-msgstr "Beaucoup plus rapide sur les grandes bibliothèques, une fenêtre de fond d’écran plus claire, des tags plus courts et plus simples."
+msgstr ""
+"Beaucoup plus rapide sur les grandes bibliothèques, une fenêtre de fond "
+"d’écran plus claire, des tags plus courts et plus simples."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:99
 msgid ""
 "Opening a library and searching are several times faster, and scrolling "
 "through thousands of thumbnails stays smooth, even before they have been "
 "created."
-msgstr "L’ouverture d’une bibliothèque et la recherche sont plusieurs fois plus rapides, et le défilement de milliers de vignettes reste fluide, même avant leur création."
+msgstr ""
+"L’ouverture d’une bibliothèque et la recherche sont plusieurs fois plus "
+"rapides, et le défilement de milliers de vignettes reste fluide, même avant "
+"leur création."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:100
 msgid ""
 "A tag is now a single word of up to 20 characters: a space ends the tag you "
 "are typing and a hyphen joins several words. Existing tags are left as they "
 "are."
-msgstr "Un tag est désormais un seul mot de 20 caractères au plus : une espace termine le tag en cours de saisie et un tiret relie plusieurs mots. Les tags existants restent tels quels."
+msgstr ""
+"Un tag est désormais un seul mot de 20 caractères au plus : une espace "
+"termine le tag en cours de saisie et un tiret relie plusieurs mots. Les tags "
+"existants restent tels quels."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:101
 msgid ""
 "The wallpaper framing window is rearranged around the virtual screen, with a "
 "discreet note when the image will look blurry."
-msgstr "La fenêtre de cadrage du fond d’écran est réorganisée autour de l’écran virtuel, avec une note discrète quand l’image sera floue."
+msgstr ""
+"La fenêtre de cadrage du fond d’écran est réorganisée autour de l’écran "
+"virtuel, avec une note discrète quand l’image sera floue."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:102
 msgid ""
 "Long names are shortened instead of stretching the panels, and the windows "
 "fit the narrowest size even with larger text."
-msgstr "Les noms longs sont raccourcis au lieu d’élargir les panneaux, et les fenêtres tiennent dans la plus petite taille, même avec un texte agrandi."
+msgstr ""
+"Les noms longs sont raccourcis au lieu d’élargir les panneaux, et les "
+"fenêtres tiennent dans la plus petite taille, même avec un texte agrandi."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:103
 msgid ""
 "The search finds œ and æ when you type oe and ae, and exporting can no "
 "longer ask for a size that would crash Pigoune."
-msgstr "La recherche trouve œ et æ quand vous tapez oe et ae, et l’export ne peut plus demander une taille qui ferait planter Pigoune."
+msgstr ""
+"La recherche trouve œ et æ quand vous tapez oe et ae, et l’export ne peut "
+"plus demander une taille qui ferait planter Pigoune."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:104
 msgid ""
 "Pigoune now tells you when an image cannot be loaded and when links were "
 "ignored while importing a folder."
-msgstr "Pigoune indique maintenant quand une image ne peut pas être chargée et quand des liens ont été ignorés pendant l’import d’un dossier."
+msgstr ""
+"Pigoune indique maintenant quand une image ne peut pas être chargée et quand "
+"des liens ont été ignorés pendant l’import d’un dossier."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:110
 msgid "Turn your images into wallpapers, framed exactly the way you want."
@@ -667,19 +683,43 @@ msgstr ""
 "Code de la langue dans laquelle Pigoune s’affiche, ou texte vide pour suivre "
 "la langue du système."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:68
+#: data/io.github.gor3pig.Pigoune.gschema.xml:61
+msgid "Last version whose news were handled"
+msgstr "Dernière version dont les nouveautés ont été traitées"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:62
+msgid ""
+"The version of Pigoune that last started, used to show what is new once "
+"after an update."
+msgstr ""
+"La version de Pigoune qui a démarré en dernier, utilisée pour montrer les "
+"nouveautés une seule fois après une mise à jour."
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:66
+msgid "Show what is new after an update"
+msgstr "Afficher les nouveautés après une mise à jour"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:67
+msgid ""
+"Whether a window with the main news opens the first time a new version "
+"starts."
+msgstr ""
+"Indique si une fenêtre présentant les principales nouveautés s’ouvre au "
+"premier démarrage d’une nouvelle version."
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml:78
 msgid "Preview background"
 msgstr "Fond de l’aperçu"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:69
+#: data/io.github.gor3pig.Pigoune.gschema.xml:79
 msgid "Background shown behind the resource in the detailed preview."
 msgstr "Fond affiché derrière la ressource dans l’aperçu détaillé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:73
+#: data/io.github.gor3pig.Pigoune.gschema.xml:83
 msgid "Show image bounds"
 msgstr "Afficher les limites de l’image"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:74
+#: data/io.github.gor3pig.Pigoune.gschema.xml:84
 msgid ""
 "Whether a dashed outline marks the edges of the resource in the detailed "
 "preview."
@@ -687,11 +727,11 @@ msgstr ""
 "Indique si un contour en pointillés marque les bords de la ressource dans "
 "l’aperçu détaillé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:78
+#: data/io.github.gor3pig.Pigoune.gschema.xml:88
 msgid "Show the thumbnail strip"
 msgstr "Afficher la bande de vignettes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:79
+#: data/io.github.gor3pig.Pigoune.gschema.xml:89
 msgid ""
 "Whether a strip of neighboring thumbnails is shown below the resource in the "
 "detailed preview."
@@ -699,11 +739,11 @@ msgstr ""
 "Indique si une bande de vignettes voisines est affichée sous la ressource "
 "dans l’aperçu détaillé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:83
+#: data/io.github.gor3pig.Pigoune.gschema.xml:93
 msgid "Show details in the preview"
 msgstr "Afficher les détails dans l’aperçu"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:84
+#: data/io.github.gor3pig.Pigoune.gschema.xml:94
 msgid ""
 "Whether the details panel is shown next to the resource in the detailed "
 "preview."
@@ -711,11 +751,11 @@ msgstr ""
 "Indique si le panneau de détails est affiché à côté de la ressource dans "
 "l’aperçu détaillé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:88
+#: data/io.github.gor3pig.Pigoune.gschema.xml:98
 msgid "Show pixel grid"
 msgstr "Afficher la grille des pixels"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:89
+#: data/io.github.gor3pig.Pigoune.gschema.xml:99
 msgid ""
 "Whether thin lines separate the pixels of a picture zoomed to 800% or more "
 "in the detailed preview."
@@ -723,88 +763,88 @@ msgstr ""
 "Indique si de fines lignes séparent les pixels d’une image agrandie à 800 % "
 "ou plus dans l’aperçu détaillé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:93
+#: data/io.github.gor3pig.Pigoune.gschema.xml:103
 msgid "Collections section expanded"
 msgstr "Section Collections dépliée"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:94
+#: data/io.github.gor3pig.Pigoune.gschema.xml:104
 msgid "Whether the Collections section of the sidebar is expanded."
 msgstr "Indique si la section Collections de la barre latérale est dépliée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:98
+#: data/io.github.gor3pig.Pigoune.gschema.xml:108
 msgid "Smart collections section expanded"
 msgstr "Section Collections intelligentes dépliée"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:99
+#: data/io.github.gor3pig.Pigoune.gschema.xml:109
 msgid "Whether the Smart Collections section of the sidebar is expanded."
 msgstr ""
 "Indique si la section Collections intelligentes de la barre latérale est "
 "dépliée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:103
+#: data/io.github.gor3pig.Pigoune.gschema.xml:113
 msgid "Tags section expanded"
 msgstr "Section Tags dépliée"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:104
+#: data/io.github.gor3pig.Pigoune.gschema.xml:114
 msgid "Whether the Tags section of the sidebar is expanded."
 msgstr "Indique si la section Tags de la barre latérale est dépliée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:108
+#: data/io.github.gor3pig.Pigoune.gschema.xml:118
 msgid "Organization section expanded"
 msgstr "Section Organisation dépliée"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:109
+#: data/io.github.gor3pig.Pigoune.gschema.xml:119
 msgid "Whether the Organization section of the details panel is expanded."
 msgstr "Indique si la section Organisation du panneau de détails est dépliée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:113
+#: data/io.github.gor3pig.Pigoune.gschema.xml:123
 msgid "Note and credits section expanded"
 msgstr "Section Note et crédits dépliée"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:114
+#: data/io.github.gor3pig.Pigoune.gschema.xml:124
 msgid "Whether the Note and Credits section of the details panel is expanded."
 msgstr ""
 "Indique si la section Note et crédits du panneau de détails est dépliée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:118
+#: data/io.github.gor3pig.Pigoune.gschema.xml:128
 msgid "File section expanded"
 msgstr "Section Fichier dépliée"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:119
+#: data/io.github.gor3pig.Pigoune.gschema.xml:129
 msgid "Whether the File section of the details panel is expanded."
 msgstr "Indique si la section Fichier du panneau de détails est dépliée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:128
+#: data/io.github.gor3pig.Pigoune.gschema.xml:138
 msgid "Collection sort criterion"
 msgstr "Critère de tri des collections"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:129
+#: data/io.github.gor3pig.Pigoune.gschema.xml:139
 msgid "How collections are ordered in the sidebar."
 msgstr "Ordre des collections dans la barre latérale."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:133
+#: data/io.github.gor3pig.Pigoune.gschema.xml:143
 msgid "Reverse collection order"
 msgstr "Ordre des collections inversé"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:134
+#: data/io.github.gor3pig.Pigoune.gschema.xml:144
 msgid ""
 "Whether the natural direction of the collection sort criterion is reversed."
 msgstr ""
 "Indique si le sens naturel du critère de tri des collections est inversé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:143
+#: data/io.github.gor3pig.Pigoune.gschema.xml:153
 msgid "Smart collection sort criterion"
 msgstr "Critère de tri des collections intelligentes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:144
+#: data/io.github.gor3pig.Pigoune.gschema.xml:154
 msgid "How smart collections are ordered in the sidebar."
 msgstr "Ordre des collections intelligentes dans la barre latérale."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:148
+#: data/io.github.gor3pig.Pigoune.gschema.xml:158
 msgid "Reverse smart collection order"
 msgstr "Ordre des collections intelligentes inversé"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:149
+#: data/io.github.gor3pig.Pigoune.gschema.xml:159
 msgid ""
 "Whether the natural direction of the smart collection sort criterion is "
 "reversed."
@@ -812,38 +852,38 @@ msgstr ""
 "Indique si le sens naturel du critère de tri des collections intelligentes "
 "est inversé."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:153
+#: data/io.github.gor3pig.Pigoune.gschema.xml:163
 msgid "Show smart collections"
 msgstr "Afficher les collections intelligentes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:154
+#: data/io.github.gor3pig.Pigoune.gschema.xml:164
 msgid "Whether the sidebar shows the smart collections section."
 msgstr ""
 "Indique si la barre latérale affiche la section des collections "
 "intelligentes."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:165
+#: data/io.github.gor3pig.Pigoune.gschema.xml:175
 msgid "Thumbnail background"
 msgstr "Fond des vignettes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:166
+#: data/io.github.gor3pig.Pigoune.gschema.xml:176
 msgid "Background shown behind the thumbnails of the grid."
 msgstr "Fond affiché derrière les vignettes de la grille."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:170
+#: data/io.github.gor3pig.Pigoune.gschema.xml:180
 msgid "Show formats"
 msgstr "Afficher les formats"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:171
+#: data/io.github.gor3pig.Pigoune.gschema.xml:181
 msgid "Whether each thumbnail of the grid shows the format of its resource."
 msgstr ""
 "Indique si chaque vignette de la grille affiche le format de sa ressource."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:175
+#: data/io.github.gor3pig.Pigoune.gschema.xml:185
 msgid "Open resources on double-click"
 msgstr "Ouvrir les ressources au double-clic"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:176
+#: data/io.github.gor3pig.Pigoune.gschema.xml:186
 msgid ""
 "Whether a double-click opens a resource in its default application instead "
 "of the preview."
@@ -851,11 +891,11 @@ msgstr ""
 "Indique si un double-clic ouvre une ressource dans son application par "
 "défaut au lieu de l’aperçu."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:180
+#: data/io.github.gor3pig.Pigoune.gschema.xml:190
 msgid "Search the whole library"
 msgstr "Rechercher dans toute la bibliothèque"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:181
+#: data/io.github.gor3pig.Pigoune.gschema.xml:191
 msgid ""
 "Whether searches and filters look in the whole library, except in the trash "
 "and smart collections."
@@ -863,38 +903,38 @@ msgstr ""
 "Indique si la recherche et les filtres regardent dans toute la bibliothèque, "
 "sauf dans la corbeille et les collections intelligentes."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:185
+#: data/io.github.gor3pig.Pigoune.gschema.xml:195
 msgid "Show tags"
 msgstr "Afficher les tags"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:186
+#: data/io.github.gor3pig.Pigoune.gschema.xml:196
 msgid "Whether the sidebar shows the tags section."
 msgstr "Indique si la barre latérale affiche la section des tags."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:190
+#: data/io.github.gor3pig.Pigoune.gschema.xml:200
 msgid "Show resource counts"
 msgstr "Afficher le nombre de ressources"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:191
+#: data/io.github.gor3pig.Pigoune.gschema.xml:201
 msgid "Whether the sidebar shows how many resources each entry contains."
 msgstr ""
 "Indique si la barre latérale affiche le nombre de ressources de chaque "
 "entrée."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:195
+#: data/io.github.gor3pig.Pigoune.gschema.xml:205
 msgid "Show resource names"
 msgstr "Afficher le nom des ressources"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:196
+#: data/io.github.gor3pig.Pigoune.gschema.xml:206
 msgid "Whether the grid shows the name of each resource under its thumbnail."
 msgstr ""
 "Indique si la grille affiche le nom de chaque ressource sous sa vignette."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:200
+#: data/io.github.gor3pig.Pigoune.gschema.xml:210
 msgid "Reopen the last library at startup"
 msgstr "Rouvrir la dernière bibliothèque au lancement"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:201
+#: data/io.github.gor3pig.Pigoune.gschema.xml:211
 msgid ""
 "Whether Pigoune opens the library left open last time instead of its welcome "
 "page."
@@ -902,44 +942,44 @@ msgstr ""
 "Si Pigoune ouvre la bibliothèque laissée ouverte la dernière fois au lieu de "
 "sa page d’accueil."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:205
+#: data/io.github.gor3pig.Pigoune.gschema.xml:215
 msgid "Play animations on hover"
 msgstr "Animer au survol"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:206
+#: data/io.github.gor3pig.Pigoune.gschema.xml:216
 msgid ""
 "Whether animated thumbnails play when the pointer is over them in the grid."
 msgstr ""
 "Si les vignettes animées s’animent quand le pointeur les survole dans la "
 "grille."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:210
+#: data/io.github.gor3pig.Pigoune.gschema.xml:220
 msgid "Reopen the last sidebar entry"
 msgstr "Rouvrir la dernière entrée de la barre latérale"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:211
+#: data/io.github.gor3pig.Pigoune.gschema.xml:221
 msgid ""
 "Whether the library opens on the last selected sidebar entry instead of All."
 msgstr ""
 "Indique si la bibliothèque s’ouvre sur la dernière entrée sélectionnée "
 "plutôt que sur « Tout »."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:215
+#: data/io.github.gor3pig.Pigoune.gschema.xml:225
 msgid "Confirm before emptying the trash"
 msgstr "Confirmer avant de vider la corbeille"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:216
+#: data/io.github.gor3pig.Pigoune.gschema.xml:226
 msgid ""
 "Whether Pigoune asks before deleting the resources in the trash for good."
 msgstr ""
 "Indique si Pigoune demande confirmation avant de supprimer définitivement "
 "les ressources de la corbeille."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:220
+#: data/io.github.gor3pig.Pigoune.gschema.xml:230
 msgid "Empty the trash automatically"
 msgstr "Vider automatiquement la corbeille"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:221
+#: data/io.github.gor3pig.Pigoune.gschema.xml:231
 msgid ""
 "Whether resources that have been in the trash for more than 30 days are "
 "deleted for good."
@@ -947,63 +987,63 @@ msgstr ""
 "Indique si les ressources présentes dans la corbeille depuis plus de 30 "
 "jours sont supprimées définitivement."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:225
+#: data/io.github.gor3pig.Pigoune.gschema.xml:235
 msgid "Last sidebar entry"
 msgstr "Dernière entrée de la barre latérale"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:226
+#: data/io.github.gor3pig.Pigoune.gschema.xml:236
 msgid "The sidebar entry selected when the library was last shown."
 msgstr ""
 "Entrée de la barre latérale sélectionnée lors du dernier affichage de la "
 "bibliothèque."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:231
+#: data/io.github.gor3pig.Pigoune.gschema.xml:241
 msgid "Thumbnail size"
 msgstr "Taille des vignettes"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:232
+#: data/io.github.gor3pig.Pigoune.gschema.xml:242
 msgid "Side of the thumbnails in the library grid, in pixels."
 msgstr "Côté des vignettes dans la grille de la bibliothèque, en pixels."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:243
+#: data/io.github.gor3pig.Pigoune.gschema.xml:253
 msgid "Export format"
 msgstr "Format d’export"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:244
+#: data/io.github.gor3pig.Pigoune.gschema.xml:254
 msgid "Format last chosen to export resources converted."
 msgstr "Dernier format choisi pour exporter des ressources converties."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:249
+#: data/io.github.gor3pig.Pigoune.gschema.xml:259
 msgid "Export quality"
 msgstr "Qualité d’export"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:250
+#: data/io.github.gor3pig.Pigoune.gschema.xml:260
 msgid "Quality of JPEG and AVIF exports."
 msgstr "Qualité des exports JPEG et AVIF."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:254
+#: data/io.github.gor3pig.Pigoune.gschema.xml:264
 msgid "Export background color"
 msgstr "Couleur de fond des exports"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:255
+#: data/io.github.gor3pig.Pigoune.gschema.xml:265
 msgid "Color that fills transparent areas when an export has no transparency."
 msgstr ""
 "Couleur qui remplit les zones transparentes quand un export n’a pas de "
 "transparence."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:259
+#: data/io.github.gor3pig.Pigoune.gschema.xml:269
 msgid "Keep transparency in exports"
 msgstr "Garder la transparence dans les exports"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:260
+#: data/io.github.gor3pig.Pigoune.gschema.xml:270
 msgid "Whether PNG, WebP, AVIF and ICO exports keep transparent areas."
 msgstr "Si les exports PNG, WebP, AVIF et ICO gardent les zones transparentes."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:268
+#: data/io.github.gor3pig.Pigoune.gschema.xml:278
 msgid "Export size unit"
 msgstr "Unité de taille des exports"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:269
+#: data/io.github.gor3pig.Pigoune.gschema.xml:279
 msgid ""
 "Whether the export width and height are in pixels or a percentage of the "
 "original."
@@ -1011,11 +1051,11 @@ msgstr ""
 "Si la largeur et la hauteur des exports sont en pixels ou en pourcentage de "
 "l’original."
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:273
+#: data/io.github.gor3pig.Pigoune.gschema.xml:283
 msgid "Icon export sizes"
 msgstr "Tailles des exports d’icône"
 
-#: data/io.github.gor3pig.Pigoune.gschema.xml:274
+#: data/io.github.gor3pig.Pigoune.gschema.xml:284
 msgid "Sizes, in pixels, gathered in an exported ICO file."
 msgstr "Tailles, en pixels, réunies dans un fichier ICO exporté."
 
@@ -1164,7 +1204,7 @@ msgstr "Aucun dossier choisi"
 msgid "_Choose…"
 msgstr "_Choisir…"
 
-#: crates/pigoune-app/src/application.rs:96
+#: crates/pigoune-app/src/application.rs:99
 msgid "translator-credits"
 msgstr "Gor3pig"
 
@@ -1762,7 +1802,7 @@ msgid "Unable to Change the Favorites"
 msgstr "Impossible de modifier les favoris"
 
 #: crates/pigoune-app/src/window.rs:4011 crates/pigoune-app/src/sidebar.rs:305
-#: crates/pigoune-app/ui/preferences-dialog.blp:47
+#: crates/pigoune-app/ui/preferences-dialog.blp:52
 msgid "Trash"
 msgstr "Corbeille"
 
@@ -2485,7 +2525,7 @@ msgid "Tags"
 msgstr "Tags"
 
 #: crates/pigoune-app/ui/asset-grid.blp:31
-#: crates/pigoune-app/ui/preferences-dialog.blp:143
+#: crates/pigoune-app/ui/preferences-dialog.blp:148
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:30
 msgid "Resources"
 msgstr "Ressources"
@@ -2825,29 +2865,37 @@ msgstr "Rouvrir la dernière entrée"
 msgid "Instead of All"
 msgstr "Plutôt que « Tout »"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:50
+#: crates/pigoune-app/ui/preferences-dialog.blp:46
+msgid "Show What’s New After an Update"
+msgstr "Afficher les nouveautés après une mise à jour"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:47
+msgid "A window at the first start of a new version"
+msgstr "Une fenêtre au premier démarrage d’une nouvelle version"
+
+#: crates/pigoune-app/ui/preferences-dialog.blp:55
 msgid "Confirm Before Emptying the Trash"
 msgstr "Confirmer avant de vider la corbeille"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:51
+#: crates/pigoune-app/ui/preferences-dialog.blp:56
 msgid "A question is asked before resources are deleted for good"
 msgstr ""
 "Une question est posée avant de supprimer définitivement des ressources"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:55
+#: crates/pigoune-app/ui/preferences-dialog.blp:60
 msgid "Empty the Trash Automatically"
 msgstr "Vider automatiquement la corbeille"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:56
+#: crates/pigoune-app/ui/preferences-dialog.blp:61
 msgid "After 30 days"
 msgstr "Après 30 jours"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:61
+#: crates/pigoune-app/ui/preferences-dialog.blp:66
 #: crates/pigoune-app/ui/library-info-dialog.blp:206
 msgid "Storage"
 msgstr "Stockage"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:63
+#: crates/pigoune-app/ui/preferences-dialog.blp:68
 msgid ""
 "Thumbnails are small copies of the images that keep the grid fast. Clearing "
 "them is safe: they are made again when needed."
@@ -2855,125 +2903,125 @@ msgstr ""
 "Les vignettes sont des copies réduites des images qui rendent la grille "
 "rapide. Les vider est sans danger : elles sont recréées au besoin."
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:68
+#: crates/pigoune-app/ui/preferences-dialog.blp:73
 msgid "Thumbnails"
 msgstr "Vignettes"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:72
+#: crates/pigoune-app/ui/preferences-dialog.blp:77
 msgid "_Clear"
 msgstr "_Vider"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:81
+#: crates/pigoune-app/ui/preferences-dialog.blp:86
 msgid "Display"
 msgstr "Affichage"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:85
+#: crates/pigoune-app/ui/preferences-dialog.blp:90
 msgid "Grid"
 msgstr "Grille"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:88
+#: crates/pigoune-app/ui/preferences-dialog.blp:93
 msgid "Show Resource Names"
 msgstr "Afficher le nom des ressources"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:89
+#: crates/pigoune-app/ui/preferences-dialog.blp:94
 msgid "Under each thumbnail"
 msgstr "Sous chaque vignette"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:93
+#: crates/pigoune-app/ui/preferences-dialog.blp:98
 msgid "Show Formats"
 msgstr "Afficher les formats"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:94
+#: crates/pigoune-app/ui/preferences-dialog.blp:99
 msgid "A badge such as SVG or PNG on each thumbnail"
 msgstr "Une étiquette comme SVG ou PNG sur chaque vignette"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:98
+#: crates/pigoune-app/ui/preferences-dialog.blp:103
 msgid "Thumbnail Background"
 msgstr "Fond des vignettes"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:99
+#: crates/pigoune-app/ui/preferences-dialog.blp:104
 msgid "Helps to see white or black images"
 msgstr "Aide à voir les images blanches ou noires"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:103
+#: crates/pigoune-app/ui/preferences-dialog.blp:108
 msgid "Default"
 msgstr "Par défaut"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:104
+#: crates/pigoune-app/ui/preferences-dialog.blp:109
 msgid "White"
 msgstr "Blanc"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:105
+#: crates/pigoune-app/ui/preferences-dialog.blp:110
 msgid "Gray"
 msgstr "Gris"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:106
+#: crates/pigoune-app/ui/preferences-dialog.blp:111
 msgid "Black"
 msgstr "Noir"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:107
+#: crates/pigoune-app/ui/preferences-dialog.blp:112
 msgid "Checkerboard"
 msgstr "Damier"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:113
+#: crates/pigoune-app/ui/preferences-dialog.blp:118
 msgid "Play Animations on Hover"
 msgstr "Animer les vignettes au survol"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:114
+#: crates/pigoune-app/ui/preferences-dialog.blp:119
 msgid "Animated images move when the pointer is over them"
 msgstr "Les images animées bougent sous le pointeur"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:119
+#: crates/pigoune-app/ui/preferences-dialog.blp:124
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:74
 msgid "Sidebar"
 msgstr "Barre latérale"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:122
+#: crates/pigoune-app/ui/preferences-dialog.blp:127
 msgid "Show Resource Counts"
 msgstr "Afficher le nombre de ressources"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:123
+#: crates/pigoune-app/ui/preferences-dialog.blp:128
 msgid "Next to each entry of the sidebar"
 msgstr "À côté de chaque entrée de la barre latérale"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:127
+#: crates/pigoune-app/ui/preferences-dialog.blp:132
 msgid "Show Tags"
 msgstr "Afficher les tags"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:128
+#: crates/pigoune-app/ui/preferences-dialog.blp:133
 msgid "A section to open each tag in one click"
 msgstr "Une section pour ouvrir chaque tag en un clic"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:132
+#: crates/pigoune-app/ui/preferences-dialog.blp:137
 msgid "Show Smart Collections"
 msgstr "Afficher les collections intelligentes"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:133
+#: crates/pigoune-app/ui/preferences-dialog.blp:138
 msgid "A section for the collections that fill themselves"
 msgstr "Une section pour les collections qui se remplissent seules"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:139
+#: crates/pigoune-app/ui/preferences-dialog.blp:144
 msgid "Behavior"
 msgstr "Comportement"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:146
+#: crates/pigoune-app/ui/preferences-dialog.blp:151
 msgid "Open Resources on Double-Click"
 msgstr "Ouvrir les ressources au double-clic"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:147
+#: crates/pigoune-app/ui/preferences-dialog.blp:152
 msgid "In the default application instead of the preview"
 msgstr "Dans l’application choisie par défaut, plutôt que dans l’aperçu"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:152
+#: crates/pigoune-app/ui/preferences-dialog.blp:157
 msgctxt "preferences group"
 msgid "Search"
 msgstr "Recherche"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:155
+#: crates/pigoune-app/ui/preferences-dialog.blp:160
 msgid "Search the Whole Library"
 msgstr "Rechercher dans toute la bibliothèque"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:156
+#: crates/pigoune-app/ui/preferences-dialog.blp:161
 msgid "Except in the trash and smart collections"
 msgstr "Sauf dans la corbeille et les collections intelligentes"
 
@@ -3693,30 +3741,30 @@ msgstr "Couleur personnalisée {code}"
 msgid "Custom Color"
 msgstr "Couleur personnalisée"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:93
+#: crates/pigoune-app/src/preferences_dialog.rs:94
 msgid "System Language"
 msgstr "Langue du système"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:108
+#: crates/pigoune-app/src/preferences_dialog.rs:109
 msgid "Restart Pigoune to use the new language"
 msgstr "Redémarrez Pigoune pour utiliser la nouvelle langue"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:109
+#: crates/pigoune-app/src/preferences_dialog.rs:110
 #: crates/pigoune-app/src/update_banner.rs:24
 msgid "_Restart"
 msgstr "_Redémarrer"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:213
+#: crates/pigoune-app/src/preferences_dialog.rs:214
 #, rust-format
 msgid "{size} freed, thumbnails are made again when needed"
 msgstr "{size} libérés, les vignettes sont recréées au besoin"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:218
+#: crates/pigoune-app/src/preferences_dialog.rs:219
 #, rust-format
 msgid "Unable to clear the thumbnails: {reason}"
 msgstr "Impossible de vider les vignettes : {reason}"
 
-#: crates/pigoune-app/src/preferences_dialog.rs:228
+#: crates/pigoune-app/src/preferences_dialog.rs:229
 #, rust-format
 msgid "{size} used by “{name}”"
 msgstr "{size} utilisés par « {name} »"
@@ -4207,6 +4255,69 @@ msgctxt "desktop bar"
 msgid "Workspaces"
 msgstr "Bureaux"
 
+#: crates/pigoune-app/src/whats_new.rs:69
+msgid "Much Faster"
+msgstr "Beaucoup plus rapide"
+
+#: crates/pigoune-app/src/whats_new.rs:71
+msgid ""
+"Opening a large library and searching take a fraction of the time, and "
+"scrolling stays smooth even with thousands of images."
+msgstr ""
+"Ouvrir une grosse bibliothèque et chercher une image prennent une fraction "
+"du temps d’avant, et le défilement reste fluide même avec des milliers "
+"d’images."
+
+#: crates/pigoune-app/src/whats_new.rs:76
+msgid "Simpler Tags"
+msgstr "Des tags plus simples"
+
+#: crates/pigoune-app/src/whats_new.rs:78
+msgid ""
+"A tag is now one word of up to 20 characters. A space confirms it and a "
+"hyphen joins several words."
+msgstr ""
+"Un tag est maintenant un seul mot de 20 caractères au plus. L’espace le "
+"valide et le tiret relie plusieurs mots."
+
+#: crates/pigoune-app/src/whats_new.rs:83
+msgid "A Clearer Wallpaper Window"
+msgstr "Une fenêtre du fond d’écran plus claire"
+
+#: crates/pigoune-app/src/whats_new.rs:85
+msgid ""
+"The framing window shows your whole screen and warns you when the image "
+"would look blurry once enlarged."
+msgstr ""
+"La fenêtre de cadrage montre tout votre écran et vous prévient quand l’image "
+"serait floue une fois agrandie."
+
+#: crates/pigoune-app/src/whats_new.rs:90
+msgid "Long Names Handled"
+msgstr "Les noms longs bien gérés"
+
+#: crates/pigoune-app/src/whats_new.rs:92
+msgid ""
+"Long names are shortened instead of stretching the panels, and the windows "
+"still fit with larger text."
+msgstr ""
+"Les noms trop longs sont raccourcis au lieu d’étirer les panneaux, et les "
+"fenêtres tiennent toujours avec un texte agrandi."
+
+#: crates/pigoune-app/src/whats_new.rs:102
+#, rust-format
+msgid "What’s New in Pigoune {version}"
+msgstr "Quoi de neuf dans Pigoune {version}"
+
+#: crates/pigoune-app/src/whats_new.rs:131
+msgid "_Continue"
+msgstr "_Continuer"
+
+#~ msgid "Long names are shortened and the windows fit even with larger text."
+#~ msgstr ""
+#~ "Les noms trop longs sont raccourcis et les fenêtres tiennent même avec un "
+#~ "texte agrandi."
+
 #~ msgid "Top Color"
 #~ msgstr "Couleur du haut"
 
@@ -4231,9 +4342,6 @@ msgstr "Bureaux"
 
 #~ msgid "Fit"
 #~ msgstr "Ajuster"
-
-#~ msgid "Prepare as Wallpaper"
-#~ msgstr "Préparer comme fond d’écran"
 
 #, rust-format
 #~ msgid ""
@@ -4439,9 +4547,6 @@ msgstr "Bureaux"
 
 #~ msgid "Original Size"
 #~ msgstr "Taille d’origine"
-
-#~ msgid "Longest Side"
-#~ msgstr "Côté le plus long"
 
 #~ msgid "In pixels, proportions kept; pixel images are never enlarged"
 #~ msgstr ""

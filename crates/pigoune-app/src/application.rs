@@ -7,6 +7,7 @@ use crate::help_url;
 use crate::icon_theme;
 use crate::release_notes;
 use crate::settings;
+use crate::whats_new;
 use crate::window::PigouneWindow;
 
 pub fn build() -> adw::Application {
@@ -61,8 +62,10 @@ fn present_main_window(application: &adw::Application) {
         return;
     }
 
-    let window = PigouneWindow::new(application, settings::load());
+    let settings = settings::load();
+    let window = PigouneWindow::new(application, settings.clone());
     window.present();
+    whats_new::show_after_update(&window, &settings);
     window.reopen_last_library();
 }
 

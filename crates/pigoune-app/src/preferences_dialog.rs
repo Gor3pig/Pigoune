@@ -28,6 +28,7 @@ pub fn present(
     for (row, key) in [
         ("reopen_last_library_row", settings::REOPEN_LAST_LIBRARY),
         ("restore_last_view_row", settings::RESTORE_LAST_VIEW),
+        ("show_whats_new_row", settings::SHOW_WHATS_NEW),
         ("show_names_row", settings::SHOW_NAMES),
         ("animate_on_hover_row", settings::ANIMATE_ON_HOVER),
         ("show_counts_row", settings::SHOW_COUNTS),
