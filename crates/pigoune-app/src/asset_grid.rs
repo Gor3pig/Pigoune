@@ -523,6 +523,9 @@ impl PigouneAssetGrid {
             self,
             move |gesture, _, x, y| {
                 let on_empty_space = grid.asset_at(x, y).is_none();
+                if on_empty_space {
+                    grid.take_focus_from_elsewhere();
+                }
                 let extending = gesture
                     .current_event_state()
                     .intersects(gdk::ModifierType::CONTROL_MASK | gdk::ModifierType::SHIFT_MASK);
@@ -535,6 +538,19 @@ impl PigouneAssetGrid {
             }
         ));
         self.imp().grid_view.add_controller(click);
+    }
+
+    fn take_focus_from_elsewhere(&self) {
+        let grid_view = &self.imp().grid_view;
+        let focus_is_inside = self
+            .root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| {
+                focus == *grid_view.upcast_ref::<gtk::Widget>() || focus.is_ancestor(&**grid_view)
+            });
+        if !focus_is_inside {
+            grid_view.grab_focus();
+        }
     }
 
     fn lasso_only_from_empty_space(&self) {
