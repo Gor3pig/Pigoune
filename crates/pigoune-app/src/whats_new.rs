@@ -75,7 +75,7 @@ fn points_of(version: &str) -> Vec<Point> {
                 icon: "drive-harddisk-symbolic",
                 title: gettext("Thumbnails Moved"),
                 text: gettext(
-                    "Clearing the thumbnails is now done in the library information, in the Storage tab, next to the space they take.",
+                    "Clearing the thumbnails is now done in Manage Library, in the Storage tab, next to the space they take.",
                 ),
             },
         ],

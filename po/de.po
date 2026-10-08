@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 11:49+0200\n"
+"POT-Creation-Date: 2026-10-08 12:34+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1025,7 +1025,7 @@ msgid "My Library"
 msgstr "Meine Bibliothek"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:58
-#: crates/pigoune-app/ui/library-info-dialog.blp:250
+#: crates/pigoune-app/ui/library-info-dialog.blp:251
 msgid "Location"
 msgstr "Speicherort"
 
@@ -1301,7 +1301,7 @@ msgstr "Abmessungen"
 
 #: crates/pigoune-app/src/window.rs:623
 #: crates/pigoune-app/ui/grid-header.blp:133
-#: crates/pigoune-app/ui/library-info-dialog.blp:164
+#: crates/pigoune-app/ui/library-info-dialog.blp:165
 msgid "Size"
 msgstr "Größe"
 
@@ -2396,8 +2396,8 @@ msgid "{seconds}.{tenths} s"
 msgstr "{seconds},{tenths} s"
 
 #: crates/pigoune-app/src/asset_facts.rs:144
-#: crates/pigoune-app/src/library_info_dialog.rs:765
-#: crates/pigoune-app/src/library_info_dialog.rs:771
+#: crates/pigoune-app/src/library_info_dialog.rs:801
+#: crates/pigoune-app/src/library_info_dialog.rs:807
 msgid "Unknown date"
 msgstr "Unbekannt"
 
@@ -3331,7 +3331,7 @@ msgid "In no collection"
 msgstr "In keiner Sammlung"
 
 #: crates/pigoune-app/src/color_chips.rs:70
-#: crates/pigoune-app/ui/library-info-dialog.blp:185
+#: crates/pigoune-app/ui/library-info-dialog.blp:186
 msgid "Detected Colors"
 msgstr "Erkannte Farben"
 
@@ -3597,7 +3597,7 @@ msgstr[0] "{name} und {count} weiteres"
 msgstr[1] "{name} und {count} weitere"
 
 #: crates/pigoune-app/ui/export-as-dialog.blp:26
-#: crates/pigoune-app/ui/library-info-dialog.blp:369
+#: crates/pigoune-app/ui/library-info-dialog.blp:371
 msgid "_Export…"
 msgstr "_Exportieren …"
 
@@ -3824,47 +3824,47 @@ msgstr "Noch nicht geprüft"
 msgid "Manage Library"
 msgstr "Bibliothek verwalten"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:26
+#: crates/pigoune-app/ui/library-info-dialog.blp:25
 msgid "Overview"
 msgstr "Überblick"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:76
+#: crates/pigoune-app/ui/library-info-dialog.blp:77
 msgid "Records"
 msgstr "Rekorde"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:99
+#: crates/pigoune-app/ui/library-info-dialog.blp:100
 msgid "Content"
 msgstr "Inhalt"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:169
+#: crates/pigoune-app/ui/library-info-dialog.blp:170
 msgid "Number"
 msgstr "Anzahl"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:206
+#: crates/pigoune-app/ui/library-info-dialog.blp:207
 msgid "Storage"
 msgstr "Speicher"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:226
+#: crates/pigoune-app/ui/library-info-dialog.blp:227
 msgid "Disk Space"
 msgstr "Speicherplatz"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:256
+#: crates/pigoune-app/ui/library-info-dialog.blp:257
 msgid "Copy the Location"
 msgstr "Speicherort kopieren"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:268
+#: crates/pigoune-app/ui/library-info-dialog.blp:269
 msgid "Open the Folder"
 msgstr "Ordner öffnen"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:279
+#: crates/pigoune-app/ui/library-info-dialog.blp:280
 msgid "Disk"
 msgstr "Datenträger"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:283
+#: crates/pigoune-app/ui/library-info-dialog.blp:284
 msgid "Thumbnails"
 msgstr "Vorschaubilder"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:285
+#: crates/pigoune-app/ui/library-info-dialog.blp:286
 msgid ""
 "Thumbnails are small copies of the images that keep the grid fast. Clearing "
 "them is safe: they are made again when needed."
@@ -3872,41 +3872,45 @@ msgstr ""
 "Vorschaubilder sind verkleinerte Kopien der Bilder, die das Raster schnell "
 "machen. Das Leeren ist unbedenklich: Sie werden bei Bedarf neu erstellt."
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:290
+#: crates/pigoune-app/ui/library-info-dialog.blp:291
 msgid "_Clear"
 msgstr "_Leeren"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:298
+#: crates/pigoune-app/ui/library-info-dialog.blp:299
 msgid "Created"
 msgstr "Erstellt"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:302
+#: crates/pigoune-app/ui/library-info-dialog.blp:303
 msgid "Compatibility"
 msgstr "Kompatibilität"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:321
+#: crates/pigoune-app/ui/library-info-dialog.blp:322
 msgid "Health"
 msgstr "Zustand"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:329
+#: crates/pigoune-app/ui/library-info-dialog.blp:330
 msgid "Export"
 msgstr "Export"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:337
+#: crates/pigoune-app/ui/library-info-dialog.blp:339
 msgid "Export the Library"
 msgstr "Bibliothek exportieren"
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:338
+#: crates/pigoune-app/ui/library-info-dialog.blp:340
 msgid ""
 "Pigoune copies your files into an ordinary folder, arranged like your "
 "collections. Nothing in the library is modified."
-msgstr "Pigoune kopiert Ihre Dateien in einen gewöhnlichen Ordner, aufgebaut wie Ihre Sammlungen. An der Bibliothek wird nichts geändert."
+msgstr ""
+"Pigoune kopiert Ihre Dateien in einen gewöhnlichen Ordner, aufgebaut wie "
+"Ihre Sammlungen. An der Bibliothek wird nichts geändert."
 
-#: crates/pigoune-app/ui/library-info-dialog.blp:381
+#: crates/pigoune-app/ui/library-info-dialog.blp:383
 msgid ""
 "Tags, notes and favorites stay in Pigoune. This is not a full backup: for "
 "that, copy the library folder."
-msgstr "Schlagwörter, Notizen und Favoriten bleiben in Pigoune. Das ist keine vollständige Sicherung: Kopieren Sie dafür den Ordner der Bibliothek."
+msgstr ""
+"Schlagwörter, Notizen und Favoriten bleiben in Pigoune. Das ist keine "
+"vollständige Sicherung: Kopieren Sie dafür den Ordner der Bibliothek."
 
 #
 #: crates/pigoune-app/src/health_page.rs:215
@@ -4090,157 +4094,157 @@ msgstr "In der Sammlung „{name}“"
 msgid "Not in a collection"
 msgstr "In keiner Sammlung"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:308
+#: crates/pigoune-app/src/library_info_dialog.rs:339
 msgid "in total"
 msgstr "insgesamt"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:313
+#: crates/pigoune-app/src/library_info_dialog.rs:344
 msgid "resource"
 msgid_plural "resources"
 msgstr[0] "Ressource"
 msgstr[1] "Ressourcen"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:358
+#: crates/pigoune-app/src/library_info_dialog.rs:389
 msgid "Resource"
 msgid_plural "Resources"
 msgstr[0] "Ressource"
 msgstr[1] "Ressourcen"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:365
+#: crates/pigoune-app/src/library_info_dialog.rs:396
 msgid "Collection"
 msgid_plural "Collections"
 msgstr[0] "Sammlung"
 msgstr[1] "Sammlungen"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:369
+#: crates/pigoune-app/src/library_info_dialog.rs:400
 msgid "Tag"
 msgid_plural "Tags"
 msgstr[0] "Schlagwort"
 msgstr[1] "Schlagwörter"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:373
+#: crates/pigoune-app/src/library_info_dialog.rs:404
 msgid "Favorite"
 msgid_plural "Favorites"
 msgstr[0] "Favorit"
 msgstr[1] "Favoriten"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:382
+#: crates/pigoune-app/src/library_info_dialog.rs:413
 #, rust-format
 msgid "{count} animated"
 msgid_plural "{count} animated"
 msgstr[0] "{count} animiert"
 msgstr[1] "{count} animiert"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:387
+#: crates/pigoune-app/src/library_info_dialog.rs:418
 #, rust-format
 msgid "{count} SVG"
 msgstr "{count} SVG"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:389
+#: crates/pigoune-app/src/library_info_dialog.rs:420
 #, rust-format
 msgid "{count} in the trash"
 msgid_plural "{count} in the trash"
 msgstr[0] "{count} im Papierkorb"
 msgstr[1] "{count} im Papierkorb"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:438
+#: crates/pigoune-app/src/library_info_dialog.rs:469
 #, rust-format
 msgid "Resources {size}"
 msgstr "Ressourcen {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:443
+#: crates/pigoune-app/src/library_info_dialog.rs:474
 #, rust-format
 msgid "Thumbnails {size}"
 msgstr "Vorschaubilder {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:445
+#: crates/pigoune-app/src/library_info_dialog.rs:476
 #, rust-format
 msgid "Database {size}"
 msgstr "Datenbank {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:446
+#: crates/pigoune-app/src/library_info_dialog.rs:477
 #, rust-format
 msgid "Trash {size}"
 msgstr "Papierkorb {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:466
+#: crates/pigoune-app/src/library_info_dialog.rs:497
 #, rust-format
 msgid "Other files {size}"
 msgstr "Andere Dateien {size}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:550
+#: crates/pigoune-app/src/library_info_dialog.rs:581
 msgid "Location copied"
 msgstr "Speicherort kopiert"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:591
+#: crates/pigoune-app/src/library_info_dialog.rs:627
 #, rust-format
 msgid "… and {count} more folder"
 msgid_plural "… and {count} more folders"
 msgstr[0] "… und {count} weiterer Ordner"
 msgstr[1] "… und {count} weitere Ordner"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:606
+#: crates/pigoune-app/src/library_info_dialog.rs:642
 #, rust-format
 msgid "{count} file"
 msgid_plural "{count} files"
 msgstr[0] "{count} Datei"
 msgstr[1] "{count} Dateien"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:614
+#: crates/pigoune-app/src/library_info_dialog.rs:650
 #, rust-format
 msgid "{size} freed, thumbnails are made again when needed"
 msgstr "{size} freigegeben, Vorschaubilder werden bei Bedarf neu erstellt"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:619
+#: crates/pigoune-app/src/library_info_dialog.rs:655
 #, rust-format
 msgid "Unable to clear the thumbnails: {reason}"
 msgstr "Die Vorschaubilder können nicht geleert werden: {reason}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:657
+#: crates/pigoune-app/src/library_info_dialog.rs:693
 msgid "Heaviest"
 msgstr "Die schwerste"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:658
+#: crates/pigoune-app/src/library_info_dialog.rs:694
 msgid "Largest"
 msgstr "Die größte"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:659
+#: crates/pigoune-app/src/library_info_dialog.rs:695
 msgid "Newest"
 msgstr "Die neueste"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:660
+#: crates/pigoune-app/src/library_info_dialog.rs:696
 msgid "Oldest"
 msgstr "Die älteste"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:670
+#: crates/pigoune-app/src/library_info_dialog.rs:706
 #, rust-format
 msgid "added on {date}"
 msgstr "hinzugefügt am {date}"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:688
+#: crates/pigoune-app/src/library_info_dialog.rs:724
 #, rust-format
 msgid "{percent} %"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:739
+#: crates/pigoune-app/src/library_info_dialog.rs:775
 #, rust-format
 msgid "{free} free of {size}"
 msgstr "{free} von {size} frei"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:746
+#: crates/pigoune-app/src/library_info_dialog.rs:782
 #, rust-format
 msgid "Pigoune {version} or later"
 msgstr "Pigoune {version} oder neuer"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:754
+#: crates/pigoune-app/src/library_info_dialog.rs:790
 msgid "Removable disk"
 msgstr "Wechseldatenträger"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:756
+#: crates/pigoune-app/src/library_info_dialog.rs:792
 msgid "Internal disk"
 msgstr "Interner Datenträger"
 
-#: crates/pigoune-app/src/library_info_dialog.rs:770
+#: crates/pigoune-app/src/library_info_dialog.rs:806
 msgid "%B %-d, %Y"
 msgstr "%-d. %B %Y"
 
@@ -4579,9 +4583,9 @@ msgstr "Vorschaubilder an neuem Ort"
 
 #: crates/pigoune-app/src/whats_new.rs:78
 msgid ""
-"Clearing the thumbnails is now done in the library information, in the "
-"Storage tab, next to the space they take."
-msgstr ""
+"Clearing the thumbnails is now done in Manage Library, in the Storage tab, "
+"next to the space they take."
+msgstr "Das Leeren der Vorschaubilder erfolgt jetzt unter „Bibliothek verwalten“, im Tab „Speicher“, neben dem Platz, den sie belegen."
 "Das Leeren der Vorschaubilder erfolgt jetzt in den Bibliotheksinformationen, "
 "im Tab „Speicher“, neben dem Platz, den sie belegen."
 
