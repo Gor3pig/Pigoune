@@ -79,6 +79,44 @@ impl From<rusqlite::Error> for AdoptError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum ReplaceError {
+    #[error("the resource {0} does not exist")]
+    AssetNotFound(AssetId),
+    #[error("{0} does not have the content of the resource")]
+    DifferentContent(PathBuf),
+    #[error("{0} could not be read")]
+    Unreadable(PathBuf),
+    #[error(transparent)]
+    Library(#[from] LibraryError),
+}
+
+impl From<ImportError> for ReplaceError {
+    fn from(error: ImportError) -> Self {
+        match error {
+            ImportError::Unreadable(path) | ImportError::UnsupportedFormat(path) => {
+                Self::Unreadable(path)
+            }
+            ImportError::CollectionNotFound(_) => Self::Library(LibraryError::Io(
+                io::Error::other("no collection is involved"),
+            )),
+            ImportError::Library(error) => Self::Library(error),
+        }
+    }
+}
+
+impl From<rusqlite::Error> for ReplaceError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
+impl From<io::Error> for ReplaceError {
+    fn from(error: io::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum CollectionError {
     #[error("a collection name cannot be empty")]
     InvalidName,

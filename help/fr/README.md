@@ -388,7 +388,10 @@ la bibliothèque ouverte, en quatre onglets :
   peut être annulée, et ne modifie ni ne supprime jamais rien d'elle-même. Pour un fichier sans
   fiche, **Ajouter** (ou **Tout ajouter**) lui redonne une fiche dans Non classés, sans déplacer
   le fichier ; Pigoune explique pourquoi quand un fichier ne peut pas être ajouté, par exemple
-  s'il n'est pas une image.
+  s'il n'est pas une image. Pour un fichier manquant ou abîmé, **Remplacer…** permet de choisir
+  une copie du fichier d'origine ; Pigoune ne l'accepte que si son contenu est identique à ce qui
+  a été importé, puis la remet en place en conservant le nom, les tags et les collections de la
+  ressource.
 
 ## Préférences
 

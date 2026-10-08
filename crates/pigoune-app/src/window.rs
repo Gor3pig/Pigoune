@@ -32,7 +32,7 @@ use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
-use crate::health_page::{Adopted, HealthActions, Refusal};
+use crate::health_page::{Adopted, HealthActions, Refusal, Replaced};
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report;
@@ -1195,6 +1195,13 @@ impl PigouneWindow {
                 || Err(Refusal::default()),
                 move |file: &Path| window.adopt_unrecorded(file)
             )),
+            replace: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |id: AssetId, copy: &Path| window.replace_stored_file(id, copy)
+            )),
             changed: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1206,6 +1213,26 @@ impl PigouneWindow {
                 move |id| window.show_in_all(id)
             )),
         }
+    }
+
+    fn replace_stored_file(&self, id: AssetId, copy: &Path) -> Replaced {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return Err(Refusal::default());
+        };
+        let file_name = copy
+            .file_name()
+            .map(|name| name.to_string_lossy().to_string())
+            .unwrap_or_default();
+        let asset_name = library
+            .asset(id)
+            .ok()
+            .flatten()
+            .map(|asset| asset.display_name)
+            .unwrap_or_default();
+        library
+            .replace_stored_file(id, copy)
+            .map_err(|error| error_messages::describe_replacement(&error, &file_name, &asset_name))
     }
 
     fn adopt_unrecorded(&self, file: &Path) -> Adopted {

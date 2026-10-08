@@ -102,6 +102,10 @@ pub fn unfinished_import_dir(root: &Path, id: AssetId) -> PathBuf {
     files_dir(root).join(format!(".{id}{UNFINISHED_IMPORT_SUFFIX}"))
 }
 
+pub fn unfinished_replacement_name(id: AssetId) -> String {
+    format!(".{id}{UNFINISHED_IMPORT_SUFFIX}")
+}
+
 pub fn is_unfinished_import(entry_name: &str) -> bool {
     entry_name.starts_with('.') && entry_name.ends_with(UNFINISHED_IMPORT_SUFFIX)
 }

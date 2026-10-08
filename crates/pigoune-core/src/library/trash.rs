@@ -51,6 +51,10 @@ impl Library {
 
 fn forget_files(root: &Path, asset: AssetId) {
     let _ = fs::remove_dir_all(layout::asset_dir(root, asset));
+    forget_thumbnails(root, asset);
+}
+
+pub(super) fn forget_thumbnails(root: &Path, asset: AssetId) {
     let Ok(sizes) = fs::read_dir(layout::thumbnails_dir(root)) else {
         return;
     };

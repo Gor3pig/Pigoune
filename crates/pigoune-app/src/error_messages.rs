@@ -2,8 +2,8 @@ use gettextrs::gettext;
 
 use crate::health_page::Refusal;
 use pigoune_core::{
-    AdoptError, AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, SmartCollectionError,
-    TagError, UndoError,
+    AdoptError, AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, ReplaceError,
+    SmartCollectionError, TagError, UndoError,
 };
 
 pub fn describe_adoption(error: &AdoptError, name: &str, known_name: Option<&str>) -> Refusal {
@@ -22,7 +22,45 @@ pub fn describe_adoption(error: &AdoptError, name: &str, known_name: Option<&str
         AdoptError::Unreadable(_) => gettext("This file could not be read. It was not changed."),
         AdoptError::Library(error) => describe(error),
     };
-    Refusal { title, body }
+    Refusal {
+        title,
+        body,
+        try_again: false,
+    }
+}
+
+pub fn describe_replacement(error: &ReplaceError, file_name: &str, asset_name: &str) -> Refusal {
+    let (title, body, try_again) = match error {
+        ReplaceError::DifferentContent(_) => (
+            gettext("This Is Not the Same File"),
+            gettext(
+                "The content of “{file}” is not identical to “{name}” as it was imported. Choose a copy identical to the original.",
+            )
+            .replace("{file}", file_name)
+            .replace("{name}", asset_name),
+            true,
+        ),
+        ReplaceError::Unreadable(_) => (
+            gettext("“{file}” Cannot Be Read").replace("{file}", file_name),
+            gettext("This file could not be read. Nothing was changed."),
+            true,
+        ),
+        ReplaceError::AssetNotFound(_) => (
+            gettext("This Resource No Longer Exists"),
+            gettext("Check the library again to see its current state."),
+            false,
+        ),
+        ReplaceError::Library(error) => (
+            gettext("Unable to Replace the File"),
+            describe(error),
+            false,
+        ),
+    };
+    Refusal {
+        title,
+        body,
+        try_again,
+    }
 }
 
 pub fn describe(error: &LibraryError) -> String {

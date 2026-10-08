@@ -341,7 +341,10 @@ tabs:
   folder that have no record. It runs in the background and can be canceled, and it never
   changes or deletes anything by itself. For a file without a record, **Add** (or **Add All**)
   gives it back a record in Unclassified, without moving the file; Pigoune explains why when a
-  file cannot be added, for example when it is not an image.
+  file cannot be added, for example when it is not an image. For a missing or damaged file,
+  **Replace…** lets you choose a copy of the original file; Pigoune accepts it only if its
+  content is identical to what was imported, then puts it back in place and keeps the asset’s
+  name, tags and collections.
 
 ## Preferences
 

@@ -15,18 +15,24 @@ const SHOWN_AT_FIRST: usize = 5;
 const PROGRESS_STEP: usize = 10;
 
 const CLOSE_RESPONSE: &str = "close";
+const AGAIN_RESPONSE: &str = "again";
 
 #[derive(Default)]
 pub struct Refusal {
     pub title: String,
     pub body: String,
+    pub try_again: bool,
 }
 
 pub type Adopted = Result<(AssetId, String), Refusal>;
 
+pub type Replaced = Result<(), Refusal>;
+pub type ReplaceAction = Box<dyn Fn(AssetId, &Path) -> Replaced>;
+
 pub struct HealthActions {
     pub plan: Box<dyn Fn() -> Result<HealthPlan, String>>,
     pub adopt: Box<dyn Fn(&Path) -> Adopted>,
+    pub replace: ReplaceAction,
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
 }
@@ -316,7 +322,7 @@ impl PigouneHealthPage {
                 Line {
                     name,
                     detail: path.to_string_lossy().to_string(),
-                    path: Some(path.clone()),
+                    action: LineAction::Add(path.clone()),
                 }
             })
             .collect();
@@ -400,20 +406,31 @@ impl PigouneHealthPage {
             .build();
         row.set_title_lines(1);
         row.set_subtitle_lines(2);
-        if let Some(path) = &line.path {
-            let button = gtk::Button::builder()
-                .label(gettext("_Add"))
-                .use_underline(true)
-                .valign(gtk::Align::Center)
-                .build();
-            button.connect_clicked(glib::clone!(
-                #[weak(rename_to = page)]
-                self,
-                #[strong]
-                path,
-                move |_| page.add_one(&path)
-            ));
-            row.add_suffix(&button);
+        match &line.action {
+            LineAction::Add(path) => {
+                let button = suffix_button(&gettext("_Add"));
+                button.connect_clicked(glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    #[strong]
+                    path,
+                    move |_| page.add_one(&path)
+                ));
+                row.add_suffix(&button);
+            }
+            LineAction::Replace(id) => {
+                let button = suffix_button(&gettext("_Replace…"));
+                button.connect_clicked(glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    #[strong(rename_to = name)]
+                    line.name,
+                    #[strong]
+                    id,
+                    move |_| page.choose_copy(id, &name)
+                ));
+                row.add_suffix(&button);
+            }
         }
         row
     }
@@ -443,7 +460,7 @@ impl PigouneHealthPage {
                 let text = gettext("“{name}” added to Unclassified").replace("{name}", &name);
                 self.show_toast(&text, Some(id));
             }
-            Err(refusal) => self.show_refusal(&refusal),
+            Err(refusal) => self.show_refusal(&refusal, None),
         }
     }
 
@@ -492,9 +509,71 @@ impl PigouneHealthPage {
         self.show_report();
     }
 
-    fn show_refusal(&self, refusal: &Refusal) {
+    fn choose_copy(&self, id: AssetId, name: &str) {
+        let dialog = gtk::FileDialog::builder()
+            .title(gettext("Choose a Copy of “{name}”").replace("{name}", name))
+            .accept_label(gettext("_Open"))
+            .modal(true)
+            .build();
+        let parent = self.root().and_downcast::<gtk::Window>();
+        let name = name.to_owned();
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            async move {
+                let Ok(file) = dialog.open_future(parent.as_ref()).await else {
+                    return;
+                };
+                if let Some(path) = file.path() {
+                    page.replace_with(id, &name, &path);
+                }
+            }
+        ));
+    }
+
+    fn replace_with(&self, id: AssetId, name: &str, copy: &Path) {
+        let Some(actions) = self.imp().actions.borrow().clone() else {
+            return;
+        };
+        match (actions.replace)(id, copy) {
+            Ok(()) => {
+                (actions.changed)();
+                self.forget_issue(id);
+                let text =
+                    gettext("“{name}” replaced: the file is back in place").replace("{name}", name);
+                self.show_toast(&text, None);
+            }
+            Err(refusal) => self.show_refusal(&refusal, Some((id, name))),
+        }
+    }
+
+    fn forget_issue(&self, id: AssetId) {
+        let imp = self.imp();
+        if let Some(report) = imp.report.borrow_mut().as_mut() {
+            report.missing.retain(|issue| issue.id != id);
+            report.damaged.retain(|issue| issue.id != id);
+        }
+        imp.repaired.set(true);
+        self.show_report();
+    }
+
+    fn show_refusal(&self, refusal: &Refusal, again: Option<(AssetId, &str)>) {
         let alert = adw::AlertDialog::new(Some(&refusal.title), Some(&refusal.body));
         alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        if let (true, Some((id, name))) = (refusal.try_again, again) {
+            alert.add_response(AGAIN_RESPONSE, &gettext("Choose Another _File"));
+            alert.set_response_appearance(AGAIN_RESPONSE, adw::ResponseAppearance::Suggested);
+            alert.set_default_response(Some(AGAIN_RESPONSE));
+            let name = name.to_owned();
+            alert.connect_response(
+                Some(AGAIN_RESPONSE),
+                glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    move |_, _| page.choose_copy(id, &name)
+                ),
+            );
+        }
         alert.present(Some(self));
     }
 
@@ -532,10 +611,15 @@ impl PigouneHealthPage {
     }
 }
 
+enum LineAction {
+    Add(PathBuf),
+    Replace(AssetId),
+}
+
 struct Line {
     name: String,
     detail: String,
-    path: Option<PathBuf>,
+    action: LineAction,
 }
 
 fn added_text(added: usize, refused: usize) -> String {
@@ -573,10 +657,18 @@ fn issue_lines(issues: &[HealthIssue]) -> Vec<Line> {
             Line {
                 name: issue.display_name.clone(),
                 detail: place,
-                path: None,
+                action: LineAction::Replace(issue.id),
             }
         })
         .collect()
+}
+
+fn suffix_button(label: &str) -> gtk::Button {
+    gtk::Button::builder()
+        .label(label)
+        .use_underline(true)
+        .valign(gtk::Align::Center)
+        .build()
 }
 
 fn count_text(template: &str, count: usize) -> String {
