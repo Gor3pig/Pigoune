@@ -23,7 +23,13 @@ const NOT_TRASHED: &str = "trashed_at_unix_ms IS NULL";
 
 const TRASHED: &str = "trashed_at_unix_ms IS NOT NULL";
 
-const WITH_TAG: &str = "id IN (SELECT asset_id FROM asset_tags WHERE tag_id = ?1)";
+const WITH_TAG: &str = "id IN (SELECT asset_id FROM asset_tags WHERE tag_id IN (
+        WITH RECURSIVE tag_subtree(id) AS (
+            SELECT id FROM tags WHERE id = ?1
+            UNION
+            SELECT child.id FROM tags child JOIN tag_subtree ON child.parent_id = tag_subtree.id
+        )
+        SELECT id FROM tag_subtree))";
 
 const IN_NO_COLLECTION: &str = "NOT EXISTS (SELECT 1 FROM asset_collections
         JOIN collections ON collections.id = asset_collections.collection_id
@@ -147,11 +153,18 @@ impl Library {
             .collect::<Result<_, _>>()?;
 
         let mut statement = self.connection.prepare(
-            "SELECT tags.id, count(assets.id) FROM tags
-             LEFT JOIN asset_tags ON asset_tags.tag_id = tags.id
+            "WITH RECURSIVE reach(tag_id, ancestor_id) AS (
+                 SELECT id, id FROM tags
+                 UNION
+                 SELECT reach.tag_id, tags.parent_id FROM reach
+                 JOIN tags ON tags.id = reach.ancestor_id
+                 WHERE tags.parent_id IS NOT NULL
+             )
+             SELECT reach.ancestor_id, count(DISTINCT assets.id) FROM reach
+             LEFT JOIN asset_tags ON asset_tags.tag_id = reach.tag_id
              LEFT JOIN assets ON assets.id = asset_tags.asset_id
                  AND assets.trashed_at_unix_ms IS NULL
-             GROUP BY tags.id",
+             GROUP BY reach.ancestor_id",
         )?;
         let tags = statement
             .query_map([], |row| {

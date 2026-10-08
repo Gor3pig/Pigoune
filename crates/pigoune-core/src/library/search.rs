@@ -138,8 +138,16 @@ impl Library {
 
     pub(super) fn tag_names_by_asset(&self) -> Result<HashMap<AssetId, Vec<String>>, LibraryError> {
         let mut statement = self.connection.prepare(
-            "SELECT asset_tags.asset_id, tags.name FROM asset_tags
-             JOIN tags ON tags.id = asset_tags.tag_id",
+            "WITH RECURSIVE reach(tag_id, ancestor_id) AS (
+                 SELECT id, id FROM tags
+                 UNION
+                 SELECT reach.tag_id, tags.parent_id FROM reach
+                 JOIN tags ON tags.id = reach.ancestor_id
+                 WHERE tags.parent_id IS NOT NULL
+             )
+             SELECT asset_tags.asset_id, tags.name FROM asset_tags
+             JOIN reach ON reach.tag_id = asset_tags.tag_id
+             JOIN tags ON tags.id = reach.ancestor_id",
         )?;
         let mut names: HashMap<AssetId, Vec<String>> = HashMap::new();
         for row in statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))? {

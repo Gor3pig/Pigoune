@@ -198,7 +198,9 @@ fn describe_tag(command: &TagCommand, names: &Names) -> Option<String> {
             &gettext("Deleting the tag “{name}” undone"),
             &names.tag(*tag)?,
         ),
-        TagCommand::Recreate { .. } => return None,
+        TagCommand::Move { .. } | TagCommand::Dissolve { .. } | TagCommand::Recreate { .. } => {
+            return None;
+        }
         TagCommand::Batch(commands) => return describe_tag_batch(commands, names),
     };
     Some(text)

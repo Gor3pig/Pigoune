@@ -226,7 +226,9 @@ impl TagCommand {
                 assets.is_empty()
             }
             Self::Rename { .. }
+            | Self::Move { .. }
             | Self::Merge { .. }
+            | Self::Dissolve { .. }
             | Self::Delete { .. }
             | Self::Recreate { .. } => false,
             Self::Batch(commands) => commands.iter().all(Self::changes_nothing),

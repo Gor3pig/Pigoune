@@ -144,7 +144,9 @@ My logos.pigoune/
   each import. Format 8 lets a smart collection save shapes (landscape, portrait, square) and
   "fits my screen", and turns every older smart collection into a search of the whole library
   (one limited to Favorites keeps "favorites only"); the screen size itself is never saved: the app gives the library the size
-  of the monitor showing its window, in real pixels, and refreshes when it changes. A library
+  of the monitor showing its window, in real pixels, and refreshes when it changes. Format 9
+  gives each tag an optional parent: tags form a tree, a name is unique among siblings only, and
+  opening a tag also shows the assets of its sub-tags; existing tags become top-level tags. A library
   created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.

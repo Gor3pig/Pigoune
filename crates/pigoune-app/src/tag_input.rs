@@ -64,6 +64,7 @@ mod tests {
         Tag {
             id: TagId::parse(&format!("00000000-0000-7000-8000-{number:012}")).expect("id"),
             name: name.to_owned(),
+            parent: None,
         }
     }
 
