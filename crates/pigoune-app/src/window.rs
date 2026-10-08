@@ -3642,10 +3642,49 @@ impl PigouneWindow {
     fn show_tag_error(&self, error: &TagError) {
         let alert = adw::AlertDialog::new(
             Some(&gettext("Unable to Change the Tags")),
-            Some(&error_messages::describe_tag(error)),
+            Some(&self.describe_tag_error(error)),
         );
         alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
         alert.present(Some(self));
+    }
+
+    fn describe_tag_error(&self, error: &TagError) -> String {
+        if let TagError::NameTaken(existing) = error
+            && let Some(text) = self.describe_taken_name(*existing)
+        {
+            return text;
+        }
+        error_messages::describe_tag(error)
+    }
+
+    fn describe_taken_name(&self, existing: TagId) -> Option<String> {
+        let path = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()?
+            .tag_path(existing)
+            .ok()?;
+        let (tag, parents) = path.split_last()?;
+        Some(match parents.last() {
+            Some(parent) => gettext("A tag named “{name}” already exists in “{parent}”.")
+                .replace("{name}", &tag.name)
+                .replace("{parent}", &parent.name),
+            None => gettext("A tag named “{name}” already exists at the top level.")
+                .replace("{name}", &tag.name),
+        })
+    }
+
+    fn tag_is_already_in(&self, tag: TagId, parent: Option<TagId>) -> bool {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.tags().ok())
+            .is_some_and(|tags| {
+                tags.iter()
+                    .any(|candidate| candidate.id == tag && candidate.parent == parent)
+            })
     }
 
     fn tag_name(&self, tag: TagId) -> Option<String> {
@@ -3696,7 +3735,7 @@ impl PigouneWindow {
                 self.offer_merge(tag, existing);
                 Ok(())
             }
-            Some(Err(error)) => Err(error_messages::describe_tag(&error)),
+            Some(Err(error)) => Err(self.describe_tag_error(&error)),
             None => Ok(()),
         }
     }
@@ -3725,15 +3764,7 @@ impl PigouneWindow {
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |_, _| {
-                    if window.apply_tag_command(&TagCommand::Merge { from, into }) {
-                        if window.imp().current_view.get() == AssetView::Tag(from) {
-                            window.imp().current_view.set(AssetView::Tag(into));
-                        }
-                        window.refresh_assets();
-                        window.refresh_selected_tags();
-                    }
-                }
+                move |_, _| window.merge_tag(from, into)
             ),
         );
         alert.present(Some(self));
@@ -3994,20 +4025,41 @@ impl PigouneWindow {
                     #[weak(rename_to = window)]
                     self,
                     move |_, _| {
-                        let command = if dissolve {
-                            TagCommand::Dissolve { tag }
-                        } else {
-                            TagCommand::Delete { tag }
-                        };
-                        if window.apply_tag_command(&command) {
-                            window.refresh_assets();
-                            window.refresh_selected_tags();
-                        }
+                        window.delete_tag(tag, dissolve);
                     }
                 ),
             );
         }
         alert.present(Some(self));
+    }
+
+    fn delete_tag(&self, tag: TagId, dissolve: bool) {
+        let Some(name) = self.tag_name(tag) else {
+            return;
+        };
+        let has_sub_tags = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.tags().ok())
+            .is_some_and(|tags| tags.iter().any(|candidate| candidate.parent == Some(tag)));
+        let command = if dissolve {
+            TagCommand::Dissolve { tag }
+        } else {
+            TagCommand::Delete { tag }
+        };
+        if !self.apply_tag_command(&command) {
+            return;
+        }
+        self.refresh_assets();
+        self.refresh_selected_tags();
+        let text = match (dissolve, has_sub_tags) {
+            (true, _) => gettext("The tag “{name}” was deleted and its sub-tags moved up."),
+            (false, true) => gettext("The tag “{name}” and its sub-tags were deleted."),
+            (false, false) => gettext("The tag “{name}” was deleted."),
+        };
+        self.show_undoable_toast(&text.replace("{name}", &name));
     }
 
     fn ask_sub_tag_name(&self, parent: TagId) {
@@ -4051,9 +4103,7 @@ impl PigouneWindow {
             .as_ref()
             .and_then(|library| library.tag_named_in(parent, name).ok().flatten());
         if let Some(existing) = taken {
-            return Err(error_messages::describe_tag(&TagError::NameTaken(
-                existing.id,
-            )));
+            return Err(self.describe_tag_error(&TagError::NameTaken(existing.id)));
         }
         let created = self.change_library(|library| {
             library.apply_tag_command(&TagCommand::Add {
@@ -4066,7 +4116,7 @@ impl PigouneWindow {
                 self.go_to_view(AssetView::Tag(parent), Vec::new());
                 Ok(())
             }
-            Some(Err(error)) => Err(error_messages::describe_tag(&error)),
+            Some(Err(error)) => Err(self.describe_tag_error(&error)),
             None => Ok(()),
         }
     }
@@ -4129,6 +4179,9 @@ impl PigouneWindow {
     }
 
     fn move_tag(&self, tag: TagId, parent: Option<TagId>) {
+        if self.tag_is_already_in(tag, parent) {
+            return;
+        }
         if self.apply_tag_command(&TagCommand::Move { tag, parent }) {
             self.go_to_view(AssetView::Tag(tag), Vec::new());
             self.refresh_selected_tags();
@@ -4146,12 +4199,19 @@ impl PigouneWindow {
     }
 
     fn merge_tag(&self, from: TagId, into: TagId) {
+        let from_name = self.tag_name(from).unwrap_or_default();
+        let into_name = self.tag_name(into).unwrap_or_default();
         if self.apply_tag_command(&TagCommand::Merge { from, into }) {
             if self.imp().current_view.get() == AssetView::Tag(from) {
                 self.imp().current_view.set(AssetView::Tag(into));
             }
             self.refresh_assets();
             self.refresh_selected_tags();
+            self.show_undoable_toast(
+                &gettext("The tag “{from}” was merged into “{into}”.")
+                    .replace("{from}", &from_name)
+                    .replace("{into}", &into_name),
+            );
         }
     }
 
