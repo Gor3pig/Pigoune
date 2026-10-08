@@ -26,6 +26,7 @@ use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTre
 use crate::conversion_memory;
 use crate::conversion_report;
 use crate::displayed_view;
+use crate::drop_action;
 use crate::drop_message;
 use crate::drop_places;
 use crate::dropped_content::{self, Dropped, DroppedImage};
@@ -940,6 +941,13 @@ impl PigouneWindow {
             #[weak(rename_to = window)]
             self,
             move |hovered| window.describe_hovered_drop(hovered.as_ref())
+        ));
+        self.imp().sidebar.connect_drop_offer(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            drop_action::DropOffer::REFUSED,
+            move |target| drop_action::offer_for_assets(target, window.displayed_view())
         ));
         self.imp().sidebar.connect_assets_dropped(glib::clone!(
             #[weak(rename_to = window)]

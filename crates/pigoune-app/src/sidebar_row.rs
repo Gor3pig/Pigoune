@@ -7,6 +7,7 @@ use pigoune_core::{AssetView, CollectionId};
 use crate::collection_drop::{self, CollectionDrop, DropZone};
 use crate::collection_look_dialog;
 use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
+use crate::drop_action::{self, DropOffer};
 use crate::drop_places;
 use crate::dropped_content;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
@@ -21,6 +22,7 @@ const SIDEBAR_ROW: &str = "sidebar-row";
 const FOLDED_ICON: &str = "pan-end-symbolic";
 const UNFOLDED_ICON: &str = "pan-down-symbolic";
 const MORE_ICON: &str = "view-more-symbolic";
+const MODIFIER_WATCH_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
 
 mod imp {
     use std::cell::{Cell, OnceCell, RefCell};
@@ -44,6 +46,7 @@ mod imp {
         pub menu: OnceCell<gtk::PopoverMenu>,
         pub item: RefCell<Option<PigouneSidebarItem>>,
         pub drop_zone: Cell<DropZone>,
+        pub modifier_watch: Cell<u32>,
     }
 
     #[glib::object_subclass]
@@ -232,7 +235,10 @@ impl PigouneSidebarRow {
 
     fn accept_drops(&self) {
         self.add_css_class(SIDEBAR_ROW);
-        let drop_target = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::COPY);
+        let drop_target = gtk::DropTarget::new(
+            glib::Type::INVALID,
+            gdk::DragAction::MOVE | gdk::DragAction::COPY,
+        );
         drop_target.set_preload(true);
         drop_target.set_types(&[
             DraggedAssets::static_type(),
@@ -244,27 +250,20 @@ impl PigouneSidebarRow {
             self,
             #[upgrade_or]
             gdk::DragAction::empty(),
-            move |target, _, y| {
-                row.follow_pointer(target, y);
-                row.describe_hover(target);
-                gdk::DragAction::COPY
-            }
+            move |target, _, y| row.hover(target, y)
         ));
         drop_target.connect_motion(glib::clone!(
             #[weak(rename_to = row)]
             self,
             #[upgrade_or]
             gdk::DragAction::empty(),
-            move |target, _, y| {
-                row.follow_pointer(target, y);
-                row.describe_hover(target);
-                gdk::DragAction::COPY
-            }
+            move |target, _, y| row.hover(target, y)
         ));
         drop_target.connect_leave(glib::clone!(
             #[weak(rename_to = row)]
             self,
             move |_| {
+                row.stop_watching_modifiers();
                 row.show_drop_zone(None);
                 row.forget_hover();
             }
@@ -283,13 +282,83 @@ impl PigouneSidebarRow {
             self,
             #[upgrade_or]
             false,
-            move |_, value, _, _| {
+            move |target, value, _, _| {
+                let keep_source = row.keeps_source(target);
+                row.stop_watching_modifiers();
                 row.show_drop_zone(None);
                 row.forget_hover();
-                row.receive(value)
+                row.receive(value, keep_source)
             }
         ));
         self.add_controller(drop_target);
+    }
+
+    fn hover(&self, target: &gtk::DropTarget, y: f64) -> gdk::DragAction {
+        let offer = self.offer_for(target);
+        target.set_actions(offer.allowed);
+        if offer.is_refused() {
+            self.stop_watching_modifiers();
+            self.show_drop_zone(None);
+            self.forget_hover();
+            return offer.preferred;
+        }
+        self.follow_pointer(target, y);
+        self.describe_hover(target);
+        self.watch_modifiers(target);
+        offer.preferred
+    }
+
+    fn offer_for(&self, target: &gtk::DropTarget) -> DropOffer {
+        let carries_assets = target
+            .current_drop()
+            .is_some_and(|drop| drop.formats().contains_type(DraggedAssets::static_type()));
+        if !carries_assets {
+            return DropOffer::MOVE_ONLY;
+        }
+        match (self.sidebar(), self.view()) {
+            (Some(sidebar), Some(view)) => sidebar.drop_offer(view),
+            _ => DropOffer::REFUSED,
+        }
+    }
+
+    fn keeps_source(&self, target: &gtk::DropTarget) -> bool {
+        let selected = target
+            .current_drop()
+            .and_then(|drop| drop.drag())
+            .map_or_else(gdk::DragAction::empty, |drag| drag.selected_action());
+        drop_action::keeps_source(selected, control_is_held(self))
+    }
+
+    fn watch_modifiers(&self, target: &gtk::DropTarget) {
+        let imp = self.imp();
+        let generation = imp.modifier_watch.get().wrapping_add(1);
+        imp.modifier_watch.set(generation);
+        glib::timeout_add_local(
+            MODIFIER_WATCH_INTERVAL,
+            glib::clone!(
+                #[weak(rename_to = row)]
+                self,
+                #[weak]
+                target,
+                #[upgrade_or]
+                glib::ControlFlow::Break,
+                move || {
+                    if row.imp().modifier_watch.get() != generation
+                        || target.current_drop().is_none()
+                    {
+                        return glib::ControlFlow::Break;
+                    }
+                    row.describe_hover(&target);
+                    glib::ControlFlow::Continue
+                }
+            ),
+        );
+    }
+
+    fn stop_watching_modifiers(&self) {
+        let imp = self.imp();
+        imp.modifier_watch
+            .set(imp.modifier_watch.get().wrapping_add(1));
     }
 
     fn accept_external_drops(&self) {
@@ -354,7 +423,7 @@ impl PigouneSidebarRow {
         sidebar.assets_hovered(Some(HoveredDrop {
             view,
             assets: dragged.0,
-            keep_source: control_is_held(self),
+            keep_source: self.keeps_source(target),
         }));
     }
 
@@ -427,7 +496,7 @@ impl PigouneSidebarRow {
         }
     }
 
-    fn receive(&self, value: &glib::Value) -> bool {
+    fn receive(&self, value: &glib::Value, keep_source: bool) -> bool {
         let Some(sidebar) = self
             .ancestor(PigouneSidebar::static_type())
             .and_downcast::<PigouneSidebar>()
@@ -453,7 +522,7 @@ impl PigouneSidebarRow {
             return false;
         };
         if let Ok(dragged) = value.get::<DraggedAssets>() {
-            sidebar.assets_dropped(view, dragged.0, control_is_held(self));
+            sidebar.assets_dropped(view, dragged.0, keep_source);
             return true;
         }
         false
@@ -497,7 +566,7 @@ impl PigouneSidebarRow {
 
     fn offer_collection_drag(&self) {
         let source = gtk::DragSource::builder()
-            .actions(gdk::DragAction::COPY)
+            .actions(gdk::DragAction::MOVE)
             .build();
         source.connect_prepare(glib::clone!(
             #[weak(rename_to = row)]

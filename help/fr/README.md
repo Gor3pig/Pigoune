@@ -87,7 +87,10 @@ droit sur une collection permet d'y créer une sous-collection, de la renommer
   clic droit.
 - **Ajoutez-les** à une collection sans les retirer de leur place en maintenant
   <kbd>Ctrl</kbd> pendant le glisser, ou avec **Ajouter à une collection…** dans le menu du
-  clic droit. Une ressource peut appartenir à plusieurs collections.
+  clic droit. Une ressource peut appartenir à plusieurs collections. Le curseur indique ce que
+  vous faites : une flèche simple pour un déplacement, un **+** pour un ajout. Il change dès
+  que vous appuyez sur <kbd>Ctrl</kbd> ou le relâchez, et une collection ne s'illumine pas
+  quand vous y glissez des ressources qui en viennent déjà.
 - **Retirez-les** de la collection affichée avec **Retirer de la collection** dans le menu du
   clic droit. Elles restent dans la bibliothèque et dans leurs autres collections.
 - **Réorganisez** les collections en les glissant dans la barre latérale, ou triez-les par nom
@@ -261,7 +264,9 @@ ses critères.
 
 - **Glissez** des ressources depuis la grille vers n'importe quelle application (un éditeur de
   texte, un logiciel de graphisme, une page web…). Pigoune y dépose une copie qui porte le nom
-  de la ressource.
+  de la ressource. Certaines applications, comme Fichiers, peuvent afficher un curseur de
+  déplacement : c'est la copie remise qui se déplace, jamais la ressource de votre
+  bibliothèque.
 - **Copiez-les** avec <kbd>Ctrl</kbd>+<kbd>C</kbd> pour les coller ailleurs.
 - **Exportez-les** dans un dossier avec **Exporter vers…** dans le menu du clic droit. Les
   fichiers existants ne sont jamais écrasés.

@@ -31,6 +31,7 @@ mod desktop_panels;
 mod displayed_view;
 mod drag_content;
 mod drag_icon;
+mod drop_action;
 mod drop_message;
 mod drop_places;
 mod dropped_content;

@@ -711,7 +711,7 @@ impl PigouneAssetGrid {
 
     fn make_draggable(&self, tile: &PigouneAssetTile) {
         let source = gtk::DragSource::builder()
-            .actions(gdk::DragAction::COPY)
+            .actions(gdk::DragAction::MOVE | gdk::DragAction::COPY)
             .build();
         source.connect_prepare(glib::clone!(
             #[weak(rename_to = grid)]

@@ -77,7 +77,9 @@ sub-collection, rename it (<kbd>F2</kbd>), customize it or delete it.
   inside a collection, with **Move to a Collection…** in the right-click menu.
 - **Add** them to a collection while keeping them where they are by holding <kbd>Ctrl</kbd>
   while dragging, or with **Add to a Collection…** in the right-click menu. An asset can belong
-  to several collections.
+  to several collections. The pointer shows which one you are doing: a plain arrow for a move,
+  a **+** for an addition. It changes as soon as you press or release <kbd>Ctrl</kbd>, and a
+  collection does not light up when you drag assets onto the one they already come from.
 - **Remove** them from the collection you are looking at with **Remove from the Collection** in
   the right-click menu. They stay in the library and in their other collections.
 - **Reorder** collections by dragging them in the sidebar, or sort them by name or creation
@@ -228,7 +230,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 ## Reusing assets
 
 - **Drag** assets from the grid into any application (a text editor, a design tool, a web
-  page…). Pigoune hands over a copy named after the asset.
+  page…). Pigoune hands over a copy named after the asset. Some applications, such as Files,
+  may show a move pointer: it is the copy handed over that moves, never the asset in your
+  library.
 - **Copy** them with <kbd>Ctrl</kbd>+<kbd>C</kbd> and paste them elsewhere.
 - **Export** them to a folder with **Export To…** in the right-click menu. Existing files are
   never overwritten.

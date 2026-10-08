@@ -12,6 +12,7 @@ use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::CollectionDrop;
 use crate::collection_looks;
 use crate::collection_sort::CollectionTree;
+use crate::drop_action::DropOffer;
 use crate::dropped_content::Dropped;
 use crate::found_flash;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
@@ -30,6 +31,7 @@ type ContentDroppedCallback = Box<dyn Fn(AssetView, Dropped)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
 type AssetsHoveredCallback = Box<dyn Fn(Option<HoveredDrop>)>;
+type DropOfferCallback = Box<dyn Fn(AssetView) -> DropOffer>;
 type SmartCollectionDroppedCallback = Box<dyn Fn(SmartCollectionId, SmartCollectionId, bool)>;
 type SectionToggledCallback = Box<dyn Fn(SidebarEntry)>;
 
@@ -66,8 +68,8 @@ mod imp {
 
     use super::{
         AssetsDroppedCallback, AssetsHoveredCallback, CollectionDroppedCallback,
-        ContentDroppedCallback, SectionToggledCallback, SmartCollectionDroppedCallback,
-        ViewChangedCallback,
+        ContentDroppedCallback, DropOfferCallback, SectionToggledCallback,
+        SmartCollectionDroppedCallback, ViewChangedCallback,
     };
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -86,6 +88,7 @@ mod imp {
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
         pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
         pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
+        pub on_drop_offer: RefCell<Option<DropOfferCallback>>,
         pub on_smart_collection_dropped: RefCell<Option<SmartCollectionDroppedCallback>>,
     }
 
@@ -156,6 +159,18 @@ impl PigouneSidebar {
         if let Some(on_assets_dropped) = self.imp().on_assets_dropped.borrow().as_ref() {
             on_assets_dropped(view, assets, keep_source);
         }
+    }
+
+    pub fn connect_drop_offer(&self, callback: impl Fn(AssetView) -> DropOffer + 'static) {
+        self.imp().on_drop_offer.replace(Some(Box::new(callback)));
+    }
+
+    pub fn drop_offer(&self, view: AssetView) -> DropOffer {
+        self.imp()
+            .on_drop_offer
+            .borrow()
+            .as_ref()
+            .map_or(DropOffer::COPY_ONLY, |offer| offer(view))
     }
 
     pub fn connect_assets_hovered(&self, callback: impl Fn(Option<HoveredDrop>) + 'static) {
