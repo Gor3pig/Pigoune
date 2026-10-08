@@ -9,8 +9,9 @@ use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
     CollectionRemoval, Dimensions, HealthPlan, ImportError, ImportSummary, Library, LibraryError,
-    SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
-    TagError, TagId, TextField, UndoError, dominant_colors, library_display_name,
+    LibraryExportReport, SmartCollection, SmartCollectionCommand, SmartCollectionId,
+    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, dominant_colors,
+    library_display_name,
 };
 
 use crate::asset_colors;
@@ -1368,6 +1369,7 @@ impl PigouneWindow {
                 storage: library.storage_use()?,
                 records: library.records()?,
                 colors: library.color_shares()?,
+                export_outline: library.export_outline(&gettext("Unclassified"))?,
             })
         });
         let shown = shown.map(|report| {
@@ -1386,12 +1388,22 @@ impl PigouneWindow {
                         Ok(()),
                         move || window.clear_thumbnails()
                     ),
+                    glib::clone!(
+                        #[weak(rename_to = window)]
+                        self,
+                        move || {
+                            let window = window.clone();
+                            glib::spawn_future_local(async move {
+                                window.export_library().await;
+                            });
+                        }
+                    ),
                     self.health_actions(),
                 )
             })
         });
         match shown {
-            Some(Ok(dialog)) => dialog.present(Some(self)),
+            Some(Ok(dialog)) => dialog.present_fitting(self),
             Some(Err(error)) => {
                 let alert = adw::AlertDialog::new(
                     Some(&gettext("Unable to Read the Library Information")),
@@ -2471,15 +2483,86 @@ impl PigouneWindow {
             .map(|library| library.export_to(&selected, &path));
         match exported {
             Some(Ok(copies)) => self.show_export_toast(copies.len(), &folder),
-            Some(Err(error)) => {
-                let alert = adw::AlertDialog::new(
-                    Some(&gettext("Unable to Export")),
-                    Some(&error_messages::describe(&error)),
-                );
-                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
-                alert.present(Some(self));
-            }
+            Some(Err(error)) => self.show_export_error(&error),
             None => {}
+        }
+    }
+
+    fn show_export_error(&self, error: &LibraryError) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Unable to Export")),
+            Some(&error_messages::describe(error)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
+    fn show_export_failures(&self, failures: &[conversion_report::Failure]) {
+        let alert = adw::AlertDialog::new(
+            Some(&conversion_report::failures_heading(failures.len())),
+            Some(&conversion_report::failures_body(failures)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
+    async fn export_library(&self) {
+        let prepared = self.imp().library.borrow().as_ref().map(|library| {
+            (
+                library_display_name(library.root()),
+                library.library_export_plan(&gettext("Unclassified")),
+            )
+        });
+        let (name, plan) = match prepared {
+            Some((name, Ok(plan))) => (name, plan),
+            Some((_, Err(error))) => {
+                self.show_export_error(&error);
+                return;
+            }
+            None => return,
+        };
+        if plan.total() == 0 {
+            let message = gettext("“{name}” has no resources to export").replace("{name}", &name);
+            toasts::announce(&self.imp().toast_overlay, &adw::Toast::new(&message));
+            return;
+        }
+        let dialog = gtk::FileDialog::builder()
+            .title(gettext("Export To"))
+            .accept_label(gettext("_Export"))
+            .modal(true)
+            .build();
+        let Ok(folder) = dialog.select_folder_future(Some(self)).await else {
+            return;
+        };
+        let Some(destination) = folder.path() else {
+            return;
+        };
+        let progress = adw::Toast::new(&gettext("Exporting “{name}”…").replace("{name}", &name));
+        progress.set_timeout(0);
+        self.imp().toast_overlay.add_toast(progress.clone());
+        let outcome = gio::spawn_blocking(move || plan.run(&destination)).await;
+        progress.dismiss();
+        match outcome {
+            Ok(Ok(report)) => self.finish_library_export(&report),
+            Ok(Err(error)) => self.show_export_error(&error),
+            Err(_) => {}
+        }
+    }
+
+    fn finish_library_export(&self, report: &LibraryExportReport) {
+        if report.exported > 0 {
+            self.show_export_toast(report.exported, &gio::File::for_path(&report.folder));
+        }
+        if !report.failures.is_empty() {
+            let failures: Vec<conversion_report::Failure> = report
+                .failures
+                .iter()
+                .map(|failure| conversion_report::Failure {
+                    name: failure.name.clone(),
+                    reason: error_messages::describe(&failure.error),
+                })
+                .collect();
+            self.show_export_failures(&failures);
         }
     }
 
@@ -2564,12 +2647,7 @@ impl PigouneWindow {
             );
         }
         if !failures.is_empty() {
-            let alert = adw::AlertDialog::new(
-                Some(&conversion_report::failures_heading(failures.len())),
-                Some(&conversion_report::failures_body(&failures)),
-            );
-            alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
-            alert.present(Some(self));
+            self.show_export_failures(&failures);
         }
     }
 

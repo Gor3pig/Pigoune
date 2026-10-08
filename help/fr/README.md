@@ -270,6 +270,10 @@ ses critères.
 - **Copiez-les** avec <kbd>Ctrl</kbd>+<kbd>C</kbd> pour les coller ailleurs.
 - **Exportez-les** dans un dossier avec **Exporter vers…** dans le menu du clic droit. Les
   fichiers existants ne sont jamais écrasés.
+- **Exportez toute la bibliothèque** en dossiers ordinaires depuis l'onglet **Export** de
+  **Gérer la bibliothèque** (voir plus bas) : **Exporter…** crée un dossier au nom de
+  la bibliothèque, avec un sous-dossier par collection et sous-collection, exactement comme
+  dans la barre latérale, et y place les fichiers d'origine.
 - **Convertissez-les** avec **Exporter au format…** dans le menu du clic droit : choisissez PNG,
   JPEG, WebP, AVIF ou ICO, puis un dossier. JPEG et AVIF proposent un réglage de qualité ; le
   JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes ; les
@@ -369,8 +373,8 @@ Une bibliothèque ne peut être ouverte que dans une seule fenêtre de Pigoune �
 la gardez dans un dossier synchronisé (Nextcloud, Syncthing…), fermez Pigoune sur un
 ordinateur avant de l'ouvrir sur un autre.
 
-Choisissez **Informations sur la bibliothèque** dans le menu principal pour voir ce que contient
-la bibliothèque ouverte, en quatre onglets :
+Choisissez **Gérer la bibliothèque** dans le menu principal pour voir ce que contient la
+bibliothèque ouverte et vous en occuper, en cinq onglets :
 
 - **Aperçu** montre le nom et l'emplacement de la bibliothèque, le nombre de ressources, de
   collections, de tags et de favoris, et les **Records** : la ressource la plus lourde, la plus
@@ -403,6 +407,15 @@ la bibliothèque ouverte, en quatre onglets :
   apparaît. Les ressources qui sont dans la corbeille ne sont pas signalées : leurs fichiers
   partent avec la corbeille, et si vous en restaurez une, la vérification suivante la regarde
   de nouveau.
+- **Export** copie toutes les ressources dans un dossier de votre choix. Pigoune crée un dossier
+  au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place
+  les fichiers d'origine ; la page montre un exemple tiré de votre propre bibliothèque. Les
+  ressources qui n'appartiennent à aucune collection vont dans un dossier **Non classés**, et
+  une ressource qui appartient à plusieurs collections est copiée dans chacune. Les ressources à
+  la corbeille sont laissées de côté. Les tags, notes et favoris restent dans Pigoune : ce n'est
+  donc pas une sauvegarde complète, pour cela copiez le dossier de la bibliothèque. Rien n'est
+  jamais écrasé : si un dossier du même nom existe déjà, l'export est créé sous le nom
+  `Nom (2)`. Le bouton est grisé quand la bibliothèque est vide.
 
 ## Préférences
 

@@ -2,15 +2,14 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneLibraryInfoDialog: Adw.Dialog {
-  title: _("Library Information");
-  content-width: 520;
+  title: _("Manage Library");
 
-  child: Adw.ToolbarView {
+  child: Adw.ToolbarView toolbar {
     width-request: 360;
 
     [top]
     Adw.HeaderBar {
-      title-widget: Adw.ViewSwitcher {
+      title-widget: Adw.ViewSwitcher switcher {
         stack: pages;
         policy: wide;
       };
@@ -44,6 +43,7 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
 
                 Label name_label {
                   wrap: true;
+                  max-width-chars: 40;
                   justify: center;
 
                   styles [
@@ -53,6 +53,7 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
 
                 Label place_label {
                   ellipsize: middle;
+                  max-width-chars: 40;
                   justify: center;
 
                   styles [
@@ -322,6 +323,75 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
           icon-name: "security-high-symbolic";
 
           child: $PigouneHealthPage health_page {};
+        }
+
+        Adw.ViewStackPage {
+          name: "export";
+          title: _("Export");
+          icon-name: "document-send-symbolic";
+
+          child: ScrolledWindow {
+            hscrollbar-policy: never;
+            propagate-natural-height: true;
+
+            child: Adw.StatusPage {
+              icon-name: "folder-symbolic";
+              title: _("Export the Library");
+              description: _("Pigoune copies your files into an ordinary folder, arranged like your collections. Nothing in the library is modified.");
+
+              child: Box {
+                orientation: vertical;
+                spacing: 18;
+                halign: center;
+                width-request: 340;
+
+                ListBox {
+                  selection-mode: none;
+
+                  styles [
+                    "boxed-list",
+                  ]
+
+                  ListBoxRow {
+                    activatable: false;
+                    selectable: false;
+
+                    child: Box export_tree {
+                      orientation: vertical;
+                      spacing: 4;
+                      margin-top: 12;
+                      margin-bottom: 12;
+                      margin-start: 14;
+                      margin-end: 14;
+                    };
+                  }
+                }
+
+                Button export_button {
+                  label: _("_Export…");
+                  use-underline: true;
+                  halign: center;
+                  clicked => $on_export_clicked() swapped;
+
+                  styles [
+                    "pill",
+                    "suggested-action",
+                  ]
+                }
+
+                Label {
+                  label: _("Tags, notes and favorites stay in Pigoune. This is not a full backup: for that, copy the library folder.");
+                  wrap: true;
+                  max-width-chars: 50;
+                  justify: center;
+
+                  styles [
+                    "dim-label",
+                  ]
+                }
+              };
+            };
+          };
         }
       };
     };

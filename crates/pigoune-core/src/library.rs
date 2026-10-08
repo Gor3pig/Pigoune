@@ -17,6 +17,7 @@ mod import;
 mod import_batch;
 mod import_plan;
 mod layout;
+mod library_export;
 mod overview;
 mod records;
 mod remove_record;
@@ -59,6 +60,9 @@ pub use id::{AssetId, CollectionId, SmartCollectionId, TagId};
 pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,
+};
+pub use library_export::{
+    ExportFailure, ExportOutline, LibraryExportPlan, LibraryExportReport, OutlineFolder,
 };
 pub use overview::LibraryOverview;
 pub use records::LibraryRecords;

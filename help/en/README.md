@@ -236,6 +236,10 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - **Copy** them with <kbd>Ctrl</kbd>+<kbd>C</kbd> and paste them elsewhere.
 - **Export** them to a folder with **Export To…** in the right-click menu. Existing files are
   never overwritten.
+- **Export the whole library** as ordinary folders from the **Export** tab of **Manage
+  Library** (see below): **Export…** creates a folder named after the library, with one
+  sub-folder for each collection and sub-collection, exactly as in the sidebar, and puts the
+  original files inside.
 - **Convert** them with **Export As…** in the right-click menu: choose PNG, JPEG, WebP, AVIF or
   ICO, then a folder. JPEG and AVIF offer a quality setting. JPEG has no transparency, so a
   background color fills the transparent areas; the other formats keep transparency unless you
@@ -324,8 +328,8 @@ folder while Pigoune is closed.
 A library can only be open in one Pigoune window at a time. If you keep a library in a synced
 folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening it on another.
 
-Choose **Library Information** in the main menu to see what the open library holds, in four
-tabs:
+Choose **Manage Library** in the main menu to see what the open library holds and to look
+after it, in five tabs:
 
 - **Overview** shows the name and location of the library, the number of assets, collections,
   tags and favorites, and the **Records**: the heaviest, the largest, the newest and the oldest
@@ -354,6 +358,14 @@ tabs:
   which can be undone from the message that appears. Assets that are in the trash are not
   reported: their files leave with the trash, and if you restore one, the next check looks at
   it again.
+- **Export** copies every asset into a folder you choose. Pigoune creates a folder named after
+  the library, with one sub-folder for each collection and sub-collection, and puts the
+  original files inside; the page shows an example made from your own library. Assets that
+  belong to no collection go into an **Unclassified** folder, and an asset that belongs to
+  several collections is copied into each of them. Assets in the trash are left out. Tags,
+  notes and favorites stay in Pigoune, so this is not a full backup: for that, copy the
+  library folder. Nothing is ever overwritten: if a folder with that name already exists, the
+  export is created as `Name (2)`. The button is disabled when the library is empty.
 
 ## Preferences
 

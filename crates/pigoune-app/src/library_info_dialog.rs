@@ -6,8 +6,8 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{
-    Asset, AssetId, ColorShare, FormatShare, LibraryOverview, LibraryRecords, StorageUse,
-    oldest_compatible_version,
+    Asset, AssetId, ColorShare, ExportOutline, FormatShare, LibraryOverview, LibraryRecords,
+    StorageUse, oldest_compatible_version,
 };
 
 use crate::asset_colors;
@@ -33,6 +33,7 @@ const RECORD_THUMBNAIL_SIDE: i32 = 40;
 
 type ShowCallback = Box<dyn Fn(AssetId)>;
 type ClearCallback = Box<dyn Fn() -> Result<(), String>>;
+type ExportCallback = Box<dyn Fn()>;
 
 pub struct LibraryReport {
     pub name: String,
@@ -42,6 +43,7 @@ pub struct LibraryReport {
     pub storage: StorageUse,
     pub records: LibraryRecords,
     pub colors: Vec<ColorShare>,
+    pub export_outline: ExportOutline,
 }
 
 mod imp {
@@ -107,6 +109,16 @@ mod imp {
         #[template_child]
         pub thumbnails_button: TemplateChild<gtk::Button>,
         #[template_child]
+        pub toolbar: TemplateChild<adw::ToolbarView>,
+        #[template_child]
+        pub switcher: TemplateChild<adw::ViewSwitcher>,
+        #[template_child]
+        pub pages: TemplateChild<adw::ViewStack>,
+        #[template_child]
+        pub export_tree: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub export_button: TemplateChild<gtk::Button>,
+        #[template_child]
         pub created_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
@@ -118,6 +130,7 @@ mod imp {
         pub record_ids: RefCell<Vec<AssetId>>,
         pub on_show: RefCell<Option<super::ShowCallback>>,
         pub clear_thumbnails: RefCell<Option<super::ClearCallback>>,
+        pub export_library: RefCell<Option<super::ExportCallback>>,
     }
 
     #[glib::object_subclass]
@@ -156,6 +169,7 @@ impl PigouneLibraryInfoDialog {
         report: LibraryReport,
         on_show: impl Fn(AssetId) + 'static,
         clear_thumbnails: impl Fn() -> Result<(), String> + 'static,
+        export_library: impl Fn() + 'static,
         health: HealthActions,
     ) -> Self {
         let LibraryReport {
@@ -166,6 +180,7 @@ impl PigouneLibraryInfoDialog {
             storage,
             records,
             colors,
+            export_outline,
         } = report;
         let (name, root, overview) = (name.as_str(), root.as_path(), &overview);
         let dialog: Self = glib::Object::new();
@@ -173,6 +188,9 @@ impl PigouneLibraryInfoDialog {
         imp.on_show.replace(Some(Box::new(on_show)));
         imp.clear_thumbnails
             .replace(Some(Box::new(clear_thumbnails)));
+        imp.export_library.replace(Some(Box::new(export_library)));
+        imp.export_button.set_sensitive(overview.resources > 0);
+        dialog.show_export_outline(&export_outline);
         imp.health_page.connect_actions(health);
         dialog.connect_closed(|dialog| dialog.imp().health_page.cancel());
         imp.root.replace(root.to_path_buf());
@@ -198,7 +216,32 @@ impl PigouneLibraryInfoDialog {
         }
         imp.format_row
             .set_subtitle(&compatibility_text(overview.format_version));
+        dialog.set_content_width(dialog.fitting_width());
         dialog
+    }
+
+    pub fn present_fitting(&self, parent: &impl IsA<gtk::Widget>) {
+        let (_, natural, _, _) = self
+            .imp()
+            .toolbar
+            .measure(gtk::Orientation::Vertical, self.content_width());
+        let available = parent.height() - PARENT_MARGIN;
+        let height = if available > 0 {
+            natural.min(available)
+        } else {
+            natural
+        };
+        self.set_content_height(height.max(SHORTEST_HEIGHT));
+        self.present(Some(parent));
+    }
+
+    fn fitting_width(&self) -> i32 {
+        let imp = self.imp();
+        let (_, tabs, _, _) = imp.switcher.measure(gtk::Orientation::Horizontal, -1);
+        let (_, pages, _, _) = imp.pages.measure(gtk::Orientation::Horizontal, -1);
+        (tabs + HEADER_ALLOWANCE)
+            .max(pages)
+            .clamp(NARROWEST_WIDTH, WIDEST_WIDTH)
     }
 
     fn show_records(&self, records: &LibraryRecords) {
@@ -509,6 +552,26 @@ impl PigouneLibraryInfoDialog {
         toasts::announce(&imp.toast_overlay, &adw::Toast::new(&message));
     }
 
+    fn show_export_outline(&self, outline: &ExportOutline) {
+        let tree = &self.imp().export_tree;
+        tree.append(&tree_line(0, &outline.root, None));
+        for folder in &outline.folders {
+            tree.append(&tree_line(folder.depth, &folder.name, Some(folder.files)));
+        }
+        if outline.more > 0 {
+            tree.append(&more_folders_line(outline.more));
+        }
+    }
+
+    #[template_callback]
+    fn on_export_clicked(&self) {
+        let export = self.imp().export_library.take();
+        self.close();
+        if let Some(export) = export {
+            export();
+        }
+    }
+
     #[template_callback]
     fn on_copy_location_clicked(&self) {
         self.clipboard()
@@ -529,6 +592,58 @@ impl PigouneLibraryInfoDialog {
             |_| {},
         );
     }
+}
+
+const TREE_INDENT: i32 = 22;
+const NARROWEST_WIDTH: i32 = 560;
+const WIDEST_WIDTH: i32 = 760;
+const HEADER_ALLOWANCE: i32 = 140;
+const SHORTEST_HEIGHT: i32 = 400;
+const PARENT_MARGIN: i32 = 48;
+
+fn tree_line(depth: usize, name: &str, files: Option<usize>) -> gtk::Widget {
+    let line = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    line.set_margin_start(TREE_INDENT * i32::try_from(depth).unwrap_or(0));
+    line.append(&gtk::Image::from_icon_name("folder-symbolic"));
+    let label = gtk::Label::new(Some(name));
+    label.set_xalign(0.0);
+    label.set_ellipsize(gtk::pango::EllipsizeMode::End);
+    if files.is_none() {
+        label.add_css_class("heading");
+    }
+    line.append(&label);
+    if let Some(files) = files {
+        let count = gtk::Label::new(Some(&files_text(files)));
+        count.add_css_class("caption");
+        count.add_css_class("dim-label");
+        line.append(&count);
+    }
+    line.upcast()
+}
+
+fn more_folders_line(count: usize) -> gtk::Widget {
+    let label = gtk::Label::new(Some(
+        &ngettext(
+            "… and {count} more folder",
+            "… and {count} more folders",
+            u32::try_from(count).unwrap_or(u32::MAX),
+        )
+        .replace("{count}", &count.to_string()),
+    ));
+    label.set_xalign(0.0);
+    label.set_margin_start(TREE_INDENT);
+    label.add_css_class("caption");
+    label.add_css_class("dim-label");
+    label.upcast()
+}
+
+fn files_text(count: usize) -> String {
+    ngettext(
+        "{count} file",
+        "{count} files",
+        u32::try_from(count).unwrap_or(u32::MAX),
+    )
+    .replace("{count}", &count.to_string())
 }
 
 fn freed_text(bytes: u64) -> String {

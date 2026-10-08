@@ -104,18 +104,18 @@ impl Library {
     }
 }
 
-fn original_extension(asset: &Asset) -> Option<String> {
+pub(super) fn original_extension(asset: &Asset) -> Option<String> {
     Path::new(&asset.original_file_name)
         .extension()
         .map(|extension| extension.to_string_lossy().into_owned())
 }
 
-fn base_name_of(asset: &Asset) -> String {
+pub(super) fn base_name_of(asset: &Asset) -> String {
     export_base_name(&asset.display_name, original_extension(asset).as_deref())
         .unwrap_or_else(|| asset.id.to_string())
 }
 
-fn create_free_file(
+pub(super) fn create_free_file(
     folder: &Path,
     base: &str,
     extension: Option<&str>,
@@ -156,7 +156,7 @@ fn safe_extension(extension: &str) -> String {
     }
 }
 
-fn export_base_name(display_name: &str, extension: Option<&str>) -> Option<String> {
+pub(super) fn export_base_name(display_name: &str, extension: Option<&str>) -> Option<String> {
     let cleaned: String = display_name
         .trim()
         .chars()
@@ -196,7 +196,11 @@ fn truncated(name: &str) -> &str {
     &name[..end]
 }
 
-fn free_name(base: &str, extension: Option<&str>, taken: &mut HashSet<String>) -> String {
+pub(super) fn free_name(
+    base: &str,
+    extension: Option<&str>,
+    taken: &mut HashSet<String>,
+) -> String {
     let with_extension = |stem: &str| match extension {
         Some(extension) => format!("{stem}.{extension}"),
         None => stem.to_owned(),
