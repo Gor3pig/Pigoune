@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use super::{AssetId, LibraryError};
 
@@ -89,6 +89,18 @@ pub fn thumbnail_in_size_dir(id: AssetId) -> PathBuf {
 
 fn thumbnail_file_name(id: AssetId) -> String {
     format!("{id}.png")
+}
+
+pub fn is_stored_path_of(id: AssetId, path: &Path) -> bool {
+    let Some(Component::Normal(name)) = path.components().next_back() else {
+        return false;
+    };
+    let Some(name) = name.to_str() else {
+        return false;
+    };
+    path.components()
+        .all(|component| matches!(component, Component::Normal(_)))
+        && Path::new(&stored_path(id, name)) == path
 }
 
 pub fn stored_path(id: AssetId, original_file_name: &str) -> String {

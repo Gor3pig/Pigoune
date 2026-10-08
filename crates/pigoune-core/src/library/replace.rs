@@ -15,6 +15,9 @@ impl Library {
         if content::digest(source)? != wanted {
             return Err(ReplaceError::DifferentContent(source.to_path_buf()));
         }
+        if !layout::is_stored_path_of(id, &asset.stored_path) {
+            return Err(ReplaceError::OutsideLibrary(id));
+        }
         let destination = self.root.join(&asset.stored_path);
         let folder = destination.parent().ok_or_else(|| {
             LibraryError::Io(std::io::Error::other("a stored file always has a folder"))

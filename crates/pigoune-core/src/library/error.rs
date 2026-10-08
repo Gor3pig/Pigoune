@@ -86,6 +86,8 @@ pub enum ReplaceError {
     DifferentContent(PathBuf),
     #[error("{0} could not be read")]
     Unreadable(PathBuf),
+    #[error("the record of the resource {0} points outside the library")]
+    OutsideLibrary(AssetId),
     #[error(transparent)]
     Library(#[from] LibraryError),
 }

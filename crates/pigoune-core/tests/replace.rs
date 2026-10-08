@@ -3,9 +3,10 @@ use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetId, AssetView, CACHE_DIR_NAME, CollectionCommand, ImportOutcome, Library,
-    ReplaceError,
+    AssetCommand, AssetId, AssetView, CACHE_DIR_NAME, CollectionCommand, DATABASE_FILE_NAME,
+    ImportOutcome, Library, ReplaceError,
 };
+use rusqlite::{Connection, params};
 
 fn sample(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -219,4 +220,41 @@ fn the_thumbnails_of_the_resource_are_made_again() {
         .expect("file is replaced");
 
     assert!(!thumbnail.exists());
+}
+
+fn point_record_to(root: &Path, id: AssetId, stored_path: &str) {
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute(
+            "UPDATE assets SET stored_path = ?1 WHERE id = ?2",
+            params![stored_path, id.to_string()],
+        )
+        .expect("record is changed");
+}
+
+#[test]
+fn a_record_pointing_outside_the_library_is_never_written() {
+    let (workspace, library, id) = setup("red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let outside = workspace.path().join("outside");
+    let absolute = outside.join("victim.png").to_string_lossy().into_owned();
+    for stored_path in [
+        "../outside/victim.png",
+        absolute.as_str(),
+        "files/../../outside/victim.png",
+    ] {
+        point_record_to(&root, id, stored_path);
+        let library = Library::open(&root).expect("library opens");
+
+        let refused = library
+            .replace_stored_file(id, &sample("red-dot.png"))
+            .expect_err("replacement is refused");
+
+        assert!(
+            matches!(refused, ReplaceError::OutsideLibrary(_)),
+            "{stored_path}"
+        );
+        assert!(!outside.exists(), "{stored_path}");
+    }
 }

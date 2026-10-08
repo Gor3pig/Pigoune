@@ -45,6 +45,14 @@ pub fn describe_replacement(error: &ReplaceError, file_name: &str, asset_name: &
             gettext("This file could not be read. Nothing was changed."),
             true,
         ),
+        ReplaceError::OutsideLibrary(_) => (
+            gettext("Unable to Replace the File"),
+            gettext(
+                "The library records a place for “{name}” outside its own folder, so Pigoune will not write there. Nothing was changed.",
+            )
+            .replace("{name}", asset_name),
+            false,
+        ),
         ReplaceError::AssetNotFound(_) => (
             gettext("This Asset No Longer Exists"),
             gettext("Check the library again to see its current state."),

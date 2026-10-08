@@ -2,9 +2,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
-    AssetCommand, AssetId, AssetView, CollectionCommand, ImportOutcome, Library, RemoveRecordError,
-    TagCommand,
+    AssetCommand, AssetId, AssetView, CollectionCommand, DATABASE_FILE_NAME, ImportOutcome,
+    Library, RemoveRecordError, TagCommand,
 };
+use rusqlite::{Connection, params};
 
 fn sample(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -189,4 +190,29 @@ fn the_same_image_can_be_imported_again_afterwards() {
 
     assert_ne!(again, id);
     assert!(stored_file(&library, again).is_file());
+}
+
+#[test]
+fn a_record_pointing_outside_the_library_is_removed_without_touching_the_disk() {
+    let (workspace, library, id) = setup("red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let folder = workspace.path().join("outside").join("empty");
+    fs::create_dir_all(&folder).expect("folder created");
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute(
+            "UPDATE assets SET stored_path = ?1 WHERE id = ?2",
+            params!["../outside/empty/victim.png", id.to_string()],
+        )
+        .expect("record is changed");
+    drop(connection);
+    let mut library = Library::open(&root).expect("library opens");
+
+    library
+        .remove_record_of_missing_file(id)
+        .expect("record is removed");
+
+    assert!(library.asset(id).expect("query").is_none());
+    assert!(folder.is_dir());
 }

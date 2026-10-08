@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 23:18+0200\n"
+"POT-Creation-Date: 2026-10-08 23:20+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1097,27 +1097,35 @@ msgstr "Diese Datei konnte nicht gelesen werden. Es wurde nichts geändert."
 
 #
 #: crates/pigoune-app/src/error_messages.rs:49
-#: crates/pigoune-app/src/error_messages.rs:75
-msgid "This Asset No Longer Exists"
-msgstr "Dieses Element existiert nicht mehr"
-
-#: crates/pigoune-app/src/error_messages.rs:50
-#: crates/pigoune-app/src/error_messages.rs:76
-msgid "Check the library again to see its current state."
-msgstr "Prüfen Sie die Bibliothek erneut, um ihren aktuellen Zustand zu sehen."
-
-#
-#: crates/pigoune-app/src/error_messages.rs:54
+#: crates/pigoune-app/src/error_messages.rs:62
 msgid "Unable to Replace the File"
 msgstr "Die Datei kann nicht ersetzt werden"
 
-#: crates/pigoune-app/src/error_messages.rs:69
+#: crates/pigoune-app/src/error_messages.rs:51
+#, rust-format
+msgid ""
+"The library records a place for “{name}” outside its own folder, so Pigoune "
+"will not write there. Nothing was changed."
+msgstr "Die Bibliothek verzeichnet für „{name}“ einen Ort außerhalb ihres eigenen Ordners, daher schreibt Pigoune dort nicht. Es wurde nichts geändert."
+
+#
+#: crates/pigoune-app/src/error_messages.rs:57
+#: crates/pigoune-app/src/error_messages.rs:83
+msgid "This Asset No Longer Exists"
+msgstr "Dieses Element existiert nicht mehr"
+
+#: crates/pigoune-app/src/error_messages.rs:58
+#: crates/pigoune-app/src/error_messages.rs:84
+msgid "Check the library again to see its current state."
+msgstr "Prüfen Sie die Bibliothek erneut, um ihren aktuellen Zustand zu sehen."
+
+#: crates/pigoune-app/src/error_messages.rs:77
 #, rust-format
 msgid "“{name}” Was Not Removed"
 msgstr "„{name}“ wurde nicht entfernt"
 
 #
-#: crates/pigoune-app/src/error_messages.rs:71
+#: crates/pigoune-app/src/error_messages.rs:79
 msgid ""
 "Its file exists again, so nothing was removed. Check the library again to "
 "see its current state."
@@ -1126,21 +1134,21 @@ msgstr ""
 "Bibliothek erneut, um ihren aktuellen Zustand zu sehen."
 
 #
-#: crates/pigoune-app/src/error_messages.rs:79
+#: crates/pigoune-app/src/error_messages.rs:87
 msgid "Unable to Remove the Asset from the Library"
 msgstr "Das Element kann nicht aus der Bibliothek entfernt werden"
 
-#: crates/pigoune-app/src/error_messages.rs:93
+#: crates/pigoune-app/src/error_messages.rs:101
 msgid "This name cannot be used. Avoid “/” and names starting with a dot."
 msgstr ""
 "Dieser Name kann nicht verwendet werden. Vermeiden Sie „/“ und Namen, die "
 "mit einem Punkt beginnen."
 
-#: crates/pigoune-app/src/error_messages.rs:96
+#: crates/pigoune-app/src/error_messages.rs:104
 msgid "A file or folder with this name already exists here."
 msgstr "Hier gibt es bereits eine Datei oder einen Ordner mit diesem Namen."
 
-#: crates/pigoune-app/src/error_messages.rs:99
+#: crates/pigoune-app/src/error_messages.rs:107
 msgid ""
 "The library folder could not be found. It may have been moved, renamed or "
 "deleted, or it may be on a disk that is no longer connected."
@@ -1149,11 +1157,11 @@ msgstr ""
 "verschoben, umbenannt oder gelöscht, oder er liegt auf einem nicht mehr "
 "verbundenen Datenträger."
 
-#: crates/pigoune-app/src/error_messages.rs:101
+#: crates/pigoune-app/src/error_messages.rs:109
 msgid "This folder is not a Pigoune library."
 msgstr "Dieser Ordner ist keine Pigoune-Bibliothek."
 
-#: crates/pigoune-app/src/error_messages.rs:103
+#: crates/pigoune-app/src/error_messages.rs:111
 msgid ""
 "This library was created by a newer version of Pigoune. Update Pigoune to "
 "open it."
@@ -1161,69 +1169,69 @@ msgstr ""
 "Diese Bibliothek wurde mit einer neueren Version von Pigoune erstellt. "
 "Aktualisieren Sie Pigoune, um sie zu öffnen."
 
-#: crates/pigoune-app/src/error_messages.rs:105
+#: crates/pigoune-app/src/error_messages.rs:113
 msgid "This library is already open in another Pigoune window."
 msgstr ""
 "Diese Bibliothek ist bereits in einem anderen Pigoune-Fenster geöffnet."
 
-#: crates/pigoune-app/src/error_messages.rs:107
+#: crates/pigoune-app/src/error_messages.rs:115
 msgid ""
 "There is not enough free space on the disk. Free up some space and try again."
 msgstr ""
 "Auf dem Datenträger ist nicht genug Speicherplatz frei. Geben Sie "
 "Speicherplatz frei und versuchen Sie es erneut."
 
-#: crates/pigoune-app/src/error_messages.rs:110
+#: crates/pigoune-app/src/error_messages.rs:118
 msgid ""
 "Pigoune is not allowed to write to this location. Choose another folder."
 msgstr ""
 "Pigoune darf an diesem Ort nicht schreiben. Wählen Sie einen anderen Ordner."
 
-#: crates/pigoune-app/src/error_messages.rs:113
+#: crates/pigoune-app/src/error_messages.rs:121
 msgid ""
 "This library seems to be damaged. Your files are still in its “files” folder."
 msgstr ""
 "Diese Bibliothek scheint beschädigt zu sein. Ihre Dateien befinden sich "
 "weiterhin in ihrem Ordner „files“."
 
-#: crates/pigoune-app/src/error_messages.rs:116
+#: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:177
 #, rust-format
 msgid "An unexpected error occurred: {error}"
 msgstr "Ein unerwarteter Fehler ist aufgetreten: {error}"
 
-#: crates/pigoune-app/src/error_messages.rs:123
+#: crates/pigoune-app/src/error_messages.rs:131
 msgid "Enter a name for the collection."
 msgstr "Geben Sie einen Namen für die Sammlung ein."
 
-#: crates/pigoune-app/src/error_messages.rs:125
+#: crates/pigoune-app/src/error_messages.rs:133
 #, rust-format
 msgid "A collection named “{name}” already exists here."
 msgstr "Hier gibt es bereits eine Sammlung namens „{name}“."
 
-#: crates/pigoune-app/src/error_messages.rs:127
+#: crates/pigoune-app/src/error_messages.rs:135
 msgid "This collection no longer exists."
 msgstr "Diese Sammlung existiert nicht mehr."
 
-#: crates/pigoune-app/src/error_messages.rs:129
+#: crates/pigoune-app/src/error_messages.rs:137
 msgid ""
 "A collection cannot be placed inside itself or one of its sub-collections."
 msgstr ""
 "Eine Sammlung kann nicht in sich selbst oder in eine ihrer Untersammlungen "
 "verschoben werden."
 
-#: crates/pigoune-app/src/error_messages.rs:132
+#: crates/pigoune-app/src/error_messages.rs:140
 msgid "The collections changed in the meantime. Try again."
 msgstr ""
 "Die Sammlungen haben sich inzwischen geändert. Versuchen Sie es erneut."
 
-#: crates/pigoune-app/src/error_messages.rs:134
-#: crates/pigoune-app/src/error_messages.rs:148
-#: crates/pigoune-app/src/error_messages.rs:186
+#: crates/pigoune-app/src/error_messages.rs:142
+#: crates/pigoune-app/src/error_messages.rs:156
+#: crates/pigoune-app/src/error_messages.rs:194
 msgid "This asset no longer exists."
 msgstr "Dieses Element existiert nicht mehr."
 
-#: crates/pigoune-app/src/error_messages.rs:136
+#: crates/pigoune-app/src/error_messages.rs:144
 #, rust-format
 msgid ""
 "The collection “{name}” is no longer empty, so creating it is not undone. "
@@ -1232,63 +1240,63 @@ msgstr ""
 "Die Sammlung „{name}“ ist nicht mehr leer, daher wird ihre Erstellung nicht "
 "rückgängig gemacht. Verwenden Sie „Löschen …“, um sie zu entfernen."
 
-#: crates/pigoune-app/src/error_messages.rs:140
+#: crates/pigoune-app/src/error_messages.rs:148
 msgid "This icon or color cannot be used for a collection."
 msgstr ""
 "Dieses Symbol oder diese Farbe kann nicht für eine Sammlung verwendet werden."
 
-#: crates/pigoune-app/src/error_messages.rs:149
+#: crates/pigoune-app/src/error_messages.rs:157
 msgid "Enter a name for the asset."
 msgstr "Geben Sie einen Namen für das Element ein."
 
-#: crates/pigoune-app/src/error_messages.rs:165
+#: crates/pigoune-app/src/error_messages.rs:173
 msgid "Enter a name for the smart collection."
 msgstr "Geben Sie einen Namen für die intelligente Sammlung ein."
 
-#: crates/pigoune-app/src/error_messages.rs:167
+#: crates/pigoune-app/src/error_messages.rs:175
 msgid "Another smart collection already has this name."
 msgstr "Eine andere intelligente Sammlung hat bereits diesen Namen."
 
-#: crates/pigoune-app/src/error_messages.rs:169
+#: crates/pigoune-app/src/error_messages.rs:177
 msgid "This smart collection no longer exists."
 msgstr "Diese intelligente Sammlung existiert nicht mehr."
 
-#: crates/pigoune-app/src/error_messages.rs:171
+#: crates/pigoune-app/src/error_messages.rs:179
 msgid "The smart collections changed in the meantime. Try again."
 msgstr ""
 "Die intelligenten Sammlungen haben sich inzwischen geändert. Versuchen Sie "
 "es erneut."
 
-#: crates/pigoune-app/src/error_messages.rs:179
+#: crates/pigoune-app/src/error_messages.rs:187
 msgid "Enter a name for the tag."
 msgstr "Geben Sie einen Namen für das Schlagwort ein."
 
-#: crates/pigoune-app/src/error_messages.rs:181
+#: crates/pigoune-app/src/error_messages.rs:189
 msgid "A tag is a single word: join several words with a hyphen."
 msgstr ""
 "Ein Schlagwort besteht aus einem einzigen Wort: Verbinden Sie mehrere Wörter "
 "mit einem Bindestrich."
 
-#: crates/pigoune-app/src/error_messages.rs:183
+#: crates/pigoune-app/src/error_messages.rs:191
 #, rust-format
 msgid "A tag has at most {count} characters."
 msgstr "Ein Schlagwort hat höchstens {count} Zeichen."
 
-#: crates/pigoune-app/src/error_messages.rs:185
+#: crates/pigoune-app/src/error_messages.rs:193
 msgid "This tag no longer exists."
 msgstr "Dieses Schlagwort existiert nicht mehr."
 
-#: crates/pigoune-app/src/error_messages.rs:187
+#: crates/pigoune-app/src/error_messages.rs:195
 msgid "Another tag already has this name."
 msgstr "Ein anderes Schlagwort hat bereits diesen Namen."
 
-#: crates/pigoune-app/src/error_messages.rs:188
+#: crates/pigoune-app/src/error_messages.rs:196
 msgid "A tag cannot be moved into itself or one of its sub-tags."
 msgstr ""
 "Ein Schlagwort kann nicht in sich selbst oder in eines seiner "
 "Unterschlagwörter verschoben werden."
 
-#: crates/pigoune-app/src/error_messages.rs:189
+#: crates/pigoune-app/src/error_messages.rs:197
 #: crates/pigoune-app/src/window.rs:4089
 msgid "A tag name cannot contain a slash."
 msgstr "Ein Schlagwortname darf keinen Schrägstrich enthalten."
