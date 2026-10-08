@@ -3,16 +3,31 @@ using Adw 1;
 
 template $PigouneLibraryInfoDialog: Adw.Dialog {
   title: _("Manage Library");
+  content-width: 900;
+
+  Adw.Breakpoint {
+    condition ("max-width: 860sp")
+
+    setters {
+      switcher_bar.reveal: true;
+      header_bar.title-widget: window_title;
+    }
+  }
 
   child: Adw.ToolbarView toolbar {
     width-request: 360;
 
     [top]
-    Adw.HeaderBar {
-      title-widget: Adw.ViewSwitcher switcher {
+    Adw.HeaderBar header_bar {
+      title-widget: Adw.ViewSwitcher {
         stack: pages;
         policy: wide;
       };
+    }
+
+    [bottom]
+    Adw.ViewSwitcherBar switcher_bar {
+      stack: pages;
     }
 
     content: Adw.ToastOverlay toast_overlay {
@@ -396,4 +411,8 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
       };
     };
   };
+}
+
+Adw.WindowTitle window_title {
+  title: _("Manage Library");
 }

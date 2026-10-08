@@ -55,5 +55,7 @@ to `NATIVE_NAMES` in `crates/pigoune-app/src/languages.rs`.
 - Keep the mnemonic underscore (`_Open`) on a letter of the translated word.
 - Follow the typography of your language (quotes, spaces before punctuation, ...), but use
   plain hyphens `-` rather than long dashes.
+- Keep the five tab titles of **Manage Library** (Overview, Content, Storage, Health, Export)
+  short, 14 characters at most, so that they fit in the window.
 - To try your translation, choose your language in **Preferences › General › Interface
   Language** and restart Pigoune, or run it with `LANGUAGE=de cargo run -p pigoune-app`.

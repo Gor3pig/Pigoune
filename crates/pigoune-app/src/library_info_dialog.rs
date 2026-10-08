@@ -111,10 +111,6 @@ mod imp {
         #[template_child]
         pub toolbar: TemplateChild<adw::ToolbarView>,
         #[template_child]
-        pub switcher: TemplateChild<adw::ViewSwitcher>,
-        #[template_child]
-        pub pages: TemplateChild<adw::ViewStack>,
-        #[template_child]
         pub export_tree: TemplateChild<gtk::Box>,
         #[template_child]
         pub export_button: TemplateChild<gtk::Button>,
@@ -216,7 +212,6 @@ impl PigouneLibraryInfoDialog {
         }
         imp.format_row
             .set_subtitle(&compatibility_text(overview.format_version));
-        dialog.set_content_width(dialog.fitting_width());
         dialog
     }
 
@@ -225,10 +220,15 @@ impl PigouneLibraryInfoDialog {
         if room > 0 {
             self.set_content_width(self.content_width().min(room));
         }
-        let (_, natural, _, _) = self
+        let (_, measured, _, _) = self
             .imp()
             .toolbar
             .measure(gtk::Orientation::Vertical, self.content_width());
+        let natural = if self.content_width() < TABS_ON_TOP_FROM {
+            measured + BOTTOM_BAR_HEIGHT
+        } else {
+            measured
+        };
         let available = parent.height() - PARENT_MARGIN;
         let height = if available > 0 {
             natural.min(available)
@@ -237,15 +237,6 @@ impl PigouneLibraryInfoDialog {
         };
         self.set_content_height(height.max(SHORTEST_HEIGHT));
         self.present(Some(parent));
-    }
-
-    fn fitting_width(&self) -> i32 {
-        let imp = self.imp();
-        let (_, tabs, _, _) = imp.switcher.measure(gtk::Orientation::Horizontal, -1);
-        let (_, pages, _, _) = imp.pages.measure(gtk::Orientation::Horizontal, -1);
-        pages
-            .clamp(NARROWEST_WIDTH, WIDEST_PAGES_WIDTH)
-            .max(tabs + HEADER_ALLOWANCE)
     }
 
     fn show_records(&self, records: &LibraryRecords) {
@@ -595,9 +586,8 @@ impl PigouneLibraryInfoDialog {
 }
 
 const TREE_INDENT: i32 = 22;
-const NARROWEST_WIDTH: i32 = 560;
-const WIDEST_PAGES_WIDTH: i32 = 760;
-const HEADER_ALLOWANCE: i32 = 140;
+const TABS_ON_TOP_FROM: i32 = 860;
+const BOTTOM_BAR_HEIGHT: i32 = 58;
 const SHORTEST_HEIGHT: i32 = 400;
 const PARENT_MARGIN: i32 = 48;
 
