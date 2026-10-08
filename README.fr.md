@@ -6,7 +6,7 @@
 
 **P**lateforme d'**I**cônes et **G**raphismes **O**rganisée, **U**nifiée, **N**ative et **É**légante
 
-*Toutes vos ressources graphiques, rangées et à portée de main.*
+*Tous vos éléments graphiques, rangés et à portée de main.*
 
 [![Licence : GPL v3](https://img.shields.io/badge/licence-GPL--3.0-3584e4?style=for-the-badge)](COPYING)
 [![GNOME](https://img.shields.io/badge/GNOME-51-4a86cf?style=for-the-badge&logo=gnome&logoColor=white)](https://www.gnome.org)
@@ -33,7 +33,7 @@ Des icônes dans `Téléchargements`, des logos dans un vieux dossier de projet,
 quelque part sur le bureau… **Pigoune rassemble tout ça dans une seule bibliothèque**, bien
 rangée et agréable à parcourir.
 
-Déposez-y vos ressources graphiques : Pigoune en garde une copie en lieu sûr (vos fichiers
+Déposez-y vos éléments graphiques : Pigoune en garde une copie en lieu sûr (vos fichiers
 d'origine ne sont jamais touchés), vous aide à les organiser et vous les rend d'un simple
 glisser-déposer quand vous en avez besoin.
 
@@ -52,9 +52,9 @@ automatiquement.
 <td width="50%" valign="top">
 
 ### Organiser
-Collections imbriquées avec leur icône et leur couleur, collections intelligentes qui se
+Collections imbriquées avec leur icône et leur couleur, collections dynamiques qui se
 remplissent toutes seules, tags, favoris, ainsi qu'une note, une source, une licence et un auteur
-pour chaque ressource.
+pour chaque élément.
 
 </td>
 </tr>
@@ -62,22 +62,22 @@ pour chaque ressource.
 <td width="50%" valign="top">
 
 ### Retrouver
-Recherche instantanée et filtres par type, par forme, par couleur ou par favori, même parmi des milliers
-de ressources, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
-collection ou un tag vous montre où se trouve la ressource.
+Recherche instantanée et filtres par type, par orientation, par couleur ou par favori, même parmi des milliers
+d’éléments, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
+collection ou un tag vous montre où se trouve l’élément.
 
 </td>
 <td width="50%" valign="top">
 
 ### Réutiliser
-Glissez une ressource vers n'importe quelle application, ouvrez-la avec une autre, copiez-la
-dans le presse-papiers ou exportez-la dans un dossier, telle quelle ou convertie en PNG, JPEG,
+Glissez un élément vers n'importe quelle application, ouvrez-le avec une autre, copiez-le
+dans le presse-papiers ou exportez-le dans un dossier, tel quel ou converti en PNG, JPEG,
 WebP, AVIF ou ICO.
 
 ### Fonds d'écran
 Cadrez n'importe quelle image sur une copie virtuelle de votre écran, sous les barres de votre
 bureau, comblez le vide avec une couleur, un dégradé, un flou ou une mosaïque, puis appliquez-la :
-votre bureau montre exactement ce que vous avez cadré. Les filtres par forme et par taille
+votre bureau montre exactement ce que vous avez cadré. Les filtres par orientation et par taille
 d'écran trouvent les images adaptées.
 
 </td>

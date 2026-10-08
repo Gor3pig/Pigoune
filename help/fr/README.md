@@ -2,14 +2,14 @@
 
 *[English version](../en/README.md)*
 
-Pigoune range toutes vos ressources graphiques (icônes, logos, illustrations) dans une seule
+Pigoune range tous vos éléments graphiques (icônes, logos, illustrations) dans une seule
 bibliothèque bien organisée. Ce guide présente tout ce qu'il sait faire.
 
 - [Premiers pas](#premiers-pas)
 - [Organiser](#organiser)
-- [Retrouver une ressource](#retrouver-une-ressource)
-- [Regarder vos ressources](#regarder-vos-ressources)
-- [Réutiliser vos ressources](#réutiliser-vos-ressources)
+- [Retrouver un élément](#retrouver-un-élément)
+- [Regarder vos éléments](#regarder-vos-éléments)
+- [Réutiliser vos éléments](#réutiliser-vos-éléments)
 - [Corbeille et annulation](#corbeille-et-annulation)
 - [Votre bibliothèque](#votre-bibliothèque)
 - [Préférences](#préférences)
@@ -22,7 +22,7 @@ bibliothèque bien organisée. Ce guide présente tout ce qu'il sait faire.
 
 ### Créer une bibliothèque
 
-Une bibliothèque est un dossier dans lequel Pigoune garde une copie de vos ressources. Sur
+Une bibliothèque est un dossier dans lequel Pigoune garde une copie de vos éléments. Sur
 l'écran d'accueil, choisissez **Nouvelle bibliothèque…**, donnez-lui un nom et choisissez où
 l'enregistrer. Vous pouvez en créer autant que vous voulez, par exemple une par projet ou par
 client.
@@ -39,7 +39,7 @@ conservées.
 **Fermer la bibliothèque**, dans le menu principal, ramène à la page d'accueil. Au prochain
 lancement, Pigoune s'ouvre aussi sur la page d'accueil.
 
-### Importer des ressources
+### Importer des éléments
 
 Cliquez sur le bouton **+** en haut de la barre latérale, ou appuyez sur
 <kbd>Ctrl</kbd>+<kbd>I</kbd>, puis choisissez **Importer des fichiers…** ou **Importer un
@@ -56,7 +56,7 @@ contient aucune image, un message le dit.
 
 - Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF,
   BMP et ICO.
-- Pigoune vérifie chaque image avant de l'importer : un fichier abîmé est signalé au lieu
+- Pigoune vérifie chaque image avant de l'importer : un fichier endommagé est signalé au lieu
   d'être ajouté.
 - Les doublons sont reconnus : un fichier déjà présent n'est jamais copié deux fois. S'il est à la corbeille, l'importer le sort de la corbeille ;
   si vous importez dans une collection, il n'appartient alors qu'à cette collection.
@@ -66,7 +66,7 @@ contient aucune image, un message le dit.
 
 Les fichiers sont importés dans la vue que vous regardez : **Tout** et **Non classés** les
 gardent sans collection, et une collection sélectionnée les reçoit. Les favoris, les tags, les
-collections intelligentes et la corbeille ne font que montrer des ressources, l'import y est donc
+collections dynamiques et la corbeille ne font que montrer des éléments, l'import y est donc
 désactivé. Vous pouvez aussi déposer des fichiers directement sur **Tout**, **Non classés** ou
 une collection de la barre latérale.
 
@@ -82,65 +82,65 @@ droit sur une collection permet d'y créer une sous-collection, de la renommer
 - **Personnalisez** une collection pour lui donner sa propre icône et sa propre couleur dans la
   barre latérale : clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis
   **Enregistrer**. **Par défaut** remet le dossier gris.
-- **Déplacez** des ressources dans une collection en les glissant dessus depuis la grille, ou,
+- **Déplacez** des éléments dans une collection en les glissant dessus depuis la grille, ou,
   quand vous êtes dans une collection, avec **Déplacer vers une collection…** dans le menu du
   clic droit.
 - **Ajoutez-les** à une collection sans les retirer de leur place en maintenant
   <kbd>Ctrl</kbd> pendant le glisser, ou avec **Ajouter à une collection…** dans le menu du
-  clic droit. Une ressource peut appartenir à plusieurs collections. Le curseur indique ce que
+  clic droit. Un élément peut appartenir à plusieurs collections. Le curseur indique ce que
   vous faites : une flèche simple pour un déplacement, un **+** pour un ajout. Il change dès
   que vous appuyez sur <kbd>Ctrl</kbd> ou le relâchez, et une collection ne s'illumine pas
-  quand vous y glissez des ressources qui en viennent déjà.
+  quand vous y glissez des éléments qui en viennent déjà.
 - **Retirez-les** de la collection affichée avec **Retirer de la collection** dans le menu du
-  clic droit. Elles restent dans la bibliothèque et dans leurs autres collections.
+  clic droit. Ils restent dans la bibliothèque et dans leurs autres collections.
 - **Réorganisez** les collections en les glissant dans la barre latérale, ou triez-les par nom
   ou par date de création avec le bouton **⋯** à côté de **Collections**.
-- **Repliez** une section de la barre latérale (Collections, Collections intelligentes ou Tags)
+- **Repliez** une section de la barre latérale (Collections, Collections dynamiques ou Tags)
   d'un clic sur son titre, ou avec <kbd>Entrée</kbd> quand le titre a le focus du clavier.
   Pigoune retient les sections repliées.
-- **Non classés** regroupe les ressources qui n'appartiennent à aucune collection.
+- **Non classés** regroupe les éléments qui n'appartiennent à aucune collection.
 
-Quand vous supprimez une collection, ses sous-collections le sont aussi, et les ressources qui
-n'appartenaient qu'à elles partent dans la corbeille. Celles qui appartiennent aussi à une
+Quand vous supprimez une collection, ses sous-collections le sont aussi, et les éléments qui
+n'appartenaient qu'à elles partent dans la corbeille. Ceux qui appartiennent aussi à une
 autre collection y restent.
 
 ### Les tags
 
-Un tag est un seul mot de 20 caractères au plus : il décrit une ressource en un mot-clé. Pour
+Un tag est un seul mot de 20 caractères au plus : il décrit un élément en un mot-clé. Pour
 réunir plusieurs mots, utilisez un tiret (*flat-design*). Une espace ou une virgule termine le
 tag en cours de saisie, ce qui permet d'en saisir plusieurs à la fois. Ajoutez des tags depuis le
 panneau de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
-droit, ou glissez des ressources sur un tag de la barre latérale. La barre latérale montre les
-tags en pastilles avec leur nombre de ressources : cliquez sur l'une d'elles pour voir toutes ses
-ressources, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
+droit, ou glissez des éléments sur un tag de la barre latérale. La barre latérale montre les
+tags en pastilles avec leur nombre d’éléments : cliquez sur l'une d'elles pour voir tous ses
+éléments, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
 **+ N autres** affiche la suite. Renommer un tag avec le nom d'un autre les fusionne.
 
 ### Les favoris
 
-Marquez une ressource comme favorite avec l'étoile à côté de son nom, dans le panneau de
-détails, appuyez sur <kbd>Ctrl</kbd>+<kbd>D</kbd>, ou glissez des ressources sur **Favoris** dans
+Ajoutez un élément aux favoris avec l'étoile à côté de son nom, dans le panneau de
+détails, appuyez sur <kbd>Ctrl</kbd>+<kbd>D</kbd>, ou glissez des éléments sur **Favoris** dans
 la barre latérale. Les favoris ont leur propre entrée dans la barre latérale.
 
 ### Noms, notes et crédits
 
-Cliquez sur le nom d'une ressource dans le panneau de détails (ou appuyez sur <kbd>F2</kbd>)
-pour la renommer. Le groupe **Note et crédits** permet d'écrire une note et d'indiquer la
-source, la licence et l'auteur de chaque ressource, ce qui est bien pratique au moment de la
-réutiliser. Le groupe **Fichier**, en dessous, indique quand la ressource a été ajoutée et le
+Cliquez sur le nom d'un élément dans le panneau de détails (ou appuyez sur <kbd>F2</kbd>)
+pour le renommer. Le groupe **Note et crédits** permet d'écrire une note et d'indiquer la
+source, la licence et l'auteur de chaque élément, ce qui est bien pratique au moment de le
+réutiliser. Le groupe **Fichier**, en dessous, indique quand l’élément a été ajouté et le
 nom du fichier d'origine. Chaque groupe se replie et se déplie d'un clic sur son titre, qui
 affiche aussi un court résumé, et Pigoune retient ceux qui sont ouverts. Sous le nom, **Ouvrir
-avec…**, **Copier** et **Exporter…** agissent directement sur la ressource.
+avec…**, **Copier** et **Exporter…** agissent directement sur l’élément.
 
-### Plusieurs ressources à la fois
+### Plusieurs éléments à la fois
 
-Sélectionnez plusieurs ressources avec <kbd>Ctrl</kbd>+clic, <kbd>Maj</kbd>+clic, en traçant
+Sélectionnez plusieurs éléments avec <kbd>Ctrl</kbd>+clic, <kbd>Maj</kbd>+clic, en traçant
 un rectangle depuis un espace vide de la grille, ou avec <kbd>Ctrl</kbd>+<kbd>A</kbd>. Le
 panneau de détails affiche alors un résumé et permet de changer les favoris et les tags de
-toutes, tandis que le glisser et le menu du clic droit agissent sur toute la sélection. Un tag
-porté par une partie seulement des ressources sélectionnées est entouré de pointillés : un
-clic dessus l'ajoute à toutes.
+tous, tandis que le glisser et le menu du clic droit agissent sur toute la sélection. Un tag
+porté par une partie seulement des éléments sélectionnés est entouré de pointillés : un
+clic dessus l'ajoute à tous.
 
-## Retrouver une ressource
+## Retrouver un élément
 
 Cliquez dans le champ de recherche, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd>, ou commencez
 simplement à taper. Pigoune cherche dans les noms, les tags, les notes, les sources, les
@@ -148,10 +148,10 @@ licences et les auteurs, sans tenir compte des majuscules, des accents ni des li
 *cœur*), dans l'entrée sélectionnée de la barre latérale. Sélectionnez **Tout** pour chercher dans toute la
 bibliothèque.
 
-- **Espace = et.** `logo chèvre` trouve les ressources qui contiennent *logo* **et** *chèvre*,
+- **Espace = et.** `logo chèvre` trouve les éléments qui contiennent *logo* **et** *chèvre*,
   même à des endroits différents (par exemple *logo* dans le nom et *chèvre* dans un tag).
-- **Virgule = ou.** `logo, chèvre` trouve celles qui contiennent *logo* **ou** *chèvre*.
-- **Les virgules découpent la recherche en groupes** : une ressource est trouvée dès qu'elle
+- **Virgule = ou.** `logo, chèvre` trouve ceux qui contiennent *logo* **ou** *chèvre*.
+- **Les virgules découpent la recherche en groupes** : un élément est trouvé dès qu'il
   contient tous les mots d'un groupe. `logo rouge, chèvre` trouve ce qui contient à la fois
   *logo* et *rouge*, ou bien *chèvre*.
 - Un mot peut n'être qu'un morceau de mot : `chat` trouve aussi *château*.
@@ -161,7 +161,7 @@ bibliothèque.
   **ou** donne `logo rouge chèvre` (les trois mots sont exigés) ; cliquer sur le **et** donne
   `logo, rouge, chèvre` (un seul suffit). La croix d'une pastille retire son mot. Les mêmes
   pastilles apparaissent sous **Mots à rechercher** dans la fenêtre des collections
-  intelligentes.
+  dynamiques.
 - Une recherche utilise 8 mots au maximum : les suivants sont ignorés, et les pastilles
   l'indiquent.
 
@@ -169,55 +169,55 @@ La recherche ne regarde pas le format : pour ne garder que les SVG, par exemple,
 bouton **Filtres**, qui garde aussi, au choix, seulement vos favoris.
 
 **Filtres** propose aussi treize couleurs. Pigoune note les couleurs principales de chaque
-ressource, jusqu'à trois qui couvrent chacune au moins 15 % de l'image visible, sans compter
-les zones transparentes. Choisissez rouge et bleu pour voir les ressources surtout rouges ou
-bleues. La dernière pastille, arc-en-ciel, ouvre le sélecteur de couleur de GNOME pour choisir
+élément, jusqu'à trois qui couvrent chacune au moins 15 % de l'image visible, sans compter
+les zones transparentes. Choisissez rouge et bleu pour voir les éléments surtout rouges ou
+bleus. La dernière pastille, arc-en-ciel, ouvre le sélecteur de couleur de GNOME pour choisir
 n'importe quelle couleur, par exemple la couleur exacte d'une charte graphique : Pigoune garde
-alors les ressources dont une couleur principale en est proche. Un nouveau clic la retire. Les
-couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rouges. À la première ouverture d'une bibliothèque avec Pigoune 2.0, ses ressources sont
-analysées en arrière-plan pendant que vous continuez à travailler ; une ressource pas encore
-analysée ne correspond à aucune couleur.
+alors les éléments dont une couleur principale en est proche. Un nouveau clic la retire. Les
+couleurs s'ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rouges. À la première ouverture d'une bibliothèque avec Pigoune 2.0, ses éléments sont
+analysés en arrière-plan pendant que vous continuez à travailler ; un élément pas encore
+analysé ne correspond à aucune couleur.
 
-**Forme** garde les ressources au format **Paysage**, **Portrait** ou **Carré** ; choisissez-en
+**Orientation** garde les éléments au format **Paysage**, **Portrait** ou **Carré** ; choisissez-en
 deux pour voir les deux. Une image compte comme carrée quand ses côtés diffèrent de 5 % au plus.
-**Adaptée à mon écran** garde les images au moins aussi grandes que l'écran où se trouve
+**Adapté à mon écran** garde les images au moins aussi grandes que l'écran où se trouve
 Pigoune, en vrais pixels et dans les deux sens, par exemple 1920 × 1080 ou plus : elles
 remplissent l'écran sans être agrandies, donc sans flou. Les SVG sont toujours mis de côté.
-Ensemble, **Paysage** et **Adaptée à mon écran** trouvent de bons fonds d'écran.
+Ensemble, **Paysage** et **Adapté à mon écran** trouvent de bons fonds d'écran.
 
-Pour savoir où une ressource est rangée, regardez **Collections** dans le groupe
+Pour savoir où un élément est rangé, regardez **Collections** dans le groupe
 **Organisation** du panneau de détails. Un clic sur une collection l'ouvre dans la barre
-latérale et met la ressource en évidence. Un clic sur un tag fonctionne de la même façon.
+latérale et met l’élément en évidence. Un clic sur un tag fonctionne de la même façon.
 **Couleurs détectées** montre les couleurs principales trouvées par Pigoune ; pour ne garder
-que les ressources d'une couleur, utilisez le bouton **Filtres**.
+que les éléments d'une couleur, utilisez le bouton **Filtres**.
 
-### Les collections intelligentes
+### Les collections dynamiques
 
-Une collection intelligente est une recherche enregistrée qui se tient à jour toute seule :
-elle affiche toujours les ressources qui correspondent à ses critères, y compris celles que vous
+Une collection dynamique est une recherche enregistrée qui se tient à jour toute seule :
+elle affiche toujours les éléments qui correspondent à ses critères, y compris ceux que vous
 importez plus tard. Par exemple, *tous mes SVG favoris* ou *toutes les images en paysage
 adaptées à mon écran*. Elle cherche toujours dans toute la bibliothèque, sauf la corbeille.
 
-- **Créez-en une** avec le bouton **+** à côté de **Collections intelligentes** dans la barre
+- **Créez-en une** avec le bouton **+** à côté de **Collections dynamiques** dans la barre
   latérale. La fenêtre est préremplie avec la recherche et les filtres en cours, et avec
   **Favoris seulement** quand **Favoris** est ouvert. Donnez-lui un nom, puis choisissez des mots à
-  rechercher, des types, des formes, des couleurs, **Adaptée à mon écran** ou **Favoris
-  seulement** : il faut au moins un critère. **Adaptée à mon écran** suit l'écran où se trouve
-  Pigoune au moment où vous ouvrez la collection intelligente.
+  rechercher, des types, des orientations, des couleurs, **Adapté à mon écran** ou **Favoris
+  seulement** : il faut au moins un critère. **Adapté à mon écran** suit l'écran où se trouve
+  Pigoune au moment où vous ouvrez la collection dynamique.
 - **Mots à rechercher** fonctionne exactement comme le champ de recherche : espaces et
   virgules, et pastilles dont les **et** et les **ou** coupent ou réunissent les groupes.
-- **Ouvrez-la** depuis la barre latérale pour voir ses ressources. Vous pouvez encore chercher
+- **Ouvrez-la** depuis la barre latérale pour voir ses éléments. Vous pouvez encore chercher
   à l'intérieur.
 - **Modifiez** son nom ou ses critères avec **Modifier…** dans son menu du clic droit, ou avec
-  <kbd>F2</kbd>. **Supprimer…** ne supprime que la recherche enregistrée : les ressources
+  <kbd>F2</kbd>. **Supprimer…** ne supprime que la recherche enregistrée : les éléments
   restent dans la bibliothèque.
-- **Réorganisez** les collections intelligentes en les faisant glisser dans la barre latérale,
+- **Réorganisez** les collections dynamiques en les faisant glisser dans la barre latérale,
   ou triez-les par nom ou par date de création avec le bouton **⋯** à côté de leur titre.
 
-On ne peut pas déposer de ressources sur une collection intelligente, puisque son contenu suit
+On ne peut pas déposer d’éléments sur une collection dynamique, puisque son contenu suit
 ses critères.
 
-## Regarder vos ressources
+## Regarder vos éléments
 
 - Changez la taille des vignettes avec le curseur au-dessus de la grille, ou avec
   <kbd>Ctrl</kbd>+<kbd>+</kbd> et <kbd>Ctrl</kbd>+<kbd>-</kbd>. Le curseur fixe la taille
@@ -225,17 +225,17 @@ ses critères.
   largeur de la fenêtre.
 - Triez la grille par date d'ajout, nom, type, dimensions ou poids avec le bouton de tri.
 - Les GIF, PNG et WebP animés s'animent au survol.
-- Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur une ressource pour ouvrir l'**aperçu
+- Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur un élément pour ouvrir l'**aperçu
   détaillé**. Zoomez avec la molette ou avec <kbd>+</kbd> et <kbd>-</kbd>, utilisez
   <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, et choisissez
   une couleur de fond avec le bouton **Fond** de la barre du haut. Les boutons **Ouvrir
-  avec…**, **Copier** et **Exporter vers…** placés à côté agissent sur la ressource affichée.
-  Le bouton **Afficher les détails** ouvre le panneau de détails à côté de la ressource, pour la
-  taguer, la ranger ou lui ajouter une note sans quitter l'aperçu ; Pigoune retient s'il est
+  avec…**, **Copier** et **Exporter vers…** placés à côté agissent sur l’élément affiché.
+  Le bouton **Afficher les détails** ouvre le panneau de détails à côté de l’élément, pour le
+  taguer, le ranger ou lui ajouter une note sans quitter l'aperçu ; Pigoune retient s'il est
   ouvert. Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd> pour revenir.
-- Passez à la ressource précédente ou suivante avec les flèches du clavier, avec les boutons
+- Passez à l’élément précédent ou suivant avec les flèches du clavier, avec les boutons
   fléchés qui apparaissent quand vous bougez la souris, ou par un balayage à deux doigts.
-  <kbd>Début</kbd> et <kbd>Fin</kbd> mènent à la première et à la dernière ressource.
+  <kbd>Début</kbd> et <kbd>Fin</kbd> mènent au premier et au dernier élément.
 - Appuyez sur <kbd>F11</kbd>, ou choisissez **Plein écran** dans le menu du zoom, pour occuper
   tout l'écran ; la barre du haut revient quand vous bougez la souris, et <kbd>Échap</kbd> quitte
   le plein écran.
@@ -251,21 +251,21 @@ ses critères.
 - À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier
   une icône ou du pixel art ; désactivez-la avec **Afficher la grille des pixels** dans le menu
   du zoom.
-- Une bande de vignettes en bas de l'aperçu montre les ressources voisines ; cliquez sur l'une
+- Une bande de vignettes en bas de l'aperçu montre les éléments voisins ; cliquez sur l'une
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
-- L'étoile à côté du bouton de retour ajoute la ressource affichée à vos favoris, et un clic droit
+- L'étoile à côté du bouton de retour ajoute l’élément affiché à vos favoris, et un clic droit
   sur l'image propose **Ouvrir avec…**, **Cadrer et définir comme fond d'écran…**, **Copier**,
-  **Exporter vers…**, **Exporter au format…**, **Ajouter aux favoris** et **Mettre à la corbeille** pour
-  elle. <kbd>Suppr</kbd> envoie aussi la ressource affichée à la corbeille, et l'aperçu passe à la
+  **Exporter vers…**, **Convertir et exporter…**, **Ajouter aux favoris** et **Mettre à la corbeille** pour
+  elle. <kbd>Suppr</kbd> envoie aussi l’élément affiché à la corbeille, et l'aperçu passe à la
   suivante.
 
-## Réutiliser vos ressources
+## Réutiliser vos éléments
 
-- **Glissez** des ressources depuis la grille vers n'importe quelle application (un éditeur de
+- **Glissez** des éléments depuis la grille vers n'importe quelle application (un éditeur de
   texte, un logiciel de graphisme, une page web…). Pigoune y dépose une copie qui porte le nom
-  de la ressource. Certaines applications, comme Fichiers, peuvent afficher un curseur de
-  déplacement : c'est la copie remise qui se déplace, jamais la ressource de votre
+  de l’élément. Certaines applications, comme Fichiers, peuvent afficher un curseur de
+  déplacement : c'est la copie remise qui se déplace, jamais l’élément de votre
   bibliothèque.
 - **Copiez-les** avec <kbd>Ctrl</kbd>+<kbd>C</kbd> pour les coller ailleurs.
 - **Exportez-les** dans un dossier avec **Exporter vers…** dans le menu du clic droit. Les
@@ -274,7 +274,7 @@ ses critères.
   **Gérer la bibliothèque** (voir plus bas) : **Exporter…** crée un dossier au nom de
   la bibliothèque, avec un sous-dossier par collection et sous-collection, exactement comme
   dans la barre latérale, et y place les fichiers d'origine.
-- **Convertissez-les** avec **Exporter au format…** dans le menu du clic droit : choisissez PNG,
+- **Convertissez-les** avec **Convertir et exporter…** dans le menu du clic droit : choisissez PNG,
   JPEG, WebP, AVIF ou ICO, puis un dossier. JPEG et AVIF proposent un réglage de qualité ; le
   JPEG n'a pas de transparence, une couleur de fond remplit donc les zones transparentes ; les
   autres formats gardent la transparence, sauf si vous désactivez **Garder la transparence**
@@ -295,7 +295,7 @@ ses critères.
   votre fond et votre unité pour le prochain export, et la taille repart toujours de l'original.
   L'original reste intact dans la bibliothèque, et les fichiers existants ne sont jamais
   écrasés.
-- **Ouvrez** une ressource dans une autre application, un logiciel de retouche par exemple,
+- **Ouvrez** un élément dans une autre application, un logiciel de retouche par exemple,
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
   importez-les si vous voulez les garder.
@@ -306,14 +306,14 @@ ses critères.
   le curseur ou <kbd>+</kbd> et <kbd>-</kbd>, et ajustez-la avec les flèches (<kbd>Maj</kbd> pour
   aller plus loin). **Remplir** revient au cadrage de GNOME, **Entière** montre toute l'image et
   **100 %** montre un pixel de l'image par pixel de l'écran. **Miroir** retourne l'image de gauche
-  à droite, dans le fond d'écran seulement, **Tiers** affiche la grille des tiers pour placer le
-  sujet, et **Aimant**, actif au départ, accroche l'image glissée au centre et aux bords de
+  à droite, dans le fond d'écran seulement, **Règle des tiers** affiche la grille des tiers pour placer le
+  sujet, et **Magnétisme**, actif au départ, accroche l'image glissée au centre et aux bords de
   l'écran, une ligne bleue montrant où. Ce qui dépasse de l'écran reste visible, en pâle. Quand l'image est agrandie au-delà de 100 %, une pastille sur l'écran prévient
   qu'elle sera floue. Le bouton plein écran, ou <kbd>F11</kbd>, montre l'écran virtuel en vraie
   grandeur, comme une simulation que rappelle une courte pastille ; <kbd>Échap</kbd> pour revenir.
 - **Assombrir**, sous **Image**, assombrit tout le fond d'écran, jusqu'à 60 %, pour que les
   icônes et les barres restent lisibles ; comme **Miroir**, il ne change que le fond d'écran,
-  jamais la ressource. Avec plusieurs écrans, **Préparer pour** choisit celui pour lequel le fond
+  jamais l’élément. Avec plusieurs écrans, **Préparer pour** choisit celui pour lequel le fond
   d'écran est fabriqué : GNOME affiche le même fond d'écran sur tous les écrans et l'adapte aux
   autres.
 - **Simulation du bureau** dessine une imitation des barres de votre bureau sur l'écran
@@ -331,35 +331,35 @@ ses critères.
 - **Définir comme fond d'écran** fabrique une image exactement à la taille de l'écran : le
   bureau montre exactement ce que vous avez cadré. Une petite fenêtre montre la préparation,
   puis GNOME vous demande de confirmer. Cochez **Ajouter aussi à la bibliothèque la version
-  modifiée** pour garder cette image comme nouvelle ressource.
+  modifiée** pour garder cette image comme nouvel élément.
 
 ## Corbeille et annulation
 
 Appuyez sur <kbd>Suppr</kbd>, ou choisissez **Mettre à la corbeille** dans le menu du clic
-droit, pour envoyer des ressources à la corbeille. Rien n'est perdu tant que vous ne la videz
-pas : ouvrez **Corbeille**, en bas de la barre latérale, pour restaurer des ressources, avec
+droit, pour envoyer des éléments à la corbeille. Rien n'est perdu tant que vous ne la videz
+pas : ouvrez **Corbeille**, en bas de la barre latérale, pour restaurer des éléments, avec
 **Restaurer** dans le menu du clic droit ou dans le panneau de détails, ou pour la vider
-définitivement. Les ressources de la corbeille peuvent encore être copiées, exportées ou ouvertes
-avec une autre application, mais pas modifiées.
+définitivement. Les éléments de la corbeille peuvent encore être copiés, exportés ou ouverts
+avec une autre application, mais pas modifiés.
 
 La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
 **Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,
 favoris, renommage, notes et crédits, mais aussi création, renommage, personnalisation,
 déplacement ou suppression d'une collection, et création, modification, réorganisation ou
-suppression d'une collection intelligente. Les imports ne s'annulent pas, et vider la corbeille
-efface l'historique des annulations. Si un import sort une ressource de la corbeille, sa mise à la
+suppression d'une collection dynamique. Les imports ne s'annulent pas, et vider la corbeille
+efface l'historique des annulations. Si un import sort un élément de la corbeille, sa mise à la
 corbeille précédente ne figure plus dans l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle
-est vide : une fois des ressources importées dedans, utilisez plutôt **Supprimer…**. Quand une
+est vide : une fois des éléments importés dedans, utilisez plutôt **Supprimer…**. Quand une
 annulation n'est plus possible, Pigoune le dit, laisse ce changement tel quel, et le
 <kbd>Ctrl</kbd>+<kbd>Z</kbd> suivant annule le changement d'avant. Un message qui suit une action ne
-compte que ce qui a vraiment changé : les ressources déjà dans la collection ou déjà étiquetées
-ne sont pas comptées.
+compte que ce qui a vraiment changé : les éléments déjà dans la collection ou déjà étiquetés
+ne sont pas comptés.
 
 ## Votre bibliothèque
 
 Une bibliothèque est un simple dossier dont le nom se termine par `.pigoune`. Il contient :
 
-- `files/`, une copie de chaque ressource, avec son nom de fichier d'origine, rangée dans de
+- `files/`, une copie de chaque élément, avec son nom de fichier d'origine, rangée dans de
   petits sous-dossiers pour que même une très grande bibliothèque reste facile à manipuler ;
 - `library.db`, la base de données qui contient les collections, les tags et toutes les
   autres informations ;
@@ -376,43 +376,43 @@ ordinateur avant de l'ouvrir sur un autre.
 Choisissez **Gérer la bibliothèque** dans le menu principal pour voir ce que contient la
 bibliothèque ouverte et vous en occuper, en cinq onglets :
 
-- **Aperçu** montre le nom et l'emplacement de la bibliothèque, le nombre de ressources, de
-  collections, de tags et de favoris, et les **Records** : la ressource la plus lourde, la plus
-  grande, la plus récente et la plus ancienne ; cliquez sur l'une d'elles pour la voir dans la
+- **Vue d'ensemble** montre le nom et l'emplacement de la bibliothèque, le nombre d’éléments, de
+  collections, de tags et de favoris, et le **Palmarès** : l’élément le plus lourd, le plus
+  grand, le plus récent et le plus ancien ; cliquez sur l'un d'eux pour le voir dans la
   grille.
 - **Contenu** montre dans un graphique en anneau comment la place se répartit entre les formats,
-  en poids ou en nombre de ressources, le nombre d'images animées, de SVG et de ressources dans la
-  corbeille, et les couleurs détectées avec le nombre de ressources dont chacune est une couleur
+  en poids ou en nombre d’éléments, le nombre d'images animées, de SVG et d’éléments dans la
+  corbeille, et les couleurs détectées avec le nombre d’éléments dont chacune est une couleur
   principale.
 - **Stockage** montre dans une seule barre la place de la bibliothèque sur son disque, répartie
-  entre les ressources, les vignettes, la base de données et la corbeille, à côté des autres
+  entre les éléments, les vignettes, la base de données et la corbeille, à côté des autres
   fichiers et de l'espace libre. En dessous : son emplacement, avec des boutons pour le copier ou
   ouvrir son dossier, si ce disque est amovible, la place prise par les vignettes, sa date de
   création et les versions de Pigoune capables de l'ouvrir. **Vider**, à côté des vignettes,
   libère leur place ; elles sont recréées quand on en a besoin.
 - **Santé** compare les fichiers du disque avec la base de données de la bibliothèque.
   **Vérifier** lit chaque fichier, ceux de la corbeille compris, et liste les fichiers manquants,
-  les fichiers abîmés (leur contenu ne correspond plus à ce qui a été importé) et les fichiers du
-  dossier de la bibliothèque qui n'ont pas de fiche. La vérification se fait en arrière-plan,
-  peut être annulée, et ne modifie ni ne supprime jamais rien d'elle-même. Pour un fichier sans
-  fiche, **Ajouter** (ou **Tout ajouter**) lui redonne une fiche dans Non classés, sans déplacer
+  les fichiers endommagés (leur contenu ne correspond plus à ce qui a été importé) et les fichiers non référencés (ceux du
+  dossier de la bibliothèque que la base de données ne connaît pas). La vérification se fait en arrière-plan,
+  peut être annulée, et ne modifie ni ne supprime jamais rien d'elle-même. Pour un fichier non
+  référencé, **Ajouter** (ou **Tout ajouter**) le remet dans la bibliothèque, dans Non classés, sans déplacer
   le fichier ; Pigoune explique pourquoi quand un fichier ne peut pas être ajouté, par exemple
-  s'il n'est pas une image. Pour un fichier manquant ou abîmé, **Remplacer…** permet de choisir
+  s'il n'est pas une image. Pour un fichier manquant ou endommagé, **Remplacer…** permet de choisir
   une copie du fichier d'origine ; Pigoune ne l'accepte que si son contenu est identique à ce qui
-  a été importé, puis la remet en place en conservant le nom, les tags et les collections de la
-  ressource. Pour un fichier manquant dont il ne reste aucune copie, **Retirer…** retire la
-  fiche de la ressource de la bibliothèque, après une confirmation qui précise que c'est
-  définitif ; un fichier abîmé, qui existe encore, ne le propose jamais. Un fichier abîmé
+  a été importé, puis la remet en place en conservant le nom, les tags et les collections de
+  l’élément. Pour un fichier manquant dont il ne reste aucune copie, **Retirer…** retire
+  l’élément de la bibliothèque, après une confirmation qui précise que c'est
+  définitif ; un fichier endommagé, qui existe encore, ne le propose jamais. Un fichier endommagé
   propose à la place **Mettre à la corbeille**, qu'on peut annuler depuis le message qui
-  apparaît. Les ressources qui sont dans la corbeille ne sont pas signalées : leurs fichiers
-  partent avec la corbeille, et si vous en restaurez une, la vérification suivante la regarde
+  apparaît. Les éléments qui sont dans la corbeille ne sont pas signalés : leurs fichiers
+  partent avec la corbeille, et si vous en restaurez un, la vérification suivante le regarde
   de nouveau.
-- **Export** copie toutes les ressources dans un dossier de votre choix. Pigoune crée un dossier
+- **Export** copie tous les éléments dans un dossier de votre choix. Pigoune crée un dossier
   au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place
   les fichiers d'origine ; la page montre un exemple tiré de votre propre bibliothèque. Les
-  ressources qui n'appartiennent à aucune collection vont dans un dossier **Non classés**, et
-  une ressource qui appartient à plusieurs collections est copiée dans chacune. Les ressources à
-  la corbeille sont laissées de côté. Les tags, notes et favoris restent dans Pigoune : ce n'est
+  éléments qui n'appartiennent à aucune collection vont dans un dossier **Non classés**, et
+  un élément qui appartient à plusieurs collections est copié dans chacune. Les éléments à
+  la corbeille sont laissés de côté. Les tags, notes et favoris restent dans Pigoune : ce n'est
   donc pas une sauvegarde complète, pour cela copiez le dossier de la bibliothèque. Rien n'est
   jamais écrasé : si un dossier du même nom existe déjà, l'export est créé sous le nom
   `Nom (2)`. Le bouton est grisé quand la bibliothèque est vide.
@@ -441,34 +441,34 @@ retrouve un réglage par son nom.
   version, une courte fenêtre présente ses principales nouveautés. Désactivez-la si vous
   préférez ne pas la voir ; la fenêtre À propos garde les nouveautés de la version en cours.
 - **Confirmer avant de vider la corbeille**.
-- **Vider automatiquement la corbeille** : les ressources sont supprimées définitivement après
+- **Vider automatiquement la corbeille** : les éléments sont supprimés définitivement après
   30 jours dans la corbeille.
 
 **Affichage**
 
-- **Afficher le nom des ressources** sous chaque vignette de la grille. Quand les noms sont
+- **Afficher le nom des éléments** sous chaque vignette de la grille. Quand les noms sont
   masqués, survolez une vignette pour voir son nom.
-- **Afficher les formats** : une étiquette indique le format de chaque ressource (SVG, PNG…)
+- **Afficher les formats** : une pastille indique le format de chaque élément (SVG, PNG…)
   sur sa vignette.
 - **Fond des vignettes** : blanc, gris, noir ou damier derrière les vignettes, pour voir les
   images blanches ou noires et les zones transparentes.
 - **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
   distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
-- **Afficher le nombre de ressources** à côté de chaque entrée de la barre latérale.
+- **Afficher le nombre d’éléments** à côté de chaque entrée de la barre latérale.
 - **Afficher les tags** : désactivez-le pour masquer la section des tags de la barre latérale.
   Les tags restent visibles dans le panneau de détails, et la recherche les trouve toujours.
-- **Afficher les collections intelligentes** : désactivez-le pour masquer la section des
-  collections intelligentes de la barre latérale. Vos collections intelligentes sont conservées
+- **Afficher les collections dynamiques** : désactivez-le pour masquer la section des
+  collections dynamiques de la barre latérale. Vos collections dynamiques sont conservées
   et reviennent quand vous le réactivez.
 
 **Comportement**
 
-- **Ouvrir les ressources au double-clic** : un double-clic ouvre la ressource dans son
+- **Ouvrir les éléments au double-clic** : un double-clic ouvre l’élément dans son
   application par défaut au lieu de l'aperçu. La touche <kbd>Espace</kbd> ouvre toujours
   l'aperçu.
 - **Rechercher dans toute la bibliothèque** : la recherche et les filtres regardent partout,
   et pas seulement dans l'entrée sélectionnée de la barre latérale, sauf dans la corbeille et
-  dans les collections intelligentes.
+  dans les collections dynamiques.
 
 Pigoune suit le style et la couleur d'accentuation choisis dans les **Paramètres** de GNOME,
 rubrique **Apparence** : style clair ou sombre, et couleur des sélections, des interrupteurs et
@@ -517,11 +517,11 @@ une bannière en haut de la fenêtre l'annonce aussi dans la demi-heure : clique
 jour**, attendez la fin de l'installation, puis cliquez sur **Redémarrer**.
 
 **Pourquoi Pigoune dit-il qu'un fichier est illisible ?**
-Le fichier est abîmé, ou n'est pas vraiment dans le format qu'indique son nom. Pigoune vérifie
+Le fichier est endommagé, ou n'est pas vraiment dans le format qu'indique son nom. Pigoune vérifie
 le contenu de chaque image, pas seulement son extension.
 
 **J'ai importé deux fois le même fichier. Où est la deuxième copie ?**
-Il n'y en a pas : Pigoune reconnaît les doublons et ajoute plutôt la ressource existante à la
+Il n'y en a pas : Pigoune reconnaît les doublons et ajoute plutôt l’élément existant à la
 collection visée.
 
 **Comment signaler un bug ou proposer une idée ?**
