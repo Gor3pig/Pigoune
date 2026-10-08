@@ -19,6 +19,7 @@ const DROP_HIGHLIGHT: &str = "drop-highlight";
 pub struct TagPill {
     pub id: TagId,
     pub name: String,
+    pub parent: Option<TagId>,
     pub count: Option<usize>,
 }
 
@@ -34,12 +35,15 @@ mod imp {
 
     #[derive(Default)]
     pub struct PigouneSidebarTagCloud {
+        pub crumbs: OnceCell<gtk::Box>,
         pub wrap: OnceCell<adw::WrapBox>,
         pub more: OnceCell<gtk::Button>,
         pub menu: OnceCell<gtk::PopoverMenu>,
         pub tags: RefCell<Vec<TagPill>>,
         pub pills: RefCell<Vec<(TagId, gtk::Button)>>,
+        pub crumb_buttons: RefCell<Vec<(TagId, gtk::Button)>>,
         pub selected: Cell<Option<TagId>>,
+        pub level: Cell<Option<TagId>>,
         pub show_all: Cell<bool>,
     }
 
@@ -82,11 +86,69 @@ impl PigouneSidebarTagCloud {
         }
         imp.tags.replace(tags);
         imp.selected.set(selected);
+        self.follow(selected);
         self.rebuild();
     }
 
     pub fn highlight(&self, selected: Option<TagId>) {
-        self.imp().selected.set(selected);
+        let imp = self.imp();
+        imp.selected.set(selected);
+        if self.follow(selected) {
+            self.rebuild();
+        } else {
+            self.mark_selected();
+        }
+    }
+
+    pub fn pill_of(&self, tag: TagId) -> Option<gtk::Button> {
+        let imp = self.imp();
+        if !imp.pills.borrow().iter().any(|(id, _)| *id == tag) {
+            if self.knows(tag) {
+                imp.level.set(self.level_of(tag));
+            }
+            imp.show_all.set(true);
+            self.rebuild();
+        }
+        imp.pills
+            .borrow()
+            .iter()
+            .find(|(id, _)| *id == tag)
+            .map(|(_, pill)| pill.clone())
+    }
+
+    fn knows(&self, tag: TagId) -> bool {
+        self.imp().tags.borrow().iter().any(|known| known.id == tag)
+    }
+
+    fn level_of(&self, tag: TagId) -> Option<TagId> {
+        let tags = self.imp().tags.borrow();
+        let known = tags.iter().find(|candidate| candidate.id == tag)?;
+        if tags.iter().any(|child| child.parent == Some(tag)) {
+            Some(tag)
+        } else {
+            known.parent
+        }
+    }
+
+    fn follow(&self, selected: Option<TagId>) -> bool {
+        let imp = self.imp();
+        let known_level = imp.level.get().filter(|level| {
+            imp.tags
+                .borrow()
+                .iter()
+                .any(|candidate| candidate.id == *level)
+        });
+        let wanted = match selected {
+            Some(tag) if self.knows(tag) => self.level_of(tag),
+            _ => known_level,
+        };
+        let changed = imp.level.get() != wanted;
+        imp.level.set(wanted);
+        changed
+    }
+
+    fn mark_selected(&self) {
+        let selected = self.imp().selected.get();
         for (id, pill) in self.imp().pills.borrow().iter() {
             if Some(*id) == selected {
                 pill.add_css_class(SELECTED);
@@ -94,26 +156,27 @@ impl PigouneSidebarTagCloud {
                 pill.remove_css_class(SELECTED);
             }
         }
-    }
-
-    pub fn pill_of(&self, tag: TagId) -> Option<gtk::Button> {
-        if !self.imp().pills.borrow().iter().any(|(id, _)| *id == tag) {
-            self.imp().show_all.set(true);
-            self.rebuild();
+        for (id, crumb) in self.imp().crumb_buttons.borrow().iter() {
+            if Some(*id) == selected {
+                crumb.add_css_class(SELECTED);
+            } else {
+                crumb.remove_css_class(SELECTED);
+            }
         }
-        self.imp()
-            .pills
-            .borrow()
-            .iter()
-            .find(|(id, _)| *id == tag)
-            .map(|(_, pill)| pill.clone())
     }
 
     fn rebuild(&self) {
         let imp = self.imp();
+        self.rebuild_crumbs();
         let wrap = part(&imp.wrap);
         wrap.remove_all();
-        let tags = imp.tags.borrow().clone();
+        let level = imp.level.get();
+        let all = imp.tags.borrow().clone();
+        let tags: Vec<TagPill> = all
+            .iter()
+            .filter(|tag| tag.parent == level)
+            .cloned()
+            .collect();
         let selected = imp.selected.get();
         let hidden = tags.len().saturating_sub(MOST_PILLS);
         let show_all = imp.show_all.get()
@@ -126,13 +189,16 @@ impl PigouneSidebarTagCloud {
         let pills: Vec<(TagId, gtk::Button)> = tags
             .iter()
             .take(shown)
-            .map(|tag| (tag.id, self.pill(tag)))
+            .map(|tag| {
+                let has_children = all.iter().any(|child| child.parent == Some(tag.id));
+                (tag.id, self.pill(tag, has_children))
+            })
             .collect();
         for (_, pill) in &pills {
             wrap.append(pill);
         }
         imp.pills.replace(pills);
-        self.highlight(selected);
+        self.mark_selected();
         let more = part(&imp.more);
         more.set_visible(hidden > 0);
         more.set_label(&if show_all {
@@ -147,7 +213,81 @@ impl PigouneSidebarTagCloud {
         });
     }
 
-    fn pill(&self, tag: &TagPill) -> gtk::Button {
+    fn rebuild_crumbs(&self) {
+        let imp = self.imp();
+        let crumbs = part(&imp.crumbs);
+        while let Some(child) = crumbs.first_child() {
+            crumbs.remove(&child);
+        }
+        imp.crumb_buttons.borrow_mut().clear();
+        let Some(level) = imp.level.get() else {
+            crumbs.set_visible(false);
+            return;
+        };
+        crumbs.set_visible(true);
+        let mut trail = Vec::new();
+        let mut next = Some(level);
+        {
+            let tags = imp.tags.borrow();
+            while let Some(id) = next {
+                let Some(tag) = tags.iter().find(|candidate| candidate.id == id) else {
+                    break;
+                };
+                trail.push((tag.id, tag.name.clone()));
+                next = tag.parent;
+            }
+        }
+        trail.reverse();
+        crumbs.append(&self.crumb_to_root());
+        for (id, name) in trail {
+            crumbs.append(
+                &gtk::Image::builder()
+                    .icon_name("go-next-symbolic")
+                    .pixel_size(12)
+                    .css_classes(["dim-label"])
+                    .build(),
+            );
+            let crumb = self.crumb(&name, id);
+            imp.crumb_buttons.borrow_mut().push((id, crumb.clone()));
+            crumbs.append(&crumb);
+        }
+    }
+
+    fn crumb_to_root(&self) -> gtk::Button {
+        let button = gtk::Button::builder()
+            .label(gettext("Tags"))
+            .css_classes(["flat", "sidebar-tag-crumb"])
+            .build();
+        button.connect_clicked(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |_| {
+                cloud.imp().level.set(None);
+                cloud.rebuild();
+            }
+        ));
+        button
+    }
+
+    fn crumb(&self, name: &str, id: TagId) -> gtk::Button {
+        let button = gtk::Button::builder()
+            .child(&name_label(name))
+            .css_classes(["flat", "sidebar-tag-crumb"])
+            .tooltip_text(gettext("Open the Tag “{name}”").replace("{name}", name))
+            .build();
+        button.connect_clicked(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |_| {
+                if let Some(sidebar) = cloud.sidebar() {
+                    sidebar.choose_tag(id);
+                }
+            }
+        ));
+        button
+    }
+
+    fn pill(&self, tag: &TagPill, has_children: bool) -> gtk::Button {
         let content = gtk::Box::builder().spacing(6).build();
         content.append(&name_label(&tag.name));
         if let Some(count) = tag.count.filter(|count| *count > 0) {
@@ -158,12 +298,24 @@ impl PigouneSidebarTagCloud {
                     .build(),
             );
         }
+        if has_children {
+            content.append(
+                &gtk::Image::builder()
+                    .icon_name("go-next-symbolic")
+                    .pixel_size(12)
+                    .css_classes(["dim-label"])
+                    .build(),
+            );
+        }
         let pill = gtk::Button::builder()
             .child(&content)
             .css_classes(["flat", "sidebar-tag-pill"])
             .tooltip_text(gettext("Open the Tag “{name}”").replace("{name}", &tag.name))
             .build();
-        pill.update_property(&[gtk::accessible::Property::Label(&spoken_label(tag))]);
+        pill.update_property(&[gtk::accessible::Property::Label(&spoken_label(
+            tag,
+            has_children,
+        ))]);
         let id = tag.id;
         pill.connect_clicked(glib::clone!(
             #[weak(rename_to = cloud)]
@@ -333,6 +485,11 @@ impl PigouneSidebarTagCloud {
             .child_spacing(PILL_SPACING)
             .line_spacing(PILL_SPACING)
             .build();
+        let crumbs = gtk::Box::builder()
+            .spacing(2)
+            .css_classes(["sidebar-tag-crumbs"])
+            .visible(false)
+            .build();
         let more = gtk::Button::builder()
             .halign(gtk::Align::Start)
             .css_classes(["flat", "sidebar-tag-more"])
@@ -349,8 +506,10 @@ impl PigouneSidebarTagCloud {
         ));
         let menu = gtk::PopoverMenu::builder().has_arrow(false).build();
         menu.set_parent(self);
+        self.append(&crumbs);
         self.append(&wrap);
         self.append(&more);
+        set_part(&imp.crumbs, crumbs);
         set_part(&imp.wrap, wrap);
         set_part(&imp.more, more);
         set_part(&imp.menu, menu);
@@ -363,8 +522,13 @@ impl Default for PigouneSidebarTagCloud {
     }
 }
 
-fn spoken_label(tag: &TagPill) -> String {
-    let name = gettext("Tag {name}").replace("{name}", &tag.name);
+fn spoken_label(tag: &TagPill, has_children: bool) -> String {
+    let name = if has_children {
+        gettext("Tag {name}, with sub-tags")
+    } else {
+        gettext("Tag {name}")
+    }
+    .replace("{name}", &tag.name);
     match tag.count {
         Some(count) => ngettext(
             "{name}, {count} asset",

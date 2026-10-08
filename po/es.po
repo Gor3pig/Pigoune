@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 17:38+0200\n"
+"POT-Creation-Date: 2026-10-08 17:44+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Spanish\n"
@@ -1276,7 +1276,9 @@ msgstr "Otra etiqueta ya tiene este nombre."
 
 #: crates/pigoune-app/src/error_messages.rs:188
 msgid "A tag cannot be moved into itself or one of its sub-tags."
-msgstr "Una etiqueta no se puede mover dentro de sí misma ni de una de sus subetiquetas."
+msgstr ""
+"Una etiqueta no se puede mover dentro de sí misma ni de una de sus "
+"subetiquetas."
 
 #: crates/pigoune-app/src/new_library_dialog.rs:101
 msgid "Choose a Location"
@@ -2531,6 +2533,7 @@ msgid "Smart Collections"
 msgstr "Colecciones inteligentes"
 
 #: crates/pigoune-app/src/sidebar.rs:310 crates/pigoune-app/src/sidebar.rs:910
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:250
 #: crates/pigoune-app/src/tag_summary.rs:144
 msgid "Tags"
 msgstr "Etiquetas"
@@ -2546,7 +2549,7 @@ msgid "favorite"
 msgstr "favorito"
 
 #: crates/pigoune-app/src/sidebar_item.rs:132
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:367
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:521
 #, rust-format
 msgid "Tag {name}"
 msgstr "Etiqueta {name}"
@@ -2557,7 +2560,7 @@ msgid "Smart collection {name}"
 msgstr "Colección inteligente {name}"
 
 #: crates/pigoune-app/src/sidebar_item.rs:142
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:370
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:526
 #, rust-format
 msgid "{name}, {count} asset"
 msgid_plural "{name}, {count} assets"
@@ -3151,23 +3154,29 @@ msgstr "Ordenar las colecciones por"
 msgid "Sort Smart Collections By"
 msgstr "Ordenar las colecciones inteligentes por"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:139
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:197
 msgid "Show Fewer"
 msgstr "Mostrar menos"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:142
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:200
 #, rust-format
 msgid "+ {count} other"
 msgid_plural "+ {count} others"
 msgstr[0] "+ {count} más"
 msgstr[1] "+ {count} más"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:164
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:268
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:305
 #: crates/pigoune-app/src/tag_editor.rs:146
 #: crates/pigoune-app/src/tag_summary.rs:115
 #, rust-format
 msgid "Open the Tag “{name}”"
 msgstr "Abrir la etiqueta “{name}”"
+
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:519
+#, rust-format
+msgid "Tag {name}, with sub-tags"
+msgstr "Etiqueta {name}, con subetiquetas"
 
 #: crates/pigoune-app/src/asset_colors.rs:11
 msgctxt "resource color"

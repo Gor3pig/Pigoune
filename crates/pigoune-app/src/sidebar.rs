@@ -917,6 +917,7 @@ fn tag_cloud_item(
             .map(|tag| TagPill {
                 id: tag.id,
                 name: tag.name.clone(),
+                parent: tag.parent,
                 count: counts.map(|counts| counts.of(AssetView::Tag(tag.id))),
             })
             .collect(),
