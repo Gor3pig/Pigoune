@@ -444,6 +444,80 @@ fn a_format_8_library_keeps_its_tags_as_top_level_tags() {
         .expect("sub-tags work after the upgrade");
 }
 
+fn rebuild_as_format_8(root: &Path, renames: &str) {
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute_batch(&format!(
+            "CREATE TABLE old_tags (
+                 id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL,
+                 normalized_name TEXT NOT NULL UNIQUE) STRICT;
+             INSERT INTO old_tags SELECT id, name, normalized_name FROM tags;
+             CREATE TABLE old_asset_tags (
+                 asset_id TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
+                 tag_id TEXT NOT NULL REFERENCES old_tags (id) ON DELETE CASCADE,
+                 PRIMARY KEY (asset_id, tag_id)) STRICT, WITHOUT ROWID;
+             INSERT INTO old_asset_tags SELECT asset_id, tag_id FROM asset_tags;
+             DROP TABLE asset_tags;
+             DROP TABLE tags;
+             ALTER TABLE old_tags RENAME TO tags;
+             ALTER TABLE old_asset_tags RENAME TO asset_tags;
+             {renames}
+             PRAGMA user_version = 8;"
+        ))
+        .expect("old format is rebuilt");
+}
+
+#[test]
+fn an_old_tag_with_a_slash_gets_a_hyphen_and_joins_a_twin_tag() {
+    let mut fixture = Fixture::new();
+    let first = fixture.import("red-dot.png");
+    let second = fixture.import("blue-photo.jpg");
+    let third = fixture.import("green-square.webp");
+    fixture.add(&[first], "noir-blanc");
+    fixture.add(&[first, second], "noirXblanc");
+    fixture.add(&[third], "aXbXc");
+    let root = fixture.library.root().to_path_buf();
+    drop(fixture.library);
+    rebuild_as_format_8(
+        &root,
+        "UPDATE tags SET name = replace(name, 'X', '/'), normalized_name = replace(normalized_name, 'x', '/')
+             WHERE name LIKE '%X%';",
+    );
+
+    let library = Library::open(&root).expect("library opens");
+
+    let tags = library.tags().expect("tags are read");
+    let mut names: Vec<&str> = tags.iter().map(|tag| tag.name.as_str()).collect();
+    names.sort_unstable();
+    assert_eq!(names, ["a-b-c", "noir-blanc"]);
+    assert!(tags.iter().all(|tag| tag.parent.is_none()));
+    let twin = tags
+        .iter()
+        .find(|tag| tag.name == "noir-blanc")
+        .expect("tag kept");
+    assert_eq!(
+        library.view_count(AssetView::Tag(twin.id)).expect("count"),
+        2
+    );
+    assert_eq!(library.tags_of(third).expect("tags")[0].name, "a-b-c");
+}
+
+#[test]
+fn a_tag_cannot_be_renamed_with_a_slash() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    fixture.add(&[asset], "logo");
+    let logo = fixture.at("logo");
+
+    let refused = fixture.refused(&TagCommand::Rename {
+        tag: logo,
+        name: "logo/flat".to_owned(),
+    });
+
+    assert!(matches!(refused, TagError::ContainsSlash));
+    assert_eq!(fixture.paths(), paths(&["logo"]));
+}
+
 #[test]
 fn a_smart_collection_searching_a_parent_name_follows_its_sub_tags() {
     let mut fixture = Fixture::new();

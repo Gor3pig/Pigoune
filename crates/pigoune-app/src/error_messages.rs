@@ -186,6 +186,7 @@ pub fn describe_tag(error: &TagError) -> String {
         TagError::AssetNotFound(_) => gettext("This asset no longer exists."),
         TagError::NameTaken(_) => gettext("Another tag already has this name."),
         TagError::Cycle => gettext("A tag cannot be moved into itself or one of its sub-tags."),
+        TagError::ContainsSlash => gettext("A tag name cannot contain a slash."),
         TagError::Library(error) => describe(error),
     }
 }

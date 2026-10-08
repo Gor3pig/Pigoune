@@ -61,6 +61,8 @@ pub enum TagError {
     NameTaken(TagId),
     #[error("a tag cannot be moved into itself or into one of its own sub-tags")]
     Cycle,
+    #[error("a tag name cannot contain a slash")]
+    ContainsSlash,
     #[error(transparent)]
     Library(#[from] LibraryError),
 }
@@ -347,7 +349,9 @@ fn valid_name(name: &str) -> Result<&str, TagError> {
 }
 
 fn ensure_is_a_short_word(name: &str) -> Result<(), TagError> {
-    if name.chars().any(char::is_whitespace) {
+    if name.contains('/') {
+        Err(TagError::ContainsSlash)
+    } else if name.chars().any(char::is_whitespace) {
         Err(TagError::NotOneWord)
     } else if name.chars().count() > LONGEST_TAG_NAME {
         Err(TagError::TooLong)

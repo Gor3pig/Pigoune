@@ -1,3 +1,24 @@
+INSERT OR IGNORE INTO asset_tags (asset_id, tag_id)
+SELECT asset_tags.asset_id, twin.id
+FROM asset_tags
+JOIN tags AS slashed ON slashed.id = asset_tags.tag_id
+JOIN tags AS twin ON twin.normalized_name = replace(slashed.normalized_name, '/', '-')
+WHERE instr(slashed.name, '/') > 0 AND twin.id <> slashed.id;
+
+DELETE FROM asset_tags WHERE tag_id IN (
+    SELECT slashed.id FROM tags AS slashed
+    JOIN tags AS twin ON twin.normalized_name = replace(slashed.normalized_name, '/', '-')
+    WHERE instr(slashed.name, '/') > 0 AND twin.id <> slashed.id
+);
+
+DELETE FROM tags WHERE instr(name, '/') > 0 AND EXISTS (
+    SELECT 1 FROM tags AS twin
+    WHERE twin.normalized_name = replace(tags.normalized_name, '/', '-') AND twin.id <> tags.id
+);
+
+UPDATE tags SET name = replace(name, '/', '-'), normalized_name = replace(normalized_name, '/', '-')
+WHERE instr(name, '/') > 0;
+
 CREATE TABLE tags_v9 (
     id TEXT PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
