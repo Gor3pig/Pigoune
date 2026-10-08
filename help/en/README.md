@@ -320,7 +320,7 @@ folder while Pigoune is closed.
 A library can only be open in one Pigoune window at a time. If you keep a library in a synced
 folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening it on another.
 
-Choose **Library Information** in the main menu to see what the open library holds, in three
+Choose **Library Information** in the main menu to see what the open library holds, in four
 tabs:
 
 - **Overview** shows the name and location of the library, the number of assets, collections,
@@ -335,6 +335,11 @@ tabs:
   folder, whether that disk is removable, the space taken by the thumbnails, when the library
   was created and which versions of Pigoune can open it. **Clear** next to the thumbnails frees
   their space; they are made again when they are needed.
+- **Health** compares the files on the disk with the library's database. **Check** reads every
+  file, including those in the trash, and lists the files that are missing, the files that are
+  damaged (their content no longer matches what was imported) and the files in the library
+  folder that have no record. It runs in the background and can be canceled, and it never
+  changes or deletes anything.
 
 ## Preferences
 

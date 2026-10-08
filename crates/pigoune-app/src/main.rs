@@ -45,6 +45,7 @@ mod frame_cache;
 mod grid_columns;
 mod grid_header;
 mod group_mosaic;
+mod health_page;
 mod help_url;
 mod host_path;
 mod icon_sides;

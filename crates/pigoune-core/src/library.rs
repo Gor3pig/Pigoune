@@ -9,6 +9,7 @@ mod collection_command;
 mod content;
 mod error;
 mod export;
+mod health;
 mod history;
 mod id;
 mod import;
@@ -47,6 +48,7 @@ pub use batch_import::{
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use error::{CollectionError, ImportError, LibraryError};
+pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, SmartCollectionId, TagId};
 pub use import::ImportOutcome;

@@ -1,0 +1,64 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneHealthPage: Box {
+  orientation: vertical;
+
+  Adw.StatusPage status {
+    vexpand: true;
+    icon-name: "security-high-symbolic";
+    title: _("Check the Library");
+    description: _("Pigoune compares the files on the disk with the database. Nothing is changed or deleted.");
+
+    child: Box {
+      orientation: vertical;
+      spacing: 18;
+      halign: center;
+      width-request: 340;
+
+      Box progress_box {
+        orientation: vertical;
+        spacing: 6;
+        visible: false;
+
+        ProgressBar progress_bar {}
+
+        Label progress_label {
+          styles [
+            "dim-label",
+            "numeric",
+          ]
+        }
+      }
+
+      ListBox results_list {
+        selection-mode: none;
+        visible: false;
+
+        styles [
+          "boxed-list",
+        ]
+      }
+
+      Button action_button {
+        label: _("_Check");
+        use-underline: true;
+        halign: center;
+        clicked => $on_action_clicked() swapped;
+
+        styles [
+          "pill",
+          "suggested-action",
+        ]
+      }
+
+      Label caption_label {
+        label: _("Not checked yet");
+
+        styles [
+          "dim-label",
+        ]
+      }
+    };
+  }
+}

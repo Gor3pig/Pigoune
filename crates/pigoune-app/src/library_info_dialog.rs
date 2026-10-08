@@ -6,8 +6,8 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{
-    Asset, AssetId, ColorShare, FormatShare, LibraryOverview, LibraryRecords, StorageUse,
-    oldest_compatible_version,
+    Asset, AssetId, ColorShare, FormatShare, HealthPlan, LibraryOverview, LibraryRecords,
+    StorageUse, oldest_compatible_version,
 };
 
 use crate::asset_colors;
@@ -51,6 +51,7 @@ mod imp {
     use gtk::prelude::*;
     use pigoune_core::{AssetId, FormatShare, StorageUse};
 
+    use crate::health_page::PigouneHealthPage;
     use crate::ring_chart::PigouneRingChart;
     use crate::stacked_bar::PigouneStackedBar;
 
@@ -107,6 +108,8 @@ mod imp {
         pub created_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub format_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
+        pub health_page: TemplateChild<PigouneHealthPage>,
         pub root: RefCell<PathBuf>,
         pub shares: RefCell<Vec<FormatShare>>,
         pub storage: RefCell<Option<StorageUse>>,
@@ -124,6 +127,7 @@ mod imp {
         fn class_init(class: &mut Self::Class) {
             PigouneRingChart::ensure_type();
             PigouneStackedBar::ensure_type();
+            PigouneHealthPage::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
         }
@@ -150,6 +154,7 @@ impl PigouneLibraryInfoDialog {
         report: LibraryReport,
         on_show: impl Fn(AssetId) + 'static,
         clear_thumbnails: impl Fn() -> Result<(), String> + 'static,
+        health_plan: impl Fn() -> Result<HealthPlan, String> + 'static,
     ) -> Self {
         let LibraryReport {
             name,
@@ -166,6 +171,8 @@ impl PigouneLibraryInfoDialog {
         imp.on_show.replace(Some(Box::new(on_show)));
         imp.clear_thumbnails
             .replace(Some(Box::new(clear_thumbnails)));
+        imp.health_page.connect_plan_source(health_plan);
+        dialog.connect_closed(|dialog| dialog.imp().health_page.cancel());
         imp.root.replace(root.to_path_buf());
         imp.records_box.set_visible(overview.resources > 1);
         dialog.show_records(&records);

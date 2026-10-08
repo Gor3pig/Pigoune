@@ -315,6 +315,14 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
             };
           };
         }
+
+        Adw.ViewStackPage {
+          name: "health";
+          title: _("Health");
+          icon-name: "security-high-symbolic";
+
+          child: $PigouneHealthPage health_page {};
+        }
       };
     };
   };

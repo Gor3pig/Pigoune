@@ -8,9 +8,9 @@ use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp,
     CollectionCommand, CollectionId, CollectionLook, CollectionPath, CollectionRemoval, Dimensions,
-    ImportError, ImportSummary, Library, LibraryError, SmartCollection, SmartCollectionCommand,
-    SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
-    dominant_colors, library_display_name,
+    HealthPlan, ImportError, ImportSummary, Library, LibraryError, SmartCollection,
+    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
+    TextField, UndoError, dominant_colors, library_display_name,
 };
 
 use crate::asset_colors;
@@ -1178,6 +1178,17 @@ impl PigouneWindow {
             })
     }
 
+    fn health_plan(&self) -> Result<HealthPlan, String> {
+        self.imp().library.borrow().as_ref().map_or_else(
+            || Err(String::new()),
+            |library| {
+                library
+                    .health_plan()
+                    .map_err(|error| error_messages::describe(&error))
+            },
+        )
+    }
+
     fn show_library_info(&self) {
         let shown = self.imp().library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>(LibraryReport {
@@ -1205,6 +1216,13 @@ impl PigouneWindow {
                         #[upgrade_or]
                         Ok(()),
                         move || window.clear_thumbnails()
+                    ),
+                    glib::clone!(
+                        #[weak(rename_to = window)]
+                        self,
+                        #[upgrade_or_else]
+                        || Err(String::new()),
+                        move || window.health_plan()
                     ),
                 )
             })

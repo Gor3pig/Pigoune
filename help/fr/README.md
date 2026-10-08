@@ -365,7 +365,7 @@ la gardez dans un dossier synchronisé (Nextcloud, Syncthing…), fermez Pigoune
 ordinateur avant de l'ouvrir sur un autre.
 
 Choisissez **Informations sur la bibliothèque** dans le menu principal pour voir ce que contient
-la bibliothèque ouverte, en trois onglets :
+la bibliothèque ouverte, en quatre onglets :
 
 - **Aperçu** montre le nom et l'emplacement de la bibliothèque, le nombre de ressources, de
   collections, de tags et de favoris, et les **Records** : la ressource la plus lourde, la plus
@@ -381,6 +381,11 @@ la bibliothèque ouverte, en trois onglets :
   ouvrir son dossier, si ce disque est amovible, la place prise par les vignettes, sa date de
   création et les versions de Pigoune capables de l'ouvrir. **Vider**, à côté des vignettes,
   libère leur place ; elles sont recréées quand on en a besoin.
+- **Santé** compare les fichiers du disque avec la base de données de la bibliothèque.
+  **Vérifier** lit chaque fichier, ceux de la corbeille compris, et liste les fichiers manquants,
+  les fichiers abîmés (leur contenu ne correspond plus à ce qui a été importé) et les fichiers du
+  dossier de la bibliothèque qui n'ont pas de fiche. La vérification se fait en arrière-plan,
+  peut être annulée, et ne modifie ni ne supprime jamais rien.
 
 ## Préférences
 
