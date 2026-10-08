@@ -84,6 +84,12 @@ to change it.
   show it, only remember the version (first installation, preference off, a version without
   points) or do nothing. The points of the running version live in the code, so they are
   translated in every language of the interface like the rest of the texts.
+- **First launch.** `first_launch.rs` is the one place that decides how Pigoune looks to a brand
+  new user: a short table of settings and their first values. It is applied once, at start-up,
+  and only when no setting has ever been saved; anyone who has already used or customized
+  Pigoune sees no change, and the new user's later choices are never overridden. Internal state
+  (last version seen, last library...) stays out of the table, and a window size is capped to
+  the screen.
 - **Wallpapers.** `wallpaper_dialog.rs` is the framing window and `wallpaper_stage.rs` its
   virtual screen, drawn at the real resolution of a monitor listed by `screen_size.rs`. The
   framing math (fill, whole image, zoom around a point, snapping, the visible part) is pure and

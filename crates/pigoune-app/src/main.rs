@@ -40,6 +40,7 @@ mod export_as_dialog;
 mod export_size;
 mod filter_choices;
 mod filter_popover;
+mod first_launch;
 mod flatpak_updates;
 mod found_flash;
 mod frame_cache;

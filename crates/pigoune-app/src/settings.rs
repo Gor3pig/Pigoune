@@ -53,10 +53,19 @@ pub const EXPORT_SIZE_UNIT: &str = "export-size-unit";
 pub const EXPORT_ICON_SIZES: &str = "export-icon-sizes";
 
 pub fn load() -> gio::Settings {
+    open(None)
+}
+
+#[cfg(test)]
+pub fn load_in_memory() -> gio::Settings {
+    open(Some(&gio::memory_settings_backend_new()))
+}
+
+fn open(backend: Option<&gio::SettingsBackend>) -> gio::Settings {
     let schema = installed_schema()
         .or_else(development_schema)
         .expect("the settings schema is installed or compiled at build time");
-    gio::Settings::new_full(&schema, None::<&gio::SettingsBackend>, None)
+    gio::Settings::new_full(&schema, backend, None)
 }
 
 pub fn store_string(settings: &gio::Settings, key: &str, value: &str) {

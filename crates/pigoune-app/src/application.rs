@@ -3,6 +3,7 @@ use gettextrs::gettext;
 use gtk::{gio, glib};
 
 use crate::config::{APP_ID, RESOURCE_BASE_PATH, VERSION};
+use crate::first_launch;
 use crate::help_url;
 use crate::icon_theme;
 use crate::release_notes;
@@ -64,6 +65,7 @@ fn present_main_window(application: &adw::Application) {
     }
 
     let settings = settings::load();
+    first_launch::apply(&settings);
     let window = PigouneWindow::new(application, settings.clone());
     window.present();
     whats_new::show_after_update(&window, &settings);
