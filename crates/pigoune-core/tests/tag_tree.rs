@@ -443,3 +443,26 @@ fn a_format_8_library_keeps_its_tags_as_top_level_tags() {
         })
         .expect("sub-tags work after the upgrade");
 }
+
+#[test]
+fn a_smart_collection_searching_a_parent_name_follows_its_sub_tags() {
+    let mut fixture = Fixture::new();
+    let goat = fixture.import("red-dot.png");
+    let other = fixture.import("dark-circle.svg");
+    fixture.add(&[goat], "animals/goat");
+    fixture.add(&[other], "logo");
+    let id = fixture
+        .library
+        .create_smart_collection("Beasts", &AssetFilter::text("animals"))
+        .expect("smart collection saved");
+
+    assert_eq!(fixture.shown(AssetView::Smart(id)), set(&[goat]));
+    assert_eq!(
+        fixture
+            .library
+            .view_counts()
+            .expect("counts")
+            .of(AssetView::Smart(id)),
+        1
+    );
+}

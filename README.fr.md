@@ -53,7 +53,7 @@ automatiquement.
 
 ### Organiser
 Collections imbriquées avec leur icône et leur couleur, collections dynamiques qui se
-remplissent toutes seules, tags, favoris, ainsi qu'une note, une source, une licence et un auteur
+remplissent toutes seules, tags imbriqués, favoris, ainsi qu'une note, une source, une licence et un auteur
 pour chaque élément.
 
 </td>

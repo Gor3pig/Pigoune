@@ -115,6 +115,21 @@ tags en pastilles avec leur nombre d’éléments : cliquez sur l'une d'elles po
 éléments, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
 **+ N autres** affiche la suite. Renommer un tag avec le nom d'un autre les fusionne.
 
+Les tags peuvent être imbriqués : *Sujet › Animaux › chèvre*. Tapez un chemin avec une barre
+oblique, par exemple `animaux/chèvre`, pour créer ou réutiliser chaque niveau ; taper `animaux/`
+propose ses sous-tags, et chaque suggestion montre ses parents. Chaque niveau est un seul mot de
+20 caractères au plus. Dans la barre latérale, la section Tags montre un niveau à la fois : une
+pastille avec un **›** a des sous-tags, et un clic dessus ouvre le tag, qui montre aussi les éléments
+de ses sous-tags, et descend dedans. Le chemin au-dessus des pastilles permet de remonter, et
+**Tags** revient au premier niveau. Le même nom peut exister dans deux branches différentes, mais
+pas deux fois au même niveau. Faites un clic droit sur un tag pour **Nouveau sous-tag…**,
+**Déplacer vers…**, **Fusionner dans…** et **Supprimer…**, ou glissez une pastille sur un autre tag,
+sur un niveau du chemin ou sur **Tags** pour la déplacer. Supprimer un tag qui a des sous-tags
+permet de les supprimer aussi ou de les remonter d'un niveau, et chaque changement s'annule.
+Chercher le nom d'un parent trouve aussi les éléments de ses sous-tags. Une bibliothèque avec des
+tags imbriqués ne peut être ouverte que par Pigoune 2.5 ou plus récent ; vos tags actuels
+deviennent des tags de premier niveau, sans rien perdre.
+
 ### Les favoris
 
 Ajoutez un élément aux favoris avec l'étoile à côté de son nom, dans le panneau de

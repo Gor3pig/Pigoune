@@ -102,6 +102,19 @@ a tag in the sidebar. The sidebar shows tags as pills with their number of asset
 to see all its assets, or right-click it to rename or delete it. Beyond twelve tags, **+ N
 others** shows the rest. Renaming a tag to the name of another one merges them.
 
+Tags can be nested: *Subject › Animals › goat*. Type a path with a slash, for example
+`animals/goat`, to create or reuse each level; typing `animals/` suggests its sub-tags, and every
+suggestion shows its parents. Each level is a single word of up to 20 characters. In the sidebar,
+the Tags section shows one level at a time: a pill with a **›** has sub-tags, and clicking it opens
+the tag, which also shows the assets of its sub-tags, and steps into it. The path above the pills
+climbs back up, and **Tags** returns to the first level. The same name can exist in two different
+branches, but not twice at the same level. Right-click a tag for **New Sub-tag…**, **Move to…**,
+**Merge into…** and **Delete…**, or drag a pill onto another tag, onto a level of the path, or onto
+**Tags** to move it. Deleting a tag that has sub-tags lets you delete them too or move them up one
+level, and every change can be undone. Searching a parent's name also finds the assets of its
+sub-tags. A library with nested tags can only be opened by Pigoune 2.5 or later; your existing tags
+become first-level tags and nothing is lost.
+
 ### Favorites
 
 Add an asset to the favorites with the star next to its name in the details panel, or press
