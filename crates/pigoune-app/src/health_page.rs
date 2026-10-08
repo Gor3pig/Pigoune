@@ -214,7 +214,7 @@ impl PigouneHealthPage {
         imp.status.set_icon_name(Some("security-high-symbolic"));
         imp.status.set_title(&gettext("Checking…"));
         imp.status.set_description(Some(&gettext(
-            "Reading the files and computing their fingerprints. You can keep using Pigoune.",
+            "Reading the files and checking their integrity. You can keep using Pigoune.",
         )));
         imp.progress_bar.set_fraction(0.0);
         imp.progress_label.set_label("");
@@ -343,7 +343,7 @@ impl PigouneHealthPage {
                 gettext("Damaged Files"),
                 issue_lines(&report.damaged, false, true),
             ),
-            (UNRECORDED, gettext("Files Without a Record"), unrecorded),
+            (UNRECORDED, gettext("Unregistered Files"), unrecorded),
         ];
         for (index, title, lines) in groups {
             if !lines.is_empty() {
@@ -597,13 +597,13 @@ impl PigouneHealthPage {
 
     fn confirm_removal(&self, id: AssetId, name: &str) {
         let alert = adw::AlertDialog::new(
-            Some(&gettext("Remove the Record of “{name}”?").replace("{name}", name)),
+            Some(&gettext("Remove “{name}” from the Library?").replace("{name}", name)),
             Some(&gettext(
-                "The file is missing. The resource, its tags, its notes and its place in the collections will be removed from the library. This cannot be undone.",
+                "The file is missing. The asset, its tags, its notes and its place in the collections will be removed from the library. This cannot be undone.",
             )),
         );
         alert.add_response(CLOSE_RESPONSE, &gettext("_Cancel"));
-        alert.add_response(REMOVE_RESPONSE, &gettext("_Remove the Record"));
+        alert.add_response(REMOVE_RESPONSE, &gettext("_Remove from the Library"));
         alert.set_response_appearance(REMOVE_RESPONSE, adw::ResponseAppearance::Destructive);
         alert.set_default_response(Some(CLOSE_RESPONSE));
         alert.set_close_response(CLOSE_RESPONSE);
@@ -627,7 +627,7 @@ impl PigouneHealthPage {
             Ok(()) => {
                 (actions.changed)();
                 self.forget_issue(id);
-                let text = gettext("The record of “{name}” was removed").replace("{name}", name);
+                let text = gettext("“{name}” was removed from the Library").replace("{name}", name);
                 self.show_toast(&text, None);
             }
             Err(refusal) => self.show_refusal(&refusal, None),
@@ -755,8 +755,8 @@ struct Line {
 fn added_text(added: usize, refused: usize) -> String {
     let added_text = count_text(
         &ngettext(
-            "{count} resource added to Unclassified",
-            "{count} resources added to Unclassified",
+            "{count} asset added to Unclassified",
+            "{count} assets added to Unclassified",
             u32::try_from(added).unwrap_or(u32::MAX),
         ),
         added,

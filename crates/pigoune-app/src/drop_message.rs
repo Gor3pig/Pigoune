@@ -82,14 +82,14 @@ fn describe_tag(
 fn describe_favorites(assets: &[AssetId], subject: &str, library: &Library) -> String {
     let text = if all_favorite(assets, library) {
         ngettext(
-            "{subject} is already a favorite",
-            "{subject} are already favorites",
+            "{subject} is already in Favorites",
+            "{subject} are already in Favorites",
             plural(assets.len()),
         )
     } else {
         ngettext(
-            "Mark {subject} as a favorite",
-            "Mark {subject} as favorites",
+            "Add {subject} to Favorites",
+            "Add {subject} to Favorites",
             plural(assets.len()),
         )
     };

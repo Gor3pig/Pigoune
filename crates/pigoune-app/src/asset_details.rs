@@ -462,8 +462,8 @@ impl PigouneAssetDetails {
         let title = match selected {
             [single] => single.display_name(),
             several => ngettext(
-                "{count} resource selected",
-                "{count} resources selected",
+                "{count} asset selected",
+                "{count} assets selected",
                 u32::try_from(several.len()).unwrap_or(u32::MAX),
             )
             .replace("{count}", &several.len().to_string()),
@@ -491,8 +491,8 @@ impl PigouneAssetDetails {
         let count = selected.len();
         imp.group_title.set_label(
             &ngettext(
-                "{count} resource selected",
-                "{count} resources selected",
+                "{count} asset selected",
+                "{count} assets selected",
                 u32::try_from(count).unwrap_or(u32::MAX),
             )
             .replace("{count}", &count.to_string()),

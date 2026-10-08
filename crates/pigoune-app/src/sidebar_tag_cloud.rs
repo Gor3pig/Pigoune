@@ -367,8 +367,8 @@ fn spoken_label(tag: &TagPill) -> String {
     let name = gettext("Tag {name}").replace("{name}", &tag.name);
     match tag.count {
         Some(count) => ngettext(
-            "{name}, {count} resource",
-            "{name}, {count} resources",
+            "{name}, {count} asset",
+            "{name}, {count} assets",
             count_for_plural(count),
         )
         .replace("{name}", &name)

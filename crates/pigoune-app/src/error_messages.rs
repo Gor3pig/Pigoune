@@ -46,7 +46,7 @@ pub fn describe_replacement(error: &ReplaceError, file_name: &str, asset_name: &
             true,
         ),
         ReplaceError::AssetNotFound(_) => (
-            gettext("This Resource No Longer Exists"),
+            gettext("This Asset No Longer Exists"),
             gettext("Check the library again to see its current state."),
             false,
         ),
@@ -72,12 +72,13 @@ pub fn describe_removal(error: &RemoveRecordError, asset_name: &str) -> Refusal 
             ),
         ),
         RemoveRecordError::AssetNotFound(_) => (
-            gettext("This Resource No Longer Exists"),
+            gettext("This Asset No Longer Exists"),
             gettext("Check the library again to see its current state."),
         ),
-        RemoveRecordError::Library(error) => {
-            (gettext("Unable to Remove the Record"), describe(error))
-        }
+        RemoveRecordError::Library(error) => (
+            gettext("Unable to Remove the Asset from the Library"),
+            describe(error),
+        ),
     };
     Refusal {
         title,
@@ -128,9 +129,9 @@ pub fn describe_collection(error: &CollectionError) -> String {
             gettext("A collection cannot be placed inside itself or one of its sub-collections.")
         }
         CollectionError::OutdatedOrder => {
-            gettext("The collections changed in the meantime. Please try again.")
+            gettext("The collections changed in the meantime. Try again.")
         }
-        CollectionError::AssetNotFound(_) => gettext("This resource no longer exists."),
+        CollectionError::AssetNotFound(_) => gettext("This asset no longer exists."),
         CollectionError::NotEmpty(name) => gettext(
             "The collection “{name}” is no longer empty, so creating it is not undone. Use “Delete…” to remove it.",
         )
@@ -144,8 +145,8 @@ pub fn describe_collection(error: &CollectionError) -> String {
 
 pub fn describe_asset(error: &AssetError) -> String {
     match error {
-        AssetError::NotFound(_) => gettext("This resource no longer exists."),
-        AssetError::InvalidName => gettext("Enter a name for the resource."),
+        AssetError::NotFound(_) => gettext("This asset no longer exists."),
+        AssetError::InvalidName => gettext("Enter a name for the asset."),
         AssetError::Library(error) => describe(error),
     }
 }
@@ -182,7 +183,7 @@ pub fn describe_tag(error: &TagError) -> String {
         TagError::TooLong => gettext("A tag has at most {count} characters.")
             .replace("{count}", &LONGEST_TAG_NAME.to_string()),
         TagError::NotFound(_) => gettext("This tag no longer exists."),
-        TagError::AssetNotFound(_) => gettext("This resource no longer exists."),
+        TagError::AssetNotFound(_) => gettext("This asset no longer exists."),
         TagError::NameTaken(_) => gettext("Another tag already has this name."),
         TagError::Library(error) => describe(error),
     }

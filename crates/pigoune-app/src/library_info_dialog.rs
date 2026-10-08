@@ -341,8 +341,8 @@ impl PigouneLibraryInfoDialog {
             Measure::Count => {
                 imp.total_label.set_label(&resources.to_string());
                 imp.total_caption.set_label(&ngettext(
-                    "resource",
-                    "resources",
+                    "asset",
+                    "assets",
                     u32::try_from(resources).unwrap_or(u32::MAX),
                 ));
             }
@@ -386,7 +386,7 @@ impl PigouneLibraryInfoDialog {
         let amount = |count: usize| u32::try_from(count).unwrap_or(u32::MAX);
         let main = figure_tile(
             overview.resources,
-            &ngettext("Resource", "Resources", amount(overview.resources)),
+            &ngettext("Asset", "Assets", amount(overview.resources)),
         );
         main.add_css_class("main-figure");
         imp.figures_grid.attach(&main, 0, 0, SMALL_FIGURES, 1);
@@ -463,11 +463,7 @@ impl PigouneLibraryInfoDialog {
     fn show_disk_space(&self, root: &Path, storage: &StorageUse) {
         let imp = self.imp();
         let library_parts = [
-            (
-                storage.resources,
-                RESOURCES_COLOR,
-                gettext("Resources {size}"),
-            ),
+            (storage.resources, RESOURCES_COLOR, gettext("Assets {size}")),
             (
                 storage.thumbnails,
                 THUMBNAILS_COLOR,

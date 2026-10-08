@@ -32,7 +32,7 @@
     <key name="show-details" type="b">
       <default>true</default>
       <summary>Show the details panel</summary>
-      <description>Whether the panel describing the selected resource is shown next to the grid.</description>
+      <description>Whether the panel describing the selected asset is shown next to the grid.</description>
     </key>
     <key name="sort-criterion" type="s">
       <choices>
@@ -44,7 +44,7 @@
       </choices>
       <default>"added"</default>
       <summary>Sort criterion</summary>
-      <description>How the resources of the library grid are ordered.</description>
+      <description>How the assets of the library grid are ordered.</description>
     </key>
     <key name="sort-reversed" type="b">
       <default>false</default>
@@ -76,22 +76,22 @@
       </choices>
       <default>"transparent"</default>
       <summary>Preview background</summary>
-      <description>Background shown behind the resource in the detailed preview.</description>
+      <description>Background shown behind the asset in the detailed preview.</description>
     </key>
     <key name="preview-bounds" type="b">
       <default>true</default>
       <summary>Show image bounds</summary>
-      <description>Whether a dashed outline marks the edges of the resource in the detailed preview.</description>
+      <description>Whether a dashed outline marks the edges of the asset in the detailed preview.</description>
     </key>
     <key name="preview-strip" type="b">
       <default>true</default>
       <summary>Show the thumbnail strip</summary>
-      <description>Whether a strip of neighboring thumbnails is shown below the resource in the detailed preview.</description>
+      <description>Whether a strip of neighboring thumbnails is shown below the asset in the detailed preview.</description>
     </key>
     <key name="preview-details" type="b">
       <default>false</default>
       <summary>Show details in the preview</summary>
-      <description>Whether the details panel is shown next to the resource in the detailed preview.</description>
+      <description>Whether the details panel is shown next to the asset in the detailed preview.</description>
     </key>
     <key name="preview-pixel-grid" type="b">
       <default>true</default>
@@ -178,12 +178,12 @@
     <key name="show-formats" type="b">
       <default>false</default>
       <summary>Show formats</summary>
-      <description>Whether each thumbnail of the grid shows the format of its resource.</description>
+      <description>Whether each thumbnail of the grid shows the format of its asset.</description>
     </key>
     <key name="double-click-opens" type="b">
       <default>false</default>
-      <summary>Open resources on double-click</summary>
-      <description>Whether a double-click opens a resource in its default application instead of the preview.</description>
+      <summary>Open assets on double-click</summary>
+      <description>Whether a double-click opens an asset in its default application instead of the preview.</description>
     </key>
     <key name="search-everywhere" type="b">
       <default>false</default>
@@ -197,13 +197,13 @@
     </key>
     <key name="show-counts" type="b">
       <default>true</default>
-      <summary>Show resource counts</summary>
-      <description>Whether the sidebar shows how many resources each entry contains.</description>
+      <summary>Show asset counts</summary>
+      <description>Whether the sidebar shows how many assets each entry contains.</description>
     </key>
     <key name="show-names" type="b">
       <default>true</default>
-      <summary>Show resource names</summary>
-      <description>Whether the grid shows the name of each resource under its thumbnail.</description>
+      <summary>Show asset names</summary>
+      <description>Whether the grid shows the name of each asset under its thumbnail.</description>
     </key>
     <key name="reopen-last-library" type="b">
       <default>true</default>
@@ -223,12 +223,12 @@
     <key name="confirm-empty-trash" type="b">
       <default>true</default>
       <summary>Confirm before emptying the trash</summary>
-      <description>Whether Pigoune asks before deleting the resources in the trash for good.</description>
+      <description>Whether Pigoune asks before deleting the assets in the trash for good.</description>
     </key>
     <key name="auto-empty-trash" type="b">
       <default>false</default>
       <summary>Empty the trash automatically</summary>
-      <description>Whether resources that have been in the trash for more than 30 days are deleted for good.</description>
+      <description>Whether assets that have been in the trash for more than 30 days are deleted for good.</description>
     </key>
     <key name="last-view" type="s">
       <default>""</default>
@@ -251,7 +251,7 @@
       </choices>
       <default>"png"</default>
       <summary>Export format</summary>
-      <description>Format last chosen to export resources converted.</description>
+      <description>Format last chosen to export assets converted.</description>
     </key>
     <key name="export-quality" type="i">
       <range min="1" max="100"/>

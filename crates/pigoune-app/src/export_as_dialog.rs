@@ -333,11 +333,11 @@ impl PigouneExportAsDialog {
 
 fn several_text(custom: CustomSize) -> String {
     match (custom.unit, custom.linked) {
-        (SizeUnit::Percent, _) => gettext("Each resource is resized by this percentage"),
+        (SizeUnit::Percent, _) => gettext("Each asset is resized by this percentage"),
         (SizeUnit::Pixels, true) => {
-            gettext("Each resource fits inside this frame, without being stretched")
+            gettext("Each asset fits inside this frame, without being stretched")
         }
-        (SizeUnit::Pixels, false) => gettext("Each resource takes exactly this size"),
+        (SizeUnit::Pixels, false) => gettext("Each asset takes exactly this size"),
     }
 }
 

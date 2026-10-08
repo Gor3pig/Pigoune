@@ -59,7 +59,7 @@ and favorites, plus a note, a source, a license and an author for each asset.
 <td width="50%" valign="top">
 
 ### Find
-Instant search and filters by type, shape, color or favorite, even among thousands of assets, with
+Instant search and filters by type, orientation, color or favorite, even among thousands of assets, with
 words combined by "and" or "or" in one click. Clicking a collection or a tag shows you where an asset
 lives.
 
@@ -73,7 +73,7 @@ export it to a folder, as it is or converted to PNG, JPEG, WebP, AVIF or ICO.
 ### Wallpapers
 Frame any image on a virtual copy of your screen, under the bars of your desktop, fill the gaps
 with a color, a gradient, a blur or a mosaic, and set it: your desktop shows exactly what you
-framed. Filters by shape and by screen size find the images that fit.
+framed. Filters by orientation and by screen size find the images that fit.
 
 </td>
 </tr>

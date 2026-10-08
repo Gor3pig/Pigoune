@@ -139,8 +139,8 @@ impl PigouneSidebarItem {
             return name;
         };
         ngettext(
-            "{name}, {count} resource",
-            "{name}, {count} resources",
+            "{name}, {count} asset",
+            "{name}, {count} assets",
             u32::try_from(count).unwrap_or(u32::MAX),
         )
         .replace("{name}", &name)

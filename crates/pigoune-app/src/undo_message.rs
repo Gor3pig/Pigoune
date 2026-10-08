@@ -21,14 +21,14 @@ fn describe_asset(command: &AssetCommand, names: &Names) -> Option<String> {
             assets.len(),
             &if *favorite {
                 ngettext(
-                    "Adding {count} resource to the favorites undone",
-                    "Adding {count} resources to the favorites undone",
+                    "Adding {count} asset to the favorites undone",
+                    "Adding {count} assets to the favorites undone",
                     plural(assets.len()),
                 )
             } else {
                 ngettext(
-                    "Removing {count} resource from the favorites undone",
-                    "Removing {count} resources from the favorites undone",
+                    "Removing {count} asset from the favorites undone",
+                    "Removing {count} assets from the favorites undone",
                     plural(assets.len()),
                 )
             },
@@ -37,20 +37,20 @@ fn describe_asset(command: &AssetCommand, names: &Names) -> Option<String> {
             assets.len(),
             &if *trashed {
                 ngettext(
-                    "Moving {count} resource to the trash undone",
-                    "Moving {count} resources to the trash undone",
+                    "Moving {count} asset to the trash undone",
+                    "Moving {count} assets to the trash undone",
                     plural(assets.len()),
                 )
             } else {
                 ngettext(
-                    "Restoring {count} resource undone",
-                    "Restoring {count} resources undone",
+                    "Restoring {count} asset undone",
+                    "Restoring {count} assets undone",
                     plural(assets.len()),
                 )
             },
         ),
         AssetCommand::Rename { asset, .. } => named(
-            &gettext("Renaming undone, the resource is named “{name}” again"),
+            &gettext("Renaming undone, the asset is named “{name}” again"),
             &names.asset(*asset)?,
         ),
         AssetCommand::SetText { asset, field, .. } => {
@@ -95,8 +95,8 @@ fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<Str
             &counted(
                 assets.len(),
                 &ngettext(
-                    "Adding {count} resource to “{name}” undone",
-                    "Adding {count} resources to “{name}” undone",
+                    "Adding {count} asset to “{name}” undone",
+                    "Adding {count} assets to “{name}” undone",
                     plural(assets.len()),
                 ),
             ),
@@ -106,8 +106,8 @@ fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<Str
             &counted(
                 assets.len(),
                 &ngettext(
-                    "Removing {count} resource from “{name}” undone",
-                    "Removing {count} resources from “{name}” undone",
+                    "Removing {count} asset from “{name}” undone",
+                    "Removing {count} assets from “{name}” undone",
                     plural(assets.len()),
                 ),
             ),
@@ -117,8 +117,8 @@ fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<Str
             &counted(
                 assets.len(),
                 &ngettext(
-                    "Moving {count} resource to “{name}” undone",
-                    "Moving {count} resources to “{name}” undone",
+                    "Moving {count} asset to “{name}” undone",
+                    "Moving {count} assets to “{name}” undone",
                     plural(assets.len()),
                 ),
             ),
@@ -168,8 +168,8 @@ fn describe_tag(command: &TagCommand, names: &Names) -> Option<String> {
             &counted(
                 assets.len(),
                 &ngettext(
-                    "Adding the tag “{name}” to {count} resource undone",
-                    "Adding the tag “{name}” to {count} resources undone",
+                    "Adding the tag “{name}” to {count} asset undone",
+                    "Adding the tag “{name}” to {count} assets undone",
                     plural(assets.len()),
                 ),
             ),
@@ -179,8 +179,8 @@ fn describe_tag(command: &TagCommand, names: &Names) -> Option<String> {
             &counted(
                 assets.len(),
                 &ngettext(
-                    "Removing the tag “{name}” from {count} resource undone",
-                    "Removing the tag “{name}” from {count} resources undone",
+                    "Removing the tag “{name}” from {count} asset undone",
+                    "Removing the tag “{name}” from {count} assets undone",
                     plural(assets.len()),
                 ),
             ),

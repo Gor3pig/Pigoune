@@ -9,8 +9,8 @@ pub struct Failure {
 
 pub fn success_text(count: usize, format: TargetFormat, folder_name: &str) -> String {
     ngettext(
-        "{count} resource exported as {format} to “{name}”",
-        "{count} resources exported as {format} to “{name}”",
+        "{count} asset exported as {format} to “{name}”",
+        "{count} assets exported as {format} to “{name}”",
         u32::try_from(count).unwrap_or(u32::MAX),
     )
     .replace("{count}", &count.to_string())
@@ -20,8 +20,8 @@ pub fn success_text(count: usize, format: TargetFormat, folder_name: &str) -> St
 
 pub fn progress_text(count: usize, format: TargetFormat) -> String {
     ngettext(
-        "Exporting {count} resource as {format}…",
-        "Exporting {count} resources as {format}…",
+        "Exporting {count} asset as {format}…",
+        "Exporting {count} assets as {format}…",
         u32::try_from(count).unwrap_or(u32::MAX),
     )
     .replace("{count}", &count.to_string())
@@ -30,8 +30,8 @@ pub fn progress_text(count: usize, format: TargetFormat) -> String {
 
 pub fn failures_heading(count: usize) -> String {
     ngettext(
-        "{count} Resource Was Not Exported",
-        "{count} Resources Were Not Exported",
+        "{count} Asset Was Not Exported",
+        "{count} Assets Were Not Exported",
         u32::try_from(count).unwrap_or(u32::MAX),
     )
     .replace("{count}", &count.to_string())

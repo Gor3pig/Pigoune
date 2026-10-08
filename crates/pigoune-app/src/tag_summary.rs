@@ -106,7 +106,7 @@ impl PigouneTagSummary {
             );
             pill.set_tooltip_text(Some(&naming(
                 &tag.name,
-                &gettext("On {count} of {total} resources. Click to add it to all of them.")
+                &gettext("On {count} of {total} assets. Click to add it to all of them.")
                     .replace("{count}", &shared.carried_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
             )));

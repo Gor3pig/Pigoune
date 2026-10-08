@@ -1194,7 +1194,10 @@ fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
     copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));
     sharing.append_item(&copy);
     sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
-    sharing.append(Some(&gettext("Export As…")), Some("win.export-selected-as"));
+    sharing.append(
+        Some(&gettext("Convert and Export…")),
+        Some("win.export-selected-as"),
+    );
     let menu = gio::Menu::new();
     menu.append_section(None, &viewing);
     menu.append_section(None, &sharing);

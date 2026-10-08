@@ -170,7 +170,7 @@ impl PigouneFilterChoices {
 
     fn build_shapes(&self) {
         let heading = gtk::Label::builder()
-            .label(gettext("Shape"))
+            .label(gettext("Orientation"))
             .xalign(0.0)
             .css_classes(["heading"])
             .build();

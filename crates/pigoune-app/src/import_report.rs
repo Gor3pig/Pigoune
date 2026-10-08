@@ -81,14 +81,14 @@ fn outcome_lines(summary: &ImportSummary, collection: Option<&str>) -> Vec<Strin
     let imported = count_for_plural(summary.imported.len());
     let imported_text = match collection {
         Some(collection) => ngettext(
-            "{count} resource imported into “{collection}”",
-            "{count} resources imported into “{collection}”",
+            "{count} asset imported into “{collection}”",
+            "{count} assets imported into “{collection}”",
             imported,
         )
         .replace("{collection}", collection),
         None => ngettext(
-            "{count} resource imported",
-            "{count} resources imported",
+            "{count} asset imported",
+            "{count} assets imported",
             imported,
         ),
     };
@@ -97,24 +97,24 @@ fn outcome_lines(summary: &ImportSummary, collection: Option<&str>) -> Vec<Strin
         (
             summary.already_present,
             ngettext(
-                "{count} resource already in the library",
-                "{count} resources already in the library",
+                "{count} asset already in the library",
+                "{count} assets already in the library",
                 count_for_plural(summary.already_present),
             ),
         ),
         (
             summary.added_to_collection,
             ngettext(
-                "{count} resource already in the library, added to its collection",
-                "{count} resources already in the library, added to their collections",
+                "{count} asset already in the library, added to its collection",
+                "{count} assets already in the library, added to their collections",
                 count_for_plural(summary.added_to_collection),
             ),
         ),
         (
             summary.restored_from_trash,
             ngettext(
-                "{count} resource restored from the trash",
-                "{count} resources restored from the trash",
+                "{count} asset restored from the trash",
+                "{count} assets restored from the trash",
                 count_for_plural(summary.restored_from_trash),
             ),
         ),
@@ -131,8 +131,8 @@ fn problem_lines(summary: &ImportSummary) -> Vec<String> {
         (
             summary.large_imported,
             ngettext(
-                "{count} large resource imported (over 50 MB): it takes up more disk space and its preview may take longer to appear",
-                "{count} large resources imported (over 50 MB): they take up more disk space and their previews may take longer to appear",
+                "{count} large asset imported (over 50 MB): it takes up more disk space and its preview may take longer to appear",
+                "{count} large assets imported (over 50 MB): they take up more disk space and their previews may take longer to appear",
                 count_for_plural(summary.large_imported),
             ),
         ),

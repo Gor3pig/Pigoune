@@ -104,7 +104,7 @@ others** shows the rest. Renaming a tag to the name of another one merges them.
 
 ### Favorites
 
-Mark an asset as a favorite with the star next to its name in the details panel, or press
+Add an asset to the favorites with the star next to its name in the details panel, or press
 <kbd>Ctrl</kbd>+<kbd>D</kbd>, or drag assets onto **Favorites** in the sidebar. Favorites have their own entry in the sidebar.
 
 ### Names, notes and credits
@@ -156,8 +156,8 @@ with types and favorites: red and SVG show the red SVG files. When a library is 
 the first time, its assets are analyzed in the background while you keep working; an asset
 not analyzed yet matches no color.
 
-**Shape** keeps the assets in **Landscape**, **Portrait** or **Square** format; pick two
-shapes to see both. An image counts as square when its sides differ by 5% at most.
+**Orientation** keeps the assets in **Landscape**, **Portrait** or **Square** format; pick two
+orientations to see both. An image counts as square when its sides differ by 5% at most.
 **Fits My Screen** keeps the images at least as large as the screen Pigoune is shown on, in
 real pixels and in both directions, for example 1920 × 1080 or larger: they fill the screen
 without being enlarged, so without blur. SVG files are always left aside.
@@ -177,7 +177,7 @@ library, the trash left aside.
 
 - **Create** one with the **+** button next to **Smart Collections** in the sidebar. The window
   is filled in with the search and the filters in use, and with **Favorites Only** when
-  **Favorites** is open. Give it a name, then choose words to find, types, shapes, colors, **Fits My Screen**
+  **Favorites** is open. Give it a name, then choose words to find, types, orientations, colors, **Fits My Screen**
   or **Favorites Only**: at least one criterion is needed. **Fits My Screen** follows the screen
   Pigoune is shown on when you open the smart collection.
 - **Words to Find** works exactly like the search field: spaces and commas, and pills whose
@@ -240,7 +240,7 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   Library** (see below): **Export…** creates a folder named after the library, with one
   sub-folder for each collection and sub-collection, exactly as in the sidebar, and puts the
   original files inside.
-- **Convert** them with **Export As…** in the right-click menu: choose PNG, JPEG, WebP, AVIF or
+- **Convert** them with **Convert and Export…** in the right-click menu: choose PNG, JPEG, WebP, AVIF or
   ICO, then a folder. JPEG and AVIF offer a quality setting. JPEG has no transparency, so a
   background color fills the transparent areas; the other formats keep transparency unless you
   turn off **Keep Transparency** to use a background color too. Choose the width and height, in
@@ -269,7 +269,7 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   <kbd>+</kbd> and <kbd>-</kbd>, and adjust it with the arrow keys (<kbd>Shift</kbd> moves
   further). **Fill** comes back to the framing of GNOME, **Whole** shows all of the image and
   **100%** shows one pixel of the image per pixel of the screen. **Mirror** flips the image from
-  left to right in the wallpaper only, **Thirds** shows the rule of thirds grid to place the
+  left to right in the wallpaper only, **Rule of Thirds** shows the rule of thirds grid to place the
   subject, and **Snap**, on at first, makes the dragged image catch the center and the edges of
   the screen, a blue line showing where. What goes past the screen stays visible, faded. When the image is enlarged past 100%, a notice over the screen warns that it
   will look blurry. The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its
@@ -346,14 +346,14 @@ after it, in five tabs:
 - **Health** compares the files on the disk with the library's database. **Check** reads every
   file, including those in the trash, and lists the files that are missing, the files that are
   damaged (their content no longer matches what was imported) and the files in the library
-  folder that have no record. It runs in the background and can be canceled, and it never
-  changes or deletes anything by itself. For a file without a record, **Add** (or **Add All**)
-  gives it back a record in Unclassified, without moving the file; Pigoune explains why when a
+  folder that are not registered in the library. It runs in the background and can be canceled,
+  and it never changes or deletes anything by itself. For an unregistered file, **Add** (or **Add All**)
+  puts it back in the library, in Unclassified, without moving the file; Pigoune explains why when a
   file cannot be added, for example when it is not an image. For a missing or damaged file,
   **Replace…** lets you choose a copy of the original file; Pigoune accepts it only if its
   content is identical to what was imported, then puts it back in place and keeps the asset’s
   name, tags and collections. For a missing file with no copy left, **Remove…** removes the
-  asset’s record from the library, after a confirmation that says it cannot be undone; a damaged
+  asset from the library, after a confirmation that says it cannot be undone; a damaged
   file, which still exists, never offers it. A damaged file offers **Move to Trash** instead,
   which can be undone from the message that appears. Assets that are in the trash are not
   reported: their files leave with the trash, and if you restore one, the next check looks at

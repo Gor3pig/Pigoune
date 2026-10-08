@@ -101,7 +101,7 @@ impl PigouneCollectionPlaces {
             );
             pill.set_tooltip_text(Some(&naming(
                 &full_path,
-                &gettext("On {count} of {total} resources")
+                &gettext("On {count} of {total} assets")
                     .replace("{count}", &shared.held_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
             )));

@@ -859,18 +859,16 @@ impl PigouneWindow {
 
     fn describe_trash_retention(&self, settings: &gio::Settings) {
         let title = if settings.boolean(settings::AUTO_EMPTY_TRASH) {
-            gettext("Resources in the trash are deleted for good after 30 days.")
+            gettext("Assets in the trash are deleted for good after 30 days.")
         } else {
-            gettext("Resources in the trash are deleted for good only when it is emptied.")
+            gettext("Assets in the trash are deleted for good only when it is emptied.")
         };
         self.imp().trash_banner.set_title(&title);
     }
 
     fn explain_empty_trash_button(&self) {
         if let Some(button) = descendant_button(self.imp().trash_banner.upcast_ref()) {
-            button.set_tooltip_text(Some(&gettext(
-                "Delete every resource in the trash for good",
-            )));
+            button.set_tooltip_text(Some(&gettext("Delete every asset in the trash for good")));
         }
     }
 
@@ -1277,7 +1275,7 @@ impl PigouneWindow {
         match trashed {
             Some(Ok(Some(stamp))) => Ok(stamp),
             Some(Err(error)) => Err(Refusal {
-                title: gettext("Unable to Change the Resource"),
+                title: gettext("Unable to Change the Asset"),
                 body: error_messages::describe_asset(&error),
                 try_again: false,
             }),
@@ -1406,7 +1404,7 @@ impl PigouneWindow {
             Some(Ok(dialog)) => dialog.present_fitting(self),
             Some(Err(error)) => {
                 let alert = adw::AlertDialog::new(
-                    Some(&gettext("Unable to Read the Library Information")),
+                    Some(&gettext("Unable to Read the Library")),
                     Some(&error_messages::describe(&error)),
                 );
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
@@ -2027,7 +2025,7 @@ impl PigouneWindow {
         ));
         sharing.append(Some(&gettext("Export To…")), Some(EXPORT_SELECTED_ACTION));
         sharing.append(
-            Some(&gettext("Export As…")),
+            Some(&gettext("Convert and Export…")),
             Some(EXPORT_SELECTED_AS_ACTION),
         );
         if in_trash {
@@ -2146,14 +2144,14 @@ impl PigouneWindow {
         let count = assets.len();
         let message = if trashed {
             ngettext(
-                "{count} resource moved to the trash",
-                "{count} resources moved to the trash",
+                "{count} asset moved to the trash",
+                "{count} assets moved to the trash",
                 u32::try_from(count).unwrap_or(u32::MAX),
             )
         } else {
             ngettext(
-                "{count} resource restored",
-                "{count} resources restored",
+                "{count} asset restored",
+                "{count} assets restored",
                 u32::try_from(count).unwrap_or(u32::MAX),
             )
         };
@@ -2180,8 +2178,8 @@ impl PigouneWindow {
             Some(&gettext("Empty the Trash?")),
             Some(
                 &ngettext(
-                    "{count} resource will be deleted for good. This cannot be undone.",
-                    "{count} resources will be deleted for good. This cannot be undone.",
+                    "{count} asset will be deleted for good. This cannot be undone.",
+                    "{count} assets will be deleted for good. This cannot be undone.",
                     u32::try_from(count).unwrap_or(u32::MAX),
                 )
                 .replace("{count}", &count.to_string()),
@@ -2290,8 +2288,8 @@ impl PigouneWindow {
                 let days = TRASH_RETENTION.as_secs() / SECONDS_PER_DAY;
                 self.show_toast(
                     &ngettext(
-                        "{count} resource older than {days} days deleted from the trash for good",
-                        "{count} resources older than {days} days deleted from the trash for good",
+                        "{count} asset older than {days} days deleted from the trash for good",
+                        "{count} assets older than {days} days deleted from the trash for good",
                         u32::try_from(count).unwrap_or(u32::MAX),
                     )
                     .replace("{count}", &count.to_string())
@@ -2376,8 +2374,8 @@ impl PigouneWindow {
                 let message = match (copies.len(), first_name) {
                     (1, Some(name)) => gettext("“{name}” copied").replace("{name}", &name),
                     (count, _) => ngettext(
-                        "{count} resource copied",
-                        "{count} resources copied",
+                        "{count} asset copied",
+                        "{count} assets copied",
                         u32::try_from(count).unwrap_or(u32::MAX),
                     )
                     .replace("{count}", &count.to_string()),
@@ -2522,7 +2520,7 @@ impl PigouneWindow {
             None => return,
         };
         if plan.total() == 0 {
-            let message = gettext("“{name}” has no resources to export").replace("{name}", &name);
+            let message = gettext("“{name}” has no assets to export").replace("{name}", &name);
             toasts::announce(&self.imp().toast_overlay, &adw::Toast::new(&message));
             return;
         }
@@ -2609,7 +2607,7 @@ impl PigouneWindow {
         settings: ConversionSettings,
     ) {
         let dialog = gtk::FileDialog::builder()
-            .title(gettext("Export As"))
+            .title(gettext("Convert and Export"))
             .accept_label(gettext("_Export"))
             .modal(true)
             .build();
@@ -2864,15 +2862,15 @@ impl PigouneWindow {
 
     fn show_open_with_error(&self, details: &str) {
         let alert =
-            adw::AlertDialog::new(Some(&gettext("Unable to Open the Resource")), Some(details));
+            adw::AlertDialog::new(Some(&gettext("Unable to Open the Asset")), Some(details));
         alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
         alert.present(Some(self));
     }
 
     fn show_export_toast(&self, count: usize, folder: &gio::File) {
         let message = ngettext(
-            "{count} resource exported to “{name}”",
-            "{count} resources exported to “{name}”",
+            "{count} asset exported to “{name}”",
+            "{count} assets exported to “{name}”",
             u32::try_from(count).unwrap_or(u32::MAX),
         )
         .replace("{count}", &count.to_string())
@@ -2983,7 +2981,7 @@ impl PigouneWindow {
             Some(Ok(_)) => true,
             Some(Err(error)) => {
                 let alert = adw::AlertDialog::new(
-                    Some(&gettext("Unable to Change the Resource")),
+                    Some(&gettext("Unable to Change the Asset")),
                     Some(&error_messages::describe_asset(&error)),
                 );
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
@@ -3292,8 +3290,8 @@ impl PigouneWindow {
                     assets: assets.to_vec(),
                 },
                 ngettext(
-                    "{count} resource moved to “{name}”",
-                    "{count} resources moved to “{name}”",
+                    "{count} asset moved to “{name}”",
+                    "{count} assets moved to “{name}”",
                     u32::try_from(assets.len()).unwrap_or(u32::MAX),
                 ),
                 assets.len(),
@@ -3303,8 +3301,8 @@ impl PigouneWindow {
                 if fresh.is_empty() {
                     self.show_toast(
                         &ngettext(
-                            "{count} resource is already in “{name}”",
-                            "{count} resources are already in “{name}”",
+                            "{count} asset is already in “{name}”",
+                            "{count} assets are already in “{name}”",
                             u32::try_from(assets.len()).unwrap_or(u32::MAX),
                         )
                         .replace("{count}", &assets.len().to_string())
@@ -3319,8 +3317,8 @@ impl PigouneWindow {
                         assets: fresh,
                     },
                     ngettext(
-                        "{count} resource added to “{name}”",
-                        "{count} resources added to “{name}”",
+                        "{count} asset added to “{name}”",
+                        "{count} assets added to “{name}”",
                         u32::try_from(count).unwrap_or(u32::MAX),
                     ),
                     count,
@@ -3396,8 +3394,8 @@ impl PigouneWindow {
                 gettext("“{name}” is already in the favorites").replace("{name}", first_name)
             } else {
                 ngettext(
-                    "{count} resource is already in the favorites",
-                    "{count} resources are already in the favorites",
+                    "{count} asset is already in the favorites",
+                    "{count} assets are already in the favorites",
                     u32::try_from(names.len()).unwrap_or(u32::MAX),
                 )
                 .replace("{count}", &names.len().to_string())
@@ -3424,8 +3422,8 @@ impl PigouneWindow {
                     gettext("“{name}” added to the favorites").replace("{name}", first_name)
                 } else {
                     ngettext(
-                        "{count} resource added to the favorites",
-                        "{count} resources added to the favorites",
+                        "{count} asset added to the favorites",
+                        "{count} assets added to the favorites",
                         u32::try_from(fresh_ids.len()).unwrap_or(u32::MAX),
                     )
                     .replace("{count}", &fresh_ids.len().to_string())
@@ -3452,8 +3450,8 @@ impl PigouneWindow {
         if fresh.is_empty() {
             self.show_toast(
                 &ngettext(
-                    "{count} resource already has the tag “{name}”",
-                    "{count} resources already have the tag “{name}”",
+                    "{count} asset already has the tag “{name}”",
+                    "{count} assets already have the tag “{name}”",
                     u32::try_from(assets.len()).unwrap_or(u32::MAX),
                 )
                 .replace("{count}", &assets.len().to_string())
@@ -3470,8 +3468,8 @@ impl PigouneWindow {
         self.drop_assets_leaving_view(assets);
         self.show_undoable_toast(
             &ngettext(
-                "Tag “{name}” added to {count} resource",
-                "Tag “{name}” added to {count} resources",
+                "Tag “{name}” added to {count} asset",
+                "Tag “{name}” added to {count} assets",
                 u32::try_from(count).unwrap_or(u32::MAX),
             )
             .replace("{count}", &count.to_string())
@@ -3837,7 +3835,7 @@ impl PigouneWindow {
         let alert = adw::AlertDialog::new(
             Some(&gettext("Delete the Smart Collection “{name}”?").replace("{name}", &name)),
             Some(&gettext(
-                "Only the saved search is deleted. The resources it shows stay in the library.",
+                "Only the saved search is deleted. The assets it shows stay in the library.",
             )),
         );
         alert.add_responses(&[
@@ -3888,8 +3886,8 @@ impl PigouneWindow {
             Some(&gettext("Delete the Tag “{name}”?").replace("{name}", &name)),
             Some(
                 &ngettext(
-                    "It will be removed from {count} resource. The resources stay in the library.",
-                    "It will be removed from {count} resources. The resources stay in the library.",
+                    "It will be removed from {count} asset. The assets stay in the library.",
+                    "It will be removed from {count} assets. The assets stay in the library.",
                     u32::try_from(used_by).unwrap_or(u32::MAX),
                 )
                 .replace("{count}", &used_by.to_string()),
@@ -4264,8 +4262,8 @@ impl PigouneWindow {
                     gettext("Collection “{name}” deleted")
                 } else {
                     ngettext(
-                        "Collection “{name}” deleted, {count} resource moved to the trash",
-                        "Collection “{name}” deleted, {count} resources moved to the trash",
+                        "Collection “{name}” deleted, {count} asset moved to the trash",
+                        "Collection “{name}” deleted, {count} assets moved to the trash",
                         u32::try_from(trashed).unwrap_or(u32::MAX),
                     )
                     .replace("{count}", &trashed.to_string())
@@ -4511,13 +4509,13 @@ impl PigouneWindow {
         };
         let description = match scope {
             _ if filter.chosen_filters() > 0 => {
-                gettext("No resource matches the chosen filters. Clear them to see more resources.")
+                gettext("No asset matches the chosen filters. Clear them to see more assets.")
             }
             Some(scope) => gettext(
-                "No resource in “{name}” matches this search. Select “All” to search everywhere.",
+                "No asset in “{name}” matches this search. Select “All” to search everywhere.",
             )
             .replace("{name}", &scope),
-            None => gettext("No resource in the library matches this search."),
+            None => gettext("No asset in the library matches this search."),
         };
         let page = self.imp().asset_grid.nothing_page();
         page.set_icon_name(Some("system-search-symbolic"));
@@ -4540,33 +4538,31 @@ impl PigouneWindow {
         if view == AssetView::Trash {
             page.set_title(&gettext("The Trash Is Empty"));
             page.set_description(Some(&gettext(
-                "Resources moved to the trash can be restored from here.",
+                "Assets moved to the trash can be restored from here.",
             )));
         } else if let AssetView::Tag(_) = view {
-            page.set_title(&gettext("No Resource Tagged “{name}”").replace("{name}", view_name));
+            page.set_title(&gettext("No Asset Tagged “{name}”").replace("{name}", view_name));
             page.set_description(Some(&gettext(
-                "Add this tag to resources from the details panel, or drag resources onto it.",
+                "Add this tag to assets from the details panel, or drag assets onto it.",
             )));
         } else if let AssetView::Smart(_) = view {
             page.set_icon_name(Some("media-playlist-shuffle-symbolic"));
-            page.set_title(&gettext("No Resource in “{name}”").replace("{name}", view_name));
+            page.set_title(&gettext("No Asset in “{name}”").replace("{name}", view_name));
             page.set_description(Some(&gettext(
-                "No resource matches this smart collection yet. Matching resources appear here by themselves.",
+                "No asset matches this smart collection yet. Matching assets appear here by themselves.",
             )));
         } else if view == AssetView::Favorites {
             page.set_title(&gettext("No Favorites"));
             page.set_description(Some(&gettext(
-                "Mark a resource as a favorite with the star in the details panel or with Ctrl+D.",
+                "Add an asset to Favorites with the star in the details panel or with Ctrl+D.",
             )));
         } else if view == AssetView::Unclassified {
-            page.set_title(&gettext("No Unclassified Resources"));
-            page.set_description(Some(&gettext(
-                "Every resource is in at least one collection.",
-            )));
+            page.set_title(&gettext("No Unclassified Assets"));
+            page.set_description(Some(&gettext("Every asset is in at least one collection.")));
         } else {
             page.set_title(&gettext("“{name}” Is Empty").replace("{name}", view_name));
             page.set_description(Some(&gettext(
-                "Resources imported while this collection is selected are placed in it.",
+                "Assets imported while this collection is selected are placed in it.",
             )));
         }
     }
@@ -4968,17 +4964,15 @@ fn deletion_consequences(removal: CollectionRemoval, contained: usize) -> String
     if removal.trashed_assets > 0 {
         sentences.push(
             ngettext(
-                "{count} resource found only here will go to the trash.",
-                "{count} resources found only here will go to the trash.",
+                "{count} asset found only here will go to the trash.",
+                "{count} assets found only here will go to the trash.",
                 count(removal.trashed_assets),
             )
             .replace("{count}", &removal.trashed_assets.to_string()),
         );
     }
     if contained > removal.trashed_assets {
-        sentences.push(gettext(
-            "Resources also kept in other collections stay there.",
-        ));
+        sentences.push(gettext("Assets also kept in other collections stay there."));
     }
     if sentences.is_empty() {
         sentences.push(gettext("This collection is empty."));
