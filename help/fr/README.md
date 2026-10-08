@@ -48,6 +48,11 @@ jusque dans la fenêtre de Pigoune. Autre possibilité : copiez des fichiers dan
 une image, comme une capture d'écran ou une image d'une page web), puis appuyez sur
 <kbd>Ctrl</kbd>+<kbd>V</kbd> dans Pigoune. Une image collée s'appelle **Image collée** suivie de la
 date et de l'heure ; vous pouvez la renommer ensuite.
+Vous pouvez aussi glisser une image d'une page web sur la fenêtre, ou sur une collection de la
+barre latérale : Pigoune garde ce que le
+navigateur lui remet (le fichier d'origine avec Chrome ou Brave, une copie PNG de l'image avec
+Firefox) et la nomme d'après le nom de fichier que le navigateur propose. Si le glissement ne
+contient aucune image, un message le dit.
 
 - Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF,
   BMP et ICO.

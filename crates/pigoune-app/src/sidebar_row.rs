@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::prelude::*;
@@ -10,6 +8,7 @@ use crate::collection_drop::{self, CollectionDrop, DropZone};
 use crate::collection_look_dialog;
 use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
 use crate::drop_places;
+use crate::dropped_content;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 use crate::sidebar_tag_cloud::PigouneSidebarTagCloud;
@@ -227,6 +226,7 @@ impl PigouneSidebarRow {
         self.open_menu_on_secondary_click();
         self.fold_on_header_click();
         self.accept_drops();
+        self.accept_external_drops();
         self.offer_collection_drag();
     }
 
@@ -238,7 +238,6 @@ impl PigouneSidebarRow {
             DraggedAssets::static_type(),
             DraggedCollection::static_type(),
             DraggedSmartCollection::static_type(),
-            gdk::FileList::static_type(),
         ]);
         drop_target.connect_enter(glib::clone!(
             #[weak(rename_to = row)]
@@ -291,6 +290,57 @@ impl PigouneSidebarRow {
             }
         ));
         self.add_controller(drop_target);
+    }
+
+    fn accept_external_drops(&self) {
+        let target =
+            gtk::DropTargetAsync::new(Some(dropped_content::formats()), gdk::DragAction::COPY);
+        target.connect_accept(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            false,
+            move |_, drop| {
+                drop.drag().is_none()
+                    && dropped_content::may_hold_an_image(&drop.formats())
+                    && row.view().is_some_and(drop_places::accepts_files)
+            }
+        ));
+        target.connect_drag_enter(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            gdk::DragAction::empty(),
+            move |_, _, _, _| {
+                row.show_drop_zone(Some(DropZone::Into));
+                gdk::DragAction::COPY
+            }
+        ));
+        target.connect_drag_leave(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            move |_, _| row.show_drop_zone(None)
+        ));
+        target.connect_drop(glib::clone!(
+            #[weak(rename_to = row)]
+            self,
+            #[upgrade_or]
+            false,
+            move |_, drop, _, _| {
+                row.show_drop_zone(None);
+                let (Some(sidebar), Some(view)) = (row.sidebar(), row.view()) else {
+                    return false;
+                };
+                let drop = drop.clone();
+                glib::spawn_future_local(async move {
+                    let dropped = dropped_content::read(&drop).await;
+                    drop.finish(gdk::DragAction::COPY);
+                    sidebar.content_dropped(view, dropped);
+                });
+                true
+            }
+        ));
+        self.add_controller(target);
     }
 
     fn describe_hover(&self, target: &gtk::DropTarget) {
@@ -364,11 +414,8 @@ impl PigouneSidebarRow {
         }
         match entry {
             Some(SidebarEntry::View(view)) => {
-                if offered.contains_type(DraggedAssets::static_type()) {
-                    drop_places::accepts_assets(view)
-                } else {
-                    drop_places::accepts_files(view)
-                }
+                offered.contains_type(DraggedAssets::static_type())
+                    && drop_places::accepts_assets(view)
             }
             Some(
                 SidebarEntry::CollectionsHeader
@@ -409,12 +456,7 @@ impl PigouneSidebarRow {
             sidebar.assets_dropped(view, dragged.0, control_is_held(self));
             return true;
         }
-        let Ok(files) = value.get::<gdk::FileList>() else {
-            return false;
-        };
-        let paths: Vec<PathBuf> = files.files().iter().filter_map(gio::File::path).collect();
-        sidebar.files_dropped(view, paths);
-        true
+        false
     }
 
     fn collection_drop(&self) -> Option<CollectionDrop> {

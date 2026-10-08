@@ -8,6 +8,8 @@ use super::{Asset, AssetId, Library, LibraryError, layout};
 const MAX_NAME_BYTES: usize = 200;
 const FORBIDDEN_CHARACTERS: [char; 2] = ['/', '\0'];
 const REPLACEMENT: char = '-';
+const MAX_EXTENSION_CHARS: usize = 5;
+const DEFAULT_EXTENSION: &str = "png";
 
 impl Library {
     pub fn export_copies(&self, assets: &[AssetId]) -> Result<Vec<PathBuf>, LibraryError> {
@@ -18,13 +20,20 @@ impl Library {
         self.fresh_copies(assets, &layout::clipboard_dir(&self.root))
     }
 
-    pub fn save_pasted_image(&self, name: &str, png: &[u8]) -> Result<PathBuf, LibraryError> {
+    pub fn save_pasted_image(
+        &self,
+        name: &str,
+        extension: &str,
+        contents: &[u8],
+    ) -> Result<PathBuf, LibraryError> {
         let folder = layout::pasted_dir(&self.root);
         let _ = fs::remove_dir_all(&folder);
         fs::create_dir_all(&folder)?;
-        let base = export_base_name(name, Some("png")).unwrap_or_else(|| name.to_owned());
-        let (mut file, path) = create_free_file(&folder, &base, Some("png"), &mut HashSet::new())?;
-        file.write_all(png)?;
+        let extension = safe_extension(extension);
+        let base = export_base_name(name, Some(&extension)).unwrap_or_else(|| name.to_owned());
+        let (mut file, path) =
+            create_free_file(&folder, &base, Some(&extension), &mut HashSet::new())?;
+        file.write_all(contents)?;
         Ok(path)
     }
 
@@ -131,6 +140,20 @@ pub fn forget_exports(root: &Path) {
     let _ = fs::remove_dir_all(layout::clipboard_dir(root));
     let _ = fs::remove_dir_all(layout::opening_dir(root));
     let _ = fs::remove_dir_all(layout::pasted_dir(root));
+}
+
+fn safe_extension(extension: &str) -> String {
+    let kept: String = extension
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .take(MAX_EXTENSION_CHARS)
+        .collect::<String>()
+        .to_lowercase();
+    if kept.is_empty() {
+        DEFAULT_EXTENSION.to_owned()
+    } else {
+        kept
+    }
 }
 
 fn export_base_name(display_name: &str, extension: Option<&str>) -> Option<String> {

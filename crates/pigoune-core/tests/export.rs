@@ -403,7 +403,7 @@ fn a_pasted_image_is_saved_under_its_name() {
 
     let saved = fixture
         .library
-        .save_pasted_image("Pasted image 2026-10-07 14.32.05", b"png bytes")
+        .save_pasted_image("Pasted image 2026-10-07 14.32.05", "png", b"png bytes")
         .expect("pasted image is saved");
 
     assert_eq!(file_name(&saved), "Pasted image 2026-10-07 14.32.05.png");
@@ -415,12 +415,12 @@ fn a_new_pasted_image_replaces_the_previous_one() {
     let fixture = Fixture::new();
     let first = fixture
         .library
-        .save_pasted_image("Pasted image", b"first")
+        .save_pasted_image("Pasted image", "png", b"first")
         .expect("first image is saved");
 
     let second = fixture
         .library
-        .save_pasted_image("Pasted image", b"second")
+        .save_pasted_image("Pasted image", "png", b"second")
         .expect("second image is saved");
 
     assert_eq!(first, second);
@@ -433,8 +433,38 @@ fn a_pasted_image_name_cannot_leave_its_folder() {
 
     let saved = fixture
         .library
-        .save_pasted_image("../escape", b"png bytes")
+        .save_pasted_image("../escape", "png", b"png bytes")
         .expect("pasted image is saved");
 
     assert_eq!(file_name(&saved), "-escape.png");
+}
+
+#[test]
+fn a_dropped_image_keeps_its_own_extension() {
+    let fixture = Fixture::new();
+
+    let saved = fixture
+        .library
+        .save_pasted_image("apple", "WebP", b"webp bytes")
+        .expect("dropped image is saved");
+
+    assert_eq!(file_name(&saved), "apple.webp");
+}
+
+#[test]
+fn an_unsafe_extension_is_cleaned_or_replaced() {
+    let fixture = Fixture::new();
+
+    let cleaned = fixture
+        .library
+        .save_pasted_image("one", "j/p\\g", b"x")
+        .expect("saved");
+    let replaced = fixture
+        .library
+        .save_pasted_image("two", "../..", b"x")
+        .expect("saved");
+
+    assert_eq!(file_name(&cleaned), "one.jpg");
+    assert_eq!(file_name(&replaced), "two.png");
+    assert!(replaced.starts_with(fixture.library.root()));
 }

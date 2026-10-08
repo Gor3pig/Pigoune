@@ -28,6 +28,7 @@ use crate::conversion_report;
 use crate::displayed_view;
 use crate::drop_message;
 use crate::drop_places;
+use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
@@ -943,10 +944,10 @@ impl PigouneWindow {
             self,
             move |view, assets, keep_source| window.drop_assets_on(view, &assets, keep_source)
         ));
-        self.imp().sidebar.connect_files_dropped(glib::clone!(
+        self.imp().sidebar.connect_content_dropped(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |view, paths| {
+            move |view, dropped| {
                 let collection = match view {
                     AssetView::Collection(id) => Some(id),
                     AssetView::All | AssetView::Unclassified => None,
@@ -956,7 +957,7 @@ impl PigouneWindow {
                     | AssetView::Trash => return,
                 };
                 glib::spawn_future_local(async move {
-                    window.import_paths_into(paths, collection).await;
+                    window.import_content(dropped, collection).await;
                 });
             }
         ));
@@ -2208,14 +2209,30 @@ impl PigouneWindow {
 
     async fn import_pasted_image(&self, texture: &gdk::Texture) {
         let png = texture.save_to_png_bytes();
+        self.import_image_bytes(
+            &pasted_content::image_name(),
+            "png",
+            &png,
+            self.target_collection(),
+        )
+        .await;
+    }
+
+    async fn import_image_bytes(
+        &self,
+        name: &str,
+        extension: &str,
+        bytes: &[u8],
+        collection: Option<CollectionId>,
+    ) {
         let saved = self
             .imp()
             .library
             .borrow()
             .as_ref()
-            .map(|library| library.save_pasted_image(&pasted_content::image_name(), &png));
+            .map(|library| library.save_pasted_image(name, extension, bytes));
         match saved {
-            Some(Ok(path)) => self.import_paths(vec![path]).await,
+            Some(Ok(path)) => self.import_paths_into(vec![path], collection).await,
             Some(Err(error)) => self.show_library_error(&error),
             None => {}
         }
@@ -4377,7 +4394,8 @@ impl PigouneWindow {
     }
 
     fn accept_dropped_files(&self) {
-        let drop_target = gtk::DropTarget::new(gdk::FileList::static_type(), gdk::DragAction::COPY);
+        let drop_target =
+            gtk::DropTargetAsync::new(Some(dropped_content::formats()), gdk::DragAction::COPY);
         drop_target.connect_accept(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -4387,41 +4405,59 @@ impl PigouneWindow {
                 window.imp().library.borrow().is_some()
                     && window.import_is_possible_here()
                     && drop.drag().is_none()
-                    && drop.formats().contains_type(gdk::FileList::static_type())
+                    && dropped_content::may_hold_an_image(&drop.formats())
             }
         ));
-        drop_target.connect_enter(glib::clone!(
+        drop_target.connect_drag_enter(glib::clone!(
             #[weak(rename_to = window)]
             self,
             #[upgrade_or]
             gdk::DragAction::empty(),
-            move |_, _, _| {
+            move |_, _, _, _| {
                 window.show_drop_hint();
                 gdk::DragAction::COPY
             }
         ));
-        drop_target.connect_leave(glib::clone!(
+        drop_target.connect_drag_leave(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |_| window.imp().drop_hint.set_visible(false)
+            move |_, _| window.imp().drop_hint.set_visible(false)
         ));
         drop_target.connect_drop(glib::clone!(
             #[weak(rename_to = window)]
             self,
             #[upgrade_or]
             false,
-            move |_, value, _, _| {
+            move |_, drop, _, _| {
                 window.imp().drop_hint.set_visible(false);
-                let Ok(files) = value.get::<gdk::FileList>() else {
-                    return false;
-                };
-                let paths: Vec<PathBuf> =
-                    files.files().iter().filter_map(gio::File::path).collect();
-                glib::spawn_future_local(async move { window.import_paths(paths).await });
+                let drop = drop.clone();
+                glib::spawn_future_local(async move { window.import_dropped(&drop).await });
                 true
             }
         ));
         self.imp().drop_area.add_controller(drop_target);
+    }
+
+    async fn import_dropped(&self, drop: &gdk::Drop) {
+        let dropped = dropped_content::read(drop).await;
+        drop.finish(gdk::DragAction::COPY);
+        self.import_content(dropped, self.target_collection()).await;
+    }
+
+    async fn import_content(&self, dropped: Dropped, collection: Option<CollectionId>) {
+        match dropped {
+            Dropped::Files(paths) => self.import_paths_into(paths, collection).await,
+            Dropped::Image(DroppedImage {
+                bytes,
+                name,
+                extension,
+            }) => {
+                let name = name.unwrap_or_else(pasted_content::image_name);
+                self.import_image_bytes(&name, &extension, &bytes, collection)
+                    .await;
+            }
+            Dropped::Nothing => self.show_toast(&nothing_to_import_text()),
+        }
     }
 
     fn show_drop_hint(&self) {
@@ -4751,4 +4787,8 @@ fn asset_objects(
             })
         })
         .collect())
+}
+
+fn nothing_to_import_text() -> String {
+    gettext("This drop holds no image. In the browser, use “Copy Image”, then press Ctrl+V")
 }

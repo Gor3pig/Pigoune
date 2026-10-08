@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::path::PathBuf;
 
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
@@ -13,6 +12,7 @@ use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::CollectionDrop;
 use crate::collection_looks;
 use crate::collection_sort::CollectionTree;
+use crate::dropped_content::Dropped;
 use crate::found_flash;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
@@ -26,7 +26,7 @@ const TRASH_ICON: &str = "user-trash-symbolic";
 const DRAG_OVER: &str = "drag-over";
 
 type ViewChangedCallback = Box<dyn Fn(AssetView)>;
-type FilesDroppedCallback = Box<dyn Fn(AssetView, Vec<PathBuf>)>;
+type ContentDroppedCallback = Box<dyn Fn(AssetView, Dropped)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
 type AssetsHoveredCallback = Box<dyn Fn(Option<HoveredDrop>)>;
@@ -66,7 +66,7 @@ mod imp {
 
     use super::{
         AssetsDroppedCallback, AssetsHoveredCallback, CollectionDroppedCallback,
-        FilesDroppedCallback, SectionToggledCallback, SmartCollectionDroppedCallback,
+        ContentDroppedCallback, SectionToggledCallback, SmartCollectionDroppedCallback,
         ViewChangedCallback,
     };
 
@@ -82,7 +82,7 @@ mod imp {
         pub chosen_tag: Cell<Option<pigoune_core::TagId>>,
         pub rebuilding: Cell<bool>,
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
-        pub on_files_dropped: RefCell<Option<FilesDroppedCallback>>,
+        pub on_content_dropped: RefCell<Option<ContentDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
         pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
         pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
@@ -131,15 +131,15 @@ impl PigouneSidebar {
         self.imp().on_view_changed.replace(Some(Box::new(callback)));
     }
 
-    pub fn connect_files_dropped(&self, callback: impl Fn(AssetView, Vec<PathBuf>) + 'static) {
+    pub fn connect_content_dropped(&self, callback: impl Fn(AssetView, Dropped) + 'static) {
         self.imp()
-            .on_files_dropped
+            .on_content_dropped
             .replace(Some(Box::new(callback)));
     }
 
-    pub fn files_dropped(&self, view: AssetView, paths: Vec<PathBuf>) {
-        if let Some(on_files_dropped) = self.imp().on_files_dropped.borrow().as_ref() {
-            on_files_dropped(view, paths);
+    pub fn content_dropped(&self, view: AssetView, dropped: Dropped) {
+        if let Some(on_content_dropped) = self.imp().on_content_dropped.borrow().as_ref() {
+            on_content_dropped(view, dropped);
         }
     }
 

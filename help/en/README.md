@@ -43,6 +43,10 @@ choose **Import Files…** or **Import a Folder…**. You can also simply drag f
 from Files onto the Pigoune window. Another way: copy files in Files (or copy an image, such as a
 screenshot or an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Pigoune. A
 pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.
+You can also drag an image from a web page onto the window, or onto a collection of the
+sidebar: Pigoune keeps what the browser
+hands over (the original file with Chrome or Brave, a PNG copy of the picture with Firefox) and
+names it after the file name the browser suggests. If the drop holds no image, a message says so.
 
 - Supported formats are SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF, BMP
   and ICO.
