@@ -5,6 +5,7 @@ use gtk::{gio, glib};
 use crate::languages;
 use crate::relaunch;
 use crate::settings;
+use crate::toasts;
 
 const PAGES: [&str; 3] = ["general_page", "display_page", "behaviour_page"];
 const RESOURCE: &str = "/io/github/gor3pig/Pigoune/ui/preferences-dialog.ui";
@@ -113,7 +114,7 @@ fn follow_language(
                 toast.set_button_label(Some(&restart));
                 toast.connect_button_clicked(move |_| relaunch::relaunch(&application));
             }
-            dialog.add_toast(toast);
+            toasts::announce_in_preferences(&dialog, &toast);
         }
     ));
 }

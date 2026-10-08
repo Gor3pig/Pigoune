@@ -17,6 +17,7 @@ use crate::config::VERSION;
 use crate::health_page::HealthActions;
 use crate::host_path;
 use crate::thumbnails;
+use crate::toasts;
 
 use crate::chart_slices::{self, Measure, Slice};
 
@@ -505,16 +506,17 @@ impl PigouneLibraryInfoDialog {
             }
             Err(reason) => failure_text(&reason),
         };
-        imp.toast_overlay.add_toast(adw::Toast::new(&message));
+        toasts::announce(&imp.toast_overlay, &adw::Toast::new(&message));
     }
 
     #[template_callback]
     fn on_copy_location_clicked(&self) {
         self.clipboard()
             .set_text(&host_path::shown_path(&self.root()).to_string_lossy());
-        self.imp()
-            .toast_overlay
-            .add_toast(adw::Toast::new(&gettext("Location copied")));
+        toasts::announce(
+            &self.imp().toast_overlay,
+            &adw::Toast::new(&gettext("Location copied")),
+        );
     }
 
     #[template_callback]

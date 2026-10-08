@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
+use crate::toasts;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
@@ -719,7 +720,7 @@ impl PigouneHealthPage {
             toast.set_button_label(Some(&label));
             toast.connect_button_clicked(move |_| on_click());
         }
-        overlay.add_toast(toast);
+        toasts::announce(&overlay, &toast);
     }
 
     fn show_resource(&self, id: AssetId) {

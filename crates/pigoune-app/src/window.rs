@@ -52,6 +52,7 @@ use crate::smart_collection_dialog::{
 use crate::smart_collection_sort::{self, SmartCollectionCriterion, SmartCollectionOrder};
 use crate::tag_editor::SharedTag;
 use crate::thumbnails::{self, THUMBNAIL_PIXELS};
+use crate::toasts;
 use crate::undo_message;
 use crate::update_banner;
 use crate::update_news::UpdateNews;
@@ -1682,7 +1683,7 @@ impl PigouneWindow {
             self,
             move |_| window.store_recent_libraries(&before)
         ));
-        self.imp().toast_overlay.add_toast(toast);
+        toasts::announce(&self.imp().toast_overlay, &toast);
     }
 
     fn follow_welcome_recent_list(&self) {
@@ -2249,7 +2250,7 @@ impl PigouneWindow {
         if let Some((previous, _)) = imp.undo_toast.replace(Some((toast.clone(), stamp))) {
             previous.dismiss();
         }
-        imp.toast_overlay.add_toast(toast);
+        toasts::announce(&imp.toast_overlay, &toast);
     }
 
     fn forget_undo_toast(&self) {
@@ -2809,7 +2810,7 @@ impl PigouneWindow {
                 );
             }
         ));
-        self.imp().toast_overlay.add_toast(toast);
+        toasts::announce(&self.imp().toast_overlay, &toast);
     }
 
     fn undo_typing(&self) -> bool {
@@ -3452,7 +3453,7 @@ impl PigouneWindow {
     }
 
     fn show_toast(&self, text: &str) {
-        self.imp().toast_overlay.add_toast(adw::Toast::new(text));
+        toasts::announce(&self.imp().toast_overlay, &adw::Toast::new(text));
     }
 
     fn drop_assets_leaving_view(&self, assets: &[AssetId]) {
@@ -4716,12 +4717,10 @@ impl PigouneWindow {
                 import_report::summary_dialog(&summary, chosen, destination).present(Some(self));
             }
             Ok(summary) => {
-                self.imp()
-                    .toast_overlay
-                    .add_toast(adw::Toast::new(&import_report::toast_text(
-                        &summary,
-                        destination,
-                    )));
+                toasts::announce(
+                    &self.imp().toast_overlay,
+                    &adw::Toast::new(&import_report::toast_text(&summary, destination)),
+                );
             }
             Err(error) => import_report::failure_dialog(&error).present(Some(self)),
         }

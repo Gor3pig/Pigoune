@@ -87,6 +87,7 @@ mod tag_editor;
 mod tag_input;
 mod tag_summary;
 mod thumbnails;
+mod toasts;
 mod undo_message;
 mod update_banner;
 mod update_news;
