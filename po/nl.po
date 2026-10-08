@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 17:44+0200\n"
+"POT-Creation-Date: 2026-10-08 17:51+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1279,7 +1279,9 @@ msgstr "Een ander label heeft deze naam al."
 
 #: crates/pigoune-app/src/error_messages.rs:188
 msgid "A tag cannot be moved into itself or one of its sub-tags."
-msgstr "Een label kan niet in zichzelf of in een van zijn sublabels worden verplaatst."
+msgstr ""
+"Een label kan niet in zichzelf of in een van zijn sublabels worden "
+"verplaatst."
 
 #: crates/pigoune-app/src/new_library_dialog.rs:101
 msgid "Choose a Location"
@@ -1446,7 +1448,7 @@ msgid "Add to Favorites"
 msgstr "Aan favorieten toevoegen"
 
 #: crates/pigoune-app/src/window.rs:2067
-#: crates/pigoune-app/src/tag_editor.rs:202
+#: crates/pigoune-app/src/tag_editor.rs:206
 msgid "Add a Tag…"
 msgstr "Een label toevoegen…"
 
@@ -2540,8 +2542,8 @@ msgid "Smart Collections"
 msgstr "Slimme verzamelingen"
 
 #: crates/pigoune-app/src/sidebar.rs:310 crates/pigoune-app/src/sidebar.rs:910
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:250
-#: crates/pigoune-app/src/tag_summary.rs:144
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:258
+#: crates/pigoune-app/src/tag_summary.rs:148
 msgid "Tags"
 msgstr "Labels"
 
@@ -2556,7 +2558,7 @@ msgid "favorite"
 msgstr "favoriet"
 
 #: crates/pigoune-app/src/sidebar_item.rs:132
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:521
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:529
 #, rust-format
 msgid "Tag {name}"
 msgstr "Label {name}"
@@ -2567,7 +2569,7 @@ msgid "Smart collection {name}"
 msgstr "Slimme verzameling {name}"
 
 #: crates/pigoune-app/src/sidebar_item.rs:142
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:526
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:534
 #, rust-format
 msgid "{name}, {count} asset"
 msgid_plural "{name}, {count} assets"
@@ -3161,26 +3163,26 @@ msgstr "Verzamelingen sorteren op"
 msgid "Sort Smart Collections By"
 msgstr "Slimme verzamelingen sorteren op"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:197
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:205
 msgid "Show Fewer"
 msgstr "Minder tonen"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:200
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:208
 #, rust-format
 msgid "+ {count} other"
 msgid_plural "+ {count} others"
 msgstr[0] "+ {count} ander"
 msgstr[1] "+ {count} andere"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:268
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:305
-#: crates/pigoune-app/src/tag_editor.rs:146
-#: crates/pigoune-app/src/tag_summary.rs:115
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:276
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:313
+#: crates/pigoune-app/src/tag_editor.rs:150
+#: crates/pigoune-app/src/tag_summary.rs:119
 #, rust-format
 msgid "Open the Tag “{name}”"
 msgstr "Het label ‘{name}’ openen"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:519
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:527
 #, rust-format
 msgid "Tag {name}, with sub-tags"
 msgstr "Label {name}, met sublabels"
@@ -3286,20 +3288,24 @@ msgstr[1] "{count} verzamelingen"
 msgid "{tags}, {collections}"
 msgstr "{tags}, {collections}"
 
-#: crates/pigoune-app/src/tag_editor.rs:140
-#: crates/pigoune-app/src/tag_summary.rs:109
+#: crates/pigoune-app/src/tag_editor.rs:144
+#: crates/pigoune-app/src/tag_summary.rs:113
 #, rust-format
 msgid "On {count} of {total} assets. Click to add it to all of them."
 msgstr ""
 "Bij {count} van {total} items. Klik om het aan alle items toe te voegen."
 
-#: crates/pigoune-app/src/tag_editor.rs:158
-#: crates/pigoune-app/src/tag_summary.rs:127
+#: crates/pigoune-app/src/tag_editor.rs:162
+#: crates/pigoune-app/src/tag_summary.rs:131
 #, rust-format
 msgid "Remove the Tag “{name}”"
 msgstr "Het label ‘{name}’ verwijderen"
 
-#: crates/pigoune-app/src/tag_summary.rs:158
+#: crates/pigoune-app/src/tag_editor.rs:350
+msgid "Create “{name}” in {parents}"
+msgstr "„{name}” aanmaken in {parents}"
+
+#: crates/pigoune-app/src/tag_summary.rs:162
 msgid "Edit the Tags"
 msgstr "Labels bewerken"
 

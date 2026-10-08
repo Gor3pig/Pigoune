@@ -7,7 +7,8 @@ use pigoune_core::Tag;
 use crate::removable_pill::removable_pill;
 use crate::shortened_label::{name_label, naming};
 use crate::tag_cloud::PigouneTagCloud;
-use crate::tag_editor::{PigouneTagEditor, SharedTag};
+use crate::tag_editor::{PigouneTagEditor, SharedTag, parent_label};
+use crate::tag_input;
 
 const EDITOR_WIDTH: i32 = 300;
 
@@ -83,15 +84,21 @@ impl PigouneTagSummary {
     }
 
     pub fn show_tags(&self, current: Vec<SharedTag>, all: Vec<Tag>) {
-        let pills = current.iter().map(|shared| self.pill(shared)).collect();
+        let pills = current
+            .iter()
+            .map(|shared| self.pill(shared, &all))
+            .collect();
         part(&self.imp().cloud).set_pills(pills);
         self.editor().show_tags(current, all);
     }
 
-    fn pill(&self, shared: &SharedTag) -> gtk::Widget {
+    fn pill(&self, shared: &SharedTag, all: &[Tag]) -> gtk::Widget {
         let tag = &shared.tag;
         let partial = shared.carried_by < shared.out_of;
         let content = gtk::Box::builder().spacing(4).build();
+        if let Some(parent) = tag_input::ancestors_of(all, tag).last() {
+            content.append(&parent_label(parent));
+        }
         content.append(&name_label(&tag.name));
         let pill = gtk::Button::builder()
             .child(&content)
@@ -116,11 +123,11 @@ impl PigouneTagSummary {
             ));
         }
         let id = tag.id;
-        let name = tag.name.clone();
+        let path = tag_input::path_of(all, tag);
         pill.connect_clicked(glib::clone!(
             #[weak(rename_to = summary)]
             self,
-            move |_| summary.editor().activate_tag(id, &name, partial)
+            move |_| summary.editor().activate_tag(id, &path, partial)
         ));
         let removable = removable_pill(
             &pill,

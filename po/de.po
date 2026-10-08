@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 17:44+0200\n"
+"POT-Creation-Date: 2026-10-08 17:51+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1284,7 +1284,9 @@ msgstr "Ein anderes Schlagwort hat bereits diesen Namen."
 
 #: crates/pigoune-app/src/error_messages.rs:188
 msgid "A tag cannot be moved into itself or one of its sub-tags."
-msgstr "Ein Schlagwort kann nicht in sich selbst oder in eines seiner Unterschlagwörter verschoben werden."
+msgstr ""
+"Ein Schlagwort kann nicht in sich selbst oder in eines seiner "
+"Unterschlagwörter verschoben werden."
 
 #: crates/pigoune-app/src/new_library_dialog.rs:101
 msgid "Choose a Location"
@@ -1451,7 +1453,7 @@ msgid "Add to Favorites"
 msgstr "Zu Favoriten hinzufügen"
 
 #: crates/pigoune-app/src/window.rs:2067
-#: crates/pigoune-app/src/tag_editor.rs:202
+#: crates/pigoune-app/src/tag_editor.rs:206
 msgid "Add a Tag…"
 msgstr "Schlagwort hinzufügen …"
 
@@ -2556,8 +2558,8 @@ msgid "Smart Collections"
 msgstr "Intelligente Sammlungen"
 
 #: crates/pigoune-app/src/sidebar.rs:310 crates/pigoune-app/src/sidebar.rs:910
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:250
-#: crates/pigoune-app/src/tag_summary.rs:144
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:258
+#: crates/pigoune-app/src/tag_summary.rs:148
 msgid "Tags"
 msgstr "Schlagwörter"
 
@@ -2572,7 +2574,7 @@ msgid "favorite"
 msgstr "Favorit"
 
 #: crates/pigoune-app/src/sidebar_item.rs:132
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:521
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:529
 #, rust-format
 msgid "Tag {name}"
 msgstr "Schlagwort {name}"
@@ -2583,7 +2585,7 @@ msgid "Smart collection {name}"
 msgstr "Intelligente Sammlung {name}"
 
 #: crates/pigoune-app/src/sidebar_item.rs:142
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:526
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:534
 #, rust-format
 msgid "{name}, {count} asset"
 msgid_plural "{name}, {count} assets"
@@ -3177,26 +3179,26 @@ msgstr "Sammlungen sortieren nach"
 msgid "Sort Smart Collections By"
 msgstr "Intelligente Sammlungen sortieren nach"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:197
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:205
 msgid "Show Fewer"
 msgstr "Weniger anzeigen"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:200
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:208
 #, rust-format
 msgid "+ {count} other"
 msgid_plural "+ {count} others"
 msgstr[0] "+ {count} weiteres"
 msgstr[1] "+ {count} weitere"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:268
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:305
-#: crates/pigoune-app/src/tag_editor.rs:146
-#: crates/pigoune-app/src/tag_summary.rs:115
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:276
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:313
+#: crates/pigoune-app/src/tag_editor.rs:150
+#: crates/pigoune-app/src/tag_summary.rs:119
 #, rust-format
 msgid "Open the Tag “{name}”"
 msgstr "Das Schlagwort „{name}“ öffnen"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:519
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:527
 #, rust-format
 msgid "Tag {name}, with sub-tags"
 msgstr "Schlagwort {name}, mit Unterschlagwörtern"
@@ -3302,19 +3304,23 @@ msgstr[1] "{count} Sammlungen"
 msgid "{tags}, {collections}"
 msgstr "{tags}, {collections}"
 
-#: crates/pigoune-app/src/tag_editor.rs:140
-#: crates/pigoune-app/src/tag_summary.rs:109
+#: crates/pigoune-app/src/tag_editor.rs:144
+#: crates/pigoune-app/src/tag_summary.rs:113
 #, rust-format
 msgid "On {count} of {total} assets. Click to add it to all of them."
 msgstr "Bei {count} von {total} Elementen. Klicken, um es allen hinzuzufügen."
 
-#: crates/pigoune-app/src/tag_editor.rs:158
-#: crates/pigoune-app/src/tag_summary.rs:127
+#: crates/pigoune-app/src/tag_editor.rs:162
+#: crates/pigoune-app/src/tag_summary.rs:131
 #, rust-format
 msgid "Remove the Tag “{name}”"
 msgstr "Das Schlagwort „{name}“ entfernen"
 
-#: crates/pigoune-app/src/tag_summary.rs:158
+#: crates/pigoune-app/src/tag_editor.rs:350
+msgid "Create “{name}” in {parents}"
+msgstr "„{name}“ in {parents} anlegen"
+
+#: crates/pigoune-app/src/tag_summary.rs:162
 msgid "Edit the Tags"
 msgstr "Schlagwörter bearbeiten"
 

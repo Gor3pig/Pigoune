@@ -8,8 +8,22 @@ pub fn is_separator(character: char) -> bool {
     character == ',' || character.is_whitespace()
 }
 
-fn shortened(name: &str) -> String {
-    name.chars().take(LONGEST_TAG_NAME).collect()
+const LEVEL_SEPARATOR: char = '/';
+
+fn shortened(path: &str) -> String {
+    path.split(LEVEL_SEPARATOR)
+        .filter(|name| !name.is_empty())
+        .map(|name| name.chars().take(LONGEST_TAG_NAME).collect::<String>())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+fn shortened_fragment(fragment: &str) -> String {
+    let mut path = shortened(fragment);
+    if !path.is_empty() && fragment.ends_with(LEVEL_SEPARATOR) {
+        path.push(LEVEL_SEPARATOR);
+    }
+    path
 }
 
 pub fn names_in(text: &str) -> Vec<String> {
@@ -27,10 +41,10 @@ pub fn split_finished(text: &str) -> (Vec<String>, String) {
             let separator_length = text[position..].chars().next().map_or(1, char::len_utf8);
             (
                 names_in(&text[..position]),
-                shortened(&text[position + separator_length..]),
+                shortened_fragment(&text[position + separator_length..]),
             )
         }
-        None => (Vec::new(), shortened(text)),
+        None => (Vec::new(), shortened_fragment(text)),
     }
 }
 
@@ -38,27 +52,103 @@ pub fn fragment_being_typed(text: &str) -> &str {
     text.rsplit(is_separator).next().unwrap_or_default()
 }
 
+pub struct CreateOffer {
+    pub path: String,
+    pub name: String,
+    pub parents: String,
+}
+
+pub fn path_of(all: &[Tag], tag: &Tag) -> String {
+    let mut names = ancestors_of(all, tag);
+    names.push(tag.name.as_str());
+    names.join("/")
+}
+
+pub fn ancestors_of<'a>(all: &'a [Tag], tag: &Tag) -> Vec<&'a str> {
+    let mut names = Vec::new();
+    let mut next = tag.parent;
+    while let Some(id) = next {
+        let Some(parent) = all.iter().find(|candidate| candidate.id == id) else {
+            break;
+        };
+        names.push(parent.name.as_str());
+        next = parent.parent;
+    }
+    names.reverse();
+    names
+}
+
+fn child_named<'a>(all: &'a [Tag], parent: Option<TagId>, name: &str) -> Option<&'a Tag> {
+    let wanted = comparable(name);
+    all.iter()
+        .find(|tag| tag.parent == parent && comparable(&tag.name) == wanted)
+}
+
+struct UnknownParent;
+
+fn resolved_parent(all: &[Tag], parents: &str) -> Result<Option<TagId>, UnknownParent> {
+    let mut current = None;
+    for name in parents
+        .split(LEVEL_SEPARATOR)
+        .filter(|name| !name.is_empty())
+    {
+        current = Some(child_named(all, current, name).ok_or(UnknownParent)?.id);
+    }
+    Ok(current)
+}
+
 pub fn suggestions<'a>(all: &'a [Tag], typed: &str, already: &[TagId]) -> Vec<&'a Tag> {
     let typed = typed.trim();
     if typed.is_empty() {
         return Vec::new();
     }
-    let wanted = comparable(typed);
-    let candidates = all.iter().filter(|tag| !already.contains(&tag.id));
+    let (parents, wanted_text) = typed.rsplit_once(LEVEL_SEPARATOR).unwrap_or(("", typed));
+    let Ok(parent) = resolved_parent(all, parents) else {
+        return Vec::new();
+    };
+    let nested = typed.contains(LEVEL_SEPARATOR);
+    let wanted = comparable(wanted_text);
+    let candidates = all
+        .iter()
+        .filter(|tag| !already.contains(&tag.id))
+        .filter(|tag| !nested || tag.parent == parent);
     let (mut starting, mut containing): (Vec<&Tag>, Vec<&Tag>) = candidates
         .filter(|tag| comparable(&tag.name).contains(&wanted))
         .partition(|tag| comparable(&tag.name).starts_with(&wanted));
     starting.append(&mut containing);
-    starting.retain(|tag| tag.name.to_lowercase() != typed.to_lowercase());
+    starting.retain(|tag| {
+        let known_by_enter = nested || tag.parent.is_none();
+        !(known_by_enter && tag.name.to_lowercase() == wanted_text.to_lowercase())
+    });
     starting.truncate(MOST_SUGGESTIONS);
     starting
+}
+
+pub fn create_offer(all: &[Tag], typed: &str) -> Option<CreateOffer> {
+    let path = shortened(typed.trim());
+    let (parents, name) = path.rsplit_once(LEVEL_SEPARATOR)?;
+    if name.is_empty() || typed.trim().ends_with(LEVEL_SEPARATOR) {
+        return None;
+    }
+    let exists =
+        resolved_parent(all, parents).is_ok_and(|parent| child_named(all, parent, name).is_some());
+    if exists {
+        return None;
+    }
+    Some(CreateOffer {
+        name: name.to_owned(),
+        parents: parents.replace('/', " › "),
+        path,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use pigoune_core::{Tag, TagId};
 
-    use super::{fragment_being_typed, names_in, split_finished, suggestions};
+    use super::{
+        create_offer, fragment_being_typed, names_in, path_of, split_finished, suggestions,
+    };
 
     fn tag(number: u8, name: &str) -> Tag {
         Tag {
@@ -160,5 +250,95 @@ mod tests {
         assert_eq!(names(suggestions(&all, "etoile", &[])), ["Étoile"]);
         assert_eq!(names(suggestions(&all, "coeur", &[])), ["Cœur"]);
         assert_eq!(names(suggestions(&all, "cœ", &[])), ["Cœur"]);
+    }
+
+    fn child(number: u8, name: &str, parent: &Tag) -> Tag {
+        Tag {
+            parent: Some(parent.id),
+            ..tag(number, name)
+        }
+    }
+
+    #[test]
+    fn each_level_of_a_path_is_cut_at_twenty_characters() {
+        let long = "abcdefghijklmnopqrstuvwxyz";
+        assert_eq!(
+            names_in(&format!("{long}/{long}")),
+            ["abcdefghijklmnopqrst/abcdefghijklmnopqrst"]
+        );
+        assert_eq!(names_in("/a//b/"), ["a/b"]);
+    }
+
+    #[test]
+    fn a_slash_that_ends_the_fragment_is_kept_while_typing() {
+        assert_eq!(
+            split_finished("logo animaux/"),
+            (vec!["logo".to_owned()], "animaux/".to_owned())
+        );
+        assert_eq!(
+            split_finished("animaux/ch"),
+            (Vec::new(), "animaux/ch".to_owned())
+        );
+        assert_eq!(split_finished("/"), (Vec::new(), String::new()));
+    }
+
+    #[test]
+    fn a_path_names_a_tag_with_its_parents() {
+        let subject = tag(1, "Sujet");
+        let animals = child(2, "Animaux", &subject);
+        let goat = child(3, "chèvre", &animals);
+        let all = [subject, animals, goat.clone()];
+        assert_eq!(path_of(&all, &goat), "Sujet/Animaux/chèvre");
+    }
+
+    #[test]
+    fn typing_a_parent_then_a_slash_suggests_its_children_only() {
+        let subject = tag(1, "Sujet");
+        let animals = child(2, "Animaux", &subject);
+        let goat = child(3, "chèvre", &animals);
+        let cat = child(4, "chat", &animals);
+        let tree = child(5, "arbre", &subject);
+        let loose = tag(6, "chèvre");
+        let all = [subject, animals, goat, cat, tree, loose];
+        let names = |found: Vec<&Tag>| found.iter().map(|tag| tag.name.clone()).collect::<Vec<_>>();
+
+        assert_eq!(
+            names(suggestions(&all, "sujet/animaux/", &[])),
+            ["chèvre", "chat"]
+        );
+        assert_eq!(
+            names(suggestions(&all, "Sujet/Animaux/ch", &[])),
+            ["chèvre", "chat"]
+        );
+        assert_eq!(names(suggestions(&all, "sujet/animaux/cha", &[])), ["chat"]);
+        assert!(suggestions(&all, "inconnu/ch", &[]).is_empty());
+        assert_eq!(names(suggestions(&all, "chè", &[])), ["chèvre", "chèvre"]);
+    }
+
+    #[test]
+    fn a_nested_tag_with_the_typed_name_is_still_suggested() {
+        let subject = tag(1, "Sujet");
+        let goat = child(2, "chèvre", &subject);
+        let all = [subject, goat];
+        let names = |found: Vec<&Tag>| found.iter().map(|tag| tag.name.clone()).collect::<Vec<_>>();
+        assert_eq!(names(suggestions(&all, "chèvre", &[])), ["chèvre"]);
+    }
+
+    #[test]
+    fn creating_is_offered_for_a_new_name_under_a_typed_parent() {
+        let subject = tag(1, "Sujet");
+        let animals = child(2, "Animaux", &subject);
+        let all = [subject, animals];
+
+        let offer = create_offer(&all, "sujet/animaux/chouette").expect("offer");
+        assert_eq!(offer.name, "chouette");
+        assert_eq!(offer.parents, "sujet › animaux");
+        assert_eq!(offer.path, "sujet/animaux/chouette");
+
+        assert!(create_offer(&all, "chouette").is_none());
+        assert!(create_offer(&all, "sujet/animaux/").is_none());
+        assert!(create_offer(&all, "sujet/animaux").is_none());
+        let deeper = create_offer(&all, "couleur/rouge").expect("offer");
+        assert_eq!(deeper.parents, "couleur");
     }
 }

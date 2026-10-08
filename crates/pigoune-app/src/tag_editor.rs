@@ -37,6 +37,7 @@ mod imp {
         pub suggestions: OnceCell<gtk::ListBox>,
         pub current: RefCell<Vec<Tag>>,
         pub all: RefCell<Vec<Tag>>,
+        pub offers: RefCell<Vec<String>>,
         pub on_added: RefCell<Option<AddedCallback>>,
         pub on_removed: RefCell<Option<RemovedCallback>>,
         pub on_opened: RefCell<Option<OpenedCallback>>,
@@ -106,7 +107,7 @@ impl PigouneTagEditor {
         }
         for (position, shared) in current.iter().enumerate() {
             let chip = gtk::FlowBoxChild::builder()
-                .child(&self.chip(shared))
+                .child(&self.chip(shared, &all))
                 .focusable(false)
                 .build();
             chips.insert(&chip, i32::try_from(position).unwrap_or(-1));
@@ -117,11 +118,14 @@ impl PigouneTagEditor {
         self.refresh_suggestions();
     }
 
-    fn chip(&self, shared: &SharedTag) -> gtk::Box {
+    fn chip(&self, shared: &SharedTag, all: &[Tag]) -> gtk::Box {
         let tag = &shared.tag;
         let partial = shared.carried_by < shared.out_of;
         let chip = gtk::Box::builder().css_classes(["tag-chip"]).build();
         let content = gtk::Box::builder().spacing(4).build();
+        if let Some(parent) = tag_input::ancestors_of(all, tag).last() {
+            content.append(&parent_label(parent));
+        }
         content.append(&name_label(&tag.name));
         let open = gtk::Button::builder()
             .child(&content)
@@ -147,11 +151,11 @@ impl PigouneTagEditor {
             ));
         }
         let id = tag.id;
-        let name = tag.name.clone();
+        let path = tag_input::path_of(all, tag);
         open.connect_clicked(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |_| editor.activate_tag(id, &name, partial)
+            move |_| editor.activate_tag(id, &path, partial)
         ));
         let remove = gtk::Button::builder()
             .icon_name("window-close-symbolic")
@@ -169,11 +173,11 @@ impl PigouneTagEditor {
         chip
     }
 
-    pub fn activate_tag(&self, id: TagId, name: &str, partial: bool) {
+    pub fn activate_tag(&self, id: TagId, path: &str, partial: bool) {
         let imp = self.imp();
         if partial {
             if let Some(on_applied) = imp.on_applied.borrow().as_ref() {
-                on_applied(name.to_owned());
+                on_applied(path.to_owned());
             }
         } else if let Some(on_opened) = imp.on_opened.borrow().as_ref() {
             on_opened(id);
@@ -332,14 +336,30 @@ impl PigouneTagEditor {
         let current_ids: Vec<TagId> = imp.current.borrow().iter().map(|tag| tag.id).collect();
         let text = entry.text();
         let all = imp.all.borrow();
-        let found =
-            tag_input::suggestions(&all, tag_input::fragment_being_typed(&text), &current_ids);
+        let typed = tag_input::fragment_being_typed(&text);
+        let found = tag_input::suggestions(&all, typed, &current_ids);
+        let mut offers = Vec::new();
         for tag in &found {
-            let label = name_label(&tag.name);
-            label.set_xalign(0.0);
-            list.append(&label);
+            list.append(&suggestion_row(&all, tag));
+            offers.push(tag_input::path_of(&all, tag));
         }
-        if found.is_empty() || !entry.has_focus() && entry.focus_child().is_none() {
+        let creation = tag_input::create_offer(&all, typed);
+        if let Some(creation) = &creation {
+            let label = gtk::Label::builder()
+                .label(
+                    gettext("Create “{name}” in {parents}")
+                        .replace("{name}", &creation.name)
+                        .replace("{parents}", &creation.parents),
+                )
+                .xalign(0.0)
+                .build();
+            list.append(&label);
+            offers.push(creation.path.clone());
+        }
+        imp.offers.replace(offers);
+        if found.is_empty() && creation.is_none()
+            || !entry.has_focus() && entry.focus_child().is_none()
+        {
             popover.popdown();
         } else {
             popover.popup();
@@ -347,19 +367,18 @@ impl PigouneTagEditor {
     }
 
     fn choose(&self, row: &gtk::ListBoxRow) {
-        let Some(name) = row
-            .child()
-            .and_downcast::<gtk::Label>()
-            .map(|label| label.label())
-        else {
+        let imp = self.imp();
+        let path = usize::try_from(row.index())
+            .ok()
+            .and_then(|index| imp.offers.borrow().get(index).cloned());
+        let Some(path) = path else {
             return;
         };
-        let imp = self.imp();
         let entry = part(&imp.entry);
         part(&imp.popover).popdown();
         entry.set_text("");
         if let Some(on_added) = imp.on_added.borrow().as_ref() {
-            on_added(vec![name.to_string()]);
+            on_added(vec![path]);
         }
         entry.grab_focus();
     }
@@ -383,6 +402,30 @@ impl Default for PigouneTagEditor {
     fn default() -> Self {
         glib::Object::new()
     }
+}
+
+pub fn parent_label(parent: &str) -> gtk::Label {
+    gtk::Label::builder()
+        .label(format!("{parent} ›"))
+        .css_classes(["caption", "dim-label"])
+        .build()
+}
+
+fn suggestion_row(all: &[Tag], tag: &Tag) -> gtk::Box {
+    let row = gtk::Box::builder().spacing(8).build();
+    let name = name_label(&tag.name);
+    name.set_xalign(0.0);
+    row.append(&name);
+    let parents = tag_input::ancestors_of(all, tag);
+    if !parents.is_empty() {
+        row.append(
+            &gtk::Label::builder()
+                .label(parents.join(" › "))
+                .css_classes(["caption", "dim-label"])
+                .build(),
+        );
+    }
+    row
 }
 
 fn part<Widget: Clone>(cell: &std::cell::OnceCell<Widget>) -> Widget {

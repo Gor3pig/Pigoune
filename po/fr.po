@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 17:44+0200\n"
+"POT-Creation-Date: 2026-10-08 17:51+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -1637,7 +1637,7 @@ msgid "Add to Favorites"
 msgstr "Ajouter aux favoris"
 
 #: crates/pigoune-app/src/window.rs:2067
-#: crates/pigoune-app/src/tag_editor.rs:202
+#: crates/pigoune-app/src/tag_editor.rs:206
 msgid "Add a Tag…"
 msgstr "Ajouter un tag…"
 
@@ -2734,8 +2734,8 @@ msgid "Smart Collections"
 msgstr "Collections dynamiques"
 
 #: crates/pigoune-app/src/sidebar.rs:310 crates/pigoune-app/src/sidebar.rs:910
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:250
-#: crates/pigoune-app/src/tag_summary.rs:144
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:258
+#: crates/pigoune-app/src/tag_summary.rs:148
 msgid "Tags"
 msgstr "Tags"
 
@@ -2750,7 +2750,7 @@ msgid "favorite"
 msgstr "favori"
 
 #: crates/pigoune-app/src/sidebar_item.rs:132
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:521
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:529
 #, rust-format
 msgid "Tag {name}"
 msgstr "Tag {name}"
@@ -2761,7 +2761,7 @@ msgid "Smart collection {name}"
 msgstr "Collection dynamique {name}"
 
 #: crates/pigoune-app/src/sidebar_item.rs:142
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:526
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:534
 #, rust-format
 msgid "{name}, {count} asset"
 msgid_plural "{name}, {count} assets"
@@ -3355,26 +3355,26 @@ msgstr "Trier les collections par"
 msgid "Sort Smart Collections By"
 msgstr "Trier les collections dynamiques par"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:197
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:205
 msgid "Show Fewer"
 msgstr "Afficher moins"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:200
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:208
 #, rust-format
 msgid "+ {count} other"
 msgid_plural "+ {count} others"
 msgstr[0] "+ {count} autre"
 msgstr[1] "+ {count} autres"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:268
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:305
-#: crates/pigoune-app/src/tag_editor.rs:146
-#: crates/pigoune-app/src/tag_summary.rs:115
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:276
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:313
+#: crates/pigoune-app/src/tag_editor.rs:150
+#: crates/pigoune-app/src/tag_summary.rs:119
 #, rust-format
 msgid "Open the Tag “{name}”"
 msgstr "Ouvrir le tag « {name} »"
 
-#: crates/pigoune-app/src/sidebar_tag_cloud.rs:519
+#: crates/pigoune-app/src/sidebar_tag_cloud.rs:527
 #, rust-format
 msgid "Tag {name}, with sub-tags"
 msgstr "Tag {name}, avec des sous-tags"
@@ -3480,19 +3480,23 @@ msgstr[1] "{count} collections"
 msgid "{tags}, {collections}"
 msgstr "{tags}, {collections}"
 
-#: crates/pigoune-app/src/tag_editor.rs:140
-#: crates/pigoune-app/src/tag_summary.rs:109
+#: crates/pigoune-app/src/tag_editor.rs:144
+#: crates/pigoune-app/src/tag_summary.rs:113
 #, rust-format
 msgid "On {count} of {total} assets. Click to add it to all of them."
 msgstr "Sur {count} des {total} éléments. Cliquez pour l’ajouter à tous."
 
-#: crates/pigoune-app/src/tag_editor.rs:158
-#: crates/pigoune-app/src/tag_summary.rs:127
+#: crates/pigoune-app/src/tag_editor.rs:162
+#: crates/pigoune-app/src/tag_summary.rs:131
 #, rust-format
 msgid "Remove the Tag “{name}”"
 msgstr "Retirer le tag « {name} »"
 
-#: crates/pigoune-app/src/tag_summary.rs:158
+#: crates/pigoune-app/src/tag_editor.rs:350
+msgid "Create “{name}” in {parents}"
+msgstr "Créer « {name} » dans {parents}"
+
+#: crates/pigoune-app/src/tag_summary.rs:162
 msgid "Edit the Tags"
 msgstr "Modifier les tags"
 
