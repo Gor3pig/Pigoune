@@ -49,14 +49,6 @@ impl Library {
         Ok(inverse)
     }
 
-    pub fn tag_imported(&mut self, tag: TagId, assets: &[AssetId]) -> Result<(), TagError> {
-        self.run_tag_command(&TagCommand::Link {
-            tag,
-            assets: assets.to_vec(),
-        })?;
-        Ok(())
-    }
-
     pub(super) fn run_tag_command(&mut self, command: &TagCommand) -> Result<TagCommand, TagError> {
         let transaction = self.connection.transaction()?;
         let inverse = apply(&transaction, command)?;

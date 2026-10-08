@@ -232,35 +232,6 @@ fn emptying_the_trash_forgets_the_history() {
 }
 
 #[test]
-fn tagging_imported_resources_is_not_recorded() {
-    let mut fixture = Fixture::new();
-    let creation = TagCommand::Add {
-        assets: vec![],
-        name: "importés".to_owned(),
-    };
-    fixture
-        .library
-        .apply_tag_command(&creation)
-        .expect("tag is created");
-    let tag = fixture
-        .library
-        .tag_named("importés")
-        .expect("tag is read")
-        .expect("tag exists")
-        .id;
-    let svg = fixture.import("dark-circle.svg", None);
-
-    fixture
-        .library
-        .tag_imported(tag, &[svg])
-        .expect("imported resources are tagged");
-
-    assert_eq!(fixture.shown(AssetView::Tag(tag)), vec![svg]);
-    assert_eq!(fixture.undo(), Some(Change::Tag(creation)));
-    assert!(!fixture.library.can_undo());
-}
-
-#[test]
 fn the_history_keeps_only_the_latest_changes() {
     let mut fixture = Fixture::new();
     let dot = fixture.import("red-dot.png", None);
