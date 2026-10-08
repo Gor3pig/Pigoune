@@ -4,6 +4,8 @@ using Adw 1;
 template $PigouneLibraryInfoDialog: Adw.Dialog {
   title: _("Manage Library");
   content-width: 900;
+  width-request: 360;
+  height-request: 400;
 
   Adw.Breakpoint {
     condition ("max-width: 860sp")
@@ -15,8 +17,6 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
   }
 
   child: Adw.ToolbarView toolbar {
-    width-request: 360;
-
     [top]
     Adw.HeaderBar header_bar {
       title-widget: Adw.ViewSwitcher {
