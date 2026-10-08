@@ -3104,7 +3104,6 @@ impl PigouneWindow {
     }
 
     fn remove_tag_from_selected(&self, tag: TagId) {
-        let imp = self.imp();
         let selected = self.targeted_ids();
         if selected.is_empty() {
             return;
@@ -3118,14 +3117,7 @@ impl PigouneWindow {
         }
         self.refresh_selected_tags();
         self.refresh_sidebar();
-        if self.displayed_view() == AssetView::Tag(tag) {
-            for asset in selected {
-                imp.asset_grid.remove_asset(asset);
-            }
-            if imp.asset_grid.is_empty() {
-                self.refresh_grid();
-            }
-        }
+        self.drop_assets_leaving_view(&selected);
     }
 
     fn refresh_selected_collections(&self) {
