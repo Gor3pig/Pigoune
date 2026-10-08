@@ -99,11 +99,17 @@ mod imp {
                 overlay.set_measure_overlay(&*self.scope_button, false);
             }
             self.search_bar.connect_entry(&*self.search_entry);
+            self.search_button.connect_toggled(glib::clone!(
+                #[weak(rename_to = bar)]
+                self.search_bar,
+                move |button| bar.set_search_mode(button.is_active())
+            ));
             self.search_bar
                 .connect_search_mode_enabled_notify(glib::clone!(
                     #[weak(rename_to = header)]
                     self.obj(),
                     move |bar| {
+                        header.imp().search_button.set_active(bar.is_search_mode());
                         if !bar.is_search_mode() && header.tight() {
                             header.imp().search_entry.set_text("");
                         }
