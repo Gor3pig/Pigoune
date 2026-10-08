@@ -385,7 +385,10 @@ la bibliothèque ouverte, en quatre onglets :
   **Vérifier** lit chaque fichier, ceux de la corbeille compris, et liste les fichiers manquants,
   les fichiers abîmés (leur contenu ne correspond plus à ce qui a été importé) et les fichiers du
   dossier de la bibliothèque qui n'ont pas de fiche. La vérification se fait en arrière-plan,
-  peut être annulée, et ne modifie ni ne supprime jamais rien.
+  peut être annulée, et ne modifie ni ne supprime jamais rien d'elle-même. Pour un fichier sans
+  fiche, **Ajouter** (ou **Tout ajouter**) lui redonne une fiche dans Non classés, sans déplacer
+  le fichier ; Pigoune explique pourquoi quand un fichier ne peut pas être ajouté, par exemple
+  s'il n'est pas une image.
 
 ## Préférences
 

@@ -6,14 +6,15 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{
-    Asset, AssetId, ColorShare, FormatShare, HealthPlan, LibraryOverview, LibraryRecords,
-    StorageUse, oldest_compatible_version,
+    Asset, AssetId, ColorShare, FormatShare, LibraryOverview, LibraryRecords, StorageUse,
+    oldest_compatible_version,
 };
 
 use crate::asset_colors;
 use crate::asset_facts;
 use crate::color_chips;
 use crate::config::VERSION;
+use crate::health_page::HealthActions;
 use crate::host_path;
 use crate::thumbnails;
 
@@ -154,7 +155,7 @@ impl PigouneLibraryInfoDialog {
         report: LibraryReport,
         on_show: impl Fn(AssetId) + 'static,
         clear_thumbnails: impl Fn() -> Result<(), String> + 'static,
-        health_plan: impl Fn() -> Result<HealthPlan, String> + 'static,
+        health: HealthActions,
     ) -> Self {
         let LibraryReport {
             name,
@@ -171,7 +172,7 @@ impl PigouneLibraryInfoDialog {
         imp.on_show.replace(Some(Box::new(on_show)));
         imp.clear_thumbnails
             .replace(Some(Box::new(clear_thumbnails)));
-        imp.health_page.connect_plan_source(health_plan);
+        imp.health_page.connect_actions(health);
         dialog.connect_closed(|dialog| dialog.imp().health_page.cancel());
         imp.root.replace(root.to_path_buf());
         imp.records_box.set_visible(overview.resources > 1);

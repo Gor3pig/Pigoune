@@ -6,11 +6,11 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
-    AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView, ChangeStamp,
-    CollectionCommand, CollectionId, CollectionLook, CollectionPath, CollectionRemoval, Dimensions,
-    HealthPlan, ImportError, ImportSummary, Library, LibraryError, SmartCollection,
-    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
-    TextField, UndoError, dominant_colors, library_display_name,
+    AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
+    ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
+    CollectionRemoval, Dimensions, HealthPlan, ImportError, ImportSummary, Library, LibraryError,
+    SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
+    TagError, TagId, TextField, UndoError, dominant_colors, library_display_name,
 };
 
 use crate::asset_colors;
@@ -32,6 +32,7 @@ use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
+use crate::health_page::{Adopted, HealthActions, Refusal};
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report;
@@ -1178,6 +1179,71 @@ impl PigouneWindow {
             })
     }
 
+    fn health_actions(&self) -> HealthActions {
+        HealthActions {
+            plan: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(String::new()),
+                move || window.health_plan()
+            )),
+            adopt: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |file: &Path| window.adopt_unrecorded(file)
+            )),
+            changed: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move || window.refresh_assets()
+            )),
+            show: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |id| window.show_in_all(id)
+            )),
+        }
+    }
+
+    fn adopt_unrecorded(&self, file: &Path) -> Adopted {
+        let mut library = self.imp().library.borrow_mut();
+        let Some(library) = library.as_mut() else {
+            return Err(Refusal::default());
+        };
+        let name = file
+            .file_name()
+            .map(|name| name.to_string_lossy().to_string())
+            .unwrap_or_default();
+        match library.adopt_unrecorded(file) {
+            Ok(id) => {
+                let shown = library
+                    .asset(id)
+                    .ok()
+                    .flatten()
+                    .map_or(name, |asset| asset.display_name);
+                Ok((id, shown))
+            }
+            Err(error) => {
+                let known_name = match &error {
+                    AdoptError::AlreadyKnown(_, known) => library
+                        .asset(*known)
+                        .ok()
+                        .flatten()
+                        .map(|asset| asset.display_name),
+                    _ => None,
+                };
+                Err(error_messages::describe_adoption(
+                    &error,
+                    &name,
+                    known_name.as_deref(),
+                ))
+            }
+        }
+    }
+
     fn health_plan(&self) -> Result<HealthPlan, String> {
         self.imp().library.borrow().as_ref().map_or_else(
             || Err(String::new()),
@@ -1217,13 +1283,7 @@ impl PigouneWindow {
                         Ok(()),
                         move || window.clear_thumbnails()
                     ),
-                    glib::clone!(
-                        #[weak(rename_to = window)]
-                        self,
-                        #[upgrade_or_else]
-                        || Err(String::new()),
-                        move || window.health_plan()
-                    ),
+                    self.health_actions(),
                 )
             })
         });

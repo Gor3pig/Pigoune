@@ -339,7 +339,9 @@ tabs:
   file, including those in the trash, and lists the files that are missing, the files that are
   damaged (their content no longer matches what was imported) and the files in the library
   folder that have no record. It runs in the background and can be canceled, and it never
-  changes or deletes anything.
+  changes or deletes anything by itself. For a file without a record, **Add** (or **Add All**)
+  gives it back a record in Unclassified, without moving the file; Pigoune explains why when a
+  file cannot be added, for example when it is not an image.
 
 ## Preferences
 

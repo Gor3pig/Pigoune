@@ -3,7 +3,7 @@ mod media;
 mod raster;
 
 pub use library::{
-    Asset, AssetCommand, AssetError, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME,
+    AdoptError, Asset, AssetCommand, AssetError, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME,
     CURRENT_FORMAT_VERSION, Change, ChangeStamp, Collection, CollectionCommand, CollectionError,
     CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ColorShare,
     DATABASE_FILE_NAME, FILES_DIR_NAME, FormatShare, HISTORY_LIMIT, HealthIssue, HealthPlan,

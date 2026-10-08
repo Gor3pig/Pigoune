@@ -1,17 +1,46 @@
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
-use pigoune_core::{HealthIssue, HealthPlan, HealthProgress, HealthReport};
+use pigoune_core::{AssetId, HealthIssue, HealthPlan, HealthProgress, HealthReport};
 use std::ops::ControlFlow;
 
 const SHOWN_AT_FIRST: usize = 5;
 const PROGRESS_STEP: usize = 10;
 
-type PlanSource = Box<dyn Fn() -> Result<HealthPlan, String>>;
+const CLOSE_RESPONSE: &str = "close";
+
+#[derive(Default)]
+pub struct Refusal {
+    pub title: String,
+    pub body: String,
+}
+
+pub type Adopted = Result<(AssetId, String), Refusal>;
+
+pub struct HealthActions {
+    pub plan: Box<dyn Fn() -> Result<HealthPlan, String>>,
+    pub adopt: Box<dyn Fn(&Path) -> Adopted>,
+    pub changed: Box<dyn Fn()>,
+    pub show: Box<dyn Fn(AssetId)>,
+}
+
+#[derive(Default)]
+pub struct ListState {
+    expanded: [Option<bool>; GROUPS],
+    all_shown: [bool; GROUPS],
+}
+
+const GROUPS: usize = 3;
+const MISSING: usize = 0;
+const DAMAGED: usize = 1;
+const UNRECORDED: usize = 2;
 
 mod imp {
     use std::cell::RefCell;
@@ -21,7 +50,10 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
 
-    use super::PlanSource;
+    use super::{HealthActions, ListState};
+    use pigoune_core::HealthReport;
+    use std::cell::Cell;
+    use std::rc::Rc;
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/health-page.ui")]
@@ -40,7 +72,10 @@ mod imp {
         pub action_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub caption_label: TemplateChild<gtk::Label>,
-        pub plan_source: RefCell<Option<PlanSource>>,
+        pub actions: RefCell<Option<Rc<HealthActions>>>,
+        pub report: RefCell<Option<HealthReport>>,
+        pub list_state: RefCell<ListState>,
+        pub repaired: Cell<bool>,
         pub cancel_requested: RefCell<Option<Arc<AtomicBool>>>,
     }
 
@@ -73,8 +108,8 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneHealthPage {
-    pub fn connect_plan_source(&self, source: impl Fn() -> Result<HealthPlan, String> + 'static) {
-        self.imp().plan_source.replace(Some(Box::new(source)));
+    pub fn connect_actions(&self, actions: HealthActions) {
+        self.imp().actions.replace(Some(Rc::new(actions)));
     }
 
     pub fn cancel(&self) {
@@ -95,7 +130,11 @@ impl PigouneHealthPage {
 
     fn start(&self) {
         let imp = self.imp();
-        let planned = imp.plan_source.borrow().as_ref().map(|source| source());
+        let planned = imp
+            .actions
+            .borrow()
+            .as_ref()
+            .map(|actions| (actions.plan)());
         let plan = match planned {
             Some(Ok(plan)) => plan,
             Some(Err(message)) => {
@@ -138,7 +177,7 @@ impl PigouneHealthPage {
                 let report = work.await.ok().flatten();
                 page.imp().cancel_requested.replace(None);
                 match report {
-                    Some(report) => page.show_report(&report),
+                    Some(report) => page.finish_check(report),
                     None => page.show_idle(),
                 }
             }
@@ -201,40 +240,12 @@ impl PigouneHealthPage {
         );
     }
 
-    fn show_report(&self, report: &HealthReport) {
+    fn finish_check(&self, report: HealthReport) {
         let imp = self.imp();
-        imp.progress_box.set_visible(false);
-        while let Some(row) = imp.results_list.first_child() {
-            imp.results_list.remove(&row);
-        }
-        let problems = report.problems();
-        if problems == 0 {
-            imp.status.set_icon_name(Some("object-select-symbolic"));
-            imp.status.set_title(&gettext("Everything Is in Order"));
-            imp.status.set_description(Some(&count_text(
-                &ngettext(
-                    "{count} file checked, no problem found.",
-                    "{count} files checked, no problem found.",
-                    u32::try_from(report.checked).unwrap_or(u32::MAX),
-                ),
-                report.checked,
-            )));
-            imp.results_list.set_visible(false);
-        } else {
-            imp.status.set_icon_name(Some("dialog-warning-symbolic"));
-            imp.status.set_title(&count_text(
-                &ngettext(
-                    "{count} problem found",
-                    "{count} problems found",
-                    u32::try_from(problems).unwrap_or(u32::MAX),
-                ),
-                problems,
-            ));
-            imp.status
-                .set_description(Some(&gettext("Nothing was changed.")));
-            self.fill_results(report);
-            imp.results_list.set_visible(true);
-        }
+        imp.report.replace(Some(report));
+        imp.repaired.set(false);
+        imp.list_state.replace(ListState::default());
+        self.show_report();
         let time = glib::DateTime::now_local()
             .ok()
             .and_then(|now| now.format("%H:%M").ok())
@@ -246,35 +257,312 @@ impl PigouneHealthPage {
         self.set_action(&gettext("Check _Again"), false);
     }
 
+    fn show_report(&self) {
+        let imp = self.imp();
+        let Some(report) = imp.report.borrow().clone() else {
+            return;
+        };
+        imp.progress_box.set_visible(false);
+        while let Some(row) = imp.results_list.first_child() {
+            imp.results_list.remove(&row);
+        }
+        let problems = report.problems();
+        if problems == 0 {
+            imp.status.set_icon_name(Some("object-select-symbolic"));
+            imp.status.set_title(&gettext("Everything Is in Order"));
+            imp.status.set_description(Some(&if imp.repaired.get() {
+                gettext("All the problems are repaired.")
+            } else {
+                count_text(
+                    &ngettext(
+                        "{count} file checked, no problem found.",
+                        "{count} files checked, no problem found.",
+                        u32::try_from(report.checked).unwrap_or(u32::MAX),
+                    ),
+                    report.checked,
+                )
+            }));
+            imp.results_list.set_visible(false);
+        } else {
+            imp.status.set_icon_name(Some("dialog-warning-symbolic"));
+            let count = u32::try_from(problems).unwrap_or(u32::MAX);
+            let title = if imp.repaired.get() {
+                ngettext(
+                    "{count} problem remaining",
+                    "{count} problems remaining",
+                    count,
+                )
+            } else {
+                ngettext("{count} problem found", "{count} problems found", count)
+            };
+            imp.status.set_title(&count_text(&title, problems));
+            imp.status
+                .set_description(Some(&gettext("Nothing is repaired unless you ask for it.")));
+            self.fill_results(&report);
+            imp.results_list.set_visible(true);
+        }
+    }
+
     fn fill_results(&self, report: &HealthReport) {
         let list = &self.imp().results_list;
+        let unrecorded = report
+            .unrecorded
+            .iter()
+            .map(|path| {
+                let name = path
+                    .file_name()
+                    .map(|name| name.to_string_lossy().to_string())
+                    .unwrap_or_default();
+                Line {
+                    name,
+                    detail: path.to_string_lossy().to_string(),
+                    path: Some(path.clone()),
+                }
+            })
+            .collect();
         let groups = [
-            (gettext("Missing Files"), issue_rows(&report.missing)),
-            (gettext("Damaged Files"), issue_rows(&report.damaged)),
             (
-                gettext("Files Without a Record"),
-                report
-                    .unrecorded
-                    .iter()
-                    .map(|path| {
-                        let name = path
-                            .file_name()
-                            .map(|name| name.to_string_lossy().to_string())
-                            .unwrap_or_default();
-                        (name, path.to_string_lossy().to_string())
-                    })
-                    .collect(),
+                MISSING,
+                gettext("Missing Files"),
+                issue_lines(&report.missing),
             ),
+            (
+                DAMAGED,
+                gettext("Damaged Files"),
+                issue_lines(&report.damaged),
+            ),
+            (UNRECORDED, gettext("Files Without a Record"), unrecorded),
         ];
-        for (title, rows) in groups {
-            if !rows.is_empty() {
-                list.append(&group_row(&title, &rows));
+        for (index, title, lines) in groups {
+            if !lines.is_empty() {
+                list.append(&self.group_row(index, &title, &lines));
             }
         }
     }
+
+    fn group_row(&self, index: usize, title: &str, lines: &[Line]) -> adw::ExpanderRow {
+        let state = self.imp().list_state.borrow();
+        let all_shown = state.all_shown[index];
+        let group = adw::ExpanderRow::builder()
+            .title(title)
+            .expanded(state.expanded[index].unwrap_or(lines.len() <= SHOWN_AT_FIRST))
+            .build();
+        drop(state);
+        group.connect_expanded_notify(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            move |group| page.imp().list_state.borrow_mut().expanded[index] =
+                Some(group.is_expanded())
+        ));
+        if index == UNRECORDED && lines.len() > 1 {
+            group.add_suffix(&self.add_all_button());
+        }
+        let count = gtk::Label::builder()
+            .label(lines.len().to_string())
+            .css_classes(["numeric", "dim-label"])
+            .build();
+        group.add_suffix(&count);
+        let shown = if all_shown {
+            lines.len()
+        } else {
+            SHOWN_AT_FIRST
+        };
+        for line in lines.iter().take(shown) {
+            group.add_row(&self.detail_row(line));
+        }
+        if lines.len() > shown {
+            group.add_row(&self.show_all_row(index, lines.len()));
+        }
+        group
+    }
+
+    fn show_all_row(&self, index: usize, count: usize) -> adw::ActionRow {
+        let row = adw::ActionRow::builder()
+            .title(count_text(&gettext("Show All {count}"), count))
+            .activatable(true)
+            .build();
+        row.connect_activated(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            move |_| {
+                page.imp().list_state.borrow_mut().all_shown[index] = true;
+                page.show_report();
+            }
+        ));
+        row
+    }
+
+    fn detail_row(&self, line: &Line) -> adw::ActionRow {
+        let row = adw::ActionRow::builder()
+            .title(glib::markup_escape_text(&line.name))
+            .subtitle(glib::markup_escape_text(&line.detail))
+            .subtitle_selectable(true)
+            .build();
+        row.set_title_lines(1);
+        row.set_subtitle_lines(2);
+        if let Some(path) = &line.path {
+            let button = gtk::Button::builder()
+                .label(gettext("_Add"))
+                .use_underline(true)
+                .valign(gtk::Align::Center)
+                .build();
+            button.connect_clicked(glib::clone!(
+                #[weak(rename_to = page)]
+                self,
+                #[strong]
+                path,
+                move |_| page.add_one(&path)
+            ));
+            row.add_suffix(&button);
+        }
+        row
+    }
+
+    fn add_all_button(&self) -> gtk::Button {
+        let button = gtk::Button::builder()
+            .label(gettext("Add _All"))
+            .use_underline(true)
+            .valign(gtk::Align::Center)
+            .build();
+        button.connect_clicked(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            move |_| page.add_all()
+        ));
+        button
+    }
+
+    fn add_one(&self, path: &Path) {
+        let Some(actions) = self.imp().actions.borrow().clone() else {
+            return;
+        };
+        match (actions.adopt)(path) {
+            Ok((id, name)) => {
+                (actions.changed)();
+                self.forget_unrecorded(&[path.to_path_buf()]);
+                let text = gettext("“{name}” added to Unclassified").replace("{name}", &name);
+                self.show_toast(&text, Some(id));
+            }
+            Err(refusal) => self.show_refusal(&refusal),
+        }
+    }
+
+    fn add_all(&self) {
+        let imp = self.imp();
+        let Some(actions) = imp.actions.borrow().clone() else {
+            return;
+        };
+        let paths = imp
+            .report
+            .borrow()
+            .as_ref()
+            .map(|report| report.unrecorded.clone())
+            .unwrap_or_default();
+        imp.results_list.set_sensitive(false);
+        imp.action_button.set_sensitive(false);
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            async move {
+                let mut added = Vec::new();
+                for path in &paths {
+                    if (actions.adopt)(path).is_ok() {
+                        added.push(path.clone());
+                    }
+                    glib::timeout_future(Duration::ZERO).await;
+                }
+                let imp = page.imp();
+                imp.results_list.set_sensitive(true);
+                imp.action_button.set_sensitive(true);
+                if !added.is_empty() {
+                    (actions.changed)();
+                    page.forget_unrecorded(&added);
+                }
+                page.show_toast(&added_text(added.len(), paths.len() - added.len()), None);
+            }
+        ));
+    }
+
+    fn forget_unrecorded(&self, paths: &[PathBuf]) {
+        let imp = self.imp();
+        if let Some(report) = imp.report.borrow_mut().as_mut() {
+            report.unrecorded.retain(|path| !paths.contains(path));
+        }
+        imp.repaired.set(true);
+        self.show_report();
+    }
+
+    fn show_refusal(&self, refusal: &Refusal) {
+        let alert = adw::AlertDialog::new(Some(&refusal.title), Some(&refusal.body));
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
+    fn show_toast(&self, text: &str, show: Option<AssetId>) {
+        let Some(overlay) = self
+            .ancestor(adw::ToastOverlay::static_type())
+            .and_downcast::<adw::ToastOverlay>()
+        else {
+            return;
+        };
+        let toast = adw::Toast::new(text);
+        toast.set_use_markup(false);
+        if let Some(id) = show {
+            toast.set_button_label(Some(&gettext("_Show")));
+            toast.connect_button_clicked(glib::clone!(
+                #[weak(rename_to = page)]
+                self,
+                move |_| page.show_resource(id)
+            ));
+        }
+        overlay.add_toast(toast);
+    }
+
+    fn show_resource(&self, id: AssetId) {
+        let Some(actions) = self.imp().actions.borrow().clone() else {
+            return;
+        };
+        if let Some(dialog) = self
+            .ancestor(adw::Dialog::static_type())
+            .and_downcast::<adw::Dialog>()
+        {
+            dialog.close();
+        }
+        (actions.show)(id);
+    }
 }
 
-fn issue_rows(issues: &[HealthIssue]) -> Vec<(String, String)> {
+struct Line {
+    name: String,
+    detail: String,
+    path: Option<PathBuf>,
+}
+
+fn added_text(added: usize, refused: usize) -> String {
+    let added_text = count_text(
+        &ngettext(
+            "{count} resource added to Unclassified",
+            "{count} resources added to Unclassified",
+            u32::try_from(added).unwrap_or(u32::MAX),
+        ),
+        added,
+    );
+    let refused_text = count_text(
+        &ngettext(
+            "{count} file could not be added.",
+            "{count} files could not be added.",
+            u32::try_from(refused).unwrap_or(u32::MAX),
+        ),
+        refused,
+    );
+    match (added, refused) {
+        (_, 0) => added_text,
+        (0, _) => refused_text,
+        _ => format!("{added_text}. {refused_text}"),
+    }
+}
+
+fn issue_lines(issues: &[HealthIssue]) -> Vec<Line> {
     issues
         .iter()
         .map(|issue| {
@@ -282,58 +570,13 @@ fn issue_rows(issues: &[HealthIssue]) -> Vec<(String, String)> {
                 Some(name) => gettext("In the collection “{name}”").replace("{name}", name),
                 None => gettext("Not in a collection"),
             };
-            (issue.display_name.clone(), place)
+            Line {
+                name: issue.display_name.clone(),
+                detail: place,
+                path: None,
+            }
         })
         .collect()
-}
-
-fn group_row(title: &str, rows: &[(String, String)]) -> adw::ExpanderRow {
-    let group = adw::ExpanderRow::builder()
-        .title(title)
-        .expanded(rows.len() <= SHOWN_AT_FIRST)
-        .build();
-    let count = gtk::Label::builder()
-        .label(rows.len().to_string())
-        .css_classes(["numeric", "dim-label"])
-        .build();
-    group.add_suffix(&count);
-    for (name, detail) in rows.iter().take(SHOWN_AT_FIRST) {
-        group.add_row(&detail_row(name, detail));
-    }
-    if rows.len() > SHOWN_AT_FIRST {
-        group.add_row(&show_all_row(&group, rows));
-    }
-    group
-}
-
-fn show_all_row(group: &adw::ExpanderRow, rows: &[(String, String)]) -> adw::ActionRow {
-    let row = adw::ActionRow::builder()
-        .title(count_text(&gettext("Show All {count}"), rows.len()))
-        .activatable(true)
-        .build();
-    let remaining: Vec<(String, String)> = rows[SHOWN_AT_FIRST..].to_vec();
-    row.connect_activated(glib::clone!(
-        #[weak]
-        group,
-        move |row| {
-            group.remove(row);
-            for (name, detail) in &remaining {
-                group.add_row(&detail_row(name, detail));
-            }
-        }
-    ));
-    row
-}
-
-fn detail_row(name: &str, detail: &str) -> adw::ActionRow {
-    let row = adw::ActionRow::builder()
-        .title(glib::markup_escape_text(name))
-        .subtitle(glib::markup_escape_text(detail))
-        .subtitle_selectable(true)
-        .build();
-    row.set_title_lines(1);
-    row.set_subtitle_lines(2);
-    row
 }
 
 fn count_text(template: &str, count: usize) -> String {

@@ -1,8 +1,29 @@
 use gettextrs::gettext;
+
+use crate::health_page::Refusal;
 use pigoune_core::{
-    AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, SmartCollectionError, TagError,
-    UndoError,
+    AdoptError, AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, SmartCollectionError,
+    TagError, UndoError,
 };
+
+pub fn describe_adoption(error: &AdoptError, name: &str, known_name: Option<&str>) -> Refusal {
+    let title = gettext("“{name}” Cannot Be Added").replace("{name}", name);
+    let body = match error {
+        AdoptError::UnsupportedFormat(_) => {
+            gettext("This file is not an image that Pigoune recognizes. It was not changed.")
+        }
+        AdoptError::AlreadyKnown(..) => gettext(
+            "Its content is the same as “{other}”, which is already in the library. The file was not changed.",
+        )
+        .replace("{other}", known_name.unwrap_or_default()),
+        AdoptError::NotAdoptable(_) => gettext(
+            "This file is not stored the way Pigoune stores its files, so it cannot be added from here. It was not changed.",
+        ),
+        AdoptError::Unreadable(_) => gettext("This file could not be read. It was not changed."),
+        AdoptError::Library(error) => describe(error),
+    };
+    Refusal { title, body }
+}
 
 pub fn describe(error: &LibraryError) -> String {
     match error {

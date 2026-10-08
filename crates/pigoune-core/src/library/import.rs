@@ -26,6 +26,10 @@ pub(super) struct PreparedFile {
 }
 
 impl PreparedFile {
+    pub(super) fn digest(&self) -> &ContentDigest {
+        &self.digest
+    }
+
     pub(super) fn byte_size(&self) -> u64 {
         self.digest.byte_size
     }
@@ -134,7 +138,7 @@ impl Library {
         })
     }
 
-    fn find_by_content_hash(&self, hash: &str) -> Result<Option<AssetId>, ImportError> {
+    pub(super) fn find_by_content_hash(&self, hash: &str) -> Result<Option<AssetId>, ImportError> {
         Ok(self
             .connection
             .query_row(
@@ -203,7 +207,7 @@ fn inspect_failure(error: InspectError, source: &Path) -> ImportError {
     }
 }
 
-fn insert_asset(
+pub(super) fn insert_asset(
     connection: &Connection,
     id: AssetId,
     asset: &PreparedFile,

@@ -46,6 +46,39 @@ pub enum ImportError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum AdoptError {
+    #[error("{0} is not stored the way Pigoune stores its files")]
+    NotAdoptable(PathBuf),
+    #[error("{0} has the same content as the resource {1}")]
+    AlreadyKnown(PathBuf, AssetId),
+    #[error("{0} is not in a supported format")]
+    UnsupportedFormat(PathBuf),
+    #[error("{0} could not be read")]
+    Unreadable(PathBuf),
+    #[error(transparent)]
+    Library(#[from] LibraryError),
+}
+
+impl From<ImportError> for AdoptError {
+    fn from(error: ImportError) -> Self {
+        match error {
+            ImportError::UnsupportedFormat(path) => Self::UnsupportedFormat(path),
+            ImportError::Unreadable(path) => Self::Unreadable(path),
+            ImportError::CollectionNotFound(_) => Self::Library(LibraryError::Io(
+                io::Error::other("no collection is involved"),
+            )),
+            ImportError::Library(error) => Self::Library(error),
+        }
+    }
+}
+
+impl From<rusqlite::Error> for AdoptError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum CollectionError {
     #[error("a collection name cannot be empty")]
     InvalidName,
