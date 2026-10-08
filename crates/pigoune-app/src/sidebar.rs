@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
@@ -19,6 +21,7 @@ use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
 use crate::sidebar_tag_cloud::{PigouneSidebarTagCloud, TagPill};
 
+const SCROLL_HOLD: std::time::Duration = std::time::Duration::from_millis(600);
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
@@ -339,6 +342,10 @@ impl PigouneSidebar {
         let selection = self.selection_of(&tree_model);
         let trash_selection = self.selection_of(&tree_of(trash));
 
+        let scrolled_to = imp
+            .list_view
+            .vadjustment()
+            .map(|adjustment| adjustment.value());
         imp.rebuilding.set(true);
         imp.list_view.set_model(Some(&selection));
         imp.trash_view.set_model(Some(&trash_selection));
@@ -356,12 +363,41 @@ impl PigouneSidebar {
             trash_selection.set_selected(gtk::INVALID_LIST_POSITION);
         }
         imp.rebuilding.set(false);
+        self.settle_scroll(&tree_model, content.reveal.is_empty(), scrolled_to);
+    }
+
+    fn settle_scroll(
+        &self,
+        tree_model: &gtk::TreeListModel,
+        keep_position: bool,
+        scrolled_to: Option<f64>,
+    ) {
+        let imp = self.imp();
         if let Some(header) = imp.refocused_header.take()
-            && let Some(position) = position_of_entry(&tree_model, header)
+            && let Some(position) = position_of_entry(tree_model, header)
         {
             imp.list_view
                 .scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
+        } else if keep_position && let Some(scrolled_to) = scrolled_to {
+            self.keep_scroll_position(scrolled_to);
         }
+    }
+
+    fn keep_scroll_position(&self, wanted: f64) {
+        let Some(adjustment) = self.imp().list_view.vadjustment() else {
+            return;
+        };
+        let handler = Rc::new(RefCell::new(None));
+        *handler.borrow_mut() = Some(adjustment.connect_value_changed(move |adjustment| {
+            if (adjustment.value() - wanted).abs() >= 1.0 {
+                adjustment.set_value(wanted);
+            }
+        }));
+        glib::timeout_add_local_once(SCROLL_HOLD, move || {
+            if let Some(handler) = handler.take() {
+                adjustment.disconnect(handler);
+            }
+        });
     }
 
     fn selection_of(&self, tree_model: &gtk::TreeListModel) -> gtk::SingleSelection {

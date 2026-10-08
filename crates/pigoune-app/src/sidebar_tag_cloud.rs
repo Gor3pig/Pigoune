@@ -101,19 +101,37 @@ impl PigouneSidebarTagCloud {
     }
 
     pub fn pill_of(&self, tag: TagId) -> Option<gtk::Button> {
+        if let Some(shown) = self.shown_button_of(tag) {
+            return Some(shown);
+        }
+        if !self.knows(tag) {
+            return None;
+        }
         let imp = self.imp();
-        if !imp.pills.borrow().iter().any(|(id, _)| *id == tag) {
-            if self.knows(tag) {
-                imp.level.set(self.level_of(tag));
-            }
+        let level = self.level_of(tag);
+        if imp.level.get() != level || !imp.show_all.get() {
+            imp.level.set(level);
             imp.show_all.set(true);
             self.rebuild();
         }
-        imp.pills
+        self.shown_button_of(tag)
+    }
+
+    fn shown_button_of(&self, tag: TagId) -> Option<gtk::Button> {
+        let imp = self.imp();
+        let in_pills = imp
+            .pills
             .borrow()
             .iter()
             .find(|(id, _)| *id == tag)
-            .map(|(_, pill)| pill.clone())
+            .map(|(_, pill)| pill.clone());
+        in_pills.or_else(|| {
+            imp.crumb_buttons
+                .borrow()
+                .iter()
+                .find(|(id, _)| *id == tag)
+                .map(|(_, crumb)| crumb.clone())
+        })
     }
 
     fn knows(&self, tag: TagId) -> bool {
