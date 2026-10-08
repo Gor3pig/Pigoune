@@ -82,8 +82,8 @@
   background-image: linear-gradient(135deg, transparent 45%, alpha(currentColor, 0.5) 45% 55%, transparent 55%);
 }
 
-.figure-tile {
-  padding: 12px 6px;
+.info-card {
+  padding: 14px 16px;
 }
 
 .animation-badge {
@@ -748,10 +748,6 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
 .preview-strip-list > row:selected {
   background: none;
   box-shadow: inset 0 0 0 2px var(--accent-bg-color);
-}
-
-.figure-tile.main-figure {
-  padding: 14px 6px;
 }
 
 .shape-choice {

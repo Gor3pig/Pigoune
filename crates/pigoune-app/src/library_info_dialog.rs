@@ -21,7 +21,6 @@ use crate::toasts;
 
 use crate::chart_slices::{self, Measure, Slice};
 
-const SMALL_FIGURES: i32 = 3;
 const RESOURCES_COLOR: &str = "#3584e4";
 const THUMBNAILS_COLOR: &str = "#9141ac";
 const DATABASE_COLOR: &str = "#e66100";
@@ -69,7 +68,7 @@ mod imp {
         #[template_child]
         pub place_label: TemplateChild<gtk::Label>,
         #[template_child]
-        pub figures_grid: TemplateChild<gtk::Grid>,
+        pub figures_list: TemplateChild<gtk::ListBox>,
         #[template_child]
         pub chart_box: TemplateChild<gtk::Box>,
         #[template_child]
@@ -379,13 +378,11 @@ impl PigouneLibraryInfoDialog {
     fn show_figures(&self, overview: &LibraryOverview) {
         let imp = self.imp();
         let amount = |count: usize| u32::try_from(count).unwrap_or(u32::MAX);
-        let main = figure_tile(
-            overview.resources,
-            &ngettext("Asset", "Assets", amount(overview.resources)),
-        );
-        main.add_css_class("main-figure");
-        imp.figures_grid.attach(&main, 0, 0, SMALL_FIGURES, 1);
-        let small = [
+        let figures = [
+            (
+                overview.resources,
+                ngettext("Asset", "Assets", amount(overview.resources)),
+            ),
             (
                 overview.collections,
                 ngettext("Collection", "Collections", amount(overview.collections)),
@@ -399,9 +396,8 @@ impl PigouneLibraryInfoDialog {
                 ngettext("Favorite", "Favorites", amount(overview.favorites)),
             ),
         ];
-        for (column, (count, caption)) in (0..).zip(small) {
-            imp.figures_grid
-                .attach(&figure_tile(count, &caption), column, 1, 1, 1);
+        for (count, caption) in figures {
+            imp.figures_list.append(&figure_row(count, &caption));
         }
         let counts = [
             ngettext(
@@ -645,28 +641,15 @@ fn failure_text(reason: &str) -> String {
     gettext("Unable to clear the thumbnails: {reason}").replace("{reason}", reason)
 }
 
-fn figure_tile(count: usize, caption: &str) -> gtk::Widget {
+fn figure_row(count: usize, caption: &str) -> adw::ActionRow {
     let number = gtk::Label::builder()
         .label(count.to_string())
-        .css_classes(["title-1", "numeric"])
+        .valign(gtk::Align::Center)
+        .css_classes(["title-4", "numeric"])
         .build();
-    let label = gtk::Label::builder()
-        .label(caption)
-        .wrap(true)
-        .justify(gtk::Justification::Center)
-        .css_classes(["caption", "dim-label"])
-        .build();
-    let tile = gtk::Box::builder()
-        .orientation(gtk::Orientation::Vertical)
-        .spacing(4)
-        .css_classes(["card", "figure-tile"])
-        .build();
-    tile.append(&number);
-    tile.append(&label);
-    tile.update_property(&[gtk::accessible::Property::Label(&format!(
-        "{count} {caption}"
-    ))]);
-    tile.upcast()
+    let row = adw::ActionRow::builder().title(caption).build();
+    row.add_suffix(&number);
+    row
 }
 
 #[derive(Clone, Copy)]

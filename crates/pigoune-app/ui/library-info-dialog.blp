@@ -44,68 +44,79 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
             hscrollbar-policy: never;
             propagate-natural-height: true;
 
-            child: Box {
-              orientation: vertical;
-              spacing: 18;
-              margin-top: 12;
-              margin-bottom: 24;
-              margin-start: 24;
-              margin-end: 24;
+            child: Adw.Clamp {
+              maximum-size: 648;
+              tightening-threshold: 560;
 
-              Box {
+              child: Box {
                 orientation: vertical;
-                spacing: 2;
+                spacing: 18;
+                margin-top: 18;
+                margin-bottom: 24;
+                margin-start: 24;
+                margin-end: 24;
 
-                Label name_label {
-                  wrap: true;
-                  max-width-chars: 40;
-                  justify: center;
+                Box {
+                  orientation: vertical;
+                  spacing: 2;
 
-                  styles [
-                    "title-2",
-                  ]
+                  Label name_label {
+                    halign: start;
+                    xalign: 0;
+                    wrap: true;
+                    max-width-chars: 40;
+                    justify: left;
+
+                    styles [
+                      "title-2",
+                    ]
+                  }
+
+                  Label place_label {
+                    halign: start;
+                    xalign: 0;
+                    ellipsize: middle;
+                    max-width-chars: 60;
+                    justify: left;
+
+                    styles [
+                      "caption",
+                      "dim-label",
+                    ]
+                  }
                 }
 
-                Label place_label {
-                  ellipsize: middle;
-                  max-width-chars: 40;
-                  justify: center;
-
-                  styles [
-                    "caption",
-                    "dim-label",
-                  ]
-                }
-              }
-
-              Grid figures_grid {
-                column-homogeneous: true;
-                column-spacing: 12;
-                row-spacing: 12;
-              }
-
-              Box records_box {
-                orientation: vertical;
-                spacing: 6;
-
-                Label {
-                  label: _("Records");
-                  xalign: 0;
-
-                  styles [
-                    "heading",
-                  ]
-                }
-
-                ListBox records_list {
+                ListBox figures_list {
                   selection-mode: none;
-                  row-activated => $on_record_activated() swapped;
 
                   styles [
                     "boxed-list",
                   ]
                 }
-              }
+
+                Box records_box {
+                  orientation: vertical;
+                  spacing: 6;
+
+                  Label {
+                    label: _("Records");
+                    xalign: 0;
+
+                    styles [
+                      "heading",
+                    ]
+                  }
+
+                  ListBox records_list {
+                    selection-mode: none;
+                    row-activated => $on_record_activated() swapped;
+
+                    styles [
+                      "boxed-list",
+                    ]
+                  }
+                }
+              };
             };
           };
         }
@@ -119,100 +130,120 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
             hscrollbar-policy: never;
             propagate-natural-height: true;
 
-            child: Box {
-              orientation: vertical;
-              spacing: 24;
-              margin-top: 12;
-              margin-bottom: 24;
-              margin-start: 24;
-              margin-end: 24;
+            child: Adw.Clamp {
+              maximum-size: 648;
+              tightening-threshold: 560;
 
-              Box chart_box {
+              child: Box {
                 orientation: vertical;
                 spacing: 18;
+                margin-top: 18;
+                margin-bottom: 24;
+                margin-start: 24;
+                margin-end: 24;
 
-                Adw.WrapBox {
-                  child-spacing: 24;
-                  line-spacing: 12;
-                  align: 0.5;
+                Box chart_box {
+                  orientation: vertical;
+                  spacing: 14;
 
-                  Overlay {
-                    valign: center;
+                  styles [
+                    "card",
+                    "info-card",
+                  ]
 
-                    child: $PigouneRingChart ring_chart {};
+                  Adw.WrapBox {
+                    child-spacing: 24;
+                    line-spacing: 12;
+                    align: 0.5;
 
-                    [overlay]
-                    Box {
-                      orientation: vertical;
-                      halign: center;
+                    Overlay {
                       valign: center;
 
-                      Label total_label {
-                        styles [
-                          "title-3",
-                          "numeric",
-                        ]
-                      }
+                      child: $PigouneRingChart ring_chart {};
 
-                      Label total_caption {
-                        styles [
-                          "caption",
-                          "dim-label",
-                        ]
+                      [overlay]
+                      Box {
+                        orientation: vertical;
+                        halign: center;
+                        valign: center;
+
+                        Label total_label {
+                          styles [
+                            "title-3",
+                            "numeric",
+                          ]
+                        }
+
+                        Label total_caption {
+                          styles [
+                            "caption",
+                            "dim-label",
+                          ]
+                        }
                       }
+                    }
+
+                    Grid legend_grid {
+                      valign: center;
+                      column-spacing: 12;
+                      row-spacing: 6;
                     }
                   }
 
-                  Grid legend_grid {
-                    valign: center;
-                    column-spacing: 12;
-                    row-spacing: 6;
+                  Adw.ToggleGroup measure_toggles {
+                    halign: center;
+                    active-name: "weight";
+                    notify::active-name => $on_measure_changed() swapped;
+
+                    Adw.Toggle {
+                      name: "weight";
+                      label: _("Size");
+                    }
+
+                    Adw.Toggle {
+                      name: "count";
+                      label: _("Number");
+                    }
                   }
                 }
 
-                Adw.ToggleGroup measure_toggles {
-                  halign: center;
-                  active-name: "weight";
-                  notify::active-name => $on_measure_changed() swapped;
-
-                  Adw.Toggle {
-                    name: "weight";
-                    label: _("Size");
-                  }
-
-                  Adw.Toggle {
-                    name: "count";
-                    label: _("Number");
-                  }
-                }
-              }
-
-              Adw.WrapBox counts_box {
-                child-spacing: 6;
-                line-spacing: 6;
-                align: 0.5;
-              }
-
-              Box colors_box {
-                orientation: vertical;
-                spacing: 8;
-
-                Label {
-                  label: _("Detected Colors");
-                  xalign: 0;
-
-                  styles [
-                    "heading",
-                  ]
-                }
-
-                $PigouneStackedBar colors_bar {}
-
-                Adw.WrapBox colors_legend {
+                Adw.WrapBox counts_box {
                   child-spacing: 6;
                   line-spacing: 6;
+                  align: 0;
                 }
-              }
+
+                Box colors_box {
+                  orientation: vertical;
+                  spacing: 8;
+
+                  Label {
+                    label: _("Detected Colors");
+                    xalign: 0;
+
+                    styles [
+                      "heading",
+                    ]
+                  }
+
+                  Box {
+                    orientation: vertical;
+                    spacing: 12;
+
+                    styles [
+                      "card",
+                      "info-card",
+                    ]
+
+                    $PigouneStackedBar colors_bar {}
+
+                    Adw.WrapBox colors_legend {
+                      child-spacing: 6;
+                      line-spacing: 6;
+                    }
+                  }
+                }
+              };
             };
           };
         }
@@ -226,108 +257,123 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
             hscrollbar-policy: never;
             propagate-natural-height: true;
 
-            child: Box {
-              orientation: vertical;
-              spacing: 24;
-              margin-top: 12;
-              margin-bottom: 24;
-              margin-start: 24;
-              margin-end: 24;
+            child: Adw.Clamp {
+              maximum-size: 648;
+              tightening-threshold: 560;
 
-              Box disk_box {
+              child: Box {
                 orientation: vertical;
-                spacing: 8;
+                spacing: 18;
+                margin-top: 18;
+                margin-bottom: 24;
+                margin-start: 24;
+                margin-end: 24;
 
-                Label {
-                  label: _("Disk Space");
-                  xalign: 0;
+                Box disk_box {
+                  orientation: vertical;
+                  spacing: 8;
+
+                  Label {
+                    label: _("Disk Space");
+                    xalign: 0;
+
+                    styles [
+                      "heading",
+                    ]
+                  }
+
+                  Box {
+                    orientation: vertical;
+                    spacing: 10;
+
+                    styles [
+                      "card",
+                      "info-card",
+                    ]
+
+                    $PigouneStackedBar disk_bar {}
+
+                    Adw.WrapBox disk_legend {
+                      child-spacing: 14;
+                      line-spacing: 4;
+                    }
+                  }
+                }
+
+                ListBox {
+                  selection-mode: none;
 
                   styles [
-                    "heading",
+                    "boxed-list",
                   ]
-                }
 
-                $PigouneStackedBar disk_bar {}
+                  Adw.ActionRow location_row {
+                    title: _("Location");
+                    subtitle-selectable: true;
 
-                Adw.WrapBox disk_legend {
-                  child-spacing: 14;
-                  line-spacing: 4;
-                }
-              }
+                    [suffix]
+                    Button {
+                      icon-name: "edit-copy-symbolic";
+                      tooltip-text: _("Copy the Location");
+                      valign: center;
+                      clicked => $on_copy_location_clicked() swapped;
 
-              ListBox {
-                selection-mode: none;
+                      styles [
+                        "flat",
+                      ]
+                    }
 
-                styles [
-                  "boxed-list",
-                ]
+                    [suffix]
+                    Button {
+                      icon-name: "folder-open-symbolic";
+                      tooltip-text: _("Open the Folder");
+                      valign: center;
+                      clicked => $on_open_folder_clicked() swapped;
 
-                Adw.ActionRow location_row {
-                  title: _("Location");
-                  subtitle-selectable: true;
-
-                  [suffix]
-                  Button {
-                    icon-name: "edit-copy-symbolic";
-                    tooltip-text: _("Copy the Location");
-                    valign: center;
-                    clicked => $on_copy_location_clicked() swapped;
-
-                    styles [
-                      "flat",
-                    ]
+                      styles [
+                        "flat",
+                      ]
+                    }
                   }
 
-                  [suffix]
-                  Button {
-                    icon-name: "folder-open-symbolic";
-                    tooltip-text: _("Open the Folder");
-                    valign: center;
-                    clicked => $on_open_folder_clicked() swapped;
+                  Adw.ActionRow disk_row {
+                    title: _("Disk");
+                  }
 
-                    styles [
-                      "flat",
-                    ]
+                  Adw.ActionRow thumbnails_row {
+                    title: _("Thumbnails");
+                    tooltip-text: _(
+                      "Thumbnails are small copies of the images that keep the grid fast. Clearing them is safe: they are made again when needed."
+                    );
+
+                    [suffix]
+                    Button thumbnails_button {
+                      label: _("_Clear");
+                      use-underline: true;
+                      valign: center;
+                      clicked => $on_clear_thumbnails_clicked() swapped;
+                    }
+                  }
+
+                  Adw.ActionRow created_row {
+                    title: _("Created");
+                  }
+
+                  Adw.ActionRow format_row {
+                    title: _("Compatibility");
+
+                    [suffix]
+                    Image {
+                      icon-name: "object-select-symbolic";
+                      valign: center;
+
+                      styles [
+                        "success",
+                      ]
+                    }
                   }
                 }
-
-                Adw.ActionRow disk_row {
-                  title: _("Disk");
-                }
-
-                Adw.ActionRow thumbnails_row {
-                  title: _("Thumbnails");
-                  tooltip-text: _(
-                    "Thumbnails are small copies of the images that keep the grid fast. Clearing them is safe: they are made again when needed."
-                  );
-
-                  [suffix]
-                  Button thumbnails_button {
-                    label: _("_Clear");
-                    use-underline: true;
-                    valign: center;
-                    clicked => $on_clear_thumbnails_clicked() swapped;
-                  }
-                }
-
-                Adw.ActionRow created_row {
-                  title: _("Created");
-                }
-
-                Adw.ActionRow format_row {
-                  title: _("Compatibility");
-
-                  [suffix]
-                  Image {
-                    icon-name: "object-select-symbolic";
-                    valign: center;
-
-                    styles [
-                      "success",
-                    ]
-                  }
-                }
-              }
+              };
             };
           };
         }
@@ -354,56 +400,63 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
               title: _("Export the Library");
               description: _("Pigoune copies your files into an ordinary folder, arranged like your collections. Nothing in the library is modified.");
 
-              child: Box {
-                orientation: vertical;
-                spacing: 18;
-                halign: center;
-                width-request: 340;
+              styles [
+                "compact",
+              ]
 
-                ListBox {
-                  selection-mode: none;
+              child: Adw.Clamp {
+                maximum-size: 440;
+                tightening-threshold: 380;
 
-                  styles [
-                    "boxed-list",
-                  ]
+                child: Box {
+                  orientation: vertical;
+                  spacing: 18;
 
-                  ListBoxRow {
-                    activatable: false;
-                    selectable: false;
+                  ListBox {
+                    selection-mode: none;
 
-                    child: Box export_tree {
-                      orientation: vertical;
-                      spacing: 4;
-                      margin-top: 12;
-                      margin-bottom: 12;
-                      margin-start: 14;
-                      margin-end: 14;
-                    };
+                    styles [
+                      "boxed-list",
+                    ]
+
+                    ListBoxRow {
+                      activatable: false;
+                      selectable: false;
+
+                      child: Box export_tree {
+                        orientation: vertical;
+                        spacing: 4;
+                        margin-top: 12;
+                        margin-bottom: 12;
+                        margin-start: 14;
+                        margin-end: 14;
+                      };
+                    }
                   }
-                }
 
-                Button export_button {
-                  label: _("_Export…");
-                  use-underline: true;
-                  halign: center;
-                  clicked => $on_export_clicked() swapped;
+                  Button export_button {
+                    label: _("_Export…");
+                    use-underline: true;
+                    halign: center;
+                    clicked => $on_export_clicked() swapped;
 
-                  styles [
-                    "pill",
-                    "suggested-action",
-                  ]
-                }
+                    styles [
+                      "pill",
+                      "suggested-action",
+                    ]
+                  }
 
-                Label {
-                  label: _("Tags, notes and favorites stay in Pigoune. This is not a full backup: for that, copy the library folder.");
-                  wrap: true;
-                  max-width-chars: 50;
-                  justify: center;
+                  Label {
+                    label: _("Tags, notes and favorites stay in Pigoune. This is not a full backup: for that, copy the library folder.");
+                    wrap: true;
+                    max-width-chars: 50;
+                    justify: center;
 
-                  styles [
-                    "dim-label",
-                  ]
-                }
+                    styles [
+                      "dim-label",
+                    ]
+                  }
+                };
               };
             };
           };
