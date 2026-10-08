@@ -221,6 +221,10 @@ impl PigouneLibraryInfoDialog {
     }
 
     pub fn present_fitting(&self, parent: &impl IsA<gtk::Widget>) {
+        let room = parent.width() - PARENT_MARGIN;
+        if room > 0 {
+            self.set_content_width(self.content_width().min(room));
+        }
         let (_, natural, _, _) = self
             .imp()
             .toolbar
@@ -239,9 +243,9 @@ impl PigouneLibraryInfoDialog {
         let imp = self.imp();
         let (_, tabs, _, _) = imp.switcher.measure(gtk::Orientation::Horizontal, -1);
         let (_, pages, _, _) = imp.pages.measure(gtk::Orientation::Horizontal, -1);
-        (tabs + HEADER_ALLOWANCE)
-            .max(pages)
-            .clamp(NARROWEST_WIDTH, WIDEST_WIDTH)
+        pages
+            .clamp(NARROWEST_WIDTH, WIDEST_PAGES_WIDTH)
+            .max(tabs + HEADER_ALLOWANCE)
     }
 
     fn show_records(&self, records: &LibraryRecords) {
@@ -592,7 +596,7 @@ impl PigouneLibraryInfoDialog {
 
 const TREE_INDENT: i32 = 22;
 const NARROWEST_WIDTH: i32 = 560;
-const WIDEST_WIDTH: i32 = 760;
+const WIDEST_PAGES_WIDTH: i32 = 760;
 const HEADER_ALLOWANCE: i32 = 140;
 const SHORTEST_HEIGHT: i32 = 400;
 const PARENT_MARGIN: i32 = 48;
