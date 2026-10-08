@@ -2,7 +2,10 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PigouneGridHeader: Adw.Bin {
-  child: Adw.HeaderBar {
+  child: Box {
+    orientation: vertical;
+
+    Adw.HeaderBar {
     show-title: false;
 
     [start]
@@ -13,13 +16,51 @@ template $PigouneGridHeader: Adw.Bin {
     }
 
     [start]
-    $PigouneSearchSpace {
-      SearchEntry search_entry {
-        max-width-chars: 24;
-        placeholder-text: _("Search…");
+    Box search_slot {
+    $PigouneSearchSpace search_space {
+      Overlay {
+        child: SearchEntry search_entry {
+          max-width-chars: 24;
+          placeholder-text: _("Search…");
 
-        accessibility {
-          label: _("Search Assets");
+          accessibility {
+            label: _("Search Assets");
+          }
+        };
+
+        [overlay]
+        MenuButton scope_button {
+          visible: false;
+          halign: start;
+          valign: center;
+          margin-start: 30;
+          tooltip-text: _("Where to Search");
+
+          child: Box {
+            spacing: 5;
+
+            Image scope_icon {
+              icon-name: "folder-symbolic";
+            }
+
+            Label scope_label {
+              ellipsize: end;
+              max-width-chars: 14;
+            }
+
+            Image scope_arrow {
+              icon-name: "pan-down-symbolic";
+            }
+          };
+
+          accessibility {
+            label: _("Search Scope");
+          }
+
+          styles [
+            "flat",
+            "scope-chip",
+          ]
         }
       }
 
@@ -34,6 +75,8 @@ template $PigouneGridHeader: Adw.Bin {
           "flat",
         ]
       }
+    }
+
     }
 
     [end]
@@ -97,6 +140,18 @@ template $PigouneGridHeader: Adw.Bin {
       styles [
         "flat",
       ]
+    }
+
+    [end]
+    ToggleButton search_button {
+      visible: bind template.tight;
+      icon-name: "system-search-symbolic";
+      tooltip-text: _("Search");
+    }
+    }
+
+    SearchBar search_bar {
+      child: Box search_bar_slot {};
     }
   };
 }

@@ -34,6 +34,7 @@ use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
+use crate::grid_header::SearchScope;
 use crate::health_page::{Adopted, HealthActions, Refusal, Replaced, Trashed};
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
@@ -438,7 +439,7 @@ mod imp {
                 window.choose_library_to_open().await;
             });
             class.install_action(SEARCH_ACTION, None, |window, _, _| {
-                window.imp().grid_header.search_entry().grab_focus();
+                window.imp().grid_header.focus_search();
             });
             class.install_action(PREFERENCES_ACTION, None, |window, _, _| {
                 window.show_preferences();
@@ -729,7 +730,7 @@ impl PigouneWindow {
         }
         let entry = self.imp().grid_header.search_entry();
         let text = format!("{}{typed}", entry.text());
-        entry.grab_focus();
+        self.imp().grid_header.focus_search();
         entry.set_text(&text);
         entry.set_position(-1);
         glib::Propagation::Stop
@@ -1089,6 +1090,25 @@ impl PigouneWindow {
                 "tile-background",
             )
             .build();
+        let search_scope = gio::SimpleAction::new_stateful(
+            "search-scope",
+            Some(glib::VariantTy::STRING),
+            &"everywhere".to_variant(),
+        );
+        search_scope.connect_activate(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_, parameter| {
+                if let Some(choice) = parameter.and_then(glib::Variant::str) {
+                    settings::store_bool(
+                        window.settings(),
+                        settings::SEARCH_EVERYWHERE,
+                        choice == "everywhere",
+                    );
+                }
+            }
+        ));
+        self.add_action(&search_scope);
         settings.connect_changed(
             Some(settings::SEARCH_EVERYWHERE),
             glib::clone!(
@@ -4392,14 +4412,49 @@ impl PigouneWindow {
         let imp = self.imp();
         let current = imp.current_view.get();
         let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
-        let searched = if everywhere && displayed_view::can_widen(current) {
-            AssetView::All
+        let name = self.scope_name(current);
+        let choosable = current != AssetView::All && displayed_view::can_widen(current);
+        self.show_search_scope_choice(everywhere);
+        let scope = if choosable {
+            SearchScope {
+                label: if everywhere {
+                    gettext("Everywhere")
+                } else {
+                    name.clone()
+                },
+                wide: everywhere,
+                menu_name: Some(name),
+            }
+        } else if current == AssetView::All {
+            SearchScope {
+                label: gettext("Everywhere"),
+                wide: true,
+                menu_name: None,
+            }
         } else {
-            current
+            SearchScope {
+                label: if current == AssetView::Trash {
+                    gettext("Trash")
+                } else {
+                    name
+                },
+                wide: false,
+                menu_name: None,
+            }
         };
-        imp.grid_header.search_entry().set_placeholder_text(Some(
-            &gettext("Search in {place}…").replace("{place}", &self.search_place(searched)),
-        ));
+        imp.grid_header.show_search_scope(&scope);
+        imp.grid_header
+            .search_entry()
+            .set_placeholder_text(Some(&gettext("Search…")));
+    }
+
+    fn show_search_scope_choice(&self, everywhere: bool) {
+        if let Some(action) = self
+            .lookup_action("search-scope")
+            .and_downcast::<gio::SimpleAction>()
+        {
+            action.set_state(&(if everywhere { "everywhere" } else { "here" }).to_variant());
+        }
     }
 
     fn searched_view(&self, view: AssetView, filter: &AssetFilter) -> AssetView {

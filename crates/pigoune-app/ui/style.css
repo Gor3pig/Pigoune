@@ -198,6 +198,22 @@ row.drop-target-row:not(:selected) {
   background-color: color-mix(in srgb, currentColor 9%, transparent);
 }
 
+.scope-chip > button {
+  min-height: 0;
+  min-width: 0;
+  padding: 1px 9px 1px 8px;
+  border-radius: 9999px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: var(--accent-color);
+  background-color: color-mix(in srgb, var(--accent-bg-color) 16%, transparent);
+}
+
+.scope-chip.here > button {
+  color: inherit;
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
+}
+
 .tag-pill.partial {
   border: 1px dashed color-mix(in srgb, currentColor 40%, transparent);
   background-color: transparent;

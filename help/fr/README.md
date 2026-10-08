@@ -145,8 +145,12 @@ clic dessus l'ajoute à tous.
 Cliquez dans le champ de recherche, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd>, ou commencez
 simplement à taper. Pigoune cherche dans les noms, les tags, les notes, les sources, les
 licences et les auteurs, sans tenir compte des majuscules, des accents ni des ligatures (*coeur* trouve
-*cœur*), dans l'entrée sélectionnée de la barre latérale. Sélectionnez **Tout** pour chercher dans toute la
-bibliothèque.
+*cœur*), dans l'entrée sélectionnée de la barre latérale. Une petite pastille au début du champ de
+recherche indique où elle cherche : **Partout** ou le nom de l'entrée. Cliquez dessus pour choisir
+**Dans toute la bibliothèque** ou **Dans** l'entrée. Dans **Tout**, la corbeille et les collections
+dynamiques, la pastille reste, sans menu, car la recherche y regarde toujours au même endroit. Dans une fenêtre étroite, le champ laisse la place à une loupe en haut à
+droite : cliquez dessus, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd> ou commencez à taper, et une barre de recherche pleine largeur
+s'ouvre sous la barre de titre, avec la même pastille et le bouton **Filtres**. <kbd>Échap</kbd> la ferme et efface la recherche.
 
 - **Espace = et.** `logo chèvre` trouve les éléments qui contiennent *logo* **et** *chèvre*,
   même à des endroits différents (par exemple *logo* dans le nom et *chèvre* dans un tag).
@@ -468,7 +472,8 @@ retrouve un réglage par son nom.
   l'aperçu.
 - **Rechercher dans toute la bibliothèque** : la recherche et les filtres regardent partout,
   et pas seulement dans l'entrée sélectionnée de la barre latérale, sauf dans la corbeille et
-  dans les collections dynamiques.
+  dans les collections dynamiques. Il est activé au
+  premier démarrage, et la pastille du champ de recherche le change à tout moment.
 
 Pigoune suit le style et la couleur d'accentuation choisis dans les **Paramètres** de GNOME,
 rubrique **Apparence** : style clair ou sombre, et couleur des sélections, des interrupteurs et

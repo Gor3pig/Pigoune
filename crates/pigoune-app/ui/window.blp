@@ -7,11 +7,21 @@ template $PigouneWindow: Adw.ApplicationWindow {
   height-request: 294;
 
   Adw.Breakpoint {
-    condition ("max-width: 1180sp")
+    condition ("max-width: 1240sp")
 
     setters {
       details_split.collapsed: true;
       grid_header.compact: true;
+    }
+  }
+
+  Adw.Breakpoint {
+    condition ("max-width: 900sp")
+
+    setters {
+      details_split.collapsed: true;
+      grid_header.compact: true;
+      grid_header.tight: true;
     }
   }
 
@@ -27,6 +37,7 @@ template $PigouneWindow: Adw.ApplicationWindow {
       details_split.sidebar-width-fraction: 0.8;
       grid_header.compact: true;
       grid_header.narrow: true;
+      grid_header.tight: true;
       asset_preview.compact: true;
     }
   }

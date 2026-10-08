@@ -128,7 +128,12 @@ it to add it to all of them.
 
 Click the search field, press <kbd>Ctrl</kbd>+<kbd>F</kbd>, or simply start typing. Pigoune
 searches names, tags, notes, sources, licenses and authors, ignoring case, accents and ligatures (*coeur* finds
-*cœur*), within the entry selected in the sidebar. Select **All** to search the whole library.
+*cœur*), within the entry selected in the sidebar. A small label at the start of the search field
+says where it looks: **Everywhere** or the name of the entry. Click it to choose **In the Whole
+Library** or **In** the entry. In **All**, the trash and smart collections the label stays, without a menu, because the
+search always looks there. In a narrow window, the field gives way to a magnifier button at the
+top right: click it, press <kbd>Ctrl</kbd>+<kbd>F</kbd> or start typing, and a full-width search bar opens
+under the title bar, with the same label and the **Filters** button. <kbd>Esc</kbd> closes it and clears the search.
 
 - **Space means and.** `logo goat` finds the assets that contain *logo* **and** *goat*, even in
   different places (for example *logo* in the name and *goat* in a tag).
@@ -392,14 +397,14 @@ split into three pages; the magnifier at the top finds a setting by its name.
 
 **Display**
 
-- **Show Resource Names** under each thumbnail of the grid. When names are hidden, hover over a
+- **Show Asset Names** under each thumbnail of the grid. When names are hidden, hover over a
   thumbnail to see its name.
 - **Show Formats**: a badge shows the format of each asset (SVG, PNG…) on its thumbnail.
 - **Thumbnail Background**: white, gray, black or a checkerboard behind the thumbnails, to see
   white or black images and transparent areas.
 - **Play Animations on Hover**: turn it off if moving thumbnails distract you; animations still
   play in the details panel and the preview.
-- **Show Resource Counts** next to each entry of the sidebar.
+- **Show Asset Counts** next to each entry of the sidebar.
 - **Show Tags**: turn it off to hide the tags section of the sidebar. Tags still appear in the
   details panel, and searches still find them.
 - **Show Smart Collections**: turn it off to hide the smart collections section of the
@@ -407,10 +412,11 @@ split into three pages; the magnifier at the top finds a setting by its name.
 
 **Behavior**
 
-- **Open Resources on Double-Click**: a double-click opens the asset in its default
+- **Open Assets on Double-Click**: a double-click opens the asset in its default
   application instead of the preview. <kbd>Space</kbd> still opens the preview.
 - **Search the Whole Library**: searches and filters look everywhere instead of only in the
-  entry selected in the sidebar, except in the trash and in smart collections.
+  entry selected in the sidebar, except in the trash and in smart collections. It is on at the
+  first start, and the label in the search field changes it at any time.
 
 Pigoune follows the style and the accent color you choose in GNOME **Settings**, under
 **Appearance**: light or dark style, and the color of selections, switches and highlights.
