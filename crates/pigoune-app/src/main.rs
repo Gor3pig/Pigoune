@@ -84,6 +84,7 @@ mod smart_collection_sort;
 mod square_space;
 mod stacked_bar;
 mod swipe_steps;
+mod tag_chooser;
 mod tag_cloud;
 mod tag_editor;
 mod tag_input;

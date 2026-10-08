@@ -194,13 +194,15 @@ fn describe_tag(command: &TagCommand, names: &Names) -> Option<String> {
             &gettext("Merging the tag “{name}” undone"),
             &names.tag(*from)?,
         ),
-        TagCommand::Delete { tag } => named(
+        TagCommand::Delete { tag } | TagCommand::Dissolve { tag } => named(
             &gettext("Deleting the tag “{name}” undone"),
             &names.tag(*tag)?,
         ),
-        TagCommand::Move { .. } | TagCommand::Dissolve { .. } | TagCommand::Recreate { .. } => {
-            return None;
-        }
+        TagCommand::Move { tag, .. } => named(
+            &gettext("Moving the tag “{name}” undone"),
+            &names.tag(*tag)?,
+        ),
+        TagCommand::Recreate { .. } => return None,
         TagCommand::Batch(commands) => return describe_tag_batch(commands, names),
     };
     Some(text)

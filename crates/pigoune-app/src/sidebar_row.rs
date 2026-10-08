@@ -720,6 +720,18 @@ pub fn tag_menu(tag: &str) -> gio::Menu {
         Some(&format!("win.rename-tag::{tag}")),
     );
     menu.append(
+        Some(&gettext("New Sub-tag…")),
+        Some(&format!("win.new-sub-tag::{tag}")),
+    );
+    menu.append(
+        Some(&gettext("Move to…")),
+        Some(&format!("win.move-tag::{tag}")),
+    );
+    menu.append(
+        Some(&gettext("Merge into…")),
+        Some(&format!("win.merge-tag::{tag}")),
+    );
+    menu.append(
         Some(&gettext("Delete…")),
         Some(&format!("win.delete-tag::{tag}")),
     );

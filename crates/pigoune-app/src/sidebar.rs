@@ -30,6 +30,7 @@ type ViewChangedCallback = Box<dyn Fn(AssetView)>;
 type ContentDroppedCallback = Box<dyn Fn(AssetView, Dropped)>;
 type AssetsDroppedCallback = Box<dyn Fn(AssetView, Vec<AssetId>, bool)>;
 type CollectionDroppedCallback = Box<dyn Fn(CollectionId, CollectionDrop)>;
+type TagDroppedCallback = Box<dyn Fn(TagId, Option<TagId>)>;
 type AssetsHoveredCallback = Box<dyn Fn(Option<HoveredDrop>)>;
 type DropOfferCallback = Box<dyn Fn(AssetView) -> DropOffer>;
 type SmartCollectionDroppedCallback = Box<dyn Fn(SmartCollectionId, SmartCollectionId, bool)>;
@@ -69,7 +70,7 @@ mod imp {
     use super::{
         AssetsDroppedCallback, AssetsHoveredCallback, CollectionDroppedCallback,
         ContentDroppedCallback, DropOfferCallback, SectionToggledCallback,
-        SmartCollectionDroppedCallback, ViewChangedCallback,
+        SmartCollectionDroppedCallback, TagDroppedCallback, ViewChangedCallback,
     };
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -87,6 +88,7 @@ mod imp {
         pub on_content_dropped: RefCell<Option<ContentDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
         pub on_collection_dropped: RefCell<Option<CollectionDroppedCallback>>,
+        pub on_tag_dropped: RefCell<Option<TagDroppedCallback>>,
         pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
         pub on_drop_offer: RefCell<Option<DropOfferCallback>>,
         pub on_smart_collection_dropped: RefCell<Option<SmartCollectionDroppedCallback>>,
@@ -192,6 +194,16 @@ impl PigouneSidebar {
         self.imp()
             .on_collection_dropped
             .replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_tag_dropped(&self, callback: impl Fn(TagId, Option<TagId>) + 'static) {
+        self.imp().on_tag_dropped.replace(Some(Box::new(callback)));
+    }
+
+    pub fn tag_dropped(&self, dragged: TagId, target: Option<TagId>) {
+        if let Some(on_tag_dropped) = self.imp().on_tag_dropped.borrow().as_ref() {
+            on_tag_dropped(dragged, target);
+        }
     }
 
     pub fn collection_dropped(&self, dragged: CollectionId, drop: CollectionDrop) {

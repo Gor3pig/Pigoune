@@ -222,10 +222,9 @@ impl CollectionCommand {
 impl TagCommand {
     fn changes_nothing(&self) -> bool {
         match self {
-            Self::Add { assets, .. } | Self::Link { assets, .. } | Self::Unlink { assets, .. } => {
-                assets.is_empty()
-            }
-            Self::Rename { .. }
+            Self::Link { assets, .. } | Self::Unlink { assets, .. } => assets.is_empty(),
+            Self::Add { .. }
+            | Self::Rename { .. }
             | Self::Move { .. }
             | Self::Merge { .. }
             | Self::Dissolve { .. }

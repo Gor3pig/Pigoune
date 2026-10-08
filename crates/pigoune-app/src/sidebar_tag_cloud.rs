@@ -5,7 +5,7 @@ use gtk::{gdk, glib};
 use pigoune_core::{AssetView, TagId};
 
 use crate::asset_grid::MENU_KEYS;
-use crate::drag_content::DraggedAssets;
+use crate::drag_content::{DraggedAssets, DraggedTag};
 use crate::shortened_label::name_label;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_row::{control_is_held, tag_menu};
@@ -266,6 +266,7 @@ impl PigouneSidebarTagCloud {
                 cloud.rebuild();
             }
         ));
+        self.accept_tag_drops(&button, None);
         button
     }
 
@@ -284,6 +285,7 @@ impl PigouneSidebarTagCloud {
                 }
             }
         ));
+        self.accept_tag_drops(&button, Some(id));
         button
     }
 
@@ -329,7 +331,64 @@ impl PigouneSidebarTagCloud {
         self.open_menu_on_secondary_click(&pill, id);
         Self::rename_on_f2(&pill, id);
         self.accept_drops(&pill, id);
+        Self::offer_tag_drag(&pill, id);
+        self.accept_tag_drops(&pill, Some(id));
         pill
+    }
+
+    fn offer_tag_drag(pill: &gtk::Button, id: TagId) {
+        let source = gtk::DragSource::builder()
+            .actions(gdk::DragAction::MOVE)
+            .build();
+        source.connect_prepare(move |_, _, _| {
+            Some(gdk::ContentProvider::for_value(&DraggedTag(id).to_value()))
+        });
+        source.connect_drag_begin(glib::clone!(
+            #[weak]
+            pill,
+            move |source, _| {
+                source.set_icon(Some(&gtk::WidgetPaintable::new(Some(&pill))), 0, 0);
+            }
+        ));
+        pill.add_controller(source);
+    }
+
+    fn accept_tag_drops(&self, target_widget: &impl IsA<gtk::Widget>, target: Option<TagId>) {
+        let widget = target_widget.as_ref();
+        let drop_target = gtk::DropTarget::new(DraggedTag::static_type(), gdk::DragAction::MOVE);
+        drop_target.connect_enter(glib::clone!(
+            #[weak]
+            widget,
+            #[upgrade_or]
+            gdk::DragAction::empty(),
+            move |_, _, _| {
+                widget.add_css_class(DROP_HIGHLIGHT);
+                gdk::DragAction::MOVE
+            }
+        ));
+        drop_target.connect_leave(glib::clone!(
+            #[weak]
+            widget,
+            move |_| widget.remove_css_class(DROP_HIGHLIGHT)
+        ));
+        drop_target.connect_drop(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            #[weak]
+            widget,
+            #[upgrade_or]
+            false,
+            move |_, value, _, _| {
+                widget.remove_css_class(DROP_HIGHLIGHT);
+                let (Some(sidebar), Ok(dragged)) = (cloud.sidebar(), value.get::<DraggedTag>())
+                else {
+                    return false;
+                };
+                sidebar.tag_dropped(dragged.0, target);
+                true
+            }
+        ));
+        widget.add_controller(drop_target);
     }
 
     fn open_menu_on_secondary_click(&self, pill: &gtk::Button, id: TagId) {

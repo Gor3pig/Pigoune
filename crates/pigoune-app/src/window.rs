@@ -53,6 +53,7 @@ use crate::smart_collection_dialog::{
     PigouneSmartCollectionDialog, SmartCollectionDraft, free_name,
 };
 use crate::smart_collection_sort::{self, SmartCollectionCriterion, SmartCollectionOrder};
+use crate::tag_chooser;
 use crate::tag_editor::SharedTag;
 use crate::thumbnails::{self, THUMBNAIL_PIXELS};
 use crate::toasts;
@@ -100,6 +101,9 @@ const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
 const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
 const EMPTY_TRASH_RESPONSE: &str = "empty";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
+const NEW_SUB_TAG_ACTION: &str = "win.new-sub-tag";
+const MOVE_TAG_ACTION: &str = "win.move-tag";
+const MERGE_TAG_ACTION: &str = "win.merge-tag";
 const NEW_SMART_COLLECTION_ACTION: &str = "win.new-smart-collection";
 const EDIT_SMART_COLLECTION_ACTION: &str = "win.edit-smart-collection";
 const DELETE_SMART_COLLECTION_ACTION: &str = "win.delete-smart-collection";
@@ -121,7 +125,7 @@ const SELECT_ALL_ACTION: &str = "win.select-all";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 21] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 24] = [
     SET_WALLPAPER_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
@@ -140,6 +144,9 @@ const OPEN_LIBRARY_ACTIONS: [&str; 21] = [
     TOGGLE_FAVORITE_ACTION,
     RENAME_TAG_ACTION,
     DELETE_TAG_ACTION,
+    NEW_SUB_TAG_ACTION,
+    MOVE_TAG_ACTION,
+    MERGE_TAG_ACTION,
     NEW_SMART_COLLECTION_ACTION,
     EDIT_SMART_COLLECTION_ACTION,
     DELETE_SMART_COLLECTION_ACTION,
@@ -165,6 +172,7 @@ const OPEN_ANOTHER_RESPONSE: &str = "open-another";
 const RETRY_RESPONSE: &str = "retry";
 const MERGE_RESPONSE: &str = "merge";
 const DELETE_RESPONSE: &str = "delete";
+const KEEP_SUB_TAGS_RESPONSE: &str = "keep-sub-tags";
 
 enum ReopeningChoice {
     Retry,
@@ -198,8 +206,9 @@ mod imp {
         CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
         DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, MOVE_TO_COLLECTION_ACTION,
-        NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION, NEW_SUBCOLLECTION_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, MERGE_TAG_ACTION,
+        MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
+        NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
         PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
         RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
@@ -480,6 +489,33 @@ mod imp {
                 |window, _, parameter| {
                     if let Some(tag) = tag_parameter(parameter) {
                         window.ask_tag_name(tag);
+                    }
+                },
+            );
+            class.install_action(
+                NEW_SUB_TAG_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(tag) = tag_parameter(parameter) {
+                        window.ask_sub_tag_name(tag);
+                    }
+                },
+            );
+            class.install_action(
+                MOVE_TAG_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(tag) = tag_parameter(parameter) {
+                        window.ask_tag_parent(tag);
+                    }
+                },
+            );
+            class.install_action(
+                MERGE_TAG_ACTION,
+                Some(glib::VariantTy::STRING),
+                |window, _, parameter| {
+                    if let Some(tag) = tag_parameter(parameter) {
+                        window.ask_tag_to_merge_into(tag);
                     }
                 },
             );
@@ -919,6 +955,11 @@ impl PigouneWindow {
                 window.show_view(view);
                 window.close_folded_sidebar();
             }
+        ));
+        self.imp().sidebar.connect_tag_dropped(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |dragged, target| window.move_tag(dragged, target)
         ));
         self.imp().sidebar.connect_collection_dropped(glib::clone!(
             #[weak(rename_to = window)]
@@ -3895,44 +3936,213 @@ impl PigouneWindow {
         let Some(name) = self.tag_name(tag) else {
             return;
         };
-        let used_by = self
+        let (used_by, sub_tags) = self
             .imp()
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.view_count(AssetView::Tag(tag)).ok())
-            .unwrap_or(0);
+            .map(|library| {
+                let used_by = library.view_count(AssetView::Tag(tag)).unwrap_or(0);
+                let sub_tags = library.tags().map_or(0, |tags| {
+                    tags.iter()
+                        .filter(|candidate| candidate.parent == Some(tag))
+                        .count()
+                });
+                (used_by, sub_tags)
+            })
+            .unwrap_or_default();
+        let body = if sub_tags == 0 {
+            ngettext(
+                "It will be removed from {count} asset. The assets stay in the library.",
+                "It will be removed from {count} assets. The assets stay in the library.",
+                u32::try_from(used_by).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &used_by.to_string())
+        } else {
+            ngettext(
+                "It contains {count} sub-tag. The assets stay in the library.",
+                "It contains {count} sub-tags. The assets stay in the library.",
+                u32::try_from(sub_tags).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &sub_tags.to_string())
+        };
         let alert = adw::AlertDialog::new(
             Some(&gettext("Delete the Tag “{name}”?").replace("{name}", &name)),
-            Some(
-                &ngettext(
-                    "It will be removed from {count} asset. The assets stay in the library.",
-                    "It will be removed from {count} assets. The assets stay in the library.",
-                    u32::try_from(used_by).unwrap_or(u32::MAX),
-                )
-                .replace("{count}", &used_by.to_string()),
-            ),
+            Some(&body),
         );
-        alert.add_responses(&[
-            (CLOSE_RESPONSE, &gettext("_Cancel")),
-            (DELETE_RESPONSE, &gettext("_Delete")),
-        ]);
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Cancel"));
+        if sub_tags > 0 {
+            alert.add_response(
+                KEEP_SUB_TAGS_RESPONSE,
+                &gettext("Delete and _Move Sub-tags Up"),
+            );
+        }
+        alert.add_response(
+            DELETE_RESPONSE,
+            &if sub_tags > 0 {
+                gettext("_Delete with Sub-tags")
+            } else {
+                gettext("_Delete")
+            },
+        );
         alert.set_response_appearance(DELETE_RESPONSE, adw::ResponseAppearance::Destructive);
         alert.set_close_response(CLOSE_RESPONSE);
-        alert.connect_response(
-            Some(DELETE_RESPONSE),
+        for (response, dissolve) in [(DELETE_RESPONSE, false), (KEEP_SUB_TAGS_RESPONSE, true)] {
+            alert.connect_response(
+                Some(response),
+                glib::clone!(
+                    #[weak(rename_to = window)]
+                    self,
+                    move |_, _| {
+                        let command = if dissolve {
+                            TagCommand::Dissolve { tag }
+                        } else {
+                            TagCommand::Delete { tag }
+                        };
+                        if window.apply_tag_command(&command) {
+                            window.refresh_assets();
+                            window.refresh_selected_tags();
+                        }
+                    }
+                ),
+            );
+        }
+        alert.present(Some(self));
+    }
+
+    fn ask_sub_tag_name(&self, parent: TagId) {
+        let dialog = PigouneCollectionNameDialog::new(
+            &gettext("New Sub-tag"),
+            &gettext("_Create"),
+            "",
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |_, _| {
-                    if window.apply_tag_command(&TagCommand::Delete { tag }) {
-                        window.refresh_assets();
-                        window.refresh_selected_tags();
-                    }
-                }
+                #[upgrade_or]
+                Ok(()),
+                move |name| window.create_sub_tag(parent, name)
             ),
         );
-        alert.present(Some(self));
+        dialog.present(Some(self));
+    }
+
+    fn create_sub_tag(&self, parent: TagId, name: &str) -> Result<(), String> {
+        let path = {
+            let library = self.imp().library.borrow();
+            let Some(library) = library.as_ref() else {
+                return Ok(());
+            };
+            let mut names: Vec<String> = library
+                .tag_path(parent)
+                .map_err(|error| error_messages::describe(&error))?
+                .into_iter()
+                .map(|step| step.name)
+                .collect();
+            names.push(name.trim().to_owned());
+            names.join("/")
+        };
+        if name.contains('/') {
+            return Err(gettext("A tag name cannot contain a slash."));
+        }
+        let taken = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.tag_named_in(parent, name).ok().flatten());
+        if let Some(existing) = taken {
+            return Err(error_messages::describe_tag(&TagError::NameTaken(
+                existing.id,
+            )));
+        }
+        let created = self.change_library(|library| {
+            library.apply_tag_command(&TagCommand::Add {
+                assets: Vec::new(),
+                name: path,
+            })
+        });
+        match created {
+            Some(Ok(_)) => {
+                self.go_to_view(AssetView::Tag(parent), Vec::new());
+                Ok(())
+            }
+            Some(Err(error)) => Err(error_messages::describe_tag(&error)),
+            None => Ok(()),
+        }
+    }
+
+    fn ask_tag_parent(&self, tag: TagId) {
+        self.ask_tag_destination(
+            tag,
+            &gettext("Move the Tag “{name}”"),
+            Some(&gettext("Top Level")),
+            true,
+            move |window, destination| window.move_tag(tag, destination),
+        );
+    }
+
+    fn ask_tag_to_merge_into(&self, tag: TagId) {
+        self.ask_tag_destination(
+            tag,
+            &gettext("Merge the Tag “{name}” Into"),
+            None,
+            false,
+            move |window, destination| {
+                if let Some(into) = destination {
+                    window.merge_tag(tag, into);
+                }
+            },
+        );
+    }
+
+    fn ask_tag_destination(
+        &self,
+        tag: TagId,
+        title: &str,
+        top_level_label: Option<&str>,
+        leave_current_parent: bool,
+        on_chosen: impl Fn(&Self, Option<TagId>) + 'static,
+    ) {
+        let Some(name) = self.tag_name(tag) else {
+            return;
+        };
+        let Some(tags) = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.tags().ok())
+        else {
+            return;
+        };
+        let choices = tag_chooser::destinations(&tags, tag, top_level_label, leave_current_parent);
+        tag_chooser::present(
+            self,
+            &title.replace("{name}", &name),
+            choices,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |destination| on_chosen(&window, destination)
+            ),
+        );
+    }
+
+    fn move_tag(&self, tag: TagId, parent: Option<TagId>) {
+        if self.apply_tag_command(&TagCommand::Move { tag, parent }) {
+            self.go_to_view(AssetView::Tag(tag), Vec::new());
+            self.refresh_selected_tags();
+        }
+    }
+
+    fn merge_tag(&self, from: TagId, into: TagId) {
+        if self.apply_tag_command(&TagCommand::Merge { from, into }) {
+            if self.imp().current_view.get() == AssetView::Tag(from) {
+                self.imp().current_view.set(AssetView::Tag(into));
+            }
+            self.refresh_assets();
+            self.refresh_selected_tags();
+        }
     }
 
     fn connect_preview(&self) {
