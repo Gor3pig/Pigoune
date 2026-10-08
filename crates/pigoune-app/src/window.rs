@@ -32,7 +32,7 @@ use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
-use crate::health_page::{Adopted, HealthActions, Refusal, Replaced};
+use crate::health_page::{Adopted, HealthActions, Refusal, Replaced, Trashed};
 use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report;
@@ -1209,6 +1209,20 @@ impl PigouneWindow {
                 || Err(Refusal::default()),
                 move |id: AssetId| window.remove_record(id)
             )),
+            trash: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |id: AssetId| window.trash_damaged_resource(id)
+            )),
+            undo: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |stamp: ChangeStamp| window.undo_from_health(stamp)
+            )),
             changed: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1240,6 +1254,36 @@ impl PigouneWindow {
         library
             .replace_stored_file(id, copy)
             .map_err(|error| error_messages::describe_replacement(&error, &file_name, &asset_name))
+    }
+
+    fn trash_damaged_resource(&self, id: AssetId) -> Trashed {
+        let trashed = self.change_library(|library| {
+            library.apply_asset_command(&AssetCommand::SetTrashed {
+                assets: vec![id],
+                trashed: true,
+            })?;
+            Ok::<_, AssetError>(library.latest_change())
+        });
+        match trashed {
+            Some(Ok(Some(stamp))) => Ok(stamp),
+            Some(Err(error)) => Err(Refusal {
+                title: gettext("Unable to Change the Resource"),
+                body: error_messages::describe_asset(&error),
+                try_again: false,
+            }),
+            Some(Ok(None)) | None => Err(Refusal::default()),
+        }
+    }
+
+    fn undo_from_health(&self, stamp: ChangeStamp) -> Replaced {
+        match self.change_library(|library| library.undo_change(stamp)) {
+            Some(Err(error)) => Err(Refusal {
+                title: gettext("Unable to Undo"),
+                body: error_messages::describe_undo(&error),
+                try_again: false,
+            }),
+            Some(Ok(_)) | None => Ok(()),
+        }
     }
 
     fn remove_record(&self, id: AssetId) -> Replaced {

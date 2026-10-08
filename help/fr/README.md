@@ -393,7 +393,11 @@ la bibliothèque ouverte, en quatre onglets :
   a été importé, puis la remet en place en conservant le nom, les tags et les collections de la
   ressource. Pour un fichier manquant dont il ne reste aucune copie, **Retirer…** retire la
   fiche de la ressource de la bibliothèque, après une confirmation qui précise que c'est
-  définitif ; un fichier abîmé, qui existe encore, ne le propose jamais.
+  définitif ; un fichier abîmé, qui existe encore, ne le propose jamais. Un fichier abîmé
+  propose à la place **Mettre à la corbeille**, qu'on peut annuler depuis le message qui
+  apparaît. Les ressources qui sont dans la corbeille ne sont pas signalées : leurs fichiers
+  partent avec la corbeille, et si vous en restaurez une, la vérification suivante la regarde
+  de nouveau.
 
 ## Préférences
 

@@ -346,7 +346,10 @@ tabs:
   content is identical to what was imported, then puts it back in place and keeps the asset’s
   name, tags and collections. For a missing file with no copy left, **Remove…** removes the
   asset’s record from the library, after a confirmation that says it cannot be undone; a damaged
-  file, which still exists, never offers it.
+  file, which still exists, never offers it. A damaged file offers **Move to Trash** instead,
+  which can be undone from the message that appears. Assets that are in the trash are not
+  reported: their files leave with the trash, and if you restore one, the next check looks at
+  it again.
 
 ## Preferences
 

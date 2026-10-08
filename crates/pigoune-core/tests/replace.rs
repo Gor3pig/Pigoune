@@ -150,13 +150,14 @@ fn the_file_of_a_trashed_resource_can_be_replaced() {
             trashed: true,
         })
         .expect("trashed");
-    fs::remove_file(stored_file(&library, id)).expect("file removed");
+    let file = stored_file(&library, id);
+    fs::remove_file(&file).expect("file removed");
 
     library
         .replace_stored_file(id, &sample("red-dot.png"))
         .expect("file is replaced");
 
-    assert_eq!(problems(&library), 0);
+    assert!(file.is_file());
 }
 
 #[test]

@@ -129,22 +129,47 @@ fn a_file_without_a_record_is_reported_as_unrecorded() {
 }
 
 #[test]
-fn files_of_trashed_resources_are_checked_too() {
+fn files_of_trashed_resources_are_not_reported_but_still_count_as_recorded() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let mut library = Library::create(workspace.path(), "Essai").expect("library");
-    let id = import(&mut library, "red-dot.png");
+    let missing = import(&mut library, "red-dot.png");
+    let damaged = import(&mut library, "blue-photo.jpg");
+    let intact = import(&mut library, "dark-circle.svg");
     library
         .apply_asset_command(&pigoune_core::AssetCommand::SetTrashed {
-            assets: vec![id],
+            assets: vec![missing, damaged, intact],
             trashed: true,
         })
         .expect("trashed");
-    fs::remove_file(stored_file(&library, id)).expect("file removed");
+    fs::remove_file(stored_file(&library, missing)).expect("file removed");
+    fs::write(stored_file(&library, damaged), b"x").expect("damaged");
 
     let report = check(&library);
 
-    assert_eq!(report.checked, 1);
-    assert_eq!(report.missing.len(), 1);
+    assert_eq!(report.checked, 0);
+    assert_eq!(report.problems(), 0);
+}
+
+#[test]
+fn a_resource_restored_from_the_trash_is_reported_again() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Essai").expect("library");
+    let id = import(&mut library, "blue-photo.jpg");
+    fs::write(stored_file(&library, id), b"x").expect("damaged");
+    let command = |trashed| pigoune_core::AssetCommand::SetTrashed {
+        assets: vec![id],
+        trashed,
+    };
+    library
+        .apply_asset_command(&command(true))
+        .expect("trashed");
+    assert_eq!(check(&library).problems(), 0);
+
+    library
+        .apply_asset_command(&command(false))
+        .expect("restored");
+
+    assert_eq!(check(&library).damaged.len(), 1);
 }
 
 #[test]

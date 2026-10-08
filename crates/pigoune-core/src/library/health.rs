@@ -10,6 +10,7 @@ pub struct HealthTarget {
     pub id: AssetId,
     pub display_name: String,
     pub collection: Option<String>,
+    trashed: bool,
     stored_path: PathBuf,
     expected_hash: String,
     expected_bytes: u64,
@@ -56,7 +57,8 @@ impl Library {
                 (SELECT min(collections.name) FROM asset_collections
                     JOIN collections ON collections.id = asset_collections.collection_id
                     WHERE asset_collections.asset_id = assets.id
-                    AND collections.trashed_at_unix_ms IS NULL)
+                    AND collections.trashed_at_unix_ms IS NULL),
+                trashed_at_unix_ms IS NOT NULL
              FROM assets ORDER BY added_at_unix_ms, id",
         )?;
         let targets = statement
@@ -68,6 +70,7 @@ impl Library {
                     expected_hash: row.get(3)?,
                     expected_bytes: row.get(4)?,
                     collection: row.get(5)?,
+                    trashed: row.get(6)?,
                 })
             })?
             .collect::<Result<_, _>>()?;
@@ -93,6 +96,9 @@ impl HealthPlan {
         for (done, target) in self.targets.iter().enumerate() {
             if progress(HealthProgress { done, total }).is_break() {
                 return None;
+            }
+            if target.trashed {
+                continue;
             }
             match self.condition_of(target) {
                 Condition::Intact => {}

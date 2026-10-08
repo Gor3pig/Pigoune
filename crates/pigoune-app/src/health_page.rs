@@ -8,7 +8,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
-use pigoune_core::{AssetId, HealthIssue, HealthPlan, HealthProgress, HealthReport};
+use pigoune_core::{AssetId, ChangeStamp, HealthIssue, HealthPlan, HealthProgress, HealthReport};
 use std::ops::ControlFlow;
 
 const SHOWN_AT_FIRST: usize = 5;
@@ -28,6 +28,7 @@ pub struct Refusal {
 pub type Adopted = Result<(AssetId, String), Refusal>;
 
 pub type Replaced = Result<(), Refusal>;
+pub type Trashed = Result<ChangeStamp, Refusal>;
 pub type ReplaceAction = Box<dyn Fn(AssetId, &Path) -> Replaced>;
 
 pub struct HealthActions {
@@ -35,6 +36,8 @@ pub struct HealthActions {
     pub adopt: Box<dyn Fn(&Path) -> Adopted>,
     pub replace: ReplaceAction,
     pub remove: Box<dyn Fn(AssetId) -> Replaced>,
+    pub trash: Box<dyn Fn(AssetId) -> Trashed>,
+    pub undo: Box<dyn Fn(ChangeStamp) -> Replaced>,
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
 }
@@ -332,12 +335,12 @@ impl PigouneHealthPage {
             (
                 MISSING,
                 gettext("Missing Files"),
-                issue_lines(&report.missing, true),
+                issue_lines(&report.missing, true, false),
             ),
             (
                 DAMAGED,
                 gettext("Damaged Files"),
-                issue_lines(&report.damaged, false),
+                issue_lines(&report.damaged, false, true),
             ),
             (UNRECORDED, gettext("Files Without a Record"), unrecorded),
         ];
@@ -400,14 +403,11 @@ impl PigouneHealthPage {
         row
     }
 
-    fn detail_row(&self, line: &Line) -> adw::ActionRow {
-        let row = adw::ActionRow::builder()
-            .title(glib::markup_escape_text(&line.name))
-            .subtitle(glib::markup_escape_text(&line.detail))
-            .subtitle_selectable(true)
+    fn detail_row(&self, line: &Line) -> adw::WrapBox {
+        let buttons = gtk::Box::builder()
+            .spacing(6)
+            .valign(gtk::Align::Center)
             .build();
-        row.set_title_lines(1);
-        row.set_subtitle_lines(2);
         match &line.action {
             LineAction::Add(path) => {
                 let button = suffix_button(&gettext("_Add"));
@@ -418,9 +418,13 @@ impl PigouneHealthPage {
                     path,
                     move |_| page.add_one(&path)
                 ));
-                row.add_suffix(&button);
+                buttons.append(&button);
             }
-            LineAction::Replace { id, removable } => {
+            LineAction::Repair {
+                id,
+                removable,
+                trashable,
+            } => {
                 let button = suffix_button(&gettext("_Replace…"));
                 button.connect_clicked(glib::clone!(
                     #[weak(rename_to = page)]
@@ -431,7 +435,7 @@ impl PigouneHealthPage {
                     id,
                     move |_| page.choose_copy(id, &name)
                 ));
-                row.add_suffix(&button);
+                buttons.append(&button);
                 if *removable {
                     let button = suffix_button(&gettext("Re_move…"));
                     button.connect_clicked(glib::clone!(
@@ -443,10 +447,33 @@ impl PigouneHealthPage {
                         id,
                         move |_| page.confirm_removal(id, &name)
                     ));
-                    row.add_suffix(&button);
+                    buttons.append(&button);
+                }
+                if *trashable {
+                    let button = suffix_button(&gettext("Move to _Trash"));
+                    button.connect_clicked(glib::clone!(
+                        #[weak(rename_to = page)]
+                        self,
+                        #[strong(rename_to = name)]
+                        line.name,
+                        #[strong]
+                        id,
+                        move |_| page.trash_damaged(id, &name)
+                    ));
+                    buttons.append(&button);
                 }
             }
         }
+        let row = adw::WrapBox::builder()
+            .child_spacing(12)
+            .line_spacing(8)
+            .margin_top(8)
+            .margin_bottom(8)
+            .margin_start(12)
+            .margin_end(12)
+            .build();
+        row.append(&line_text(line));
+        row.append(&buttons);
         row
     }
 
@@ -473,7 +500,12 @@ impl PigouneHealthPage {
                 (actions.changed)();
                 self.forget_unrecorded(&[path.to_path_buf()]);
                 let text = gettext("“{name}” added to Unclassified").replace("{name}", &name);
-                self.show_toast(&text, Some(id));
+                let show: Box<dyn Fn()> = Box::new(glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    move || page.show_resource(id)
+                ));
+                self.show_toast(&text, Some((gettext("_Show"), show)));
             }
             Err(refusal) => self.show_refusal(&refusal, None),
         }
@@ -601,6 +633,49 @@ impl PigouneHealthPage {
         }
     }
 
+    fn trash_damaged(&self, id: AssetId, name: &str) {
+        let imp = self.imp();
+        let Some(actions) = imp.actions.borrow().clone() else {
+            return;
+        };
+        let issue = imp
+            .report
+            .borrow()
+            .as_ref()
+            .and_then(|report| report.damaged.iter().find(|issue| issue.id == id).cloned());
+        match (actions.trash)(id) {
+            Ok(stamp) => {
+                (actions.changed)();
+                self.forget_issue(id);
+                let text = gettext("“{name}” moved to the trash").replace("{name}", name);
+                let undo: Box<dyn Fn()> = Box::new(glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    move || page.undo_trashing(stamp, issue.clone())
+                ));
+                self.show_toast(&text, Some((gettext("_Undo"), undo)));
+            }
+            Err(refusal) => self.show_refusal(&refusal, None),
+        }
+    }
+
+    fn undo_trashing(&self, stamp: ChangeStamp, issue: Option<HealthIssue>) {
+        let imp = self.imp();
+        let Some(actions) = imp.actions.borrow().clone() else {
+            return;
+        };
+        match (actions.undo)(stamp) {
+            Ok(()) => {
+                (actions.changed)();
+                if let (Some(issue), Some(report)) = (issue, imp.report.borrow_mut().as_mut()) {
+                    report.damaged.push(issue);
+                }
+                self.show_report();
+            }
+            Err(refusal) => self.show_refusal(&refusal, None),
+        }
+    }
+
     fn forget_issue(&self, id: AssetId) {
         let imp = self.imp();
         if let Some(report) = imp.report.borrow_mut().as_mut() {
@@ -631,7 +706,7 @@ impl PigouneHealthPage {
         alert.present(Some(self));
     }
 
-    fn show_toast(&self, text: &str, show: Option<AssetId>) {
+    fn show_toast(&self, text: &str, button: Option<(String, Box<dyn Fn()>)>) {
         let Some(overlay) = self
             .ancestor(adw::ToastOverlay::static_type())
             .and_downcast::<adw::ToastOverlay>()
@@ -640,13 +715,9 @@ impl PigouneHealthPage {
         };
         let toast = adw::Toast::new(text);
         toast.set_use_markup(false);
-        if let Some(id) = show {
-            toast.set_button_label(Some(&gettext("_Show")));
-            toast.connect_button_clicked(glib::clone!(
-                #[weak(rename_to = page)]
-                self,
-                move |_| page.show_resource(id)
-            ));
+        if let Some((label, on_click)) = button {
+            toast.set_button_label(Some(&label));
+            toast.connect_button_clicked(move |_| on_click());
         }
         overlay.add_toast(toast);
     }
@@ -667,7 +738,11 @@ impl PigouneHealthPage {
 
 enum LineAction {
     Add(PathBuf),
-    Replace { id: AssetId, removable: bool },
+    Repair {
+        id: AssetId,
+        removable: bool,
+        trashable: bool,
+    },
 }
 
 struct Line {
@@ -700,7 +775,7 @@ fn added_text(added: usize, refused: usize) -> String {
     }
 }
 
-fn issue_lines(issues: &[HealthIssue], removable: bool) -> Vec<Line> {
+fn issue_lines(issues: &[HealthIssue], removable: bool, trashable: bool) -> Vec<Line> {
     issues
         .iter()
         .map(|issue| {
@@ -711,13 +786,41 @@ fn issue_lines(issues: &[HealthIssue], removable: bool) -> Vec<Line> {
             Line {
                 name: issue.display_name.clone(),
                 detail: place,
-                action: LineAction::Replace {
+                action: LineAction::Repair {
                     id: issue.id,
                     removable,
+                    trashable,
                 },
             }
         })
         .collect()
+}
+
+fn line_text(line: &Line) -> gtk::Box {
+    let text = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .spacing(2)
+        .valign(gtk::Align::Center)
+        .build();
+    let name = gtk::Label::builder()
+        .label(&line.name)
+        .xalign(0.0)
+        .wrap(true)
+        .wrap_mode(gtk::pango::WrapMode::WordChar)
+        .max_width_chars(28)
+        .build();
+    let detail = gtk::Label::builder()
+        .label(&line.detail)
+        .xalign(0.0)
+        .wrap(true)
+        .wrap_mode(gtk::pango::WrapMode::Char)
+        .max_width_chars(36)
+        .selectable(true)
+        .css_classes(["dim-label", "caption"])
+        .build();
+    text.append(&name);
+    text.append(&detail);
+    text
 }
 
 fn suffix_button(label: &str) -> gtk::Button {
