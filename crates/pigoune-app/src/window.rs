@@ -4132,6 +4132,16 @@ impl PigouneWindow {
         if self.apply_tag_command(&TagCommand::Move { tag, parent }) {
             self.go_to_view(AssetView::Tag(tag), Vec::new());
             self.refresh_selected_tags();
+            let name = self.tag_name(tag).unwrap_or_default();
+            let text = match parent.and_then(|parent| self.tag_name(parent)) {
+                Some(parent_name) => gettext("The tag “{name}” was moved into “{parent}”.")
+                    .replace("{name}", &name)
+                    .replace("{parent}", &parent_name),
+                None => {
+                    gettext("The tag “{name}” was moved to the top level.").replace("{name}", &name)
+                }
+            };
+            self.show_undoable_toast(&text);
         }
     }
 

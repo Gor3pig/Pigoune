@@ -291,13 +291,20 @@ impl PigouneTagEditor {
         let text = entry.text();
         let (finished, rest) = tag_input::split_finished(&text);
         if rest != text.as_str() {
-            entry.set_text(&rest);
-            entry.set_position(-1);
+            glib::idle_add_local_once(glib::clone!(
+                #[weak]
+                entry,
+                move || {
+                    entry.set_text(&rest);
+                    entry.set_position(-1);
+                }
+            ));
             if !finished.is_empty()
                 && let Some(on_added) = self.imp().on_added.borrow().as_ref()
             {
                 on_added(finished);
             }
+            return;
         }
         self.refresh_suggestions();
     }
