@@ -19,6 +19,7 @@ mod import_plan;
 mod layout;
 mod overview;
 mod records;
+mod remove_record;
 mod replace;
 mod schema;
 mod search;
@@ -49,7 +50,9 @@ pub use batch_import::{
 };
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
-pub use error::{AdoptError, CollectionError, ImportError, LibraryError, ReplaceError};
+pub use error::{
+    AdoptError, CollectionError, ImportError, LibraryError, RemoveRecordError, ReplaceError,
+};
 pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, SmartCollectionId, TagId};

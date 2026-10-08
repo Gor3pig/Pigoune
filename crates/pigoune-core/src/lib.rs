@@ -10,10 +10,10 @@ pub use library::{
     HealthProgress, HealthReport, HealthTarget, ImportControl, ImportEnding, ImportError,
     ImportOutcome, ImportProgress, ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION,
     LONGEST_TAG_NAME, Library, LibraryError, LibraryOverview, LibraryRecords, MAX_QUERY_WORDS,
-    ReplaceError, SmartCollection, SmartCollectionCommand, SmartCollectionError, SmartCollectionId,
-    StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
-    ViewCounts, comparable, library_display_name, oldest_compatible_version, query_groups,
-    query_text, query_word_count,
+    RemoveRecordError, ReplaceError, SmartCollection, SmartCollectionCommand, SmartCollectionError,
+    SmartCollectionId, StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField,
+    UndoError, ViewCounts, comparable, library_display_name, oldest_compatible_version,
+    query_groups, query_text, query_word_count,
 };
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,

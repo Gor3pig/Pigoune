@@ -117,6 +117,22 @@ impl From<io::Error> for ReplaceError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum RemoveRecordError {
+    #[error("the resource {0} does not exist")]
+    AssetNotFound(AssetId),
+    #[error("the file of the resource {0} exists")]
+    FileStillThere(AssetId),
+    #[error(transparent)]
+    Library(#[from] LibraryError),
+}
+
+impl From<rusqlite::Error> for RemoveRecordError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum CollectionError {
     #[error("a collection name cannot be empty")]
     InvalidName,

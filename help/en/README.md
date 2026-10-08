@@ -344,7 +344,9 @@ tabs:
   file cannot be added, for example when it is not an image. For a missing or damaged file,
   **Replace…** lets you choose a copy of the original file; Pigoune accepts it only if its
   content is identical to what was imported, then puts it back in place and keeps the asset’s
-  name, tags and collections.
+  name, tags and collections. For a missing file with no copy left, **Remove…** removes the
+  asset’s record from the library, after a confirmation that says it cannot be undone; a damaged
+  file, which still exists, never offers it.
 
 ## Preferences
 

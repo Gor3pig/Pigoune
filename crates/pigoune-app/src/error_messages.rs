@@ -2,8 +2,8 @@ use gettextrs::gettext;
 
 use crate::health_page::Refusal;
 use pigoune_core::{
-    AdoptError, AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, ReplaceError,
-    SmartCollectionError, TagError, UndoError,
+    AdoptError, AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, RemoveRecordError,
+    ReplaceError, SmartCollectionError, TagError, UndoError,
 };
 
 pub fn describe_adoption(error: &AdoptError, name: &str, known_name: Option<&str>) -> Refusal {
@@ -60,6 +60,29 @@ pub fn describe_replacement(error: &ReplaceError, file_name: &str, asset_name: &
         title,
         body,
         try_again,
+    }
+}
+
+pub fn describe_removal(error: &RemoveRecordError, asset_name: &str) -> Refusal {
+    let (title, body) = match error {
+        RemoveRecordError::FileStillThere(_) => (
+            gettext("“{name}” Was Not Removed").replace("{name}", asset_name),
+            gettext(
+                "Its file exists again, so nothing was removed. Check the library again to see its current state.",
+            ),
+        ),
+        RemoveRecordError::AssetNotFound(_) => (
+            gettext("This Resource No Longer Exists"),
+            gettext("Check the library again to see its current state."),
+        ),
+        RemoveRecordError::Library(error) => {
+            (gettext("Unable to Remove the Record"), describe(error))
+        }
+    };
+    Refusal {
+        title,
+        body,
+        try_again: false,
     }
 }
 

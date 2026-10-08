@@ -1202,6 +1202,13 @@ impl PigouneWindow {
                 || Err(Refusal::default()),
                 move |id: AssetId, copy: &Path| window.replace_stored_file(id, copy)
             )),
+            remove: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |id: AssetId| window.remove_record(id)
+            )),
             changed: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1233,6 +1240,22 @@ impl PigouneWindow {
         library
             .replace_stored_file(id, copy)
             .map_err(|error| error_messages::describe_replacement(&error, &file_name, &asset_name))
+    }
+
+    fn remove_record(&self, id: AssetId) -> Replaced {
+        let mut library = self.imp().library.borrow_mut();
+        let Some(library) = library.as_mut() else {
+            return Err(Refusal::default());
+        };
+        let asset_name = library
+            .asset(id)
+            .ok()
+            .flatten()
+            .map(|asset| asset.display_name)
+            .unwrap_or_default();
+        library
+            .remove_record_of_missing_file(id)
+            .map_err(|error| error_messages::describe_removal(&error, &asset_name))
     }
 
     fn adopt_unrecorded(&self, file: &Path) -> Adopted {

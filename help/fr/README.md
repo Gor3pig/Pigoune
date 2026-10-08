@@ -391,7 +391,9 @@ la bibliothèque ouverte, en quatre onglets :
   s'il n'est pas une image. Pour un fichier manquant ou abîmé, **Remplacer…** permet de choisir
   une copie du fichier d'origine ; Pigoune ne l'accepte que si son contenu est identique à ce qui
   a été importé, puis la remet en place en conservant le nom, les tags et les collections de la
-  ressource.
+  ressource. Pour un fichier manquant dont il ne reste aucune copie, **Retirer…** retire la
+  fiche de la ressource de la bibliothèque, après une confirmation qui précise que c'est
+  définitif ; un fichier abîmé, qui existe encore, ne le propose jamais.
 
 ## Préférences
 

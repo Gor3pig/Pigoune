@@ -16,6 +16,7 @@ const PROGRESS_STEP: usize = 10;
 
 const CLOSE_RESPONSE: &str = "close";
 const AGAIN_RESPONSE: &str = "again";
+const REMOVE_RESPONSE: &str = "remove";
 
 #[derive(Default)]
 pub struct Refusal {
@@ -33,6 +34,7 @@ pub struct HealthActions {
     pub plan: Box<dyn Fn() -> Result<HealthPlan, String>>,
     pub adopt: Box<dyn Fn(&Path) -> Adopted>,
     pub replace: ReplaceAction,
+    pub remove: Box<dyn Fn(AssetId) -> Replaced>,
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
 }
@@ -330,12 +332,12 @@ impl PigouneHealthPage {
             (
                 MISSING,
                 gettext("Missing Files"),
-                issue_lines(&report.missing),
+                issue_lines(&report.missing, true),
             ),
             (
                 DAMAGED,
                 gettext("Damaged Files"),
-                issue_lines(&report.damaged),
+                issue_lines(&report.damaged, false),
             ),
             (UNRECORDED, gettext("Files Without a Record"), unrecorded),
         ];
@@ -418,7 +420,7 @@ impl PigouneHealthPage {
                 ));
                 row.add_suffix(&button);
             }
-            LineAction::Replace(id) => {
+            LineAction::Replace { id, removable } => {
                 let button = suffix_button(&gettext("_Replace…"));
                 button.connect_clicked(glib::clone!(
                     #[weak(rename_to = page)]
@@ -430,6 +432,19 @@ impl PigouneHealthPage {
                     move |_| page.choose_copy(id, &name)
                 ));
                 row.add_suffix(&button);
+                if *removable {
+                    let button = suffix_button(&gettext("Re_move…"));
+                    button.connect_clicked(glib::clone!(
+                        #[weak(rename_to = page)]
+                        self,
+                        #[strong(rename_to = name)]
+                        line.name,
+                        #[strong]
+                        id,
+                        move |_| page.confirm_removal(id, &name)
+                    ));
+                    row.add_suffix(&button);
+                }
             }
         }
         row
@@ -547,6 +562,45 @@ impl PigouneHealthPage {
         }
     }
 
+    fn confirm_removal(&self, id: AssetId, name: &str) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Remove the Record of “{name}”?").replace("{name}", name)),
+            Some(&gettext(
+                "The file is missing. The resource, its tags, its notes and its place in the collections will be removed from the library. This cannot be undone.",
+            )),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Cancel"));
+        alert.add_response(REMOVE_RESPONSE, &gettext("_Remove the Record"));
+        alert.set_response_appearance(REMOVE_RESPONSE, adw::ResponseAppearance::Destructive);
+        alert.set_default_response(Some(CLOSE_RESPONSE));
+        alert.set_close_response(CLOSE_RESPONSE);
+        let name = name.to_owned();
+        alert.connect_response(
+            Some(REMOVE_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = page)]
+                self,
+                move |_, _| page.remove_record(id, &name)
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn remove_record(&self, id: AssetId, name: &str) {
+        let Some(actions) = self.imp().actions.borrow().clone() else {
+            return;
+        };
+        match (actions.remove)(id) {
+            Ok(()) => {
+                (actions.changed)();
+                self.forget_issue(id);
+                let text = gettext("The record of “{name}” was removed").replace("{name}", name);
+                self.show_toast(&text, None);
+            }
+            Err(refusal) => self.show_refusal(&refusal, None),
+        }
+    }
+
     fn forget_issue(&self, id: AssetId) {
         let imp = self.imp();
         if let Some(report) = imp.report.borrow_mut().as_mut() {
@@ -613,7 +667,7 @@ impl PigouneHealthPage {
 
 enum LineAction {
     Add(PathBuf),
-    Replace(AssetId),
+    Replace { id: AssetId, removable: bool },
 }
 
 struct Line {
@@ -646,7 +700,7 @@ fn added_text(added: usize, refused: usize) -> String {
     }
 }
 
-fn issue_lines(issues: &[HealthIssue]) -> Vec<Line> {
+fn issue_lines(issues: &[HealthIssue], removable: bool) -> Vec<Line> {
     issues
         .iter()
         .map(|issue| {
@@ -657,7 +711,10 @@ fn issue_lines(issues: &[HealthIssue]) -> Vec<Line> {
             Line {
                 name: issue.display_name.clone(),
                 detail: place,
-                action: LineAction::Replace(issue.id),
+                action: LineAction::Replace {
+                    id: issue.id,
+                    removable,
+                },
             }
         })
         .collect()
