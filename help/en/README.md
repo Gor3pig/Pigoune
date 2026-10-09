@@ -148,7 +148,9 @@ Click the search field, press <kbd>Ctrl</kbd>+<kbd>F</kbd>, or simply start typi
 searches names, tags, notes, sources, licenses and authors, ignoring case, accents and ligatures (*coeur* finds
 *cœur*), within the entry selected in the sidebar. A small label at the start of the search field
 says where it looks: **Everywhere** or the name of the entry. Click it to choose **In the Whole
-Library** or **In** the entry. In **All**, the trash and smart collections the label stays, without a menu, because the
+Library** or **In** the entry. When you choose an entry in the sidebar while a search is
+looking everywhere, the grid shows that entry with your search applied inside it; typing again
+widens the search as before. In **All**, the trash and smart collections the label stays, without a menu, because the
 search always looks there. In a narrow window, the field gives way to a magnifier button at the
 top right: click it, press <kbd>Ctrl</kbd>+<kbd>F</kbd> or start typing, and a full-width search bar opens
 under the title bar, with the same label and the **Filters** button. <kbd>Esc</kbd> closes it and clears the search.

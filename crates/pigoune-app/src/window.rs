@@ -281,6 +281,7 @@ mod imp {
         #[template_child]
         pub query_pills: TemplateChild<PigouneQueryPills>,
         pub current_view: Cell<AssetView>,
+        pub view_chosen_by_click: Cell<bool>,
         pub browsing_selection: Cell<bool>,
         pub settings: OnceCell<gio::Settings>,
         pub library: RefCell<Option<Library>>,
@@ -856,6 +857,7 @@ impl PigouneWindow {
             return;
         }
         imp.search_query.replace(query.to_owned());
+        imp.view_chosen_by_click.set(false);
         imp.query_pills.show_query(query);
         self.refresh_grid();
     }
@@ -863,6 +865,7 @@ impl PigouneWindow {
     fn reset_search(&self) {
         let imp = self.imp();
         imp.search_query.replace(String::new());
+        imp.view_chosen_by_click.set(false);
         imp.filters.replace(AssetFilter::default());
         imp.grid_header.filter_popover().clear();
         imp.grid_header.show_filter_count(0);
@@ -1026,9 +1029,26 @@ impl PigouneWindow {
         let _ = settings.set_boolean(key, !settings.boolean(key));
     }
 
+    fn note_view_chosen_by_click(&self) -> bool {
+        let imp = self.imp();
+        let narrows = displayed_view::narrows_by_click(
+            self.settings().boolean(settings::SEARCH_EVERYWHERE),
+            self.current_filter().narrows(),
+        );
+        let changed = narrows && !imp.view_chosen_by_click.get();
+        if changed {
+            imp.view_chosen_by_click.set(true);
+        }
+        changed
+    }
+
     fn show_view(&self, view: AssetView) {
         let imp = self.imp();
+        let narrowed = self.note_view_chosen_by_click();
         if imp.current_view.replace(view) == view {
+            if narrowed {
+                self.refresh_grid();
+            }
             return;
         }
         self.remember_view(view);
@@ -1159,6 +1179,7 @@ impl PigouneWindow {
             self,
             move |_, parameter| {
                 if let Some(choice) = parameter.and_then(glib::Variant::str) {
+                    window.imp().view_chosen_by_click.set(false);
                     settings::store_bool(
                         window.settings(),
                         settings::SEARCH_EVERYWHERE,
@@ -3218,6 +3239,7 @@ impl PigouneWindow {
 
     fn go_to_view(&self, view: AssetView, reveal: Vec<CollectionId>) {
         let imp = self.imp();
+        self.note_view_chosen_by_click();
         imp.current_view.set(view);
         self.remember_view(view);
         imp.asset_preview.close();
@@ -4704,7 +4726,10 @@ impl PigouneWindow {
     fn announce_search_place(&self) {
         let imp = self.imp();
         let current = imp.current_view.get();
-        let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
+        let everywhere = displayed_view::everywhere(
+            self.settings().boolean(settings::SEARCH_EVERYWHERE),
+            imp.view_chosen_by_click.get(),
+        );
         let name = self.scope_name(current);
         let choosable = current != AssetView::All && displayed_view::can_widen(current);
         self.show_search_scope_choice(everywhere);
@@ -4756,7 +4781,10 @@ impl PigouneWindow {
     }
 
     fn searched_view(&self, view: AssetView, filter: &AssetFilter) -> AssetView {
-        let everywhere = self.settings().boolean(settings::SEARCH_EVERYWHERE);
+        let everywhere = displayed_view::everywhere(
+            self.settings().boolean(settings::SEARCH_EVERYWHERE),
+            self.imp().view_chosen_by_click.get(),
+        );
         displayed_view::shown(view, everywhere, filter.narrows())
     }
 

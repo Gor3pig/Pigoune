@@ -11,6 +11,14 @@ pub fn can_widen(view: AssetView) -> bool {
     )
 }
 
+pub fn everywhere(setting: bool, chosen_by_click: bool) -> bool {
+    setting && !chosen_by_click
+}
+
+pub fn narrows_by_click(setting: bool, searching: bool) -> bool {
+    setting && searching
+}
+
 pub fn shown(chosen: AssetView, search_everywhere: bool, searching: bool) -> AssetView {
     if search_everywhere && searching && can_widen(chosen) {
         AssetView::All
@@ -66,5 +74,20 @@ mod tests {
         );
         assert_eq!(shown(smart, true, true), smart);
         assert_eq!(shown(AssetView::Trash, true, true), AssetView::Trash);
+    }
+
+    #[test]
+    fn a_view_chosen_by_a_click_wins_over_the_everywhere_setting() {
+        assert!(everywhere(true, false));
+        assert!(!everywhere(true, true));
+        assert!(!everywhere(false, false));
+        assert!(!everywhere(false, true));
+    }
+
+    #[test]
+    fn a_click_narrows_the_search_only_when_it_would_have_been_widened() {
+        assert!(narrows_by_click(true, true));
+        assert!(!narrows_by_click(true, false));
+        assert!(!narrows_by_click(false, true));
     }
 }

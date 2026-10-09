@@ -167,7 +167,9 @@ simplement à taper. Pigoune cherche dans les noms, les tags, les notes, les sou
 licences et les auteurs, sans tenir compte des majuscules, des accents ni des ligatures (*coeur* trouve
 *cœur*), dans l'entrée sélectionnée de la barre latérale. Une petite pastille au début du champ de
 recherche indique où elle cherche : **Partout** ou le nom de l'entrée. Cliquez dessus pour choisir
-**Dans toute la bibliothèque** ou **Dans** l'entrée. Dans **Tout**, la corbeille et les collections
+**Dans toute la bibliothèque** ou **Dans** l'entrée. Quand vous choisissez une entrée de la barre
+latérale alors qu'une recherche regarde partout, la grille montre cette entrée avec votre recherche
+appliquée dedans ; taper de nouveau élargit la recherche comme avant. Dans **Tout**, la corbeille et les collections
 dynamiques, la pastille reste, sans menu, car la recherche y regarde toujours au même endroit. Dans une fenêtre étroite, le champ laisse la place à une loupe en haut à
 droite : cliquez dessus, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd> ou commencez à taper, et une barre de recherche pleine largeur
 s'ouvre sous la barre de titre, avec la même pastille et le bouton **Filtres**. <kbd>Échap</kbd> la ferme et efface la recherche.
