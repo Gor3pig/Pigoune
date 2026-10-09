@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::f64::consts::PI;
 
 const CHANNELS: usize = 4;
@@ -55,13 +56,39 @@ impl RgbaImage {
         if (width, height) == (self.width, self.height) {
             return self.clone();
         }
-        let premultiplied = premultiply(&self.pixels);
-        let across = resample_rows(&premultiplied, self.width, self.height, width);
-        let down = resample_columns(&across, width, self.height, height);
+        let columns = contributions(self.width, width);
+        let rows = contributions(self.height, height);
+        let source_row = to_index(self.width) * CHANNELS;
+        let mut window: VecDeque<(usize, Vec<f64>)> = VecDeque::new();
+        let mut pixels = Vec::with_capacity(to_index(width) * to_index(height) * CHANNELS);
+        for contribution in &rows {
+            while window
+                .front()
+                .is_some_and(|(index, _)| *index < contribution.first)
+            {
+                window.pop_front();
+            }
+            let end = contribution.first + contribution.weights.len();
+            let next = window
+                .back()
+                .map_or(contribution.first, |(index, _)| index + 1);
+            for index in next..end {
+                let source = &self.pixels[index * source_row..(index + 1) * source_row];
+                window.push_back((index, resample_row(&premultiply(source), &columns)));
+            }
+            let mut row = vec![0.0; to_index(width) * CHANNELS];
+            for (offset, weight) in contribution.weights.iter().enumerate() {
+                let (_, values) = &window[contribution.first + offset - window[0].0];
+                for (target, value) in row.iter_mut().zip(values) {
+                    *target += value * weight;
+                }
+            }
+            pixels.extend(unpremultiply(&row));
+        }
         Self {
             width,
             height,
-            pixels: unpremultiply(&down),
+            pixels,
         }
     }
 
@@ -538,49 +565,106 @@ fn sinc(value: f64) -> f64 {
     }
 }
 
-fn resample_rows(values: &[f64], width: u32, height: u32, new_width: u32) -> Vec<f64> {
-    let contributions = contributions(width, new_width);
-    let source_row = to_index(width) * CHANNELS;
-    let mut result = Vec::with_capacity(to_index(new_width) * to_index(height) * CHANNELS);
-    for row in values.chunks(source_row) {
-        for contribution in &contributions {
-            let mut pixel = [0.0; CHANNELS];
-            for (offset, weight) in contribution.weights.iter().enumerate() {
-                let start = (contribution.first + offset) * CHANNELS;
-                for channel in 0..CHANNELS {
-                    pixel[channel] += row[start + channel] * weight;
-                }
-            }
-            result.extend(pixel);
-        }
-    }
-    result
-}
-
-fn resample_columns(values: &[f64], width: u32, height: u32, new_height: u32) -> Vec<f64> {
-    let contributions = contributions(height, new_height);
-    let row_length = to_index(width) * CHANNELS;
-    let mut result = Vec::with_capacity(row_length * to_index(new_height));
-    for contribution in &contributions {
-        let mut row = vec![0.0; row_length];
+fn resample_row(values: &[f64], columns: &[Contribution]) -> Vec<f64> {
+    let mut result = Vec::with_capacity(columns.len() * CHANNELS);
+    for contribution in columns {
+        let mut pixel = [0.0; CHANNELS];
         for (offset, weight) in contribution.weights.iter().enumerate() {
-            let start = (contribution.first + offset) * row_length;
-            for (target, source) in row.iter_mut().zip(&values[start..start + row_length]) {
-                *target += source * weight;
+            let start = (contribution.first + offset) * CHANNELS;
+            for channel in 0..CHANNELS {
+                pixel[channel] += values[start + channel] * weight;
             }
         }
-        result.extend(row);
+        result.extend(pixel);
     }
     result
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{RgbaImage, fitted_within};
+    use super::{
+        CHANNELS, RgbaImage, contributions, fitted_within, premultiply, to_index, unpremultiply,
+    };
 
     fn uniform(width: u32, height: u32, pixel: [u8; 4]) -> RgbaImage {
         let count = usize::try_from(width * height).expect("small image");
         RgbaImage::new(width, height, pixel.repeat(count)).expect("valid image")
+    }
+
+    fn reference_resized(image: &RgbaImage, width: u32, height: u32) -> RgbaImage {
+        let premultiplied = premultiply(&image.pixels);
+        let across = reference_rows(&premultiplied, image.width, image.height, width);
+        let down = reference_columns(&across, width, image.height, height);
+        RgbaImage::new(width, height, unpremultiply(&down)).expect("valid image")
+    }
+
+    fn reference_rows(values: &[f64], width: u32, height: u32, new_width: u32) -> Vec<f64> {
+        let contributions = contributions(width, new_width);
+        let source_row = to_index(width) * CHANNELS;
+        let mut result = Vec::with_capacity(to_index(new_width) * to_index(height) * CHANNELS);
+        for row in values.chunks(source_row) {
+            for contribution in &contributions {
+                let mut pixel = [0.0; CHANNELS];
+                for (offset, weight) in contribution.weights.iter().enumerate() {
+                    let start = (contribution.first + offset) * CHANNELS;
+                    for channel in 0..CHANNELS {
+                        pixel[channel] += row[start + channel] * weight;
+                    }
+                }
+                result.extend(pixel);
+            }
+        }
+        result
+    }
+
+    fn reference_columns(values: &[f64], width: u32, height: u32, new_height: u32) -> Vec<f64> {
+        let contributions = contributions(height, new_height);
+        let row_length = to_index(width) * CHANNELS;
+        let mut result = Vec::with_capacity(row_length * to_index(new_height));
+        for contribution in &contributions {
+            let mut row = vec![0.0; row_length];
+            for (offset, weight) in contribution.weights.iter().enumerate() {
+                let start = (contribution.first + offset) * row_length;
+                for (target, source) in row.iter_mut().zip(&values[start..start + row_length]) {
+                    *target += source * weight;
+                }
+            }
+            result.extend(row);
+        }
+        result
+    }
+
+    fn scrambled(width: u32, height: u32) -> RgbaImage {
+        let mut state = 12_345_u32;
+        let pixels = (0..width * height * 4)
+            .map(|_| {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                (state >> 24) as u8
+            })
+            .collect();
+        RgbaImage::new(width, height, pixels).expect("valid image")
+    }
+
+    #[test]
+    fn resizing_row_by_row_gives_exactly_the_whole_image_result() {
+        let sizes = [
+            ((37, 23), (11, 7)),
+            ((37, 23), (90, 61)),
+            ((64, 64), (63, 1)),
+            ((1, 9), (5, 9)),
+            ((9, 1), (9, 4)),
+            ((200, 150), (20, 15)),
+            ((20, 15), (200, 150)),
+            ((50, 50), (50, 20)),
+        ];
+        for ((from_width, from_height), (width, height)) in sizes {
+            let image = scrambled(from_width, from_height);
+            assert_eq!(
+                image.resized(width, height),
+                reference_resized(&image, width, height),
+                "{from_width}x{from_height} to {width}x{height}"
+            );
+        }
     }
 
     #[test]
