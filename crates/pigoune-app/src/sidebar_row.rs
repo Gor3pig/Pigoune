@@ -95,7 +95,7 @@ impl PigouneSidebarRow {
             cloud
         });
         cloud.set_visible(true);
-        cloud.show_tags(item.tag_pills(), item.selected_tag());
+        cloud.show_tags(item.tag_pills(), item.selected_tag(), &item.cloud_place());
     }
 
     pub fn show(&self, item: &PigouneSidebarItem) {

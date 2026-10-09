@@ -1,3 +1,6 @@
+use std::cell::Cell;
+use std::rc::Rc;
+
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::prelude::*;
@@ -14,6 +17,15 @@ const MOST_PILLS: usize = 12;
 const PILL_SPACING: i32 = 4;
 const SELECTED: &str = "selected";
 const DROP_HIGHLIGHT: &str = "drop-highlight";
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct CloudPlace {
+    selected: Option<TagId>,
+    level: Option<TagId>,
+    show_all: bool,
+}
+
+pub type SharedCloudPlace = Rc<Cell<CloudPlace>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TagPill {
@@ -45,6 +57,7 @@ mod imp {
         pub selected: Cell<Option<TagId>>,
         pub level: Cell<Option<TagId>>,
         pub show_all: Cell<bool>,
+        pub place: RefCell<Option<super::SharedCloudPlace>>,
     }
 
     #[glib::object_subclass]
@@ -78,16 +91,51 @@ glib::wrapper! {
 }
 
 impl PigouneSidebarTagCloud {
-    pub fn show_tags(&self, tags: Vec<TagPill>, selected: Option<TagId>) {
+    pub fn show_tags(&self, tags: Vec<TagPill>, selected: Option<TagId>, place: &SharedCloudPlace) {
         let imp = self.imp();
-        let unchanged = *imp.tags.borrow() == tags && imp.selected.get() == selected;
+        let remembered = place.get();
+        let same_place = imp
+            .place
+            .borrow()
+            .as_ref()
+            .is_some_and(|current| Rc::ptr_eq(current, place));
+        let unchanged = same_place
+            && *imp.tags.borrow() == tags
+            && imp.selected.get() == selected
+            && imp.level.get() == remembered.level
+            && imp.show_all.get() == remembered.show_all;
         if unchanged {
             return;
         }
+        imp.place.replace(Some(place.clone()));
         imp.tags.replace(tags);
+        imp.level.set(remembered.level);
+        imp.show_all.set(remembered.show_all);
         imp.selected.set(selected);
-        self.follow(selected);
+        if remembered.selected == selected {
+            self.forget_vanished_level();
+        } else {
+            self.follow(selected);
+        }
         self.rebuild();
+    }
+
+    fn remember_place(&self) {
+        let imp = self.imp();
+        if let Some(place) = imp.place.borrow().as_ref() {
+            place.set(CloudPlace {
+                selected: imp.selected.get(),
+                level: imp.level.get(),
+                show_all: imp.show_all.get(),
+            });
+        }
+    }
+
+    fn forget_vanished_level(&self) {
+        let imp = self.imp();
+        if imp.level.get().is_some_and(|level| !self.knows(level)) {
+            imp.level.set(None);
+        }
     }
 
     pub fn highlight(&self, selected: Option<TagId>) {
@@ -97,6 +145,7 @@ impl PigouneSidebarTagCloud {
             self.rebuild();
         } else {
             self.mark_selected();
+            self.remember_place();
         }
     }
 
@@ -217,6 +266,7 @@ impl PigouneSidebarTagCloud {
         }
         imp.pills.replace(pills);
         self.mark_selected();
+        self.remember_place();
         let more = part(&imp.more);
         more.set_visible(hidden > 0);
         more.set_label(&if show_all {

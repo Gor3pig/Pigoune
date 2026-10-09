@@ -19,7 +19,7 @@ use crate::dropped_content::Dropped;
 use crate::found_flash;
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
-use crate::sidebar_tag_cloud::{PigouneSidebarTagCloud, TagPill};
+use crate::sidebar_tag_cloud::{PigouneSidebarTagCloud, SharedCloudPlace, TagPill};
 
 const SCROLL_HOLD: std::time::Duration = std::time::Duration::from_millis(600);
 const ALL_ICON: &str = "view-grid-symbolic";
@@ -87,6 +87,7 @@ mod imp {
         pub refocused_header: Cell<Option<super::SidebarEntry>>,
         pub chosen_tag: Cell<Option<pigoune_core::TagId>>,
         pub rebuilding: Cell<bool>,
+        pub cloud_place: crate::sidebar_tag_cloud::SharedCloudPlace,
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
         pub on_content_dropped: RefCell<Option<ContentDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
@@ -326,7 +327,12 @@ impl PigouneSidebar {
                 folded.tags.then_some(content.tags.len()),
             ));
             if !folded.tags {
-                root.append(&tag_cloud_item(&content.tags, counts, chosen_tag));
+                root.append(&tag_cloud_item(
+                    &content.tags,
+                    counts,
+                    chosen_tag,
+                    &imp.cloud_place,
+                ));
             }
         }
         let trash = gio::ListStore::new::<PigouneSidebarItem>();
@@ -834,6 +840,7 @@ fn header_item(entry: SidebarEntry, label: String, folded: Option<usize>) -> Pig
         folded: folded.is_some(),
         tag_pills: Vec::new(),
         selected_tag: None,
+        cloud_place: None,
         children: None,
     })
 }
@@ -862,6 +869,7 @@ fn view_item(
         folded: false,
         tag_pills: Vec::new(),
         selected_tag: None,
+        cloud_place: None,
         children,
     })
 }
@@ -892,6 +900,7 @@ fn collection_items(
                 folded: false,
                 tag_pills: Vec::new(),
                 selected_tag: None,
+                cloud_place: None,
                 children: store,
             })
         })
@@ -952,6 +961,7 @@ fn tag_cloud_item(
     tags: &[Tag],
     counts: Option<&ViewCounts>,
     chosen: Option<TagId>,
+    place: &SharedCloudPlace,
 ) -> PigouneSidebarItem {
     PigouneSidebarItem::new(SidebarItemData {
         entry: SidebarEntry::TagCloud,
@@ -970,6 +980,7 @@ fn tag_cloud_item(
             })
             .collect(),
         selected_tag: chosen,
+        cloud_place: Some(place.clone()),
         children: None,
     })
 }

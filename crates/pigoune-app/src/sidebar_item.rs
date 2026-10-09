@@ -3,7 +3,7 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{AssetView, TagId};
 
-use crate::sidebar_tag_cloud::TagPill;
+use crate::sidebar_tag_cloud::{SharedCloudPlace, TagPill};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SidebarEntry {
@@ -23,6 +23,7 @@ pub struct SidebarItemData {
     pub folded: bool,
     pub tag_pills: Vec<TagPill>,
     pub selected_tag: Option<TagId>,
+    pub cloud_place: Option<SharedCloudPlace>,
     pub children: Option<gio::ListStore>,
 }
 
@@ -121,6 +122,10 @@ impl PigouneSidebarItem {
 
     pub fn selected_tag(&self) -> Option<TagId> {
         self.data().selected_tag
+    }
+
+    pub fn cloud_place(&self) -> SharedCloudPlace {
+        self.data().cloud_place.clone().unwrap_or_default()
     }
 
     pub fn children(&self) -> Option<gio::ListStore> {
