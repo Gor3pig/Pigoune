@@ -585,3 +585,37 @@ footer nav {
 .install-button {
   margin: 1.25rem 0;
 }
+
+.nested {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 2rem;
+  align-items: center;
+  margin-top: 1.75rem;
+}
+
+.nested .text p {
+  margin: 0 0 0.75rem;
+}
+
+.nested ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+}
+
+.nested li {
+  margin-bottom: 0.45rem;
+}
+
+.nested .zoom img {
+  display: block;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 760px) {
+  .nested {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
