@@ -73,7 +73,7 @@ pub use search::{
 pub use smart_collection::SmartCollection;
 pub use smart_collection_command::{SmartCollectionCommand, SmartCollectionError};
 pub use storage::{ColorShare, FormatShare, StorageUse};
-pub use tag::Tag;
+pub use tag::{Tag, same_tag_name};
 pub use tag_command::{LONGEST_TAG_NAME, TagCommand, TagError};
 pub use trash::TRASH_RETENTION;
 pub use view::{AssetView, ViewCounts};

@@ -60,6 +60,11 @@ pub fn normalized(name: &str) -> String {
     name.trim().to_lowercase()
 }
 
+#[must_use]
+pub fn same_tag_name(first: &str, second: &str) -> bool {
+    normalized(first) == normalized(second)
+}
+
 pub fn find_child(
     connection: &Connection,
     parent: Option<TagId>,

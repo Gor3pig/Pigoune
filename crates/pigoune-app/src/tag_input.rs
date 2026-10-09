@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use pigoune_core::{LONGEST_TAG_NAME, Tag, TagId, comparable};
+use pigoune_core::{LONGEST_TAG_NAME, Tag, TagId, comparable, same_tag_name};
 
 const MOST_SUGGESTIONS: usize = 8;
 
@@ -79,9 +79,8 @@ pub fn ancestors_of<'a>(all: &'a [Tag], tag: &Tag) -> Vec<&'a str> {
 }
 
 fn child_named<'a>(all: &'a [Tag], parent: Option<TagId>, name: &str) -> Option<&'a Tag> {
-    let wanted = comparable(name);
     all.iter()
-        .find(|tag| tag.parent == parent && comparable(&tag.name) == wanted)
+        .find(|tag| tag.parent == parent && same_tag_name(&tag.name, name))
 }
 
 struct UnknownParent;
@@ -156,6 +155,32 @@ mod tests {
             name: name.to_owned(),
             parent: None,
         }
+    }
+
+    #[test]
+    fn a_parent_typed_with_another_accent_is_not_the_existing_tag() {
+        let subject = tag(1, "Sujet");
+        let all = vec![subject.clone(), child(2, "Animaux", &subject)];
+
+        assert!(suggestions(&all, "Sujét/", &[]).is_empty());
+        assert_eq!(
+            suggestions(&all, "sujet/", &[])
+                .iter()
+                .map(|found| found.name.as_str())
+                .collect::<Vec<_>>(),
+            ["Animaux"]
+        );
+    }
+
+    #[test]
+    fn a_name_differing_only_by_an_accent_is_offered_for_creation() {
+        let animals = tag(1, "animaux");
+        let all = vec![animals.clone(), child(2, "chèvre", &animals)];
+
+        let offer = create_offer(&all, "animaux/chevre").expect("offer");
+
+        assert_eq!(offer.name, "chevre");
+        assert!(create_offer(&all, "Animaux/Chèvre").is_none());
     }
 
     #[test]

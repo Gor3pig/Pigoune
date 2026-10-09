@@ -14,7 +14,7 @@ pub use library::{
     ReplaceError, SmartCollection, SmartCollectionCommand, SmartCollectionError, SmartCollectionId,
     StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
     ViewCounts, comparable, library_display_name, oldest_compatible_version, query_groups,
-    query_text, query_word_count,
+    query_text, query_word_count, same_tag_name,
 };
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,
