@@ -119,12 +119,14 @@ Les tags peuvent être imbriqués : *Sujet › Animaux › chèvre*. Tapez un ch
 oblique, par exemple `animaux/chèvre`, pour créer ou réutiliser chaque niveau ; taper `animaux/`
 propose ses sous-tags, et chaque suggestion montre ses parents. Un nom simple suivi de <kbd>Entrée</kbd> réutilise le tag de
 ce nom où qu'il soit ; si plusieurs tags le portent, choisissez le bon dans la liste. Chaque niveau est un seul mot de
-20 caractères au plus. Dans la barre latérale, la section Tags montre un niveau à la fois : un
-clic sur le nom d'une pastille affiche ce tag dans la grille, avec les éléments de ses sous-tags, et une
-pastille qui a des sous-tags porte un petit **›** qui descend dedans sans changer la grille
-(<kbd>Alt</kbd>+<kbd>→</kbd> ; <kbd>Alt</kbd>+<kbd>←</kbd> remonte). Le chemin au-dessus des pastilles permet de
-remonter, et **Tags** revient au premier niveau. Si certains des éléments que vous aviez sélectionnés
-ne sont pas dans la nouvelle vue, un court message dit combien. Le même nom peut exister dans deux branches différentes, mais
+20 caractères au plus. Dans la barre latérale, la section Tags montre toujours ce que montre la grille : un
+clic sur le nom d'une pastille affiche ce tag dans la grille, avec les éléments de ses sous-tags, et ouvre
+ses sous-tags dans la barre latérale. Le chemin au-dessus des pastilles permet de remonter, et **Tags**
+revient au premier niveau et affiche de nouveau toute la bibliothèque. Choisir autre chose dans la
+barre latérale (Tout, une collection…) ramène la section Tags au premier niveau. La pastille de
+recherche et les messages nomment un tag avec son chemin complet, par exemple *subject › animals*. Si
+certains des éléments que vous aviez sélectionnés ne sont pas dans la nouvelle vue, un court message dit
+combien. Le même nom peut exister dans deux branches différentes, mais
 pas deux fois au même niveau. Faites un clic droit sur un tag pour **Nouveau sous-tag…**,
 **Déplacer vers…**, **Fusionner dans…** et **Supprimer…**, ou glissez une pastille sur un autre tag,
 sur un niveau du chemin ou sur **Tags** pour la déplacer. Supprimer un tag qui a des sous-tags
@@ -515,7 +517,6 @@ Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoun
 | Ajouter aux favoris ou en retirer | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Mettre à la corbeille | <kbd>Suppr</kbd> |
 | Renommer ou modifier l'entrée sélectionnée dans la barre latérale | <kbd>F2</kbd> |
-| Ouvrir les sous-tags du tag dans la barre latérale / remonter d'un niveau de tags | <kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>Alt</kbd>+<kbd>←</kbd> |
 | Supprimer la collection sélectionnée dans la barre latérale | <kbd>Suppr</kbd> |
 | Annuler | <kbd>Ctrl</kbd>+<kbd>Z</kbd> |
 | Vignettes plus grandes / plus petites | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> |

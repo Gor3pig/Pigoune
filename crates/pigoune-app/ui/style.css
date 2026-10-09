@@ -728,29 +728,6 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
   font-weight: bold;
 }
 
-.sidebar-tag-pill.with-chevron {
-  padding-right: 8px;
-  border-radius: 9999px 0 0 9999px;
-}
-
-.sidebar-tag-chevron {
-  min-width: 18px;
-  min-height: 26px;
-  margin-left: 1px;
-  padding: 0 5px 0 3px;
-  border-radius: 0 9999px 9999px 0;
-  background-color: color-mix(in srgb, currentColor 8%, transparent);
-}
-
-.sidebar-tag-chevron:hover {
-  background-color: alpha(@accent_bg_color, 0.3);
-}
-
-.sidebar-tag-chevron.selected {
-  background-color: alpha(@accent_bg_color, 0.2);
-  color: @accent_color;
-}
-
 .sidebar-tag-pill.drop-highlight {
   box-shadow: 0 0 0 2px @accent_color;
 }

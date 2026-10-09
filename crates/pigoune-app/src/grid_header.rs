@@ -12,6 +12,7 @@ pub struct SearchScope {
     pub label: String,
     pub wide: bool,
     pub menu_name: Option<String>,
+    pub detail: Option<String>,
 }
 
 const CHIP_START: i32 = 30;
@@ -180,8 +181,11 @@ impl PigouneGridHeader {
         } else {
             imp.scope_button.add_css_class("here");
         }
+        imp.scope_button.set_tooltip_text(scope.detail.as_deref());
         imp.scope_button
-            .update_property(&[gtk::accessible::Property::Description(&scope.label)]);
+            .update_property(&[gtk::accessible::Property::Description(
+                scope.detail.as_deref().unwrap_or(&scope.label),
+            )]);
         imp.scope_choosable.set(scope.menu_name.is_some());
         imp.scope_button.set_can_target(scope.menu_name.is_some());
         imp.scope_button.set_focusable(scope.menu_name.is_some());

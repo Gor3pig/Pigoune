@@ -4,12 +4,17 @@ use crate::sidebar_tag_cloud::TagPill;
 
 pub trait TreeNode {
     fn node_id(&self) -> TagId;
+    fn node_name(&self) -> &str;
     fn parent_id(&self) -> Option<TagId>;
 }
 
 impl TreeNode for Tag {
     fn node_id(&self) -> TagId {
         self.id
+    }
+
+    fn node_name(&self) -> &str {
+        &self.name
     }
 
     fn parent_id(&self) -> Option<TagId> {
@@ -20,6 +25,10 @@ impl TreeNode for Tag {
 impl TreeNode for TagPill {
     fn node_id(&self) -> TagId {
         self.id
+    }
+
+    fn node_name(&self) -> &str {
+        &self.name
     }
 
     fn parent_id(&self) -> Option<TagId> {
@@ -54,6 +63,18 @@ pub fn branch<T: TreeNode>(all: &[T], id: TagId) -> Vec<&T> {
     found
 }
 
+pub fn path_text<T: TreeNode>(all: &[T], id: TagId) -> String {
+    branch(all, id)
+        .iter()
+        .map(|node| node.node_name())
+        .collect::<Vec<_>>()
+        .join(" › ")
+}
+
+pub fn has_children<T: TreeNode>(all: &[T], id: TagId) -> bool {
+    all.iter().any(|node| node.parent_id() == Some(id))
+}
+
 pub fn descendants<T: TreeNode>(all: &[T], root: TagId) -> Vec<TagId> {
     let mut found = vec![root];
     let mut index = 0;
@@ -77,7 +98,7 @@ pub fn is_within<T: TreeNode>(all: &[T], id: TagId, root: TagId) -> bool {
 mod tests {
     use pigoune_core::{Tag, TagId};
 
-    use super::{ancestors, branch, descendants, is_within};
+    use super::{ancestors, branch, descendants, has_children, is_within, path_text};
 
     fn tag(number: u8, name: &str, parent: Option<&Tag>) -> Tag {
         Tag {
@@ -110,5 +131,19 @@ mod tests {
         assert!(is_within(&all, goat.id, subject.id));
         assert!(is_within(&all, subject.id, subject.id));
         assert!(!is_within(&all, other.id, subject.id));
+    }
+
+    #[test]
+    fn the_path_text_names_every_level_from_the_top() {
+        let subject = tag(1, "subject", None);
+        let animals = tag(2, "animals", Some(&subject));
+        let goat = tag(3, "goat", Some(&animals));
+        let all = vec![subject.clone(), animals.clone(), goat.clone()];
+
+        assert_eq!(path_text(&all, goat.id), "subject › animals › goat");
+        assert_eq!(path_text(&all, subject.id), "subject");
+        assert_eq!(path_text(&all, tag(9, "unknown", None).id), "");
+        assert!(has_children(&all, animals.id));
+        assert!(!has_children(&all, goat.id));
     }
 }

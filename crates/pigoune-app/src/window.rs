@@ -55,6 +55,7 @@ use crate::smart_collection_dialog::{
 use crate::smart_collection_sort::{self, SmartCollectionCriterion, SmartCollectionOrder};
 use crate::tag_chooser;
 use crate::tag_editor::SharedTag;
+use crate::tag_tree;
 use crate::thumbnails::{self, THUMBNAIL_PIXELS};
 use crate::toasts;
 use crate::undo_message;
@@ -4688,6 +4689,18 @@ impl PigouneWindow {
         }
     }
 
+    fn view_has_sub_tags(&self, view: AssetView) -> bool {
+        let AssetView::Tag(id) = view else {
+            return false;
+        };
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.tags().ok())
+            .is_some_and(|tags| tag_tree::has_children(&tags, id))
+    }
+
     fn announce_search_place(&self) {
         let imp = self.imp();
         let current = imp.current_view.get();
@@ -4696,6 +4709,8 @@ impl PigouneWindow {
         let choosable = current != AssetView::All && displayed_view::can_widen(current);
         self.show_search_scope_choice(everywhere);
         let scope = if choosable {
+            let detail = (!everywhere && self.view_has_sub_tags(current))
+                .then(|| gettext("“{name}”, with its sub-tags").replace("{name}", &name));
             SearchScope {
                 label: if everywhere {
                     gettext("Everywhere")
@@ -4704,12 +4719,14 @@ impl PigouneWindow {
                 },
                 wide: everywhere,
                 menu_name: Some(name),
+                detail,
             }
         } else if current == AssetView::All {
             SearchScope {
                 label: gettext("Everywhere"),
                 wide: true,
                 menu_name: None,
+                detail: None,
             }
         } else {
             SearchScope {
@@ -4720,6 +4737,7 @@ impl PigouneWindow {
                 },
                 wide: false,
                 menu_name: None,
+                detail: None,
             }
         };
         imp.grid_header.show_search_scope(&scope);
@@ -5342,10 +5360,11 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .flatten()
             .map_or_else(|| library.name(), |collection| collection.name),
         AssetView::Tag(id) => library
-            .tag(id)
+            .tags()
             .ok()
-            .flatten()
-            .map_or_else(|| library.name(), |tag| tag.name),
+            .map(|tags| tag_tree::path_text(&tags, id))
+            .filter(|path| !path.is_empty())
+            .unwrap_or_else(|| library.name()),
         AssetView::Smart(id) => library
             .smart_collection(id)
             .ok()

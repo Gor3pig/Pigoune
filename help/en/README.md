@@ -106,11 +106,13 @@ Tags can be nested: *Subject › Animals › goat*. Type a path with a slash, fo
 `animals/goat`, to create or reuse each level; typing `animals/` suggests its sub-tags, and every
 suggestion shows its parents. A plain name followed by <kbd>Enter</kbd> reuses the tag of that
 name wherever it is; if several tags share it, pick the right one in the list. Each level is a single word of up to 20 characters. In the sidebar,
-the Tags section shows one level at a time: clicking the name of a pill shows that tag in the
-grid, together with the assets of its sub-tags, and a pill with sub-tags has a small **›** that
-steps into them without changing the grid (<kbd>Alt</kbd>+<kbd>→</kbd>; <kbd>Alt</kbd>+<kbd>←</kbd> goes back up).
-The path above the pills climbs back up, and **Tags** returns to the first level. If some of the
-assets you had selected are not in the new view, a short message says how many. The same name can exist in two different
+the Tags section always shows what the grid shows: clicking the name of a pill shows that tag in the
+grid, together with the assets of its sub-tags, and opens its sub-tags in the sidebar. The path above
+the pills climbs back up, and **Tags** returns to the first level and shows the whole library again.
+Choosing anything else in the sidebar (All, a collection…) brings the Tags section back to the first
+level. The search badge and the messages name a tag with its full path, for example
+*subject › animals*. If some of the assets you had selected are not in the new view, a short message
+says how many. The same name can exist in two different
 branches, but not twice at the same level. Right-click a tag for **New Sub-tag…**, **Move to…**,
 **Merge into…** and **Delete…**, or drag a pill onto another tag, onto a level of the path, or onto
 **Tags** to move it. Deleting a tag that has sub-tags lets you delete them too or move them up one
@@ -455,7 +457,6 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.
 | Add to or remove from favorites | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Move to trash | <kbd>Delete</kbd> |
 | Rename or edit the entry selected in the sidebar | <kbd>F2</kbd> |
-| Open the sub-tags of the tag in the sidebar / go up one tag level | <kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>Alt</kbd>+<kbd>←</kbd> |
 | Delete the collection selected in the sidebar | <kbd>Delete</kbd> |
 | Undo | <kbd>Ctrl</kbd>+<kbd>Z</kbd> |
 | Larger / smaller thumbnails | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> |
