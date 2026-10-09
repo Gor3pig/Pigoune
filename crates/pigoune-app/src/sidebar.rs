@@ -1,6 +1,4 @@
-use std::cell::RefCell;
 use std::collections::HashSet;
-use std::rc::Rc;
 
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
@@ -21,7 +19,6 @@ use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry, SidebarItemData};
 use crate::sidebar_row::PigouneSidebarRow;
 use crate::sidebar_tag_cloud::{PigouneSidebarTagCloud, SharedCloudPlace, TagPill};
 
-const SCROLL_HOLD: std::time::Duration = std::time::Duration::from_millis(600);
 const ALL_ICON: &str = "view-grid-symbolic";
 const UNCLASSIFIED_ICON: &str = "image-x-generic-symbolic";
 const FAVORITES_ICON: &str = "starred-symbolic";
@@ -88,6 +85,7 @@ mod imp {
         pub chosen_tag: Cell<Option<pigoune_core::TagId>>,
         pub rebuilding: Cell<bool>,
         pub cloud_place: crate::sidebar_tag_cloud::SharedCloudPlace,
+        pub scroll_keeper: RefCell<Option<(gtk::Adjustment, glib::SignalHandlerId)>>,
         pub on_view_changed: RefCell<Option<ViewChangedCallback>>,
         pub on_content_dropped: RefCell<Option<ContentDroppedCallback>>,
         pub on_assets_dropped: RefCell<Option<AssetsDroppedCallback>>,
@@ -273,7 +271,7 @@ impl PigouneSidebar {
         expanded.extend(content.reveal.iter().copied());
         let counts = content.show_counts.then_some(&content.counts);
 
-        let root = gio::ListStore::new::<PigouneSidebarItem>();
+        let mut root = Vec::new();
         for (view, label, icon) in [
             (AssetView::All, gettext("All"), ALL_ICON),
             (AssetView::Favorites, gettext("Favorites"), FAVORITES_ICON),
@@ -283,7 +281,7 @@ impl PigouneSidebar {
                 UNCLASSIFIED_ICON,
             ),
         ] {
-            root.append(&view_item(view, label, icon, counts, None));
+            root.push(view_item(view, label, icon, counts, None));
         }
         let folded = content.folded;
         let chosen_tag = match content.selected {
@@ -292,25 +290,23 @@ impl PigouneSidebar {
         };
         imp.chosen_tag.set(chosen_tag);
         let collections = collection_items(&content.tree, None, counts);
-        root.append(&header_item(
+        root.push(header_item(
             SidebarEntry::CollectionsHeader,
             gettext("Collections"),
             folded.collections.then_some(0),
         ));
         if !folded.collections {
-            for item in collections {
-                root.append(&item);
-            }
+            root.extend(collections);
         }
         if content.show_smart_collections {
-            root.append(&header_item(
+            root.push(header_item(
                 SidebarEntry::SmartCollectionsHeader,
                 gettext("Smart Collections"),
                 folded.smart_collections.then_some(0),
             ));
             if !folded.smart_collections {
                 for collection in &content.smart_collections {
-                    root.append(&view_item(
+                    root.push(view_item(
                         AssetView::Smart(collection.id),
                         collection.name.clone(),
                         SMART_COLLECTION_ICON,
@@ -321,13 +317,13 @@ impl PigouneSidebar {
             }
         }
         if !content.tags.is_empty() {
-            root.append(&header_item(
+            root.push(header_item(
                 SidebarEntry::TagsHeader,
                 gettext("Tags"),
                 folded.tags.then_some(content.tags.len()),
             ));
             if !folded.tags {
-                root.append(&tag_cloud_item(
+                root.push(tag_cloud_item(
                     &content.tags,
                     counts,
                     chosen_tag,
@@ -335,26 +331,17 @@ impl PigouneSidebar {
                 ));
             }
         }
-        let trash = gio::ListStore::new::<PigouneSidebarItem>();
-        trash.append(&view_item(
-            AssetView::Trash,
-            gettext("Trash"),
-            TRASH_ICON,
-            counts,
-            None,
-        ));
-
-        let tree_model = tree_of(root);
-        let selection = self.selection_of(&tree_model);
-        let trash_selection = self.selection_of(&tree_of(trash));
-
+        let trash = view_item(AssetView::Trash, gettext("Trash"), TRASH_ICON, counts, None);
+        let (tree_model, selection) = self.models_of(&imp.list_view);
+        let (_, trash_selection) = self.models_of(&imp.trash_view);
         let scrolled_to = imp
             .list_view
             .vadjustment()
             .map(|adjustment| adjustment.value());
+
         imp.rebuilding.set(true);
-        imp.list_view.set_model(Some(&selection));
-        imp.trash_view.set_model(Some(&trash_selection));
+        let resized = update_in_place(&tree_model, &root);
+        let _ = update_in_place(&trash_selection_tree(&trash_selection), &[trash]);
         expand(&tree_model, &expanded);
         if content.selected == AssetView::Trash {
             selection.set_selected(gtk::INVALID_LIST_POSITION);
@@ -369,41 +356,73 @@ impl PigouneSidebar {
             trash_selection.set_selected(gtk::INVALID_LIST_POSITION);
         }
         imp.rebuilding.set(false);
-        self.settle_scroll(&tree_model, content.reveal.is_empty(), scrolled_to);
-    }
-
-    fn settle_scroll(
-        &self,
-        tree_model: &gtk::TreeListModel,
-        keep_position: bool,
-        scrolled_to: Option<f64>,
-    ) {
-        let imp = self.imp();
+        self.forget_scroll_keeper();
         if let Some(header) = imp.refocused_header.take()
-            && let Some(position) = position_of_entry(tree_model, header)
+            && let Some(position) = position_of_entry(&tree_model, header)
         {
             imp.list_view
                 .scroll_to(position, gtk::ListScrollFlags::FOCUS, None);
-        } else if keep_position && let Some(scrolled_to) = scrolled_to {
-            self.keep_scroll_position(scrolled_to);
+        } else if resized
+            && content.reveal.is_empty()
+            && let Some(scrolled_to) = scrolled_to
+        {
+            self.keep_position_through_resize(scrolled_to);
         }
     }
 
-    fn keep_scroll_position(&self, wanted: f64) {
+    fn keep_position_through_resize(&self, wanted: f64) {
         let Some(adjustment) = self.imp().list_view.vadjustment() else {
             return;
         };
-        let handler = Rc::new(RefCell::new(None));
-        *handler.borrow_mut() = Some(adjustment.connect_value_changed(move |adjustment| {
-            if (adjustment.value() - wanted).abs() >= 1.0 {
-                adjustment.set_value(wanted);
+        let handler = adjustment.connect_changed(glib::clone!(
+            #[weak(rename_to = sidebar)]
+            self,
+            move |adjustment| {
+                let reachable = wanted.min(adjustment.upper() - adjustment.page_size());
+                if (adjustment.value() - reachable).abs() >= 1.0 {
+                    adjustment.set_value(reachable);
+                }
+                sidebar.forget_scroll_keeper();
             }
-        }));
-        glib::timeout_add_local_once(SCROLL_HOLD, move || {
-            if let Some(handler) = handler.take() {
-                adjustment.disconnect(handler);
+        ));
+        self.imp()
+            .scroll_keeper
+            .replace(Some((adjustment, handler)));
+        let Some(clock) = self.imp().list_view.frame_clock() else {
+            self.forget_scroll_keeper();
+            return;
+        };
+        let after_paint = std::rc::Rc::new(std::cell::Cell::new(None));
+        after_paint.set(Some(clock.connect_after_paint(glib::clone!(
+            #[weak(rename_to = sidebar)]
+            self,
+            #[strong]
+            after_paint,
+            move |clock| {
+                sidebar.forget_scroll_keeper();
+                if let Some(handler) = after_paint.take() {
+                    clock.disconnect(handler);
+                }
             }
-        });
+        ))));
+    }
+
+    fn forget_scroll_keeper(&self) {
+        if let Some((adjustment, handler)) = self.imp().scroll_keeper.take() {
+            adjustment.disconnect(handler);
+        }
+    }
+
+    fn models_of(&self, list_view: &gtk::ListView) -> (gtk::TreeListModel, gtk::SingleSelection) {
+        if let Some(selection) = list_view.model().and_downcast::<gtk::SingleSelection>()
+            && let Some(tree_model) = selection.model().and_downcast::<gtk::TreeListModel>()
+        {
+            return (tree_model, selection);
+        }
+        let tree_model = tree_of(gio::ListStore::new::<PigouneSidebarItem>());
+        let selection = self.selection_of(&tree_model);
+        list_view.set_model(Some(&selection));
+        (tree_model, selection)
     }
 
     fn selection_of(&self, tree_model: &gtk::TreeListModel) -> gtk::SingleSelection {
@@ -843,6 +862,44 @@ fn header_item(entry: SidebarEntry, label: String, folded: Option<usize>) -> Pig
         cloud_place: None,
         children: None,
     })
+}
+
+fn trash_selection_tree(selection: &gtk::SingleSelection) -> gtk::TreeListModel {
+    selection
+        .model()
+        .and_downcast::<gtk::TreeListModel>()
+        .expect("the trash list shows a tree model")
+}
+
+fn update_in_place(tree_model: &gtk::TreeListModel, items: &[PigouneSidebarItem]) -> bool {
+    let Some(store) = tree_model.model().downcast::<gio::ListStore>().ok() else {
+        return false;
+    };
+    let current: Vec<PigouneSidebarItem> = (0..store.n_items())
+        .filter_map(|position| store.item(position).and_downcast())
+        .collect();
+    let kept_before = current
+        .iter()
+        .zip(items)
+        .take_while(|(old, new)| old.same_as(new))
+        .count();
+    let kept_after = current[kept_before..]
+        .iter()
+        .rev()
+        .zip(items[kept_before..].iter().rev())
+        .take_while(|(old, new)| old.same_as(new))
+        .count();
+    let removed = current.len() - kept_before - kept_after;
+    let added = &items[kept_before..items.len() - kept_after];
+    if removed == 0 && added.is_empty() {
+        return false;
+    }
+    store.splice(
+        u32::try_from(kept_before).unwrap_or(u32::MAX),
+        u32::try_from(removed).unwrap_or(u32::MAX),
+        added,
+    );
+    true
 }
 
 fn tree_of(root: gio::ListStore) -> gtk::TreeListModel {

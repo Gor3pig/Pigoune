@@ -1,5 +1,6 @@
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
+use gtk::prelude::*;
 use gtk::{gio, glib};
 use pigoune_core::{AssetView, TagId};
 
@@ -132,6 +133,19 @@ impl PigouneSidebarItem {
         self.data().children.clone()
     }
 
+    pub fn same_as(&self, other: &Self) -> bool {
+        let (mine, theirs) = (self.data(), other.data());
+        mine.entry == theirs.entry
+            && mine.label == theirs.label
+            && mine.icon_name == theirs.icon_name
+            && mine.color_class == theirs.color_class
+            && mine.count == theirs.count
+            && mine.folded == theirs.folded
+            && mine.tag_pills == theirs.tag_pills
+            && mine.selected_tag == theirs.selected_tag
+            && same_children(mine.children.as_ref(), theirs.children.as_ref())
+    }
+
     pub fn spoken_label(&self) -> String {
         let name = match self.view() {
             Some(AssetView::Tag(_)) => gettext("Tag {name}").replace("{name}", self.label()),
@@ -150,5 +164,20 @@ impl PigouneSidebarItem {
         )
         .replace("{name}", &name)
         .replace("{count}", &count.to_string())
+    }
+}
+
+fn same_children(mine: Option<&gio::ListStore>, theirs: Option<&gio::ListStore>) -> bool {
+    match (mine, theirs) {
+        (None, None) => true,
+        (Some(mine), Some(theirs)) => {
+            mine.n_items() == theirs.n_items()
+                && (0..mine.n_items()).all(|position| {
+                    let mine = mine.item(position).and_downcast::<PigouneSidebarItem>();
+                    let theirs = theirs.item(position).and_downcast::<PigouneSidebarItem>();
+                    matches!((mine, theirs), (Some(mine), Some(theirs)) if mine.same_as(&theirs))
+                })
+        }
+        _ => false,
     }
 }
