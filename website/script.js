@@ -73,8 +73,11 @@ function runCarousels() {
     rail.className = "rail";
     const state = document.createElement("div");
     state.className = "state";
+    rail.setAttribute("aria-hidden", "true");
     controls.append(toggle, rail);
-    carousel.append(controls, state);
+    const thumbnails = document.createElement("div");
+    thumbnails.className = "thumbs";
+    carousel.append(controls, thumbnails, state);
 
     const dots = slides.map((slide, index) => {
       const dot = document.createElement("button");
@@ -82,12 +85,30 @@ function runCarousels() {
       dot.className = "dot";
       dot.setAttribute("aria-label", labels.labelImage.replace("{n}", index + 1).replace("{total}", count));
       dot.append(Object.assign(document.createElement("span"), { className: "fill" }));
+      dot.tabIndex = -1;
       dot.addEventListener("click", () => show(index));
       rail.append(dot);
       slide.setAttribute("role", "group");
       slide.setAttribute("aria-roledescription", labels.labelSlide);
       slide.setAttribute("aria-label", `${index + 1} / ${count}`);
       return dot;
+    });
+
+    const thumbnailButtons = slides.map((slide, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "thumb";
+      button.setAttribute("aria-label", slide.querySelector("figcaption").textContent);
+      const picture = document.createElement("img");
+      picture.src = slide.dataset.thumb;
+      picture.alt = "";
+      picture.width = 320;
+      picture.height = 180;
+      picture.loading = "lazy";
+      button.append(picture);
+      button.addEventListener("click", () => show(index));
+      thumbnails.append(button);
+      return button;
     });
 
     stage.setAttribute("role", "group");
@@ -122,6 +143,16 @@ function runCarousels() {
         dot.classList.toggle("now", position === current);
         dot.setAttribute("aria-current", String(position === current));
       });
+      thumbnailButtons.forEach((button, position) => {
+        button.setAttribute("aria-current", String(position === current));
+      });
+      const active = thumbnailButtons[current];
+      if (thumbnails.scrollWidth > thumbnails.clientWidth) {
+        thumbnails.scrollTo({
+          left: active.offsetLeft - (thumbnails.clientWidth - active.clientWidth) / 2,
+          behavior: calmRequested ? "auto" : "smooth",
+        });
+      }
       refresh();
     }
 

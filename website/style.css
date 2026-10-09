@@ -632,6 +632,7 @@ footer nav {
 
 .carousel .controls,
 .carousel .arrow,
+.carousel .thumbs,
 .carousel .state {
   display: none;
 }
@@ -675,6 +676,54 @@ footer nav {
   align-items: center;
   gap: 0.9rem;
   margin-top: 0.9rem;
+}
+
+.carousel.enhanced .thumbs {
+  position: relative;
+  display: flex;
+  gap: 0.6rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 1rem auto 0;
+  padding: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.carousel .thumb {
+  flex: 0 0 auto;
+  width: 7rem;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.carousel .thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.carousel .thumb:hover,
+.carousel .thumb[aria-current="true"] {
+  opacity: 1;
+}
+
+.carousel .thumb[aria-current="true"] {
+  outline: 3px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+.carousel .thumb:focus-visible {
+  outline: 3px solid var(--accent-strong);
+  outline-offset: 2px;
+  opacity: 1;
 }
 
 .carousel.enhanced .state {
@@ -813,5 +862,9 @@ footer nav {
 
   .carousel .dot {
     width: 1.5rem;
+  }
+
+  .carousel .thumb {
+    width: 5rem;
   }
 }
