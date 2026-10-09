@@ -179,6 +179,9 @@ fn add_to_collection(
     Ok(changed > 0)
 }
 
+const LONGEST_STORED_NAME: usize = 200;
+const LONGEST_EXTENSION: usize = 20;
+
 pub(super) fn prepare(source: &Path) -> Result<PreparedFile, ImportError> {
     let original_file_name = importable_file_name(source)?;
     let media = media::inspect(source).map_err(|error| inspect_failure(error, source))?;
@@ -195,9 +198,26 @@ fn importable_file_name(source: &Path) -> Result<String, ImportError> {
     let metadata =
         fs::metadata(source).map_err(|_| ImportError::Unreadable(source.to_path_buf()))?;
     match source.file_name() {
-        Some(name) if metadata.is_file() => Ok(name.to_string_lossy().into_owned()),
+        Some(name) if metadata.is_file() => Ok(shortened(&name.to_string_lossy())),
         _ => Err(ImportError::UnsupportedFormat(source.to_path_buf())),
     }
+}
+
+fn shortened(name: &str) -> String {
+    if name.len() <= LONGEST_STORED_NAME {
+        return name.to_owned();
+    }
+    let extension = Path::new(name)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .filter(|extension| extension.len() <= LONGEST_EXTENSION)
+        .map(|extension| format!(".{extension}"))
+        .unwrap_or_default();
+    let mut end = LONGEST_STORED_NAME - extension.len();
+    while !name.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}{extension}", &name[..end])
 }
 
 fn inspect_failure(error: InspectError, source: &Path) -> ImportError {
@@ -258,7 +278,34 @@ fn display_name_of(original_file_name: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::display_name_of;
+    use super::{display_name_of, shortened};
+
+    #[test]
+    fn a_short_name_is_kept_as_it_is() {
+        assert_eq!(shortened("logo.final.png"), "logo.final.png");
+    }
+
+    #[test]
+    fn a_long_name_is_cut_but_keeps_its_extension() {
+        let long = format!("{}.png", "a".repeat(250));
+        let cut = shortened(&long);
+        assert_eq!(cut.len(), 200);
+        assert!(cut.ends_with("a.png"));
+    }
+
+    #[test]
+    fn a_name_is_never_cut_inside_a_character() {
+        let long = format!("{}.png", "é".repeat(150));
+        let cut = shortened(&long);
+        assert!(cut.len() <= 200);
+        assert!(cut.ends_with("é.png"));
+    }
+
+    #[test]
+    fn a_huge_extension_is_cut_with_the_name() {
+        let long = format!("logo.{}", "x".repeat(300));
+        assert_eq!(shortened(&long).len(), 200);
+    }
 
     #[test]
     fn the_display_name_is_the_file_name_without_its_extension() {

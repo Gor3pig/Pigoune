@@ -1,4 +1,5 @@
 use std::fs;
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use pigoune_core::{
@@ -215,4 +216,22 @@ fn a_record_pointing_outside_the_library_is_removed_without_touching_the_disk() 
 
     assert!(library.asset(id).expect("query").is_none());
     assert!(folder.is_dir());
+}
+
+#[test]
+fn an_unreadable_folder_keeps_the_record() {
+    let (_workspace, mut library, id) = setup("red-dot.png");
+    let file = stored_file(&library, id);
+    let folder = file.parent().expect("parent folder").to_path_buf();
+    fs::set_permissions(&folder, fs::Permissions::from_mode(0o000)).expect("permissions change");
+    let enforced = fs::exists(&file).is_err();
+
+    let result = library.remove_record_of_missing_file(id);
+
+    fs::set_permissions(&folder, fs::Permissions::from_mode(0o755)).expect("permissions change");
+    if enforced {
+        assert!(matches!(result, Err(RemoveRecordError::FileStillThere(found)) if found == id));
+        assert!(library.asset(id).expect("query").is_some());
+        assert!(file.is_file());
+    }
 }

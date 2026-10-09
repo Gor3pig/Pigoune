@@ -10,7 +10,7 @@ impl Library {
             .ok_or(RemoveRecordError::AssetNotFound(id))?;
         let inside = layout::is_stored_path_of(id, &asset.stored_path);
         let file = self.root.join(&asset.stored_path);
-        if inside && file.exists() {
+        if inside && !matches!(fs::exists(&file), Ok(false)) {
             return Err(RemoveRecordError::FileStillThere(id));
         }
         self.connection

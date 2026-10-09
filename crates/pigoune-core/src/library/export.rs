@@ -5,6 +5,19 @@ use std::path::{Path, PathBuf};
 
 use super::{Asset, AssetId, Library, LibraryError, layout};
 
+#[derive(Debug)]
+pub struct CopyFailure {
+    pub asset: AssetId,
+    pub display_name: String,
+    pub error: io::Error,
+}
+
+#[derive(Debug)]
+pub struct CopyReport {
+    pub copies: Vec<PathBuf>,
+    pub failures: Vec<CopyFailure>,
+}
+
 const MAX_NAME_BYTES: usize = 200;
 const FORBIDDEN_CHARACTERS: [char; 2] = ['/', '\0'];
 const REPLACEMENT: char = '-';
@@ -42,11 +55,7 @@ impl Library {
         Ok(self.fresh_copies(&[asset], &folder)?.pop())
     }
 
-    pub fn export_to(
-        &self,
-        assets: &[AssetId],
-        folder: &Path,
-    ) -> Result<Vec<PathBuf>, LibraryError> {
+    pub fn export_to(&self, assets: &[AssetId], folder: &Path) -> Result<CopyReport, LibraryError> {
         if !folder.is_dir() {
             return Err(LibraryError::NotFound(folder.to_path_buf()));
         }
@@ -80,15 +89,27 @@ impl Library {
     ) -> Result<Vec<PathBuf>, LibraryError> {
         let _ = fs::remove_dir_all(folder);
         fs::create_dir_all(folder)?;
-        self.copy_into(assets, folder)
+        let report = self.copy_into(assets, folder)?;
+        match report.failures.into_iter().next() {
+            Some(failure) => Err(failure.error.into()),
+            None => Ok(report.copies),
+        }
     }
 
-    fn copy_into(&self, assets: &[AssetId], folder: &Path) -> Result<Vec<PathBuf>, LibraryError> {
+    fn copy_into(&self, assets: &[AssetId], folder: &Path) -> Result<CopyReport, LibraryError> {
         let mut taken = HashSet::new();
         let mut copies = Vec::new();
+        let mut failures = Vec::new();
         for id in assets {
             let Some(asset) = self.asset(*id)? else {
                 continue;
+            };
+            let mut source = match File::open(self.file_of(&asset)) {
+                Ok(source) => source,
+                Err(error) => {
+                    failures.push(failure_of(&asset, error));
+                    continue;
+                }
             };
             let extension = original_extension(&asset);
             let (mut file, copy) = create_free_file(
@@ -97,10 +118,24 @@ impl Library {
                 extension.as_deref(),
                 &mut taken,
             )?;
-            io::copy(&mut File::open(self.file_of(&asset))?, &mut file)?;
-            copies.push(copy);
+            match io::copy(&mut source, &mut file) {
+                Ok(_) => copies.push(copy),
+                Err(error) => {
+                    drop(file);
+                    let _ = fs::remove_file(&copy);
+                    failures.push(failure_of(&asset, error));
+                }
+            }
         }
-        Ok(copies)
+        Ok(CopyReport { copies, failures })
+    }
+}
+
+fn failure_of(asset: &Asset, error: io::Error) -> CopyFailure {
+    CopyFailure {
+        asset: asset.id,
+        display_name: asset.display_name.clone(),
+        error,
     }
 }
 

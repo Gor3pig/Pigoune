@@ -167,7 +167,8 @@ fn exporting_to_a_folder_never_overwrites_a_file() {
     let copies = fixture
         .library
         .export_to(&[svg], &folder)
-        .expect("export succeeds");
+        .expect("export succeeds")
+        .copies;
 
     assert_eq!(copies, [folder.join("Logo GitHub (3).svg")]);
     assert_eq!(

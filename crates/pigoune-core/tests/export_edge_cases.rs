@@ -142,7 +142,8 @@ fn exporting_never_overwrites_a_file_of_the_user() {
     let second = fixture
         .library
         .export_to(&[asset], destination.path())
-        .expect("second export");
+        .expect("second export")
+        .copies;
 
     assert_eq!(
         fs::read(destination.path().join("Logo.png")).expect("file is read"),
@@ -201,7 +202,8 @@ fn a_trashed_resource_can_still_be_copied_exported_and_opened() {
     let exported = fixture
         .library
         .export_to(&[asset], destination.path())
-        .expect("export");
+        .expect("export")
+        .copies;
     let opening = fixture.library.opening_copy(asset).expect("opening copy");
 
     assert_eq!(copies.len(), 1);
@@ -270,4 +272,39 @@ fn a_converted_export_never_overwrites_the_previous_one() {
     assert_ne!(first, second);
     assert_eq!(fs::read(first).expect("file is read"), b"one");
     assert_eq!(fs::read(second).expect("file is read"), b"two");
+}
+
+#[test]
+fn a_missing_source_is_reported_and_the_others_are_still_exported() {
+    let mut fixture = Fixture::new();
+    let lost = fixture.import("red-dot.png");
+    let kept = fixture.import("dark-circle.svg");
+    let stored = fixture.library.asset(lost).expect("query").expect("asset");
+    fs::remove_file(fixture.library.root().join(&stored.stored_path)).expect("file is removed");
+    let destination = tempfile::tempdir().expect("temporary directory");
+
+    let report = fixture
+        .library
+        .export_to(&[lost, kept], destination.path())
+        .expect("export runs");
+
+    assert_eq!(report.copies.len(), 1);
+    assert_eq!(report.failures.len(), 1);
+    assert_eq!(report.failures[0].asset, lost);
+    let left: Vec<_> = fs::read_dir(destination.path())
+        .expect("folder is listed")
+        .flatten()
+        .collect();
+    assert_eq!(left.len(), 1);
+    assert!(left[0].metadata().expect("metadata").len() > 0);
+}
+
+#[test]
+fn a_missing_source_is_an_error_when_preparing_drag_copies() {
+    let mut fixture = Fixture::new();
+    let lost = fixture.import("red-dot.png");
+    let stored = fixture.library.asset(lost).expect("query").expect("asset");
+    fs::remove_file(fixture.library.root().join(&stored.stored_path)).expect("file is removed");
+
+    assert!(fixture.library.export_copies(&[lost]).is_err());
 }

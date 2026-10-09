@@ -2580,7 +2580,24 @@ impl PigouneWindow {
             .as_ref()
             .map(|library| library.export_to(&selected, &path));
         match exported {
-            Some(Ok(copies)) => self.show_export_toast(copies.len(), &folder),
+            Some(Ok(report)) => {
+                if !report.copies.is_empty() {
+                    self.show_export_toast(report.copies.len(), &folder);
+                }
+                if !report.failures.is_empty() {
+                    let failures: Vec<_> = report
+                        .failures
+                        .iter()
+                        .map(|failure| conversion_report::Failure {
+                            name: failure.display_name.clone(),
+                            reason: conversion_report::reason(
+                                crate::image_conversion::ConversionError::Unreadable,
+                            ),
+                        })
+                        .collect();
+                    self.show_export_failures(&failures);
+                }
+            }
             Some(Err(error)) => self.show_export_error(&error),
             None => {}
         }

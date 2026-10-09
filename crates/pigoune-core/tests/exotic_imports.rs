@@ -277,3 +277,28 @@ fn a_svg_with_entity_declarations_is_refused_quickly() {
     assert!(started.elapsed() < std::time::Duration::from_secs(1));
     assert_eq!(fixture.asset_count(), 0);
 }
+
+#[test]
+fn a_name_that_is_not_valid_text_does_not_stop_the_batch() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+
+    let mut fixture = Fixture::new();
+    let mut raw_name = vec![0xFF_u8; 100];
+    raw_name.extend_from_slice(b".png");
+    let odd = fixture.sources.path().join(OsStr::from_bytes(&raw_name));
+    fs::write(&odd, distinct_png(1)).expect("source is written");
+    let normal = fixture.source("normal.png", &distinct_png(2));
+
+    let summary = fixture
+        .library
+        .import_paths(&[odd, normal], None, |_| true, |_| ImportControl::Continue)
+        .expect("import runs");
+
+    assert!(
+        matches!(summary.ending, ImportEnding::Completed),
+        "{:?}",
+        summary.ending
+    );
+    assert_eq!(fixture.asset_count(), 2);
+}

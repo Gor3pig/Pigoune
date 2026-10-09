@@ -54,6 +54,7 @@ pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use error::{
     AdoptError, CollectionError, ImportError, LibraryError, RemoveRecordError, ReplaceError,
 };
+pub use export::{CopyFailure, CopyReport};
 pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, SmartCollectionId, TagId};
