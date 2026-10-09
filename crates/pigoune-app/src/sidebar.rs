@@ -517,6 +517,14 @@ impl PigouneSidebar {
     }
 
     pub fn choose_tag(&self, tag: TagId) {
+        self.choose_tag_showing(tag, true);
+    }
+
+    pub fn choose_tag_in_place(&self, tag: TagId) {
+        self.choose_tag_showing(tag, false);
+    }
+
+    fn choose_tag_showing(&self, tag: TagId, follow: bool) {
         let imp = self.imp();
         imp.chosen_tag.set(Some(tag));
         imp.rebuilding.set(true);
@@ -527,7 +535,11 @@ impl PigouneSidebar {
         }
         imp.rebuilding.set(false);
         if let Some(cloud) = self.tag_cloud() {
-            cloud.highlight(Some(tag));
+            if follow {
+                cloud.highlight(Some(tag));
+            } else {
+                cloud.highlight_in_place(tag);
+            }
         }
         if let Some(on_view_changed) = imp.on_view_changed.borrow().as_ref() {
             on_view_changed(AssetView::Tag(tag));

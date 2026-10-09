@@ -1032,7 +1032,24 @@ impl PigouneWindow {
         }
         self.remember_view(view);
         imp.asset_preview.close();
+        let before = self.selected_ids();
         self.refresh_grid();
+        self.tell_lost_selection(&before);
+    }
+
+    fn tell_lost_selection(&self, before: &[AssetId]) {
+        let lost = crate::selection_loss::lost_count(before, &self.selected_ids());
+        if lost == 0 {
+            return;
+        }
+        self.show_toast(
+            &ngettext(
+                "{count} selected asset is not in this view.",
+                "{count} selected assets are not in this view.",
+                u32::try_from(lost).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &lost.to_string()),
+        );
     }
 
     fn view_on_opening(&self) -> AssetView {

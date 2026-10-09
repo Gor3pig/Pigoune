@@ -73,6 +73,7 @@ mod ring_chart;
 mod screen_size;
 mod search_space;
 mod search_width;
+mod selection_loss;
 mod settings;
 mod shortened_label;
 mod sidebar;

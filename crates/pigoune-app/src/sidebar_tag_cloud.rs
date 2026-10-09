@@ -16,6 +16,7 @@ use crate::tag_tree;
 
 const MOST_PILLS: usize = 12;
 const PILL_SPACING: i32 = 4;
+const CHEVRON_PIXELS: i32 = 10;
 const SELECTED: &str = "selected";
 const DROP_HIGHLIGHT: &str = "drop-highlight";
 
@@ -27,6 +28,13 @@ pub struct CloudPlace {
 }
 
 pub type SharedCloudPlace = Rc<Cell<CloudPlace>>;
+
+struct PillParts {
+    id: TagId,
+    root: gtk::Widget,
+    name: gtk::Button,
+    chevron: Option<gtk::Button>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TagPill {
@@ -54,6 +62,7 @@ mod imp {
         pub menu: OnceCell<gtk::PopoverMenu>,
         pub tags: RefCell<Vec<TagPill>>,
         pub pills: RefCell<Vec<(TagId, gtk::Button)>>,
+        pub chevrons: RefCell<Vec<(TagId, gtk::Button)>>,
         pub crumb_buttons: RefCell<Vec<(TagId, gtk::Button)>>,
         pub selected: Cell<Option<TagId>>,
         pub level: Cell<Option<TagId>>,
@@ -156,6 +165,53 @@ impl PigouneSidebarTagCloud {
         }
     }
 
+    pub fn highlight_in_place(&self, selected: TagId) {
+        self.imp().selected.set(Some(selected));
+        self.mark_selected();
+        self.remember_place();
+    }
+
+    fn step_into(&self, tag: TagId) {
+        if !self.has_children(tag) {
+            return;
+        }
+        self.imp().level.set(Some(tag));
+        self.rebuild();
+        let first = self
+            .imp()
+            .pills
+            .borrow()
+            .first()
+            .map(|(_, pill)| pill.clone());
+        if let Some(first) = first {
+            first.grab_focus();
+        }
+    }
+
+    fn step_out(&self) {
+        let imp = self.imp();
+        let Some(left) = imp.level.get() else {
+            return;
+        };
+        let parent = imp
+            .tags
+            .borrow()
+            .iter()
+            .find(|tag| tag.id == left)
+            .and_then(|tag| tag.parent);
+        imp.level.set(parent);
+        self.rebuild();
+        let came_from = imp
+            .pills
+            .borrow()
+            .iter()
+            .find(|(id, _)| *id == left)
+            .map(|(_, pill)| pill.clone());
+        if let Some(came_from) = came_from {
+            came_from.grab_focus();
+        }
+    }
+
     pub fn pill_of(&self, tag: TagId) -> Option<gtk::Button> {
         if let Some(shown) = self.shown_button_of(tag) {
             return Some(shown);
@@ -225,6 +281,13 @@ impl PigouneSidebarTagCloud {
                 pill.remove_css_class(SELECTED);
             }
         }
+        for (id, chevron) in self.imp().chevrons.borrow().iter() {
+            if Some(*id) == selected {
+                chevron.add_css_class(SELECTED);
+            } else {
+                chevron.remove_css_class(SELECTED);
+            }
+        }
         for (id, crumb) in self.imp().crumb_buttons.borrow().iter() {
             if Some(*id) == selected {
                 crumb.add_css_class(SELECTED);
@@ -255,18 +318,19 @@ impl PigouneSidebarTagCloud {
                 .skip(MOST_PILLS)
                 .any(|tag| Some(tag.id) == selected);
         let shown = if show_all { tags.len() } else { MOST_PILLS };
-        let pills: Vec<(TagId, gtk::Button)> = tags
-            .iter()
-            .take(shown)
-            .map(|tag| {
-                let has_children = all.iter().any(|child| child.parent == Some(tag.id));
-                (tag.id, self.pill(tag, has_children))
-            })
-            .collect();
-        for (_, pill) in &pills {
-            wrap.append(pill);
+        let mut pills = Vec::new();
+        let mut chevrons = Vec::new();
+        for tag in tags.iter().take(shown) {
+            let has_children = all.iter().any(|child| child.parent == Some(tag.id));
+            let parts = self.pill(tag, has_children);
+            wrap.append(&parts.root);
+            if let Some(chevron) = parts.chevron {
+                chevrons.push((parts.id, chevron));
+            }
+            pills.push((parts.id, parts.name));
         }
         imp.pills.replace(pills);
+        imp.chevrons.replace(chevrons);
         self.mark_selected();
         self.remember_place();
         let more = part(&imp.more);
@@ -350,7 +414,7 @@ impl PigouneSidebarTagCloud {
         button
     }
 
-    fn pill(&self, tag: &TagPill, has_children: bool) -> gtk::Button {
+    fn pill(&self, tag: &TagPill, has_children: bool) -> PillParts {
         let content = gtk::Box::builder().spacing(6).build();
         content.append(&name_label(&tag.name));
         if let Some(count) = tag.count.filter(|count| *count > 0) {
@@ -361,20 +425,14 @@ impl PigouneSidebarTagCloud {
                     .build(),
             );
         }
-        if has_children {
-            content.append(
-                &gtk::Image::builder()
-                    .icon_name("go-next-symbolic")
-                    .pixel_size(12)
-                    .css_classes(["dim-label"])
-                    .build(),
-            );
-        }
         let pill = gtk::Button::builder()
             .child(&content)
             .css_classes(["flat", "sidebar-tag-pill"])
             .tooltip_text(gettext("Open the Tag “{name}”").replace("{name}", &tag.name))
             .build();
+        if has_children {
+            pill.add_css_class("with-chevron");
+        }
         pill.update_property(&[gtk::accessible::Property::Label(&spoken_label(
             tag,
             has_children,
@@ -385,16 +443,85 @@ impl PigouneSidebarTagCloud {
             self,
             move |_| {
                 if let Some(sidebar) = cloud.sidebar() {
-                    sidebar.choose_tag(id);
+                    sidebar.choose_tag_in_place(id);
                 }
             }
         ));
         self.open_menu_on_secondary_click(&pill, id);
+        self.offer_level_keys(&pill, id, has_children);
         Self::rename_on_f2(&pill, id);
         self.accept_drops(&pill, id);
         Self::offer_tag_drag(&pill, id);
         self.accept_tag_drops(&pill, Some(id));
-        pill
+        let chevron = has_children.then(|| self.chevron(tag));
+        let root: gtk::Widget = match &chevron {
+            Some(chevron) => {
+                let group = gtk::Box::builder().build();
+                group.append(&pill);
+                group.append(chevron);
+                group.upcast()
+            }
+            None => pill.clone().upcast(),
+        };
+        PillParts {
+            id,
+            root,
+            name: pill,
+            chevron,
+        }
+    }
+
+    fn chevron(&self, tag: &TagPill) -> gtk::Button {
+        let label = gettext("Show the Sub-tags of “{name}”").replace("{name}", &tag.name);
+        let chevron = gtk::Button::builder()
+            .child(
+                &gtk::Image::builder()
+                    .icon_name("go-next-symbolic")
+                    .pixel_size(CHEVRON_PIXELS)
+                    .build(),
+            )
+            .css_classes(["flat", "sidebar-tag-chevron"])
+            .tooltip_text(&label)
+            .build();
+        chevron.update_property(&[gtk::accessible::Property::Label(&label)]);
+        let id = tag.id;
+        chevron.connect_clicked(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |_| cloud.step_into(id)
+        ));
+        chevron
+    }
+
+    fn offer_level_keys(&self, pill: &gtk::Button, id: TagId, has_children: bool) {
+        let keys = gtk::EventControllerKey::new();
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, modifiers| {
+                let only_alt = modifiers.contains(gdk::ModifierType::ALT_MASK)
+                    && !modifiers.intersects(
+                        gdk::ModifierType::CONTROL_MASK | gdk::ModifierType::SHIFT_MASK,
+                    );
+                if !only_alt {
+                    return glib::Propagation::Proceed;
+                }
+                match key {
+                    gdk::Key::Right if has_children => {
+                        cloud.step_into(id);
+                        glib::Propagation::Stop
+                    }
+                    gdk::Key::Left if cloud.imp().level.get().is_some() => {
+                        cloud.step_out();
+                        glib::Propagation::Stop
+                    }
+                    _ => glib::Propagation::Proceed,
+                }
+            }
+        ));
+        pill.add_controller(keys);
     }
 
     fn offer_tag_drag(pill: &gtk::Button, id: TagId) {
