@@ -63,19 +63,40 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
-        "2.4.0" => vec![
+        "2.5.0" => vec![
             Point {
-                icon: "dialog-information-symbolic",
-                title: gettext("News After Each Update"),
+                icon: "view-list-symbolic",
+                title: gettext("Nested Tags"),
                 text: gettext(
-                    "This window sums up the main news the first time a new version starts. You can turn it off in the Preferences.",
+                    "Tags can now live inside other tags, like Subject › Animals › goat. Type a path with a slash to create them, and browse them level by level in the sidebar.",
                 ),
             },
             Point {
-                icon: "drive-harddisk-symbolic",
-                title: gettext("Thumbnails Moved"),
+                icon: "object-select-symbolic",
+                title: gettext("Library Health Check"),
                 text: gettext(
-                    "Clearing the thumbnails is now done in Manage Library, in the Storage tab, next to the space they take.",
+                    "The Health tab of Manage Library finds missing, damaged and unrecorded files, and helps you repair them.",
+                ),
+            },
+            Point {
+                icon: "document-send-symbolic",
+                title: gettext("Export and Web Import"),
+                text: gettext(
+                    "Export the whole library as folders, and import images dragged straight from a web browser.",
+                ),
+            },
+            Point {
+                icon: "system-search-symbolic",
+                title: gettext("Clearer Search"),
+                text: gettext(
+                    "The search field shows where it searches, and a magnifier opens it in narrow windows.",
+                ),
+            },
+            Point {
+                icon: "preferences-desktop-locale-symbolic",
+                title: gettext("One Vocabulary"),
+                text: gettext(
+                    "The interface now uses the same words in every language, and Manage Library has a new layout.",
                 ),
             },
         ],

@@ -24,39 +24,39 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/01.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/02.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/03.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/03.png</image>
       <caption>Look closely at an asset and step through its animation</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/04.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/04.png</image>
       <caption>Convert assets to PNG, JPEG, WebP, AVIF or ICO</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/05.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/05.png</image>
       <caption>See what your library holds, in light or dark style</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/06.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/06.png</image>
       <caption>Combine words with “and” or “or” in one click</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/07.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/07.png</image>
       <caption>Save a search as a smart collection that fills itself</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/08.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/08.png</image>
       <caption>Find the images that fit your screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.4.0/data/screenshots/09.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.5.0/data/screenshots/09.png</image>
       <caption>Frame any image and set it as your wallpaper</caption>
     </screenshot>
   </screenshots>
@@ -92,6 +92,19 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="2.5.0" date="2026-10-09">
+      <description>
+        <p>Tags can now be nested, the library can check its own health, and the interface uses one consistent vocabulary.</p>
+        <ul>
+          <li>Nest tags like Subject › Animals › goat: type a path with a slash, browse the tags level by level in the sidebar, and move, merge or delete a tag together with its sub-tags.</li>
+          <li>The new Health tab of Manage Library finds missing, damaged and unrecorded files, and lets you add, replace, remove or trash them.</li>
+          <li>Export the whole library as folders, and import images dragged straight from a web browser.</li>
+          <li>The search field shows where it searches, and a magnifier opens the search in narrow windows.</li>
+          <li>The French interface now says “élément” instead of “ressource”, with the same wording in the other languages, and Manage Library is laid out in a centered column.</li>
+          <li>Libraries opened with Pigoune 2.5 can no longer be opened with older versions.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.4.0" date="2026-10-07">
       <description>
         <p>A short window now tells you what is new after each update, and clearing the thumbnails moves to the library information.</p>
