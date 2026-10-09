@@ -12,6 +12,7 @@ use crate::drag_content::{DraggedAssets, DraggedTag};
 use crate::shortened_label::name_label;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_row::{control_is_held, tag_menu};
+use crate::tag_tree;
 
 const MOST_PILLS: usize = 12;
 const PILL_SPACING: i32 = 4;
@@ -294,19 +295,10 @@ impl PigouneSidebarTagCloud {
             return;
         };
         crumbs.set_visible(true);
-        let mut trail = Vec::new();
-        let mut next = Some(level);
-        {
-            let tags = imp.tags.borrow();
-            while let Some(id) = next {
-                let Some(tag) = tags.iter().find(|candidate| candidate.id == id) else {
-                    break;
-                };
-                trail.push((tag.id, tag.name.clone()));
-                next = tag.parent;
-            }
-        }
-        trail.reverse();
+        let trail: Vec<(TagId, String)> = tag_tree::branch(&imp.tags.borrow(), level)
+            .into_iter()
+            .map(|tag| (tag.id, tag.name.clone()))
+            .collect();
         crumbs.append(&self.crumb_to_root());
         for (id, name) in trail {
             crumbs.append(
@@ -477,22 +469,10 @@ impl PigouneSidebarTagCloud {
 
     fn can_move_into(&self, dragged: TagId, target: Option<TagId>) -> bool {
         let tags = self.imp().tags.borrow();
-        let parent_of = |id: TagId| {
-            tags.iter()
-                .find(|candidate| candidate.id == id)
-                .and_then(|candidate| candidate.parent)
-        };
-        if tags.iter().any(|tag| tag.id == dragged) && parent_of(dragged) == target {
-            return false;
-        }
-        let mut next = target;
-        while let Some(id) = next {
-            if id == dragged {
-                return false;
-            }
-            next = parent_of(id);
-        }
-        true
+        let already_there = tag_tree::find(&tags, dragged).is_some_and(|tag| tag.parent == target);
+        let inside_itself =
+            target.is_some_and(|target| tag_tree::is_within(&tags, target, dragged));
+        !already_there && !inside_itself
     }
 
     fn open_menu_on_secondary_click(&self, pill: &gtk::Button, id: TagId) {

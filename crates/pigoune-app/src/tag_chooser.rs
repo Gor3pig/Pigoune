@@ -6,6 +6,8 @@ use gettextrs::gettext;
 use gtk::{gdk, glib};
 use pigoune_core::{Tag, TagId, comparable};
 
+use crate::tag_tree;
+
 pub struct TagChoice {
     pub id: Option<TagId>,
     pub label: String,
@@ -20,28 +22,13 @@ struct Chooser {
     on_chosen: Box<dyn Fn(Option<TagId>)>,
 }
 
-fn below(all: &[Tag], root: TagId) -> Vec<TagId> {
-    let mut found = vec![root];
-    let mut index = 0;
-    while index < found.len() {
-        let parent = found[index];
-        found.extend(
-            all.iter()
-                .filter(|tag| tag.parent == Some(parent))
-                .map(|tag| tag.id),
-        );
-        index += 1;
-    }
-    found
-}
-
 pub fn destinations(
     all: &[Tag],
     moving: TagId,
     top_level_label: Option<&str>,
     leave_current_parent: bool,
 ) -> Vec<TagChoice> {
-    let excluded = below(all, moving);
+    let excluded = tag_tree::descendants(all, moving);
     let current_parent = all
         .iter()
         .find(|tag| tag.id == moving)

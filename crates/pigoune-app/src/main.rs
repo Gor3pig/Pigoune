@@ -89,6 +89,7 @@ mod tag_cloud;
 mod tag_editor;
 mod tag_input;
 mod tag_summary;
+mod tag_tree;
 mod thumbnails;
 mod toasts;
 mod undo_message;

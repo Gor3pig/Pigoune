@@ -2,6 +2,8 @@ use std::collections::HashSet;
 
 use pigoune_core::{LONGEST_TAG_NAME, Tag, TagId, comparable, same_tag_name};
 
+use crate::tag_tree;
+
 const MOST_SUGGESTIONS: usize = 8;
 
 pub fn is_separator(character: char) -> bool {
@@ -65,17 +67,10 @@ pub fn path_of(all: &[Tag], tag: &Tag) -> String {
 }
 
 pub fn ancestors_of<'a>(all: &'a [Tag], tag: &Tag) -> Vec<&'a str> {
-    let mut names = Vec::new();
-    let mut next = tag.parent;
-    while let Some(id) = next {
-        let Some(parent) = all.iter().find(|candidate| candidate.id == id) else {
-            break;
-        };
-        names.push(parent.name.as_str());
-        next = parent.parent;
-    }
-    names.reverse();
-    names
+    tag_tree::ancestors(all, tag)
+        .into_iter()
+        .map(|parent| parent.name.as_str())
+        .collect()
 }
 
 fn child_named<'a>(all: &'a [Tag], parent: Option<TagId>, name: &str) -> Option<&'a Tag> {
