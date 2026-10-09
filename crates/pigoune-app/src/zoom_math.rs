@@ -5,6 +5,7 @@ pub const ACTUAL_SIZE: f64 = 1.0;
 pub const SHARP_PIXELS_FROM: f64 = 2.0;
 pub const PIXEL_GRID_FROM: f64 = 8.0;
 const STRETCH_RESISTANCE: f64 = 0.55;
+const PAN_STEP: f64 = 0.1;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Size {
@@ -55,6 +56,25 @@ pub fn clamp_center(center: Point, view: Size, image: Size, zoom: f64) -> Point 
 fn clamp_axis(center: f64, view: f64, image: f64, zoom: f64) -> f64 {
     let half_visible = view / zoom / 2.0;
     center.clamp((image - half_visible).min(0.0), half_visible.max(image))
+}
+
+pub fn pan_center(center: Point, view: Size, image: Size, zoom: f64, direction: Point) -> Point {
+    Point {
+        x: pan_axis(center.x, view.width, image.width, zoom, direction.x),
+        y: pan_axis(center.y, view.height, image.height, zoom, direction.y),
+    }
+}
+
+fn pan_axis(center: f64, view: f64, image: f64, zoom: f64, direction: f64) -> f64 {
+    if image * zoom <= view {
+        return center;
+    }
+    clamp_axis(
+        center + direction * PAN_STEP * view / zoom,
+        view,
+        image,
+        zoom,
+    )
 }
 
 pub fn stretch_center(center: Point, view: Size, image: Size, zoom: f64) -> Point {
@@ -112,6 +132,53 @@ mod tests {
 
     fn size(width: f64, height: f64) -> Size {
         Size { width, height }
+    }
+
+    #[test]
+    fn panning_moves_the_view_by_a_tenth_of_its_size() {
+        let image = size(2000.0, 2000.0);
+        let center = Point {
+            x: 1000.0,
+            y: 1000.0,
+        };
+        let moved = pan_center(
+            center,
+            size(500.0, 400.0),
+            image,
+            2.0,
+            Point { x: 1.0, y: -1.0 },
+        );
+        assert!((moved.x - 1025.0).abs() < 1e-9);
+        assert!((moved.y - 980.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn panning_stops_at_the_edge_of_the_image() {
+        let image = size(1000.0, 1000.0);
+        let edge = Point { x: 990.0, y: 500.0 };
+        let moved = pan_center(
+            edge,
+            size(500.0, 500.0),
+            image,
+            2.0,
+            Point { x: 1.0, y: 0.0 },
+        );
+        assert!((moved.x - 1000.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn an_axis_where_the_image_fits_does_not_move() {
+        let image = size(100.0, 2000.0);
+        let center = Point { x: 50.0, y: 1000.0 };
+        let moved = pan_center(
+            center,
+            size(500.0, 400.0),
+            image,
+            2.0,
+            Point { x: 1.0, y: 1.0 },
+        );
+        assert!((moved.x - 50.0).abs() < 1e-9);
+        assert!(moved.y > 1000.0);
     }
 
     #[test]

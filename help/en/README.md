@@ -224,7 +224,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - Animated GIF, PNG and WebP images play when you hover over them.
 - Press <kbd>Space</kbd> or double-click an asset to open the **detailed preview**. Zoom with
   the scroll wheel or with <kbd>+</kbd> and <kbd>-</kbd>, use <kbd>0</kbd> to fit the window
-  and <kbd>1</kbd> for the actual size, and choose a background color with the **Background**
+  and <kbd>1</kbd> for the actual size, drag a zoomed image or move it with <kbd>Shift</kbd>
+  and the arrow keys, and choose a background color with the **Background**
   button of the top bar. The **Open With…**, **Copy** and **Export To…** buttons next to it act
   on the asset shown. The **Show Details** button opens the details panel next to the asset, to
   tag it, file it or add a note without leaving the preview; Pigoune remembers whether it is
@@ -233,7 +234,7 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   when you move the mouse, or with a two-finger swipe. <kbd>Home</kbd> and <kbd>End</kbd> jump
   to the first and last asset.
 - Press <kbd>F11</kbd>, or choose **Full Screen** in the zoom menu, to fill the screen; the top
-  bar comes back when you move the mouse, and <kbd>Esc</kbd> leaves full screen.
+  bar comes back when you move the mouse or press <kbd>Tab</kbd>, and <kbd>Esc</kbd> leaves full screen.
 - For an ICO file holding several sizes, buttons below the image show each size as it was drawn
   (16, 32, 48, 256…).
 - For an animation, a bar below the image pauses and resumes it and steps through it frame by

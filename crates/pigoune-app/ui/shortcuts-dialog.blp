@@ -70,6 +70,11 @@ Adw.ShortcutsDialog shortcuts_dialog {
     }
 
     Adw.ShortcutsItem {
+      title: _("Open the Context Menu");
+      accelerator: "Menu <Shift>F10";
+    }
+
+    Adw.ShortcutsItem {
       title: _("Undo");
       action-name: "win.undo";
     }
@@ -162,8 +167,18 @@ Adw.ShortcutsDialog shortcuts_dialog {
     }
 
     Adw.ShortcutsItem {
+      title: _("Move the Zoomed Image");
+      accelerator: "<Shift>Left <Shift>Right <Shift>Up <Shift>Down";
+    }
+
+    Adw.ShortcutsItem {
       title: _("Full Screen");
       accelerator: "F11";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Move to Trash");
+      accelerator: "Delete";
     }
 
     Adw.ShortcutsItem {

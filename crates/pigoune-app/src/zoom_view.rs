@@ -185,6 +185,26 @@ impl PigouneZoomView {
         self.zoom_to(self.zoom() / KEY_ZOOM_FACTOR, self.view_center());
     }
 
+    pub fn pan(&self, direction_x: f64, direction_y: f64) {
+        let imp = self.imp();
+        self.stop_spring();
+        let center = zoom_math::pan_center(
+            imp.center.get(),
+            self.view_size(),
+            imp.image.get(),
+            imp.zoom.get(),
+            Point {
+                x: direction_x,
+                y: direction_y,
+            },
+        );
+        if center != imp.center.get() {
+            imp.fits.set(false);
+            imp.center.set(center);
+            self.queue_draw();
+        }
+    }
+
     fn zoom_to(&self, zoom: f64, anchor: Point) {
         let imp = self.imp();
         let old_zoom = self.zoom();

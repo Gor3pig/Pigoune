@@ -194,18 +194,10 @@ impl PigouneSidebarTagCloud {
     fn mark_selected(&self) {
         let selected = self.imp().selected.get();
         for (id, pill) in self.imp().pills.borrow().iter() {
-            if Some(*id) == selected {
-                pill.add_css_class(SELECTED);
-            } else {
-                pill.remove_css_class(SELECTED);
-            }
+            mark_button(pill, Some(*id) == selected);
         }
         for (id, crumb) in self.imp().crumb_buttons.borrow().iter() {
-            if Some(*id) == selected {
-                crumb.add_css_class(SELECTED);
-            } else {
-                crumb.remove_css_class(SELECTED);
-            }
+            mark_button(crumb, Some(*id) == selected);
         }
     }
 
@@ -644,6 +636,19 @@ impl Default for PigouneSidebarTagCloud {
     fn default() -> Self {
         glib::Object::new()
     }
+}
+
+fn mark_button(button: &gtk::Button, selected: bool) {
+    if selected {
+        button.add_css_class(SELECTED);
+    } else {
+        button.remove_css_class(SELECTED);
+    }
+    button.update_state(&[gtk::accessible::State::Pressed(if selected {
+        gtk::AccessibleTristate::True
+    } else {
+        gtk::AccessibleTristate::False
+    })]);
 }
 
 fn spoken_label(tag: &TagPill, has_children: bool) -> String {

@@ -186,6 +186,20 @@ mod imp {
             self.show_action_buttons();
         }
 
+        fn bind_pan_keys(class: &mut <Self as ObjectSubclass>::Class) {
+            for (key, x, y) in [
+                (gdk::Key::Left, -1.0, 0.0),
+                (gdk::Key::Right, 1.0, 0.0),
+                (gdk::Key::Up, 0.0, -1.0),
+                (gdk::Key::Down, 0.0, 1.0),
+            ] {
+                class.add_binding(key, gdk::ModifierType::SHIFT_MASK, move |preview| {
+                    preview.imp().zoom_view.pan(x, y);
+                    glib::Propagation::Stop
+                });
+            }
+        }
+
         fn bind_step_keys(class: &mut <Self as ObjectSubclass>::Class) {
             class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
                 preview.step(-1);
@@ -302,6 +316,7 @@ mod imp {
                 preview.step_frame(1);
                 glib::Propagation::Stop
             });
+            Self::bind_pan_keys(class);
             Self::bind_step_keys(class);
         }
 
@@ -316,6 +331,7 @@ mod imp {
             self.parent_constructed();
             self.obj().follow_zoom();
             self.obj().follow_pointer();
+            self.obj().reveal_controls_on_tab();
             self.obj().listen_to_menu_requests();
             self.obj().listen_to_navigation();
             self.obj().take_focus_on_click();
@@ -624,6 +640,36 @@ impl PigouneAssetPreview {
         imp.context_menu.popup();
     }
 
+    fn reveal_controls_on_tab(&self) {
+        let keys = gtk::EventControllerKey::new();
+        keys.set_propagation_phase(gtk::PropagationPhase::Capture);
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, state| {
+                let reaches_controls = preview.is_fullscreen()
+                    && !preview.imp().controls_shown.get()
+                    && key == gdk::Key::Tab
+                    && !state.contains(gdk::ModifierType::CONTROL_MASK);
+                if reaches_controls {
+                    preview.show_controls();
+                    glib::idle_add_local_once(glib::clone!(
+                        #[weak]
+                        preview,
+                        move || {
+                            preview.imp().zoom_button.grab_focus();
+                        }
+                    ));
+                    return glib::Propagation::Stop;
+                }
+                glib::Propagation::Proceed
+            }
+        ));
+        self.add_controller(keys);
+    }
+
     fn follow_pointer(&self) {
         let motion = gtk::EventControllerMotion::new();
         motion.connect_motion(glib::clone!(
@@ -689,7 +735,11 @@ impl PigouneAssetPreview {
             imp.header_bar.upcast_ref(),
         ]
         .iter()
-        .any(|widget| widget.state_flags().contains(gtk::StateFlags::PRELIGHT));
+        .any(|widget| {
+            widget
+                .state_flags()
+                .intersects(gtk::StateFlags::PRELIGHT | gtk::StateFlags::FOCUS_WITHIN)
+        });
         let menu_open = [
             imp.zoom_button.popover(),
             Some(imp.background_popover.get().upcast()),

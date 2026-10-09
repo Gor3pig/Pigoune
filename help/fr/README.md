@@ -253,7 +253,8 @@ ses critères.
 - Les GIF, PNG et WebP animés s'animent au survol.
 - Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur un élément pour ouvrir l'**aperçu
   détaillé**. Zoomez avec la molette ou avec <kbd>+</kbd> et <kbd>-</kbd>, utilisez
-  <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, et choisissez
+  <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, faites glisser une image zoomée ou déplacez-la avec
+  <kbd>Maj</kbd> et les flèches, et choisissez
   une couleur de fond avec le bouton **Fond** de la barre du haut. Les boutons **Ouvrir
   avec…**, **Copier** et **Exporter vers…** placés à côté agissent sur l’élément affiché.
   Le bouton **Afficher les détails** ouvre le panneau de détails à côté de l’élément, pour le
@@ -263,7 +264,7 @@ ses critères.
   fléchés qui apparaissent quand vous bougez la souris, ou par un balayage à deux doigts.
   <kbd>Début</kbd> et <kbd>Fin</kbd> mènent au premier et au dernier élément.
 - Appuyez sur <kbd>F11</kbd>, ou choisissez **Plein écran** dans le menu du zoom, pour occuper
-  tout l'écran ; la barre du haut revient quand vous bougez la souris, et <kbd>Échap</kbd> quitte
+  tout l'écran ; la barre du haut revient quand vous bougez la souris ou appuyez sur <kbd>Tab</kbd>, et <kbd>Échap</kbd> quitte
   le plein écran.
 - Pour un fichier ICO qui contient plusieurs tailles, des boutons sous l'image affichent chaque
   taille telle qu'elle a été dessinée (16, 32, 48, 256…).
