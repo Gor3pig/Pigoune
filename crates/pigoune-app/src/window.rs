@@ -4018,7 +4018,9 @@ impl PigouneWindow {
             .as_ref()
             .map(|library| {
                 let used_by = library.view_count(AssetView::Tag(tag)).unwrap_or(0);
-                let sub_tags = library.sub_tags(tag).map_or(0, |below| below.len());
+                let sub_tags = library
+                    .tags()
+                    .map_or(0, |all| tag_tree::sub_tag_count(&all, tag));
                 (used_by, sub_tags)
             })
             .unwrap_or_default();
@@ -4468,16 +4470,18 @@ impl PigouneWindow {
             .sort(&mut smart_collections, |name: &str| {
                 glib::FilenameCollationKey::from(name)
             });
-        let still_exists = match imp.current_view.get() {
-            AssetView::Collection(id) => collections.iter().any(|collection| collection.id == id),
-            AssetView::Tag(id) => tags.iter().any(|tag| tag.id == id),
-            AssetView::Smart(id) => smart_collections
+        let still_exists = displayed_view::still_exists(
+            imp.current_view.get(),
+            &collections
                 .iter()
-                .any(|collection| collection.id == id),
-            AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => {
-                true
-            }
-        };
+                .map(|collection| collection.id)
+                .collect::<Vec<_>>(),
+            &tags.iter().map(|tag| tag.id).collect::<Vec<_>>(),
+            &smart_collections
+                .iter()
+                .map(|collection| collection.id)
+                .collect::<Vec<_>>(),
+        );
         if !still_exists {
             imp.current_view.set(AssetView::All);
         }
@@ -4504,6 +4508,9 @@ impl PigouneWindow {
             },
         });
         self.refresh_selected_collections();
+        if !still_exists {
+            self.refresh_grid();
+        }
     }
 
     fn ask_new_collection(&self, parent: Option<CollectionId>) {
@@ -4878,7 +4885,9 @@ impl PigouneWindow {
                     asset.set_favorite(favorite);
                 }
                 self.refresh_sidebar();
-                if self.displayed_view() == AssetView::Favorites && !favorite {
+                let showing_favorites = self.displayed_view() == AssetView::Favorites
+                    || self.current_filter().favorites_only;
+                if showing_favorites && !favorite {
                     for asset in &selected {
                         imp.asset_grid.remove_asset(asset.id());
                     }

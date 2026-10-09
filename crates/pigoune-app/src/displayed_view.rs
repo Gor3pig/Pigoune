@@ -1,4 +1,4 @@
-use pigoune_core::AssetView;
+use pigoune_core::{AssetView, CollectionId, SmartCollectionId, TagId};
 
 pub fn can_widen(view: AssetView) -> bool {
     matches!(
@@ -9,6 +9,20 @@ pub fn can_widen(view: AssetView) -> bool {
             | AssetView::Collection(_)
             | AssetView::Tag(_)
     )
+}
+
+pub fn still_exists(
+    view: AssetView,
+    collections: &[CollectionId],
+    tags: &[TagId],
+    smart_collections: &[SmartCollectionId],
+) -> bool {
+    match view {
+        AssetView::Collection(id) => collections.contains(&id),
+        AssetView::Tag(id) => tags.contains(&id),
+        AssetView::Smart(id) => smart_collections.contains(&id),
+        AssetView::All | AssetView::Favorites | AssetView::Unclassified | AssetView::Trash => true,
+    }
 }
 
 pub fn everywhere(setting: bool, chosen_by_click: bool) -> bool {
@@ -89,5 +103,57 @@ mod tests {
         assert!(narrows_by_click(true, true));
         assert!(!narrows_by_click(true, false));
         assert!(!narrows_by_click(false, true));
+    }
+
+    #[test]
+    fn a_view_exists_while_its_item_is_still_listed() {
+        let collection_id =
+            CollectionId::parse("00000000-0000-7000-8000-000000000007").expect("id");
+        let tag_id = TagId::parse("00000000-0000-7000-8000-000000000009").expect("id");
+        let smart_id =
+            SmartCollectionId::parse("00000000-0000-7000-8000-00000000000b").expect("id");
+
+        assert!(still_exists(
+            AssetView::Collection(collection_id),
+            &[collection_id],
+            &[],
+            &[]
+        ));
+        assert!(!still_exists(
+            AssetView::Collection(collection_id),
+            &[],
+            &[tag_id],
+            &[smart_id]
+        ));
+        assert!(!still_exists(
+            AssetView::Tag(tag_id),
+            &[collection_id],
+            &[],
+            &[smart_id]
+        ));
+        assert!(!still_exists(
+            AssetView::Smart(smart_id),
+            &[collection_id],
+            &[tag_id],
+            &[]
+        ));
+        assert!(still_exists(
+            AssetView::Smart(smart_id),
+            &[],
+            &[],
+            &[smart_id]
+        ));
+    }
+
+    #[test]
+    fn the_fixed_views_always_exist() {
+        for view in [
+            AssetView::All,
+            AssetView::Favorites,
+            AssetView::Unclassified,
+            AssetView::Trash,
+        ] {
+            assert!(still_exists(view, &[], &[], &[]));
+        }
     }
 }

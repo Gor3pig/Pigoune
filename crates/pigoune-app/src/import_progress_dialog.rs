@@ -73,9 +73,9 @@ impl PigouneImportProgressDialog {
         }
         imp.status_label.set_label(
             &ngettext(
-                "{done} of {total} file processed",
-                "{done} of {total} files processed",
-                u32::try_from(progress.total).unwrap_or(u32::MAX),
+                "{done} file processed out of {total}",
+                "{done} files processed out of {total}",
+                u32::try_from(progress.done).unwrap_or(u32::MAX),
             )
             .replace("{done}", &progress.done.to_string())
             .replace("{total}", &progress.total.to_string()),

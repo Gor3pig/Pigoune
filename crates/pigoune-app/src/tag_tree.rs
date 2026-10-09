@@ -86,6 +86,10 @@ pub fn descendants<T: TreeNode>(all: &[T], root: TagId) -> Vec<TagId> {
     found
 }
 
+pub fn sub_tag_count<T: TreeNode>(all: &[T], root: TagId) -> usize {
+    descendants(all, root).len() - 1
+}
+
 pub fn is_within<T: TreeNode>(all: &[T], id: TagId, root: TagId) -> bool {
     branch(all, id).iter().any(|node| node.node_id() == root)
 }
@@ -94,7 +98,7 @@ pub fn is_within<T: TreeNode>(all: &[T], id: TagId, root: TagId) -> bool {
 mod tests {
     use pigoune_core::{Tag, TagId};
 
-    use super::{ancestors, branch, descendants, is_within, path_text};
+    use super::{ancestors, branch, descendants, is_within, path_text, sub_tag_count};
 
     fn tag(number: u8, name: &str, parent: Option<&Tag>) -> Tag {
         Tag {
@@ -102,6 +106,19 @@ mod tests {
             name: name.to_owned(),
             parent: parent.map(|parent| parent.id),
         }
+    }
+
+    #[test]
+    fn sub_tags_are_counted_at_every_level() {
+        let subject = tag(1, "subject", None);
+        let animals = tag(2, "animals", Some(&subject));
+        let goat = tag(3, "goat", Some(&animals));
+        let sheep = tag(5, "sheep", Some(&animals));
+        let other = tag(4, "other", None);
+        let all = vec![subject.clone(), animals, goat.clone(), sheep, other];
+
+        assert_eq!(sub_tag_count(&all, subject.id), 3);
+        assert_eq!(sub_tag_count(&all, goat.id), 0);
     }
 
     #[test]
