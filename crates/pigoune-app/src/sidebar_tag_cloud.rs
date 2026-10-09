@@ -112,9 +112,7 @@ impl PigouneSidebarTagCloud {
         imp.level.set(remembered.level);
         imp.show_all.set(remembered.show_all);
         imp.selected.set(selected);
-        if remembered.selected == selected {
-            self.forget_vanished_level();
-        } else {
+        if remembered.selected != selected || !self.level_is_open() {
             self.follow(selected);
         }
         self.rebuild();
@@ -131,11 +129,19 @@ impl PigouneSidebarTagCloud {
         }
     }
 
-    fn forget_vanished_level(&self) {
-        let imp = self.imp();
-        if imp.level.get().is_some_and(|level| !self.knows(level)) {
-            imp.level.set(None);
-        }
+    fn level_is_open(&self) -> bool {
+        self.imp()
+            .level
+            .get()
+            .is_none_or(|level| self.has_children(level))
+    }
+
+    fn has_children(&self, tag: TagId) -> bool {
+        self.imp()
+            .tags
+            .borrow()
+            .iter()
+            .any(|candidate| candidate.parent == Some(tag))
     }
 
     pub fn highlight(&self, selected: Option<TagId>) {
@@ -199,12 +205,7 @@ impl PigouneSidebarTagCloud {
 
     fn follow(&self, selected: Option<TagId>) -> bool {
         let imp = self.imp();
-        let known_level = imp.level.get().filter(|level| {
-            imp.tags
-                .borrow()
-                .iter()
-                .any(|candidate| candidate.id == *level)
-        });
+        let known_level = imp.level.get().filter(|level| self.has_children(*level));
         let wanted = match selected {
             Some(tag) if self.knows(tag) => self.level_of(tag),
             _ => known_level,
@@ -424,16 +425,28 @@ impl PigouneSidebarTagCloud {
     fn accept_tag_drops(&self, target_widget: &impl IsA<gtk::Widget>, target: Option<TagId>) {
         let widget = target_widget.as_ref();
         let drop_target = gtk::DropTarget::new(DraggedTag::static_type(), gdk::DragAction::MOVE);
-        drop_target.connect_enter(glib::clone!(
+        drop_target.set_preload(true);
+        let hover = glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
             #[weak]
             widget,
             #[upgrade_or]
             gdk::DragAction::empty(),
-            move |_, _, _| {
+            move |drop_target: &gtk::DropTarget, _: f64, _: f64| {
+                let dragged = drop_target
+                    .value()
+                    .and_then(|value| value.get::<DraggedTag>().ok());
+                if dragged.is_some_and(|dragged| !cloud.can_move_into(dragged.0, target)) {
+                    widget.remove_css_class(DROP_HIGHLIGHT);
+                    return gdk::DragAction::empty();
+                }
                 widget.add_css_class(DROP_HIGHLIGHT);
                 gdk::DragAction::MOVE
             }
-        ));
+        );
+        drop_target.connect_enter(hover.clone());
+        drop_target.connect_motion(hover);
         drop_target.connect_leave(glib::clone!(
             #[weak]
             widget,
@@ -452,11 +465,34 @@ impl PigouneSidebarTagCloud {
                 else {
                     return false;
                 };
+                if !cloud.can_move_into(dragged.0, target) {
+                    return false;
+                }
                 sidebar.tag_dropped(dragged.0, target);
                 true
             }
         ));
         widget.add_controller(drop_target);
+    }
+
+    fn can_move_into(&self, dragged: TagId, target: Option<TagId>) -> bool {
+        let tags = self.imp().tags.borrow();
+        let parent_of = |id: TagId| {
+            tags.iter()
+                .find(|candidate| candidate.id == id)
+                .and_then(|candidate| candidate.parent)
+        };
+        if tags.iter().any(|tag| tag.id == dragged) && parent_of(dragged) == target {
+            return false;
+        }
+        let mut next = target;
+        while let Some(id) = next {
+            if id == dragged {
+                return false;
+            }
+            next = parent_of(id);
+        }
+        true
     }
 
     fn open_menu_on_secondary_click(&self, pill: &gtk::Button, id: TagId) {
