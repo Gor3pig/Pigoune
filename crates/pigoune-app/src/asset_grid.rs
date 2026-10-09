@@ -68,6 +68,8 @@ mod imp {
         pub thumbnails: Rc<ThumbnailCache>,
         pub export_copies: RefCell<Option<super::ExportCopies>>,
         pub drag_caption: RefCell<Option<gtk::Label>>,
+        pub selection_callback: RefCell<Option<super::SelectionCallback>>,
+        pub removing: Cell<bool>,
     }
 
     impl Default for PigouneAssetGrid {
@@ -92,6 +94,8 @@ mod imp {
                 thumbnails: Rc::default(),
                 export_copies: RefCell::default(),
                 drag_caption: RefCell::default(),
+                selection_callback: RefCell::default(),
+                removing: Cell::default(),
             }
         }
     }
@@ -178,6 +182,7 @@ glib::wrapper! {
 }
 
 type ExportCopies = Rc<dyn Fn(&[AssetId]) -> Vec<PathBuf>>;
+type SelectionCallback = Rc<dyn Fn(Vec<PigouneAssetObject>)>;
 
 const ASSETS_PAGE: &str = "assets";
 const NOTHING_PAGE: &str = "nothing";
@@ -255,16 +260,34 @@ impl PigouneAssetGrid {
             .collect()
     }
 
-    pub fn remove_asset(&self, id: AssetId) {
-        let store = &self.imp().assets;
-        let position = (0..store.n_items()).find(|position| {
-            store
-                .item(*position)
-                .and_downcast::<PigouneAssetObject>()
-                .is_some_and(|asset| asset.id() == id)
-        });
-        if let Some(position) = position {
-            store.remove(position);
+    pub fn remove_assets(&self, ids: &[AssetId]) {
+        let imp = self.imp();
+        let leaving: HashSet<AssetId> = ids.iter().copied().collect();
+        let store = &imp.assets;
+        let mut runs: Vec<(u32, u32)> = Vec::new();
+        for position in 0..store.n_items() {
+            let Some(asset) = store.item(position).and_downcast::<PigouneAssetObject>() else {
+                continue;
+            };
+            if !leaving.contains(&asset.id()) {
+                continue;
+            }
+            match runs.last_mut() {
+                Some((start, length)) if *start + *length == position => *length += 1,
+                _ => runs.push((position, 1)),
+            }
+        }
+        if runs.is_empty() {
+            return;
+        }
+        imp.removing.set(true);
+        for (start, length) in runs.into_iter().rev() {
+            store.splice(start, length, &[] as &[PigouneAssetObject]);
+        }
+        imp.removing.set(false);
+        let callback = imp.selection_callback.borrow().clone();
+        if let Some(callback) = callback {
+            callback(self.selected_assets());
         }
     }
 
@@ -416,17 +439,28 @@ impl PigouneAssetGrid {
         let Some(selection) = self.selection() else {
             return;
         };
-        let callback = Rc::new(callback);
+        let callback: SelectionCallback = Rc::new(callback);
+        self.imp()
+            .selection_callback
+            .replace(Some(Rc::clone(&callback)));
         let on_items = Rc::clone(&callback);
         selection.connect_selection_changed(glib::clone!(
             #[weak(rename_to = grid)]
             self,
-            move |_, _, _| callback(grid.selected_assets())
+            move |_, _, _| {
+                if !grid.imp().removing.get() {
+                    callback(grid.selected_assets());
+                }
+            }
         ));
         selection.connect_items_changed(glib::clone!(
             #[weak(rename_to = grid)]
             self,
-            move |_, _, _, _| on_items(grid.selected_assets())
+            move |_, _, _, _| {
+                if !grid.imp().removing.get() {
+                    on_items(grid.selected_assets());
+                }
+            }
         ));
     }
 

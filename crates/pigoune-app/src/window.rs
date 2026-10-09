@@ -3658,19 +3658,15 @@ impl PigouneWindow {
             .borrow()
             .as_ref()
             .map(|library| {
-                assets
-                    .iter()
-                    .copied()
-                    .filter(|asset| !library.view_contains(view, *asset).unwrap_or(true))
-                    .collect()
+                library
+                    .assets_outside_view(view, assets)
+                    .unwrap_or_default()
             })
             .unwrap_or_default();
         if leaving.is_empty() {
             return;
         }
-        for asset in leaving {
-            imp.asset_grid.remove_asset(asset);
-        }
+        imp.asset_grid.remove_assets(&leaving);
         if imp.asset_grid.is_empty() {
             self.refresh_grid();
         }
@@ -4888,9 +4884,9 @@ impl PigouneWindow {
                 let showing_favorites = self.displayed_view() == AssetView::Favorites
                     || self.current_filter().favorites_only;
                 if showing_favorites && !favorite {
-                    for asset in &selected {
-                        imp.asset_grid.remove_asset(asset.id());
-                    }
+                    let leaving: Vec<AssetId> =
+                        selected.iter().map(PigouneAssetObject::id).collect();
+                    imp.asset_grid.remove_assets(&leaving);
                     if imp.asset_grid.is_empty() {
                         self.refresh_grid();
                     }

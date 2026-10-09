@@ -453,3 +453,28 @@ fn a_smart_collection_fits_the_screen_the_library_is_shown_on() {
         sorted(vec![small, large])
     );
 }
+
+#[test]
+fn assets_outside_a_view_are_found_in_one_pass_for_every_kind_of_view() {
+    let mut fixture = Fixture::new();
+    let red = fixture.import("red-dot.png");
+    let circle = fixture.import("dark-circle.svg");
+    let png = fixture.save("PNG", &formats(&[AssetFormat::Png]));
+
+    let outside_smart = fixture
+        .library
+        .assets_outside_view(AssetView::Smart(png), &[red, circle])
+        .expect("checked");
+    let outside_favorites = fixture
+        .library
+        .assets_outside_view(AssetView::Favorites, &[red, circle])
+        .expect("checked");
+    let outside_all = fixture
+        .library
+        .assets_outside_view(AssetView::All, &[red, circle])
+        .expect("checked");
+
+    assert_eq!(outside_smart, vec![circle]);
+    assert_eq!(outside_favorites, vec![red, circle]);
+    assert!(outside_all.is_empty());
+}

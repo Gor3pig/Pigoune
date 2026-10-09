@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 use super::view::{self, AssetView, SUBTREE};
@@ -87,6 +88,32 @@ impl Library {
             )
             .optional()?
             .is_some())
+    }
+
+    pub fn assets_outside_view(
+        &self,
+        view: AssetView,
+        assets: &[AssetId],
+    ) -> Result<Vec<AssetId>, LibraryError> {
+        if let AssetView::Smart(id) = view {
+            let inside: HashSet<AssetId> = self
+                .smart_collection_assets(id)?
+                .into_iter()
+                .map(|asset| asset.id)
+                .collect();
+            return Ok(assets
+                .iter()
+                .copied()
+                .filter(|asset| !inside.contains(asset))
+                .collect());
+        }
+        let mut outside = Vec::new();
+        for asset in assets {
+            if !self.view_contains(view, *asset)? {
+                outside.push(*asset);
+            }
+        }
+        Ok(outside)
     }
 
     #[must_use]
