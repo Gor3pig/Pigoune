@@ -4719,8 +4719,8 @@ impl PigouneWindow {
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.tags().ok())
-            .is_some_and(|tags| tag_tree::has_children(&tags, id))
+            .and_then(|library| library.sub_tags(id).ok())
+            .is_some_and(|children| !children.is_empty())
     }
 
     fn announce_search_place(&self) {
@@ -5388,9 +5388,9 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .flatten()
             .map_or_else(|| library.name(), |collection| collection.name),
         AssetView::Tag(id) => library
-            .tags()
+            .tag_path(id)
             .ok()
-            .map(|tags| tag_tree::path_text(&tags, id))
+            .map(|path| tag_tree::path_text(&path, id))
             .filter(|path| !path.is_empty())
             .unwrap_or_else(|| library.name()),
         AssetView::Smart(id) => library

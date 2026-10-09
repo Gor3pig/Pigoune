@@ -71,10 +71,6 @@ pub fn path_text<T: TreeNode>(all: &[T], id: TagId) -> String {
         .join(" › ")
 }
 
-pub fn has_children<T: TreeNode>(all: &[T], id: TagId) -> bool {
-    all.iter().any(|node| node.parent_id() == Some(id))
-}
-
 pub fn descendants<T: TreeNode>(all: &[T], root: TagId) -> Vec<TagId> {
     let mut found = vec![root];
     let mut index = 0;
@@ -98,7 +94,7 @@ pub fn is_within<T: TreeNode>(all: &[T], id: TagId, root: TagId) -> bool {
 mod tests {
     use pigoune_core::{Tag, TagId};
 
-    use super::{ancestors, branch, descendants, has_children, is_within, path_text};
+    use super::{ancestors, branch, descendants, is_within, path_text};
 
     fn tag(number: u8, name: &str, parent: Option<&Tag>) -> Tag {
         Tag {
@@ -143,7 +139,11 @@ mod tests {
         assert_eq!(path_text(&all, goat.id), "subject › animals › goat");
         assert_eq!(path_text(&all, subject.id), "subject");
         assert_eq!(path_text(&all, tag(9, "unknown", None).id), "");
-        assert!(has_children(&all, animals.id));
-        assert!(!has_children(&all, goat.id));
+
+        let only_the_ancestry = vec![subject, animals, goat.clone()];
+        assert_eq!(
+            path_text(&only_the_ancestry, goat.id),
+            "subject › animals › goat"
+        );
     }
 }

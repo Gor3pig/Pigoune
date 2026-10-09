@@ -1,7 +1,10 @@
+use std::collections::HashSet;
+
 use pigoune_core::AssetId;
 
 pub fn lost_count(before: &[AssetId], after: &[AssetId]) -> usize {
-    before.iter().filter(|id| !after.contains(id)).count()
+    let kept: HashSet<&AssetId> = after.iter().collect();
+    before.iter().filter(|id| !kept.contains(id)).count()
 }
 
 #[cfg(test)]
