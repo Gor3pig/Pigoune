@@ -118,6 +118,23 @@ pub fn suggestions<'a>(all: &'a [Tag], typed: &str, already: &[TagId]) -> Vec<&'
     starting
 }
 
+pub enum EnterTarget {
+    Use(String),
+    Ambiguous,
+}
+
+pub fn enter_target(all: &[Tag], typed: &str) -> EnterTarget {
+    if typed.contains(LEVEL_SEPARATOR) || child_named(all, None, typed).is_some() {
+        return EnterTarget::Use(typed.to_owned());
+    }
+    let mut same_name = all.iter().filter(|tag| same_tag_name(&tag.name, typed));
+    match (same_name.next(), same_name.next()) {
+        (None, _) => EnterTarget::Use(typed.to_owned()),
+        (Some(only), None) => EnterTarget::Use(path_of(all, only)),
+        (Some(_), Some(_)) => EnterTarget::Ambiguous,
+    }
+}
+
 pub fn create_offer(all: &[Tag], typed: &str) -> Option<CreateOffer> {
     let path = shortened(typed.trim());
     let (parents, name) = path.rsplit_once(LEVEL_SEPARATOR)?;
@@ -141,7 +158,8 @@ mod tests {
     use pigoune_core::{Tag, TagId};
 
     use super::{
-        create_offer, fragment_being_typed, names_in, path_of, split_finished, suggestions,
+        EnterTarget, create_offer, enter_target, fragment_being_typed, names_in, path_of,
+        split_finished, suggestions,
     };
 
     fn tag(number: u8, name: &str) -> Tag {
@@ -360,5 +378,56 @@ mod tests {
         assert!(create_offer(&all, "sujet/animaux").is_none());
         let deeper = create_offer(&all, "couleur/rouge").expect("offer");
         assert_eq!(deeper.parents, "couleur");
+    }
+
+    fn used(target: EnterTarget) -> String {
+        match target {
+            EnterTarget::Use(path) => path,
+            EnterTarget::Ambiguous => "ambiguous".to_owned(),
+        }
+    }
+
+    #[test]
+    fn enter_reuses_the_only_tag_with_the_typed_name_whatever_its_level() {
+        let animals = tag(1, "Animals");
+        let all = [animals.clone(), child(2, "Birds", &animals)];
+
+        assert_eq!(used(enter_target(&all, "birds")), "Animals/Birds");
+        assert_eq!(used(enter_target(&all, "Bírds")), "Bírds");
+    }
+
+    #[test]
+    fn enter_prefers_the_first_level_tag_with_the_typed_name() {
+        let animals = tag(1, "Animals");
+        let all = [
+            animals.clone(),
+            child(2, "Birds", &animals),
+            tag(3, "Birds"),
+        ];
+
+        assert_eq!(used(enter_target(&all, "Birds")), "Birds");
+    }
+
+    #[test]
+    fn enter_does_not_guess_between_several_nested_tags() {
+        let animals = tag(1, "Animals");
+        let games = tag(2, "Games");
+        let all = [
+            animals.clone(),
+            games.clone(),
+            child(3, "Birds", &animals),
+            child(4, "Birds", &games),
+        ];
+
+        assert_eq!(used(enter_target(&all, "Birds")), "ambiguous");
+    }
+
+    #[test]
+    fn enter_creates_a_new_tag_for_an_unknown_name_and_keeps_typed_paths() {
+        let animals = tag(1, "Animals");
+        let all = [animals.clone(), child(2, "Birds", &animals)];
+
+        assert_eq!(used(enter_target(&all, "Fish")), "Fish");
+        assert_eq!(used(enter_target(&all, "Birds/Owls")), "Birds/Owls");
     }
 }

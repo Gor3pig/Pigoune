@@ -117,7 +117,8 @@ tags en pastilles avec leur nombre d’éléments : cliquez sur l'une d'elles po
 
 Les tags peuvent être imbriqués : *Sujet › Animaux › chèvre*. Tapez un chemin avec une barre
 oblique, par exemple `animaux/chèvre`, pour créer ou réutiliser chaque niveau ; taper `animaux/`
-propose ses sous-tags, et chaque suggestion montre ses parents. Chaque niveau est un seul mot de
+propose ses sous-tags, et chaque suggestion montre ses parents. Un nom simple suivi de <kbd>Entrée</kbd> réutilise le tag de
+ce nom où qu'il soit ; si plusieurs tags le portent, choisissez le bon dans la liste. Chaque niveau est un seul mot de
 20 caractères au plus. Dans la barre latérale, la section Tags montre un niveau à la fois : une
 pastille avec un **›** a des sous-tags, et un clic dessus ouvre le tag, qui montre aussi les éléments
 de ses sous-tags, et descend dedans. Le chemin au-dessus des pastilles permet de remonter, et

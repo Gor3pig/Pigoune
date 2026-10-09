@@ -393,11 +393,29 @@ impl PigouneTagEditor {
     fn submit(&self) {
         let imp = self.imp();
         let entry = part(&imp.entry);
-        let names = tag_input::names_in(&entry.text());
-        part(&imp.popover).popdown();
-        if names.is_empty() {
+        let typed = tag_input::names_in(&entry.text());
+        if typed.is_empty() {
+            part(&imp.popover).popdown();
             return;
         }
+        let targets: Vec<_> = {
+            let all = imp.all.borrow();
+            typed
+                .iter()
+                .map(|name| tag_input::enter_target(&all, name))
+                .collect()
+        };
+        let mut names = Vec::new();
+        for target in targets {
+            match target {
+                tag_input::EnterTarget::Use(name) => names.push(name),
+                tag_input::EnterTarget::Ambiguous => {
+                    self.refresh_suggestions();
+                    return;
+                }
+            }
+        }
+        part(&imp.popover).popdown();
         entry.set_text("");
         if let Some(on_added) = imp.on_added.borrow().as_ref() {
             on_added(names);
