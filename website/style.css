@@ -10,6 +10,8 @@
   --border: rgb(0 0 6 / 0.09);
   --code: #f1f1f3;
   --shadow: 0 1px 3px rgb(0 0 6 / 0.08), 0 8px 24px rgb(0 0 6 / 0.06);
+  --rail: rgb(0 0 6 / 0.16);
+  --osd: rgb(30 30 34 / 0.78);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +25,8 @@
     --border: rgb(255 255 255 / 0.1);
     --code: #37373c;
     --shadow: 0 1px 3px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+    --rail: rgb(255 255 255 / 0.22);
+    --osd: rgb(0 0 0 / 0.7);
   }
 }
 
@@ -617,5 +621,197 @@ footer nav {
 @media (max-width: 760px) {
   .nested {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.carousel .stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 1.75rem;
+}
+
+.carousel .controls,
+.carousel .arrow,
+.carousel .state {
+  display: none;
+}
+
+.carousel.enhanced .stack {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.carousel.enhanced .stage {
+  position: relative;
+}
+
+.carousel.enhanced .slide {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(2.5%);
+  transition: opacity 0.8s ease, transform 0.8s ease, visibility 0s 0.8s;
+}
+
+.carousel.settling .slide {
+  transition: none !important;
+}
+
+.carousel.enhanced .slide.past {
+  transform: translateX(-2.5%);
+}
+
+.carousel.enhanced .slide.on {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.carousel.enhanced .controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.carousel.enhanced .state {
+  display: block;
+  min-height: 1.3rem;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.carousel.enhanced .arrow {
+  position: absolute;
+  top: calc(50% - 1.9rem);
+  display: grid;
+  place-items: center;
+  width: 2.8rem;
+  height: 2.8rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--osd);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+  color: #ffffff;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.carousel.enhanced .stage:hover .arrow,
+.carousel.enhanced .stage:focus-within .arrow {
+  opacity: 1;
+}
+
+.carousel .arrow:hover {
+  background: var(--accent-strong);
+}
+
+.carousel .arrow.prev {
+  left: 0.6rem;
+}
+
+.carousel .arrow.next {
+  right: 0.6rem;
+}
+
+.carousel .toggle {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.carousel .rail {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.carousel .dot {
+  position: relative;
+  width: 2.1rem;
+  height: 1.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.carousel .dot::before,
+.carousel .fill {
+  content: "";
+  position: absolute;
+  inset: calc(50% - 1.5px) 0 auto;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.carousel .dot::before {
+  background: var(--rail);
+}
+
+.carousel .fill {
+  background: var(--accent-strong);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.carousel .dot.done .fill,
+.carousel .dot.now .fill {
+  transform: scaleX(1);
+}
+
+.carousel[data-playing="true"] .dot.now .fill {
+  transform: scaleX(0);
+  animation: carousel-fill 5.5s linear forwards;
+}
+
+.carousel[data-held="true"] .dot.now .fill {
+  animation-play-state: paused;
+}
+
+@keyframes carousel-fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel.enhanced .slide,
+  .carousel.enhanced .arrow {
+    transition: none;
+  }
+
+  .carousel.enhanced .slide,
+  .carousel.enhanced .slide.past {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .carousel.enhanced .arrow {
+    width: 2.3rem;
+    height: 2.3rem;
+    opacity: 1;
+  }
+
+  .carousel .dot {
+    width: 1.5rem;
   }
 }
