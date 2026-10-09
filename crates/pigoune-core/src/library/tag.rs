@@ -54,6 +54,21 @@ impl Library {
     pub fn tag_path(&self, tag: TagId) -> Result<Vec<Tag>, LibraryError> {
         ancestry(&self.connection, tag)
     }
+
+    pub fn tag(&self, tag: TagId) -> Result<Option<Tag>, LibraryError> {
+        Ok(self
+            .connection
+            .query_row(
+                &format!("SELECT {COLUMNS} FROM tags WHERE id = ?1"),
+                [tag],
+                from_row,
+            )
+            .optional()?)
+    }
+
+    pub fn sub_tags(&self, tag: TagId) -> Result<Vec<Tag>, LibraryError> {
+        children(&self.connection, tag)
+    }
 }
 
 pub fn normalized(name: &str) -> String {

@@ -3672,11 +3672,8 @@ impl PigouneWindow {
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.tags().ok())
-            .is_some_and(|tags| {
-                tags.iter()
-                    .any(|candidate| candidate.id == tag && candidate.parent == parent)
-            })
+            .and_then(|library| library.tag(tag).ok().flatten())
+            .is_some_and(|found| found.parent == parent)
     }
 
     fn tag_name(&self, tag: TagId) -> Option<String> {
@@ -3684,11 +3681,9 @@ impl PigouneWindow {
             .library
             .borrow()
             .as_ref()?
-            .tags()
+            .tag(tag)
             .ok()?
-            .into_iter()
-            .find(|candidate| candidate.id == tag)
-            .map(|candidate| candidate.name)
+            .map(|found| found.name)
     }
 
     fn ask_tag_name(&self, tag: TagId) {
@@ -3966,11 +3961,7 @@ impl PigouneWindow {
             .as_ref()
             .map(|library| {
                 let used_by = library.view_count(AssetView::Tag(tag)).unwrap_or(0);
-                let sub_tags = library.tags().map_or(0, |tags| {
-                    tags.iter()
-                        .filter(|candidate| candidate.parent == Some(tag))
-                        .count()
-                });
+                let sub_tags = library.sub_tags(tag).map_or(0, |below| below.len());
                 (used_by, sub_tags)
             })
             .unwrap_or_default();
@@ -4034,8 +4025,8 @@ impl PigouneWindow {
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.tags().ok())
-            .is_some_and(|tags| tags.iter().any(|candidate| candidate.parent == Some(tag)));
+            .and_then(|library| library.sub_tags(tag).ok())
+            .is_some_and(|below| !below.is_empty());
         let command = if dissolve {
             TagCommand::Dissolve { tag }
         } else {
@@ -5334,9 +5325,9 @@ fn view_name(library: &Library, view: AssetView) -> String {
             .flatten()
             .map_or_else(|| library.name(), |collection| collection.name),
         AssetView::Tag(id) => library
-            .tags()
+            .tag(id)
             .ok()
-            .and_then(|tags| tags.into_iter().find(|tag| tag.id == id))
+            .flatten()
             .map_or_else(|| library.name(), |tag| tag.name),
         AssetView::Smart(id) => library
             .smart_collection(id)

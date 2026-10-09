@@ -556,6 +556,33 @@ fn merging_a_tag_whose_sub_tag_has_its_name_and_undoing_restores_both() {
 }
 
 #[test]
+fn one_tag_and_its_sub_tags_can_be_read_alone() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    fixture.add(&[asset], "animals/goat");
+    fixture.add(&[asset], "animals/cat");
+    let animals = fixture.at("animals");
+    let goat = fixture.at("animals/goat");
+
+    let read = fixture
+        .library
+        .tag(goat)
+        .expect("read")
+        .expect("tag exists");
+    let below = fixture.library.sub_tags(animals).expect("read");
+
+    assert_eq!((read.name.as_str(), read.parent), ("goat", Some(animals)));
+    assert_eq!(
+        below
+            .iter()
+            .map(|tag| tag.name.as_str())
+            .collect::<Vec<_>>(),
+        ["cat", "goat"]
+    );
+    assert!(fixture.library.sub_tags(goat).expect("read").is_empty());
+}
+
+#[test]
 fn a_smart_collection_searching_a_parent_name_follows_its_sub_tags() {
     let mut fixture = Fixture::new();
     let goat = fixture.import("red-dot.png");
