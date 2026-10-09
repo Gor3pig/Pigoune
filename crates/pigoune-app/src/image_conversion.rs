@@ -149,6 +149,9 @@ pub async fn convert(
     }
     let natural = source.natural_size();
     let (image, target) = if let Some(screen) = settings.screen {
+        if export_size::exceeds_limit(screen.scaled(natural), natural) {
+            return Err(ConversionError::TooLarge);
+        }
         (
             framed_image(source, screen, natural).await?,
             (screen.width, screen.height),

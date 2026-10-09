@@ -309,4 +309,12 @@ mod tests {
         assert_eq!(screen(Framing::Fit).scaled((1080, 1920)), (608, 1080));
         assert_eq!(screen(Framing::Fit).scaled((4000, 1000)), (1920, 480));
     }
+
+    #[test]
+    fn a_very_thin_image_is_refused_when_filling_the_screen() {
+        let thin = (2000, 4);
+        assert!(exceeds_limit(screen(Framing::Fill).scaled(thin), thin));
+        assert!(!exceeds_limit(screen(Framing::Fit).scaled(thin), thin));
+        assert!(!exceeds_limit(screen(Framing::Fill).scaled(PHOTO), PHOTO));
+    }
 }

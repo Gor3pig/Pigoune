@@ -1,15 +1,24 @@
-use std::fs;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 
 use roxmltree::{Document, Node, ParsingOptions};
 
-use super::{AssetFormat, Dimensions, InspectError, MediaInfo};
+use super::{AssetFormat, Dimensions, InspectError, LARGEST_SIDE, MediaInfo};
 
 const SVG_NAMESPACE: &str = "http://www.w3.org/2000/svg";
 const PIXELS_PER_INCH: f64 = 96.0;
+const LARGEST_FILE: u64 = 16 * 1024 * 1024;
+const ENTITY_DECLARATION: &str = "<!ENTITY";
 
 pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
-    let bytes = fs::read(path).map_err(|_| InspectError::Unreadable)?;
+    let mut bytes = Vec::new();
+    File::open(path)
+        .and_then(|file| file.take(LARGEST_FILE + 1).read_to_end(&mut bytes))
+        .map_err(|_| InspectError::Unreadable)?;
+    if bytes.len() as u64 > LARGEST_FILE {
+        return Err(InspectError::Unreadable);
+    }
     let text = std::str::from_utf8(&bytes).map_err(|_| InspectError::Unsupported)?;
     Ok(MediaInfo {
         format: AssetFormat::Svg,
@@ -21,6 +30,9 @@ pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
 
 fn read_dimensions(text: &str) -> Result<Option<Dimensions>, InspectError> {
     let text = text.strip_prefix('\u{FEFF}').unwrap_or(text);
+    if text.contains(ENTITY_DECLARATION) {
+        return Err(InspectError::Unreadable);
+    }
     let options = ParsingOptions {
         allow_dtd: true,
         ..ParsingOptions::default()
@@ -87,7 +99,7 @@ fn length_in_pixels(value: &str) -> Option<f64> {
 )]
 fn whole_pixels(value: f64) -> Option<u32> {
     let rounded = value.round();
-    (rounded >= 1.0 && rounded <= f64::from(u32::MAX)).then_some(rounded as u32)
+    (rounded >= 1.0 && rounded <= f64::from(LARGEST_SIDE)).then_some(rounded as u32)
 }
 
 #[cfg(test)]
@@ -127,6 +139,20 @@ mod tests {
     fn a_declaration_doctype_and_byte_order_mark_are_accepted() {
         let svg = "\u{FEFF}<?xml version=\"1.0\"?>\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"/>";
         assert_eq!(read_dimensions(svg), Ok(dimensions(8, 8)));
+    }
+
+    #[test]
+    fn entity_declarations_are_refused() {
+        let svg = "<?xml version=\"1.0\"?><!DOCTYPE svg [<!ENTITY a \"AAAA\"><!ENTITY b \"&a;&a;&a;\">]><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><text>&b;&b;</text></svg>";
+        assert_eq!(read_dimensions(svg), Err(InspectError::Unreadable));
+    }
+
+    #[test]
+    fn sides_beyond_the_largest_supported_are_unknown() {
+        let svg = r#"<svg xmlns="http://www.w3.org/2000/svg" width="4000000000" height="8"/>"#;
+        assert_eq!(read_dimensions(svg), Ok(None));
+        let largest = r#"<svg xmlns="http://www.w3.org/2000/svg" width="65535" height="8"/>"#;
+        assert_eq!(read_dimensions(largest), Ok(dimensions(65_535, 8)));
     }
 
     #[test]

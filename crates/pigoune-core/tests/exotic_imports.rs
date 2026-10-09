@@ -225,3 +225,55 @@ fn a_cancelled_import_keeps_what_came_in_and_can_be_resumed() {
     assert_eq!(fixture.asset_count(), 120);
     assert_eq!(fixture.stored_files(), 120);
 }
+
+#[test]
+fn a_markup_file_beyond_the_size_limit_is_refused() {
+    let mut fixture = Fixture::new();
+    let mut svg =
+        b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><!--".to_vec();
+    svg.resize(17 * 1024 * 1024, b' ');
+    svg.extend_from_slice(b"--></svg>");
+    let huge = fixture.source("huge.svg", &svg);
+
+    let result = fixture.library.import_file(&huge, None);
+
+    assert!(result.is_err(), "{result:?}");
+    assert_eq!(fixture.asset_count(), 0);
+    assert_eq!(fixture.stored_files(), 0);
+}
+
+#[test]
+fn a_bitmap_with_an_absurd_width_is_refused() {
+    let mut fixture = Fixture::new();
+    let mut bitmap = b"BM".to_vec();
+    bitmap.extend_from_slice(&[0; 12]);
+    bitmap.extend_from_slice(&40_u32.to_le_bytes());
+    bitmap.extend_from_slice(&70_000_i32.to_le_bytes());
+    bitmap.extend_from_slice(&1_i32.to_le_bytes());
+    bitmap.extend_from_slice(&[0; 32]);
+    let wide = fixture.source("wide.bmp", &bitmap);
+
+    let result = fixture.library.import_file(&wide, None);
+
+    assert!(result.is_err(), "{result:?}");
+    assert_eq!(fixture.asset_count(), 0);
+}
+
+#[test]
+fn a_svg_with_entity_declarations_is_refused_quickly() {
+    let mut fixture = Fixture::new();
+    let long = "A".repeat(10_000);
+    let svg = format!(
+        "<?xml version=\"1.0\"?><!DOCTYPE svg [<!ENTITY a \"{long}\"><!ENTITY b \"{}\">]><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><text>{}</text></svg>",
+        "&a;".repeat(255),
+        "&b;".repeat(100)
+    );
+    let bomb = fixture.source("bomb.svg", svg.as_bytes());
+    let started = std::time::Instant::now();
+
+    let result = fixture.library.import_file(&bomb, None);
+
+    assert!(result.is_err(), "{result:?}");
+    assert!(started.elapsed() < std::time::Duration::from_secs(1));
+    assert_eq!(fixture.asset_count(), 0);
+}

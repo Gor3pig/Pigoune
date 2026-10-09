@@ -1,3 +1,4 @@
+mod bmp;
 mod color;
 mod dimensions;
 mod format;
@@ -26,6 +27,7 @@ pub use rgb::Rgb;
 pub use shape::{AssetShape, shapes_from_text, shapes_text};
 
 const HEADER_LENGTH: u64 = 512;
+pub const LARGEST_SIDE: u32 = 65_535;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MediaInfo {
@@ -90,17 +92,25 @@ fn inspect_binary(path: &Path, format: AssetFormat) -> Result<MediaInfo, Inspect
 
     Ok(MediaInfo {
         format,
-        dimensions: Some(probe_dimensions(path)?),
+        dimensions: Some(probe_dimensions(path, format)?),
         is_animated: is_animated(path, format)?,
         embedded_sizes: Vec::new(),
     })
 }
 
-fn probe_dimensions(path: &Path) -> Result<Dimensions, InspectError> {
-    let size = imagesize::size(path).map_err(|_| InspectError::Unreadable)?;
-    let width = u32::try_from(size.width).map_err(|_| InspectError::Unreadable)?;
-    let height = u32::try_from(size.height).map_err(|_| InspectError::Unreadable)?;
-    Dimensions::new(width, height).ok_or(InspectError::Unreadable)
+fn probe_dimensions(path: &Path, format: AssetFormat) -> Result<Dimensions, InspectError> {
+    let dimensions = if format == AssetFormat::Bmp {
+        bmp::size(path)?
+    } else {
+        let size = imagesize::size(path).map_err(|_| InspectError::Unreadable)?;
+        let width = u32::try_from(size.width).map_err(|_| InspectError::Unreadable)?;
+        let height = u32::try_from(size.height).map_err(|_| InspectError::Unreadable)?;
+        Dimensions::new(width, height).ok_or(InspectError::Unreadable)?
+    };
+    if dimensions.width().max(dimensions.height()) > LARGEST_SIDE {
+        return Err(InspectError::Unreadable);
+    }
+    Ok(dimensions)
 }
 
 pub fn is_animated(path: &Path, format: AssetFormat) -> Result<bool, InspectError> {
