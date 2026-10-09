@@ -230,33 +230,103 @@ fn merge(connection: &Connection, from: TagId, into: TagId) -> Result<TagCommand
         return Err(TagError::Cycle);
     }
     let carried = tagged_assets(connection, from)?;
-    let mut steps: Vec<TagCommand> = children(connection, from)?
-        .into_iter()
-        .map(|child| TagCommand::Move {
-            tag: child.id,
-            parent: Some(into),
-        })
-        .collect();
-    steps.push(TagCommand::Delete { tag: from });
-    steps.push(TagCommand::Link {
-        tag: into,
-        assets: carried,
-    });
+    let namesake = if parent_of(connection, from)? == Some(into) {
+        namesake_child(connection, from)?
+    } else {
+        None
+    };
+    let steps = if let Some(namesake) = namesake {
+        let mut steps = vec![
+            TagCommand::Link {
+                tag: into,
+                assets: carried.clone(),
+            },
+            TagCommand::Unlink {
+                tag: from,
+                assets: carried,
+            },
+        ];
+        steps.extend(take_place_of(connection, from, namesake, Some(into))?);
+        steps
+    } else {
+        let mut steps: Vec<TagCommand> = children(connection, from)?
+            .into_iter()
+            .map(|child| TagCommand::Move {
+                tag: child.id,
+                parent: Some(into),
+            })
+            .collect();
+        steps.push(TagCommand::Delete { tag: from });
+        steps.push(TagCommand::Link {
+            tag: into,
+            assets: carried,
+        });
+        steps
+    };
     apply(connection, &TagCommand::Batch(steps))
 }
 
 fn dissolve(connection: &Connection, tag: TagId) -> Result<TagCommand, TagError> {
     ensure_tag_exists(connection, tag)?;
     let parent = parent_of(connection, tag)?;
-    let mut steps: Vec<TagCommand> = children(connection, tag)?
-        .into_iter()
-        .map(|child| TagCommand::Move {
-            tag: child.id,
-            parent,
-        })
-        .collect();
-    steps.push(TagCommand::Delete { tag });
+    let steps = if let Some(namesake) = namesake_child(connection, tag)? {
+        let mut steps = vec![TagCommand::Unlink {
+            tag,
+            assets: tagged_assets(connection, tag)?,
+        }];
+        steps.extend(take_place_of(connection, tag, namesake, parent)?);
+        steps
+    } else {
+        let mut steps: Vec<TagCommand> = children(connection, tag)?
+            .into_iter()
+            .map(|child| TagCommand::Move {
+                tag: child.id,
+                parent,
+            })
+            .collect();
+        steps.push(TagCommand::Delete { tag });
+        steps
+    };
     apply(connection, &TagCommand::Batch(steps))
+}
+
+fn namesake_child(connection: &Connection, tag: TagId) -> Result<Option<TagId>, TagError> {
+    let name = tag::normalized(&name_of(connection, tag)?);
+    Ok(children(connection, tag)?
+        .into_iter()
+        .find(|child| tag::normalized(&child.name) == name)
+        .map(|child| child.id))
+}
+
+fn take_place_of(
+    connection: &Connection,
+    tag: TagId,
+    namesake: TagId,
+    others_go_to: Option<TagId>,
+) -> Result<Vec<TagCommand>, TagError> {
+    let mut steps = vec![TagCommand::Link {
+        tag,
+        assets: tagged_assets(connection, namesake)?,
+    }];
+    steps.extend(
+        children(connection, tag)?
+            .into_iter()
+            .filter(|child| child.id != namesake)
+            .map(|child| TagCommand::Move {
+                tag: child.id,
+                parent: others_go_to,
+            }),
+    );
+    steps.extend(
+        children(connection, namesake)?
+            .into_iter()
+            .map(|child| TagCommand::Move {
+                tag: child.id,
+                parent: Some(tag),
+            }),
+    );
+    steps.push(TagCommand::Delete { tag: namesake });
+    Ok(steps)
 }
 
 fn delete(connection: &Connection, tag: TagId) -> Result<TagCommand, TagError> {

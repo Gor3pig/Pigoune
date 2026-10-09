@@ -519,6 +519,43 @@ fn a_tag_cannot_be_renamed_with_a_slash() {
 }
 
 #[test]
+fn dissolving_a_tag_lifts_a_sub_tag_of_the_same_name_and_undoing_puts_it_back() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    fixture.add(&[asset], "x/x/leaf");
+    let outer = fixture.at("x");
+
+    fixture.apply(&TagCommand::Dissolve { tag: outer });
+
+    assert_eq!(fixture.paths(), paths(&["x", "x/leaf"]));
+    assert_eq!(
+        fixture.shown(AssetView::Tag(fixture.at("x/leaf"))),
+        set(&[asset])
+    );
+    fixture.undo();
+    assert_eq!(fixture.paths(), paths(&["x", "x/x", "x/x/leaf"]));
+}
+
+#[test]
+fn merging_a_tag_whose_sub_tag_has_its_name_and_undoing_restores_both() {
+    let mut fixture = Fixture::new();
+    let asset = fixture.import("red-dot.png");
+    fixture.add(&[asset], "b/red/red");
+    let from = fixture.at("b/red");
+    let into = fixture.at("b");
+
+    fixture.apply(&TagCommand::Merge { from, into });
+
+    assert_eq!(fixture.paths(), paths(&["b", "b/red"]));
+    assert_eq!(
+        fixture.shown(AssetView::Tag(fixture.at("b/red"))),
+        set(&[asset])
+    );
+    fixture.undo();
+    assert_eq!(fixture.paths(), paths(&["b", "b/red", "b/red/red"]));
+}
+
+#[test]
 fn a_smart_collection_searching_a_parent_name_follows_its_sub_tags() {
     let mut fixture = Fixture::new();
     let goat = fixture.import("red-dot.png");
