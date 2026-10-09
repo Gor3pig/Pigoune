@@ -18,20 +18,25 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out the tag
         uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
+          persist-credentials: false
 
-      - name: Check that the version matches the tag
+      - name: Check that every version matches the tag
         run: |
           version=$(sed -n "s/^  version: '\(.*\)',$/\1/p" meson.build)
-          if [ "v$version" != "$TAG" ]; then
-            echo "meson.build says $version, but the tag is $TAG"
-            exit 1
-          fi
+          cargo_version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          lock_version=$(grep -A1 '^name = "pigoune-app"$' Cargo.lock | sed -n 's/^version = "\(.*\)"$/\1/p')
+          release_version=$(sed -n 's/^ *<release version="\([^"]*\)".*/\1/p' data/io.github.gor3pig.Pigoune.metainfo.xml.in | head -n 1)
+          for found in "meson.build:$version" "Cargo.toml:$cargo_version" "Cargo.lock:$lock_version" "metainfo release:$release_version"; do
+            if [ "v${found#*:}" != "$TAG" ]; then
+              echo "${found%%:*} says ${found#*:}, but the tag is $TAG"
+              exit 1
+            fi
+          done
           echo "VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Install Flatpak tools
@@ -53,6 +58,8 @@ jobs:
             "${updates[@]}" repo "pigoune-$VERSION.flatpak" io.github.gor3pig.Pigoune
 
       - name: Attach the package to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if ! gh release view "$TAG" > /dev/null 2>&1; then
             gh release create "$TAG" --draft --verify-tag --title "Pigoune $VERSION" \

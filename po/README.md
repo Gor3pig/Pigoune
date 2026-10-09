@@ -29,6 +29,9 @@ software centers, the launcher and the settings descriptions. The other language
 **only the interface**, the entries that come from `crates/`. Leave the entries that come from
 `data/` empty: `./check.sh` refuses them for any language other than French.
 
+In French, write a non-breaking space inside « » and before `:`, `;`, `?` and `!`, so a line
+break never separates them from the word. `./check.sh` checks the guillemets.
+
 ## Adding a new language
 
 1. Create the file from the template, replacing `de` with your language code:

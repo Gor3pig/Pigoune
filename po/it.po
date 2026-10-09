@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 22:29+0200\n"
+"POT-Creation-Date: 2026-10-09 22:36+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Italian\n"
@@ -1469,12 +1469,12 @@ msgstr "Apri l'anteprima"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:253
-#: crates/pigoune-app/src/asset_preview.rs:1234
+#: crates/pigoune-app/src/asset_preview.rs:1235
 msgid "Open With…"
 msgstr "Apri con…"
 
 #: crates/pigoune-app/src/window.rs:2111
-#: crates/pigoune-app/src/asset_preview.rs:1237
+#: crates/pigoune-app/src/asset_preview.rs:1238
 msgid "Frame and Set as Wallpaper…"
 msgstr "Inquadra e imposta come sfondo…"
 
@@ -1488,19 +1488,19 @@ msgstr "Rinomina…"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:260
-#: crates/pigoune-app/src/asset_preview.rs:1242
+#: crates/pigoune-app/src/asset_preview.rs:1243
 msgid "Copy"
 msgstr "Copia"
 
 #: crates/pigoune-app/src/window.rs:2126
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:267
-#: crates/pigoune-app/src/asset_preview.rs:1245
+#: crates/pigoune-app/src/asset_preview.rs:1246
 msgid "Export To…"
 msgstr "Esporta in…"
 
 #: crates/pigoune-app/src/window.rs:2128
-#: crates/pigoune-app/src/asset_preview.rs:1247
+#: crates/pigoune-app/src/asset_preview.rs:1248
 msgid "Convert and Export…"
 msgstr "Converti ed esporta…"
 
@@ -1511,7 +1511,7 @@ msgstr "_Ripristina"
 
 #: crates/pigoune-app/src/window.rs:2142
 #: crates/pigoune-app/src/asset_preview.rs:583
-#: crates/pigoune-app/src/asset_preview.rs:1256
+#: crates/pigoune-app/src/asset_preview.rs:1257
 #: crates/pigoune-app/src/asset_details.rs:502
 #: crates/pigoune-app/src/asset_details.rs:560
 msgid "Remove from Favorites"
@@ -1519,7 +1519,7 @@ msgstr "Rimuovi dai preferiti"
 
 #: crates/pigoune-app/src/window.rs:2144
 #: crates/pigoune-app/src/asset_preview.rs:587
-#: crates/pigoune-app/src/asset_preview.rs:1258
+#: crates/pigoune-app/src/asset_preview.rs:1259
 #: crates/pigoune-app/src/asset_details.rs:504
 #: crates/pigoune-app/src/asset_details.rs:562
 msgid "Add to Favorites"
@@ -1546,7 +1546,7 @@ msgstr "Rimuovi dalla raccolta “{name}”"
 
 #: crates/pigoune-app/src/window.rs:2174
 #: crates/pigoune-app/ui/asset-details.blp:105
-#: crates/pigoune-app/src/asset_preview.rs:1262
+#: crates/pigoune-app/src/asset_preview.rs:1263
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:68
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:180
 msgid "Move to Trash"
@@ -2647,7 +2647,7 @@ msgid "Previous Frame"
 msgstr "Fotogramma precedente"
 
 #: crates/pigoune-app/ui/asset-preview.blp:355
-#: crates/pigoune-app/src/asset_preview.rs:1064
+#: crates/pigoune-app/src/asset_preview.rs:1065
 msgid "Pause"
 msgstr "Pausa"
 
@@ -2666,29 +2666,29 @@ msgstr "Elemento precedente"
 msgid "Next Asset"
 msgstr "Elemento successivo"
 
-#: crates/pigoune-app/src/asset_preview.rs:1066
+#: crates/pigoune-app/src/asset_preview.rs:1067
 msgid "Play"
 msgstr "Riproduci"
 
-#: crates/pigoune-app/src/asset_preview.rs:1124
+#: crates/pigoune-app/src/asset_preview.rs:1125
 msgid "The full-size image could not be loaded: showing its thumbnail"
 msgstr ""
 "Impossibile caricare l'immagine a dimensione reale: viene mostrata la "
 "miniatura"
 
-#: crates/pigoune-app/src/asset_preview.rs:1126
+#: crates/pigoune-app/src/asset_preview.rs:1127
 msgid "This image could not be loaded: its file may be missing or damaged"
 msgstr ""
 "Impossibile caricare questa immagine: il file potrebbe mancare o essere "
 "danneggiato"
 
-#: crates/pigoune-app/src/asset_preview.rs:1219
+#: crates/pigoune-app/src/asset_preview.rs:1220
 #: crates/pigoune-app/src/wallpaper_dialog.rs:690
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent}%"
 
-#: crates/pigoune-app/src/asset_preview.rs:1295
+#: crates/pigoune-app/src/asset_preview.rs:1296
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} di {count}"
@@ -4821,153 +4821,3 @@ msgstr "Novità di Pigoune {version}"
 #: crates/pigoune-app/src/whats_new.rs:138
 msgid "_Continue"
 msgstr "_Continua"
-
-#~ msgid "Open the Sub-tags of the Tag"
-#~ msgstr "Apri le sotto-etichette dell’etichetta"
-
-#~ msgid "Go Up One Tag Level"
-#~ msgstr "Sali di un livello di etichette"
-
-#~ msgid "Click Again to Show the Whole Library"
-#~ msgstr "Fai di nuovo clic per mostrare tutta la libreria"
-
-#, rust-format
-#~ msgid "Show the Sub-tags of “{name}”"
-#~ msgstr "Mostra le sotto-etichette di “{name}”"
-
-#, rust-format
-#~ msgid "Grid: {path}. Click to go back to it."
-#~ msgstr "Griglia: {path}. Fai clic per tornarci."
-
-#~ msgid "News After Each Update"
-#~ msgstr "Novità dopo ogni aggiornamento"
-
-#~ msgid ""
-#~ "This window sums up the main news the first time a new version starts. "
-#~ "You can turn it off in the Preferences."
-#~ msgstr ""
-#~ "Questa finestra riassume le principali novità al primo avvio di una nuova "
-#~ "versione. Puoi disattivarla nelle Preferenze."
-
-#~ msgid "Thumbnails Moved"
-#~ msgstr "Le miniature hanno cambiato posto"
-
-#~ msgid ""
-#~ "Clearing the thumbnails is now done in Manage Library, in the Storage "
-#~ "tab, next to the space they take."
-#~ msgstr ""
-#~ "Lo svuotamento delle miniature si fa ora in “Gestisci la libreria”, nella "
-#~ "scheda Archiviazione, accanto allo spazio che occupano.Lo svuotamento "
-#~ "delle miniature si fa ora nelle informazioni sulla libreria, nella scheda "
-#~ "Archiviazione, accanto allo spazio che occupano."
-
-#, rust-format
-#~ msgid "Search in {place}…"
-#~ msgstr "Cerca in {place}…"
-
-#~ msgid "Library _Information"
-#~ msgstr "_Informazioni sulla libreria"
-
-#~ msgid "Library Information"
-#~ msgstr "Informazioni sulla libreria"
-
-#~ msgid "An ordinary folder, arranged like your collections"
-#~ msgstr "Una normale cartella, organizzata come le raccolte"
-
-#~ msgid "The original files, unmodified."
-#~ msgstr "I file originali, non modificati."
-
-#~ msgid "A resource in two collections is copied into both."
-#~ msgstr "Una risorsa presente in due raccolte viene copiata in entrambe."
-
-#~ msgid "Tags, notes and favorites stay in Pigoune."
-#~ msgstr "Etichette, note e preferiti restano in Pigoune."
-
-#
-#~ msgid "Nothing was changed."
-#~ msgstr "Non è stato modificato nulla."
-
-#~ msgid "Much Faster"
-#~ msgstr "Molto più veloce"
-
-#~ msgid ""
-#~ "Opening a large library and searching take a fraction of the time, and "
-#~ "scrolling stays smooth even with thousands of images."
-#~ msgstr ""
-#~ "Aprire una libreria grande e cercare richiedono una frazione del tempo, e "
-#~ "lo scorrimento resta fluido anche con migliaia di immagini."
-
-#~ msgid "Simpler Tags"
-#~ msgstr "Etichette più semplici"
-
-#~ msgid ""
-#~ "A tag is now one word of up to 20 characters. A space confirms it and a "
-#~ "hyphen joins several words."
-#~ msgstr ""
-#~ "Un'etichetta è ora una sola parola di al massimo 20 caratteri. Lo spazio "
-#~ "la conferma e il trattino unisce più parole."
-
-#~ msgid "A Clearer Wallpaper Window"
-#~ msgstr "Una finestra dello sfondo più chiara"
-
-#~ msgid ""
-#~ "The framing window shows your whole screen and warns you when the image "
-#~ "would look blurry once enlarged."
-#~ msgstr ""
-#~ "La finestra di inquadratura mostra tutto il tuo schermo e ti avvisa "
-#~ "quando l'immagine sarebbe sfocata una volta ingrandita."
-
-#~ msgid "Long Names Handled"
-#~ msgstr "Nomi lunghi gestiti meglio"
-
-#~ msgid ""
-#~ "Long names are shortened instead of stretching the panels, and the "
-#~ "windows still fit with larger text."
-#~ msgstr ""
-#~ "I nomi lunghi vengono abbreviati invece di allargare i pannelli, e le "
-#~ "finestre si adattano ancora con testo più grande."
-
-#~ msgid "Top Color"
-#~ msgstr "Colore in alto"
-
-#~ msgid "Bottom Color"
-#~ msgstr "Colore in basso"
-
-#~ msgid "Choose the bottom color"
-#~ msgstr "Scegli il colore in basso"
-
-#~ msgid "Next click: the bottom color of the gradient"
-#~ msgstr "Prossimo clic: il colore in basso della sfumatura"
-
-#~ msgid "Next click: the top color of the gradient"
-#~ msgstr "Prossimo clic: il colore in alto della sfumatura"
-
-#~ msgid "Background Color"
-#~ msgstr "Colore di sfondo"
-
-#, rust-format
-#~ msgid "Screen where Pigoune is shown: {width} × {height} pixels"
-#~ msgstr "Schermo in cui è mostrato Pigoune: {width} × {height} pixel"
-
-#~ msgid "Fit"
-#~ msgstr "Adatta"
-
-#, rust-format
-#~ msgid ""
-#~ "Screen: {width} × {height} · Drag to move, scroll to zoom, arrow keys to "
-#~ "adjust"
-#~ msgstr ""
-#~ "Schermo: {width} × {height} · Trascina per spostare, rotellina per lo "
-#~ "zoom, frecce per regolare"
-
-#~ msgid "Prepare as Wallpaper…"
-#~ msgstr "Prepara come sfondo…"
-
-#~ msgid "Show as Wallpaper"
-#~ msgstr "Mostra come sfondo"
-
-#~ msgid "A smart collection cannot be saved from this view."
-#~ msgstr "Impossibile salvare una raccolta intelligente da questa vista."
-
-#~ msgid "Found In"
-#~ msgstr "Trovate in"

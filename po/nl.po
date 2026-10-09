@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 22:29+0200\n"
+"POT-Creation-Date: 2026-10-09 22:36+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1468,12 +1468,12 @@ msgstr "Voorbeeld openen"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:253
-#: crates/pigoune-app/src/asset_preview.rs:1234
+#: crates/pigoune-app/src/asset_preview.rs:1235
 msgid "Open With…"
 msgstr "Openen met…"
 
 #: crates/pigoune-app/src/window.rs:2111
-#: crates/pigoune-app/src/asset_preview.rs:1237
+#: crates/pigoune-app/src/asset_preview.rs:1238
 msgid "Frame and Set as Wallpaper…"
 msgstr "Uitsnijden en als achtergrond instellen…"
 
@@ -1487,19 +1487,19 @@ msgstr "Hernoemen…"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:260
-#: crates/pigoune-app/src/asset_preview.rs:1242
+#: crates/pigoune-app/src/asset_preview.rs:1243
 msgid "Copy"
 msgstr "Kopiëren"
 
 #: crates/pigoune-app/src/window.rs:2126
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:267
-#: crates/pigoune-app/src/asset_preview.rs:1245
+#: crates/pigoune-app/src/asset_preview.rs:1246
 msgid "Export To…"
 msgstr "Exporteren naar…"
 
 #: crates/pigoune-app/src/window.rs:2128
-#: crates/pigoune-app/src/asset_preview.rs:1247
+#: crates/pigoune-app/src/asset_preview.rs:1248
 msgid "Convert and Export…"
 msgstr "Converteren en exporteren…"
 
@@ -1510,7 +1510,7 @@ msgstr "_Herstellen"
 
 #: crates/pigoune-app/src/window.rs:2142
 #: crates/pigoune-app/src/asset_preview.rs:583
-#: crates/pigoune-app/src/asset_preview.rs:1256
+#: crates/pigoune-app/src/asset_preview.rs:1257
 #: crates/pigoune-app/src/asset_details.rs:502
 #: crates/pigoune-app/src/asset_details.rs:560
 msgid "Remove from Favorites"
@@ -1518,7 +1518,7 @@ msgstr "Uit favorieten verwijderen"
 
 #: crates/pigoune-app/src/window.rs:2144
 #: crates/pigoune-app/src/asset_preview.rs:587
-#: crates/pigoune-app/src/asset_preview.rs:1258
+#: crates/pigoune-app/src/asset_preview.rs:1259
 #: crates/pigoune-app/src/asset_details.rs:504
 #: crates/pigoune-app/src/asset_details.rs:562
 msgid "Add to Favorites"
@@ -1545,7 +1545,7 @@ msgstr "Uit de verzameling ‘{name}’ verwijderen"
 
 #: crates/pigoune-app/src/window.rs:2174
 #: crates/pigoune-app/ui/asset-details.blp:105
-#: crates/pigoune-app/src/asset_preview.rs:1262
+#: crates/pigoune-app/src/asset_preview.rs:1263
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:68
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:180
 msgid "Move to Trash"
@@ -2643,7 +2643,7 @@ msgid "Previous Frame"
 msgstr "Vorig beeld"
 
 #: crates/pigoune-app/ui/asset-preview.blp:355
-#: crates/pigoune-app/src/asset_preview.rs:1064
+#: crates/pigoune-app/src/asset_preview.rs:1065
 msgid "Pause"
 msgstr "Pauzeren"
 
@@ -2662,29 +2662,29 @@ msgstr "Vorig item"
 msgid "Next Asset"
 msgstr "Volgend item"
 
-#: crates/pigoune-app/src/asset_preview.rs:1066
+#: crates/pigoune-app/src/asset_preview.rs:1067
 msgid "Play"
 msgstr "Afspelen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1124
+#: crates/pigoune-app/src/asset_preview.rs:1125
 msgid "The full-size image could not be loaded: showing its thumbnail"
 msgstr ""
 "De afbeelding op volledige grootte kon niet worden geladen: de miniatuur "
 "wordt getoond"
 
-#: crates/pigoune-app/src/asset_preview.rs:1126
+#: crates/pigoune-app/src/asset_preview.rs:1127
 msgid "This image could not be loaded: its file may be missing or damaged"
 msgstr ""
 "Deze afbeelding kon niet worden geladen: het bestand ontbreekt of is "
 "beschadigd"
 
-#: crates/pigoune-app/src/asset_preview.rs:1219
+#: crates/pigoune-app/src/asset_preview.rs:1220
 #: crates/pigoune-app/src/wallpaper_dialog.rs:690
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent}%"
 
-#: crates/pigoune-app/src/asset_preview.rs:1295
+#: crates/pigoune-app/src/asset_preview.rs:1296
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} van {count}"
@@ -4821,153 +4821,3 @@ msgstr "Nieuw in Pigoune {version}"
 #: crates/pigoune-app/src/whats_new.rs:138
 msgid "_Continue"
 msgstr "_Doorgaan"
-
-#~ msgid "Open the Sub-tags of the Tag"
-#~ msgstr "De sublabels van het label openen"
-
-#~ msgid "Go Up One Tag Level"
-#~ msgstr "Een labelniveau omhoog"
-
-#~ msgid "Click Again to Show the Whole Library"
-#~ msgstr "Klik nogmaals om de hele bibliotheek te tonen"
-
-#, rust-format
-#~ msgid "Show the Sub-tags of “{name}”"
-#~ msgstr "De sublabels van ‘{name}’ tonen"
-
-#, rust-format
-#~ msgid "Grid: {path}. Click to go back to it."
-#~ msgstr "Raster: {path}. Klik om ernaar terug te gaan."
-
-#~ msgid "News After Each Update"
-#~ msgstr "Nieuws na elke update"
-
-#~ msgid ""
-#~ "This window sums up the main news the first time a new version starts. "
-#~ "You can turn it off in the Preferences."
-#~ msgstr ""
-#~ "Dit venster vat het belangrijkste nieuws samen wanneer een nieuwe versie "
-#~ "voor het eerst start. Je kunt het uitschakelen in de Voorkeuren."
-
-#~ msgid "Thumbnails Moved"
-#~ msgstr "Miniaturen op een nieuwe plek"
-
-#~ msgid ""
-#~ "Clearing the thumbnails is now done in Manage Library, in the Storage "
-#~ "tab, next to the space they take."
-#~ msgstr ""
-#~ "Het legen van de miniaturen gebeurt nu in ‘Bibliotheek beheren’, op het "
-#~ "tabblad Opslag, naast de ruimte die ze innemen.Het legen van de "
-#~ "miniaturen gebeurt nu in de bibliotheekinformatie, op het tabblad Opslag, "
-#~ "naast de ruimte die ze innemen."
-
-#, rust-format
-#~ msgid "Search in {place}…"
-#~ msgstr "Zoeken in {place}…"
-
-#~ msgid "Library _Information"
-#~ msgstr "Bibliotheek_informatie"
-
-#~ msgid "Library Information"
-#~ msgstr "Bibliotheekinformatie"
-
-#~ msgid "An ordinary folder, arranged like your collections"
-#~ msgstr "Een gewone map, ingedeeld zoals je verzamelingen"
-
-#~ msgid "The original files, unmodified."
-#~ msgstr "De originele bestanden, ongewijzigd."
-
-#~ msgid "A resource in two collections is copied into both."
-#~ msgstr "Een item in twee verzamelingen wordt in beide gekopieerd."
-
-#~ msgid "Tags, notes and favorites stay in Pigoune."
-#~ msgstr "Labels, notities en favorieten blijven in Pigoune."
-
-#
-#~ msgid "Nothing was changed."
-#~ msgstr "Er is niets gewijzigd."
-
-#~ msgid "Much Faster"
-#~ msgstr "Veel sneller"
-
-#~ msgid ""
-#~ "Opening a large library and searching take a fraction of the time, and "
-#~ "scrolling stays smooth even with thousands of images."
-#~ msgstr ""
-#~ "Een grote bibliotheek openen en zoeken kost nog maar een fractie van de "
-#~ "tijd, en scrollen blijft soepel, zelfs met duizenden afbeeldingen."
-
-#~ msgid "Simpler Tags"
-#~ msgstr "Eenvoudigere labels"
-
-#~ msgid ""
-#~ "A tag is now one word of up to 20 characters. A space confirms it and a "
-#~ "hyphen joins several words."
-#~ msgstr ""
-#~ "Een label is nu één woord van maximaal 20 tekens. Een spatie bevestigt "
-#~ "het en een koppelteken verbindt meerdere woorden."
-
-#~ msgid "A Clearer Wallpaper Window"
-#~ msgstr "Een duidelijker achtergrondvenster"
-
-#~ msgid ""
-#~ "The framing window shows your whole screen and warns you when the image "
-#~ "would look blurry once enlarged."
-#~ msgstr ""
-#~ "Het uitsnedevenster toont je hele scherm en waarschuwt je wanneer de "
-#~ "afbeelding na vergroting wazig zou ogen."
-
-#~ msgid "Long Names Handled"
-#~ msgstr "Lange namen netjes afgehandeld"
-
-#~ msgid ""
-#~ "Long names are shortened instead of stretching the panels, and the "
-#~ "windows still fit with larger text."
-#~ msgstr ""
-#~ "Lange namen worden ingekort in plaats van de panelen te rekken, en de "
-#~ "vensters passen ook bij grotere tekst."
-
-#~ msgid "Top Color"
-#~ msgstr "Bovenste kleur"
-
-#~ msgid "Bottom Color"
-#~ msgstr "Onderste kleur"
-
-#~ msgid "Choose the bottom color"
-#~ msgstr "Onderste kleur kiezen"
-
-#~ msgid "Next click: the bottom color of the gradient"
-#~ msgstr "Volgende klik: de onderste kleur van het verloop"
-
-#~ msgid "Next click: the top color of the gradient"
-#~ msgstr "Volgende klik: de bovenste kleur van het verloop"
-
-#~ msgid "Background Color"
-#~ msgstr "Achtergrondkleur"
-
-#, rust-format
-#~ msgid "Screen where Pigoune is shown: {width} × {height} pixels"
-#~ msgstr "Scherm waarop Pigoune wordt getoond: {width} × {height} pixels"
-
-#~ msgid "Fit"
-#~ msgstr "Passend maken"
-
-#, rust-format
-#~ msgid ""
-#~ "Screen: {width} × {height} · Drag to move, scroll to zoom, arrow keys to "
-#~ "adjust"
-#~ msgstr ""
-#~ "Scherm: {width} × {height} · Sleep om te verplaatsen, scroll om te "
-#~ "zoomen, pijltjestoetsen om bij te stellen"
-
-#~ msgid "Prepare as Wallpaper…"
-#~ msgstr "Als achtergrond voorbereiden…"
-
-#~ msgid "Show as Wallpaper"
-#~ msgstr "Bekijken als achtergrond"
-
-#~ msgid "A smart collection cannot be saved from this view."
-#~ msgstr "Vanuit deze weergave kan geen slimme verzameling worden opgeslagen."
-
-#~ msgid "Found In"
-#~ msgstr "Gevonden in"

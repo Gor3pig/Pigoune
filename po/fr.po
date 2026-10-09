@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 22:29+0200\n"
+"POT-Creation-Date: 2026-10-09 22:36+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -130,7 +130,7 @@ msgid ""
 "the tags level by level in the sidebar, and move, merge or delete a tag "
 "together with its sub-tags."
 msgstr ""
-"Imbriquez les tags comme Sujet › Animaux › chèvre : tapez un chemin avec une "
+"Imbriquez les tags comme Sujet › Animaux › chèvre : tapez un chemin avec une "
 "barre oblique, parcourez les tags niveau par niveau dans la barre latérale, "
 "et déplacez, fusionnez ou supprimez un tag avec ses sous-tags."
 
@@ -166,7 +166,7 @@ msgid ""
 "same wording in the other languages, and Manage Library is laid out in a "
 "centered column."
 msgstr ""
-"L’interface française dit maintenant « élément » au lieu de « ressource », "
+"L’interface française dit maintenant « élément » au lieu de « ressource », "
 "avec les mêmes mots dans les autres langues, et Gérer la bibliothèque est "
 "présentée dans une colonne centrée."
 
@@ -1368,8 +1368,8 @@ msgid ""
 "The library records a place for “{name}” outside its own folder, so Pigoune "
 "will not write there. Nothing was changed."
 msgstr ""
-"La bibliothèque indique pour « {name} » un emplacement hors de son propre "
-"dossier : Pigoune n’y écrira pas. Rien n’a été modifié."
+"La bibliothèque indique pour « {name} » un emplacement hors de son propre "
+"dossier : Pigoune n’y écrira pas. Rien n’a été modifié."
 
 #
 #: crates/pigoune-app/src/error_messages.rs:57
@@ -1673,12 +1673,12 @@ msgstr "Ouvrir l’aperçu"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:253
-#: crates/pigoune-app/src/asset_preview.rs:1234
+#: crates/pigoune-app/src/asset_preview.rs:1235
 msgid "Open With…"
 msgstr "Ouvrir avec…"
 
 #: crates/pigoune-app/src/window.rs:2111
-#: crates/pigoune-app/src/asset_preview.rs:1237
+#: crates/pigoune-app/src/asset_preview.rs:1238
 msgid "Frame and Set as Wallpaper…"
 msgstr "Cadrer et définir comme fond d’écran…"
 
@@ -1692,19 +1692,19 @@ msgstr "Renommer…"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:260
-#: crates/pigoune-app/src/asset_preview.rs:1242
+#: crates/pigoune-app/src/asset_preview.rs:1243
 msgid "Copy"
 msgstr "Copier"
 
 #: crates/pigoune-app/src/window.rs:2126
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:267
-#: crates/pigoune-app/src/asset_preview.rs:1245
+#: crates/pigoune-app/src/asset_preview.rs:1246
 msgid "Export To…"
 msgstr "Exporter vers…"
 
 #: crates/pigoune-app/src/window.rs:2128
-#: crates/pigoune-app/src/asset_preview.rs:1247
+#: crates/pigoune-app/src/asset_preview.rs:1248
 msgid "Convert and Export…"
 msgstr "Convertir et exporter…"
 
@@ -1715,7 +1715,7 @@ msgstr "_Restaurer"
 
 #: crates/pigoune-app/src/window.rs:2142
 #: crates/pigoune-app/src/asset_preview.rs:583
-#: crates/pigoune-app/src/asset_preview.rs:1256
+#: crates/pigoune-app/src/asset_preview.rs:1257
 #: crates/pigoune-app/src/asset_details.rs:502
 #: crates/pigoune-app/src/asset_details.rs:560
 msgid "Remove from Favorites"
@@ -1723,7 +1723,7 @@ msgstr "Retirer des favoris"
 
 #: crates/pigoune-app/src/window.rs:2144
 #: crates/pigoune-app/src/asset_preview.rs:587
-#: crates/pigoune-app/src/asset_preview.rs:1258
+#: crates/pigoune-app/src/asset_preview.rs:1259
 #: crates/pigoune-app/src/asset_details.rs:504
 #: crates/pigoune-app/src/asset_details.rs:562
 msgid "Add to Favorites"
@@ -1750,7 +1750,7 @@ msgstr "Retirer de la collection « {name} »"
 
 #: crates/pigoune-app/src/window.rs:2174
 #: crates/pigoune-app/ui/asset-details.blp:105
-#: crates/pigoune-app/src/asset_preview.rs:1262
+#: crates/pigoune-app/src/asset_preview.rs:1263
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:68
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:180
 msgid "Move to Trash"
@@ -1956,12 +1956,12 @@ msgstr "Impossible de modifier les tags"
 #: crates/pigoune-app/src/window.rs:3715
 #, rust-format
 msgid "A tag named “{name}” already exists in “{parent}”."
-msgstr "Un tag nommé « {name} » existe déjà dans « {parent} »."
+msgstr "Un tag nommé « {name} » existe déjà dans « {parent} »."
 
 #: crates/pigoune-app/src/window.rs:3718
 #, rust-format
 msgid "A tag named “{name}” already exists at the top level."
-msgstr "Un tag nommé « {name} » existe déjà au premier niveau."
+msgstr "Un tag nommé « {name} » existe déjà au premier niveau."
 
 #: crates/pigoune-app/src/window.rs:3747
 msgid "Rename Tag"
@@ -2072,17 +2072,17 @@ msgstr "_Supprimer avec les sous-tags"
 #: crates/pigoune-app/src/window.rs:4096
 #, rust-format
 msgid "The tag “{name}” was deleted and its sub-tags moved up."
-msgstr "Le tag « {name} » a été supprimé et ses sous-tags ont été remontés."
+msgstr "Le tag « {name} » a été supprimé et ses sous-tags ont été remontés."
 
 #: crates/pigoune-app/src/window.rs:4097
 #, rust-format
 msgid "The tag “{name}” and its sub-tags were deleted."
-msgstr "Le tag « {name} » et ses sous-tags ont été supprimés."
+msgstr "Le tag « {name} » et ses sous-tags ont été supprimés."
 
 #: crates/pigoune-app/src/window.rs:4098
 #, rust-format
 msgid "The tag “{name}” was deleted."
-msgstr "Le tag « {name} » a été supprimé."
+msgstr "Le tag « {name} » a été supprimé."
 
 #: crates/pigoune-app/src/window.rs:4105
 msgid "New Sub-tag"
@@ -2091,7 +2091,7 @@ msgstr "Nouveau sous-tag"
 #: crates/pigoune-app/src/window.rs:4165
 #, rust-format
 msgid "Move the Tag “{name}”"
-msgstr "Déplacer le tag « {name} »"
+msgstr "Déplacer le tag « {name} »"
 
 #: crates/pigoune-app/src/window.rs:4166
 msgid "Top Level"
@@ -2100,22 +2100,22 @@ msgstr "Premier niveau"
 #: crates/pigoune-app/src/window.rs:4175
 #, rust-format
 msgid "Merge the Tag “{name}” Into"
-msgstr "Fusionner le tag « {name} » dans"
+msgstr "Fusionner le tag « {name} » dans"
 
 #: crates/pigoune-app/src/window.rs:4228
 #, rust-format
 msgid "The tag “{name}” was moved into “{parent}”."
-msgstr "Le tag « {name} » a été déplacé dans « {parent} »."
+msgstr "Le tag « {name} » a été déplacé dans « {parent} »."
 
 #: crates/pigoune-app/src/window.rs:4232
 #, rust-format
 msgid "The tag “{name}” was moved to the top level."
-msgstr "Le tag « {name} » a été déplacé au premier niveau."
+msgstr "Le tag « {name} » a été déplacé au premier niveau."
 
 #: crates/pigoune-app/src/window.rs:4249
 #, rust-format
 msgid "The tag “{from}” was merged into “{into}”."
-msgstr "Le tag « {from} » a été fusionné avec « {into} »."
+msgstr "Le tag « {from} » a été fusionné avec « {into} »."
 
 #: crates/pigoune-app/src/window.rs:4514
 msgid "New Sub-collection"
@@ -2164,7 +2164,7 @@ msgstr "« {name} »"
 #: crates/pigoune-app/src/window.rs:4758
 #, rust-format
 msgid "“{name}”, with its sub-tags"
-msgstr "« {name} », avec ses sous-tags"
+msgstr "« {name} », avec ses sous-tags"
 
 #: crates/pigoune-app/src/window.rs:4761 crates/pigoune-app/src/window.rs:4771
 msgid "Everywhere"
@@ -2854,7 +2854,7 @@ msgid "Previous Frame"
 msgstr "Image précédente"
 
 #: crates/pigoune-app/ui/asset-preview.blp:355
-#: crates/pigoune-app/src/asset_preview.rs:1064
+#: crates/pigoune-app/src/asset_preview.rs:1065
 msgid "Pause"
 msgstr "Pause"
 
@@ -2873,27 +2873,27 @@ msgstr "Élément précédent"
 msgid "Next Asset"
 msgstr "Élément suivant"
 
-#: crates/pigoune-app/src/asset_preview.rs:1066
+#: crates/pigoune-app/src/asset_preview.rs:1067
 msgid "Play"
 msgstr "Lecture"
 
-#: crates/pigoune-app/src/asset_preview.rs:1124
+#: crates/pigoune-app/src/asset_preview.rs:1125
 msgid "The full-size image could not be loaded: showing its thumbnail"
 msgstr "L’image en taille réelle n’a pas pu être chargée : voici sa vignette"
 
-#: crates/pigoune-app/src/asset_preview.rs:1126
+#: crates/pigoune-app/src/asset_preview.rs:1127
 msgid "This image could not be loaded: its file may be missing or damaged"
 msgstr ""
 "Cette image n’a pas pu être chargée : son fichier est peut-être manquant ou "
 "endommagé"
 
-#: crates/pigoune-app/src/asset_preview.rs:1219
+#: crates/pigoune-app/src/asset_preview.rs:1220
 #: crates/pigoune-app/src/wallpaper_dialog.rs:690
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:1295
+#: crates/pigoune-app/src/asset_preview.rs:1296
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} sur {count}"
@@ -3575,7 +3575,7 @@ msgstr "Ouvrir le tag « {name} »"
 #: crates/pigoune-app/src/sidebar_tag_cloud.rs:342
 #, rust-format
 msgid "Open the Tag “{name}” and Its Sub-tags"
-msgstr "Ouvrir le tag « {name} » et ses sous-tags"
+msgstr "Ouvrir le tag « {name} » et ses sous-tags"
 
 #: crates/pigoune-app/src/sidebar_tag_cloud.rs:656
 #, rust-format
@@ -3706,7 +3706,7 @@ msgstr "Retirer le tag « {name} »"
 #: crates/pigoune-app/src/tag_editor.rs:357
 #, rust-format
 msgid "Create “{name}” in {parents}"
-msgstr "Créer « {name} » dans {parents}"
+msgstr "Créer « {name} » dans {parents}"
 
 #: crates/pigoune-app/src/tag_summary.rs:165
 msgid "Edit the Tags"
@@ -3895,7 +3895,7 @@ msgstr "Suppression du tag « {name} » annulée"
 #: crates/pigoune-app/src/undo_message.rs:202
 #, rust-format
 msgid "Moving the tag “{name}” undone"
-msgstr "Déplacement du tag « {name} » annulé"
+msgstr "Déplacement du tag « {name} » annulé"
 
 #: crates/pigoune-app/src/undo_message.rs:214
 #, rust-format
@@ -3936,7 +3936,7 @@ msgstr "Tri : {criterion}"
 #: crates/pigoune-app/src/grid_header.rs:257
 #, rust-format
 msgid "In “{name}”"
-msgstr "Dans « {name} »"
+msgstr "Dans « {name} »"
 
 #: crates/pigoune-app/src/grid_header.rs:261
 msgid "In the Whole Library"
@@ -5025,362 +5025,3 @@ msgstr "Quoi de neuf dans Pigoune {version}"
 #: crates/pigoune-app/src/whats_new.rs:138
 msgid "_Continue"
 msgstr "_Continuer"
-
-#~ msgid "Open the Sub-tags of the Tag"
-#~ msgstr "Ouvrir les sous-tags du tag"
-
-#~ msgid "Go Up One Tag Level"
-#~ msgstr "Remonter d’un niveau de tags"
-
-#~ msgid "Click Again to Show the Whole Library"
-#~ msgstr "Cliquer à nouveau pour afficher toute la bibliothèque"
-
-#, rust-format
-#~ msgid "Show the Sub-tags of “{name}”"
-#~ msgstr "Afficher les sous-tags de « {name} »"
-
-#, rust-format
-#~ msgid "Grid: {path}. Click to go back to it."
-#~ msgstr "Grille : {path}. Cliquer pour y retourner."
-
-#~ msgid "News After Each Update"
-#~ msgstr "Les nouveautés après chaque mise à jour"
-
-#~ msgid ""
-#~ "This window sums up the main news the first time a new version starts. "
-#~ "You can turn it off in the Preferences."
-#~ msgstr ""
-#~ "Cette fenêtre résume les principales nouveautés au premier démarrage "
-#~ "d’une nouvelle version. Vous pouvez la désactiver dans les Préférences."
-
-#~ msgid "Thumbnails Moved"
-#~ msgstr "Les vignettes ont changé de place"
-
-#~ msgid ""
-#~ "Clearing the thumbnails is now done in Manage Library, in the Storage "
-#~ "tab, next to the space they take."
-#~ msgstr ""
-#~ "Le vidage des vignettes se fait maintenant dans Gérer la bibliothèque, "
-#~ "onglet Stockage, à côté de la place qu’elles occupent.Le vidage des "
-#~ "vignettes se fait maintenant dans les informations de la bibliothèque, "
-#~ "onglet Stockage, à côté de la place qu’elles occupent."
-
-#, rust-format
-#~ msgid "Search in {place}…"
-#~ msgstr "Rechercher dans {place}…"
-
-#~ msgid "Library _Information"
-#~ msgstr "_Informations sur la bibliothèque"
-
-#~ msgid "Library Information"
-#~ msgstr "Informations sur la bibliothèque"
-
-#~ msgid "An ordinary folder, arranged like your collections"
-#~ msgstr "Un dossier ordinaire, rangé comme vos collections"
-
-#~ msgid "The original files, unmodified."
-#~ msgstr "Les fichiers d’origine, sans modification."
-
-#~ msgid "A resource in two collections is copied into both."
-#~ msgstr ""
-#~ "Une ressource rangée dans deux collections est copiée dans les deux."
-
-#~ msgid "Tags, notes and favorites stay in Pigoune."
-#~ msgstr "Les tags, notes et favoris restent dans Pigoune."
-
-#
-#~ msgid "Nothing was changed."
-#~ msgstr "Rien n’a été modifié."
-
-#~ msgid "Much Faster"
-#~ msgstr "Beaucoup plus rapide"
-
-#~ msgid ""
-#~ "Opening a large library and searching take a fraction of the time, and "
-#~ "scrolling stays smooth even with thousands of images."
-#~ msgstr ""
-#~ "Ouvrir une grosse bibliothèque et chercher une image prennent une "
-#~ "fraction du temps d’avant, et le défilement reste fluide même avec des "
-#~ "milliers d’images."
-
-#~ msgid "Simpler Tags"
-#~ msgstr "Des tags plus simples"
-
-#~ msgid ""
-#~ "A tag is now one word of up to 20 characters. A space confirms it and a "
-#~ "hyphen joins several words."
-#~ msgstr ""
-#~ "Un tag est maintenant un seul mot de 20 caractères au plus. L’espace le "
-#~ "valide et le tiret relie plusieurs mots."
-
-#~ msgid "A Clearer Wallpaper Window"
-#~ msgstr "Une fenêtre du fond d’écran plus claire"
-
-#~ msgid ""
-#~ "The framing window shows your whole screen and warns you when the image "
-#~ "would look blurry once enlarged."
-#~ msgstr ""
-#~ "La fenêtre de cadrage montre tout votre écran et vous prévient quand "
-#~ "l’image serait floue une fois agrandie."
-
-#~ msgid "Long Names Handled"
-#~ msgstr "Les noms longs bien gérés"
-
-#~ msgid ""
-#~ "Long names are shortened instead of stretching the panels, and the "
-#~ "windows still fit with larger text."
-#~ msgstr ""
-#~ "Les noms trop longs sont raccourcis au lieu d’étirer les panneaux, et les "
-#~ "fenêtres tiennent toujours avec un texte agrandi."
-
-#~ msgid "Long names are shortened and the windows fit even with larger text."
-#~ msgstr ""
-#~ "Les noms trop longs sont raccourcis et les fenêtres tiennent même avec un "
-#~ "texte agrandi."
-
-#~ msgid "Top Color"
-#~ msgstr "Couleur du haut"
-
-#~ msgid "Bottom Color"
-#~ msgstr "Couleur du bas"
-
-#~ msgid "Choose the bottom color"
-#~ msgstr "Choisir la couleur du bas"
-
-#~ msgid "Next click: the bottom color of the gradient"
-#~ msgstr "Prochain clic : la couleur du bas du dégradé"
-
-#~ msgid "Next click: the top color of the gradient"
-#~ msgstr "Prochain clic : la couleur du haut du dégradé"
-
-#~ msgid "Background Color"
-#~ msgstr "Couleur du fond"
-
-#, rust-format
-#~ msgid "Screen where Pigoune is shown: {width} × {height} pixels"
-#~ msgstr "Écran où se trouve Pigoune : {width} × {height} pixels"
-
-#~ msgid "Fit"
-#~ msgstr "Ajuster"
-
-#, rust-format
-#~ msgid ""
-#~ "Screen: {width} × {height} · Drag to move, scroll to zoom, arrow keys to "
-#~ "adjust"
-#~ msgstr ""
-#~ "Écran : {width} × {height} · glisser pour déplacer, molette pour zoomer, "
-#~ "flèches pour ajuster"
-
-#~ msgid "Prepare as Wallpaper…"
-#~ msgstr "Préparer comme fond d’écran…"
-
-#~ msgid "Show as Wallpaper"
-#~ msgstr "Voir comme fond d’écran"
-
-#~ msgid "A smart collection cannot be saved from this view."
-#~ msgstr ""
-#~ "Impossible d’enregistrer une collection intelligente depuis cette vue."
-
-#~ msgid "Found In"
-#~ msgstr "Dans"
-
-#~ msgid "At startup, the library left open last time opens again"
-#~ msgstr ""
-#~ "Au lancement, la bibliothèque laissée ouverte la dernière fois se rouvre"
-
-#~ msgid "A library opens on the entry selected last time instead of All"
-#~ msgstr ""
-#~ "Une bibliothèque s’ouvre sur la dernière entrée sélectionnée plutôt que "
-#~ "sur « Tout »"
-
-#~ msgid "The name of each resource appears under its thumbnail"
-#~ msgstr "Le nom de chaque ressource apparaît sous sa vignette"
-
-#~ msgid "The number of resources appears next to each entry"
-#~ msgstr "Le nombre de ressources apparaît à côté de chaque entrée"
-
-#~ msgid "Each tag appears in the sidebar to show its resources in one click"
-#~ msgstr ""
-#~ "Chaque tag apparaît dans la barre latérale pour afficher ses ressources "
-#~ "en un clic"
-
-#~ msgid ""
-#~ "Each smart collection appears in the sidebar, filled with the resources "
-#~ "matching its criteria"
-#~ msgstr ""
-#~ "Chaque collection intelligente apparaît dans la barre latérale, remplie "
-#~ "des ressources qui correspondent à ses critères"
-
-#~ msgid "Resources are deleted for good after 30 days in the trash"
-#~ msgstr ""
-#~ "Les ressources sont supprimées définitivement après 30 jours dans la "
-#~ "corbeille"
-
-#~ msgid "Animated"
-#~ msgid_plural "Animated"
-#~ msgstr[0] "Animée"
-#~ msgstr[1] "Animées"
-
-#~ msgid "SVG"
-#~ msgstr "SVG"
-
-#~ msgid "In the Trash"
-#~ msgid_plural "In the Trash"
-#~ msgstr[0] "Dans la corbeille"
-#~ msgstr[1] "Dans la corbeille"
-
-#, rust-format
-#~ msgid "This library {size}"
-#~ msgstr "Cette bibliothèque {size}"
-
-#, rust-format
-#~ msgid "Show Only the {color} Resources"
-#~ msgstr "Ne garder que la couleur « {color} »"
-
-#~ msgid "Added"
-#~ msgstr "Ajoutée le"
-
-#~ msgid "Information"
-#~ msgstr "Informations"
-
-#~ msgid "Stored In"
-#~ msgid_plural "Stored In"
-#~ msgstr[0] "Rangée dans"
-#~ msgstr[1] "Rangées dans"
-
-#~ msgctxt "collection icon"
-#~ msgid "Documents"
-#~ msgstr "Documents"
-
-#~ msgctxt "collection icon"
-#~ msgid "Video Camera"
-#~ msgstr "Caméra"
-
-#~ msgctxt "collection icon"
-#~ msgid "Musical Note"
-#~ msgstr "Note de musique"
-
-#~ msgctxt "collection icon"
-#~ msgid "Gamepad"
-#~ msgstr "Manette"
-
-#~ msgid ""
-#~ "Searches and filters ignore the collection or tag selected in the sidebar"
-#~ msgstr ""
-#~ "La recherche et les filtres ignorent la collection ou le tag sélectionné "
-#~ "dans la barre latérale"
-
-#~ msgid ""
-#~ "Collections that fill themselves based on your criteria: words, types, "
-#~ "favorites"
-#~ msgstr ""
-#~ "Des collections qui se remplissent toutes seules selon vos critères : "
-#~ "mots, types, favoris"
-
-#~ msgid ""
-#~ "Separate words with spaces to require them all, with commas to accept any "
-#~ "of them. The name, tags, note, source, license and author are searched, "
-#~ "whatever the case and accents."
-#~ msgstr ""
-#~ "Séparez les mots par des espaces pour les exiger tous, par des virgules "
-#~ "pour accepter l’un ou l’autre. La recherche porte sur le nom, les tags, "
-#~ "la note, la source, la licence et l’auteur, sans tenir compte des "
-#~ "majuscules ni des accents."
-
-#~ msgid "Saved searches appear in the sidebar and update by themselves"
-#~ msgstr ""
-#~ "Des recherches enregistrées apparaissent dans la barre latérale et se "
-#~ "mettent à jour d’elles-mêmes"
-
-#~ msgctxt "smart collection field"
-#~ msgid "Search"
-#~ msgstr "Recherche"
-
-#~ msgid "Containing the Text"
-#~ msgstr "Contenant le texte"
-
-#~ msgid "Of the Type"
-#~ msgstr "Du type"
-
-#~ msgid "Leave everything unchecked to keep every type"
-#~ msgstr "Ne cochez rien pour garder tous les types"
-
-#~ msgid "Rename Smart Collection"
-#~ msgstr "Renommer la collection intelligente"
-
-#~ msgid "Save as Smart Collection…"
-#~ msgstr "Enregistrer comme collection intelligente…"
-
-#, rust-format
-#~ msgid "Renaming undone, the smart collection is named “{name}” again"
-#~ msgstr ""
-#~ "Renommage annulé, la collection intelligente s’appelle de nouveau "
-#~ "« {name} »"
-
-#~ msgid "Organize several assets at once with tags and collections"
-#~ msgstr ""
-#~ "Organisez plusieurs ressources à la fois avec les tags et les collections"
-
-#~ msgid "See the details of an asset at a glance"
-#~ msgstr "Voyez les détails d’une ressource d’un coup d’œil"
-
-#~ msgid "Light or dark, Pigoune follows your system style"
-#~ msgstr "Clair ou sombre, Pigoune suit le style de votre système"
-
-#~ msgid "_Create a Library"
-#~ msgstr "_Créer une bibliothèque"
-
-#~ msgid "Rename (F2)"
-#~ msgstr "Renommer (F2)"
-
-#, rust-format
-#~ msgid "Library format {number}"
-#~ msgstr "Format de bibliothèque {number}"
-
-#~ msgid "Library Format"
-#~ msgstr "Format de bibliothèque"
-
-#~ msgid "Export width"
-#~ msgstr "Largeur des exports"
-
-#~ msgid "Width of converted exports, in the export size unit."
-#~ msgstr "Largeur des exports convertis, dans l’unité de taille des exports."
-
-#~ msgid "Export height"
-#~ msgstr "Hauteur des exports"
-
-#~ msgid "Height of converted exports, in the export size unit."
-#~ msgstr "Hauteur des exports convertis, dans l’unité de taille des exports."
-
-#~ msgid "Keep proportions in exports"
-#~ msgstr "Garder les proportions dans les exports"
-
-#~ msgid "Whether changing the export width or height updates the other side."
-#~ msgstr ""
-#~ "Si changer la largeur ou la hauteur d’un export ajuste l’autre côté."
-
-#~ msgid "Small files, keeps transparency"
-#~ msgstr "Fichiers légers, garde la transparence"
-
-#~ msgid "Original Size"
-#~ msgstr "Taille d’origine"
-
-#~ msgid "In pixels, proportions kept; pixel images are never enlarged"
-#~ msgstr ""
-#~ "En pixels, proportions conservées ; les images en pixels ne sont jamais "
-#~ "agrandies"
-
-#~ msgid "Icons up to 256 × 256 pixels, keeps transparency"
-#~ msgstr "Icônes jusqu’à 256 × 256 pixels, garde la transparence"
-
-#~ msgid "too large for ICO, which allows 256 × 256 pixels at most"
-#~ msgstr "trop grande pour le format ICO, limité à 256 × 256 pixels"
-
-#~ msgid "First development snapshot."
-#~ msgstr "Première version de développement."
-
-#~ msgid "The cozy box for your icons, logos and illustrations."
-#~ msgstr "La boîte réconfortante pour vos icônes, logos et illustrations."
-
-#~ msgid "Move to the Trash"
-#~ msgstr "Mettre à la corbeille"

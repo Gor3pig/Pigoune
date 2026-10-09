@@ -2,6 +2,7 @@
 
 (() => {
   const SUPPORTED_LANGUAGES = ["en", "fr"];
+  const FRENCH_ANCHORS = { "#install": "#installer", "#systems": "#systemes" };
 
   function chosenLanguage() {
     try {
@@ -25,6 +26,6 @@
   }
 
   if ((chosenLanguage() ?? preferredLanguage()) === "fr") {
-    location.replace("fr/" + location.hash);
+    location.replace("fr/" + (FRENCH_ANCHORS[location.hash] ?? location.hash));
   }
 })();

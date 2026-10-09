@@ -69,6 +69,15 @@ translatable_files_are_listed() {
     return $missing
 }
 
+french_guillemets_use_non_breaking_spaces() {
+    local found
+    found=$(grep -nF -e '« ' -e ' »' po/fr.po || true)
+    if [ -n "$found" ]; then
+        printf 'po/fr.po: use a non-breaking space inside « » on these lines:\n%s\n' "$found"
+        return 1
+    fi
+}
+
 FULLY_TRANSLATED_LANGUAGE=fr
 
 translations_are_complete() {
@@ -109,6 +118,7 @@ step "Desktop entry" validate_desktop_file
 step "AppStream metainfo" validate_metainfo
 step "Translatable files are listed" translatable_files_are_listed
 step "Translations are complete" translations_are_complete
+step "French guillemets" french_guillemets_use_non_breaking_spaces
 
 printf '\n'
 if [ ${#failures[@]} -eq 0 ]; then
