@@ -276,6 +276,18 @@ impl PigouneSidebarTagCloud {
         let imp = self.imp();
         imp.peek_origin.set(None);
         if imp.peeking.get() {
+            let cloud = self.downgrade();
+            glib::idle_add_local_once(move || {
+                if let Some(cloud) = cloud.upgrade() {
+                    cloud.close_peek();
+                }
+            });
+        }
+    }
+
+    fn close_peek(&self) {
+        let imp = self.imp();
+        if imp.peeking.get() && imp.peek_origin.get().is_none() {
             self.follow(imp.selected.get());
             self.rebuild();
         }
