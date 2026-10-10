@@ -7,6 +7,7 @@ const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
 const BMP_INFO_HEADER_SIZES: [u32; 7] = [12, 40, 52, 56, 64, 108, 124];
 const AVIF_BRANDS: [&[u8]; 2] = [b"avif", b"avis"];
+const HEIC_BRANDS: [&[u8]; 6] = [b"heic", b"heix", b"heim", b"heis", b"hevc", b"hevx"];
 const BRAND_LENGTH: usize = 4;
 const UTF8_BYTE_ORDER_MARK: &[u8] = b"\xEF\xBB\xBF";
 
@@ -17,6 +18,7 @@ pub enum AssetFormat {
     Jpeg,
     Webp,
     Avif,
+    Heic,
     Jxl,
     Gif,
     Tiff,
@@ -25,12 +27,13 @@ pub enum AssetFormat {
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 11] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
         Self::Webp,
         Self::Avif,
+        Self::Heic,
         Self::Jxl,
         Self::Gif,
         Self::Tiff,
@@ -46,6 +49,7 @@ impl AssetFormat {
             Self::Jpeg => "jpeg",
             Self::Webp => "webp",
             Self::Avif => "avif",
+            Self::Heic => "heic",
             Self::Jxl => "jxl",
             Self::Gif => "gif",
             Self::Tiff => "tiff",
@@ -76,6 +80,8 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
         Some(AssetFormat::Ico)
     } else if is_avif(header) {
         Some(AssetFormat::Avif)
+    } else if has_brand(header, &HEIC_BRANDS) {
+        Some(AssetFormat::Heic)
     } else if JXL_SIGNATURES
         .iter()
         .any(|signature| header.starts_with(signature))
@@ -107,6 +113,10 @@ fn is_ico(header: &[u8]) -> bool {
 }
 
 fn is_avif(header: &[u8]) -> bool {
+    has_brand(header, &AVIF_BRANDS)
+}
+
+fn has_brand(header: &[u8], wanted: &[&[u8]]) -> bool {
     if header.get(4..8) != Some(b"ftyp") {
         return false;
     }
@@ -124,10 +134,10 @@ fn is_avif(header: &[u8]) -> bool {
         .get(16..box_end)
         .unwrap_or_default()
         .as_chunks::<BRAND_LENGTH>();
-    major_brand.is_some_and(|brand| AVIF_BRANDS.contains(&brand))
+    major_brand.is_some_and(|brand| wanted.contains(&brand))
         || compatible_brands
             .iter()
-            .any(|brand| AVIF_BRANDS.contains(&brand.as_slice()))
+            .any(|brand| wanted.contains(&brand.as_slice()))
 }
 
 fn is_bmp(header: &[u8]) -> bool {
@@ -144,7 +154,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 15] = [
+        let cases: [(&[u8], AssetFormat); 19] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -154,6 +164,13 @@ mod tests {
             (b"\0\0\0\x1cftypavif\0\0\0\0mif1avifmiaf", AssetFormat::Avif),
             (b"\0\0\0\x18ftypmif1\0\0\0\0mif1avif", AssetFormat::Avif),
             (b"\0\0\0\x18ftypavis\0\0\0\0msf1miaf", AssetFormat::Avif),
+            (b"\0\0\0\x18ftypheic\0\0\0\0mif1heic", AssetFormat::Heic),
+            (b"\0\0\0\x18ftypmif1\0\0\0\0mif1heix", AssetFormat::Heic),
+            (b"\0\0\0\x18ftyphevc\0\0\0\0hevcmsf1", AssetFormat::Heic),
+            (
+                b"\0\0\0\x20ftypmif1\0\0\0\0mif1miafavifheic",
+                AssetFormat::Avif,
+            ),
             (&[0xFF, 0x0A, 0x10, 0x00], AssetFormat::Jxl),
             (
                 b"\0\0\0\x0cJXL \r\n\x87\n\0\0\0\x14ftypjxl ",
@@ -181,7 +198,7 @@ mod tests {
             &[0, 0, 1, 0, 0, 0],
             &[0, 0, 2, 0, 1, 0],
             b"%PDF-1.7",
-            b"\0\0\0\x18ftypheic\0\0\0\0mif1heic",
+            b"\0\0\0\x18ftypmif1\0\0\0\0mif1miaf",
             b"\0\0\0\x10ftypisom\0\0\0\0avif",
             b"\0\0\0\x18ftypmp42\0\0\0\0isomavc1",
             b"BMW is a car maker",

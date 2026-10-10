@@ -24,6 +24,7 @@ pub fn format_name(format: AssetFormat) -> &'static str {
         AssetFormat::Jpeg => "JPEG",
         AssetFormat::Webp => "WebP",
         AssetFormat::Avif => "AVIF",
+        AssetFormat::Heic => "HEIC",
         AssetFormat::Jxl => "JPEG XL",
         AssetFormat::Gif => "GIF",
         AssetFormat::Tiff => "TIFF",

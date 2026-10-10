@@ -48,8 +48,9 @@ sidebar: Pigoune keeps what the browser
 hands over (the original file with Chrome or Brave, a PNG copy of the picture with Firefox) and
 names it after the file name the browser suggests. If the drop holds no image, a message says so.
 
-- Supported formats are SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF, BMP
-  and ICO.
+- Supported formats are SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP
+  and ICO. HEIC photos are shown when the system can decode them, which the Flatpak package
+  does; a file that cannot be shown is refused instead of imported.
 - Pigoune checks every image before importing it, so damaged files are listed instead of
   added.
 - Duplicates are recognized: a file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash; when you import into

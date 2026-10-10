@@ -54,8 +54,9 @@ navigateur lui remet (le fichier d'origine avec Chrome ou Brave, une copie PNG d
 Firefox) et la nomme d'après le nom de fichier que le navigateur propose. Si le glissement ne
 contient aucune image, un message le dit.
 
-- Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF,
-  BMP et ICO.
+- Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF,
+  BMP et ICO. Les photos HEIC s’affichent quand le système sait les décoder, ce que fait le
+  paquet Flatpak ; un fichier qui ne peut pas être affiché est refusé au lieu d’être importé.
 - Pigoune vérifie chaque image avant de l'importer : un fichier endommagé est signalé au lieu
   d'être ajouté.
 - Les doublons sont reconnus : un fichier déjà présent n'est jamais copié deux fois. S'il est à la corbeille, l'importer le sort de la corbeille ;

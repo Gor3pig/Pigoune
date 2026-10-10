@@ -85,6 +85,7 @@ pub fn color_of(format: AssetFormat) -> &'static str {
         AssetFormat::Jpeg => "#3a944a",
         AssetFormat::Webp => "#c88800",
         AssetFormat::Avif => "#ed5b00",
+        AssetFormat::Heic => "#8f8a1f",
         AssetFormat::Jxl => "#e62d42",
         AssetFormat::Gif => "#d56199",
         AssetFormat::Tiff => "#9141ac",

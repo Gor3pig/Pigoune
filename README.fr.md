@@ -44,8 +44,8 @@ glisser-déposer quand vous en avez besoin.
 <td width="50%" valign="top">
 
 ### Déposer
-Glissez des fichiers ou des dossiers entiers : SVG, PNG, JPEG, WebP, AVIF, JPEG XL, GIF, TIFF,
-BMP et ICO. Chaque image est vérifiée avant d'entrer, et les doublons sont reconnus
+Glissez des fichiers ou des dossiers entiers : SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF,
+TIFF, BMP et ICO. Chaque image est vérifiée avant d'entrer, et les doublons sont reconnus
 automatiquement.
 
 </td>

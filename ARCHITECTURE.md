@@ -9,7 +9,7 @@ which choices shape them. It describes the current state; the code is the final 
 |---|---|
 | Language | Rust (edition 2024), `unsafe` forbidden |
 | User interface | GTK 4 and libadwaita through `gtk4-rs` and `libadwaita-rs`, layouts written in Blueprint |
-| Image decoding | glycin, which decodes images in a sandbox (SVG, raster formats including AVIF, JPEG XL and TIFF, animated GIF, ICO) |
+| Image decoding | glycin, which decodes images in a sandbox (SVG, raster formats including AVIF, HEIC, JPEG XL and TIFF, animated GIF, ICO) |
 | Data | SQLite through `rusqlite` (bundled), the single source of truth of a library |
 | File fingerprints | BLAKE3 |
 | Identifiers | UUID v7, ordered by creation time |

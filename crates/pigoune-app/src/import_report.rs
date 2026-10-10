@@ -36,6 +36,11 @@ pub fn summary_dialog(
     if lines.is_empty() {
         lines.push(gettext("Nothing was imported."));
     }
+    if summary.unreadable.iter().any(|path| is_heic_path(path)) {
+        lines.push(gettext(
+            "HEIC photos can only be imported when your system can decode them: the Flatpak package can.",
+        ));
+    }
     if let ImportEnding::Interrupted(error) = &summary.ending {
         lines.push(String::new());
         lines.push(describe_interruption(error));
@@ -167,6 +172,14 @@ fn problem_lines(summary: &ImportSummary) -> Vec<String> {
     .collect()
 }
 
+fn is_heic_path(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| {
+            extension.eq_ignore_ascii_case("heic") || extension.eq_ignore_ascii_case("heif")
+        })
+}
+
 fn describe_interruption(error: &ImportError) -> String {
     match error {
         ImportError::Library(error) => error_messages::describe(error),
@@ -232,7 +245,15 @@ fn count_for_plural(count: usize) -> u32 {
 mod tests {
     use std::path::PathBuf;
 
-    use super::display_path;
+    use super::{display_path, is_heic_path};
+
+    #[test]
+    fn heic_files_are_recognized_by_their_extension() {
+        assert!(is_heic_path(&PathBuf::from("/photos/IMG_0001.HEIC")));
+        assert!(is_heic_path(&PathBuf::from("beach.heif")));
+        assert!(!is_heic_path(&PathBuf::from("beach.jpg")));
+        assert!(!is_heic_path(&PathBuf::from("heic")));
+    }
 
     #[test]
     fn a_file_inside_a_chosen_folder_is_shown_from_that_folder() {

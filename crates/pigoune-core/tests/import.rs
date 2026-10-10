@@ -183,6 +183,7 @@ fn every_raster_format_reports_its_dimensions() {
         ("green-square.webp", AssetFormat::Webp, dimensions(5, 4)),
         ("still.gif", AssetFormat::Gif, dimensions(2, 2)),
         ("orange-banner.avif", AssetFormat::Avif, dimensions(6, 5)),
+        ("coral-stripe.heic", AssetFormat::Heic, dimensions(7, 4)),
         ("purple-strip.jxl", AssetFormat::Jxl, dimensions(7, 3)),
         ("teal-column.tiff", AssetFormat::Tiff, dimensions(2, 6)),
         ("navy-tile.bmp", AssetFormat::Bmp, dimensions(8, 8)),
