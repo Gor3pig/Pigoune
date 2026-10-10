@@ -17,6 +17,7 @@ use crate::tag_tree;
 const MOST_PILLS: usize = 12;
 const PILL_SPACING: i32 = 4;
 const SELECTED: &str = "selected";
+const EMPTY: &str = "empty";
 const DROP_HIGHLIGHT: &str = "drop-highlight";
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -351,6 +352,9 @@ impl PigouneSidebarTagCloud {
             tag,
             has_children,
         ))]);
+        if tag.count == Some(0) {
+            pill.add_css_class(EMPTY);
+        }
         let id = tag.id;
         pill.connect_clicked(glib::clone!(
             #[weak(rename_to = cloud)]

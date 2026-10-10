@@ -428,7 +428,8 @@ split into three pages; the magnifier at the top finds a setting by its name.
   white or black images and transparent areas.
 - **Play Animations on Hover**: turn it off if moving thumbnails distract you; animations still
   play in the details panel and the preview.
-- **Show Asset Counts** next to each entry of the sidebar.
+- **Show Asset Counts** next to each entry of the sidebar. While you search or filter, the
+  numbers count only the matching assets, and tags with none are dimmed.
 - **Show Tags**: turn it off to hide the tags section of the sidebar. Tags still appear in the
   details panel, and searches still find them.
 - **Show Smart Collections**: turn it off to hide the smart collections section of the

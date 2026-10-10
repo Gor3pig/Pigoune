@@ -75,6 +75,7 @@ const MAIN_PAGE: &str = "main";
 const PREVIEW_PAGE: &str = "preview";
 const OPENING_FLIGHT_MILLISECONDS: u32 = 250;
 const CLOSING_FLIGHT_MILLISECONDS: u32 = 200;
+const COUNTS_REFRESH_DELAY: std::time::Duration = std::time::Duration::from_millis(350);
 const CREATE_LIBRARY_ACTION: &str = "win.create-library";
 const OPEN_LIBRARY_ACTION: &str = "win.open-library";
 const CLOSE_LIBRARY_ACTION: &str = "win.close-library";
@@ -288,6 +289,7 @@ mod imp {
         pub screen: Cell<Option<Dimensions>>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
         pub view_to_restore: Cell<Option<(ChangeStamp, AssetView)>>,
+        pub counts_refresh: RefCell<Option<glib::SourceId>>,
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
         pub hovered_drop: Cell<Option<(AssetView, bool)>>,
@@ -850,6 +852,7 @@ impl PigouneWindow {
         imp.grid_header.show_filter_count(filters.chosen_filters());
         imp.filters.replace(filters);
         self.refresh_grid();
+        self.schedule_counts_refresh();
     }
 
     fn search(&self, query: &str) {
@@ -861,6 +864,22 @@ impl PigouneWindow {
         imp.view_chosen_by_click.set(false);
         imp.query_pills.show_query(query);
         self.refresh_grid();
+        self.schedule_counts_refresh();
+    }
+
+    fn schedule_counts_refresh(&self) {
+        let imp = self.imp();
+        if let Some(pending) = imp.counts_refresh.take() {
+            pending.remove();
+        }
+        let window = self.downgrade();
+        let pending = glib::timeout_add_local_once(COUNTS_REFRESH_DELAY, move || {
+            if let Some(window) = window.upgrade() {
+                window.imp().counts_refresh.take();
+                window.refresh_sidebar();
+            }
+        });
+        imp.counts_refresh.replace(Some(pending));
     }
 
     fn reset_search(&self) {
@@ -872,6 +891,7 @@ impl PigouneWindow {
         imp.grid_header.show_filter_count(0);
         imp.grid_header.search_entry().set_text("");
         imp.query_pills.show_query("");
+        self.schedule_counts_refresh();
     }
 
     fn follow_trash_confirmation(&self, settings: &gio::Settings) {
@@ -4527,10 +4547,11 @@ impl PigouneWindow {
         let imp = self.imp();
         let order = self.collection_order();
         let show_counts = self.settings().boolean(settings::SHOW_COUNTS);
+        let filter = self.current_filter();
         let read = imp.library.borrow().as_ref().map(|library| {
             Ok::<_, LibraryError>((
                 library.visible_collections()?,
-                library.view_counts()?,
+                library.view_counts_matching(&filter)?,
                 library.tags()?,
                 library.smart_collections()?,
             ))

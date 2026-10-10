@@ -484,7 +484,9 @@ retrouve un réglage par son nom.
   images blanches ou noires et les zones transparentes.
 - **Animer les vignettes au survol** : désactivez-le si les vignettes qui bougent vous
   distraient ; les animations se jouent toujours dans le panneau de détails et l'aperçu.
-- **Afficher le nombre d’éléments** à côté de chaque entrée de la barre latérale.
+- **Afficher le nombre d’éléments** à côté de chaque entrée de la barre latérale. Pendant une
+  recherche ou un filtre, les nombres ne comptent que les éléments qui correspondent, et les tags
+  qui n’en ont aucun sont estompés.
 - **Afficher les tags** : désactivez-le pour masquer la section des tags de la barre latérale.
   Les tags restent visibles dans le panneau de détails, et la recherche les trouve toujours.
 - **Afficher les collections dynamiques** : désactivez-le pour masquer la section des

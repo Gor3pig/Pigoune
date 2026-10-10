@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use super::{CollectionId, Library, LibraryError, SmartCollectionId, TagId};
+use rusqlite::params_from_iter;
+
+use super::{AssetFilter, CollectionId, Library, LibraryError, SmartCollectionId, TagId};
 
 pub const SUBTREE: &str = "WITH RECURSIVE subtree(id) AS (
         SELECT id FROM collections WHERE id = ?1 AND trashed_at_unix_ms IS NULL
@@ -122,16 +124,55 @@ impl Library {
     }
 
     pub fn view_counts(&self) -> Result<ViewCounts, LibraryError> {
+        self.counts_restricted_to(None)
+    }
+
+    pub fn view_counts_matching(&self, filter: &AssetFilter) -> Result<ViewCounts, LibraryError> {
+        if !filter.narrows() {
+            return self.view_counts();
+        }
+        let assets = self.find_assets_in(AssetView::All, filter)?;
+        let trashed = self.find_assets_in(AssetView::Trash, filter)?.len();
+        let ids = format!(
+            "[{}]",
+            assets
+                .iter()
+                .map(|asset| format!("\"{}\"", asset.id))
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        let mut counts = self.counts_restricted_to(Some(&ids))?;
+        counts.trash = trashed;
+        let tags = self.tag_names_by_asset()?;
+        counts.smart_collections = self
+            .smart_collections()?
+            .iter()
+            .map(|collection| {
+                (
+                    collection.id,
+                    collection.filter.count_among(&assets, &tags, self.screen),
+                )
+            })
+            .collect();
+        Ok(counts)
+    }
+
+    fn counts_restricted_to(&self, ids: Option<&str>) -> Result<ViewCounts, LibraryError> {
+        let restriction = if ids.is_some() {
+            " AND assets.id IN (SELECT value FROM json_each(?1))"
+        } else {
+            ""
+        };
         let count = |condition: &str| -> Result<usize, LibraryError> {
             let total: i64 = self.connection.query_row(
-                &format!("SELECT count(*) FROM assets WHERE {condition}"),
-                [],
+                &format!("SELECT count(*) FROM assets WHERE {condition}{restriction}"),
+                params_from_iter(ids),
                 |row| row.get(0),
             )?;
             Ok(usize::try_from(total).unwrap_or(0))
         };
 
-        let mut statement = self.connection.prepare(
+        let mut statement = self.connection.prepare(&format!(
             "WITH RECURSIVE ancestry(collection_id, ancestor_id) AS (
                  SELECT id, id FROM collections WHERE trashed_at_unix_ms IS NULL
                  UNION
@@ -142,17 +183,17 @@ impl Library {
              SELECT ancestry.ancestor_id, count(DISTINCT assets.id) FROM ancestry
              JOIN asset_collections ON asset_collections.collection_id = ancestry.collection_id
              JOIN assets ON assets.id = asset_collections.asset_id
-             WHERE assets.trashed_at_unix_ms IS NULL
-             GROUP BY ancestry.ancestor_id",
-        )?;
+             WHERE assets.trashed_at_unix_ms IS NULL{restriction}
+             GROUP BY ancestry.ancestor_id"
+        ))?;
         let collections = statement
-            .query_map([], |row| {
+            .query_map(params_from_iter(ids), |row| {
                 let total: i64 = row.get(1)?;
                 Ok((row.get(0)?, usize::try_from(total).unwrap_or(0)))
             })?
             .collect::<Result<_, _>>()?;
 
-        let mut statement = self.connection.prepare(
+        let mut statement = self.connection.prepare(&format!(
             "WITH RECURSIVE reach(tag_id, ancestor_id) AS (
                  SELECT id, id FROM tags
                  UNION
@@ -163,11 +204,11 @@ impl Library {
              SELECT reach.ancestor_id, count(DISTINCT assets.id) FROM reach
              LEFT JOIN asset_tags ON asset_tags.tag_id = reach.tag_id
              LEFT JOIN assets ON assets.id = asset_tags.asset_id
-                 AND assets.trashed_at_unix_ms IS NULL
-             GROUP BY reach.ancestor_id",
-        )?;
+                 AND assets.trashed_at_unix_ms IS NULL{restriction}
+             GROUP BY reach.ancestor_id"
+        ))?;
         let tags = statement
-            .query_map([], |row| {
+            .query_map(params_from_iter(ids), |row| {
                 let total: i64 = row.get(1)?;
                 Ok((row.get(0)?, usize::try_from(total).unwrap_or(0)))
             })?
