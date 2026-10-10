@@ -9,6 +9,7 @@ use crate::shortened_label::{name_label, naming};
 use crate::tag_cloud::PigouneTagCloud;
 use crate::tag_editor::{PigouneTagEditor, SharedTag, parent_label};
 use crate::tag_input;
+use crate::tag_tree;
 
 const EDITOR_WIDTH: i32 = 300;
 
@@ -112,14 +113,15 @@ impl PigouneTagSummary {
                     .build(),
             );
             pill.set_tooltip_text(Some(&naming(
-                &tag.name,
-                &gettext("On {count} of {total} assets. Click to add it to all of them.")
+                &tag_tree::path_text(all, tag.id),
+                &gettext("On {count} of {total} assets")
                     .replace("{count}", &shared.carried_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
             )));
         } else {
             pill.set_tooltip_text(Some(
-                &gettext("Open the Tag “{name}”").replace("{name}", &tag.name),
+                &gettext("Open the Tag “{name}”")
+                    .replace("{name}", &tag_tree::path_text(all, tag.id)),
             ));
         }
         let id = tag.id;
@@ -127,13 +129,26 @@ impl PigouneTagSummary {
         pill.connect_clicked(glib::clone!(
             #[weak(rename_to = summary)]
             self,
-            move |_| summary.editor().activate_tag(id, &path, partial)
+            move |_| summary.editor().open_tag(id)
         ));
+        let add_tooltip = partial.then(|| {
+            gettext("Add the Tag “{name}” to All the Selected Assets").replace("{name}", &tag.name)
+        });
         let removable = removable_pill(
             &pill,
             &gettext("Remove the Tag “{name}”").replace("{name}", &tag.name),
             partial,
+            add_tooltip.as_deref(),
         );
+        if let Some(add) = &removable.add {
+            add.connect_clicked(glib::clone!(
+                #[weak(rename_to = summary)]
+                self,
+                #[strong]
+                path,
+                move |_| summary.editor().add_to_all(&path)
+            ));
+        }
         removable.remove.connect_clicked(glib::clone!(
             #[weak(rename_to = summary)]
             self,

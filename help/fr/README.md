@@ -157,8 +157,9 @@ Sélectionnez plusieurs éléments avec <kbd>Ctrl</kbd>+clic, <kbd>Maj</kbd>+cli
 un rectangle depuis un espace vide de la grille, ou avec <kbd>Ctrl</kbd>+<kbd>A</kbd>. Le
 panneau de détails affiche alors un résumé et permet de changer les favoris et les tags de
 tous, tandis que le glisser et le menu du clic droit agissent sur toute la sélection. Un tag
-porté par une partie seulement des éléments sélectionnés est entouré de pointillés : un
-clic dessus l'ajoute à tous.
+porté par une partie seulement des éléments sélectionnés est entouré de pointillés, avec son
+nombre (par exemple 2/5) : cliquez son nom pour l'ouvrir, ou le petit + à côté pour l'ajouter à
+tous.
 
 ## Retrouver un élément
 

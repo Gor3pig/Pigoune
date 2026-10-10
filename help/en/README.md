@@ -139,8 +139,9 @@ open. Under the name, **Open With…**, **Copy** and **Export…** act on the as
 Select several assets with <kbd>Ctrl</kbd>+click, <kbd>Shift</kbd>+click, by drawing a
 rectangle from an empty area of the grid, or with <kbd>Ctrl</kbd>+<kbd>A</kbd>. The details
 panel then shows a summary and lets you change favorites and tags for all of them, while
-dragging and the right-click menu work on the whole selection. A tag carried by only some of the selected assets is shown with a dashed outline: click
-it to add it to all of them.
+dragging and the right-click menu work on the whole selection. A tag carried by only some of the selected assets is shown with a dashed outline and its
+count (such as 2/5): click its name to open it, or the small + next to it to add it to all of
+them.
 
 ## Finding assets
 

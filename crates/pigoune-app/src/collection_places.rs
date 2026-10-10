@@ -121,6 +121,7 @@ impl PigouneCollectionPlaces {
             &pill,
             &gettext("Remove from the Collection “{name}”").replace("{name}", &name),
             partial,
+            None,
         );
         removable
             .remove

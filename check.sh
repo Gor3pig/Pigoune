@@ -91,10 +91,10 @@ translations_are_complete() {
         msgmerge --quiet --no-fuzzy-matching "po/$language.po" "$workdir/pigoune.pot" \
             --output-file="$workdir/$language.po"
         if [ "$language" = "$FULLY_TRANSLATED_LANGUAGE" ]; then
-            statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language.po" 2>&1)
+            statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language.po" 2>&1) || incomplete=1
         else
             msggrep --location='crates/*/*/*' "$workdir/$language.po" --output-file="$workdir/$language-interface.po"
-            statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language-interface.po" 2>&1)
+            statistics=$(msgfmt --check --statistics --output-file=/dev/null "$workdir/$language-interface.po" 2>&1) || incomplete=1
             if msggrep --location='data/*' "$workdir/$language.po" | msgattrib --translated --no-obsolete | grep -q '^msgid "[^"]'; then
                 statistics="$statistics; only the interface may be translated, not data/"
                 incomplete=1

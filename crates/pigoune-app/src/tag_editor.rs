@@ -6,6 +6,7 @@ use pigoune_core::{Tag, TagId};
 
 use crate::shortened_label::{name_label, naming};
 use crate::tag_input;
+use crate::tag_tree;
 
 type AddedCallback = Box<dyn Fn(Vec<String>)>;
 type OpenedCallback = Box<dyn Fn(TagId)>;
@@ -140,14 +141,15 @@ impl PigouneTagEditor {
                     .build(),
             );
             open.set_tooltip_text(Some(&naming(
-                &tag.name,
-                &gettext("On {count} of {total} assets. Click to add it to all of them.")
+                &tag_tree::path_text(all, tag.id),
+                &gettext("On {count} of {total} assets")
                     .replace("{count}", &shared.carried_by.to_string())
                     .replace("{total}", &shared.out_of.to_string()),
             )));
         } else {
             open.set_tooltip_text(Some(
-                &gettext("Open the Tag “{name}”").replace("{name}", &tag.name),
+                &gettext("Open the Tag “{name}”")
+                    .replace("{name}", &tag_tree::path_text(all, tag.id)),
             ));
         }
         let id = tag.id;
@@ -155,8 +157,27 @@ impl PigouneTagEditor {
         open.connect_clicked(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |_| editor.activate_tag(id, &path, partial)
+            move |_| editor.open_tag(id)
         ));
+        let add = partial.then(|| {
+            let add = gtk::Button::builder()
+                .icon_name("list-add-symbolic")
+                .tooltip_text(
+                    gettext("Add the Tag “{name}” to All the Selected Assets")
+                        .replace("{name}", &tag.name),
+                )
+                .valign(gtk::Align::Center)
+                .css_classes(["flat", "circular", "tag-chip-remove"])
+                .build();
+            add.connect_clicked(glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                #[strong]
+                path,
+                move |_| editor.add_to_all(&path)
+            ));
+            add
+        });
         let remove = gtk::Button::builder()
             .icon_name("window-close-symbolic")
             .tooltip_text(gettext("Remove the Tag “{name}”").replace("{name}", &tag.name))
@@ -169,18 +190,22 @@ impl PigouneTagEditor {
             move |_| editor.remove(id)
         ));
         chip.append(&open);
+        if let Some(add) = &add {
+            chip.append(add);
+        }
         chip.append(&remove);
         chip
     }
 
-    pub fn activate_tag(&self, id: TagId, path: &str, partial: bool) {
-        let imp = self.imp();
-        if partial {
-            if let Some(on_applied) = imp.on_applied.borrow().as_ref() {
-                on_applied(path.to_owned());
-            }
-        } else if let Some(on_opened) = imp.on_opened.borrow().as_ref() {
+    pub fn open_tag(&self, id: TagId) {
+        if let Some(on_opened) = self.imp().on_opened.borrow().as_ref() {
             on_opened(id);
+        }
+    }
+
+    pub fn add_to_all(&self, path: &str) {
+        if let Some(on_applied) = self.imp().on_applied.borrow().as_ref() {
+            on_applied(path.to_owned());
         }
     }
 

@@ -1950,7 +1950,7 @@ impl PigouneWindow {
             editor.connect_opened(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |tag| window.go_to_view(AssetView::Tag(tag), Vec::new())
+                move |tag| window.open_tag_from_details(tag)
             ));
             editor.connect_applied(glib::clone!(
                 #[weak(rename_to = window)]
@@ -3250,6 +3250,13 @@ impl PigouneWindow {
         imp.sidebar.point_out(AssetView::All);
         imp.asset_grid.select_asset(id);
         imp.asset_grid.point_out_selected_next();
+    }
+
+    fn open_tag_from_details(&self, tag: TagId) {
+        let before = self.selected_ids();
+        settings::store_bool(self.settings(), settings::SIDEBAR_TAGS_EXPANDED, true);
+        self.go_to_view(AssetView::Tag(tag), Vec::new());
+        self.tell_lost_selection(&before);
     }
 
     fn go_to_view(&self, view: AssetView, reveal: Vec<CollectionId>) {
