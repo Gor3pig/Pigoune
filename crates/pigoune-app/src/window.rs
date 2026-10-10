@@ -91,6 +91,7 @@ const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
 const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
 const OPEN_WITH_ACTION: &str = "win.open-with";
+const SHOW_IN_FILES_ACTION: &str = "win.show-in-files";
 const SET_WALLPAPER_ACTION: &str = "win.set-wallpaper";
 const FALLBACK_SCREEN: (u32, u32) = (1920, 1080);
 const RENAME_ASSET_ACTION: &str = "win.rename-asset";
@@ -216,9 +217,9 @@ mod imp {
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
         PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
         RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
-        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION,
-        TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter, smart_collection_parameter,
-        tag_parameter,
+        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
+        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
+        smart_collection_parameter, tag_parameter,
     };
     use pigoune_core::CollectionCommand;
 
@@ -397,6 +398,9 @@ mod imp {
         });
         class.install_action_async(OPEN_WITH_ACTION, None, |window, _, _| async move {
             window.open_selected_with().await;
+        });
+        class.install_action_async(SHOW_IN_FILES_ACTION, None, |window, _, _| async move {
+            window.show_selected_in_files().await;
         });
         class.install_action(SET_WALLPAPER_ACTION, None, |window, _, _| {
             window.prepare_selected_as_wallpaper();
@@ -2128,6 +2132,7 @@ impl PigouneWindow {
         let in_trash = self.is_showing_trash();
         if selected.len() == 1 {
             viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
+            viewing.append(Some(&gettext("Show in Files")), Some(SHOW_IN_FILES_ACTION));
         }
         if selected.len() == 1 && !in_trash {
             viewing.append(
@@ -2851,6 +2856,19 @@ impl PigouneWindow {
             return;
         };
         self.open_asset(asset, true).await;
+    }
+
+    async fn show_selected_in_files(&self) {
+        let targeted = self.targeted_assets();
+        let [asset] = targeted.as_slice() else {
+            return;
+        };
+        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(asset.file())));
+        if let Err(error) = launcher.open_containing_folder_future(Some(self)).await
+            && !is_dismissed(&error)
+        {
+            self.show_toast(&gettext("The file could not be shown in Files."));
+        }
     }
 
     async fn open_asset(&self, asset: AssetId, choose_application: bool) {

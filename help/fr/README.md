@@ -330,6 +330,10 @@ ses critères.
   avec **Ouvrir avec…** dans le menu du clic droit. L'application reçoit une copie : votre
   bibliothèque reste intacte, enregistrez donc vos modifications sous un nouveau nom et
   importez-les si vous voulez les garder.
+- **Retrouvez le fichier sur le disque** avec **Afficher dans Fichiers** dans le menu du clic
+  droit : votre gestionnaire de fichiers s'ouvre sur le fichier stocké dans la bibliothèque.
+  C'est le vrai fichier : ne le déplacez, ne le renommez et ne le modifiez pas depuis là ; sinon,
+  le bilan de santé de la bibliothèque le signalera.
 - **Utilisez une image comme fond d'écran** avec **Cadrer et définir comme fond d'écran…** dans
   le menu du clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel
   à la résolution réelle de l'écran où se trouve Pigoune, par exemple 1920 × 1080, avec l'image

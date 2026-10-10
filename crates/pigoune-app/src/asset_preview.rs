@@ -1242,6 +1242,7 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
 fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
     let viewing = gio::Menu::new();
     viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
+    viewing.append(Some(&gettext("Show in Files")), Some("win.show-in-files"));
     if editing {
         viewing.append(
             Some(&gettext("Frame and Set as Wallpaper…")),

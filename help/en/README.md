@@ -292,6 +292,9 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - **Open** an asset in another application, such as an image editor, with **Open With…** in
   the right-click menu. The application receives a copy: your library stays untouched, so
   save your changes under a new name and import them if you want to keep them.
+- **Find the file on disk** with **Show in Files** in the right-click menu: your file manager
+  opens on the file stored in the library. It is the real file, so do not move, rename or edit
+  it from there; if you do, the library health check will point it out.
 - **Set an image as your wallpaper** with **Frame and Set as Wallpaper…** in the right-click
   menu of the grid or of the preview. A large window shows a virtual screen at the real
   resolution of the screen Pigoune is shown on, for example 1920 × 1080, with the image framed
