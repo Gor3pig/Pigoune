@@ -39,7 +39,7 @@ starts, it opens on the welcome page too.
 ### Import assets
 
 Click the **+** button at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>I</kbd>, and
-choose **Import Files…** or **Import a Folder…**. You can also simply drag files or folders
+choose **Import Files…** or **Import Folder…**. You can also simply drag files or folders
 from Files onto the Pigoune window. Another way: copy files in Files (or copy an image, such as a
 screenshot or an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Pigoune. A
 pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.

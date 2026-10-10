@@ -156,12 +156,12 @@ impl PigouneFilterChoices {
         imp.format_checks.replace(checks);
         let favorites = gtk::CheckButton::with_label(&gettext("Favorites Only"));
         self.notify_on_toggle(&favorites);
+        self.append(&favorites);
         self.append(&heading);
         self.append(&formats);
         self.build_shapes();
         self.build_fits_screen();
         self.build_colors();
-        self.append(&favorites);
         if imp.favorites_check.set(favorites).is_err() {
             unreachable!("filter choices are built once");
         }

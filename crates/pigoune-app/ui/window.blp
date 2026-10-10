@@ -257,7 +257,7 @@ template $PigouneWindow: Adw.ApplicationWindow {
                               }
 
                               Button {
-                                label: _("Import a F_older…");
+                                label: _("Import F_older…");
                                 use-underline: true;
                                 action-name: "win.import-folder";
 
@@ -324,7 +324,7 @@ menu import_menu {
     }
 
     item {
-      label: _("Import a F_older…");
+      label: _("Import F_older…");
       action: "win.import-folder";
     }
   }
@@ -377,17 +377,17 @@ menu primary_menu {
       label: _("_Open Library…");
       action: "win.open-library";
     }
+
+    item {
+      label: _("_Close Library");
+      action: "win.close-library";
+    }
   }
 
   section {
     item {
       label: _("_Manage Library");
       action: "win.library-info";
-    }
-
-    item {
-      label: _("_Close Library");
-      action: "win.close-library";
     }
   }
 

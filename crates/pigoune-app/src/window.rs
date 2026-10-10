@@ -118,7 +118,8 @@ const PREFERENCES_ACTION: &str = "win.preferences";
 const LIBRARY_INFO_ACTION: &str = "win.library-info";
 const OPEN_RECENT_LIBRARY_ACTION: &str = "win.open-recent-library";
 const CLEAR_RECENT_LIBRARIES_ACTION: &str = "win.clear-recent-libraries";
-const LIBRARY_ENTRIES: i32 = 2;
+const LIBRARY_ENTRIES: i32 = 3;
+const RECENT_LIBRARIES_POSITION: i32 = 2;
 const WELCOME_MINIMUM_HEIGHT: i32 = 480;
 const LIBRARY_MINIMUM_HEIGHT: i32 = 294;
 const SEARCH_ACTION: &str = "win.search";
@@ -1776,10 +1777,14 @@ impl PigouneWindow {
         self.show_welcome_recent_libraries(&paths);
         let section = &imp.library_libraries_section;
         if section.n_items() > LIBRARY_ENTRIES {
-            section.remove(LIBRARY_ENTRIES);
+            section.remove(RECENT_LIBRARIES_POSITION);
         }
         if !paths.is_empty() {
-            section.append_submenu(Some(&gettext("_Recent Libraries")), &imp.recent_menu);
+            section.insert_submenu(
+                RECENT_LIBRARIES_POSITION,
+                Some(&gettext("_Recent Libraries")),
+                &imp.recent_menu,
+            );
         }
     }
 
