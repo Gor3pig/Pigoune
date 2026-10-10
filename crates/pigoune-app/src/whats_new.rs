@@ -63,40 +63,40 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
-        "2.5.0" => vec![
+        "2.6.0" => vec![
             Point {
                 icon: "view-list-symbolic",
-                title: gettext("Nested Tags"),
+                title: gettext("Smoother Tags"),
                 text: gettext(
-                    "Tags can now live inside other tags, like Subject › Animals › goat. Type a path with a slash to create them, and browse them level by level in the sidebar.",
+                    "Clicking a tag shows it and opens its sub-tags at once, and holding dragged assets over a tag with sub-tags for a second opens them so you can drop deeper.",
                 ),
             },
             Point {
-                icon: "object-select-symbolic",
-                title: gettext("Library Health Check"),
+                icon: "edit-find-symbolic",
+                title: gettext("Accurate Counts"),
                 text: gettext(
-                    "The Health tab of Manage Library finds missing, damaged and unrecorded files, and helps you repair them.",
+                    "The numbers in the sidebar follow the search and the filters, so a tag no longer says 21 beside a grid of 3.",
                 ),
             },
             Point {
-                icon: "document-send-symbolic",
-                title: gettext("Export and Web Import"),
+                icon: "image-x-generic-symbolic",
+                title: gettext("More Images"),
                 text: gettext(
-                    "Export the whole library as folders, and import images dragged straight from a web browser.",
+                    "HEIC photos can be imported when your system can decode them, and unusual ICO, BMP, AVIF and SVG files are recognized more reliably.",
                 ),
             },
             Point {
-                icon: "system-search-symbolic",
-                title: gettext("Clearer Search"),
+                icon: "security-high-symbolic",
+                title: gettext("Faster and Safer"),
                 text: gettext(
-                    "The search field shows where it searches, and a magnifier opens it in narrow windows.",
+                    "Deleting a large selection takes about a second instead of minutes, and SVG files built to exhaust memory are refused.",
                 ),
             },
             Point {
-                icon: "preferences-desktop-locale-symbolic",
-                title: gettext("One Vocabulary"),
+                icon: "folder-open-symbolic",
+                title: gettext("Tidier Menus"),
                 text: gettext(
-                    "The interface now uses the same words in every language, and Manage Library has a new layout.",
+                    "Show in Files and Move to for collections join menus that are now ordered the same way everywhere.",
                 ),
             },
         ],
