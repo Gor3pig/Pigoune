@@ -323,6 +323,10 @@ impl PigouneTagEditor {
                 popover.popdown();
                 glib::Propagation::Stop
             }
+            gdk::Key::Escape if !part(&imp.entry).text().is_empty() => {
+                part(&imp.entry).set_text("");
+                glib::Propagation::Stop
+            }
             gdk::Key::BackSpace if part(&imp.entry).text().is_empty() => {
                 let last = imp.current.borrow().last().map(|tag| tag.id);
                 if let Some(last) = last {

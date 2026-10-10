@@ -390,7 +390,7 @@ gridview.asset-grid > child:focus:focus-visible {
 }
 
 gridview.asset-grid > child:focus:focus-visible .tile-frame {
-  outline: 2px solid color-mix(in srgb, var(--accent-color) 50%, transparent);
+  outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
 

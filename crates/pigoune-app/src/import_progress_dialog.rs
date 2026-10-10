@@ -7,7 +7,7 @@ use pigoune_core::ImportProgress;
 type CancelRequestedCallback = Box<dyn Fn()>;
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
 
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -24,6 +24,7 @@ mod imp {
         #[template_child]
         pub cancel_button: TemplateChild<gtk::Button>,
         pub on_cancel_requested: RefCell<Option<CancelRequestedCallback>>,
+        pub announced_milestone: Cell<usize>,
     }
 
     #[glib::object_subclass]
@@ -71,15 +72,19 @@ impl PigouneImportProgressDialog {
             imp.progress_bar
                 .set_fraction(fraction(progress.done, progress.total));
         }
-        imp.status_label.set_label(
-            &ngettext(
-                "{done} file processed out of {total}",
-                "{done} files processed out of {total}",
-                u32::try_from(progress.done).unwrap_or(u32::MAX),
-            )
-            .replace("{done}", &progress.done.to_string())
-            .replace("{total}", &progress.total.to_string()),
-        );
+        let status = ngettext(
+            "{done} file processed out of {total}",
+            "{done} files processed out of {total}",
+            u32::try_from(progress.done).unwrap_or(u32::MAX),
+        )
+        .replace("{done}", &progress.done.to_string())
+        .replace("{total}", &progress.total.to_string());
+        imp.status_label.set_label(&status);
+        let milestone = milestone(progress.done, progress.total);
+        if milestone > imp.announced_milestone.get() {
+            imp.announced_milestone.set(milestone);
+            self.announce(&status, gtk::AccessibleAnnouncementPriority::Low);
+        }
     }
 
     #[template_callback]
@@ -99,10 +104,39 @@ impl Default for PigouneImportProgressDialog {
     }
 }
 
+const MILESTONES: usize = 4;
+
+fn milestone(done: usize, total: usize) -> usize {
+    if total == 0 {
+        return 0;
+    }
+    (done.min(total) * MILESTONES) / total
+}
+
 #[expect(
     clippy::cast_precision_loss,
     reason = "a progress bar does not need exact counts beyond 2^52 files"
 )]
 fn fraction(done: usize, total: usize) -> f64 {
     done as f64 / total as f64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::milestone;
+
+    #[test]
+    fn progress_is_announced_by_quarters() {
+        assert_eq!(milestone(0, 100), 0);
+        assert_eq!(milestone(24, 100), 0);
+        assert_eq!(milestone(25, 100), 1);
+        assert_eq!(milestone(74, 100), 2);
+        assert_eq!(milestone(100, 100), 4);
+    }
+
+    #[test]
+    fn an_unknown_or_overshot_total_never_panics() {
+        assert_eq!(milestone(5, 0), 0);
+        assert_eq!(milestone(9, 4), 4);
+    }
 }

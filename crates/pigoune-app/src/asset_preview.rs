@@ -291,6 +291,9 @@ mod imp {
                 glib::Propagation::Stop
             });
             class.add_binding(gdk::Key::Delete, gdk::ModifierType::empty(), |preview| {
+                if preview.focus_is_in_details() {
+                    return glib::Propagation::Proceed;
+                }
                 if preview.imp().actionable.get() {
                     let _ = preview.activate_action("win.trash-selected", None);
                 }
@@ -865,12 +868,18 @@ impl PigouneAssetPreview {
         self.imp().details_slot.add_controller(panel_click);
     }
 
+    fn focus_is_in_details(&self) -> bool {
+        self.root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| focus.is_ancestor(&*self.imp().details_slot))
+    }
+
     fn leave_panel_controls(&self) {
         let focus = self.root().and_then(|root| root.focus());
         let Some(focus) = focus else {
             return;
         };
-        let in_panel = focus.is_ancestor(&*self.imp().details_slot);
+        let in_panel = self.focus_is_in_details();
         let typing = focus.is::<gtk::Text>() || focus.is::<gtk::TextView>();
         if in_panel && !typing {
             self.grab_focus();

@@ -250,7 +250,8 @@ ses critères.
   minimale : les vignettes grandissent légèrement pour que chaque rangée occupe toute la
   largeur de la fenêtre.
 - Triez la grille par date d'ajout, nom, type, dimensions ou poids avec le bouton de tri.
-- Les GIF, PNG et WebP animés s'animent au survol.
+- Les GIF, PNG et WebP animés s'animent au survol, sauf si votre système est réglé pour réduire
+  les animations.
 - Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur un élément pour ouvrir l'**aperçu
   détaillé**. Zoomez avec la molette ou avec <kbd>+</kbd> et <kbd>-</kbd>, utilisez
   <kbd>0</kbd> pour ajuster à la fenêtre et <kbd>1</kbd> pour la taille réelle, faites glisser une image zoomée ou déplacez-la avec

@@ -306,7 +306,10 @@ impl PigouneAssetTile {
         let Some(asset) = imp.asset.borrow().clone() else {
             return;
         };
+        let system_allows =
+            gtk::Settings::default().is_none_or(|settings| settings.is_gtk_enable_animations());
         if !imp.animates_on_hover.get()
+            || !system_allows
             || !asset.asset().is_animated
             || imp.animation.borrow().is_some()
         {
