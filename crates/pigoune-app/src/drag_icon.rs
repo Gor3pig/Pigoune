@@ -14,7 +14,7 @@ const SHADOW_BLUR: f32 = 10.0;
 const SHADOW_DROP: f32 = 3.0;
 
 const ICON_WIDTH: i32 = 360;
-const STACK_OPACITY: f64 = 0.7;
+const POINTER_GAP: f32 = 14.0;
 const CAPTION_CLASS: &str = "drag-caption";
 
 pub struct StackIcon {
@@ -45,8 +45,8 @@ pub fn stack_icon(
     let paintable = snapshot.to_paintable(Some(&graphene::Size::new(side, side)))?;
     Some(StackIcon {
         paintable,
-        hot_x: whole(center.x()),
-        hot_y: whole(center.y()),
+        hot_x: whole(MARGIN - POINTER_GAP),
+        hot_y: whole(MARGIN - POINTER_GAP),
     })
 }
 
@@ -67,7 +67,6 @@ pub fn icon_widget(icon: &StackIcon, caption: &gtk::Label) -> gtk::Widget {
     let picture = gtk::Picture::for_paintable(&icon.paintable);
     picture.set_can_shrink(false);
     picture.set_halign(gtk::Align::Center);
-    picture.set_opacity(STACK_OPACITY);
     let layout = gtk::Box::new(gtk::Orientation::Vertical, 0);
     layout.set_width_request(ICON_WIDTH);
     layout.append(&picture);
