@@ -113,7 +113,9 @@ Un tag est un seul mot de 20 caractères au plus : il décrit un élément en un
 réunir plusieurs mots, utilisez un tiret (*flat-design*). Une espace ou une virgule termine le
 tag en cours de saisie, ce qui permet d'en saisir plusieurs à la fois. Ajoutez des tags depuis le
 panneau de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
-droit, ou glissez des éléments sur un tag de la barre latérale. La barre latérale montre les
+droit, ou glissez des éléments sur un tag de la barre latérale. Gardez-les une seconde au-dessus d'un
+tag qui a des sous-tags : ils s'ouvrent, et vous pouvez déposer sur l'un d'eux ; la barre
+latérale revient ensuite à sa place. La barre latérale montre les
 tags en pastilles avec leur nombre d’éléments : cliquez sur l'une d'elles pour voir tous ses
 éléments, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
 **+ N autres** affiche la suite. Renommer un tag avec le nom d'un autre les fusionne.

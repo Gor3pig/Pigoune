@@ -100,7 +100,8 @@ A tag is a single word of up to 20 characters: it describes assets in one keywor
 several words, use a hyphen (*flat-design*). A space or a comma ends the tag you are typing, so
 you can enter several at once. Add tags from the details panel with the
 **+** button next to the tags, with **Add a Tag…** in the right-click menu, or drag assets onto
-a tag in the sidebar. The sidebar shows tags as pills with their number of assets: click one
+a tag in the sidebar. Keep them over a tag that has sub-tags for a second and its sub-tags
+open, so you can drop them on one; the sidebar goes back to where it was afterwards. The sidebar shows tags as pills with their number of assets: click one
 to see all its assets, or right-click it to rename or delete it. Beyond twelve tags, **+ N
 others** shows the rest. Renaming a tag to the name of another one merges them.
 

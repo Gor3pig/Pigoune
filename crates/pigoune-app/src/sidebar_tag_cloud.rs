@@ -1,5 +1,6 @@
 use std::cell::Cell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
@@ -17,6 +18,8 @@ use crate::tag_tree;
 const MOST_PILLS: usize = 12;
 const PILL_SPACING: i32 = 4;
 const SELECTED: &str = "selected";
+const OPENING_DELAY: Duration = Duration::from_secs(1);
+const PEEK_MOVEMENT: f64 = 12.0;
 const EMPTY: &str = "empty";
 const DROP_HIGHLIGHT: &str = "drop-highlight";
 
@@ -58,6 +61,10 @@ mod imp {
         pub level: Cell<Option<TagId>>,
         pub show_all: Cell<bool>,
         pub place: RefCell<Option<super::SharedCloudPlace>>,
+        pub opening: RefCell<Option<glib::SourceId>>,
+        pub peeking: Cell<bool>,
+        pub pointer: Cell<(f64, f64)>,
+        pub peek_origin: Cell<Option<(f64, f64)>>,
     }
 
     #[glib::object_subclass]
@@ -184,12 +191,94 @@ impl PigouneSidebarTagCloud {
 
     fn follow(&self, selected: Option<TagId>) -> bool {
         let imp = self.imp();
+        if imp.peeking.replace(false) {
+            self.set_height_request(-1);
+        }
         let wanted = selected
             .filter(|tag| self.knows(*tag))
             .and_then(|tag| self.level_of(tag));
         let changed = imp.level.get() != wanted;
         imp.level.set(wanted);
         changed
+    }
+
+    fn watch_hover_to_open(&self, widget: &impl IsA<gtk::Widget>, level: Option<TagId>) {
+        let motion = gtk::DropControllerMotion::new();
+        motion.connect_enter(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |motion, _, _| {
+                let carries_assets = motion
+                    .drop()
+                    .is_some_and(|drop| drop.formats().contains_type(DraggedAssets::static_type()));
+                if carries_assets {
+                    cloud.schedule_peek(level);
+                }
+            }
+        ));
+        motion.connect_leave(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |_| cloud.cancel_opening()
+        ));
+        widget.add_controller(motion);
+    }
+
+    fn schedule_peek(&self, level: Option<TagId>) {
+        self.cancel_opening();
+        let imp = self.imp();
+        if imp.level.get() == level {
+            return;
+        }
+        let cloud = self.downgrade();
+        let opening = glib::timeout_add_local_once(OPENING_DELAY, move || {
+            if let Some(cloud) = cloud.upgrade() {
+                cloud.imp().opening.take();
+                if cloud.pointer_moved_since_peek() {
+                    cloud.peek(level);
+                }
+            }
+        });
+        imp.opening.replace(Some(opening));
+    }
+
+    fn cancel_opening(&self) {
+        if let Some(opening) = self.imp().opening.take() {
+            opening.remove();
+        }
+    }
+
+    fn pointer_moved_since_peek(&self) -> bool {
+        let imp = self.imp();
+        imp.peek_origin.get().is_none_or(|(x, y)| {
+            let (now_x, now_y) = imp.pointer.get();
+            (now_x - x).hypot(now_y - y) >= PEEK_MOVEMENT
+        })
+    }
+
+    fn peek(&self, level: Option<TagId>) {
+        let imp = self.imp();
+        imp.peek_origin.set(Some(imp.pointer.get()));
+        if !imp.peeking.get() {
+            let row_height = self.parent().map_or(self.height(), |row| row.height());
+            self.set_height_request(row_height);
+        }
+        imp.level.set(level);
+        imp.peeking.set(true);
+        if let Some(sidebar) = self.sidebar() {
+            sidebar.assets_hovered(None);
+        }
+        self.rebuild();
+    }
+
+    fn end_peek(&self) {
+        self.cancel_opening();
+        let imp = self.imp();
+        imp.peek_origin.set(None);
+        if imp.peeking.get() {
+            self.follow(imp.selected.get());
+            self.rebuild();
+        }
     }
 
     fn mark_selected(&self) {
@@ -293,6 +382,7 @@ impl PigouneSidebarTagCloud {
             }
         ));
         self.accept_tag_drops(&button, None);
+        self.watch_hover_to_open(&button, None);
         button
     }
 
@@ -315,6 +405,7 @@ impl PigouneSidebarTagCloud {
         Self::rename_on_f2(&button, id);
         self.accept_drops(&button, id);
         self.accept_tag_drops(&button, Some(id));
+        self.watch_hover_to_open(&button, Some(id));
         button
     }
 
@@ -370,6 +461,9 @@ impl PigouneSidebarTagCloud {
         self.accept_drops(&pill, id);
         Self::offer_tag_drag(&pill, id);
         self.accept_tag_drops(&pill, Some(id));
+        if has_children {
+            self.watch_hover_to_open(&pill, Some(id));
+        }
         pill
     }
 
@@ -625,6 +719,18 @@ impl PigouneSidebarTagCloud {
         ));
         let menu = gtk::PopoverMenu::builder().has_arrow(false).build();
         menu.set_parent(self);
+        let leaving = gtk::DropControllerMotion::new();
+        leaving.connect_motion(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |_, x, y| cloud.imp().pointer.set((x, y))
+        ));
+        leaving.connect_leave(glib::clone!(
+            #[weak(rename_to = cloud)]
+            self,
+            move |_| cloud.end_peek()
+        ));
+        self.add_controller(leaving);
         self.append(&crumbs);
         self.append(&wrap);
         self.append(&more);
