@@ -714,61 +714,81 @@ fn set_part<Widget>(cell: &std::cell::OnceCell<Widget>, widget: Widget) {
 }
 
 pub fn tag_menu(tag: &str) -> gio::Menu {
-    let menu = gio::Menu::new();
-    menu.append(
-        Some(&gettext("Rename…")),
-        Some(&format!("win.rename-tag::{tag}")),
-    );
-    menu.append(
+    let creating = gio::Menu::new();
+    creating.append(
         Some(&gettext("New Sub-tag…")),
         Some(&format!("win.new-sub-tag::{tag}")),
     );
-    menu.append(
+    creating.append(
+        Some(&gettext("Rename…")),
+        Some(&format!("win.rename-tag::{tag}")),
+    );
+    let reorganizing = gio::Menu::new();
+    reorganizing.append(
         Some(&gettext("Move to…")),
         Some(&format!("win.move-tag::{tag}")),
     );
-    menu.append(
+    reorganizing.append(
         Some(&gettext("Merge into…")),
         Some(&format!("win.merge-tag::{tag}")),
     );
-    menu.append(
+    let discarding = gio::Menu::new();
+    discarding.append(
         Some(&gettext("Delete…")),
         Some(&format!("win.delete-tag::{tag}")),
     );
+    let menu = gio::Menu::new();
+    menu.append_section(None, &creating);
+    menu.append_section(None, &reorganizing);
+    menu.append_section(None, &discarding);
     menu
 }
 
 fn smart_collection_menu(collection: &str) -> gio::Menu {
-    let menu = gio::Menu::new();
-    menu.append(
+    let editing = gio::Menu::new();
+    editing.append(
         Some(&gettext("Edit…")),
         Some(&format!("win.edit-smart-collection::{collection}")),
     );
-    menu.append(
+    let discarding = gio::Menu::new();
+    discarding.append(
         Some(&gettext("Delete…")),
         Some(&format!("win.delete-smart-collection::{collection}")),
     );
+    let menu = gio::Menu::new();
+    menu.append_section(None, &editing);
+    menu.append_section(None, &discarding);
     menu
 }
 
 fn collection_menu(collection: CollectionId) -> gio::Menu {
-    let menu = gio::Menu::new();
-    menu.append(
+    let creating = gio::Menu::new();
+    creating.append(
         Some(&gettext("New Sub-collection…")),
         Some(&format!("win.new-subcollection::{collection}")),
     );
-    menu.append(
+    creating.append(
         Some(&gettext("Rename…")),
         Some(&format!("win.rename-collection::{collection}")),
     );
-    menu.append(
+    creating.append(
         Some(&gettext("Customize…")),
         Some(&format!("win.customize-collection::{collection}")),
     );
-    menu.append(
+    let reorganizing = gio::Menu::new();
+    reorganizing.append(
+        Some(&gettext("Move to…")),
+        Some(&format!("win.move-collection::{collection}")),
+    );
+    let discarding = gio::Menu::new();
+    discarding.append(
         Some(&gettext("Delete…")),
         Some(&format!("win.delete-collection::{collection}")),
     );
+    let menu = gio::Menu::new();
+    menu.append_section(None, &creating);
+    menu.append_section(None, &reorganizing);
+    menu.append_section(None, &discarding);
     menu
 }
 

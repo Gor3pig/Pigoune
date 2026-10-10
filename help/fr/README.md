@@ -78,7 +78,9 @@ une collection de la barre latérale.
 Les collections fonctionnent comme des dossiers et peuvent contenir d'autres collections.
 Créez-en une avec le bouton **+** à côté de **Collections**, dans la barre latérale. Un clic
 droit sur une collection permet d'y créer une sous-collection, de la renommer
-(<kbd>F2</kbd>), de la personnaliser ou de la supprimer.
+(<kbd>F2</kbd>), de la personnaliser, de la déplacer dans une autre collection ou au premier
+niveau avec **Déplacer vers…**, ou de la supprimer. Le menu est présenté de la même façon pour les
+tags.
 
 - **Personnalisez** une collection pour lui donner sa propre icône et sa propre couleur dans la
   barre latérale : clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis

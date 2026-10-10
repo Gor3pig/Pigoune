@@ -4,7 +4,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib};
-use pigoune_core::{CollectionId, CollectionPath};
+use pigoune_core::{CollectionId, CollectionPath, comparable};
 
 use crate::collection_choice::{self, path_label};
 
@@ -15,8 +15,9 @@ struct Chooser {
     no_choice_label: gtk::Label,
     all: Vec<CollectionPath>,
     held_by_all: Vec<CollectionId>,
-    shown: RefCell<Vec<CollectionId>>,
-    on_chosen: Box<dyn Fn(CollectionId)>,
+    top_level: Option<String>,
+    shown: RefCell<Vec<Option<CollectionId>>>,
+    on_chosen: Box<dyn Fn(Option<CollectionId>)>,
 }
 
 pub fn present(
@@ -25,6 +26,21 @@ pub fn present(
     all: Vec<CollectionPath>,
     held_by_all: Vec<CollectionId>,
     on_chosen: impl Fn(CollectionId) + 'static,
+) {
+    present_with_top_level(parent, title, all, held_by_all, None, move |chosen| {
+        if let Some(collection) = chosen {
+            on_chosen(collection);
+        }
+    });
+}
+
+pub fn present_with_top_level(
+    parent: &impl IsA<gtk::Widget>,
+    title: &str,
+    all: Vec<CollectionPath>,
+    held_by_all: Vec<CollectionId>,
+    top_level: Option<String>,
+    on_chosen: impl Fn(Option<CollectionId>) + 'static,
 ) {
     let search = gtk::SearchEntry::builder()
         .placeholder_text(gettext("Search a Collection"))
@@ -75,6 +91,7 @@ pub fn present(
         no_choice_label,
         all,
         held_by_all,
+        top_level,
         shown: RefCell::new(Vec::new()),
         on_chosen: Box::new(on_chosen),
     });
@@ -134,12 +151,24 @@ fn connect(chooser: &Rc<Chooser>) {
 impl Chooser {
     fn refresh(&self) {
         self.choices.remove_all();
-        self.no_choice_label.set_label(&if self.all.is_empty() {
-            gettext("No collections yet. Create one with the “+” button in the sidebar.")
-        } else {
-            gettext("No collection found")
-        });
+        self.no_choice_label
+            .set_label(&if self.all.is_empty() && self.top_level.is_none() {
+                gettext("No collections yet. Create one with the “+” button in the sidebar.")
+            } else {
+                gettext("No collection found")
+            });
         let found = collection_choice::choices(&self.all, &self.search.text(), &self.held_by_all);
+        let mut shown: Vec<Option<CollectionId>> = Vec::new();
+        let typed = comparable(self.search.text().trim());
+        if let Some(label) = self
+            .top_level
+            .as_ref()
+            .filter(|label| comparable(label).contains(&typed))
+        {
+            self.choices
+                .append(&gtk::Label::builder().label(label).xalign(0.0).build());
+            shown.push(None);
+        }
         for path in &found {
             let label = gtk::Label::builder()
                 .label(path_label(path))
@@ -149,15 +178,15 @@ impl Chooser {
                 .build();
             self.choices.append(&label);
         }
-        self.shown
-            .replace(found.iter().map(|path| path.id).collect());
+        shown.extend(found.iter().map(|path| Some(path.id)));
+        self.shown.replace(shown);
     }
 
     fn choose(&self, index: usize) {
-        let Some(id) = self.shown.borrow().get(index).copied() else {
+        let Some(chosen) = self.shown.borrow().get(index).copied() else {
             return;
         };
         self.dialog.close();
-        (self.on_chosen)(id);
+        (self.on_chosen)(chosen);
     }
 }

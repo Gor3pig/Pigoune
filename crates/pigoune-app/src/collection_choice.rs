@@ -1,4 +1,4 @@
-use pigoune_core::{CollectionId, CollectionPath, comparable};
+use pigoune_core::{Collection, CollectionId, CollectionPath, comparable};
 
 const PATH_SEPARATOR: &str = " › ";
 
@@ -18,11 +18,79 @@ pub fn choices<'a>(
         .collect()
 }
 
+pub fn unavailable_destinations(
+    collections: &[Collection],
+    moving: CollectionId,
+) -> Vec<CollectionId> {
+    let mut unavailable = vec![moving];
+    let mut index = 0;
+    while index < unavailable.len() {
+        let parent = unavailable[index];
+        unavailable.extend(
+            collections
+                .iter()
+                .filter(|collection| collection.parent == Some(parent))
+                .map(|collection| collection.id),
+        );
+        index += 1;
+    }
+    unavailable.extend(
+        collections
+            .iter()
+            .find(|collection| collection.id == moving)
+            .and_then(|collection| collection.parent),
+    );
+    unavailable
+}
+
 #[cfg(test)]
 mod tests {
-    use pigoune_core::{CollectionId, CollectionPath};
+    use pigoune_core::{Collection, CollectionId, CollectionLook, CollectionPath};
 
-    use super::{choices, path_label};
+    use super::{choices, path_label, unavailable_destinations};
+
+    fn id(number: u8) -> CollectionId {
+        CollectionId::parse(&format!("00000000-0000-7000-8000-{number:012}")).expect("id")
+    }
+
+    fn collection(number: u8, parent: Option<u8>) -> Collection {
+        Collection {
+            id: id(number),
+            name: format!("Collection {number}"),
+            parent: parent.map(id),
+            position: 0,
+            created_at_unix_ms: 0,
+            look: CollectionLook::default(),
+        }
+    }
+
+    #[test]
+    fn a_collection_cannot_go_into_itself_its_descendants_or_its_own_parent() {
+        let all = [
+            collection(1, None),
+            collection(2, Some(1)),
+            collection(3, Some(2)),
+            collection(4, Some(2)),
+            collection(5, None),
+        ];
+        let unavailable = unavailable_destinations(&all, id(2));
+        for blocked in [1, 2, 3, 4] {
+            assert!(unavailable.contains(&id(blocked)), "{blocked}");
+        }
+        assert!(!unavailable.contains(&id(5)));
+    }
+
+    #[test]
+    fn a_top_level_collection_blocks_only_itself_and_what_it_holds() {
+        let all = [
+            collection(1, None),
+            collection(2, Some(1)),
+            collection(3, None),
+        ];
+        let unavailable = unavailable_destinations(&all, id(1));
+        assert!(unavailable.contains(&id(1)) && unavailable.contains(&id(2)));
+        assert!(!unavailable.contains(&id(3)));
+    }
 
     fn path(number: u8, names: &[&str]) -> CollectionPath {
         CollectionPath {

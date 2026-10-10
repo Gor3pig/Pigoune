@@ -18,6 +18,7 @@ use crate::asset_colors;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::clipboard_content;
+use crate::collection_choice;
 use crate::collection_chooser;
 use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_look_dialog::PigouneCollectionLookDialog;
@@ -87,6 +88,7 @@ const NEW_COLLECTION_ACTION: &str = "win.new-collection";
 const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
 const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
 const CUSTOMIZE_COLLECTION_ACTION: &str = "win.customize-collection";
+const MOVE_COLLECTION_ACTION: &str = "win.move-collection";
 const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
 const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
@@ -128,7 +130,7 @@ const SELECT_ALL_ACTION: &str = "win.select-all";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 24] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 25] = [
     SET_WALLPAPER_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
@@ -143,6 +145,7 @@ const OPEN_LIBRARY_ACTIONS: [&str; 24] = [
     NEW_SUBCOLLECTION_ACTION,
     RENAME_COLLECTION_ACTION,
     CUSTOMIZE_COLLECTION_ACTION,
+    MOVE_COLLECTION_ACTION,
     DELETE_COLLECTION_ACTION,
     TOGGLE_FAVORITE_ACTION,
     RENAME_TAG_ACTION,
@@ -212,7 +215,7 @@ mod imp {
         DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
         IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, MERGE_TAG_ACTION,
-        MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
+        MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
         NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
         PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
@@ -336,6 +339,15 @@ mod imp {
             |window, _, parameter| {
                 if let Some(id) = collection_parameter(parameter) {
                     window.ask_collection_look(id);
+                }
+            },
+        );
+        class.install_action(
+            MOVE_COLLECTION_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(id) = collection_parameter(parameter) {
+                    window.ask_collection_parent(id);
                 }
             },
         );
@@ -4754,6 +4766,69 @@ impl PigouneWindow {
         );
         alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
         alert.present(Some(self));
+    }
+
+    fn ask_collection_parent(&self, id: CollectionId) {
+        let Some(name) = self.collection_name(id) else {
+            return;
+        };
+        let read = self.imp().library.borrow().as_ref().map(|library| {
+            Ok::<_, LibraryError>((library.visible_collections()?, library.collection_paths()?))
+        });
+        let Some(Ok((collections, paths))) = read else {
+            return;
+        };
+        let has_parent = collections
+            .iter()
+            .any(|collection| collection.id == id && collection.parent.is_some());
+        let unavailable = collection_choice::unavailable_destinations(&collections, id);
+        let top_level = has_parent.then(|| gettext("Top Level"));
+        collection_chooser::present_with_top_level(
+            self,
+            &gettext("Move the Collection “{name}”").replace("{name}", &name),
+            paths,
+            unavailable,
+            top_level,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |parent| window.move_collection(id, parent)
+            ),
+        );
+    }
+
+    fn move_collection(&self, id: CollectionId, parent: Option<CollectionId>) {
+        let name = self.collection_name(id).unwrap_or_default();
+        let parent_name = parent.and_then(|parent| self.collection_name(parent));
+        let applied = self.change_library(|library| {
+            library.apply_collection_command(&CollectionCommand::Move { id, parent })?;
+            Ok::<_, pigoune_core::CollectionError>(ancestors(library, parent))
+        });
+        match applied {
+            Some(Ok(reveal)) => {
+                self.refresh_sidebar_revealing(reveal);
+                self.refresh_grid();
+                let text = match parent_name {
+                    Some(parent_name) => {
+                        gettext("The collection “{name}” was moved into “{parent}”.")
+                            .replace("{name}", &name)
+                            .replace("{parent}", &parent_name)
+                    }
+                    None => gettext("The collection “{name}” was moved to the top level.")
+                        .replace("{name}", &name),
+                };
+                self.show_undoable_toast(&text);
+            }
+            Some(Err(error)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Move the Collection")),
+                    Some(&error_messages::describe_collection(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
     }
 
     fn ask_collection_name(&self, id: CollectionId) {

@@ -69,7 +69,8 @@ files directly onto **All**, **Unclassified** or a collection in the sidebar.
 
 Collections work like folders, and can contain other collections. Create one with the **+**
 button next to **Collections** in the sidebar. Right-click a collection to create a
-sub-collection, rename it (<kbd>F2</kbd>), customize it or delete it.
+sub-collection, rename it (<kbd>F2</kbd>), customize it, move it into another collection or
+to the top level with **Move to…**, or delete it. The menu is laid out the same way for tags.
 
 - **Customize** a collection to give it its own icon and color in the sidebar: right-click it,
   choose **Customize…**, pick a color and an icon, then **Save**. **Default** brings back the
