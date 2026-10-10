@@ -1243,12 +1243,6 @@ fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
     let viewing = gio::Menu::new();
     viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
     viewing.append(Some(&gettext("Show in Files")), Some("win.show-in-files"));
-    if editing {
-        viewing.append(
-            Some(&gettext("Frame and Set as Wallpaper…")),
-            Some("win.set-wallpaper"),
-        );
-    }
     let sharing = gio::Menu::new();
     let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
     copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));
@@ -1258,6 +1252,12 @@ fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
         Some(&gettext("Convert and Export…")),
         Some("win.export-selected-as"),
     );
+    if editing {
+        sharing.append(
+            Some(&gettext("Frame and Set as Wallpaper…")),
+            Some("win.set-wallpaper"),
+        );
+    }
     let menu = gio::Menu::new();
     menu.append_section(None, &viewing);
     menu.append_section(None, &sharing);

@@ -288,9 +288,9 @@ ses critères.
   d'elles pour l'afficher. Elle est masquée en plein écran et dans les fenêtres étroites ;
   désactivez-la avec **Afficher la bande de vignettes** dans le menu du zoom.
 - L'étoile à côté du bouton de retour ajoute l’élément affiché à vos favoris, et un clic droit
-  sur l'image propose **Ouvrir avec…**, **Cadrer et définir comme fond d'écran…**, **Copier**,
-  **Exporter vers…**, **Convertir et exporter…**, **Ajouter aux favoris** et **Mettre à la corbeille** pour
-  elle. <kbd>Suppr</kbd> envoie aussi l’élément affiché à la corbeille, et l'aperçu passe à la
+  sur l'image propose **Ouvrir avec…**, **Afficher dans Fichiers**, **Copier**, **Exporter vers…**,
+  **Convertir et exporter…**, **Cadrer et définir comme fond d'écran…**, **Ajouter aux favoris** et
+  **Mettre à la corbeille** pour elle. <kbd>Suppr</kbd> envoie aussi l’élément affiché à la corbeille, et l'aperçu passe à la
   suivante.
 
 ## Réutiliser vos éléments

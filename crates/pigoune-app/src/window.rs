@@ -2146,17 +2146,6 @@ impl PigouneWindow {
             viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
             viewing.append(Some(&gettext("Show in Files")), Some(SHOW_IN_FILES_ACTION));
         }
-        if selected.len() == 1 && !in_trash {
-            viewing.append(
-                Some(&gettext("Frame and Set as Wallpaper…")),
-                Some(SET_WALLPAPER_ACTION),
-            );
-            viewing.append_item(&menu_item(
-                &gettext("Rename…"),
-                RENAME_ASSET_ACTION,
-                Some("F2"),
-            ));
-        }
         let sharing = gio::Menu::new();
         sharing.append_item(&menu_item(
             &gettext("Copy"),
@@ -2168,6 +2157,12 @@ impl PigouneWindow {
             Some(&gettext("Convert and Export…")),
             Some(EXPORT_SELECTED_AS_ACTION),
         );
+        if selected.len() == 1 && !in_trash {
+            sharing.append(
+                Some(&gettext("Frame and Set as Wallpaper…")),
+                Some(SET_WALLPAPER_ACTION),
+            );
+        }
         if in_trash {
             let restoring = gio::Menu::new();
             restoring.append(Some(&gettext("_Restore")), Some(RESTORE_SELECTED_ACTION));
@@ -2178,6 +2173,13 @@ impl PigouneWindow {
             return menu.upcast();
         }
         let organizing = gio::Menu::new();
+        if selected.len() == 1 {
+            organizing.append_item(&menu_item(
+                &gettext("Rename…"),
+                RENAME_ASSET_ACTION,
+                Some("F2"),
+            ));
+        }
         let favorite_label = if selected.iter().all(PigouneAssetObject::favorite) {
             gettext("Remove from Favorites")
         } else {

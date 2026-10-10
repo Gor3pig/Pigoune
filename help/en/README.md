@@ -254,8 +254,8 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   show it. It is hidden in full screen and in narrow windows; turn it off with **Show Thumbnail
   Strip** in the zoom menu.
 - The star next to the back button adds the shown asset to your favorites, and a right-click on
-  the image offers **Open With…**, **Frame and Set as Wallpaper…**, **Copy**, **Export To…**, **Export
-  As…**, **Add to Favorites** and **Move to Trash** for it. <kbd>Delete</kbd> also moves the shown
+  the image offers **Open With…**, **Show in Files**, **Copy**, **Export To…**, **Convert and
+  Export…**, **Frame and Set as Wallpaper…**, **Add to Favorites** and **Move to Trash** for it. <kbd>Delete</kbd> also moves the shown
   asset to the trash, and the preview goes on with the next one.
 
 ## Reusing assets
