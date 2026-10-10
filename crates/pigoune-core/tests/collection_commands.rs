@@ -884,3 +884,16 @@ fn restoring_a_collection_without_a_clash_keeps_its_name() {
     assert_eq!(fixture.name_of(brands), "Marques");
     assert_eq!(fixture.name_of(tech), "Tech");
 }
+
+#[test]
+fn sibling_collections_cannot_share_a_name_written_with_other_accent_forms() {
+    let mut fixture = Fixture::new();
+    fixture.collection("Caf\u{e9}", None);
+
+    let result = fixture.library.create_collection("Cafe\u{301}", None);
+
+    assert!(
+        matches!(result, Err(CollectionError::NameTaken(_))),
+        "{result:?}"
+    );
+}

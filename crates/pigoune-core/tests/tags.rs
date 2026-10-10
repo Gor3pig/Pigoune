@@ -404,3 +404,17 @@ fn an_old_tag_that_breaks_the_rule_stays_usable() {
 
     assert_eq!(fixture.shown(old), set(&[other]));
 }
+
+#[test]
+fn composed_and_decomposed_accents_name_the_same_tag() {
+    let mut fixture = Fixture::new();
+    let first = fixture.import("red-dot.png");
+    let second = fixture.import("dark-circle.svg");
+
+    let composed = fixture.tag(&[first], "caf\u{e9}");
+    let decomposed = fixture.tag(&[second], "cafe\u{301}");
+
+    assert_eq!(composed, decomposed);
+    assert_eq!(fixture.all_names().len(), 1);
+    assert_eq!(fixture.count(composed), 2);
+}

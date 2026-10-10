@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use super::layout::DATABASE_FILE_NAME;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlannedFile {
     pub source: PathBuf,
@@ -19,6 +21,7 @@ impl ImportPlan {
         let mut plan = Self::default();
         for path in paths {
             match fs::metadata(path) {
+                Ok(metadata) if metadata.is_dir() && is_library_folder(path) => {}
                 Ok(metadata) if metadata.is_dir() => {
                     plan.add_folder(path, &folder_chain(&[], root_folder_name(path)));
                 }
@@ -46,6 +49,7 @@ impl ImportPlan {
                 continue;
             }
             match entry.file_type() {
+                Ok(kind) if kind.is_dir() && is_library_folder(&entry.path()) => {}
                 Ok(kind) if kind.is_dir() => {
                     self.add_folder(&entry.path(), &folder_chain(folders, Some(name)));
                 }
@@ -76,6 +80,10 @@ fn folder_chain(parents: &[String], name: Option<String>) -> Vec<String> {
     let mut chain = parents.to_vec();
     chain.extend(name.filter(|name| !name.trim().is_empty()));
     chain
+}
+
+fn is_library_folder(folder: &Path) -> bool {
+    folder.join(DATABASE_FILE_NAME).is_file()
 }
 
 fn is_hidden(name: &str) -> bool {

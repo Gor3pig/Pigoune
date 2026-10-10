@@ -237,7 +237,7 @@ fn searchable_text(asset: &Asset, tags: &[String]) -> String {
 pub fn comparable(text: &str) -> String {
     let mut plain = String::with_capacity(text.len());
     for character in text
-        .nfd()
+        .nfkd()
         .filter(|character| !is_combining_mark(*character))
         .flat_map(char::to_lowercase)
     {
@@ -257,6 +257,7 @@ fn special_letter(character: char) -> Option<&'static str> {
         'ø' => Some("o"),
         'ł' => Some("l"),
         'đ' => Some("d"),
+        'ı' => Some("i"),
         _ => None,
     }
 }
@@ -267,6 +268,13 @@ mod tests {
         MAX_QUERY_WORDS, comparable, query_groups, query_text, query_word_count, search_groups,
         search_words,
     };
+
+    #[test]
+    fn ligatures_and_the_dotless_i_are_folded() {
+        assert_eq!(comparable("ﬁle ﬂeur ﬃ"), "file fleur ffi");
+        assert_eq!(comparable("ISTANBUL ıspanak"), "istanbul ispanak");
+        assert_eq!(comparable("Ｆｕｌｌ"), "full");
+    }
 
     #[test]
     fn case_and_accents_are_ignored() {

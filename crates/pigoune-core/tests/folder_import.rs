@@ -566,3 +566,36 @@ fn folder_names(folder: &Path) -> Vec<String> {
         })
         .collect()
 }
+
+#[test]
+fn a_library_inside_an_imported_folder_is_left_alone() {
+    let mut fixture = Fixture::new();
+    let photos = fixture.folder("Photos");
+    fixture.sample("Photos/red.png", "red-dot.png");
+    let mut other = Library::create(&photos, "Old").expect("other library is created");
+    let elsewhere = fixture.sample("Elsewhere/blue.png", "dark-circle.svg");
+    other.import_file(&elsewhere, None).expect("asset is added");
+    drop(other);
+
+    let summary = fixture.import(&[photos], None);
+
+    assert_eq!(fixture.placements(), ["Photos/red.png"]);
+    assert_eq!(fixture.collection_paths(), ["Photos"]);
+    assert!(summary.unreadable.is_empty());
+}
+
+#[test]
+fn a_library_given_as_a_source_imports_nothing() {
+    let mut fixture = Fixture::new();
+    let photos = fixture.folder("Photos");
+    let mut other = Library::create(&photos, "Old").expect("other library is created");
+    let elsewhere = fixture.sample("Elsewhere/blue.png", "dark-circle.svg");
+    other.import_file(&elsewhere, None).expect("asset is added");
+    let root = other.root().to_path_buf();
+    drop(other);
+
+    fixture.import(&[root], None);
+
+    assert!(fixture.placements().is_empty());
+    assert!(fixture.collection_paths().is_empty());
+}

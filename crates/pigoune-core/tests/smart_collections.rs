@@ -478,3 +478,14 @@ fn assets_outside_a_view_are_found_in_one_pass_for_every_kind_of_view() {
     assert_eq!(outside_favorites, vec![red, circle]);
     assert!(outside_all.is_empty());
 }
+
+#[test]
+fn smart_collections_cannot_share_a_name_written_with_other_accent_forms() {
+    let mut fixture = Fixture::new();
+    fixture.save("Caf\u{e9}", &AssetFilter::default());
+
+    assert!(matches!(
+        fixture.refused("Cafe\u{301}"),
+        SmartCollectionError::NameTaken(_)
+    ));
+}

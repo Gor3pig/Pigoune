@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use rusqlite::{Connection, OptionalExtension, Row, params};
+use unicode_normalization::UnicodeNormalization;
 
 use super::{
     AssetId, CollectionCommand, CollectionError, CollectionId, Library, LibraryError, clock,
@@ -263,5 +264,5 @@ pub fn find_child_named(
 }
 
 pub fn comparable_name(name: &str) -> String {
-    name.trim().to_lowercase()
+    name.trim().nfc().collect::<String>().to_lowercase()
 }

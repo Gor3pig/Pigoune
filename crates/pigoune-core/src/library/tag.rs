@@ -1,4 +1,5 @@
 use rusqlite::{Connection, OptionalExtension, Row};
+use unicode_normalization::UnicodeNormalization;
 
 use super::{AssetId, Library, LibraryError, TagId};
 
@@ -72,7 +73,7 @@ impl Library {
 }
 
 pub fn normalized(name: &str) -> String {
-    name.trim().to_lowercase()
+    name.trim().nfc().collect::<String>().to_lowercase()
 }
 
 #[must_use]

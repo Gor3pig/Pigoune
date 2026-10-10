@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use rusqlite::{Connection, OptionalExtension, Row, params};
+use unicode_normalization::UnicodeNormalization;
 
 use super::view::AssetView;
 use super::{Asset, AssetFilter, Library, LibraryError, SmartCollectionId};
@@ -109,7 +110,7 @@ pub fn insert(connection: &Connection, collection: &SmartCollection) -> Result<(
 }
 
 pub fn normalized(name: &str) -> String {
-    name.trim().to_lowercase()
+    name.trim().nfc().collect::<String>().to_lowercase()
 }
 
 fn smart_collection_from_row(row: &Row<'_>) -> rusqlite::Result<SmartCollection> {
