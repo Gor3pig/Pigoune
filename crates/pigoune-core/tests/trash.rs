@@ -255,3 +255,29 @@ fn a_resource_can_be_imported_again_after_the_trash_is_emptied() {
     assert_ne!(again, asset);
     assert_eq!(fixture.shown(AssetView::All), [again]);
 }
+
+#[test]
+fn a_file_that_cannot_be_deleted_neither_keeps_its_record_nor_stops_the_others() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let mut fixture = Fixture::new();
+    let stuck = fixture.import("red-dot.png", None);
+    let other = fixture.import("dark-circle.svg", None);
+    let stuck_file = fixture.stored_file(stuck);
+    let other_file = fixture.stored_file(other);
+    fixture.trash(&[stuck, other]);
+    let folder = stuck_file.parent().expect("asset folder").to_path_buf();
+    fs::set_permissions(&folder, fs::Permissions::from_mode(0o555)).expect("permissions change");
+    let enforced = fs::write(folder.join("probe"), b"x").is_err();
+
+    let result = fixture.library.empty_trash();
+
+    fs::set_permissions(&folder, fs::Permissions::from_mode(0o755)).expect("permissions change");
+    if enforced {
+        assert_eq!(result.expect("trash is emptied"), 2);
+        assert!(fixture.library.asset(stuck).expect("read").is_none());
+        assert!(fixture.library.asset(other).expect("read").is_none());
+        assert!(!other_file.exists());
+        assert!(stuck_file.exists());
+    }
+}
