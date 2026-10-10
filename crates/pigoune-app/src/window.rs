@@ -154,12 +154,14 @@ const OPEN_LIBRARY_ACTIONS: [&str; 24] = [
     DELETE_SMART_COLLECTION_ACTION,
 ];
 
-const IMAGE_MIME_TYPES: [&str; 11] = [
+const IMAGE_MIME_TYPES: [&str; 13] = [
     "image/svg+xml",
     "image/png",
     "image/jpeg",
     "image/webp",
     "image/avif",
+    "image/heic",
+    "image/heif",
     "image/jxl",
     "image/gif",
     "image/tiff",

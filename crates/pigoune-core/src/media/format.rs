@@ -7,7 +7,9 @@ const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
 const BMP_INFO_HEADER_SIZES: [u32; 7] = [12, 40, 52, 56, 64, 108, 124];
 const AVIF_BRANDS: [&[u8]; 2] = [b"avif", b"avis"];
-const HEIC_BRANDS: [&[u8]; 6] = [b"heic", b"heix", b"heim", b"heis", b"hevc", b"hevx"];
+const HEIC_BRANDS: [&[u8]; 8] = [
+    b"heic", b"heix", b"heim", b"heis", b"hevc", b"hevx", b"hevm", b"hevs",
+];
 const BRAND_LENGTH: usize = 4;
 const UTF8_BYTE_ORDER_MARK: &[u8] = b"\xEF\xBB\xBF";
 
@@ -154,7 +156,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 19] = [
+        let cases: [(&[u8], AssetFormat); 20] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -167,6 +169,7 @@ mod tests {
             (b"\0\0\0\x18ftypheic\0\0\0\0mif1heic", AssetFormat::Heic),
             (b"\0\0\0\x18ftypmif1\0\0\0\0mif1heix", AssetFormat::Heic),
             (b"\0\0\0\x18ftyphevc\0\0\0\0hevcmsf1", AssetFormat::Heic),
+            (b"\0\0\0\x18ftyphevm\0\0\0\0mif1hevs", AssetFormat::Heic),
             (
                 b"\0\0\0\x20ftypmif1\0\0\0\0mif1miafavifheic",
                 AssetFormat::Avif,
