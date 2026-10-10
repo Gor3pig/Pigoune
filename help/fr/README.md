@@ -130,7 +130,8 @@ combien. Le même nom peut exister dans deux branches différentes, mais
 pas deux fois au même niveau. Faites un clic droit sur un tag pour **Nouveau sous-tag…**,
 **Déplacer vers…**, **Fusionner dans…** et **Supprimer…**, ou glissez une pastille sur un autre tag,
 sur un niveau du chemin ou sur **Tags** pour la déplacer. Supprimer un tag qui a des sous-tags
-permet de les supprimer aussi ou de les remonter d'un niveau, et chaque changement s'annule.
+permet de les supprimer aussi ou de les remonter d'un niveau, et chaque changement s'annule. Si vous supprimez le tag affiché, Pigoune affiche
+son parent, et l'annulation vous ramène sur le tag.
 Chercher le nom d'un parent trouve aussi les éléments de ses sous-tags. Une bibliothèque avec des
 tags imbriqués ne peut être ouverte que par Pigoune 2.5 ou plus récent ; vos tags actuels
 deviennent des tags de premier niveau, sans rien perdre.

@@ -287,6 +287,7 @@ mod imp {
         pub library: RefCell<Option<Library>>,
         pub screen: Cell<Option<Dimensions>>,
         pub fresh_change: Cell<Option<ChangeStamp>>,
+        pub view_to_restore: Cell<Option<(ChangeStamp, AssetView)>>,
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
         pub hovered_drop: Cell<Option<(AssetView, bool)>>,
@@ -2400,16 +2401,41 @@ impl PigouneWindow {
         }
     }
 
+    fn restore_view_after_undo(&self, undone: Option<ChangeStamp>) {
+        let imp = self.imp();
+        let Some((saved, view)) = imp.view_to_restore.get() else {
+            return;
+        };
+        if undone != Some(saved) {
+            return;
+        }
+        imp.view_to_restore.set(None);
+        self.go_to_view(view, Vec::new());
+    }
+
+    fn latest_change_stamp(&self) -> Option<ChangeStamp> {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(Library::latest_change)
+    }
+
     fn undo(&self) {
         if self.undo_typing() {
             return;
         }
+        let stamp = self.latest_change_stamp();
         let undone = self.change_library(|library| {
             library
                 .undo()
                 .map(|change| change.map(|change| undo_message::describe(&change, library)))
         });
+        let succeeded = matches!(undone, Some(Ok(Some(_))));
         self.show_undo_outcome(undone, true);
+        if succeeded {
+            self.restore_view_after_undo(stamp);
+        }
     }
 
     fn undo_change(&self, stamp: ChangeStamp) {
@@ -2418,7 +2444,11 @@ impl PigouneWindow {
                 .undo_change(stamp)
                 .map(|change| change.map(|change| undo_message::describe(&change, library)))
         });
+        let succeeded = matches!(undone, Some(Ok(Some(_))));
         self.show_undo_outcome(undone, false);
+        if succeeded {
+            self.restore_view_after_undo(Some(stamp));
+        }
     }
 
     fn show_undo_outcome(
@@ -4092,8 +4122,24 @@ impl PigouneWindow {
         } else {
             TagCommand::Delete { tag }
         };
+        let previous_view = self.imp().current_view.get();
+        let landing = self.view_after_deleting(tag, dissolve, previous_view);
+        let landing_name = landing.and_then(|view| match view {
+            AssetView::Tag(parent) => self.tag_name(parent),
+            _ => None,
+        });
         if !self.apply_tag_command(&command) {
             return;
+        }
+        if let Some(landing) = landing {
+            self.imp().current_view.set(landing);
+            self.remember_view(landing);
+            self.imp().view_to_restore.set(
+                self.imp()
+                    .fresh_change
+                    .get()
+                    .map(|stamp| (stamp, previous_view)),
+            );
         }
         self.refresh_assets();
         self.refresh_selected_tags();
@@ -4101,8 +4147,37 @@ impl PigouneWindow {
             (true, _) => gettext("The tag “{name}” was deleted and its sub-tags moved up."),
             (false, true) => gettext("The tag “{name}” and its sub-tags were deleted."),
             (false, false) => gettext("The tag “{name}” was deleted."),
+        }
+        .replace("{name}", &name);
+        let text = match (landing, landing_name) {
+            (_, Some(parent)) => {
+                format!(
+                    "{text} {}",
+                    gettext("Showing “{name}”.").replace("{name}", &parent)
+                )
+            }
+            (Some(_), None) => format!("{text} {}", gettext("Showing the whole library.")),
+            (None, _) => text,
         };
-        self.show_undoable_toast(&text.replace("{name}", &name));
+        self.show_undoable_toast(&text);
+    }
+
+    fn view_after_deleting(
+        &self,
+        tag: TagId,
+        dissolve: bool,
+        current: AssetView,
+    ) -> Option<AssetView> {
+        let library = self.imp().library.borrow();
+        let library = library.as_ref()?;
+        let tags = library.tags().ok()?;
+        let parent = tags.iter().find(|known| known.id == tag)?.parent;
+        let removed = if dissolve {
+            vec![tag]
+        } else {
+            tag_tree::descendants(&tags, tag)
+        };
+        displayed_view::view_after_tag_removal(current, &removed, parent)
     }
 
     fn ask_sub_tag_name(&self, parent: TagId) {
@@ -4244,9 +4319,17 @@ impl PigouneWindow {
     fn merge_tag(&self, from: TagId, into: TagId) {
         let from_name = self.tag_name(from).unwrap_or_default();
         let into_name = self.tag_name(into).unwrap_or_default();
+        let previous_view = self.imp().current_view.get();
         if self.apply_tag_command(&TagCommand::Merge { from, into }) {
-            if self.imp().current_view.get() == AssetView::Tag(from) {
+            if previous_view == AssetView::Tag(from) {
                 self.imp().current_view.set(AssetView::Tag(into));
+                self.remember_view(AssetView::Tag(into));
+                self.imp().view_to_restore.set(
+                    self.imp()
+                        .fresh_change
+                        .get()
+                        .map(|stamp| (stamp, previous_view)),
+                );
             }
             self.refresh_assets();
             self.refresh_selected_tags();
@@ -4949,10 +5032,20 @@ impl PigouneWindow {
                 "Assets moved to the trash can be restored from here.",
             )));
         } else if let AssetView::Tag(_) = view {
-            page.set_title(&gettext("No Asset Tagged “{name}”").replace("{name}", view_name));
-            page.set_description(Some(&gettext(
-                "Add this tag to assets from the details panel, or drag assets onto it.",
-            )));
+            if self.view_has_sub_tags(view) {
+                page.set_title(
+                    &gettext("Nothing Tagged “{name}” or Its Sub-tags")
+                        .replace("{name}", view_name),
+                );
+                page.set_description(Some(&gettext(
+                    "Add this tag or one of its sub-tags to assets from the details panel, or drag assets onto it.",
+                )));
+            } else {
+                page.set_title(&gettext("No Asset Tagged “{name}”").replace("{name}", view_name));
+                page.set_description(Some(&gettext(
+                    "Add this tag to assets from the details panel, or drag assets onto it.",
+                )));
+            }
         } else if let AssetView::Smart(_) = view {
             page.set_icon_name(Some("media-playlist-shuffle-symbolic"));
             page.set_title(&gettext("No Asset in “{name}”").replace("{name}", view_name));

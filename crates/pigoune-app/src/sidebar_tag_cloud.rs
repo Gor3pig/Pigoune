@@ -215,12 +215,11 @@ impl PigouneSidebarTagCloud {
             .collect();
         let selected = imp.selected.get();
         let hidden = tags.len().saturating_sub(MOST_PILLS);
-        let show_all = imp.show_all.get()
-            || hidden == 0
-            || tags
-                .iter()
-                .skip(MOST_PILLS)
-                .any(|tag| Some(tag.id) == selected);
+        let selected_hidden = tags
+            .iter()
+            .skip(MOST_PILLS)
+            .any(|tag| Some(tag.id) == selected);
+        let show_all = imp.show_all.get() || hidden == 0 || selected_hidden;
         let shown = if show_all { tags.len() } else { MOST_PILLS };
         let mut pills = Vec::new();
         for tag in tags.iter().take(shown) {
@@ -233,7 +232,7 @@ impl PigouneSidebarTagCloud {
         self.mark_selected();
         self.remember_place();
         let more = part(&imp.more);
-        more.set_visible(hidden > 0);
+        more.set_visible(shows_more_button(hidden, selected_hidden));
         more.set_label(&if show_all {
             gettext("Show Fewer")
         } else {
@@ -638,6 +637,10 @@ impl Default for PigouneSidebarTagCloud {
     }
 }
 
+fn shows_more_button(hidden: usize, selected_hidden: bool) -> bool {
+    hidden > 0 && !selected_hidden
+}
+
 fn mark_button(button: &gtk::Button, selected: bool) {
     if selected {
         button.add_css_class(SELECTED);
@@ -683,5 +686,17 @@ fn part<Widget: Clone>(cell: &std::cell::OnceCell<Widget>) -> Widget {
 fn set_part<Widget>(cell: &std::cell::OnceCell<Widget>, widget: Widget) {
     if cell.set(widget).is_err() {
         unreachable!("the tag cloud builds its parts once");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shows_more_button;
+
+    #[test]
+    fn the_more_button_is_shown_only_when_it_can_do_something() {
+        assert!(shows_more_button(3, false));
+        assert!(!shows_more_button(0, false));
+        assert!(!shows_more_button(3, true));
     }
 }

@@ -11,6 +11,19 @@ pub fn can_widen(view: AssetView) -> bool {
     )
 }
 
+pub fn view_after_tag_removal(
+    current: AssetView,
+    removed: &[TagId],
+    parent: Option<TagId>,
+) -> Option<AssetView> {
+    match current {
+        AssetView::Tag(shown) if removed.contains(&shown) => {
+            Some(parent.map_or(AssetView::All, AssetView::Tag))
+        }
+        _ => None,
+    }
+}
+
 pub fn still_exists(
     view: AssetView,
     collections: &[CollectionId],
@@ -143,6 +156,45 @@ mod tests {
             &[],
             &[smart_id]
         ));
+    }
+
+    fn tag_id(number: u8) -> TagId {
+        TagId::parse(&format!("00000000-0000-7000-8000-{number:012}")).expect("id")
+    }
+
+    #[test]
+    fn a_removed_tag_that_is_shown_falls_back_to_its_parent() {
+        let (animals, birds, hawks) = (tag_id(1), tag_id(2), tag_id(3));
+        assert_eq!(
+            view_after_tag_removal(AssetView::Tag(hawks), &[hawks], Some(birds)),
+            Some(AssetView::Tag(birds))
+        );
+        assert_eq!(
+            view_after_tag_removal(AssetView::Tag(hawks), &[birds, hawks], Some(animals)),
+            Some(AssetView::Tag(animals))
+        );
+    }
+
+    #[test]
+    fn a_removed_top_level_tag_falls_back_to_the_whole_library() {
+        let animals = tag_id(1);
+        assert_eq!(
+            view_after_tag_removal(AssetView::Tag(animals), &[animals], None),
+            Some(AssetView::All)
+        );
+    }
+
+    #[test]
+    fn a_view_that_survives_the_removal_is_left_alone() {
+        let (animals, birds) = (tag_id(1), tag_id(2));
+        assert_eq!(
+            view_after_tag_removal(AssetView::Tag(birds), &[animals], None),
+            None
+        );
+        assert_eq!(
+            view_after_tag_removal(AssetView::Favorites, &[animals], None),
+            None
+        );
     }
 
     #[test]

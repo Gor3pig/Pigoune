@@ -116,7 +116,8 @@ says how many. The same name can exist in two different
 branches, but not twice at the same level. Right-click a tag for **New Sub-tag…**, **Move to…**,
 **Merge into…** and **Delete…**, or drag a pill onto another tag, onto a level of the path, or onto
 **Tags** to move it. Deleting a tag that has sub-tags lets you delete them too or move them up one
-level, and every change can be undone. Searching a parent's name also finds the assets of its
+level, and every change can be undone. If you delete the tag you are looking at, Pigoune shows
+its parent instead, and undoing brings you back to the tag. Searching a parent's name also finds the assets of its
 sub-tags. A library with nested tags can only be opened by Pigoune 2.5 or later; your existing tags
 become first-level tags and nothing is lost.
 
