@@ -62,3 +62,19 @@ pub(super) fn forget_thumbnails(root: &Path, asset: AssetId) {
         let _ = fs::remove_file(size.path().join(layout::thumbnail_in_size_dir(asset)));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use super::TRASH_RETENTION;
+
+    #[test]
+    fn the_retention_matches_the_thirty_days_the_interface_announces() {
+        assert_eq!(
+            TRASH_RETENTION,
+            Duration::from_hours(30 * 24),
+            "update \"After 30 days\" in preferences-dialog.blp and the trash text in window.rs"
+        );
+    }
+}

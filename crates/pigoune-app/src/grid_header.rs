@@ -181,7 +181,10 @@ impl PigouneGridHeader {
         } else {
             imp.scope_button.add_css_class("here");
         }
-        imp.scope_button.set_tooltip_text(scope.detail.as_deref());
+        let shown_chars = usize::try_from(imp.scope_label.max_width_chars()).unwrap_or(0);
+        let full_label = (scope.label.chars().count() > shown_chars).then_some(&scope.label);
+        imp.scope_button
+            .set_tooltip_text(scope.detail.as_ref().or(full_label).map(String::as_str));
         imp.scope_button
             .update_property(&[gtk::accessible::Property::Description(
                 scope.detail.as_deref().unwrap_or(&scope.label),

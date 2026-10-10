@@ -60,6 +60,13 @@ pub fn reason(error: ConversionError) -> String {
     }
 }
 
+pub fn copy_failure_reason(error: &std::io::Error) -> String {
+    match error.kind() {
+        std::io::ErrorKind::NotFound => gettext("its file is missing from the library"),
+        _ => gettext("the file could not be copied"),
+    }
+}
+
 pub fn name_suffix(frame_number: Option<usize>, size: Option<&str>) -> Option<String> {
     let frame = frame_number
         .map(|number| gettext("frame-{number}").replace("{number}", &number.to_string()));
@@ -69,7 +76,21 @@ pub fn name_suffix(frame_number: Option<usize>, size: Option<&str>) -> Option<St
 
 #[cfg(test)]
 mod tests {
-    use super::name_suffix;
+    use std::io::{Error, ErrorKind};
+
+    use super::{copy_failure_reason, name_suffix};
+
+    #[test]
+    fn a_missing_file_is_told_apart_from_other_copy_failures() {
+        assert_eq!(
+            copy_failure_reason(&Error::from(ErrorKind::NotFound)),
+            "its file is missing from the library"
+        );
+        assert_eq!(
+            copy_failure_reason(&Error::from(ErrorKind::PermissionDenied)),
+            "the file could not be copied"
+        );
+    }
 
     #[test]
     fn the_frame_and_the_size_both_appear_in_the_name() {

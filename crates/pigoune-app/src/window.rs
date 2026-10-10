@@ -2590,9 +2590,7 @@ impl PigouneWindow {
                         .iter()
                         .map(|failure| conversion_report::Failure {
                             name: failure.display_name.clone(),
-                            reason: conversion_report::reason(
-                                crate::image_conversion::ConversionError::Unreadable,
-                            ),
+                            reason: conversion_report::copy_failure_reason(&failure.error),
                         })
                         .collect();
                     self.show_export_failures(&failures);
