@@ -117,12 +117,19 @@ fn dimensions(width: u32, height: u32) -> Dimensions {
 }
 
 fn icon_with_sides(sides: &[u8]) -> Vec<u8> {
+    const IMAGE: &[u8] = b"image";
     let count = u16::try_from(sides.len()).expect("few entries");
     let mut bytes = vec![0, 0, 1, 0];
     bytes.extend(count.to_le_bytes());
+    let mut offset = 6 + 16 * sides.len();
     for &side in sides {
-        bytes.extend([side, side]);
-        bytes.extend([0; 14]);
+        bytes.extend([side, side, 0, 0, 1, 0, 32, 0]);
+        bytes.extend(u32::try_from(IMAGE.len()).expect("small").to_le_bytes());
+        bytes.extend(u32::try_from(offset).expect("small").to_le_bytes());
+        offset += IMAGE.len();
+    }
+    for _ in sides {
+        bytes.extend_from_slice(IMAGE);
     }
     bytes
 }

@@ -6,7 +6,7 @@ const TIFF_SIGNATURES: [&[u8]; 4] = [b"II*\0", b"MM\0*", b"II+\0", b"MM\0+"];
 const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
 const BMP_INFO_HEADER_SIZES: [u32; 7] = [12, 40, 52, 56, 64, 108, 124];
-const AVIF_BRAND: &[u8] = b"avif";
+const AVIF_BRANDS: [&[u8]; 2] = [b"avif", b"avis"];
 const BRAND_LENGTH: usize = 4;
 const UTF8_BYTE_ORDER_MARK: &[u8] = b"\xEF\xBB\xBF";
 
@@ -124,10 +124,10 @@ fn is_avif(header: &[u8]) -> bool {
         .get(16..box_end)
         .unwrap_or_default()
         .as_chunks::<BRAND_LENGTH>();
-    major_brand == Some(AVIF_BRAND)
+    major_brand.is_some_and(|brand| AVIF_BRANDS.contains(&brand))
         || compatible_brands
             .iter()
-            .any(|brand| brand.as_slice() == AVIF_BRAND)
+            .any(|brand| AVIF_BRANDS.contains(&brand.as_slice()))
 }
 
 fn is_bmp(header: &[u8]) -> bool {
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 14] = [
+        let cases: [(&[u8], AssetFormat); 15] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -153,6 +153,7 @@ mod tests {
             (&[0, 0, 1, 0, 2, 0], AssetFormat::Ico),
             (b"\0\0\0\x1cftypavif\0\0\0\0mif1avifmiaf", AssetFormat::Avif),
             (b"\0\0\0\x18ftypmif1\0\0\0\0mif1avif", AssetFormat::Avif),
+            (b"\0\0\0\x18ftypavis\0\0\0\0msf1miaf", AssetFormat::Avif),
             (&[0xFF, 0x0A, 0x10, 0x00], AssetFormat::Jxl),
             (
                 b"\0\0\0\x0cJXL \r\n\x87\n\0\0\0\x14ftypjxl ",

@@ -26,7 +26,7 @@ pub use ico::{icon_from_pngs, single_size_icon};
 pub use rgb::Rgb;
 pub use shape::{AssetShape, shapes_from_text, shapes_text};
 
-const HEADER_LENGTH: u64 = 512;
+const HEADER_LENGTH: u64 = 4096;
 pub const LARGEST_SIDE: u32 = 65_535;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

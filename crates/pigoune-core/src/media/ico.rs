@@ -12,26 +12,65 @@ const SINGLE_IMAGE_OFFSET: usize = HEADER_LENGTH + ENTRY_LENGTH;
 const PLANES: u16 = 1;
 const BITS_PER_PIXEL: u16 = 32;
 
+struct Entry {
+    size: Option<Dimensions>,
+    length: u64,
+    offset: u64,
+}
+
+impl Entry {
+    fn fits_in(&self, file_length: u64) -> bool {
+        self.length > 0
+            && self
+                .offset
+                .checked_add(self.length)
+                .is_some_and(|end| end <= file_length)
+    }
+}
+
 pub fn embedded_sizes(path: &Path) -> Result<Vec<Dimensions>, InspectError> {
     let file = File::open(path).map_err(|_| InspectError::Unreadable)?;
-    let sizes = read_sizes(&mut BufReader::new(file)).map_err(|_| InspectError::Unreadable)?;
+    let file_length = file.metadata().map_err(|_| InspectError::Unreadable)?.len();
+    let entries = read_entries(&mut BufReader::new(file)).map_err(|_| InspectError::Unreadable)?;
+    let sizes: BTreeSet<Dimensions> = entries
+        .iter()
+        .filter(|entry| entry.fits_in(file_length))
+        .filter_map(|entry| entry.size)
+        .collect();
     if sizes.is_empty() {
         return Err(InspectError::Unreadable);
     }
-    Ok(sizes)
+    Ok(sizes.into_iter().collect())
 }
 
-fn read_sizes(reader: &mut impl Read) -> io::Result<Vec<Dimensions>> {
+fn read_entries(reader: &mut impl Read) -> io::Result<Vec<Entry>> {
     let mut header = [0; HEADER_LENGTH];
     reader.read_exact(&mut header)?;
     let count = u16::from_le_bytes([header[4], header[5]]);
 
-    let mut sizes = BTreeSet::new();
+    let mut entries = Vec::new();
     for _ in 0..count {
         let mut entry = [0; ENTRY_LENGTH];
         reader.read_exact(&mut entry)?;
-        sizes.extend(Dimensions::new(side(entry[0]), side(entry[1])));
+        entries.push(Entry {
+            size: Dimensions::new(side(entry[0]), side(entry[1])),
+            length: u64::from(u32::from_le_bytes([
+                entry[8], entry[9], entry[10], entry[11],
+            ])),
+            offset: u64::from(u32::from_le_bytes([
+                entry[12], entry[13], entry[14], entry[15],
+            ])),
+        });
     }
+    Ok(entries)
+}
+
+#[cfg(test)]
+fn read_sizes(reader: &mut impl Read) -> io::Result<Vec<Dimensions>> {
+    let sizes: BTreeSet<Dimensions> = read_entries(reader)?
+        .into_iter()
+        .filter_map(|entry| entry.size)
+        .collect();
     Ok(sizes.into_iter().collect())
 }
 
@@ -104,7 +143,7 @@ fn side(stored: u8) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{icon_from_pngs, read_sizes, single_size_icon};
+    use super::{icon_from_pngs, read_entries, read_sizes, single_size_icon};
     use crate::media::Dimensions;
 
     struct Image {
@@ -173,6 +212,40 @@ mod tests {
         assert_eq!(
             read_sizes(&mut bytes.as_slice()).expect("readable"),
             [dimensions(256, 256)]
+        );
+    }
+
+    fn sizes_present_in(bytes: &[u8]) -> Vec<Dimensions> {
+        let entries = read_entries(&mut &bytes[..]).expect("readable");
+        let file_length = u64::try_from(bytes.len()).expect("small");
+        entries
+            .iter()
+            .filter(|entry| entry.fits_in(file_length))
+            .filter_map(|entry| entry.size)
+            .collect()
+    }
+
+    #[test]
+    fn an_entry_whose_image_is_missing_is_not_counted() {
+        let bytes = ico(&[(0, 0)]);
+        assert!(sizes_present_in(&bytes).is_empty());
+    }
+
+    #[test]
+    fn an_entry_whose_image_is_inside_the_file_is_counted() {
+        let bytes = icon_with(&[image(16, 32, b"small"), image(32, 32, b"medium")]);
+        assert_eq!(
+            sizes_present_in(&bytes),
+            [dimensions(16, 16), dimensions(32, 32)]
+        );
+    }
+
+    #[test]
+    fn an_image_running_past_the_end_of_the_file_is_not_counted() {
+        let bytes = icon_with(&[image(16, 32, b"small"), image(32, 32, b"medium")]);
+        assert_eq!(
+            sizes_present_in(&bytes[..bytes.len() - 1]),
+            [dimensions(16, 16)]
         );
     }
 

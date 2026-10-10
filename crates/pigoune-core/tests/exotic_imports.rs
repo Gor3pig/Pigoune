@@ -302,3 +302,32 @@ fn a_name_that_is_not_valid_text_does_not_stop_the_batch() {
     );
     assert_eq!(fixture.asset_count(), 2);
 }
+
+#[test]
+fn an_svg_preceded_by_many_blank_lines_is_still_imported() {
+    let mut fixture = Fixture::new();
+    let mut svg = " \n".repeat(300).into_bytes();
+    svg.extend_from_slice(b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"/>");
+    let spaced = fixture.source("spaced.svg", &svg);
+
+    let result = fixture.library.import_file(&spaced, None);
+
+    assert!(
+        matches!(result, Ok(ImportOutcome::Imported(_))),
+        "{result:?}"
+    );
+}
+
+#[test]
+fn an_icon_without_any_image_is_refused() {
+    let mut fixture = Fixture::new();
+    let mut icon = vec![0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 32, 0];
+    icon.extend_from_slice(&1000_u32.to_le_bytes());
+    icon.extend_from_slice(&22_u32.to_le_bytes());
+    let empty = fixture.source("empty.ico", &icon);
+
+    let result = fixture.library.import_file(&empty, None);
+
+    assert!(result.is_err(), "{result:?}");
+    assert_eq!(fixture.asset_count(), 0);
+}
