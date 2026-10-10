@@ -154,8 +154,8 @@ part of the process, not a judgment of your work.
 
 The website at <https://gor3pig.github.io/Pigoune/> lives in `website/`: one page in English
 (`index.html`) and one in French (`fr/index.html`), kept identical, with a shared stylesheet and
-a small script. It uses plain HTML, CSS and JavaScript, with no framework, no external fonts and
-no tracking, and it works without JavaScript. The icon and the screenshots are taken from
+a small script. It uses plain HTML, CSS and JavaScript, with no framework, no external fonts,
+no tracking and no request to other sites, and it works without JavaScript. The icon and the screenshots are taken from
 `data/` when the site is assembled, the screenshots being converted to WebP, which needs
 `cwebp` or ImageMagick. To preview it:
 

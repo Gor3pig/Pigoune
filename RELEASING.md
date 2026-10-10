@@ -10,7 +10,8 @@ maintainer of the repository.
    translation. Rewrite the three to five points of the new version in `points_of` in
    `whats_new.rs` and translate them in every language of the interface. A version without
    points (a simple fix) opens no window.
-2. Point the screenshot URLs in the metainfo at the new tag.
+2. Point the screenshot URLs in the metainfo at the new tag, and run `cargo audit` to check
+   the dependencies for known vulnerabilities.
 3. Commit with the title `Release version X.Y.Z`, tag the commit with `vX.Y.Z` and push the
    tag.
 4. The release workflow builds the Flatpak package from the tag and attaches it to a draft

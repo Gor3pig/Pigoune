@@ -1,7 +1,5 @@
 "use strict";
 
-const LATEST_RELEASE_API = "https://api.github.com/repos/Gor3pig/Pigoune/releases/latest";
-
 function revealSectionsWhileScrolling() {
   const sections = document.querySelectorAll(".reveal");
   if (!("IntersectionObserver" in window)) {
@@ -223,23 +221,6 @@ function runCarousels() {
   });
 }
 
-async function showLatestVersion() {
-  const button = document.querySelector("[data-latest-label]");
-  try {
-    const response = await fetch(LATEST_RELEASE_API, { headers: { Accept: "application/vnd.github+json" } });
-    if (!response.ok) {
-      return;
-    }
-    const release = await response.json();
-    const version = String(release.tag_name || "").replace(/^v/, "");
-    if (/^\d+(\.\d+)*$/.test(version)) {
-      button.textContent = button.dataset.latestLabel.replace("{version}", version);
-    }
-  } catch {
-    return;
-  }
-}
-
 function rememberChosenLanguage() {
   document.querySelectorAll("[data-language]").forEach((link) => {
     link.addEventListener("click", () => {
@@ -256,4 +237,3 @@ rememberChosenLanguage();
 revealSectionsWhileScrolling();
 runCarousels();
 enlargeScreenshotsOnClick();
-showLatestVersion();
