@@ -24,47 +24,47 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/01.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/02.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/03.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/03.png</image>
       <caption>Look closely at an asset and step through its animation</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/04.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/04.png</image>
       <caption>Convert assets to PNG, JPEG, WebP, AVIF or ICO</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/05.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/05.png</image>
       <caption>See what your library holds, in light or dark style</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/06.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/06.png</image>
       <caption>Combine words with “and” or “or” in one click</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/07.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/07.png</image>
       <caption>Save a search as a smart collection that fills itself</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/08.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/08.png</image>
       <caption>Find the images that fit your screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/09.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/09.png</image>
       <caption>Frame any image and set it as your wallpaper</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/10.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/10.png</image>
       <caption>Nest your tags and browse them level by level</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.0/data/screenshots/11.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.6.1/data/screenshots/11.png</image>
       <caption>Check that every file of your library is still there and intact</caption>
     </screenshot>
   </screenshots>
@@ -100,6 +100,14 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="2.6.1" date="2026-10-10">
+      <description>
+        <p>A fix for a crash when dragging assets over the tags.</p>
+        <ul>
+          <li>Pigoune no longer closes when you hold dragged assets over a tag with sub-tags, then move the pointer out of the tag list.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.6.0" date="2026-10-10">
       <description>
         <p>A finishing release: simpler tag navigation, accurate counts, wider image support and much faster deletion of large selections.</p>
