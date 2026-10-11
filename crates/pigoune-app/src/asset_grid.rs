@@ -15,6 +15,7 @@ use crate::drag_content::DraggedAssets;
 use crate::drag_icon;
 use crate::found_flash;
 use crate::grid_columns;
+use crate::list_diff;
 use crate::thumbnails::ThumbnailCache;
 
 pub const MENU_KEYS: &str = "<Shift>F10|Menu";
@@ -222,8 +223,35 @@ impl PigouneAssetGrid {
     }
 
     pub fn show_assets(&self, assets: &[PigouneAssetObject]) {
-        let store = &self.imp().assets;
-        store.splice(0, store.n_items(), assets);
+        let imp = self.imp();
+        let store = &imp.assets;
+        let shown: Vec<PigouneAssetObject> = (0..store.n_items())
+            .filter_map(|position| store.item(position).and_downcast())
+            .collect();
+        let (start, end) =
+            list_diff::unchanged_edges(&shown, assets, |old, new| old.is_unchanged_by(new.asset()));
+        let removed = shown.len() - start - end;
+        let added = &assets[start..assets.len() - end];
+        if removed > 0 || !added.is_empty() {
+            store.splice(
+                u32::try_from(start).unwrap_or(u32::MAX),
+                u32::try_from(removed).unwrap_or(u32::MAX),
+                added,
+            );
+        }
+        let mut renamed = false;
+        for (old, new) in shown[..start].iter().zip(&assets[..start]) {
+            renamed |= old.adopt_edits_of(new);
+        }
+        for (old, new) in shown[shown.len() - end..]
+            .iter()
+            .zip(&assets[assets.len() - end..])
+        {
+            renamed |= old.adopt_edits_of(new);
+        }
+        if renamed && let Some(sorter) = imp.sorter.borrow().as_ref() {
+            sorter.changed(gtk::SorterChange::Different);
+        }
     }
 
     pub fn selected_assets(&self) -> Vec<PigouneAssetObject> {

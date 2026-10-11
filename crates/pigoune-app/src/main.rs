@@ -58,6 +58,7 @@ mod import_progress_dialog;
 mod import_report;
 mod languages;
 mod library_info_dialog;
+mod list_diff;
 mod load_slots;
 mod new_library_dialog;
 mod pasted_content;

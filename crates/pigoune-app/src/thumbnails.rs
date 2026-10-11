@@ -12,7 +12,7 @@ use crate::asset_colors;
 use crate::load_slots::LoadSlots;
 
 pub const THUMBNAIL_PIXELS: u32 = 256;
-const REMEMBERED_THUMBNAILS: usize = 600;
+const REMEMBERED_THUMBNAILS: usize = 400;
 const MOST_CONCURRENT_LOADS: usize = 4;
 const SVG_MIME_TYPE: &str = "image/svg+xml";
 const RGBA_CHANNELS: usize = 4;
@@ -24,30 +24,36 @@ thread_local! {
 #[derive(Default)]
 pub struct ThumbnailCache {
     textures: RefCell<HashMap<AssetId, gdk::Texture>>,
-    arrival_order: RefCell<VecDeque<AssetId>>,
+    use_order: RefCell<VecDeque<AssetId>>,
 }
 
 impl ThumbnailCache {
     pub fn remembered(&self, id: AssetId) -> Option<gdk::Texture> {
-        self.textures.borrow().get(&id).cloned()
+        let texture = self.textures.borrow().get(&id).cloned()?;
+        let mut use_order = self.use_order.borrow_mut();
+        if let Some(position) = use_order.iter().position(|known| *known == id) {
+            use_order.remove(position);
+        }
+        use_order.push_back(id);
+        Some(texture)
     }
 
     pub fn remember(&self, id: AssetId, texture: gdk::Texture) {
         let mut textures = self.textures.borrow_mut();
-        let mut arrival_order = self.arrival_order.borrow_mut();
+        let mut use_order = self.use_order.borrow_mut();
         if textures.insert(id, texture).is_none() {
-            arrival_order.push_back(id);
+            use_order.push_back(id);
         }
-        while arrival_order.len() > REMEMBERED_THUMBNAILS {
-            if let Some(oldest) = arrival_order.pop_front() {
-                textures.remove(&oldest);
+        while use_order.len() > REMEMBERED_THUMBNAILS {
+            if let Some(least_used) = use_order.pop_front() {
+                textures.remove(&least_used);
             }
         }
     }
 
     pub fn forget_all(&self) {
         self.textures.borrow_mut().clear();
-        self.arrival_order.borrow_mut().clear();
+        self.use_order.borrow_mut().clear();
     }
 }
 
@@ -228,8 +234,47 @@ mod tests {
     use gtk::prelude::*;
     use gtk::{gdk, glib};
 
-    use super::{fit_within, load_stored, scaled_to, shrink, write_atomically};
+    use pigoune_core::AssetId;
+
+    use super::{
+        REMEMBERED_THUMBNAILS, ThumbnailCache, fit_within, load_stored, scaled_to, shrink,
+        write_atomically,
+    };
     use crate::asset_colors;
+
+    fn asset_id(number: usize) -> AssetId {
+        AssetId::parse(&format!("00000000-0000-7000-8000-{number:012}")).expect("valid id")
+    }
+
+    fn one_pixel() -> gdk::Texture {
+        gdk::MemoryTexture::new(
+            1,
+            1,
+            gdk::MemoryFormat::R8g8b8a8,
+            &glib::Bytes::from_owned(vec![0_u8; 4]),
+            4,
+        )
+        .upcast()
+    }
+
+    #[test]
+    fn the_least_recently_used_thumbnail_is_forgotten_first() {
+        let cache = ThumbnailCache::default();
+        for number in 1..=REMEMBERED_THUMBNAILS {
+            cache.remember(asset_id(number), one_pixel());
+        }
+        assert!(cache.remembered(asset_id(1)).is_some());
+
+        cache.remember(asset_id(REMEMBERED_THUMBNAILS + 1), one_pixel());
+
+        assert!(cache.remembered(asset_id(1)).is_some());
+        assert!(cache.remembered(asset_id(2)).is_none());
+        assert!(
+            cache
+                .remembered(asset_id(REMEMBERED_THUMBNAILS + 1))
+                .is_some()
+        );
+    }
 
     #[test]
     fn small_images_keep_their_size() {
