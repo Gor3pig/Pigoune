@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
@@ -41,6 +42,7 @@ pub struct LibraryReport {
     pub shares: Vec<FormatShare>,
     pub storage: StorageUse,
     pub records: LibraryRecords,
+    pub record_thumbnails: HashMap<AssetId, PathBuf>,
     pub colors: Vec<ColorShare>,
     pub export_outline: ExportOutline,
 }
@@ -174,6 +176,7 @@ impl PigouneLibraryInfoDialog {
             shares,
             storage,
             records,
+            record_thumbnails,
             colors,
             export_outline,
         } = report;
@@ -190,7 +193,7 @@ impl PigouneLibraryInfoDialog {
         dialog.connect_closed(|dialog| dialog.imp().health_page.cancel());
         imp.root.replace(root.to_path_buf());
         imp.records_box.set_visible(overview.resources > 1);
-        dialog.show_records(&records);
+        dialog.show_records(&records, &record_thumbnails);
         imp.chart_box.set_visible(overview.resources > 0);
         imp.shares.replace(shares);
         imp.storage.replace(Some(storage));
@@ -238,7 +241,11 @@ impl PigouneLibraryInfoDialog {
         self.present(Some(parent));
     }
 
-    fn show_records(&self, records: &LibraryRecords) {
+    fn show_records(
+        &self,
+        records: &LibraryRecords,
+        record_thumbnails: &HashMap<AssetId, PathBuf>,
+    ) {
         let entries = [
             (RecordKind::Heaviest, &records.heaviest),
             (RecordKind::Largest, &records.largest),
@@ -250,12 +257,22 @@ impl PigouneLibraryInfoDialog {
             let Some(asset) = asset else {
                 continue;
             };
-            imp.records_list.append(&self.record_row(kind, asset));
+            let thumbnail_file = record_thumbnails
+                .get(&asset.id)
+                .cloned()
+                .unwrap_or_default();
+            imp.records_list
+                .append(&self.record_row(kind, asset, thumbnail_file));
             imp.record_ids.borrow_mut().push(asset.id);
         }
     }
 
-    fn record_row(&self, kind: RecordKind, asset: &Asset) -> adw::ActionRow {
+    fn record_row(
+        &self,
+        kind: RecordKind,
+        asset: &Asset,
+        thumbnail_file: PathBuf,
+    ) -> adw::ActionRow {
         let row = adw::ActionRow::builder()
             .title(kind.title())
             .subtitle(kind.detail(asset))
@@ -272,9 +289,7 @@ impl PigouneLibraryInfoDialog {
             #[weak]
             picture,
             async move {
-                let pixels =
-                    u32::try_from(RECORD_THUMBNAIL_SIDE * picture.scale_factor()).unwrap_or(1);
-                if let Some(texture) = thumbnails::render(&file, pixels).await {
+                if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
                     picture.set_paintable(Some(&texture));
                 }
             }

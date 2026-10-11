@@ -1499,13 +1499,25 @@ impl PigouneWindow {
 
     fn show_library_info(&self) {
         let shown = self.imp().library.borrow().as_ref().map(|library| {
+            let records = library.records()?;
+            let record_thumbnails = [
+                &records.heaviest,
+                &records.largest,
+                &records.newest,
+                &records.oldest,
+            ]
+            .into_iter()
+            .flatten()
+            .map(|asset| (asset.id, library.thumbnail_file(asset.id, THUMBNAIL_PIXELS)))
+            .collect();
             Ok::<_, LibraryError>(LibraryReport {
                 name: library.name(),
                 root: library.root().to_path_buf(),
                 overview: library.overview()?,
                 shares: library.format_shares()?,
                 storage: library.storage_use()?,
-                records: library.records()?,
+                records,
+                record_thumbnails,
                 colors: library.color_shares()?,
                 export_outline: library.export_outline(&gettext("Unclassified"))?,
             })
