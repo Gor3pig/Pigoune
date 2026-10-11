@@ -295,12 +295,16 @@ impl PigouneCollectionLookDialog {
             #[weak(rename_to = dialog)]
             self,
             move |button| {
-                if button.is_active() {
+                if button.is_active() && dialog.shown_icon_key() != key {
                     dialog.choose_icon(key);
                 }
             }
         ));
         button
+    }
+
+    fn shown_icon_key(&self) -> &'static str {
+        collection_looks::known_icon_key(&self.imp().look.borrow())
     }
 
     fn choose_color(&self, key: Option<&'static str>) {
@@ -382,7 +386,12 @@ impl PigouneCollectionLookDialog {
 
     #[template_callback]
     fn on_icon_search_stopped(&self) {
-        self.imp().icon_search.set_text("");
+        let search = &self.imp().icon_search;
+        if search.text().is_empty() {
+            self.close();
+        } else {
+            search.set_text("");
+        }
     }
 
     #[template_callback]

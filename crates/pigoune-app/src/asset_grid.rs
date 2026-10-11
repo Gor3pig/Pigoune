@@ -229,7 +229,7 @@ impl PigouneAssetGrid {
             .filter_map(|position| store.item(position).and_downcast())
             .collect();
         let (start, end) =
-            list_diff::unchanged_edges(&shown, assets, |old, new| old.is_unchanged_by(new.asset()));
+            list_diff::unchanged_edges(&shown, assets, PigouneAssetObject::is_unchanged_by);
         let removed = shown.len() - start - end;
         let added = &assets[start..assets.len() - end];
         if removed > 0 || !added.is_empty() {

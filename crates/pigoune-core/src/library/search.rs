@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -112,15 +113,25 @@ impl Library {
     ) -> Vec<&'a Asset> {
         let groups = search_groups(&filter.text);
         let mut cache = self.query_cache.lock(self.connection.total_changes());
+        let cacheable = self.connection.is_autocommit();
         let no_tags = Vec::new();
         assets
             .into_iter()
             .filter(|asset| {
                 filter.keeps_apart_from_text(asset)
                     && (groups.is_empty() || {
-                        let text = cache.texts.entry(asset.id).or_insert_with(|| {
-                            searchable_text(asset, tags.get(&asset.id).unwrap_or(&no_tags))
-                        });
+                        let tags_of_asset = tags.get(&asset.id).unwrap_or(&no_tags);
+                        let text = if cacheable {
+                            Cow::Borrowed(
+                                cache
+                                    .texts
+                                    .entry(asset.id)
+                                    .or_insert_with(|| searchable_text(asset, tags_of_asset))
+                                    .as_str(),
+                            )
+                        } else {
+                            Cow::Owned(searchable_text(asset, tags_of_asset))
+                        };
                         groups
                             .iter()
                             .any(|words| words.iter().all(|word| text.contains(word.as_str())))
@@ -153,7 +164,8 @@ impl Library {
         &self,
     ) -> Result<Arc<HashMap<AssetId, Vec<String>>>, LibraryError> {
         let stamp = self.connection.total_changes();
-        if let Some(known) = self.query_cache.lock(stamp).tags.clone() {
+        let cacheable = self.connection.is_autocommit();
+        if cacheable && let Some(known) = self.query_cache.lock(stamp).tags.clone() {
             return Ok(known);
         }
         let mut statement = self.connection.prepare(
@@ -174,7 +186,9 @@ impl Library {
             names.entry(asset).or_default().push(name);
         }
         let names = Arc::new(names);
-        self.query_cache.lock(stamp).tags = Some(names.clone());
+        if cacheable {
+            self.query_cache.lock(stamp).tags = Some(names.clone());
+        }
         Ok(names)
     }
 }

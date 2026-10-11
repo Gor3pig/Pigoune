@@ -99,6 +99,12 @@ fn show_about_dialog(application: &adw::Application) {
     dialog.set_support_url(&localized_help_url());
     dialog.set_license_type(gtk::License::Gpl30);
     dialog.set_copyright("© 2026 Gor3pig");
+    dialog.add_legal_section(
+        "Phosphor Icons",
+        Some("© 2023 Phosphor Icons"),
+        gtk::License::MitX11,
+        None,
+    );
     dialog.set_translator_credits(&gettext("translator-credits"));
     show_release_notes_in_french_or_english(&dialog);
     dialog.present(application.active_window().as_ref());

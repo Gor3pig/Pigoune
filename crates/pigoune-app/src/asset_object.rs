@@ -123,20 +123,42 @@ impl PigouneAssetObject {
         self.set_property(property, value);
     }
 
-    pub fn is_unchanged_by(&self, newer: &Asset) -> bool {
-        let mine = self.asset();
-        mine.id == newer.id
-            && mine.original_file_name == newer.original_file_name
-            && mine.stored_path == newer.stored_path
-            && mine.format == newer.format
-            && mine.dimensions == newer.dimensions
-            && mine.byte_size == newer.byte_size
-            && mine.content_hash == newer.content_hash
-            && mine.is_animated == newer.is_animated
-            && mine.embedded_sizes == newer.embedded_sizes
-            && mine.added_at_unix_ms == newer.added_at_unix_ms
-            && mine.trashed_at_unix_ms == newer.trashed_at_unix_ms
-            && mine.colors == newer.colors
+    pub fn is_unchanged_by(&self, newer: &Self) -> bool {
+        let Asset {
+            id,
+            display_name: _,
+            original_file_name,
+            stored_path,
+            format,
+            dimensions,
+            byte_size,
+            content_hash,
+            is_animated,
+            embedded_sizes,
+            added_at_unix_ms,
+            trashed_at_unix_ms,
+            is_favorite: _,
+            note: _,
+            source_url: _,
+            license: _,
+            author: _,
+            colors,
+        } = self.asset();
+        let other = newer.asset();
+        *id == other.id
+            && *original_file_name == other.original_file_name
+            && *stored_path == other.stored_path
+            && *format == other.format
+            && *dimensions == other.dimensions
+            && *byte_size == other.byte_size
+            && *content_hash == other.content_hash
+            && *is_animated == other.is_animated
+            && *embedded_sizes == other.embedded_sizes
+            && *added_at_unix_ms == other.added_at_unix_ms
+            && *trashed_at_unix_ms == other.trashed_at_unix_ms
+            && *colors == other.colors
+            && self.file() == newer.file()
+            && self.thumbnail_file() == newer.thumbnail_file()
     }
 
     pub fn adopt_edits_of(&self, newer: &Self) -> bool {
@@ -214,8 +236,13 @@ mod tests {
     fn edits_do_not_make_an_asset_a_different_picture() {
         let shown = object(asset("Logo", false, 10));
 
-        assert!(shown.is_unchanged_by(&asset("Renamed", true, 10)));
-        assert!(!shown.is_unchanged_by(&asset("Logo", false, 11)));
+        assert!(shown.is_unchanged_by(&object(asset("Renamed", true, 10))));
+        assert!(!shown.is_unchanged_by(&object(asset("Logo", false, 11))));
+        assert!(!shown.is_unchanged_by(&PigouneAssetObject::new(AssetEntry {
+            asset: asset("Logo", false, 10),
+            file: PathBuf::from("/other-library/files/logo.png"),
+            thumbnail_file: PathBuf::from("/library/thumbnail.png"),
+        })));
     }
 
     #[test]

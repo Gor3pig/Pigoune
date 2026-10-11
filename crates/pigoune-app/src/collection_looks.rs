@@ -1,5 +1,5 @@
 use gettextrs::pgettext;
-use pigoune_core::CollectionLook;
+use pigoune_core::{CollectionLook, comparable};
 
 pub const DEFAULT_ICON_KEY: &str = "folder";
 pub const DEFAULT_ICON_NAME: &str = "folder-symbolic";
@@ -509,27 +509,7 @@ pub fn matches_wanted(search_text: &str, wanted: &str) -> bool {
 }
 
 fn folded(text: &str) -> String {
-    text.to_lowercase().chars().map(plain_letters).collect()
-}
-
-fn plain_letters(letter: char) -> String {
-    match letter {
-        'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' | 'ą' => "a".to_owned(),
-        'ç' | 'ć' => "c".to_owned(),
-        'è' | 'é' | 'ê' | 'ë' | 'ę' => "e".to_owned(),
-        'ì' | 'í' | 'î' | 'ï' => "i".to_owned(),
-        'ł' => "l".to_owned(),
-        'ñ' | 'ń' => "n".to_owned(),
-        'ò' | 'ó' | 'ô' | 'õ' | 'ö' | 'ø' => "o".to_owned(),
-        'ś' => "s".to_owned(),
-        'ù' | 'ú' | 'û' | 'ü' => "u".to_owned(),
-        'ý' | 'ÿ' => "y".to_owned(),
-        'ź' | 'ż' => "z".to_owned(),
-        'æ' => "ae".to_owned(),
-        'œ' => "oe".to_owned(),
-        'ß' => "ss".to_owned(),
-        other => other.to_string(),
-    }
+    comparable(text)
 }
 
 #[must_use]

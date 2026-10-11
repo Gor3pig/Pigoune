@@ -70,6 +70,9 @@ impl Library {
     }
 
     fn cached_assets(&self, view: AssetView) -> Result<Arc<Vec<Asset>>, LibraryError> {
+        if !self.connection.is_autocommit() {
+            return Ok(Arc::new(self.load_assets(view)?));
+        }
         let stamp = self.connection.total_changes();
         let known = {
             let cache = self.query_cache.lock(stamp);
@@ -202,11 +205,7 @@ impl Library {
         id: AssetId,
         colors: &[DominantColor],
     ) -> Result<(), LibraryError> {
-        self.connection.execute(
-            "UPDATE assets SET colors = ?2 WHERE id = ?1",
-            params![id, media::dominant_text(colors)],
-        )?;
-        Ok(())
+        self.record_colors_batch(&[(id, colors.to_vec())])
     }
 }
 

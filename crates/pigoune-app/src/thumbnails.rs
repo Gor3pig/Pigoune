@@ -12,7 +12,7 @@ use crate::asset_colors;
 use crate::load_slots::LoadSlots;
 
 pub const THUMBNAIL_PIXELS: u32 = 256;
-const REMEMBERED_THUMBNAILS: usize = 400;
+const REMEMBERED_THUMBNAILS: usize = 600;
 const MOST_CONCURRENT_LOADS: usize = 4;
 const SVG_MIME_TYPE: &str = "image/svg+xml";
 const RGBA_CHANNELS: usize = 4;
@@ -30,20 +30,15 @@ pub struct ThumbnailCache {
 impl ThumbnailCache {
     pub fn remembered(&self, id: AssetId) -> Option<gdk::Texture> {
         let texture = self.textures.borrow().get(&id).cloned()?;
-        let mut use_order = self.use_order.borrow_mut();
-        if let Some(position) = use_order.iter().position(|known| *known == id) {
-            use_order.remove(position);
-        }
-        use_order.push_back(id);
+        touch(&mut self.use_order.borrow_mut(), id);
         Some(texture)
     }
 
     pub fn remember(&self, id: AssetId, texture: gdk::Texture) {
         let mut textures = self.textures.borrow_mut();
         let mut use_order = self.use_order.borrow_mut();
-        if textures.insert(id, texture).is_none() {
-            use_order.push_back(id);
-        }
+        textures.insert(id, texture);
+        touch(&mut use_order, id);
         while use_order.len() > REMEMBERED_THUMBNAILS {
             if let Some(least_used) = use_order.pop_front() {
                 textures.remove(&least_used);
@@ -55,6 +50,13 @@ impl ThumbnailCache {
         self.textures.borrow_mut().clear();
         self.use_order.borrow_mut().clear();
     }
+}
+
+fn touch(use_order: &mut VecDeque<AssetId>, id: AssetId) {
+    if let Some(position) = use_order.iter().position(|known| *known == id) {
+        use_order.remove(position);
+    }
+    use_order.push_back(id);
 }
 
 pub async fn thumbnail(file: &Path, thumbnail_file: &Path) -> Option<gdk::Texture> {
