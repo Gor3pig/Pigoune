@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
@@ -54,9 +55,44 @@ impl Library {
     }
 
     pub fn visible_assets_in(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
-        if let AssetView::Smart(id) = view {
-            return self.smart_collection_assets(id);
+        match view {
+            AssetView::Smart(id) => self.smart_collection_assets(id),
+            AssetView::All | AssetView::Trash => Ok(self.cached_assets(view)?.as_ref().clone()),
+            _ => self.load_assets(view),
         }
+    }
+
+    pub(super) fn shared_assets(&self, view: AssetView) -> Result<Arc<Vec<Asset>>, LibraryError> {
+        match view {
+            AssetView::All | AssetView::Trash => self.cached_assets(view),
+            _ => Ok(Arc::new(self.visible_assets_in(view)?)),
+        }
+    }
+
+    fn cached_assets(&self, view: AssetView) -> Result<Arc<Vec<Asset>>, LibraryError> {
+        let stamp = self.connection.total_changes();
+        let known = {
+            let cache = self.query_cache.lock(stamp);
+            if matches!(view, AssetView::Trash) {
+                cache.trash.clone()
+            } else {
+                cache.all.clone()
+            }
+        };
+        if let Some(known) = known {
+            return Ok(known);
+        }
+        let loaded = Arc::new(self.load_assets(view)?);
+        let mut cache = self.query_cache.lock(stamp);
+        if matches!(view, AssetView::Trash) {
+            cache.trash = Some(loaded.clone());
+        } else {
+            cache.all = Some(loaded.clone());
+        }
+        Ok(loaded)
+    }
+
+    fn load_assets(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
         let filter = view::filter(view);
         let clause = filter.clause();
         let mut statement = self.connection.prepare(&format!(

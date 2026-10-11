@@ -19,6 +19,7 @@ mod import_plan;
 mod layout;
 mod library_export;
 mod overview;
+mod query_cache;
 mod records;
 mod remove_record;
 mod replace;
@@ -85,6 +86,7 @@ pub struct Library {
     connection: Connection,
     history: History,
     screen: Option<Dimensions>,
+    query_cache: query_cache::SharedQueryCache,
     _exclusive_access: Option<File>,
 }
 
@@ -143,6 +145,7 @@ impl Library {
             connection,
             history: History::default(),
             screen: None,
+            query_cache: query_cache::SharedQueryCache::default(),
             _exclusive_access: exclusive_access,
         })
     }

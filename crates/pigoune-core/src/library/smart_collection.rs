@@ -48,14 +48,14 @@ impl Library {
         if collections.is_empty() {
             return Ok(HashMap::new());
         }
-        let assets = self.visible_assets_in(AssetView::All)?;
+        let assets = self.shared_assets(AssetView::All)?;
         let tags = self.tag_names_by_asset()?;
         Ok(collections
             .iter()
             .map(|collection| {
                 (
                     collection.id,
-                    collection.filter.count_among(&assets, &tags, self.screen),
+                    self.count_among(&collection.filter, assets.iter(), &tags),
                 )
             })
             .collect())

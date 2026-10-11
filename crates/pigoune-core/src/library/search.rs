@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
@@ -46,41 +47,12 @@ impl AssetFilter {
         self.chosen_filters() > 0 || !search_groups(&self.text).is_empty()
     }
 
-    fn keeps(&self, asset: &Asset, groups: &[Vec<String>], tags: &[String]) -> bool {
+    fn keeps_apart_from_text(&self, asset: &Asset) -> bool {
         (self.formats.is_empty() || self.formats.contains(&asset.format))
             && (!self.favorites_only || asset.is_favorite)
             && self.keeps_colors_of(asset)
             && self.keeps_shape_of(asset)
             && self.keeps_size_of(asset)
-            && (groups.is_empty() || {
-                let text = searchable_text(asset, tags);
-                groups
-                    .iter()
-                    .any(|words| words.iter().all(|word| text.contains(word.as_str())))
-            })
-    }
-}
-
-impl AssetFilter {
-    pub(super) fn count_among(
-        &self,
-        assets: &[Asset],
-        tags: &HashMap<AssetId, Vec<String>>,
-        library_screen: Option<Dimensions>,
-    ) -> usize {
-        if !self.narrows() {
-            return assets.len();
-        }
-        let filter = Self {
-            screen: self.screen.or(library_screen),
-            ..self.clone()
-        };
-        let groups = search_groups(&filter.text);
-        let no_tags = Vec::new();
-        assets
-            .iter()
-            .filter(|asset| filter.keeps(asset, &groups, tags.get(&asset.id).unwrap_or(&no_tags)))
-            .count()
     }
 
     fn keeps_shape_of(&self, asset: &Asset) -> bool {
@@ -119,24 +91,71 @@ impl Library {
         view: AssetView,
         filter: &AssetFilter,
     ) -> Result<Vec<Asset>, LibraryError> {
-        let assets = self.visible_assets_in(view)?;
         if !filter.narrows() {
-            return Ok(assets);
+            return self.visible_assets_in(view);
         }
-        let filter = &AssetFilter {
-            screen: filter.screen.or(self.screen),
-            ..filter.clone()
-        };
-        let groups = search_groups(&filter.text);
+        let filter = self.with_library_screen(filter);
+        let assets = self.shared_assets(view)?;
         let tags = self.tag_names_by_asset()?;
-        let no_tags = Vec::new();
-        Ok(assets
+        Ok(self
+            .matching(assets.iter(), &filter, &tags)
             .into_iter()
-            .filter(|asset| filter.keeps(asset, &groups, tags.get(&asset.id).unwrap_or(&no_tags)))
+            .cloned()
             .collect())
     }
 
-    pub(super) fn tag_names_by_asset(&self) -> Result<HashMap<AssetId, Vec<String>>, LibraryError> {
+    pub(super) fn matching<'a>(
+        &self,
+        assets: impl IntoIterator<Item = &'a Asset>,
+        filter: &AssetFilter,
+        tags: &HashMap<AssetId, Vec<String>>,
+    ) -> Vec<&'a Asset> {
+        let groups = search_groups(&filter.text);
+        let mut cache = self.query_cache.lock(self.connection.total_changes());
+        let no_tags = Vec::new();
+        assets
+            .into_iter()
+            .filter(|asset| {
+                filter.keeps_apart_from_text(asset)
+                    && (groups.is_empty() || {
+                        let text = cache.texts.entry(asset.id).or_insert_with(|| {
+                            searchable_text(asset, tags.get(&asset.id).unwrap_or(&no_tags))
+                        });
+                        groups
+                            .iter()
+                            .any(|words| words.iter().all(|word| text.contains(word.as_str())))
+                    })
+            })
+            .collect()
+    }
+
+    pub(super) fn count_among<'a>(
+        &self,
+        filter: &AssetFilter,
+        assets: impl IntoIterator<Item = &'a Asset>,
+        tags: &HashMap<AssetId, Vec<String>>,
+    ) -> usize {
+        if !filter.narrows() {
+            return assets.into_iter().count();
+        }
+        let filter = self.with_library_screen(filter);
+        self.matching(assets, &filter, tags).len()
+    }
+
+    pub(super) fn with_library_screen(&self, filter: &AssetFilter) -> AssetFilter {
+        AssetFilter {
+            screen: filter.screen.or(self.screen),
+            ..filter.clone()
+        }
+    }
+
+    pub(super) fn tag_names_by_asset(
+        &self,
+    ) -> Result<Arc<HashMap<AssetId, Vec<String>>>, LibraryError> {
+        let stamp = self.connection.total_changes();
+        if let Some(known) = self.query_cache.lock(stamp).tags.clone() {
+            return Ok(known);
+        }
         let mut statement = self.connection.prepare(
             "WITH RECURSIVE reach(tag_id, ancestor_id) AS (
                  SELECT id, id FROM tags
@@ -154,6 +173,8 @@ impl Library {
             let (asset, name) = row?;
             names.entry(asset).or_default().push(name);
         }
+        let names = Arc::new(names);
+        self.query_cache.lock(stamp).tags = Some(names.clone());
         Ok(names)
     }
 }

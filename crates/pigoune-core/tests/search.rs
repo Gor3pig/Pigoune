@@ -255,3 +255,36 @@ fn the_search_stays_inside_the_selected_view() {
     );
     assert_eq!(fixture.found(AssetView::Trash, "marque"), [trashed]);
 }
+
+#[test]
+fn search_results_follow_every_change_made_after_a_search() {
+    let mut fixture = Fixture::new();
+    let red = fixture.import("red-dot.png", None);
+    let navy = fixture.import("navy-tile.bmp", None);
+    fixture.set_text(red, TextField::Note, "sunrise");
+
+    assert_eq!(fixture.found(AssetView::All, "sunrise"), [red]);
+    assert!(fixture.found(AssetView::All, "harbor").is_empty());
+
+    fixture.set_text(navy, TextField::Note, "harbor");
+    fixture.set_text(red, TextField::Note, "");
+    assert_eq!(fixture.found(AssetView::All, "harbor"), [navy]);
+    assert!(fixture.found(AssetView::All, "sunrise").is_empty());
+
+    fixture.tag(navy, "ocean");
+    assert_eq!(fixture.found(AssetView::All, "ocean"), [navy]);
+
+    fixture.apply(&AssetCommand::SetTrashed {
+        assets: vec![navy],
+        trashed: true,
+    });
+    assert!(fixture.found(AssetView::All, "ocean").is_empty());
+    assert_eq!(fixture.found(AssetView::Trash, "ocean"), [navy]);
+
+    fixture
+        .library
+        .undo()
+        .expect("undo runs")
+        .expect("something is undone");
+    assert_eq!(fixture.found(AssetView::All, "ocean"), [navy]);
+}

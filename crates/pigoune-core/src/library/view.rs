@@ -131,8 +131,13 @@ impl Library {
         if !filter.narrows() {
             return self.view_counts();
         }
-        let assets = self.find_assets_in(AssetView::All, filter)?;
-        let trashed = self.find_assets_in(AssetView::Trash, filter)?.len();
+        let filter = self.with_library_screen(filter);
+        let tags = self.tag_names_by_asset()?;
+        let all = self.shared_assets(AssetView::All)?;
+        let assets = self.matching(all.iter(), &filter, &tags);
+        let trashed = self
+            .matching(self.shared_assets(AssetView::Trash)?.iter(), &filter, &tags)
+            .len();
         let ids = format!(
             "[{}]",
             assets
@@ -143,14 +148,13 @@ impl Library {
         );
         let mut counts = self.counts_restricted_to(Some(&ids))?;
         counts.trash = trashed;
-        let tags = self.tag_names_by_asset()?;
         counts.smart_collections = self
             .smart_collections()?
             .iter()
             .map(|collection| {
                 (
                     collection.id,
-                    collection.filter.count_among(&assets, &tags, self.screen),
+                    self.count_among(&collection.filter, assets.iter().copied(), &tags),
                 )
             })
             .collect();

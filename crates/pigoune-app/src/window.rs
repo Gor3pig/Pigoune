@@ -1624,11 +1624,17 @@ impl PigouneWindow {
         ));
         imp.current_view.set(self.view_on_opening());
         self.refresh_assets();
-        self.empty_expired_trash();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         self.set_library_actions_enabled(true);
-        self.analyse_colors();
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || {
+                window.empty_expired_trash();
+                window.analyse_colors();
+            }
+        ));
     }
 
     fn analyse_colors(&self) {
@@ -1649,7 +1655,12 @@ impl PigouneWindow {
             let mut analysed = Vec::with_capacity(pending.len());
             for (id, file, thumbnail_file) in pending {
                 let colors = match thumbnails::thumbnail(&file, &thumbnail_file).await {
-                    Some(texture) => dominant_colors(&asset_colors::rgba_pixels(&texture)),
+                    Some(texture) => {
+                        let pixels = asset_colors::rgba_pixels(&texture);
+                        gio::spawn_blocking(move || dominant_colors(&pixels))
+                            .await
+                            .unwrap_or_default()
+                    }
                     None => Vec::new(),
                 };
                 analysed.push((id, colors));
@@ -2288,7 +2299,7 @@ impl PigouneWindow {
         {
             return false;
         }
-        self.refresh_sidebar();
+        self.schedule_counts_refresh();
         self.drop_assets_leaving_view(assets);
         let count = assets.len();
         let message = if trashed {
@@ -3177,7 +3188,7 @@ impl PigouneWindow {
             .and_then(|library| library.smart_collections().ok())
             .is_some_and(|collections| !collections.is_empty());
         if has_smart_collections {
-            self.refresh_sidebar();
+            self.schedule_counts_refresh();
         }
     }
 
@@ -3261,7 +3272,7 @@ impl PigouneWindow {
             return;
         }
         self.refresh_selected_tags();
-        self.refresh_sidebar();
+        self.schedule_counts_refresh();
         self.drop_assets_leaving_view(&selected);
     }
 
@@ -3623,7 +3634,7 @@ impl PigouneWindow {
                         asset.set_favorite(true);
                     }
                 }
-                self.refresh_sidebar();
+                self.schedule_counts_refresh();
                 let text = if fresh_ids.len() == 1 {
                     gettext("“{name}” added to the favorites").replace("{name}", first_name)
                 } else {
@@ -3670,7 +3681,7 @@ impl PigouneWindow {
             return;
         }
         self.refresh_selected_tags();
-        self.refresh_sidebar();
+        self.schedule_counts_refresh();
         self.drop_assets_leaving_view(assets);
         self.show_undoable_toast(
             &ngettext(
@@ -5093,7 +5104,7 @@ impl PigouneWindow {
                 for asset in &selected {
                     asset.set_favorite(favorite);
                 }
-                self.refresh_sidebar();
+                self.schedule_counts_refresh();
                 let showing_favorites = self.displayed_view() == AssetView::Favorites
                     || self.current_filter().favorites_only;
                 if showing_favorites && !favorite {
