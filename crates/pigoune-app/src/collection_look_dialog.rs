@@ -159,13 +159,6 @@ impl PigouneCollectionLookDialog {
                 flow_box.append(&button);
                 buttons.push((key, button));
             }
-            flow_box.set_filter_func(glib::clone!(
-                #[weak(rename_to = dialog)]
-                self,
-                #[upgrade_or]
-                true,
-                move |child| dialog.child_matches_search(child)
-            ));
             let section = icon_section(&title, &flow_box);
             imp.icon_content
                 .insert_child_after(&section, previous.as_ref());
@@ -173,6 +166,15 @@ impl PigouneCollectionLookDialog {
             groups.push((section, flow_box));
         }
         imp.icon_buttons.replace(buttons);
+        for (_, flow_box) in &groups {
+            flow_box.set_filter_func(glib::clone!(
+                #[weak(rename_to = dialog)]
+                self,
+                #[upgrade_or]
+                true,
+                move |child| dialog.child_matches_search(child)
+            ));
+        }
         imp.icon_groups.replace(groups);
         self.scroll_to_chosen_icon_when_shown();
     }
@@ -355,6 +357,9 @@ impl PigouneCollectionLookDialog {
 
     #[template_callback]
     fn on_icon_search_activated(&self) {
+        if self.imp().search_query.borrow().trim().is_empty() {
+            return;
+        }
         let first_match = self
             .imp()
             .icon_buttons
