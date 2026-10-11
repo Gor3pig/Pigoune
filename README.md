@@ -156,3 +156,6 @@ Pigoune is free software and help is welcome: bug reports, ideas, translations a
 ## License
 
 Pigoune is free software released under the [GNU GPL v3 or later](COPYING).
+
+The collection icons are from [Phosphor Icons](https://phosphoricons.com), released under the
+[MIT license](crates/pigoune-app/icons/LICENSE-phosphor).

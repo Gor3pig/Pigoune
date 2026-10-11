@@ -68,6 +68,11 @@ to change it.
   ships no icon of its own apart from the application icon in `data/icons/`. `icon_theme.rs`
   keeps Adwaita even when the system uses another icon theme, so the icons look the same on
   every distribution and match the screenshots and the user guide.
+- The one exception is the icon choice for collections: its 294 icons are the bold weight of
+  [Phosphor](https://phosphoricons.com) (MIT, license in `crates/pigoune-app/icons/`), copied
+  unmodified into `crates/pigoune-app/icons/scalable/actions/` and embedded through
+  `resources.gresource.xml`. `collection_looks.rs` lists them by theme; a test checks that each
+  one is embedded. The gray default folder stays the Adwaita one.
 - Small pure helpers (sorting, layout math, text formatting) sit in their own modules with unit
   tests, for example `asset_sort.rs`, `grid_columns.rs`, `tag_cloud.rs` or `asset_facts.rs`.
 - Inside Flatpak, folders chosen in the file chooser arrive as document portal paths
@@ -133,9 +138,11 @@ My logos.pigoune/
   looks for animated PNG and WebP among assets imported earlier). Format 3 records the bucketed
   paths, then moves the folders and thumbnails into their buckets; every opening finishes moves
   left behind by an interruption. Format 4 adds the `smart_collections` table. Format 5 adds
-  the icon and color of each collection, stored as plain names (`emote-love`, `pink`) that the
-  app turns into a GNOME icon and accent color, falling back to the gray folder for a name it
-  does not know. Format 6 adds the main colors of each asset and the colors of each smart
+  the icon and color of each collection, stored as plain names (`heart`, `pink`) that the
+  app turns into an icon and accent color, falling back to the gray folder for a name it
+  does not know. The first versions stored names of GNOME icons (`emote-love`); the app keeps
+  that list of old names forever and shows the matching Phosphor icon, so no library needs
+  to be converted. Format 6 adds the main colors of each asset and the colors of each smart
   collection. `dominant_colors` in the core sorts the visible pixels of a thumbnail into
   thirteen color families and keeps the average color of each; format 7 analyzes every asset
   again to record these averages, and lets a smart collection save a custom color, matched

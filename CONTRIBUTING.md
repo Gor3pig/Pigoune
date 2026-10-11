@@ -122,7 +122,9 @@ These rules keep the code base consistent. `check.sh` enforces most of them.
 - **No panics.** Errors are explicit types, and every failure ends up as a clear message in the
   interface. `unwrap()` is only used in tests.
 - **Follow the GNOME Human Interface Guidelines** for anything visible.
-- **Icons** in `data/icons/` are the official artwork and are not modified.
+- **Icons** in `data/icons/` are the official artwork and are not modified. The collection
+  icons in `crates/pigoune-app/icons/` come from Phosphor (MIT) and are copied as they are:
+  never edit their drawing, and declare each new file in `resources.gresource.xml`.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the code is organized.
 

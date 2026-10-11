@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-10 21:31+0200\n"
+"POT-Creation-Date: 2026-10-11 14:45+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Polish\n"
@@ -2881,257 +2881,1605 @@ msgstr "Wróć do szarego katalogu"
 msgid "Icon"
 msgstr "Ikona"
 
-#: crates/pigoune-app/src/collection_look_dialog.rs:83
+#: crates/pigoune-app/ui/collection-look-dialog.blp:127
+msgid "Search Icons…"
+msgstr "Szukaj ikon…"
+
+#: crates/pigoune-app/ui/collection-look-dialog.blp:152
+msgid "No icons found"
+msgstr "Nie znaleziono ikon"
+
+#: crates/pigoune-app/src/collection_look_dialog.rs:91
 #, rust-format
 msgid "Customize “{name}”"
 msgstr "Dostosuj „{name}”"
 
-#: crates/pigoune-app/src/collection_looks.rs:175
+#: crates/pigoune-app/src/collection_looks.rs:474
+msgctxt "collection theme"
+msgid "Files and Documents"
+msgstr "Pliki i dokumenty"
+
+#: crates/pigoune-app/src/collection_looks.rs:475
+msgctxt "collection theme"
+msgid "Art and Design"
+msgstr "Sztuka i projektowanie"
+
+#: crates/pigoune-app/src/collection_looks.rs:476
+msgctxt "collection theme"
+msgid "Photo and Video"
+msgstr "Zdjęcia i wideo"
+
+#: crates/pigoune-app/src/collection_looks.rs:477
+msgctxt "collection theme"
+msgid "Music and Audio"
+msgstr "Muzyka i dźwięk"
+
+#: crates/pigoune-app/src/collection_looks.rs:478
+msgctxt "collection theme"
+msgid "Nature and Weather"
+msgstr "Przyroda i pogoda"
+
+#: crates/pigoune-app/src/collection_looks.rs:479
+msgctxt "collection theme"
+msgid "Animals"
+msgstr "Zwierzęta"
+
+#: crates/pigoune-app/src/collection_looks.rs:480
+msgctxt "collection theme"
+msgid "Places and Buildings"
+msgstr "Miejsca i budynki"
+
+#: crates/pigoune-app/src/collection_looks.rs:481
+msgctxt "collection theme"
+msgid "Travel and Transport"
+msgstr "Podróże i transport"
+
+#: crates/pigoune-app/src/collection_looks.rs:482
+msgctxt "collection theme"
+msgid "Home and Clothing"
+msgstr "Dom i odzież"
+
+#: crates/pigoune-app/src/collection_looks.rs:483
+msgctxt "collection theme"
+msgid "Food and Drink"
+msgstr "Jedzenie i napoje"
+
+#: crates/pigoune-app/src/collection_looks.rs:484
+msgctxt "collection theme"
+msgid "Games and Sports"
+msgstr "Gry i sport"
+
+#: crates/pigoune-app/src/collection_looks.rs:485
+msgctxt "collection theme"
+msgid "Science, Tech and Work"
+msgstr "Nauka, technika i praca"
+
+#: crates/pigoune-app/src/collection_looks.rs:486
+msgctxt "collection theme"
+msgid "Symbols and People"
+msgstr "Symbole i osoby"
+
+#: crates/pigoune-app/src/collection_looks.rs:535
 msgctxt "collection color"
 msgid "Default"
 msgstr "Domyślny"
 
-#: crates/pigoune-app/src/collection_looks.rs:180
-msgctxt "collection icon"
-msgid "Pictures"
-msgstr "Obrazy"
-
-#: crates/pigoune-app/src/collection_looks.rs:181
-msgctxt "collection icon"
-msgid "Music"
-msgstr "Muzyka"
-
-#: crates/pigoune-app/src/collection_looks.rs:182
-msgctxt "collection icon"
-msgid "Videos"
-msgstr "Filmy"
-
-#: crates/pigoune-app/src/collection_looks.rs:183
-msgctxt "collection icon"
-msgid "Templates"
-msgstr "Szablony"
-
-#: crates/pigoune-app/src/collection_looks.rs:184
-msgctxt "collection icon"
-msgid "Home"
-msgstr "Dom"
-
-#: crates/pigoune-app/src/collection_looks.rs:185
-msgctxt "collection icon"
-msgid "Bookmark"
-msgstr "Zakładka"
-
-#: crates/pigoune-app/src/collection_looks.rs:186
-msgctxt "collection icon"
-msgid "Star"
-msgstr "Gwiazda"
-
-#: crates/pigoune-app/src/collection_looks.rs:187
-msgctxt "collection icon"
-msgid "Heart"
-msgstr "Serce"
-
-#: crates/pigoune-app/src/collection_looks.rs:188
-msgctxt "collection icon"
-msgid "Camera"
-msgstr "Aparat"
-
-#: crates/pigoune-app/src/collection_looks.rs:189
-msgctxt "collection icon"
-msgid "Font"
-msgstr "Czcionka"
-
-#: crates/pigoune-app/src/collection_looks.rs:190
-msgctxt "collection icon"
-msgid "Document"
-msgstr "Dokument"
-
-#: crates/pigoune-app/src/collection_looks.rs:191
-msgctxt "collection icon"
-msgid "Drawing"
-msgstr "Rysunek"
-
-#: crates/pigoune-app/src/collection_looks.rs:192
-msgctxt "collection icon"
-msgid "Presentation"
-msgstr "Prezentacja"
-
-#: crates/pigoune-app/src/collection_looks.rs:193
-msgctxt "collection icon"
-msgid "Spreadsheet"
-msgstr "Arkusz kalkulacyjny"
-
-#: crates/pigoune-app/src/collection_looks.rs:194
-msgctxt "collection icon"
-msgid "Package"
-msgstr "Pakiet"
-
-#: crates/pigoune-app/src/collection_looks.rs:195
-msgctxt "collection icon"
-msgid "Graphics"
-msgstr "Grafika"
-
-#: crates/pigoune-app/src/collection_looks.rs:196
-msgctxt "collection icon"
-msgid "Games"
-msgstr "Gry"
-
-#: crates/pigoune-app/src/collection_looks.rs:197
-msgctxt "collection icon"
-msgid "Science"
-msgstr "Nauka"
-
-#: crates/pigoune-app/src/collection_looks.rs:198
-msgctxt "collection icon"
-msgid "Tools"
-msgstr "Narzędzia"
-
-#: crates/pigoune-app/src/collection_looks.rs:199
-msgctxt "collection icon"
-msgid "Nature"
-msgstr "Przyroda"
-
-#: crates/pigoune-app/src/collection_looks.rs:200
-msgctxt "collection icon"
-msgid "Food"
-msgstr "Jedzenie"
-
-#: crates/pigoune-app/src/collection_looks.rs:201
-msgctxt "collection icon"
-msgid "Travel"
-msgstr "Podróże"
-
-#: crates/pigoune-app/src/collection_looks.rs:202
-msgctxt "collection icon"
-msgid "Light Bulb"
-msgstr "Żarówka"
-
-#: crates/pigoune-app/src/collection_looks.rs:203
-msgctxt "collection icon"
-msgid "Symbols"
-msgstr "Symbole"
-
-#: crates/pigoune-app/src/collection_looks.rs:204
-msgctxt "collection icon"
-msgid "Flag"
-msgstr "Flaga"
-
-#: crates/pigoune-app/src/collection_looks.rs:205
-msgctxt "collection icon"
-msgid "Sports"
-msgstr "Sport"
-
-#: crates/pigoune-app/src/collection_looks.rs:206
-msgctxt "collection icon"
-msgid "People"
-msgstr "Ludzie"
-
-#: crates/pigoune-app/src/collection_looks.rs:207
-msgctxt "collection icon"
-msgid "Smile"
-msgstr "Uśmiech"
-
-#: crates/pigoune-app/src/collection_looks.rs:208
-msgctxt "collection icon"
-msgid "Sun"
-msgstr "Słońce"
-
-#: crates/pigoune-app/src/collection_looks.rs:209
-msgctxt "collection icon"
-msgid "Moon"
-msgstr "Księżyc"
-
-#: crates/pigoune-app/src/collection_looks.rs:210
-msgctxt "collection icon"
-msgid "Computer"
-msgstr "Komputer"
-
-#: crates/pigoune-app/src/collection_looks.rs:211
-msgctxt "collection icon"
-msgid "Phone"
-msgstr "Telefon"
-
-#: crates/pigoune-app/src/collection_looks.rs:212
-msgctxt "collection icon"
-msgid "Graphics Tablet"
-msgstr "Tablet graficzny"
-
-#: crates/pigoune-app/src/collection_looks.rs:213
-msgctxt "collection icon"
-msgid "Location"
-msgstr "Miejsce"
-
-#: crates/pigoune-app/src/collection_looks.rs:214
-msgctxt "collection icon"
-msgid "Headphones"
-msgstr "Słuchawki"
-
-#: crates/pigoune-app/src/collection_looks.rs:215
-msgctxt "collection icon"
-msgid "Calendar"
-msgstr "Kalendarz"
-
-#: crates/pigoune-app/src/collection_looks.rs:216
-msgctxt "collection icon"
-msgid "Paper Clip"
-msgstr "Spinacz"
-
-#: crates/pigoune-app/src/collection_looks.rs:217
-msgctxt "collection icon"
-msgid "Key"
-msgstr "Klucz"
-
-#: crates/pigoune-app/src/collection_looks.rs:218
-msgctxt "collection icon"
-msgid "Airplane"
-msgstr "Samolot"
-
-#: crates/pigoune-app/src/collection_looks.rs:219
+#: crates/pigoune-app/src/collection_looks.rs:545
 msgctxt "collection icon"
 msgid "Folder"
 msgstr "Katalog"
 
-#: crates/pigoune-app/src/collection_looks.rs:225
+#: crates/pigoune-app/src/collection_looks.rs:550
+msgctxt "collection icon"
+msgid "Document"
+msgstr "Dokument"
+
+#: crates/pigoune-app/src/collection_looks.rs:551
+msgctxt "collection icon"
+msgid "Spreadsheet"
+msgstr "Arkusz kalkulacyjny"
+
+#: crates/pigoune-app/src/collection_looks.rs:552
+msgctxt "collection icon"
+msgid "Presentation"
+msgstr "Prezentacja"
+
+#: crates/pigoune-app/src/collection_looks.rs:553
+msgctxt "collection icon"
+msgid "Font"
+msgstr "Czcionka"
+
+#: crates/pigoune-app/src/collection_looks.rs:554
+msgctxt "collection icon"
+msgid "Package"
+msgstr "Paczka"
+
+#: crates/pigoune-app/src/collection_looks.rs:555
+msgctxt "collection icon"
+msgid "Paper Clip"
+msgstr "Spinacz"
+
+#: crates/pigoune-app/src/collection_looks.rs:556
+msgctxt "collection icon"
+msgid "Clipboard"
+msgstr "Schowek"
+
+#: crates/pigoune-app/src/collection_looks.rs:557
+msgctxt "collection icon"
+msgid "Notebook"
+msgstr "Notatnik"
+
+#: crates/pigoune-app/src/collection_looks.rs:558
+msgctxt "collection icon"
+msgid "Newspaper"
+msgstr "Gazeta"
+
+#: crates/pigoune-app/src/collection_looks.rs:559
+msgctxt "collection icon"
+msgid "Book"
+msgstr "Książka"
+
+#: crates/pigoune-app/src/collection_looks.rs:560
+msgctxt "collection icon"
+msgid "Books"
+msgstr "Książki"
+
+#: crates/pigoune-app/src/collection_looks.rs:561
+msgctxt "collection icon"
+msgid "Open Book"
+msgstr "Otwarta książka"
+
+#: crates/pigoune-app/src/collection_looks.rs:562
+msgctxt "collection icon"
+msgid "Page Marker"
+msgstr "Zakładka"
+
+#: crates/pigoune-app/src/collection_looks.rs:563
+msgctxt "collection icon"
+msgid "Blank Calendar"
+msgstr "Pusty kalendarz"
+
+#: crates/pigoune-app/src/collection_looks.rs:564
+msgctxt "collection icon"
+msgid "Templates"
+msgstr "Szablony"
+
+#: crates/pigoune-app/src/collection_looks.rs:565
+msgctxt "collection icon"
+msgid "Text Box"
+msgstr "Pole tekstowe"
+
+#: crates/pigoune-app/src/collection_looks.rs:566
+msgctxt "collection icon"
+msgid "Wide Brush"
+msgstr "Szeroki pędzel"
+
+#: crates/pigoune-app/src/collection_looks.rs:567
+msgctxt "collection icon"
+msgid "Paint Bucket"
+msgstr "Wiadro z farbą"
+
+#: crates/pigoune-app/src/collection_looks.rs:568
+msgctxt "collection icon"
+msgid "Palette"
+msgstr "Paleta"
+
+#: crates/pigoune-app/src/collection_looks.rs:569
+msgctxt "collection icon"
+msgid "Pencil"
+msgstr "Ołówek"
+
+#: crates/pigoune-app/src/collection_looks.rs:570
+msgctxt "collection icon"
+msgid "Pen Nib"
+msgstr "Stalówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:571
+msgctxt "collection icon"
+msgid "Eyedropper"
+msgstr "Zakraplacz"
+
+#: crates/pigoune-app/src/collection_looks.rs:572
+msgctxt "collection icon"
+msgid "Scissors"
+msgstr "Nożyczki"
+
+#: crates/pigoune-app/src/collection_looks.rs:573
+msgctxt "collection icon"
+msgid "Ruler"
+msgstr "Linijka"
+
+#: crates/pigoune-app/src/collection_looks.rs:574
+msgctxt "collection icon"
+msgid "Shapes"
+msgstr "Kształty"
+
+#: crates/pigoune-app/src/collection_looks.rs:575
+msgctxt "collection icon"
+msgid "Magic Wand"
+msgstr "Magiczna różdżka"
+
+#: crates/pigoune-app/src/collection_looks.rs:576
+msgctxt "collection icon"
+msgid "Sparkle"
+msgstr "Iskra"
+
+#: crates/pigoune-app/src/collection_looks.rs:577
+msgctxt "collection icon"
+msgid "Paint Brush"
+msgstr "Pędzel"
+
+#: crates/pigoune-app/src/collection_looks.rs:578
+msgctxt "collection icon"
+msgid "Household Brush"
+msgstr "Pędzel malarski"
+
+#: crates/pigoune-app/src/collection_looks.rs:579
+msgctxt "collection icon"
+msgid "Paint Roller"
+msgstr "Wałek malarski"
+
+#: crates/pigoune-app/src/collection_looks.rs:580
+msgctxt "collection icon"
+msgid "Highlighter"
+msgstr "Zakreślacz"
+
+#: crates/pigoune-app/src/collection_looks.rs:581
+msgctxt "collection icon"
+msgid "Eraser"
+msgstr "Gumka"
+
+#: crates/pigoune-app/src/collection_looks.rs:582
+msgctxt "collection icon"
+msgid "Pencil and Ruler"
+msgstr "Ołówek i linijka"
+
+#: crates/pigoune-app/src/collection_looks.rs:583
+msgctxt "collection icon"
+msgid "Pen"
+msgstr "Długopis"
+
+#: crates/pigoune-app/src/collection_looks.rs:584
+msgctxt "collection icon"
+msgid "Bézier Curve"
+msgstr "Krzywa Béziera"
+
+#: crates/pigoune-app/src/collection_looks.rs:585
+msgctxt "collection icon"
+msgid "Vector Shape"
+msgstr "Kształt wektorowy"
+
+#: crates/pigoune-app/src/collection_looks.rs:586
+msgctxt "collection icon"
+msgid "Path"
+msgstr "Ścieżka"
+
+#: crates/pigoune-app/src/collection_looks.rs:587
+msgctxt "collection icon"
+msgid "Polygon"
+msgstr "Wielokąt"
+
+#: crates/pigoune-app/src/collection_looks.rs:588
+msgctxt "collection icon"
+msgid "Hexagon"
+msgstr "Sześciokąt"
+
+#: crates/pigoune-app/src/collection_looks.rs:589
+msgctxt "collection icon"
+msgid "Half Circle"
+msgstr "Półkole"
+
+#: crates/pigoune-app/src/collection_looks.rs:590
+msgctxt "collection icon"
+msgid "Cube"
+msgstr "Sześcian"
+
+#: crates/pigoune-app/src/collection_looks.rs:591
+msgctxt "collection icon"
+msgid "Cylinder"
+msgstr "Walec"
+
+#: crates/pigoune-app/src/collection_looks.rs:592
+msgctxt "collection icon"
+msgid "3D"
+msgstr "3D"
+
+#: crates/pigoune-app/src/collection_looks.rs:593
+msgctxt "collection icon"
+msgid "Gradient"
+msgstr "Gradient"
+
+#: crates/pigoune-app/src/collection_looks.rs:594
+msgctxt "collection icon"
+msgid "Color Swatches"
+msgstr "Próbki kolorów"
+
+#: crates/pigoune-app/src/collection_looks.rs:595
+msgctxt "collection icon"
+msgid "Crop"
+msgstr "Kadrowanie"
+
+#: crates/pigoune-app/src/collection_looks.rs:596
+msgctxt "collection icon"
+msgid "Frame"
+msgstr "Ramka"
+
+#: crates/pigoune-app/src/collection_looks.rs:597
+msgctxt "collection icon"
+msgid "Perspective"
+msgstr "Perspektywa"
+
+#: crates/pigoune-app/src/collection_looks.rs:598
+msgctxt "collection icon"
+msgid "Signature"
+msgstr "Podpis"
+
+#: crates/pigoune-app/src/collection_looks.rs:599
+msgctxt "collection icon"
+msgid "Scribble"
+msgstr "Bazgroły"
+
+#: crates/pigoune-app/src/collection_looks.rs:600
+msgctxt "collection icon"
+msgid "Spiral"
+msgstr "Spirala"
+
+#: crates/pigoune-app/src/collection_looks.rs:601
+msgctxt "collection icon"
+msgid "Stamp"
+msgstr "Pieczątka"
+
+#: crates/pigoune-app/src/collection_looks.rs:602
+msgctxt "collection icon"
+msgid "Sticker"
+msgstr "Naklejka"
+
+#: crates/pigoune-app/src/collection_looks.rs:603
+msgctxt "collection icon"
+msgid "Blueprint"
+msgstr "Plan"
+
+#: crates/pigoune-app/src/collection_looks.rs:604
+msgctxt "collection icon"
+msgid "Lasso"
+msgstr "Lasso"
+
+#: crates/pigoune-app/src/collection_looks.rs:612
+msgctxt "collection icon"
+msgid "Vignette"
+msgstr "Winietowanie"
+
+#: crates/pigoune-app/src/collection_looks.rs:613
+msgctxt "collection icon"
+msgid "Spray Bottle"
+msgstr "Spryskiwacz"
+
+#: crates/pigoune-app/src/collection_looks.rs:614
+msgctxt "collection icon"
+msgid "Image"
+msgstr "Obraz"
+
+#: crates/pigoune-app/src/collection_looks.rs:615
+msgctxt "collection icon"
+msgid "Photos"
+msgstr "Zdjęcia"
+
+#: crates/pigoune-app/src/collection_looks.rs:616
+msgctxt "collection icon"
+msgid "Film Strip"
+msgstr "Taśma filmowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:617
+msgctxt "collection icon"
+msgid "Clapperboard"
+msgstr "Klaps filmowy"
+
+#: crates/pigoune-app/src/collection_looks.rs:618
+msgctxt "collection icon"
+msgid "Aperture"
+msgstr "Przysłona"
+
+#: crates/pigoune-app/src/collection_looks.rs:619
+msgctxt "collection icon"
+msgid "Camera"
+msgstr "Aparat fotograficzny"
+
+#: crates/pigoune-app/src/collection_looks.rs:620
+msgctxt "collection icon"
+msgid "Videos"
+msgstr "Filmy"
+
+#: crates/pigoune-app/src/collection_looks.rs:621
+msgctxt "collection icon"
+msgid "Film Reel"
+msgstr "Szpula filmowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:622
+msgctxt "collection icon"
+msgid "Screenplay"
+msgstr "Scenariusz"
+
+#: crates/pigoune-app/src/collection_looks.rs:623
+msgctxt "collection icon"
+msgid "Panorama"
+msgstr "Panorama"
+
+#: crates/pigoune-app/src/collection_looks.rs:624
+msgctxt "collection icon"
+msgid "Television"
+msgstr "Telewizor"
+
+#: crates/pigoune-app/src/collection_looks.rs:625
+msgctxt "collection icon"
+msgid "Music Notes"
+msgstr "Nuty"
+
+#: crates/pigoune-app/src/collection_looks.rs:626
+msgctxt "collection icon"
+msgid "Guitar"
+msgstr "Gitara"
+
+#: crates/pigoune-app/src/collection_looks.rs:627
+msgctxt "collection icon"
+msgid "Vinyl Record"
+msgstr "Płyta winylowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:628
+msgctxt "collection icon"
+msgid "Headphones"
+msgstr "Słuchawki"
+
+#: crates/pigoune-app/src/collection_looks.rs:629
+msgctxt "collection icon"
+msgid "Piano Keys"
+msgstr "Klawisze fortepianu"
+
+#: crates/pigoune-app/src/collection_looks.rs:630
+msgctxt "collection icon"
+msgid "Metronome"
+msgstr "Metronom"
+
+#: crates/pigoune-app/src/collection_looks.rs:631
+msgctxt "collection icon"
+msgid "Stage Microphone"
+msgstr "Mikrofon sceniczny"
+
+#: crates/pigoune-app/src/collection_looks.rs:632
+msgctxt "collection icon"
+msgid "Cassette Tape"
+msgstr "Kaseta magnetofonowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:633
+msgctxt "collection icon"
+msgid "Disco Ball"
+msgstr "Kula dyskotekowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:634
+msgctxt "collection icon"
+msgid "Tree"
+msgstr "Drzewo"
+
+#: crates/pigoune-app/src/collection_looks.rs:635
+msgctxt "collection icon"
+msgid "Evergreen Tree"
+msgstr "Drzewo iglaste"
+
+#: crates/pigoune-app/src/collection_looks.rs:636
+msgctxt "collection icon"
+msgid "Palm Tree"
+msgstr "Palma"
+
+#: crates/pigoune-app/src/collection_looks.rs:637
+msgctxt "collection icon"
+msgid "Leaf"
+msgstr "Liść"
+
+#: crates/pigoune-app/src/collection_looks.rs:638
+msgctxt "collection icon"
+msgid "Flower"
+msgstr "Kwiat"
+
+#: crates/pigoune-app/src/collection_looks.rs:639
+msgctxt "collection icon"
+msgid "Lotus"
+msgstr "Lotos"
+
+#: crates/pigoune-app/src/collection_looks.rs:640
+msgctxt "collection icon"
+msgid "Plant"
+msgstr "Roślina"
+
+#: crates/pigoune-app/src/collection_looks.rs:641
+msgctxt "collection icon"
+msgid "Cactus"
+msgstr "Kaktus"
+
+#: crates/pigoune-app/src/collection_looks.rs:642
+msgctxt "collection icon"
+msgid "Mountains"
+msgstr "Góry"
+
+#: crates/pigoune-app/src/collection_looks.rs:643
+msgctxt "collection icon"
+msgid "Cloud"
+msgstr "Chmura"
+
+#: crates/pigoune-app/src/collection_looks.rs:644
+msgctxt "collection icon"
+msgid "Rain"
+msgstr "Deszcz"
+
+#: crates/pigoune-app/src/collection_looks.rs:645
+msgctxt "collection icon"
+msgid "Snowflake"
+msgstr "Płatek śniegu"
+
+#: crates/pigoune-app/src/collection_looks.rs:646
+msgctxt "collection icon"
+msgid "Lightning"
+msgstr "Błyskawica"
+
+#: crates/pigoune-app/src/collection_looks.rs:647
+msgctxt "collection icon"
+msgid "Flame"
+msgstr "Płomień"
+
+#: crates/pigoune-app/src/collection_looks.rs:648
+msgctxt "collection icon"
+msgid "Water Drop"
+msgstr "Kropla wody"
+
+#: crates/pigoune-app/src/collection_looks.rs:649
+msgctxt "collection icon"
+msgid "Waves"
+msgstr "Fale"
+
+#: crates/pigoune-app/src/collection_looks.rs:650
+msgctxt "collection icon"
+msgid "Rainbow"
+msgstr "Tęcza"
+
+#: crates/pigoune-app/src/collection_looks.rs:651
+msgctxt "collection icon"
+msgid "Moon and Stars"
+msgstr "Księżyc i gwiazdy"
+
+#: crates/pigoune-app/src/collection_looks.rs:652
+msgctxt "collection icon"
+msgid "Sun"
+msgstr "Słońce"
+
+#: crates/pigoune-app/src/collection_looks.rs:653
+msgctxt "collection icon"
+msgid "Moon"
+msgstr "Księżyc"
+
+#: crates/pigoune-app/src/collection_looks.rs:654
+msgctxt "collection icon"
+msgid "Acorn"
+msgstr "Żołądź"
+
+#: crates/pigoune-app/src/collection_looks.rs:655
+msgctxt "collection icon"
+msgid "Tulip"
+msgstr "Tulipan"
+
+#: crates/pigoune-app/src/collection_looks.rs:656
+msgctxt "collection icon"
+msgid "Potted Plant"
+msgstr "Roślina doniczkowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:657
+msgctxt "collection icon"
+msgid "Clover"
+msgstr "Koniczyna"
+
+#: crates/pigoune-app/src/collection_looks.rs:658
+msgctxt "collection icon"
+msgid "Feather"
+msgstr "Pióro"
+
+#: crates/pigoune-app/src/collection_looks.rs:659
+msgctxt "collection icon"
+msgid "Park"
+msgstr "Park"
+
+#: crates/pigoune-app/src/collection_looks.rs:660
+msgctxt "collection icon"
+msgid "Island"
+msgstr "Wyspa"
+
+#: crates/pigoune-app/src/collection_looks.rs:661
+msgctxt "collection icon"
+msgid "Sunrise"
+msgstr "Wschód słońca"
+
+#: crates/pigoune-app/src/collection_looks.rs:662
+msgctxt "collection icon"
+msgid "Dim Light"
+msgstr "Słabe światło"
+
+#: crates/pigoune-app/src/collection_looks.rs:663
+msgctxt "collection icon"
+msgid "Partly Sunny"
+msgstr "Częściowo słonecznie"
+
+#: crates/pigoune-app/src/collection_looks.rs:664
+msgctxt "collection icon"
+msgid "Cloudy Night"
+msgstr "Pochmurna noc"
+
+#: crates/pigoune-app/src/collection_looks.rs:665
+msgctxt "collection icon"
+msgid "Snow"
+msgstr "Śnieg"
+
+#: crates/pigoune-app/src/collection_looks.rs:666
+msgctxt "collection icon"
+msgid "Fog"
+msgstr "Mgła"
+
+#: crates/pigoune-app/src/collection_looks.rs:674
+msgctxt "collection icon"
+msgid "Thunderstorm"
+msgstr "Burza"
+
+#: crates/pigoune-app/src/collection_looks.rs:675
+msgctxt "collection icon"
+msgid "Rainbow Cloud"
+msgstr "Tęczowa chmura"
+
+#: crates/pigoune-app/src/collection_looks.rs:676
+msgctxt "collection icon"
+msgid "Thermometer"
+msgstr "Termometr"
+
+#: crates/pigoune-app/src/collection_looks.rs:677
+msgctxt "collection icon"
+msgid "Wind"
+msgstr "Wiatr"
+
+#: crates/pigoune-app/src/collection_looks.rs:678
+msgctxt "collection icon"
+msgid "Tornado"
+msgstr "Tornado"
+
+#: crates/pigoune-app/src/collection_looks.rs:679
+msgctxt "collection icon"
+msgid "Hurricane"
+msgstr "Huragan"
+
+#: crates/pigoune-app/src/collection_looks.rs:680
+msgctxt "collection icon"
+msgid "Meteor"
+msgstr "Meteor"
+
+#: crates/pigoune-app/src/collection_looks.rs:681
+msgctxt "collection icon"
+msgid "Shooting Star"
+msgstr "Spadająca gwiazda"
+
+#: crates/pigoune-app/src/collection_looks.rs:682
+msgctxt "collection icon"
+msgid "Planet"
+msgstr "Planeta"
+
+#: crates/pigoune-app/src/collection_looks.rs:683
+msgctxt "collection icon"
+msgid "Four-Point Star"
+msgstr "Czteroramienna gwiazda"
+
+#: crates/pigoune-app/src/collection_looks.rs:684
+msgctxt "collection icon"
+msgid "Half Drop"
+msgstr "Pół kropli"
+
+#: crates/pigoune-app/src/collection_looks.rs:685
+msgctxt "collection icon"
+msgid "Campfire"
+msgstr "Ognisko"
+
+#: crates/pigoune-app/src/collection_looks.rs:686
+msgctxt "collection icon"
+msgid "Windmill"
+msgstr "Wiatrak"
+
+#: crates/pigoune-app/src/collection_looks.rs:687
+msgctxt "collection icon"
+msgid "Solar Panel"
+msgstr "Panel słoneczny"
+
+#: crates/pigoune-app/src/collection_looks.rs:688
+msgctxt "collection icon"
+msgid "Cat"
+msgstr "Kot"
+
+#: crates/pigoune-app/src/collection_looks.rs:689
+msgctxt "collection icon"
+msgid "Dog"
+msgstr "Pies"
+
+#: crates/pigoune-app/src/collection_looks.rs:690
+msgctxt "collection icon"
+msgid "Bird"
+msgstr "Ptak"
+
+#: crates/pigoune-app/src/collection_looks.rs:691
+msgctxt "collection icon"
+msgid "Fish"
+msgstr "Ryba"
+
+#: crates/pigoune-app/src/collection_looks.rs:692
+msgctxt "collection icon"
+msgid "Butterfly"
+msgstr "Motyl"
+
+#: crates/pigoune-app/src/collection_looks.rs:693
+msgctxt "collection icon"
+msgid "Bug"
+msgstr "Owad"
+
+#: crates/pigoune-app/src/collection_looks.rs:694
+msgctxt "collection icon"
+msgid "Horse"
+msgstr "Koń"
+
+#: crates/pigoune-app/src/collection_looks.rs:695
+msgctxt "collection icon"
+msgid "Cow"
+msgstr "Krowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:696
+msgctxt "collection icon"
+msgid "Paw Print"
+msgstr "Ślad łapy"
+
+#: crates/pigoune-app/src/collection_looks.rs:697
+msgctxt "collection icon"
+msgid "Rabbit"
+msgstr "Królik"
+
+#: crates/pigoune-app/src/collection_looks.rs:698
+msgctxt "collection icon"
+msgid "Beetle"
+msgstr "Chrząszcz"
+
+#: crates/pigoune-app/src/collection_looks.rs:699
+msgctxt "collection icon"
+msgid "Small Fish"
+msgstr "Mała rybka"
+
+#: crates/pigoune-app/src/collection_looks.rs:700
+msgctxt "collection icon"
+msgid "Egg"
+msgstr "Jajko"
+
+#: crates/pigoune-app/src/collection_looks.rs:701
+msgctxt "collection icon"
+msgid "Shrimp"
+msgstr "Krewetka"
+
+#: crates/pigoune-app/src/collection_looks.rs:702
+msgctxt "collection icon"
+msgid "Bone"
+msgstr "Kość"
+
+#: crates/pigoune-app/src/collection_looks.rs:703
+msgctxt "collection icon"
+msgid "House"
+msgstr "Dom"
+
+#: crates/pigoune-app/src/collection_looks.rs:704
+msgctxt "collection icon"
+msgid "Buildings"
+msgstr "Budynki"
+
+#: crates/pigoune-app/src/collection_looks.rs:705
+msgctxt "collection icon"
+msgid "Shop"
+msgstr "Sklep"
+
+#: crates/pigoune-app/src/collection_looks.rs:706
+msgctxt "collection icon"
+msgid "Castle"
+msgstr "Zamek"
+
+#: crates/pigoune-app/src/collection_looks.rs:707
+msgctxt "collection icon"
+msgid "Church"
+msgstr "Kościół"
+
+#: crates/pigoune-app/src/collection_looks.rs:708
+msgctxt "collection icon"
+msgid "Mosque"
+msgstr "Meczet"
+
+#: crates/pigoune-app/src/collection_looks.rs:709
+msgctxt "collection icon"
+msgid "Hospital"
+msgstr "Szpital"
+
+#: crates/pigoune-app/src/collection_looks.rs:710
+msgctxt "collection icon"
+msgid "Factory"
+msgstr "Fabryka"
+
+#: crates/pigoune-app/src/collection_looks.rs:711
+msgctxt "collection icon"
+msgid "City"
+msgstr "Miasto"
+
+#: crates/pigoune-app/src/collection_looks.rs:712
+msgctxt "collection icon"
+msgid "Bridge"
+msgstr "Most"
+
+#: crates/pigoune-app/src/collection_looks.rs:713
+msgctxt "collection icon"
+msgid "Lighthouse"
+msgstr "Latarnia morska"
+
+#: crates/pigoune-app/src/collection_looks.rs:714
+msgctxt "collection icon"
+msgid "Garage"
+msgstr "Garaż"
+
+#: crates/pigoune-app/src/collection_looks.rs:715
+msgctxt "collection icon"
+msgid "Warehouse"
+msgstr "Magazyn"
+
+#: crates/pigoune-app/src/collection_looks.rs:716
+msgctxt "collection icon"
+msgid "Tower Crane"
+msgstr "Żuraw wieżowy"
+
+#: crates/pigoune-app/src/collection_looks.rs:717
+msgctxt "collection icon"
+msgid "Hard Hat"
+msgstr "Kask ochronny"
+
+#: crates/pigoune-app/src/collection_looks.rs:718
+msgctxt "collection icon"
+msgid "Open Door"
+msgstr "Otwarte drzwi"
+
+#: crates/pigoune-app/src/collection_looks.rs:719
+msgctxt "collection icon"
+msgid "Map Pin"
+msgstr "Pinezka na mapie"
+
+#: crates/pigoune-app/src/collection_looks.rs:720
+msgctxt "collection icon"
+msgid "Map"
+msgstr "Mapa"
+
+#: crates/pigoune-app/src/collection_looks.rs:721
+msgctxt "collection icon"
+msgid "Globe"
+msgstr "Globus"
+
+#: crates/pigoune-app/src/collection_looks.rs:722
+msgctxt "collection icon"
+msgid "Desk Globe"
+msgstr "Globus na podstawie"
+
+#: crates/pigoune-app/src/collection_looks.rs:723
+msgctxt "collection icon"
+msgid "Americas"
+msgstr "Ameryki"
+
+#: crates/pigoune-app/src/collection_looks.rs:724
+msgctxt "collection icon"
+msgid "Car"
+msgstr "Samochód"
+
+#: crates/pigoune-app/src/collection_looks.rs:725
+msgctxt "collection icon"
+msgid "Bicycle"
+msgstr "Rower"
+
+#: crates/pigoune-app/src/collection_looks.rs:726
+msgctxt "collection icon"
+msgid "Train"
+msgstr "Pociąg"
+
+#: crates/pigoune-app/src/collection_looks.rs:727
+msgctxt "collection icon"
+msgid "Rocket"
+msgstr "Rakieta"
+
+#: crates/pigoune-app/src/collection_looks.rs:728
+msgctxt "collection icon"
+msgid "Sailboat"
+msgstr "Żaglówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:736
+msgctxt "collection icon"
+msgid "Tent"
+msgstr "Namiot"
+
+#: crates/pigoune-app/src/collection_looks.rs:737
+msgctxt "collection icon"
+msgid "Backpack"
+msgstr "Plecak"
+
+#: crates/pigoune-app/src/collection_looks.rs:738
+msgctxt "collection icon"
+msgid "Suitcase"
+msgstr "Walizka"
+
+#: crates/pigoune-app/src/collection_looks.rs:739
+msgctxt "collection icon"
+msgid "Lifebuoy"
+msgstr "Koło ratunkowe"
+
+#: crates/pigoune-app/src/collection_looks.rs:740
+msgctxt "collection icon"
+msgid "Airplane"
+msgstr "Samolot"
+
+#: crates/pigoune-app/src/collection_looks.rs:741
+msgctxt "collection icon"
+msgid "Airplane Taking Off"
+msgstr "Startujący samolot"
+
+#: crates/pigoune-app/src/collection_looks.rs:742
+msgctxt "collection icon"
+msgid "Bus"
+msgstr "Autobus"
+
+#: crates/pigoune-app/src/collection_looks.rs:743
+msgctxt "collection icon"
+msgid "Taxi"
+msgstr "Taksówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:744
+msgctxt "collection icon"
+msgid "Tram"
+msgstr "Tramwaj"
+
+#: crates/pigoune-app/src/collection_looks.rs:745
+msgctxt "collection icon"
+msgid "Subway"
+msgstr "Metro"
+
+#: crates/pigoune-app/src/collection_looks.rs:746
+msgctxt "collection icon"
+msgid "Cable Car"
+msgstr "Kolejka linowa"
+
+#: crates/pigoune-app/src/collection_looks.rs:747
+msgctxt "collection icon"
+msgid "Motorcycle"
+msgstr "Motocykl"
+
+#: crates/pigoune-app/src/collection_looks.rs:748
+msgctxt "collection icon"
+msgid "Scooter"
+msgstr "Hulajnoga"
+
+#: crates/pigoune-app/src/collection_looks.rs:749
+msgctxt "collection icon"
+msgid "Truck"
+msgstr "Ciężarówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:750
+msgctxt "collection icon"
+msgid "Van"
+msgstr "Furgonetka"
+
+#: crates/pigoune-app/src/collection_looks.rs:751
+msgctxt "collection icon"
+msgid "Jeep"
+msgstr "Terenówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:752
+msgctxt "collection icon"
+msgid "Police Car"
+msgstr "Radiowóz"
+
+#: crates/pigoune-app/src/collection_looks.rs:753
+msgctxt "collection icon"
+msgid "Ambulance"
+msgstr "Karetka"
+
+#: crates/pigoune-app/src/collection_looks.rs:754
+msgctxt "collection icon"
+msgid "Fire Truck"
+msgstr "Wóz strażacki"
+
+#: crates/pigoune-app/src/collection_looks.rs:755
+msgctxt "collection icon"
+msgid "Boat"
+msgstr "Łódź"
+
+#: crates/pigoune-app/src/collection_looks.rs:756
+msgctxt "collection icon"
+msgid "Parachute"
+msgstr "Spadochron"
+
+#: crates/pigoune-app/src/collection_looks.rs:757
+msgctxt "collection icon"
+msgid "Steering Wheel"
+msgstr "Kierownica"
+
+#: crates/pigoune-app/src/collection_looks.rs:758
+msgctxt "collection icon"
+msgid "Gas Pump"
+msgstr "Dystrybutor paliwa"
+
+#: crates/pigoune-app/src/collection_looks.rs:759
+msgctxt "collection icon"
+msgid "Traffic Light"
+msgstr "Sygnalizacja świetlna"
+
+#: crates/pigoune-app/src/collection_looks.rs:760
+msgctxt "collection icon"
+msgid "Signpost"
+msgstr "Drogowskaz"
+
+#: crates/pigoune-app/src/collection_looks.rs:761
+msgctxt "collection icon"
+msgid "Compass Rose"
+msgstr "Róża wiatrów"
+
+#: crates/pigoune-app/src/collection_looks.rs:762
+msgctxt "collection icon"
+msgid "Rolling Suitcase"
+msgstr "Walizka na kółkach"
+
+#: crates/pigoune-app/src/collection_looks.rs:763
+msgctxt "collection icon"
+msgid "Ticket"
+msgstr "Bilet"
+
+#: crates/pigoune-app/src/collection_looks.rs:764
+msgctxt "collection icon"
+msgid "Compass"
+msgstr "Kompas"
+
+#: crates/pigoune-app/src/collection_looks.rs:765
+msgctxt "collection icon"
+msgid "Anchor"
+msgstr "Kotwica"
+
+#: crates/pigoune-app/src/collection_looks.rs:766
+msgctxt "collection icon"
+msgid "Road"
+msgstr "Droga"
+
+#: crates/pigoune-app/src/collection_looks.rs:767
+msgctxt "collection icon"
+msgid "Armchair"
+msgstr "Fotel"
+
+#: crates/pigoune-app/src/collection_looks.rs:768
+msgctxt "collection icon"
+msgid "Couch"
+msgstr "Kanapa"
+
+#: crates/pigoune-app/src/collection_looks.rs:769
+msgctxt "collection icon"
+msgid "Lamp"
+msgstr "Lampa"
+
+#: crates/pigoune-app/src/collection_looks.rs:770
+msgctxt "collection icon"
+msgid "Bed"
+msgstr "Łóżko"
+
+#: crates/pigoune-app/src/collection_looks.rs:771
+msgctxt "collection icon"
+msgid "Bathtub"
+msgstr "Wanna"
+
+#: crates/pigoune-app/src/collection_looks.rs:772
+msgctxt "collection icon"
+msgid "Swimming Pool"
+msgstr "Basen"
+
+#: crates/pigoune-app/src/collection_looks.rs:773
+msgctxt "collection icon"
+msgid "Light Bulb"
+msgstr "Żarówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:774
+msgctxt "collection icon"
+msgid "Flashlight"
+msgstr "Latarka"
+
+#: crates/pigoune-app/src/collection_looks.rs:775
+msgctxt "collection icon"
+msgid "Dress"
+msgstr "Sukienka"
+
+#: crates/pigoune-app/src/collection_looks.rs:776
+msgctxt "collection icon"
+msgid "Pants"
+msgstr "Spodnie"
+
+#: crates/pigoune-app/src/collection_looks.rs:777
+msgctxt "collection icon"
+msgid "Hoodie"
+msgstr "Bluza z kapturem"
+
+#: crates/pigoune-app/src/collection_looks.rs:778
+msgctxt "collection icon"
+msgid "High Heel"
+msgstr "Szpilka"
+
+#: crates/pigoune-app/src/collection_looks.rs:779
+msgctxt "collection icon"
+msgid "Boot"
+msgstr "Kozak"
+
+#: crates/pigoune-app/src/collection_looks.rs:780
+msgctxt "collection icon"
+msgid "Sunglasses"
+msgstr "Okulary przeciwsłoneczne"
+
+#: crates/pigoune-app/src/collection_looks.rs:781
+msgctxt "collection icon"
+msgid "T-Shirt"
+msgstr "Koszulka"
+
+#: crates/pigoune-app/src/collection_looks.rs:782
+msgctxt "collection icon"
+msgid "Sneaker"
+msgstr "Sneaker"
+
+#: crates/pigoune-app/src/collection_looks.rs:783
+msgctxt "collection icon"
+msgid "Umbrella"
+msgstr "Parasol"
+
+#: crates/pigoune-app/src/collection_looks.rs:784
+msgctxt "collection icon"
+msgid "Handbag"
+msgstr "Torebka"
+
+#: crates/pigoune-app/src/collection_looks.rs:785
+msgctxt "collection icon"
+msgid "Shopping Cart"
+msgstr "Wózek na zakupy"
+
+#: crates/pigoune-app/src/collection_looks.rs:786
+msgctxt "collection icon"
+msgid "Coffee"
+msgstr "Kawa"
+
+#: crates/pigoune-app/src/collection_looks.rs:787
+msgctxt "collection icon"
+msgid "Pizza"
+msgstr "Pizza"
+
+#: crates/pigoune-app/src/collection_looks.rs:788
+msgctxt "collection icon"
+msgid "Cake"
+msgstr "Ciasto"
+
+#: crates/pigoune-app/src/collection_looks.rs:789
+msgctxt "collection icon"
+msgid "Hamburger"
+msgstr "Hamburger"
+
+#: crates/pigoune-app/src/collection_looks.rs:790
+msgctxt "collection icon"
+msgid "Wine"
+msgstr "Wino"
+
+#: crates/pigoune-app/src/collection_looks.rs:798
+msgctxt "collection icon"
+msgid "Champagne"
+msgstr "Szampan"
+
+#: crates/pigoune-app/src/collection_looks.rs:799
+msgctxt "collection icon"
+msgid "Beer Mug"
+msgstr "Kufel do piwa"
+
+#: crates/pigoune-app/src/collection_looks.rs:800
+msgctxt "collection icon"
+msgid "Ice Cream"
+msgstr "Lody"
+
+#: crates/pigoune-app/src/collection_looks.rs:801
+msgctxt "collection icon"
+msgid "Popcorn"
+msgstr "Popcorn"
+
+#: crates/pigoune-app/src/collection_looks.rs:802
+msgctxt "collection icon"
+msgid "Cutlery"
+msgstr "Sztućce"
+
+#: crates/pigoune-app/src/collection_looks.rs:803
+msgctxt "collection icon"
+msgid "Chef Hat"
+msgstr "Czapka kucharska"
+
+#: crates/pigoune-app/src/collection_looks.rs:804
+msgctxt "collection icon"
+msgid "Game Controller"
+msgstr "Kontroler do gier"
+
+#: crates/pigoune-app/src/collection_looks.rs:805
+msgctxt "collection icon"
+msgid "Dice"
+msgstr "Kostka do gry"
+
+#: crates/pigoune-app/src/collection_looks.rs:806
+msgctxt "collection icon"
+msgid "Puzzle Piece"
+msgstr "Element układanki"
+
+#: crates/pigoune-app/src/collection_looks.rs:807
+msgctxt "collection icon"
+msgid "Trophy"
+msgstr "Puchar"
+
+#: crates/pigoune-app/src/collection_looks.rs:808
+msgctxt "collection icon"
+msgid "Medal"
+msgstr "Medal"
+
+#: crates/pigoune-app/src/collection_looks.rs:809
+msgctxt "collection icon"
+msgid "Target"
+msgstr "Tarcza"
+
+#: crates/pigoune-app/src/collection_looks.rs:810
+msgctxt "collection icon"
+msgid "Crown"
+msgstr "Korona"
+
+#: crates/pigoune-app/src/collection_looks.rs:811
+msgctxt "collection icon"
+msgid "Diamond"
+msgstr "Diament"
+
+#: crates/pigoune-app/src/collection_looks.rs:812
+msgctxt "collection icon"
+msgid "Balloon"
+msgstr "Balon"
+
+#: crates/pigoune-app/src/collection_looks.rs:813
+msgctxt "collection icon"
+msgid "Gift"
+msgstr "Prezent"
+
+#: crates/pigoune-app/src/collection_looks.rs:814
+msgctxt "collection icon"
+msgid "Confetti"
+msgstr "Konfetti"
+
+#: crates/pigoune-app/src/collection_looks.rs:815
+msgctxt "collection icon"
+msgid "Joystick"
+msgstr "Joystick"
+
+#: crates/pigoune-app/src/collection_looks.rs:816
+msgctxt "collection icon"
+msgid "Building Blocks"
+msgstr "Klocki"
+
+#: crates/pigoune-app/src/collection_looks.rs:817
+msgctxt "collection icon"
+msgid "Playing Cards"
+msgstr "Karty do gry"
+
+#: crates/pigoune-app/src/collection_looks.rs:818
+msgctxt "collection icon"
+msgid "Poker Chip"
+msgstr "Żeton pokerowy"
+
+#: crates/pigoune-app/src/collection_looks.rs:819
+msgctxt "collection icon"
+msgid "Basketball"
+msgstr "Koszykówka"
+
+#: crates/pigoune-app/src/collection_looks.rs:820
+msgctxt "collection icon"
+msgid "Soccer Ball"
+msgstr "Piłka nożna"
+
+#: crates/pigoune-app/src/collection_looks.rs:821
+msgctxt "collection icon"
+msgid "Boxing Glove"
+msgstr "Rękawica bokserska"
+
+#: crates/pigoune-app/src/collection_looks.rs:822
+msgctxt "collection icon"
+msgid "Barbell"
+msgstr "Sztanga"
+
+#: crates/pigoune-app/src/collection_looks.rs:823
+msgctxt "collection icon"
+msgid "Checkered Flag"
+msgstr "Flaga w szachownicę"
+
+#: crates/pigoune-app/src/collection_looks.rs:824
+msgctxt "collection icon"
+msgid "Treasure Chest"
+msgstr "Skrzynia ze skarbem"
+
+#: crates/pigoune-app/src/collection_looks.rs:825
+msgctxt "collection icon"
+msgid "Theater Mask"
+msgstr "Maska teatralna"
+
+#: crates/pigoune-app/src/collection_looks.rs:826
+msgctxt "collection icon"
+msgid "Sword"
+msgstr "Miecz"
+
+#: crates/pigoune-app/src/collection_looks.rs:827
+msgctxt "collection icon"
+msgid "Atom"
+msgstr "Atom"
+
+#: crates/pigoune-app/src/collection_looks.rs:828
+msgctxt "collection icon"
+msgid "Flask"
+msgstr "Kolba"
+
+#: crates/pigoune-app/src/collection_looks.rs:829
+msgctxt "collection icon"
+msgid "Microscope"
+msgstr "Mikroskop"
+
+#: crates/pigoune-app/src/collection_looks.rs:830
+msgctxt "collection icon"
+msgid "Stethoscope"
+msgstr "Stetoskop"
+
+#: crates/pigoune-app/src/collection_looks.rs:831
+msgctxt "collection icon"
+msgid "First Aid Kit"
+msgstr "Apteczka"
+
+#: crates/pigoune-app/src/collection_looks.rs:832
+msgctxt "collection icon"
+msgid "Heartbeat"
+msgstr "Bicie serca"
+
+#: crates/pigoune-app/src/collection_looks.rs:833
+msgctxt "collection icon"
+msgid "Tooth"
+msgstr "Ząb"
+
+#: crates/pigoune-app/src/collection_looks.rs:834
+msgctxt "collection icon"
+msgid "Brain"
+msgstr "Mózg"
+
+#: crates/pigoune-app/src/collection_looks.rs:835
+msgctxt "collection icon"
+msgid "Code"
+msgstr "Kod"
+
+#: crates/pigoune-app/src/collection_looks.rs:836
+msgctxt "collection icon"
+msgid "Terminal"
+msgstr "Terminal"
+
+#: crates/pigoune-app/src/collection_looks.rs:837
+msgctxt "collection icon"
+msgid "Robot"
+msgstr "Robot"
+
+#: crates/pigoune-app/src/collection_looks.rs:838
+msgctxt "collection icon"
+msgid "Alien"
+msgstr "Kosmita"
+
+#: crates/pigoune-app/src/collection_looks.rs:839
+msgctxt "collection icon"
+msgid "Laptop"
+msgstr "Laptop"
+
+#: crates/pigoune-app/src/collection_looks.rs:840
+msgctxt "collection icon"
+msgid "Monitor"
+msgstr "Monitor"
+
+#: crates/pigoune-app/src/collection_looks.rs:841
+msgctxt "collection icon"
+msgid "Computer"
+msgstr "Komputer"
+
+#: crates/pigoune-app/src/collection_looks.rs:842
+msgctxt "collection icon"
+msgid "Mobile Device"
+msgstr "Urządzenie mobilne"
+
+#: crates/pigoune-app/src/collection_looks.rs:843
+msgctxt "collection icon"
+msgid "Phone"
+msgstr "Telefon"
+
+#: crates/pigoune-app/src/collection_looks.rs:844
+msgctxt "collection icon"
+msgid "Tablet"
+msgstr "Tablet"
+
+#: crates/pigoune-app/src/collection_looks.rs:845
+msgctxt "collection icon"
+msgid "Wrench"
+msgstr "Klucz"
+
+#: crates/pigoune-app/src/collection_looks.rs:846
+msgctxt "collection icon"
+msgid "Hammer"
+msgstr "Młotek"
+
+#: crates/pigoune-app/src/collection_looks.rs:847
+msgctxt "collection icon"
+msgid "Toolbox"
+msgstr "Skrzynka z narzędziami"
+
+#: crates/pigoune-app/src/collection_looks.rs:848
+msgctxt "collection icon"
+msgid "Screwdriver"
+msgstr "Śrubokręt"
+
+#: crates/pigoune-app/src/collection_looks.rs:849
+msgctxt "collection icon"
+msgid "Magnet"
+msgstr "Magnes"
+
+#: crates/pigoune-app/src/collection_looks.rs:850
+msgctxt "collection icon"
+msgid "Calculator"
+msgstr "Kalkulator"
+
+#: crates/pigoune-app/src/collection_looks.rs:851
+msgctxt "collection icon"
+msgid "Bar Chart"
+msgstr "Wykres słupkowy"
+
+#: crates/pigoune-app/src/collection_looks.rs:852
+msgctxt "collection icon"
+msgid "Graduation Cap"
+msgstr "Biret absolwenta"
+
+#: crates/pigoune-app/src/collection_looks.rs:860
+msgctxt "collection icon"
+msgid "Briefcase"
+msgstr "Teczka"
+
+#: crates/pigoune-app/src/collection_looks.rs:861
+msgctxt "collection icon"
+msgid "Binoculars"
+msgstr "Lornetka"
+
+#: crates/pigoune-app/src/collection_looks.rs:862
+msgctxt "collection icon"
+msgid "Star"
+msgstr "Gwiazda"
+
+#: crates/pigoune-app/src/collection_looks.rs:863
+msgctxt "collection icon"
+msgid "Heart"
+msgstr "Serce"
+
+#: crates/pigoune-app/src/collection_looks.rs:864
+msgctxt "collection icon"
+msgid "Smile"
+msgstr "Uśmiech"
+
+#: crates/pigoune-app/src/collection_looks.rs:865
+msgctxt "collection icon"
+msgid "Waving Hand"
+msgstr "Machająca ręka"
+
+#: crates/pigoune-app/src/collection_looks.rs:866
+msgctxt "collection icon"
+msgid "User"
+msgstr "Użytkownik"
+
+#: crates/pigoune-app/src/collection_looks.rs:867
+msgctxt "collection icon"
+msgid "Group"
+msgstr "Grupa"
+
+#: crates/pigoune-app/src/collection_looks.rs:868
+msgctxt "collection icon"
+msgid "Infinity"
+msgstr "Nieskończoność"
+
+#: crates/pigoune-app/src/collection_looks.rs:869
+msgctxt "collection icon"
+msgid "Ghost"
+msgstr "Duch"
+
+#: crates/pigoune-app/src/collection_looks.rs:870
+msgctxt "collection icon"
+msgid "Skull"
+msgstr "Czaszka"
+
+#: crates/pigoune-app/src/collection_looks.rs:871
+msgctxt "collection icon"
+msgid "Clock"
+msgstr "Zegar"
+
+#: crates/pigoune-app/src/collection_looks.rs:872
+msgctxt "collection icon"
+msgid "Hourglass"
+msgstr "Klepsydra"
+
+#: crates/pigoune-app/src/collection_looks.rs:873
+msgctxt "collection icon"
+msgid "Wristwatch"
+msgstr "Zegarek na rękę"
+
+#: crates/pigoune-app/src/collection_looks.rs:874
+msgctxt "collection icon"
+msgid "Scales"
+msgstr "Waga"
+
+#: crates/pigoune-app/src/collection_looks.rs:875
+msgctxt "collection icon"
+msgid "Lock"
+msgstr "Kłódka"
+
+#: crates/pigoune-app/src/collection_looks.rs:876
+msgctxt "collection icon"
+msgid "Key"
+msgstr "Klucz"
+
+#: crates/pigoune-app/src/collection_looks.rs:877
+msgctxt "collection icon"
+msgid "Shield"
+msgstr "Tarcza ochronna"
+
+#: crates/pigoune-app/src/collection_looks.rs:878
+msgctxt "collection icon"
+msgid "Pole Flag"
+msgstr "Flaga na maszcie"
+
+#: crates/pigoune-app/src/collection_looks.rs:886
 msgctxt "collection color"
 msgid "Teal"
 msgstr "Morski"
 
-#: crates/pigoune-app/src/collection_looks.rs:226
+#: crates/pigoune-app/src/collection_looks.rs:887
 msgctxt "collection color"
 msgid "Green"
 msgstr "Zielony"
 
-#: crates/pigoune-app/src/collection_looks.rs:227
+#: crates/pigoune-app/src/collection_looks.rs:888
 msgctxt "collection color"
 msgid "Yellow"
 msgstr "Żółty"
 
-#: crates/pigoune-app/src/collection_looks.rs:228
+#: crates/pigoune-app/src/collection_looks.rs:889
 msgctxt "collection color"
 msgid "Orange"
 msgstr "Pomarańczowy"
 
-#: crates/pigoune-app/src/collection_looks.rs:229
+#: crates/pigoune-app/src/collection_looks.rs:890
 msgctxt "collection color"
 msgid "Red"
 msgstr "Czerwony"
 
-#: crates/pigoune-app/src/collection_looks.rs:230
+#: crates/pigoune-app/src/collection_looks.rs:891
 msgctxt "collection color"
 msgid "Pink"
 msgstr "Różowy"
 
-#: crates/pigoune-app/src/collection_looks.rs:231
+#: crates/pigoune-app/src/collection_looks.rs:892
 msgctxt "collection color"
 msgid "Purple"
 msgstr "Fioletowy"
 
-#: crates/pigoune-app/src/collection_looks.rs:232
+#: crates/pigoune-app/src/collection_looks.rs:893
 msgctxt "collection color"
 msgid "Slate"
 msgstr "Łupkowy"
 
-#: crates/pigoune-app/src/collection_looks.rs:233
+#: crates/pigoune-app/src/collection_looks.rs:894
 msgctxt "collection color"
 msgid "Blue"
 msgstr "Niebieski"
@@ -4984,6 +6332,82 @@ msgstr "Nowości w Pigoune {version}"
 #: crates/pigoune-app/src/whats_new.rs:138
 msgid "_Continue"
 msgstr "_Kontynuuj"
+
+#~ msgctxt "collection icon"
+#~ msgid "Pictures"
+#~ msgstr "Obrazy"
+
+#~ msgctxt "collection icon"
+#~ msgid "Music"
+#~ msgstr "Muzyka"
+
+#~ msgctxt "collection icon"
+#~ msgid "Home"
+#~ msgstr "Dom"
+
+#~ msgctxt "collection icon"
+#~ msgid "Bookmark"
+#~ msgstr "Zakładka"
+
+#~ msgctxt "collection icon"
+#~ msgid "Drawing"
+#~ msgstr "Rysunek"
+
+#~ msgctxt "collection icon"
+#~ msgid "Graphics"
+#~ msgstr "Grafika"
+
+#~ msgctxt "collection icon"
+#~ msgid "Games"
+#~ msgstr "Gry"
+
+#~ msgctxt "collection icon"
+#~ msgid "Science"
+#~ msgstr "Nauka"
+
+#~ msgctxt "collection icon"
+#~ msgid "Tools"
+#~ msgstr "Narzędzia"
+
+#~ msgctxt "collection icon"
+#~ msgid "Nature"
+#~ msgstr "Przyroda"
+
+#~ msgctxt "collection icon"
+#~ msgid "Food"
+#~ msgstr "Jedzenie"
+
+#~ msgctxt "collection icon"
+#~ msgid "Travel"
+#~ msgstr "Podróże"
+
+#~ msgctxt "collection icon"
+#~ msgid "Symbols"
+#~ msgstr "Symbole"
+
+#~ msgctxt "collection icon"
+#~ msgid "Flag"
+#~ msgstr "Flaga"
+
+#~ msgctxt "collection icon"
+#~ msgid "Sports"
+#~ msgstr "Sport"
+
+#~ msgctxt "collection icon"
+#~ msgid "People"
+#~ msgstr "Ludzie"
+
+#~ msgctxt "collection icon"
+#~ msgid "Graphics Tablet"
+#~ msgstr "Tablet graficzny"
+
+#~ msgctxt "collection icon"
+#~ msgid "Location"
+#~ msgstr "Miejsce"
+
+#~ msgctxt "collection icon"
+#~ msgid "Calendar"
+#~ msgstr "Kalendarz"
 
 #~ msgid "Nested Tags"
 #~ msgstr "Zagnieżdżone etykiety"

@@ -4,7 +4,7 @@ use gettextrs::gettext;
 use gtk::glib;
 use pigoune_core::CollectionLook;
 
-use crate::collection_looks::{self, DEFAULT_ICON_KEY, LookChoice};
+use crate::collection_looks::{self, IconGroup, LookChoice};
 
 type SubmitCallback = Box<dyn Fn(&CollectionLook) -> Result<(), String>>;
 
@@ -33,12 +33,20 @@ mod imp {
         #[template_child]
         pub icon_title: TemplateChild<gtk::Label>,
         #[template_child]
-        pub icon_box: TemplateChild<gtk::FlowBox>,
+        pub icon_search: TemplateChild<gtk::SearchEntry>,
+        #[template_child]
+        pub no_icon_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub icon_scroller: TemplateChild<gtk::ScrolledWindow>,
+        #[template_child]
+        pub icon_content: TemplateChild<gtk::Box>,
         #[template_child]
         pub icon_name_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub error_label: TemplateChild<gtk::Label>,
         pub look: RefCell<CollectionLook>,
+        pub search_query: RefCell<String>,
+        pub icon_groups: RefCell<Vec<(gtk::Box, gtk::FlowBox)>>,
         pub color_buttons: RefCell<Vec<(Option<&'static str>, gtk::ToggleButton)>>,
         pub icon_buttons: RefCell<Vec<(&'static str, gtk::ToggleButton)>>,
         pub on_submit: RefCell<Option<SubmitCallback>>,
@@ -86,6 +94,7 @@ impl PigouneCollectionLookDialog {
         imp.on_submit.replace(Some(Box::new(on_submit)));
         dialog.build_color_buttons();
         dialog.build_icon_buttons();
+        dialog.add_search_shortcut();
         dialog.show_look();
         dialog
     }
@@ -137,18 +146,130 @@ impl PigouneCollectionLookDialog {
 
     fn build_icon_buttons(&self) {
         let imp = self.imp();
-        let mut buttons = Vec::new();
-        for LookChoice { key, label } in collection_looks::icon_choices() {
-            buttons.push((key, self.icon_button(key, &label)));
-        }
-        let first = buttons[0].1.clone();
-        for (_, button) in &buttons {
-            if button != &first {
-                button.set_group(Some(&first));
+        let mut buttons: Vec<(&'static str, gtk::ToggleButton)> = Vec::new();
+        let mut groups = Vec::new();
+        let mut previous: Option<gtk::Widget> = None;
+        for IconGroup { title, choices } in collection_looks::icon_groups() {
+            let flow_box = icon_flow_box();
+            for LookChoice { key, label } in choices {
+                let button = self.icon_button(key, &label);
+                if let Some((_, first)) = buttons.first() {
+                    button.set_group(Some(first));
+                }
+                flow_box.append(&button);
+                buttons.push((key, button));
             }
-            imp.icon_box.append(button);
+            flow_box.set_filter_func(glib::clone!(
+                #[weak(rename_to = dialog)]
+                self,
+                #[upgrade_or]
+                true,
+                move |child| dialog.child_matches_search(child)
+            ));
+            let section = icon_section(&title, &flow_box);
+            imp.icon_content
+                .insert_child_after(&section, previous.as_ref());
+            previous = Some(section.clone().upcast());
+            groups.push((section, flow_box));
         }
         imp.icon_buttons.replace(buttons);
+        imp.icon_groups.replace(groups);
+        self.scroll_to_chosen_icon_when_shown();
+    }
+
+    fn add_search_shortcut(&self) {
+        let controller = gtk::ShortcutController::new();
+        controller.add_shortcut(gtk::Shortcut::new(
+            gtk::ShortcutTrigger::parse_string("<Control>f"),
+            Some(gtk::CallbackAction::new(glib::clone!(
+                #[weak(rename_to = dialog)]
+                self,
+                #[upgrade_or]
+                glib::Propagation::Proceed,
+                move |_, _| {
+                    dialog.imp().icon_search.grab_focus();
+                    glib::Propagation::Stop
+                }
+            ))),
+        ));
+        self.add_controller(controller);
+    }
+
+    fn child_matches_search(&self, child: &gtk::FlowBoxChild) -> bool {
+        child
+            .child()
+            .and_downcast::<gtk::ToggleButton>()
+            .is_none_or(|button| self.button_matches_search(&button))
+    }
+
+    fn button_matches_search(&self, button: &gtk::ToggleButton) -> bool {
+        let imp = self.imp();
+        let query = imp.search_query.borrow();
+        imp.icon_buttons
+            .borrow()
+            .iter()
+            .find(|(_, candidate)| candidate == button)
+            .is_some_and(|(key, candidate)| {
+                collection_looks::matches_search(
+                    &candidate.tooltip_text().unwrap_or_default(),
+                    key,
+                    &query,
+                )
+            })
+    }
+
+    fn flow_box_has_match(&self, flow_box: &gtk::FlowBox) -> bool {
+        let mut child = flow_box.first_child();
+        while let Some(widget) = child {
+            if let Some(flow_child) = widget.downcast_ref::<gtk::FlowBoxChild>()
+                && self.child_matches_search(flow_child)
+            {
+                return true;
+            }
+            child = widget.next_sibling();
+        }
+        false
+    }
+
+    fn show_search_results(&self) {
+        let imp = self.imp();
+        let mut any_match = false;
+        for (section, flow_box) in imp.icon_groups.borrow().iter() {
+            let has_match = self.flow_box_has_match(flow_box);
+            section.set_visible(has_match);
+            any_match |= has_match;
+        }
+        imp.no_icon_label.set_visible(!any_match);
+    }
+
+    fn scroll_to_chosen_icon_when_shown(&self) {
+        self.imp().icon_scroller.connect_map(glib::clone!(
+            #[weak(rename_to = dialog)]
+            self,
+            move |_| {
+                glib::idle_add_local_once(glib::clone!(
+                    #[weak]
+                    dialog,
+                    move || dialog.scroll_to_chosen_icon()
+                ));
+            }
+        ));
+    }
+
+    fn scroll_to_chosen_icon(&self) {
+        let imp = self.imp();
+        let chosen = collection_looks::known_icon_key(&imp.look.borrow());
+        let buttons = imp.icon_buttons.borrow();
+        let Some((_, button)) = buttons.iter().find(|(key, _)| *key == chosen) else {
+            return;
+        };
+        let Some(bounds) = button.compute_bounds(&*imp.icon_content) else {
+            return;
+        };
+        let adjustment = imp.icon_scroller.vadjustment();
+        let centered =
+            f64::from(bounds.y()) - (adjustment.page_size() - f64::from(bounds.height())) / 2.0;
+        adjustment.set_value(centered);
     }
 
     fn icon_button(&self, key: &'static str, label: &str) -> gtk::ToggleButton {
@@ -181,7 +302,7 @@ impl PigouneCollectionLookDialog {
     }
 
     fn choose_icon(&self, key: &'static str) {
-        self.imp().look.borrow_mut().icon = (key != DEFAULT_ICON_KEY).then(|| key.to_owned());
+        self.imp().look.borrow_mut().icon = Some(key.to_owned());
         self.show_look();
     }
 
@@ -197,16 +318,55 @@ impl PigouneCollectionLookDialog {
             button.set_active(*key == chosen_color);
         }
         let chosen_icon = collection_looks::known_icon_key(&look);
+        let mut chosen_name = collection_looks::default_icon_label();
         for (key, button) in imp.icon_buttons.borrow().iter() {
             button.set_active(*key == chosen_icon);
             if let Some(image) = button.child() {
                 set_tint(&image, color_class);
             }
             if *key == chosen_icon {
-                imp.icon_name_label
-                    .set_label(&button.tooltip_text().unwrap_or_default());
+                chosen_name = button.tooltip_text().unwrap_or_default().to_string();
             }
         }
+        imp.icon_name_label.set_label(&chosen_name);
+    }
+
+    #[template_callback]
+    fn on_icon_search_changed(&self) {
+        let imp = self.imp();
+        imp.search_query.replace(imp.icon_search.text().to_string());
+        for (_, flow_box) in imp.icon_groups.borrow().iter() {
+            flow_box.invalidate_filter();
+        }
+        self.show_search_results();
+        if imp.search_query.borrow().is_empty() {
+            glib::idle_add_local_once(glib::clone!(
+                #[weak(rename_to = dialog)]
+                self,
+                move || dialog.scroll_to_chosen_icon()
+            ));
+        } else {
+            imp.icon_scroller.vadjustment().set_value(0.0);
+        }
+    }
+
+    #[template_callback]
+    fn on_icon_search_activated(&self) {
+        let first_match = self
+            .imp()
+            .icon_buttons
+            .borrow()
+            .iter()
+            .map(|(_, button)| button.clone())
+            .find(|button| self.button_matches_search(button));
+        if let Some(button) = first_match {
+            button.set_active(true);
+        }
+    }
+
+    #[template_callback]
+    fn on_icon_search_stopped(&self) {
+        self.imp().icon_search.set_text("");
     }
 
     #[template_callback]
@@ -254,6 +414,33 @@ fn swatch_class(key: Option<&str>) -> &'static str {
         Some("slate") => "swatch-slate",
         _ => "swatch-default",
     }
+}
+
+fn icon_flow_box() -> gtk::FlowBox {
+    gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .homogeneous(true)
+        .min_children_per_line(6)
+        .max_children_per_line(8)
+        .column_spacing(4)
+        .row_spacing(4)
+        .build()
+}
+
+fn icon_section(title: &str, flow_box: &gtk::FlowBox) -> gtk::Box {
+    let heading = gtk::Label::builder()
+        .label(title)
+        .xalign(0.0)
+        .margin_start(4)
+        .css_classes(["caption-heading", "dim-label"])
+        .build();
+    let section = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .spacing(6)
+        .build();
+    section.append(&heading);
+    section.append(flow_box);
+    section
 }
 
 pub fn set_tint(widget: &gtk::Widget, color_class: Option<&str>) {

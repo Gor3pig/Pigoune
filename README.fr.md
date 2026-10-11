@@ -166,3 +166,6 @@ explique comment compiler Pigoune et proposer une modification,
 
 Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure](COPYING).
 
+Les icônes des collections viennent de [Phosphor Icons](https://phosphoricons.com), distribuées
+sous [licence MIT](crates/pigoune-app/icons/LICENSE-phosphor).
+

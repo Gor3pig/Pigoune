@@ -123,18 +123,42 @@ template $PigouneCollectionLookDialog: Adw.Dialog {
             ]
           }
 
-          FlowBox icon_box {
-            selection-mode: none;
-            homogeneous: true;
-            min-children-per-line: 6;
-            max-children-per-line: 8;
-            column-spacing: 4;
-            row-spacing: 4;
+          SearchEntry icon_search {
+            placeholder-text: _("Search Icons…");
+            search-delay: 100;
+            activate => $on_icon_search_activated() swapped;
+            search-changed => $on_icon_search_changed() swapped;
+            stop-search => $on_icon_search_stopped() swapped;
+          }
+
+          ScrolledWindow icon_scroller {
+            hscrollbar-policy: never;
+            propagate-natural-height: true;
+            max-content-height: 240;
 
             styles [
               "card",
-              "collection-look-choices",
             ]
+
+            child: Box icon_content {
+              orientation: vertical;
+              spacing: 16;
+
+              styles [
+                "collection-look-choices",
+              ]
+
+              Label no_icon_label {
+                label: _("No icons found");
+                visible: false;
+                margin-top: 12;
+                margin-bottom: 12;
+
+                styles [
+                  "dim-label",
+                ]
+              }
+            };
           }
 
           Label icon_name_label {
