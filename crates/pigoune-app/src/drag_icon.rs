@@ -16,6 +16,8 @@ const SHADOW_DROP: f32 = 3.0;
 const ICON_WIDTH: i32 = 360;
 const POINTER_GAP: f32 = 14.0;
 const CAPTION_CLASS: &str = "drag-caption";
+const CAPTION_AREA_HEIGHT: i32 = 64;
+const CAPTION_LINES: i32 = 2;
 
 pub struct StackIcon {
     pub paintable: gdk::Paintable,
@@ -55,6 +57,8 @@ pub fn caption_label() -> gtk::Label {
         .visible(false)
         .use_markup(true)
         .wrap(true)
+        .lines(CAPTION_LINES)
+        .ellipsize(gtk::pango::EllipsizeMode::End)
         .justify(gtk::Justification::Center)
         .max_width_chars(40)
         .halign(gtk::Align::Center)
@@ -67,10 +71,19 @@ pub fn icon_widget(icon: &StackIcon, caption: &gtk::Label) -> gtk::Widget {
     let picture = gtk::Picture::for_paintable(&icon.paintable);
     picture.set_can_shrink(false);
     picture.set_halign(gtk::Align::Center);
+    picture.set_valign(gtk::Align::Start);
+    picture.set_size_request(
+        icon.paintable.intrinsic_width(),
+        icon.paintable.intrinsic_height(),
+    );
+    caption.set_valign(gtk::Align::Start);
+    let caption_area = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    caption_area.set_height_request(CAPTION_AREA_HEIGHT);
+    caption_area.append(caption);
     let layout = gtk::Box::new(gtk::Orientation::Vertical, 0);
     layout.set_width_request(ICON_WIDTH);
     layout.append(&picture);
-    layout.append(caption);
+    layout.append(&caption_area);
     layout.upcast()
 }
 
