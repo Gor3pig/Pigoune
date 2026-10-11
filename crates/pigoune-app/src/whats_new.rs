@@ -63,41 +63,32 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
-        "2.6.0" => vec![
+        "2.7.0" => vec![
             Point {
-                icon: "view-list-symbolic",
-                title: gettext("Smoother Tags"),
+                icon: "folder-pictures-symbolic",
+                title: gettext("More Icons"),
                 text: gettext(
-                    "Clicking a tag shows it and opens its sub-tags at once, and holding dragged assets over a tag with sub-tags for a second opens them so you can drop deeper.",
+                    "Choose from 294 icons in 13 themes for your collections, and find one quickly with the search field.",
                 ),
             },
             Point {
                 icon: "edit-find-symbolic",
-                title: gettext("Accurate Counts"),
+                title: gettext("Faster Searching"),
                 text: gettext(
-                    "The numbers in the sidebar follow the search and the filters, so a tag no longer says 21 beside a grid of 3.",
+                    "Searching, filtering and the numbers in the sidebar are several times faster on large libraries.",
                 ),
             },
             Point {
-                icon: "image-x-generic-symbolic",
-                title: gettext("More Images"),
+                icon: "view-grid-symbolic",
+                title: gettext("Steadier Grid"),
                 text: gettext(
-                    "HEIC photos can be imported when your system can decode them, and unusual ICO, BMP, AVIF and SVG files are recognized more reliably.",
+                    "Marking a favorite, adding a tag or renaming an asset no longer rebuilds the grid, so your scroll position and selection stay put.",
                 ),
             },
             Point {
-                icon: "security-high-symbolic",
-                title: gettext("Faster and Safer"),
-                text: gettext(
-                    "Deleting a large selection takes about a second instead of minutes, and SVG files built to exhaust memory are refused.",
-                ),
-            },
-            Point {
-                icon: "folder-open-symbolic",
-                title: gettext("Tidier Menus"),
-                text: gettext(
-                    "Show in Files and Move to for collections join menus that are now ordered the same way everywhere.",
-                ),
+                icon: "drive-harddisk-symbolic",
+                title: gettext("Quicker Library Window"),
+                text: gettext("The records of Manage Library now show their thumbnails at once."),
             },
         ],
         _ => Vec::new(),
