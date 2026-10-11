@@ -1646,20 +1646,22 @@ impl PigouneWindow {
         while let Some(pending) = self.files_awaiting_colors()
             && !pending.is_empty()
         {
+            let mut analysed = Vec::with_capacity(pending.len());
             for (id, file, thumbnail_file) in pending {
                 let colors = match thumbnails::thumbnail(&file, &thumbnail_file).await {
                     Some(texture) => dominant_colors(&asset_colors::rgba_pixels(&texture)),
                     None => Vec::new(),
                 };
-                let recorded = self
-                    .imp()
-                    .library
-                    .borrow_mut()
-                    .as_mut()
-                    .map(|library| library.record_colors(id, &colors));
-                if !matches!(recorded, Some(Ok(()))) {
-                    return;
-                }
+                analysed.push((id, colors));
+            }
+            let recorded = self
+                .imp()
+                .library
+                .borrow_mut()
+                .as_mut()
+                .map(|library| library.record_colors_batch(&analysed));
+            if !matches!(recorded, Some(Ok(()))) {
+                return;
             }
             self.show_new_colors();
         }

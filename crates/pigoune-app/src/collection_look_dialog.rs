@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
@@ -11,7 +13,8 @@ type SubmitCallback = Box<dyn Fn(&CollectionLook) -> Result<(), String>>;
 const CHECKMARK_ICON: &str = "object-select-symbolic";
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
+    use std::collections::HashMap;
 
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -46,6 +49,9 @@ mod imp {
         pub error_label: TemplateChild<gtk::Label>,
         pub look: RefCell<CollectionLook>,
         pub search_query: RefCell<String>,
+        pub search_texts: RefCell<HashMap<gtk::ToggleButton, String>>,
+        pub tinted: Cell<bool>,
+        pub tinted_with: Cell<Option<&'static str>>,
         pub icon_groups: RefCell<Vec<(gtk::Box, gtk::FlowBox)>>,
         pub color_buttons: RefCell<Vec<(Option<&'static str>, gtk::ToggleButton)>>,
         pub icon_buttons: RefCell<Vec<(&'static str, gtk::ToggleButton)>>,
@@ -147,6 +153,7 @@ impl PigouneCollectionLookDialog {
     fn build_icon_buttons(&self) {
         let imp = self.imp();
         let mut buttons: Vec<(&'static str, gtk::ToggleButton)> = Vec::new();
+        let mut search_texts = HashMap::new();
         let mut groups = Vec::new();
         let mut previous: Option<gtk::Widget> = None;
         for IconGroup { title, choices } in collection_looks::icon_groups() {
@@ -157,6 +164,7 @@ impl PigouneCollectionLookDialog {
                     button.set_group(Some(first));
                 }
                 flow_box.append(&button);
+                search_texts.insert(button.clone(), collection_looks::search_text(&label, key));
                 buttons.push((key, button));
             }
             let section = icon_section(&title, &flow_box);
@@ -166,6 +174,7 @@ impl PigouneCollectionLookDialog {
             groups.push((section, flow_box));
         }
         imp.icon_buttons.replace(buttons);
+        imp.search_texts.replace(search_texts);
         for (_, flow_box) in &groups {
             flow_box.set_filter_func(glib::clone!(
                 #[weak(rename_to = dialog)]
@@ -206,18 +215,13 @@ impl PigouneCollectionLookDialog {
 
     fn button_matches_search(&self, button: &gtk::ToggleButton) -> bool {
         let imp = self.imp();
-        let query = imp.search_query.borrow();
-        imp.icon_buttons
-            .borrow()
-            .iter()
-            .find(|(_, candidate)| candidate == button)
-            .is_some_and(|(key, candidate)| {
-                collection_looks::matches_search(
-                    &candidate.tooltip_text().unwrap_or_default(),
-                    key,
-                    &query,
-                )
-            })
+        let wanted = imp.search_query.borrow();
+        wanted.is_empty()
+            || imp
+                .search_texts
+                .borrow()
+                .get(button)
+                .is_some_and(|text| collection_looks::matches_wanted(text, &wanted))
     }
 
     fn flow_box_has_match(&self, flow_box: &gtk::FlowBox) -> bool {
@@ -323,10 +327,13 @@ impl PigouneCollectionLookDialog {
             button.set_active(*key == chosen_color);
         }
         let chosen_icon = collection_looks::known_icon_key(&look);
+        let tint_changed = !imp.tinted.get() || imp.tinted_with.get() != color_class;
+        imp.tinted.set(true);
+        imp.tinted_with.set(color_class);
         let mut chosen_name = collection_looks::default_icon_label();
         for (key, button) in imp.icon_buttons.borrow().iter() {
             button.set_active(*key == chosen_icon);
-            if let Some(image) = button.child() {
+            if tint_changed && let Some(image) = button.child() {
                 set_tint(&image, color_class);
             }
             if *key == chosen_icon {
@@ -339,7 +346,8 @@ impl PigouneCollectionLookDialog {
     #[template_callback]
     fn on_icon_search_changed(&self) {
         let imp = self.imp();
-        imp.search_query.replace(imp.icon_search.text().to_string());
+        imp.search_query
+            .replace(collection_looks::search_wanted(&imp.icon_search.text()));
         for (_, flow_box) in imp.icon_groups.borrow().iter() {
             flow_box.invalidate_filter();
         }
@@ -357,7 +365,7 @@ impl PigouneCollectionLookDialog {
 
     #[template_callback]
     fn on_icon_search_activated(&self) {
-        if self.imp().search_query.borrow().trim().is_empty() {
+        if self.imp().search_query.borrow().is_empty() {
             return;
         }
         let first_match = self

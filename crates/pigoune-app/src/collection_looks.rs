@@ -494,11 +494,18 @@ fn theme_title(theme: &str) -> String {
 }
 
 #[must_use]
-pub fn matches_search(label: &str, key: &str, query: &str) -> bool {
-    let wanted = folded(query.trim());
-    wanted.is_empty()
-        || folded(label).contains(&wanted)
-        || folded(&key.replace('-', " ")).contains(&wanted)
+pub fn search_text(label: &str, key: &str) -> String {
+    format!("{}\n{}", folded(label), folded(&key.replace('-', " ")))
+}
+
+#[must_use]
+pub fn search_wanted(query: &str) -> String {
+    folded(query.trim())
+}
+
+#[must_use]
+pub fn matches_wanted(search_text: &str, wanted: &str) -> bool {
+    wanted.is_empty() || search_text.contains(wanted)
 }
 
 fn folded(text: &str) -> String {
@@ -908,7 +915,7 @@ mod tests {
     use super::{
         COLOR_KEYS, DEFAULT_ICON_NAME, ICON_GROUPS, ICON_KEYS, LEGACY_ICON_KEYS, color_class,
         default_icon_label, icon_groups, icon_name, is_phosphor_icon, known_icon_key,
-        matches_search,
+        matches_wanted, search_text, search_wanted,
     };
 
     #[test]
@@ -961,6 +968,10 @@ mod tests {
         assert_eq!(icon_name(&starred), "star-symbolic");
         assert_eq!(icon_name(&home), "house-symbolic");
         assert_eq!(LEGACY_ICON_KEYS.len(), 39);
+    }
+
+    fn matches_search(label: &str, key: &str, query: &str) -> bool {
+        matches_wanted(&search_text(label, key), &search_wanted(query))
     }
 
     #[test]

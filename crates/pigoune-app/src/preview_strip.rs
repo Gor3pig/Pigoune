@@ -14,6 +14,7 @@ type ChosenCallback = Box<dyn Fn(u32)>;
 
 mod imp {
     use std::cell::{OnceCell, RefCell};
+    use std::collections::HashMap;
     use std::rc::Rc;
 
     use adw::subclass::prelude::*;
@@ -28,6 +29,7 @@ mod imp {
         pub selection: OnceCell<gtk::SingleSelection>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
         pub on_chosen: RefCell<Option<ChosenCallback>>,
+        pub loading: RefCell<HashMap<gtk::ListItem, glib::JoinHandle<()>>>,
     }
 
     #[glib::object_subclass]
@@ -134,6 +136,17 @@ impl PigounePreviewStrip {
             self,
             move |_, item| strip.show_thumbnail(item)
         ));
+        factory.connect_unbind(glib::clone!(
+            #[weak(rename_to = strip)]
+            self,
+            move |_, item| {
+                if let Some(item) = item.downcast_ref::<gtk::ListItem>()
+                    && let Some(loading) = strip.imp().loading.borrow_mut().remove(item)
+                {
+                    loading.abort();
+                }
+            }
+        ));
         let list_view = gtk::ListView::builder()
             .model(&selection)
             .factory(&factory)
@@ -190,7 +203,8 @@ impl PigounePreviewStrip {
         }
         picture.set_paintable(None::<&gdk::Paintable>);
         let item = item.clone();
-        glib::spawn_future_local(async move {
+        let loading_item = item.clone();
+        let loading = glib::spawn_future_local(async move {
             let texture = thumbnails::thumbnail(asset.file(), asset.thumbnail_file()).await;
             let Some(texture) = texture else {
                 return;
@@ -204,5 +218,13 @@ impl PigounePreviewStrip {
                 picture.set_paintable(Some(&texture));
             }
         });
+        if let Some(previous) = self
+            .imp()
+            .loading
+            .borrow_mut()
+            .insert(loading_item, loading)
+        {
+            previous.abort();
+        }
     }
 }

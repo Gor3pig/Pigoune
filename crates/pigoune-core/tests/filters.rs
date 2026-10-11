@@ -191,6 +191,35 @@ fn colors(colors: &[AssetColor]) -> AssetFilter {
 }
 
 #[test]
+fn colors_recorded_in_one_batch_are_all_searchable() {
+    let mut fixture = Fixture::new();
+    let red = fixture.import("red-dot.png", None);
+    let navy = fixture.import("navy-tile.bmp", None);
+    let dominant = |family| {
+        vec![DominantColor {
+            family,
+            average: Rgb::new(0, 0, 0),
+        }]
+    };
+    fixture
+        .library
+        .record_colors_batch(&[
+            (red, dominant(AssetColor::Red)),
+            (navy, dominant(AssetColor::Blue)),
+        ])
+        .expect("colors are recorded together");
+
+    assert_eq!(
+        fixture.found(AssetView::All, &colors(&[AssetColor::Red])),
+        [red]
+    );
+    assert_eq!(
+        fixture.found(AssetView::All, &colors(&[AssetColor::Blue])),
+        [navy]
+    );
+}
+
+#[test]
 fn any_of_the_chosen_colors_is_kept() {
     let mut fixture = Fixture::new();
     let red = fixture.import("red-dot.png", None);

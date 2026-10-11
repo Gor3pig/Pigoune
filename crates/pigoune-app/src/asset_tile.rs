@@ -4,6 +4,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib, graphene};
+use pigoune_core::AssetId;
 
 use crate::animation;
 use crate::asset_facts;
@@ -158,6 +159,9 @@ impl PigouneAssetTile {
 
     pub fn show_asset(&self, asset: &PigouneAssetObject, cache: &Rc<ThumbnailCache>) {
         let imp = self.imp();
+        if let Some(previous) = imp.loading.take() {
+            previous.abort();
+        }
         self.follow_name(asset);
         imp.asset.replace(Some(asset.clone()));
         self.show_badge();
@@ -192,7 +196,9 @@ impl PigouneAssetTile {
             async move {
                 if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
                     cache.remember(id, texture.clone());
-                    tile.fade_in(&texture);
+                    if tile.shows(id) {
+                        tile.fade_in(&texture);
+                    }
                 }
             }
         ));
@@ -222,6 +228,14 @@ impl PigouneAssetTile {
 
     pub fn asset(&self) -> Option<PigouneAssetObject> {
         self.imp().asset.borrow().clone()
+    }
+
+    fn shows(&self, id: AssetId) -> bool {
+        self.imp()
+            .asset
+            .borrow()
+            .as_ref()
+            .is_some_and(|shown| shown.id() == id)
     }
 
     pub fn forget_asset(&self) {

@@ -145,6 +145,22 @@ impl Library {
         Ok(ids)
     }
 
+    pub fn record_colors_batch(
+        &mut self,
+        batch: &[(AssetId, Vec<DominantColor>)],
+    ) -> Result<(), LibraryError> {
+        let transaction = self.connection.transaction()?;
+        {
+            let mut statement =
+                transaction.prepare_cached("UPDATE assets SET colors = ?2 WHERE id = ?1")?;
+            for (id, colors) in batch {
+                statement.execute(params![id, media::dominant_text(colors)])?;
+            }
+        }
+        transaction.commit()?;
+        Ok(())
+    }
+
     pub fn record_colors(
         &mut self,
         id: AssetId,
