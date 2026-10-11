@@ -78,9 +78,10 @@ impl PigouneCollectionPlaces {
 
     fn pill(&self, shared: &SharedCollection) -> gtk::Box {
         let content = gtk::Box::builder().spacing(4).build();
-        let icon = gtk::Image::from_icon_name(collection_looks::icon_name(&shared.look));
-        collection_look_dialog::set_tint(
-            icon.upcast_ref(),
+        let icon = gtk::Image::new();
+        collection_look_dialog::show_icon(
+            &icon,
+            collection_looks::icon_name(&shared.look),
             collection_looks::color_class(&shared.look),
         );
         content.append(&icon);

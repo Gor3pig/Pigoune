@@ -3,6 +3,7 @@ use pigoune_core::CollectionLook;
 
 pub const DEFAULT_ICON_KEY: &str = "folder";
 pub const DEFAULT_ICON_NAME: &str = "folder-symbolic";
+pub const PHOSPHOR_ICON_PIXELS: i32 = 18;
 
 pub struct LookChoice {
     pub key: &'static str,
@@ -306,7 +307,7 @@ icon_groups![
         "monitor",
         "desktop",
         "device-mobile",
-        "phone",
+        "phone-handset",
         "device-tablet",
         "wrench",
         "hammer",
@@ -377,7 +378,7 @@ const LEGACY_ICON_KEYS: &[(&str, &str)] = &[
     ("weather-clear", "sun"),
     ("weather-clear-night", "moon"),
     ("computer", "desktop"),
-    ("phone", "phone"),
+    ("phone", "phone-handset"),
     ("input-tablet", "device-tablet"),
     ("mark-location", "map-pin"),
 ];
@@ -409,6 +410,11 @@ pub fn icon_name_of_key(key: &str) -> &'static str {
         .iter()
         .position(|known| *known == key)
         .map_or(DEFAULT_ICON_NAME, |index| ICON_NAMES[index])
+}
+
+#[must_use]
+pub fn is_phosphor_icon(name: &str) -> bool {
+    ICON_NAMES.contains(&name)
 }
 
 #[must_use]
@@ -840,7 +846,7 @@ fn icon_label_fifth(key: &str) -> Option<String> {
         "monitor" => pgettext("collection icon", "Monitor"),
         "desktop" => pgettext("collection icon", "Computer"),
         "device-mobile" => pgettext("collection icon", "Mobile Device"),
-        "phone" => pgettext("collection icon", "Phone"),
+        "phone-handset" => pgettext("collection icon", "Phone"),
         "device-tablet" => pgettext("collection icon", "Tablet"),
         "wrench" => pgettext("collection icon", "Wrench"),
         "hammer" => pgettext("collection icon", "Hammer"),
@@ -901,7 +907,8 @@ mod tests {
 
     use super::{
         COLOR_KEYS, DEFAULT_ICON_NAME, ICON_GROUPS, ICON_KEYS, LEGACY_ICON_KEYS, color_class,
-        default_icon_label, icon_groups, icon_name, known_icon_key, matches_search,
+        default_icon_label, icon_groups, icon_name, is_phosphor_icon, known_icon_key,
+        matches_search,
     };
 
     #[test]
@@ -988,12 +995,39 @@ mod tests {
     }
 
     #[test]
-    fn every_icon_is_declared_in_the_resources() {
+    fn every_icon_file_is_declared_in_the_resources() {
+        let resources = include_str!("../resources.gresource.xml");
+        let folder =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("icons/scalable/actions");
+        for entry in std::fs::read_dir(folder).expect("icons folder exists") {
+            let name = entry.expect("icon entry is readable").file_name();
+            let declaration = format!(
+                "<file>icons/scalable/actions/{}</file>",
+                name.to_string_lossy()
+            );
+            assert!(
+                resources.contains(&declaration),
+                "{declaration} is not embedded"
+            );
+        }
+    }
+
+    #[test]
+    fn every_icon_key_has_an_embedded_file() {
         let resources = include_str!("../resources.gresource.xml");
         for key in ICON_KEYS {
             let declaration = format!("<file>icons/scalable/actions/{key}-symbolic.svg</file>");
             assert!(resources.contains(&declaration), "{key} is not embedded");
         }
+    }
+
+    #[test]
+    fn only_the_collection_icons_are_phosphor_ones() {
+        for key in ICON_KEYS {
+            assert!(is_phosphor_icon(&format!("{key}-symbolic")));
+        }
+        assert!(!is_phosphor_icon(DEFAULT_ICON_NAME));
+        assert!(!is_phosphor_icon("user-trash-symbolic"));
     }
 
     #[test]

@@ -72,7 +72,11 @@ to change it.
   [Phosphor](https://phosphoricons.com) (MIT, license in `crates/pigoune-app/icons/`), copied
   unmodified into `crates/pigoune-app/icons/scalable/actions/` and embedded through
   `resources.gresource.xml`. `collection_looks.rs` lists them by theme; a test checks that each
-  one is embedded. The gray default folder stays the Adwaita one.
+  one is embedded. The gray default folder stays the Adwaita one. Phosphor drawings leave about
+  6 % of margin on each side, while Adwaita icons fill their whole 16 px box, so
+  `show_icon` in `collection_look_dialog.rs` displays the collection icons at 18 px (class
+  `phosphor-icon`) inside a fixed 18 px slot, which gives both families the same visual size
+  and keeps the labels of the sidebar aligned.
 - Small pure helpers (sorting, layout math, text formatting) sit in their own modules with unit
   tests, for example `asset_sort.rs`, `grid_columns.rs`, `tag_cloud.rs` or `asset_facts.rs`.
 - Inside Flatpak, folders chosen in the file chooser arrive as document portal paths

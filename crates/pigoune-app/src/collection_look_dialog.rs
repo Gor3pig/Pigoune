@@ -273,7 +273,8 @@ impl PigouneCollectionLookDialog {
     }
 
     fn icon_button(&self, key: &'static str, label: &str) -> gtk::ToggleButton {
-        let image = gtk::Image::from_icon_name(collection_looks::icon_name_of_key(key));
+        let image = gtk::Image::new();
+        show_icon(&image, collection_looks::icon_name_of_key(key), None);
         let button = gtk::ToggleButton::builder()
             .child(&image)
             .tooltip_text(label)
@@ -310,9 +311,11 @@ impl PigouneCollectionLookDialog {
         let imp = self.imp();
         let look = imp.look.borrow().clone();
         let color_class = collection_looks::color_class(&look);
-        set_tint(imp.preview_icon.upcast_ref(), color_class);
-        imp.preview_icon
-            .set_icon_name(Some(collection_looks::icon_name(&look)));
+        show_icon(
+            &imp.preview_icon,
+            collection_looks::icon_name(&look),
+            color_class,
+        );
         let chosen_color = collection_looks::known_color_key(&look);
         for (key, button) in imp.color_buttons.borrow().iter() {
             button.set_active(*key == chosen_color);
@@ -441,6 +444,20 @@ fn icon_section(title: &str, flow_box: &gtk::FlowBox) -> gtk::Box {
     section.append(&heading);
     section.append(flow_box);
     section
+}
+
+pub fn show_icon(image: &gtk::Image, icon_name: &str, color_class: Option<&str>) {
+    image.set_icon_name(Some(icon_name));
+    image.set_size_request(
+        collection_looks::PHOSPHOR_ICON_PIXELS,
+        collection_looks::PHOSPHOR_ICON_PIXELS,
+    );
+    if collection_looks::is_phosphor_icon(icon_name) {
+        image.add_css_class("phosphor-icon");
+    } else {
+        image.remove_css_class("phosphor-icon");
+    }
+    set_tint(image.upcast_ref(), color_class);
 }
 
 pub fn set_tint(widget: &gtk::Widget, color_class: Option<&str>) {

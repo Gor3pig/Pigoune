@@ -130,8 +130,7 @@ impl PigouneSidebarRow {
             UNFOLDED_ICON
         }));
         let icon = part(&imp.icon);
-        icon.set_icon_name(Some(item.icon_name()));
-        collection_look_dialog::set_tint(icon.upcast_ref(), item.color_class());
+        collection_look_dialog::show_icon(&icon, item.icon_name(), item.color_class());
         icon.set_visible(!is_header && !is_tag);
         part(&imp.hash).set_visible(is_tag);
         let label = part(&imp.label);

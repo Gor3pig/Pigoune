@@ -173,6 +173,10 @@ row.drop-target-row:not(:selected) {
   border-radius: 9999px;
 }
 
+.phosphor-icon {
+  -gtk-icon-size: 18px;
+}
+
 .tag-chip-remove {
   min-width: 22px;
   min-height: 22px;
