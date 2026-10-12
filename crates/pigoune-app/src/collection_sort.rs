@@ -99,6 +99,14 @@ impl CollectionTree {
             .find(|collection| collection.id == id)
     }
 
+    pub fn parents(&self) -> HashMap<CollectionId, Option<CollectionId>> {
+        self.children
+            .values()
+            .flatten()
+            .map(|collection| (collection.id, collection.parent))
+            .collect()
+    }
+
     pub fn arrangements(&self) -> Vec<CollectionCommand> {
         let mut parents: Vec<Option<CollectionId>> = self.children.keys().copied().collect();
         parents.sort();

@@ -9,7 +9,7 @@ use pigoune_core::{
 };
 
 use crate::asset_grid::MENU_KEYS;
-use crate::collection_drop::CollectionDrop;
+use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_looks;
 use crate::collection_sort::CollectionTree;
 use crate::drop_action::DropOffer;
@@ -93,6 +93,12 @@ mod imp {
         pub on_tag_dropped: RefCell<Option<TagDroppedCallback>>,
         pub on_assets_hovered: RefCell<Option<AssetsHoveredCallback>>,
         pub on_drop_offer: RefCell<Option<DropOfferCallback>>,
+        pub collection_parents: RefCell<
+            std::collections::HashMap<
+                pigoune_core::CollectionId,
+                Option<pigoune_core::CollectionId>,
+            >,
+        >,
         pub on_smart_collection_dropped: RefCell<Option<SmartCollectionDroppedCallback>>,
     }
 
@@ -175,6 +181,10 @@ impl PigouneSidebar {
             .borrow()
             .as_ref()
             .map_or(DropOffer::COPY_ONLY, |offer| offer(view))
+    }
+
+    pub fn collection_can_receive(&self, dragged: CollectionId, target: CollectionId) -> bool {
+        collection_drop::can_receive(&self.imp().collection_parents.borrow(), dragged, target)
     }
 
     pub fn connect_assets_hovered(&self, callback: impl Fn(Option<HoveredDrop>) + 'static) {
@@ -270,19 +280,9 @@ impl PigouneSidebar {
         let mut expanded = self.expanded_collections();
         expanded.extend(content.reveal.iter().copied());
         let counts = content.show_counts.then_some(&content.counts);
+        imp.collection_parents.replace(content.tree.parents());
 
-        let mut root = Vec::new();
-        for (view, label, icon) in [
-            (AssetView::All, gettext("All"), ALL_ICON),
-            (AssetView::Favorites, gettext("Favorites"), FAVORITES_ICON),
-            (
-                AssetView::Unclassified,
-                gettext("Unclassified"),
-                UNCLASSIFIED_ICON,
-            ),
-        ] {
-            root.push(view_item(view, label, icon, counts, None));
-        }
+        let mut root = lens_items(counts);
         let folded = content.folded;
         let chosen_tag = match content.selected {
             AssetView::Tag(id) => Some(id),
@@ -991,6 +991,21 @@ fn collection_of(row: &gtk::TreeListRow) -> Option<CollectionId> {
         | AssetView::Smart(_)
         | AssetView::Trash => None,
     }
+}
+
+fn lens_items(counts: Option<&ViewCounts>) -> Vec<PigouneSidebarItem> {
+    [
+        (AssetView::All, gettext("All"), ALL_ICON),
+        (AssetView::Favorites, gettext("Favorites"), FAVORITES_ICON),
+        (
+            AssetView::Unclassified,
+            gettext("Unclassified"),
+            UNCLASSIFIED_ICON,
+        ),
+    ]
+    .into_iter()
+    .map(|(view, label, icon)| view_item(view, label, icon, counts, None))
+    .collect()
 }
 
 fn expand(tree_model: &gtk::TreeListModel, expanded: &HashSet<CollectionId>) {

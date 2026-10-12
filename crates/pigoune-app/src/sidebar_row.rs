@@ -309,6 +309,15 @@ impl PigouneSidebarRow {
     }
 
     fn offer_for(&self, target: &gtk::DropTarget) -> DropOffer {
+        if let Some(AssetView::Collection(row_collection)) = self.view()
+            && let Some(dragged) = target
+                .value()
+                .and_then(|value| value.get::<DraggedCollection>().ok())
+            && let Some(sidebar) = self.sidebar()
+            && !sidebar.collection_can_receive(dragged.0, row_collection)
+        {
+            return DropOffer::REFUSED;
+        }
         let carries_assets = target
             .current_drop()
             .is_some_and(|drop| drop.formats().contains_type(DraggedAssets::static_type()));

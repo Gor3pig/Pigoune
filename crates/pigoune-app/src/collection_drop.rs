@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use pigoune_core::{CollectionCommand, CollectionId};
 
 use crate::collection_sort::CollectionTree;
@@ -89,6 +91,21 @@ pub fn plan(
     }
 }
 
+pub fn can_receive(
+    parents: &HashMap<CollectionId, Option<CollectionId>>,
+    dragged: CollectionId,
+    target: CollectionId,
+) -> bool {
+    let mut current = Some(target);
+    while let Some(id) = current {
+        if id == dragged {
+            return false;
+        }
+        current = parents.get(&id).copied().flatten();
+    }
+    true
+}
+
 fn placed(
     siblings: &[CollectionId],
     dragged: CollectionId,
@@ -112,7 +129,7 @@ fn placed(
 mod tests {
     use pigoune_core::{Collection, CollectionCommand, CollectionId, CollectionLook};
 
-    use super::{CollectionDrop, DropPlan, DropZone, plan, zone_at};
+    use super::{CollectionDrop, DropPlan, DropZone, can_receive, plan, zone_at};
     use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 
     fn id(number: u8) -> CollectionId {
@@ -143,6 +160,23 @@ mod tests {
             reversed: false,
         };
         CollectionTree::new(collections, order, |name: &str| name.to_lowercase())
+    }
+
+    #[test]
+    fn a_collection_is_refused_by_itself_and_by_its_descendants() {
+        let parents = tree().parents();
+        assert!(!can_receive(&parents, id(2), id(2)));
+        assert!(!can_receive(&parents, id(2), id(4)));
+        assert!(!can_receive(&parents, id(2), id(5)));
+    }
+
+    #[test]
+    fn a_collection_is_accepted_by_the_other_branches_and_its_parent() {
+        let parents = tree().parents();
+        assert!(can_receive(&parents, id(2), id(3)));
+        assert!(can_receive(&parents, id(4), id(2)));
+        assert!(can_receive(&parents, id(4), id(5)));
+        assert!(can_receive(&parents, id(3), id(1)));
     }
 
     #[test]
