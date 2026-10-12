@@ -25,8 +25,9 @@ pub fn describe(
         AssetView::Tag(tag) => describe_tag(&hovered.assets, tag, &subject, library)?,
         AssetView::Favorites => describe_favorites(&hovered.assets, &subject, library),
         AssetView::Unclassified => describe_unclassified(&hovered.assets, &subject, library),
-        AssetView::All | AssetView::Smart(_) => {
-            return None;
+        AssetView::All => gettext("All already shows every asset, there is nothing to drop here."),
+        AssetView::Smart(_) => {
+            gettext("A smart collection fills itself, assets cannot be added to it.")
         }
     };
     Some(markup)

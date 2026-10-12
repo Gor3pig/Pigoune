@@ -299,13 +299,23 @@ impl PigouneSidebarRow {
         if offer.is_refused() {
             self.stop_watching_modifiers();
             self.show_drop_zone(None);
-            self.forget_hover();
+            if Self::carries_assets(target) {
+                self.describe_hover(target);
+            } else {
+                self.forget_hover();
+            }
             return offer.preferred;
         }
         self.follow_pointer(target, y);
         self.describe_hover(target);
         self.watch_modifiers(target);
         offer.preferred
+    }
+
+    fn carries_assets(target: &gtk::DropTarget) -> bool {
+        target
+            .current_drop()
+            .is_some_and(|drop| drop.formats().contains_type(DraggedAssets::static_type()))
     }
 
     fn offer_for(&self, target: &gtk::DropTarget) -> DropOffer {
@@ -318,10 +328,7 @@ impl PigouneSidebarRow {
         {
             return DropOffer::REFUSED;
         }
-        let carries_assets = target
-            .current_drop()
-            .is_some_and(|drop| drop.formats().contains_type(DraggedAssets::static_type()));
-        if !carries_assets {
+        if !Self::carries_assets(target) {
             return DropOffer::MOVE_ONLY;
         }
         match (self.sidebar(), self.view()) {
@@ -665,7 +672,7 @@ impl PigouneSidebarRow {
         ));
         self.add_controller(click);
 
-        let long_press = gtk::GestureLongPress::new();
+        let long_press = gtk::GestureLongPress::builder().touch_only(true).build();
         long_press.connect_pressed(glib::clone!(
             #[weak(rename_to = row)]
             self,

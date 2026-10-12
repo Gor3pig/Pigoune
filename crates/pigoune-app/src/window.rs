@@ -874,7 +874,9 @@ impl PigouneWindow {
         let filters = imp.grid_header.filter_popover().choice();
         imp.grid_header.show_filter_count(filters.chosen_filters());
         imp.filters.replace(filters);
+        let before = self.selected_ids();
         self.refresh_grid();
+        self.tell_lost_selection(&before);
         self.schedule_counts_refresh();
     }
 
@@ -886,7 +888,9 @@ impl PigouneWindow {
         imp.search_query.replace(query.to_owned());
         imp.view_chosen_by_click.set(false);
         imp.query_pills.show_query(query);
+        let before = self.selected_ids();
         self.refresh_grid();
+        self.tell_lost_selection(&before);
         self.schedule_counts_refresh();
     }
 

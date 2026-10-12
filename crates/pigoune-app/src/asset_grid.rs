@@ -665,7 +665,7 @@ impl PigouneAssetGrid {
         ));
         self.imp().grid_view.add_controller(click);
 
-        let long_press = gtk::GestureLongPress::new();
+        let long_press = gtk::GestureLongPress::builder().touch_only(true).build();
         let on_long_press = Rc::clone(&callback);
         long_press.connect_pressed(glib::clone!(
             #[weak(rename_to = grid)]
