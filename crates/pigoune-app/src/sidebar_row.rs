@@ -10,6 +10,7 @@ use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollecti
 use crate::drop_action::{self, DropOffer};
 use crate::drop_places;
 use crate::dropped_content;
+use crate::settings;
 use crate::sidebar::{HoveredDrop, PigouneSidebar};
 use crate::sidebar_item::{PigouneSidebarItem, SidebarEntry};
 use crate::sidebar_tag_cloud::PigouneSidebarTagCloud;
@@ -684,6 +685,7 @@ impl PigouneSidebarRow {
             Some(AssetView::Collection(id)) => collection_menu(id),
             Some(AssetView::Tag(id)) => tag_menu(&id.to_string()),
             Some(AssetView::Smart(id)) => smart_collection_menu(&id.to_string()),
+            Some(AssetView::Trash) => trash_menu(),
             _ => return false,
         };
         let menu = part(&self.imp().menu);
@@ -740,6 +742,19 @@ pub fn tag_menu(tag: &str) -> gio::Menu {
     menu.append_section(None, &creating);
     menu.append_section(None, &reorganizing);
     menu.append_section(None, &discarding);
+    menu
+}
+
+fn trash_menu() -> gio::Menu {
+    let label = if settings::load().boolean(settings::CONFIRM_EMPTY_TRASH) {
+        gettext("_Empty Trash…")
+    } else {
+        gettext("_Empty Trash")
+    };
+    let emptying = gio::Menu::new();
+    emptying.append(Some(&label), Some("win.empty-trash"));
+    let menu = gio::Menu::new();
+    menu.append_section(None, &emptying);
     menu
 }
 

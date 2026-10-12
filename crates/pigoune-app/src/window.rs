@@ -101,6 +101,7 @@ const ADD_TAG_ACTION: &str = "win.add-tag";
 const ADD_TO_COLLECTION_ACTION: &str = "win.add-to-collection";
 const MOVE_TO_COLLECTION_ACTION: &str = "win.move-to-collection";
 const REMOVE_FROM_COLLECTION_ACTION: &str = "win.remove-from-collection";
+const REMOVE_FROM_ALL_COLLECTIONS_ACTION: &str = "win.remove-from-all-collections";
 const TRASH_SELECTED_ACTION: &str = "win.trash-selected";
 const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
 const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
@@ -219,9 +220,10 @@ mod imp {
         MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
         NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
-        PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
-        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
-        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
+        PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION,
+        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
+        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
+        SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
         TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
         smart_collection_parameter, tag_parameter,
     };
@@ -437,6 +439,9 @@ mod imp {
         });
         class.install_action(MOVE_TO_COLLECTION_ACTION, None, |window, _, _| {
             window.after_menu_closes(super::PigouneWindow::ask_collection_to_move_selected);
+        });
+        class.install_action(REMOVE_FROM_ALL_COLLECTIONS_ACTION, None, |window, _, _| {
+            window.unclassify_selected();
         });
         class.install_action(
             REMOVE_FROM_COLLECTION_ACTION,
@@ -2230,27 +2235,7 @@ impl PigouneWindow {
             ADD_TO_COLLECTION_ACTION,
             Some("<Control>k"),
         ));
-        if matches!(self.displayed_view(), AssetView::Collection(_)) {
-            organizing.append_item(&menu_item(
-                &gettext("Move to a Collection…"),
-                MOVE_TO_COLLECTION_ACTION,
-                Some("<Control>m"),
-            ));
-        }
-        if let AssetView::Collection(id) = self.displayed_view()
-            && self.directly_holds_any(id, &selected)
-        {
-            let name = self.collection_name(id).unwrap_or_default();
-            let item = gio::MenuItem::new(
-                Some(&gettext("Remove from the Collection “{name}”").replace("{name}", &name)),
-                None,
-            );
-            item.set_action_and_target_value(
-                Some(REMOVE_FROM_COLLECTION_ACTION),
-                Some(&id.to_string().to_variant()),
-            );
-            organizing.append_item(&item);
-        }
+        self.append_collection_actions(&organizing, &selected);
         let discarding = gio::Menu::new();
         discarding.append_item(&menu_item(
             &gettext("Move to Trash"),
@@ -2263,6 +2248,36 @@ impl PigouneWindow {
         menu.append_section(None, &organizing);
         menu.append_section(None, &discarding);
         menu.upcast()
+    }
+
+    fn append_collection_actions(&self, menu: &gio::Menu, selected: &[PigouneAssetObject]) {
+        if matches!(self.displayed_view(), AssetView::Collection(_)) {
+            menu.append_item(&menu_item(
+                &gettext("Move to a Collection…"),
+                MOVE_TO_COLLECTION_ACTION,
+                Some("<Control>m"),
+            ));
+        }
+        if let AssetView::Collection(id) = self.displayed_view()
+            && self.directly_holds_any(id, selected)
+        {
+            let name = self.collection_name(id).unwrap_or_default();
+            let item = gio::MenuItem::new(
+                Some(&gettext("Remove from the Collection “{name}”").replace("{name}", &name)),
+                None,
+            );
+            item.set_action_and_target_value(
+                Some(REMOVE_FROM_COLLECTION_ACTION),
+                Some(&id.to_string().to_variant()),
+            );
+            menu.append_item(&item);
+        }
+        if self.holds_any_collection(selected) {
+            menu.append(
+                Some(&gettext("Remove from All Collections")),
+                Some(REMOVE_FROM_ALL_COLLECTIONS_ACTION),
+            );
+        }
     }
 
     fn show_selection(&self, selected: &[PigouneAssetObject]) {
@@ -2350,6 +2365,7 @@ impl PigouneWindow {
             .and_then(|library| library.view_count(AssetView::Trash).ok())
             .unwrap_or(0);
         if count == 0 {
+            self.show_toast(&gettext("The trash is already empty."));
             return;
         }
         if !self.settings().boolean(settings::CONFIRM_EMPTY_TRASH) {
@@ -3473,6 +3489,23 @@ impl PigouneWindow {
             Some((shared, all))
         } else {
             None
+        }
+    }
+
+    fn holds_any_collection(&self, selected: &[PigouneAssetObject]) -> bool {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return false;
+        };
+        let ids: Vec<AssetId> = selected.iter().map(PigouneAssetObject::id).collect();
+        library
+            .unclassify_command(&ids)
+            .is_ok_and(|command| command.is_some())
+    }
+
+    fn unclassify_selected(&self) {
+        if self.can_organize_selection() {
+            self.drop_assets_on_unclassified(&self.targeted_ids());
         }
     }
 
