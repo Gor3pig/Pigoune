@@ -225,7 +225,6 @@ mod imp {
         TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
         smart_collection_parameter, tag_parameter,
     };
-    use pigoune_core::CollectionCommand;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/window.ui")]
@@ -441,10 +440,7 @@ mod imp {
             Some(glib::VariantTy::STRING),
             |window, _, parameter| {
                 if let Some(collection) = collection_parameter(parameter) {
-                    window.change_selected_collections(|assets| CollectionCommand::RemoveAssets {
-                        collection,
-                        assets,
-                    });
+                    window.remove_selected_from_collection(collection);
                 }
             },
         );
@@ -3258,6 +3254,10 @@ impl PigouneWindow {
         if selected.is_empty() {
             return;
         }
+        let single_name = match names.as_slice() {
+            [name] => Some(name.clone()),
+            _ => None,
+        };
         let commands = names
             .into_iter()
             .map(|name| TagCommand::Add {
@@ -3268,6 +3268,9 @@ impl PigouneWindow {
         if self.apply_tag_command(&TagCommand::Batch(commands)) {
             self.refresh_selected_tags();
             self.refresh_sidebar();
+            if self.imp().fresh_change.get().is_some() {
+                self.show_undoable_toast(&tags_added_text(single_name.as_deref(), selected.len()));
+            }
         }
     }
 
@@ -3276,6 +3279,7 @@ impl PigouneWindow {
         if selected.is_empty() {
             return;
         }
+        let linked = selected.len() - self.assets_without_tag(tag, &selected).len();
         let command = TagCommand::Unlink {
             tag,
             assets: selected.clone(),
@@ -3286,6 +3290,17 @@ impl PigouneWindow {
         self.refresh_selected_tags();
         self.schedule_counts_refresh();
         self.drop_assets_leaving_view(&selected);
+        if linked > 0 {
+            self.show_undoable_toast(
+                &ngettext(
+                    "Tag “{name}” removed from {count} asset",
+                    "Tag “{name}” removed from {count} assets",
+                    u32::try_from(linked).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &linked.to_string())
+                .replace("{name}", &self.tag_name(tag).unwrap_or_default()),
+            );
+        }
     }
 
     fn refresh_selected_collections(&self) {
@@ -3311,9 +3326,12 @@ impl PigouneWindow {
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |collection| window.change_selected_collections(|assets| {
-                    CollectionCommand::AddAssets { collection, assets }
-                })
+                move |collection| {
+                    let assets = window.targeted_ids();
+                    if !assets.is_empty() {
+                        window.drop_assets_on_collection(collection, &assets, true);
+                    }
+                }
             ),
         );
     }
@@ -3437,10 +3455,41 @@ impl PigouneWindow {
         }
     }
 
-    fn change_selected_collections(&self, command: impl FnOnce(Vec<AssetId>) -> CollectionCommand) {
-        let selected = self.targeted_ids();
-        if !selected.is_empty() {
-            self.apply_collection_change(&command(selected.clone()), &selected);
+    fn remove_selected_from_collection(&self, collection: CollectionId) {
+        let holders: Vec<AssetId> = {
+            let library = self.imp().library.borrow();
+            let Some(library) = library.as_ref() else {
+                return;
+            };
+            self.targeted_ids()
+                .into_iter()
+                .filter(|asset| {
+                    library
+                        .collections_of(*asset)
+                        .is_ok_and(|held| held.contains(&collection))
+                })
+                .collect()
+        };
+        if holders.is_empty() {
+            return;
+        }
+        let command = CollectionCommand::RemoveAssets {
+            collection,
+            assets: holders.clone(),
+        };
+        if self.apply_collection_change(&command, &holders) {
+            self.show_undoable_toast(
+                &ngettext(
+                    "{count} asset removed from “{name}”",
+                    "{count} assets removed from “{name}”",
+                    u32::try_from(holders.len()).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &holders.len().to_string())
+                .replace(
+                    "{name}",
+                    &self.collection_name(collection).unwrap_or_default(),
+                ),
+            );
         }
     }
 
@@ -3546,7 +3595,7 @@ impl PigouneWindow {
     fn drop_assets_on_collection(&self, to: CollectionId, assets: &[AssetId], keep_source: bool) {
         let name = self.collection_name(to).unwrap_or_default();
         let (command, message, count) = match self.displayed_view() {
-            AssetView::Collection(from) if from == to => return,
+            AssetView::Collection(from) if from == to && !keep_source => return,
             AssetView::Collection(from) if !keep_source => (
                 CollectionCommand::MoveAssets {
                     from,
@@ -3714,21 +3763,43 @@ impl PigouneWindow {
                     }
                 }
                 self.schedule_counts_refresh();
-                let text = if fresh_ids.len() == 1 {
-                    gettext("“{name}” added to the favorites").replace("{name}", first_name)
-                } else {
-                    ngettext(
-                        "{count} asset added to the favorites",
-                        "{count} assets added to the favorites",
-                        u32::try_from(fresh_ids.len()).unwrap_or(u32::MAX),
-                    )
-                    .replace("{count}", &fresh_ids.len().to_string())
-                };
-                self.show_undoable_toast(&text);
+                self.show_favorite_toast(true, &fresh_ids);
             }
             Some(Err(error)) => self.show_favorite_error(&error),
             None => {}
         }
+    }
+
+    fn show_favorite_toast(&self, favorite: bool, assets: &[AssetId]) {
+        let first_name = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.asset(*assets.first()?).ok().flatten())
+            .map(|asset| asset.display_name)
+            .unwrap_or_default();
+        let count = assets.len();
+        let plural = u32::try_from(count).unwrap_or(u32::MAX);
+        let text = match (favorite, count) {
+            (true, 1) => gettext("“{name}” added to the favorites"),
+            (false, 1) => gettext("“{name}” removed from the favorites"),
+            (true, _) => ngettext(
+                "{count} asset added to the favorites",
+                "{count} assets added to the favorites",
+                plural,
+            ),
+            (false, _) => ngettext(
+                "{count} asset removed from the favorites",
+                "{count} assets removed from the favorites",
+                plural,
+            ),
+        };
+        self.show_undoable_toast(
+            &text
+                .replace("{name}", &first_name)
+                .replace("{count}", &count.to_string()),
+        );
     }
 
     fn show_favorite_error(&self, error: &AssetError) {
@@ -5172,6 +5243,11 @@ impl PigouneWindow {
             return;
         }
         let favorite = !selected.iter().all(PigouneAssetObject::favorite);
+        let changed: Vec<AssetId> = selected
+            .iter()
+            .filter(|asset| asset.favorite() != favorite)
+            .map(PigouneAssetObject::id)
+            .collect();
         let applied = self.change_library(|library| {
             library.apply_asset_command(&AssetCommand::SetFavorite {
                 assets: selected.iter().map(PigouneAssetObject::id).collect(),
@@ -5196,6 +5272,9 @@ impl PigouneWindow {
                 } else if selected.len() > 1 {
                     imp.asset_details
                         .show_group(&selected, &imp.asset_grid.thumbnails());
+                }
+                if !changed.is_empty() {
+                    self.show_favorite_toast(favorite, &changed);
                 }
             }
             Some(Err(error)) => self.show_favorite_error(&error),
@@ -5559,6 +5638,24 @@ fn descendant_button(widget: &gtk::Widget) -> Option<gtk::Button> {
         child = current.next_sibling();
     }
     None
+}
+
+fn tags_added_text(single_name: Option<&str>, count: usize) -> String {
+    let plural = u32::try_from(count).unwrap_or(u32::MAX);
+    match single_name {
+        Some(name) => ngettext(
+            "Tag “{name}” added to {count} asset",
+            "Tag “{name}” added to {count} assets",
+            plural,
+        )
+        .replace("{name}", name),
+        None => ngettext(
+            "Tags added to {count} asset",
+            "Tags added to {count} assets",
+            plural,
+        ),
+    }
+    .replace("{count}", &count.to_string())
 }
 
 fn recent_removal_text(count: usize) -> String {
