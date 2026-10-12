@@ -63,6 +63,36 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "2.8.0" => vec![
+            Point {
+                icon: "edit-undo-symbolic",
+                title: gettext("Undo and Redo"),
+                text: gettext(
+                    "Two buttons at the top of the sidebar undo and redo your changes, and the message after an undo offers to redo it.",
+                ),
+            },
+            Point {
+                icon: "input-keyboard-symbolic",
+                title: gettext("Your Own Shortcuts"),
+                text: gettext(
+                    "Change the keyboard shortcuts in Preferences, on the new Shortcuts page, and give a key to actions that had none.",
+                ),
+            },
+            Point {
+                icon: "folder-symbolic",
+                title: gettext("Clearer Moves"),
+                text: gettext(
+                    "Dragging assets from All into a collection now moves them and Ctrl adds them, and every action tells you what changed with an Undo button.",
+                ),
+            },
+            Point {
+                icon: "drive-harddisk-symbolic",
+                title: gettext("Manage Library, Instantly"),
+                text: gettext(
+                    "The Manage Library window opens at once, even for a library on a slow disk.",
+                ),
+            },
+        ],
         "2.7.0" => vec![
             Point {
                 icon: "folder-pictures-symbolic",

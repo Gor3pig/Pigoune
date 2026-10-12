@@ -24,47 +24,47 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/01.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/02.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/03.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/03.png</image>
       <caption>Look closely at an asset and step through its animation</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/04.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/04.png</image>
       <caption>Convert assets to PNG, JPEG, WebP, AVIF or ICO</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/05.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/05.png</image>
       <caption>See what your library holds, in light or dark style</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/06.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/06.png</image>
       <caption>Combine words with “and” or “or” in one click</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/07.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/07.png</image>
       <caption>Save a search as a smart collection that fills itself</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/08.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/08.png</image>
       <caption>Find the images that fit your screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/09.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/09.png</image>
       <caption>Frame any image and set it as your wallpaper</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/10.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/10.png</image>
       <caption>Nest your tags and browse them level by level</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.7.0/data/screenshots/11.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v2.8.0/data/screenshots/11.png</image>
       <caption>Check that every file of your library is still there and intact</caption>
     </screenshot>
   </screenshots>
@@ -100,6 +100,19 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="2.8.0" date="2026-10-12">
+      <description>
+        <p>Undo and Redo get their own buttons, the keyboard shortcuts can be changed, and moving assets is clearer.</p>
+        <ul>
+          <li>Two buttons at the top of the sidebar undo and redo your changes. The message after an undo offers to redo it, and the message after a redo offers to undo it again.</li>
+          <li>The keyboard shortcuts can be changed in Preferences, on the new Shortcuts page. Standard ones such as copy, paste and undo are locked, and actions like exporting or importing a folder can be given a key.</li>
+          <li>New shortcuts: Ctrl+K adds the selection to a collection, Ctrl+M moves it, Ctrl+T adds a tag, Ctrl+Shift+Z redoes and Ctrl+W closes the window.</li>
+          <li>Dragging assets from All or Unclassified into a collection now moves them, and holding Ctrl adds them without removing them from their other collections. Dropping assets on Unclassified removes them from all their collections.</li>
+          <li>Adding, removing, favoriting, tagging and moving assets, collections and tags now show a message with Undo, whether you use a drag, a menu or a key. Refused drops explain why.</li>
+          <li>Manage Library opens at once instead of waiting for the disk, which was slow for libraries kept behind the Flatpak document portal.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.7.0" date="2026-10-11">
       <description>
         <p>Choose from 294 icons for your collections, sorted by theme, and enjoy a faster, steadier Pigoune.</p>
