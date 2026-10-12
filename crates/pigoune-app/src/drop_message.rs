@@ -25,10 +25,12 @@ pub fn describe(
         AssetView::Tag(tag) => describe_tag(&hovered.assets, tag, &subject, library)?,
         AssetView::Favorites => describe_favorites(&hovered.assets, &subject, library),
         AssetView::Unclassified => describe_unclassified(&hovered.assets, &subject, library),
-        AssetView::All => gettext("All already shows every asset, there is nothing to drop here."),
-        AssetView::Smart(_) => {
-            gettext("A smart collection fills itself, assets cannot be added to it.")
-        }
+        AssetView::All => template(&gettext(
+            "All already shows every asset, there is nothing to drop here.",
+        )),
+        AssetView::Smart(_) => template(&gettext(
+            "A smart collection fills itself, assets cannot be added to it.",
+        )),
     };
     Some(markup)
 }
@@ -41,7 +43,7 @@ fn describe_collection(
     library: &Library,
 ) -> Option<String> {
     let count = hovered.assets.len();
-    let name = library.collection(to).ok()??.name;
+    let name = shortened(&library.collection(to).ok()??.name);
     if let Some(text) = moving_from_everywhere(hovered, current_view, to, library) {
         return Some(named(&with_subject(&template(&text), subject), &name));
     }
@@ -74,8 +76,8 @@ fn moving_from_everywhere(
         .ok()??;
     Some(if command.removes_assets() {
         ngettext(
-            "Move {subject} to the collection {name} and out of its other collections",
-            "Move {subject} to the collection {name} and out of their other collections",
+            "Move {subject} to {name} and out of its other collections",
+            "Move {subject} to {name} and out of their other collections",
             plural(hovered.assets.len()),
         )
     } else {

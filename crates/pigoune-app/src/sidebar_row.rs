@@ -498,10 +498,7 @@ impl PigouneSidebarRow {
             );
         }
         match entry {
-            Some(SidebarEntry::View(view)) => {
-                offered.contains_type(DraggedAssets::static_type())
-                    && drop_places::accepts_assets(view)
-            }
+            Some(SidebarEntry::View(_)) => offered.contains_type(DraggedAssets::static_type()),
             Some(
                 SidebarEntry::CollectionsHeader
                 | SidebarEntry::SmartCollectionsHeader

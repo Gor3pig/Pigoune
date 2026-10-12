@@ -3342,13 +3342,31 @@ impl PigouneWindow {
                 name,
             })
             .collect();
+        let tag_counts_before = self.tag_counts_of(&selected);
         if self.apply_tag_command(&TagCommand::Batch(commands)) {
             self.refresh_selected_tags();
             self.refresh_sidebar();
-            if self.imp().fresh_change.get().is_some() {
-                self.show_undoable_toast(&tags_added_text(single_name.as_deref(), selected.len()));
+            let gained = self
+                .tag_counts_of(&selected)
+                .iter()
+                .zip(&tag_counts_before)
+                .filter(|(after, before)| after > before)
+                .count();
+            if gained > 0 {
+                self.show_undoable_toast(&tags_added_text(single_name.as_deref(), gained));
             }
         }
+    }
+
+    fn tag_counts_of(&self, assets: &[AssetId]) -> Vec<usize> {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return vec![0; assets.len()];
+        };
+        assets
+            .iter()
+            .map(|asset| library.tags_of(*asset).map_or(0, |tags| tags.len()))
+            .collect()
     }
 
     fn remove_tag_from_selected(&self, tag: TagId) {
@@ -3904,8 +3922,8 @@ impl PigouneWindow {
         };
         self.show_undoable_toast(
             &text
-                .replace("{name}", &first_name)
-                .replace("{count}", &count.to_string()),
+                .replace("{count}", &count.to_string())
+                .replace("{name}", &first_name),
         );
     }
 
@@ -3940,15 +3958,7 @@ impl PigouneWindow {
         self.refresh_selected_tags();
         self.schedule_counts_refresh();
         self.drop_assets_leaving_view(assets);
-        self.show_undoable_toast(
-            &ngettext(
-                "Tag “{name}” added to {count} asset",
-                "Tag “{name}” added to {count} assets",
-                u32::try_from(count).unwrap_or(u32::MAX),
-            )
-            .replace("{count}", &count.to_string())
-            .replace("{name}", &name),
-        );
+        self.show_undoable_toast(&tags_added_text(Some(&name), count));
     }
 
     fn drop_collection(&self, dragged: CollectionId, drop: CollectionDrop) {
@@ -4006,7 +4016,7 @@ impl PigouneWindow {
             let name = self.collection_name(dragged).unwrap_or_default();
             let parent_name = parent.and_then(|parent| self.collection_name(parent));
             self.show_collection_moved_toast(&name, parent_name.as_deref());
-        } else {
+        } else if self.imp().fresh_change.get().is_some() {
             self.show_undoable_toast(&gettext("The order of the collections was changed."));
         }
     }
@@ -5784,14 +5794,15 @@ fn tags_added_text(single_name: Option<&str>, count: usize) -> String {
             "Tag “{name}” added to {count} assets",
             plural,
         )
+        .replace("{count}", &count.to_string())
         .replace("{name}", name),
         None => ngettext(
             "Tags added to {count} asset",
             "Tags added to {count} assets",
             plural,
-        ),
+        )
+        .replace("{count}", &count.to_string()),
     }
-    .replace("{count}", &count.to_string())
 }
 
 fn recent_removal_text(count: usize) -> String {

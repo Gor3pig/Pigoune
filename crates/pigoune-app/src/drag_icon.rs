@@ -60,7 +60,7 @@ pub fn caption_label() -> gtk::Label {
         .lines(CAPTION_LINES)
         .ellipsize(gtk::pango::EllipsizeMode::End)
         .justify(gtk::Justification::Center)
-        .max_width_chars(40)
+        .max_width_chars(48)
         .halign(gtk::Align::Center)
         .build();
     caption.add_css_class(CAPTION_CLASS);
