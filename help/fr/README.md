@@ -390,7 +390,8 @@ efface l'historique des annulations. Si un import sort un élément de la corbei
 corbeille précédente ne figure plus dans l'historique des annulations. La création d'une collection ne s'annule que tant qu'elle
 est vide : une fois des éléments importés dedans, utilisez plutôt **Supprimer…**. Quand une
 annulation n'est plus possible, Pigoune le dit, laisse ce changement tel quel, et le
-<kbd>Ctrl</kbd>+<kbd>Z</kbd> suivant annule le changement d'avant. Un message qui suit une action ne
+<kbd>Ctrl</kbd>+<kbd>Z</kbd> suivant annule le changement d'avant. Un changement annulé peut être rétabli avec
+<kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> (ou <kbd>Ctrl</kbd>+<kbd>Y</kbd>) tant que vous n'en faites pas un autre. Un message qui suit une action ne
 compte que ce qui a vraiment changé : les éléments déjà dans la collection ou déjà étiquetés
 ne sont pas comptés.
 
@@ -459,7 +460,7 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
 ## Préférences
 
 Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur
-<kbd>Ctrl</kbd>+<kbd>,</kbd>. Les réglages sont répartis sur trois pages ; la loupe en haut
+<kbd>Ctrl</kbd>+<kbd>,</kbd>. Les réglages sont répartis sur quatre pages ; la loupe en haut
 retrouve un réglage par son nom.
 
 **Général**
@@ -512,13 +513,29 @@ retrouve un réglage par son nom.
   dans les collections dynamiques. Il est activé au
   premier démarrage, et la pastille du champ de recherche le change à tout moment.
 
+**Raccourcis**
+
+- La plupart des raccourcis listés dans [Raccourcis clavier](#raccourcis-clavier) peuvent être
+  modifiés ici. Sélectionnez une action, puis appuyez sur la nouvelle combinaison de touches.
+  Pigoune refuse une combinaison déjà utilisée par une autre action en vous disant laquelle, une
+  lettre seule (taper dans la grille lance une recherche, utilisez donc <kbd>Ctrl</kbd> ou
+  <kbd>Alt</kbd> avec une touche, ou une touche de fonction), et les touches que Pigoune garde
+  pour lui, comme <kbd>F2</kbd>, <kbd>F10</kbd> et <kbd>F11</kbd>.
+- Un bouton à côté d'un raccourci modifié rétablit sa valeur par défaut, et **Rétablir tous les
+  raccourcis** rétablit tous les raccourcis.
+- Les raccourcis standards (copier, coller, tout sélectionner, annuler, rétablir et quitter) sont
+  affichés avec un cadenas et ne peuvent pas être modifiés.
+- Quelques actions, comme importer un dossier, exporter ou restaurer des éléments, n'ont aucun
+  raccourci tant que vous ne leur en donnez pas un.
+
 Pigoune suit le style et la couleur d'accentuation choisis dans les **Paramètres** de GNOME,
 rubrique **Apparence** : style clair ou sombre, et couleur des sélections, des interrupteurs et
 des surlignages.
 
 ## Raccourcis clavier
 
-Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoune.
+Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoune. La plupart peuvent être
+modifiés dans les **Préférences**, sur la page **Raccourcis**.
 
 | Action | Raccourci |
 |---|---|
@@ -526,20 +543,27 @@ Appuyez sur <kbd>Ctrl</kbd>+<kbd>?</kbd> pour voir tous les raccourcis de Pigoun
 | Ouvrir une bibliothèque | <kbd>Ctrl</kbd>+<kbd>O</kbd> |
 | Importer des fichiers | <kbd>Ctrl</kbd>+<kbd>I</kbd> |
 | Rechercher | <kbd>Ctrl</kbd>+<kbd>F</kbd> |
-| Aperçu détaillé | <kbd>Espace</kbd> |
+| Aperçu détaillé | <kbd>Espace</kbd> ou <kbd>Entrée</kbd> |
 | Tout sélectionner / tout désélectionner | <kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Échap</kbd> |
 | Copier | <kbd>Ctrl</kbd>+<kbd>C</kbd> |
 | Coller des fichiers ou une image pour les importer | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
-| Renommer | <kbd>F2</kbd> |
+| Renommer l'élément sélectionné | <kbd>F2</kbd> |
 | Ajouter aux favoris ou en retirer | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
+| Ajouter un tag | <kbd>Ctrl</kbd>+<kbd>T</kbd> |
+| Ajouter à une collection | <kbd>Ctrl</kbd>+<kbd>K</kbd> |
+| Déplacer vers une autre collection (depuis une collection) | <kbd>Ctrl</kbd>+<kbd>M</kbd> |
 | Mettre à la corbeille | <kbd>Suppr</kbd> |
 | Renommer ou modifier l'entrée sélectionnée dans la barre latérale | <kbd>F2</kbd> |
-| Supprimer la collection sélectionnée dans la barre latérale | <kbd>Suppr</kbd> |
+| Supprimer la collection, la collection dynamique ou le tag sélectionné dans la barre latérale | <kbd>Suppr</kbd> |
+| Passer d'une entrée à l'autre de la barre latérale | <kbd>Haut</kbd> / <kbd>Bas</kbd> |
+| Déplier ou replier une entrée de la barre latérale | <kbd>Droite</kbd> / <kbd>Gauche</kbd> |
 | Annuler | <kbd>Ctrl</kbd>+<kbd>Z</kbd> |
+| Rétablir | <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> ou <kbd>Ctrl</kbd>+<kbd>Y</kbd> |
 | Vignettes plus grandes / plus petites | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> |
 | Menu contextuel | <kbd>Menu</kbd> ou <kbd>Maj</kbd>+<kbd>F10</kbd> |
 | Aide | <kbd>F1</kbd> |
 | Préférences | <kbd>Ctrl</kbd>+<kbd>,</kbd> |
+| Fermer la fenêtre | <kbd>Ctrl</kbd>+<kbd>W</kbd> |
 | Quitter | <kbd>Ctrl</kbd>+<kbd>Q</kbd> |
 
 ## Questions et réponses

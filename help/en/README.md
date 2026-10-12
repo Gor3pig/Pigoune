@@ -344,7 +344,8 @@ trash clears the undo history. If an import takes an asset out of the trash, the
 Trash" of that asset is no longer in the undo history. Creating a collection is only undone while it is still empty:
 once assets are imported into it, use **Delete…** instead. When an undo is no longer possible,
 Pigoune says so, leaves that change as it is, and the next <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the
-change before it. A message that follows an action counts only what really changed: assets that
+change before it. A change that was undone can be redone with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
+(or <kbd>Ctrl</kbd>+<kbd>Y</kbd>) until you make another change. A message that follows an action counts only what really changed: assets that
 were already in the collection or already had the tag are not counted.
 
 ## Your library
@@ -405,7 +406,7 @@ after it, in five tabs:
 ## Preferences
 
 Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>. The settings are
-split into three pages; the magnifier at the top finds a setting by its name.
+split into four pages; the magnifier at the top finds a setting by its name.
 
 **General**
 
@@ -449,12 +450,27 @@ split into three pages; the magnifier at the top finds a setting by its name.
   entry selected in the sidebar, except in the trash and in smart collections. It is on at the
   first start, and the label in the search field changes it at any time.
 
+**Shortcuts**
+
+- Most of the shortcuts listed in [Keyboard shortcuts](#keyboard-shortcuts) can be changed here.
+  Select an action, then press the new key combination. Pigoune refuses a combination already
+  used by another action and tells you which one, a single letter (typing in the grid starts a
+  search, so use <kbd>Ctrl</kbd> or <kbd>Alt</kbd> with a key, or a function key), and the keys
+  Pigoune keeps for itself, such as <kbd>F2</kbd>, <kbd>F10</kbd> and <kbd>F11</kbd>.
+- A button next to a changed shortcut brings back its default, and **Restore All Shortcuts**
+  brings back all of them.
+- The standard shortcuts (copy, paste, select all, undo, redo and quit) are shown with a lock and
+  cannot be changed.
+- Some actions, such as importing a folder, exporting or restoring assets, have no shortcut until
+  you give them one.
+
 Pigoune follows the style and the accent color you choose in GNOME **Settings**, under
 **Appearance**: light or dark style, and the color of selections, switches and highlights.
 
 ## Keyboard shortcuts
 
-Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.
+Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune. Most of them can be changed in
+**Preferences**, on the **Shortcuts** page.
 
 | Action | Shortcut |
 |---|---|
@@ -462,20 +478,27 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune.
 | Open a library | <kbd>Ctrl</kbd>+<kbd>O</kbd> |
 | Import files | <kbd>Ctrl</kbd>+<kbd>I</kbd> |
 | Search | <kbd>Ctrl</kbd>+<kbd>F</kbd> |
-| Detailed preview | <kbd>Space</kbd> |
+| Detailed preview | <kbd>Space</kbd> or <kbd>Enter</kbd> |
 | Select all / deselect all | <kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Esc</kbd> |
 | Copy | <kbd>Ctrl</kbd>+<kbd>C</kbd> |
 | Paste files or an image to import | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
-| Rename | <kbd>F2</kbd> |
+| Rename the selected asset | <kbd>F2</kbd> |
 | Add to or remove from favorites | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
+| Add a tag | <kbd>Ctrl</kbd>+<kbd>T</kbd> |
+| Add to a collection | <kbd>Ctrl</kbd>+<kbd>K</kbd> |
+| Move to another collection (from inside a collection) | <kbd>Ctrl</kbd>+<kbd>M</kbd> |
 | Move to trash | <kbd>Delete</kbd> |
 | Rename or edit the entry selected in the sidebar | <kbd>F2</kbd> |
-| Delete the collection selected in the sidebar | <kbd>Delete</kbd> |
+| Delete the collection, smart collection or tag selected in the sidebar | <kbd>Delete</kbd> |
+| Move between the entries of the sidebar | <kbd>Up</kbd> / <kbd>Down</kbd> |
+| Expand or collapse an entry of the sidebar | <kbd>Right</kbd> / <kbd>Left</kbd> |
 | Undo | <kbd>Ctrl</kbd>+<kbd>Z</kbd> |
+| Redo | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> or <kbd>Ctrl</kbd>+<kbd>Y</kbd> |
 | Larger / smaller thumbnails | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> |
 | Context menu | <kbd>Menu</kbd> or <kbd>Shift</kbd>+<kbd>F10</kbd> |
 | Help | <kbd>F1</kbd> |
 | Preferences | <kbd>Ctrl</kbd>+<kbd>,</kbd> |
+| Close the window | <kbd>Ctrl</kbd>+<kbd>W</kbd> |
 | Quit | <kbd>Ctrl</kbd>+<kbd>Q</kbd> |
 
 ## Questions and answers
