@@ -106,6 +106,19 @@ impl Library {
         self.history.entries.back().map(|entry| entry.stamp)
     }
 
+    #[must_use]
+    pub fn latest_redoable(&self) -> Option<ChangeStamp> {
+        self.history.redoable.last().map(|entry| entry.stamp)
+    }
+
+    pub fn redo_change(&mut self, stamp: ChangeStamp) -> Result<Option<Change>, UndoError> {
+        if self.latest_redoable() == Some(stamp) {
+            self.redo()
+        } else {
+            Ok(None)
+        }
+    }
+
     pub fn undo_change(&mut self, stamp: ChangeStamp) -> Result<Option<Change>, UndoError> {
         if self.latest_change() == Some(stamp) {
             self.undo()

@@ -60,7 +60,7 @@ use crate::tag_editor::SharedTag;
 use crate::tag_tree;
 use crate::thumbnails::{self, THUMBNAIL_PIXELS};
 use crate::toasts;
-use crate::undo_message;
+use crate::undo_message::{self, Outcome};
 use crate::update_banner;
 use crate::update_news::UpdateNews;
 use crate::view_setting;
@@ -188,6 +188,12 @@ const MERGE_RESPONSE: &str = "merge";
 const DELETE_RESPONSE: &str = "delete";
 const KEEP_SUB_TAGS_RESPONSE: &str = "keep-sub-tags";
 
+#[derive(Debug, Clone, Copy)]
+pub enum ToastOffer {
+    Undo(ChangeStamp),
+    Redo(ChangeStamp),
+}
+
 enum ReopeningChoice {
     Retry,
     OpenAnother,
@@ -228,8 +234,8 @@ mod imp {
         REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
         RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
         SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, UNDO_ACTION, collection_parameter,
-        smart_collection_parameter, tag_parameter,
+        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer, UNDO_ACTION,
+        collection_parameter, smart_collection_parameter, tag_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -255,6 +261,12 @@ mod imp {
         pub stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub import_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
+        pub history_buttons: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub undo_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub redo_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub toast_overlay: TemplateChild<adw::ToastOverlay>,
         #[template_child]
@@ -305,7 +317,7 @@ mod imp {
         pub search_query: RefCell<String>,
         pub filters: RefCell<AssetFilter>,
         pub hovered_drop: Cell<Option<(AssetView, bool)>>,
-        pub undo_toast: RefCell<Option<(adw::Toast, ChangeStamp)>>,
+        pub undo_toast: RefCell<Option<(adw::Toast, ToastOffer)>>,
     }
 
     fn install_collection_actions(class: &mut <PigouneWindow as ObjectSubclass>::Class) {
@@ -586,6 +598,7 @@ mod imp {
             self.obj().follow_page_height();
             self.obj().watch_for_updates();
             self.obj().follow_screen();
+            self.obj().connect_history_buttons();
         }
     }
 
@@ -1657,6 +1670,8 @@ impl PigouneWindow {
         self.refresh_assets();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
+        imp.history_buttons.set_visible(true);
+        self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
@@ -1981,6 +1996,7 @@ impl PigouneWindow {
         imp.window_title.set_title("Pigoune");
         imp.stack.set_visible_child_name(WELCOME_PAGE);
         imp.import_button.set_visible(false);
+        imp.history_buttons.set_visible(false);
         imp.grid_header.details_button().set_visible(false);
         self.set_library_actions_enabled(false);
     }
@@ -2449,33 +2465,41 @@ impl PigouneWindow {
 
     fn change_library<R>(&self, change: impl FnOnce(&mut Library) -> R) -> Option<R> {
         let imp = self.imp();
-        let (result, before, after) = {
+        let (result, before, after, redoable) = {
             let mut library = imp.library.borrow_mut();
             let library = library.as_mut()?;
             let before = library.latest_change();
             let result = change(library);
-            (result, before, library.latest_change())
+            (
+                result,
+                before,
+                library.latest_change(),
+                library.latest_redoable(),
+            )
         };
         imp.fresh_change.set(after.filter(|_| after != before));
-        self.dismiss_stale_undo_toast(after);
+        self.dismiss_stale_undo_toast(after, redoable);
+        self.refresh_history_buttons();
         Some(result)
     }
 
-    fn dismiss_stale_undo_toast(&self, latest: Option<ChangeStamp>) {
+    fn dismiss_stale_undo_toast(&self, latest: Option<ChangeStamp>, redoable: Option<ChangeStamp>) {
         let imp = self.imp();
         let stale = imp
             .undo_toast
             .borrow()
             .as_ref()
-            .is_some_and(|(_, stamp)| latest != Some(*stamp));
+            .is_some_and(|(_, offer)| match offer {
+                ToastOffer::Undo(stamp) => latest != Some(*stamp),
+                ToastOffer::Redo(stamp) => redoable != Some(*stamp),
+            });
         if stale && let Some((toast, _)) = imp.undo_toast.take() {
             toast.dismiss();
         }
     }
 
     fn show_undoable_toast(&self, text: &str) {
-        let imp = self.imp();
-        let Some(stamp) = imp.fresh_change.get() else {
+        let Some(stamp) = self.imp().fresh_change.get() else {
             self.show_toast(text);
             return;
         };
@@ -2486,6 +2510,32 @@ impl PigouneWindow {
             self,
             move |_| window.undo_change(stamp)
         ));
+        self.offer_toast(&toast, ToastOffer::Undo(stamp));
+    }
+
+    fn show_redoable_toast(&self, text: &str) {
+        let redoable = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(Library::latest_redoable);
+        let Some(stamp) = redoable else {
+            self.show_toast(text);
+            return;
+        };
+        let toast = adw::Toast::new(text);
+        toast.set_button_label(Some(&gettext("_Redo")));
+        toast.connect_button_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.redo_change(stamp)
+        ));
+        self.offer_toast(&toast, ToastOffer::Redo(stamp));
+    }
+
+    fn offer_toast(&self, toast: &adw::Toast, offer: ToastOffer) {
+        let imp = self.imp();
         toast.connect_dismissed(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -2501,16 +2551,47 @@ impl PigouneWindow {
                 }
             }
         ));
-        if let Some((previous, _)) = imp.undo_toast.replace(Some((toast.clone(), stamp))) {
+        if let Some((previous, _)) = imp.undo_toast.replace(Some((toast.clone(), offer))) {
             previous.dismiss();
         }
-        toasts::announce(&imp.toast_overlay, &toast);
+        toasts::announce(&imp.toast_overlay, toast);
     }
 
     fn forget_undo_toast(&self) {
         if let Some((toast, _)) = self.imp().undo_toast.take() {
             toast.dismiss();
         }
+    }
+
+    fn connect_history_buttons(&self) {
+        let imp = self.imp();
+        imp.undo_button.connect_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.undo()
+        ));
+        imp.redo_button.connect_clicked(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |_| window.redo()
+        ));
+    }
+
+    fn refresh_history_buttons(&self) {
+        let imp = self.imp();
+        let (can_undo, can_redo) = imp
+            .library
+            .borrow()
+            .as_ref()
+            .map_or((false, false), |library| {
+                (library.can_undo(), library.can_redo())
+            });
+        imp.undo_button.set_sensitive(can_undo);
+        imp.redo_button.set_sensitive(can_redo);
+        imp.undo_button
+            .set_tooltip_text(Some(&shortcut_tooltip(&gettext("Undo"), UNDO_ACTION)));
+        imp.redo_button
+            .set_tooltip_text(Some(&shortcut_tooltip(&gettext("Redo"), REDO_ACTION)));
     }
 
     fn empty_expired_trash(&self) {
@@ -2562,9 +2643,9 @@ impl PigouneWindow {
         }
         let stamp = self.latest_change_stamp();
         let undone = self.change_library(|library| {
-            library
-                .undo()
-                .map(|change| change.map(|change| undo_message::describe(&change, library)))
+            library.undo().map(|change| {
+                change.map(|change| undo_message::describe(&change, library, Outcome::Undone))
+            })
         });
         let succeeded = matches!(undone, Some(Ok(Some(_))));
         self.show_undo_outcome(undone, true);
@@ -2577,14 +2658,36 @@ impl PigouneWindow {
         if self.redo_typing() {
             return;
         }
-        let redone = self.change_library(Library::redo);
+        let redone = self.change_library(|library| {
+            library.redo().map(|change| {
+                change.map(|change| undo_message::describe(&change, library, Outcome::Redone))
+            })
+        });
+        self.show_redo_outcome(redone, true);
+    }
+
+    fn redo_change(&self, stamp: ChangeStamp) {
+        let redone = self.change_library(|library| {
+            library.redo_change(stamp).map(|change| {
+                change.map(|change| undo_message::describe(&change, library, Outcome::Redone))
+            })
+        });
+        self.show_redo_outcome(redone, false);
+    }
+
+    fn show_redo_outcome(
+        &self,
+        redone: Option<Result<Option<String>, UndoError>>,
+        tell_when_nothing: bool,
+    ) {
         match redone {
-            Some(Ok(Some(_))) => {
+            Some(Ok(Some(message))) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
-                self.show_toast(&gettext("Change redone"));
+                self.show_undoable_toast(&message);
             }
-            Some(Ok(None)) => self.show_toast(&gettext("Nothing to redo")),
+            Some(Ok(None)) if tell_when_nothing => self.show_toast(&gettext("Nothing to redo")),
+            Some(Ok(None)) | None => {}
             Some(Err(error)) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
@@ -2595,15 +2698,14 @@ impl PigouneWindow {
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
                 alert.present(Some(self));
             }
-            None => {}
         }
     }
 
     fn undo_change(&self, stamp: ChangeStamp) {
         let undone = self.change_library(|library| {
-            library
-                .undo_change(stamp)
-                .map(|change| change.map(|change| undo_message::describe(&change, library)))
+            library.undo_change(stamp).map(|change| {
+                change.map(|change| undo_message::describe(&change, library, Outcome::Undone))
+            })
         });
         let succeeded = matches!(undone, Some(Ok(Some(_))));
         self.show_undo_outcome(undone, false);
@@ -2621,7 +2723,7 @@ impl PigouneWindow {
             Some(Ok(Some(message))) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
-                self.show_toast(&message);
+                self.show_redoable_toast(&message);
             }
             Some(Ok(None)) if tell_when_nothing => self.show_toast(&gettext("Nothing to undo")),
             Some(Ok(None)) | None => {}
@@ -5980,6 +6082,15 @@ fn is_dismissed(error: &glib::Error) -> bool {
         error.kind::<gtk::DialogError>(),
         Some(gtk::DialogError::Dismissed | gtk::DialogError::Cancelled)
     ) || error.matches(gio::IOErrorEnum::Cancelled)
+}
+
+fn shortcut_tooltip(label: &str, action: &str) -> String {
+    let shortcut = shortcuts::current_label(action);
+    if shortcut.is_empty() {
+        label.to_owned()
+    } else {
+        format!("{label} ({shortcut})")
+    }
 }
 
 fn menu_item(label: &str, action: &str, accel: Option<&str>) -> gio::MenuItem {

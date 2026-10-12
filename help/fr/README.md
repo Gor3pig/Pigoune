@@ -381,8 +381,9 @@ pas : ouvrez **Corbeille**, en bas de la barre latérale, pour restaurer des él
 définitivement. Les éléments de la corbeille peuvent encore être copiés, exportés ou ouverts
 avec une autre application, mais pas modifiés.
 
-La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> ou avec le bouton
-**Annuler** du message qui apparaît après une action : mise à la corbeille, déplacement, tags,
+La plupart des modifications s'annulent avec <kbd>Ctrl</kbd>+<kbd>Z</kbd>, avec le bouton
+**Annuler** en haut de la barre latérale, ou avec le bouton **Annuler** du message qui apparaît
+après une action : mise à la corbeille, déplacement, tags,
 favoris, renommage, notes et crédits, mais aussi création, renommage, personnalisation,
 déplacement ou suppression d'une collection, et création, modification, réorganisation ou
 suppression d'une collection dynamique. Les imports ne s'annulent pas, et vider la corbeille
@@ -391,7 +392,9 @@ corbeille précédente ne figure plus dans l'historique des annulations. La cré
 est vide : une fois des éléments importés dedans, utilisez plutôt **Supprimer…**. Quand une
 annulation n'est plus possible, Pigoune le dit, laisse ce changement tel quel, et le
 <kbd>Ctrl</kbd>+<kbd>Z</kbd> suivant annule le changement d'avant. Un changement annulé peut être rétabli avec
-<kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> (ou <kbd>Ctrl</kbd>+<kbd>Y</kbd>) tant que vous n'en faites pas un autre. Un message qui suit une action ne
+<kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> (ou <kbd>Ctrl</kbd>+<kbd>Y</kbd>), avec le bouton **Rétablir** à côté de
+**Annuler**, ou avec le bouton **Rétablir** du message qui suit une annulation, tant que vous n'en faites
+pas un autre. Un message qui suit une action ne
 compte que ce qui a vraiment changé : les éléments déjà dans la collection ou déjà étiquetés
 ne sont pas comptés.
 

@@ -6,164 +6,344 @@ use pigoune_core::{
     SmartCollectionCommand, SmartCollectionId, TagCommand, TagId, TextField,
 };
 
-pub fn describe(change: &Change, library: &Library) -> String {
-    let names = Names(library);
-    let described = match change {
-        Change::Asset(command) => describe_asset(command, &names),
-        Change::Collection(command) => describe_collection(command, &names),
-        Change::Tag(command) => describe_tag(command, &names),
-        Change::SmartCollection(command) => describe_smart_collection(command, &names),
-    };
-    described.unwrap_or_else(|| gettext("Last change undone"))
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Outcome {
+    Undone,
+    Redone,
 }
 
-fn describe_asset(command: &AssetCommand, names: &Names) -> Option<String> {
-    let text = match command {
-        AssetCommand::SetFavorite { assets, favorite } => counted(
-            assets.len(),
-            &if *favorite {
+fn pick(
+    outcome: Outcome,
+    undone: impl FnOnce() -> String,
+    redone: impl FnOnce() -> String,
+) -> String {
+    match outcome {
+        Outcome::Undone => undone(),
+        Outcome::Redone => redone(),
+    }
+}
+
+pub fn describe(change: &Change, library: &Library, outcome: Outcome) -> String {
+    let names = Names(library);
+    let described = match change {
+        Change::Asset(command) => describe_asset(command, &names, outcome),
+        Change::Collection(command) => describe_collection(command, &names, outcome),
+        Change::Tag(command) => describe_tag(command, &names, outcome),
+        Change::SmartCollection(command) => describe_smart_collection(command, &names, outcome),
+    };
+    described.unwrap_or_else(|| {
+        pick(
+            outcome,
+            || gettext("Last change undone"),
+            || gettext("Last change redone"),
+        )
+    })
+}
+
+fn favorite_text(favorite: bool, count: usize, outcome: Outcome) -> String {
+    if favorite {
+        pick(
+            outcome,
+            || {
                 ngettext(
                     "Adding {count} asset to the favorites undone",
                     "Adding {count} assets to the favorites undone",
-                    plural(assets.len()),
+                    plural(count),
                 )
-            } else {
+            },
+            || {
+                ngettext(
+                    "Adding {count} asset to the favorites redone",
+                    "Adding {count} assets to the favorites redone",
+                    plural(count),
+                )
+            },
+        )
+    } else {
+        pick(
+            outcome,
+            || {
                 ngettext(
                     "Removing {count} asset from the favorites undone",
                     "Removing {count} assets from the favorites undone",
-                    plural(assets.len()),
+                    plural(count),
                 )
             },
-        ),
-        AssetCommand::SetTrashed { assets, trashed } => counted(
-            assets.len(),
-            &if *trashed {
+            || {
+                ngettext(
+                    "Removing {count} asset from the favorites redone",
+                    "Removing {count} assets from the favorites redone",
+                    plural(count),
+                )
+            },
+        )
+    }
+}
+
+fn trashed_text(trashed: bool, count: usize, outcome: Outcome) -> String {
+    if trashed {
+        pick(
+            outcome,
+            || {
                 ngettext(
                     "Moving {count} asset to the trash undone",
                     "Moving {count} assets to the trash undone",
-                    plural(assets.len()),
+                    plural(count),
                 )
-            } else {
+            },
+            || {
+                ngettext(
+                    "Moving {count} asset to the trash redone",
+                    "Moving {count} assets to the trash redone",
+                    plural(count),
+                )
+            },
+        )
+    } else {
+        pick(
+            outcome,
+            || {
                 ngettext(
                     "Restoring {count} asset undone",
                     "Restoring {count} assets undone",
-                    plural(assets.len()),
+                    plural(count),
                 )
             },
+            || {
+                ngettext(
+                    "Restoring {count} asset redone",
+                    "Restoring {count} assets redone",
+                    plural(count),
+                )
+            },
+        )
+    }
+}
+
+fn describe_asset(command: &AssetCommand, names: &Names, outcome: Outcome) -> Option<String> {
+    let text = match command {
+        AssetCommand::SetFavorite { assets, favorite } => counted(
+            assets.len(),
+            &favorite_text(*favorite, assets.len(), outcome),
         ),
+        AssetCommand::SetTrashed { assets, trashed } => {
+            counted(assets.len(), &trashed_text(*trashed, assets.len(), outcome))
+        }
         AssetCommand::Rename { asset, .. } => named(
-            &gettext("Renaming undone, the asset is named “{name}” again"),
+            &pick(
+                outcome,
+                || gettext("Renaming undone, the asset is named “{name}” again"),
+                || gettext("Renaming redone, the asset is named “{name}”"),
+            ),
             &names.asset(*asset)?,
         ),
         AssetCommand::SetText { asset, field, .. } => {
-            named(&text_change(*field), &names.asset(*asset)?)
+            named(&text_change(*field, outcome), &names.asset(*asset)?)
         }
         AssetCommand::Batch(commands) => {
-            return single(commands, |command| describe_asset(command, names));
+            return single(commands, |command| describe_asset(command, names, outcome));
         }
     };
     Some(text)
 }
 
-fn text_change(field: TextField) -> String {
+fn text_change(field: TextField, outcome: Outcome) -> String {
     match field {
-        TextField::Note => gettext("Note change on “{name}” undone"),
-        TextField::SourceUrl => gettext("Source change on “{name}” undone"),
-        TextField::License => gettext("License change on “{name}” undone"),
-        TextField::Author => gettext("Author change on “{name}” undone"),
+        TextField::Note => pick(
+            outcome,
+            || gettext("Note change on “{name}” undone"),
+            || gettext("Note change on “{name}” redone"),
+        ),
+        TextField::SourceUrl => pick(
+            outcome,
+            || gettext("Source change on “{name}” undone"),
+            || gettext("Source change on “{name}” redone"),
+        ),
+        TextField::License => pick(
+            outcome,
+            || gettext("License change on “{name}” undone"),
+            || gettext("License change on “{name}” redone"),
+        ),
+        TextField::Author => pick(
+            outcome,
+            || gettext("Author change on “{name}” undone"),
+            || gettext("Author change on “{name}” redone"),
+        ),
     }
 }
 
-fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<String> {
+fn describe_collection(
+    command: &CollectionCommand,
+    names: &Names,
+    outcome: Outcome,
+) -> Option<String> {
     let text = match command {
         CollectionCommand::Create { collection } => named(
-            &gettext("Creating the collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Creating the collection “{name}” undone"),
+                || gettext("Creating the collection “{name}” redone"),
+            ),
             &collection.name,
         ),
         CollectionCommand::Delete { .. } => return None,
         CollectionCommand::Restyle { id, .. } => named(
-            &gettext("Customizing the collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Customizing the collection “{name}” undone"),
+                || gettext("Customizing the collection “{name}” redone"),
+            ),
             &names.collection(*id)?,
         ),
         CollectionCommand::Rename { id, .. } => named(
-            &gettext("Renaming undone, the collection is named “{name}” again"),
+            &pick(
+                outcome,
+                || gettext("Renaming undone, the collection is named “{name}” again"),
+                || gettext("Renaming redone, the collection is named “{name}”"),
+            ),
             &names.collection(*id)?,
         ),
         CollectionCommand::Trash { id } => named(
-            &gettext("Deleting the collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Deleting the collection “{name}” undone"),
+                || gettext("Deleting the collection “{name}” redone"),
+            ),
             &names.collection(*id)?,
         ),
-        CollectionCommand::AddAssets { collection, assets } => named(
-            &counted(
-                assets.len(),
-                &ngettext(
-                    "Adding {count} asset to “{name}” undone",
-                    "Adding {count} assets to “{name}” undone",
-                    plural(assets.len()),
+        CollectionCommand::AddAssets { collection, assets } => {
+            let count = assets.len();
+            named(
+                &counted(
+                    count,
+                    &pick(
+                        outcome,
+                        || {
+                            ngettext(
+                                "Adding {count} asset to “{name}” undone",
+                                "Adding {count} assets to “{name}” undone",
+                                plural(count),
+                            )
+                        },
+                        || {
+                            ngettext(
+                                "Adding {count} asset to “{name}” redone",
+                                "Adding {count} assets to “{name}” redone",
+                                plural(count),
+                            )
+                        },
+                    ),
                 ),
-            ),
-            &names.collection(*collection)?,
-        ),
-        CollectionCommand::RemoveAssets { collection, assets } => named(
-            &counted(
-                assets.len(),
-                &ngettext(
-                    "Removing {count} asset from “{name}” undone",
-                    "Removing {count} assets from “{name}” undone",
-                    plural(assets.len()),
+                &names.collection(*collection)?,
+            )
+        }
+        CollectionCommand::RemoveAssets { collection, assets } => {
+            let count = assets.len();
+            named(
+                &counted(
+                    count,
+                    &pick(
+                        outcome,
+                        || {
+                            ngettext(
+                                "Removing {count} asset from “{name}” undone",
+                                "Removing {count} assets from “{name}” undone",
+                                plural(count),
+                            )
+                        },
+                        || {
+                            ngettext(
+                                "Removing {count} asset from “{name}” redone",
+                                "Removing {count} assets from “{name}” redone",
+                                plural(count),
+                            )
+                        },
+                    ),
                 ),
-            ),
-            &names.collection(*collection)?,
-        ),
-        CollectionCommand::MoveAssets { to, assets, .. } => named(
-            &counted(
-                assets.len(),
-                &ngettext(
-                    "Moving {count} asset to “{name}” undone",
-                    "Moving {count} assets to “{name}” undone",
-                    plural(assets.len()),
-                ),
-            ),
-            &names.collection(*to)?,
-        ),
+                &names.collection(*collection)?,
+            )
+        }
+        CollectionCommand::MoveAssets { to, assets, .. } => {
+            named(&moved_text(assets.len(), outcome), &names.collection(*to)?)
+        }
         CollectionCommand::Move { .. }
         | CollectionCommand::Arrange { .. }
         | CollectionCommand::SetTrashed { .. }
-        | CollectionCommand::Batch(_) => return describe_arrangement(command, names),
+        | CollectionCommand::Batch(_) => return describe_arrangement(command, names, outcome),
     };
     Some(text)
 }
 
-fn describe_arrangement(command: &CollectionCommand, names: &Names) -> Option<String> {
+fn moved_text(count: usize, outcome: Outcome) -> String {
+    counted(
+        count,
+        &pick(
+            outcome,
+            || {
+                ngettext(
+                    "Moving {count} asset to “{name}” undone",
+                    "Moving {count} assets to “{name}” undone",
+                    plural(count),
+                )
+            },
+            || {
+                ngettext(
+                    "Moving {count} asset to “{name}” redone",
+                    "Moving {count} assets to “{name}” redone",
+                    plural(count),
+                )
+            },
+        ),
+    )
+}
+
+fn describe_arrangement(
+    command: &CollectionCommand,
+    names: &Names,
+    outcome: Outcome,
+) -> Option<String> {
     if let Some(count) = unclassified_count(command) {
         return Some(counted(
             count,
-            &ngettext(
-                "Removing {count} asset from all its collections undone",
-                "Removing {count} assets from all their collections undone",
-                plural(count),
+            &pick(
+                outcome,
+                || {
+                    ngettext(
+                        "Removing {count} asset from all its collections undone",
+                        "Removing {count} assets from all their collections undone",
+                        plural(count),
+                    )
+                },
+                || {
+                    ngettext(
+                        "Removing {count} asset from all its collections redone",
+                        "Removing {count} assets from all their collections redone",
+                        plural(count),
+                    )
+                },
             ),
         ));
     }
     if let Some((count, target)) = moved_into(command) {
         return Some(named(
-            &counted(
-                count,
-                &ngettext(
-                    "Moving {count} asset to “{name}” undone",
-                    "Moving {count} assets to “{name}” undone",
-                    plural(count),
-                ),
-            ),
+            &moved_text(count, outcome),
             &names.collection(target)?,
         ));
     }
     match moved_collection(command) {
         Some(id) => Some(named(
-            &gettext("Moving the collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Moving the collection “{name}” undone"),
+                || gettext("Moving the collection “{name}” redone"),
+            ),
             &names.collection(id)?,
         )),
-        None if is_arrangement(command) => Some(gettext("Change of the collection order undone")),
+        None if is_arrangement(command) => Some(pick(
+            outcome,
+            || gettext("Change of the collection order undone"),
+            || gettext("Change of the collection order redone"),
+        )),
         None => None,
     }
 }
@@ -221,75 +401,146 @@ fn is_arrangement(command: &CollectionCommand) -> bool {
     }
 }
 
-fn describe_tag(command: &TagCommand, names: &Names) -> Option<String> {
+fn describe_tag(command: &TagCommand, names: &Names, outcome: Outcome) -> Option<String> {
     let text = match command {
-        TagCommand::Add { name, .. } => named(&gettext("Adding the tag “{name}” undone"), name),
-        TagCommand::Link { tag, assets } => named(
-            &counted(
-                assets.len(),
-                &ngettext(
-                    "Adding the tag “{name}” to {count} asset undone",
-                    "Adding the tag “{name}” to {count} assets undone",
-                    plural(assets.len()),
-                ),
+        TagCommand::Add { name, .. } => named(
+            &pick(
+                outcome,
+                || gettext("Adding the tag “{name}” undone"),
+                || gettext("Adding the tag “{name}” redone"),
             ),
-            &names.tag(*tag)?,
+            name,
         ),
-        TagCommand::Unlink { tag, assets } => named(
-            &counted(
-                assets.len(),
-                &ngettext(
-                    "Removing the tag “{name}” from {count} asset undone",
-                    "Removing the tag “{name}” from {count} assets undone",
-                    plural(assets.len()),
+        TagCommand::Link { tag, assets } => {
+            let count = assets.len();
+            named(
+                &counted(
+                    count,
+                    &pick(
+                        outcome,
+                        || {
+                            ngettext(
+                                "Adding the tag “{name}” to {count} asset undone",
+                                "Adding the tag “{name}” to {count} assets undone",
+                                plural(count),
+                            )
+                        },
+                        || {
+                            ngettext(
+                                "Adding the tag “{name}” to {count} asset redone",
+                                "Adding the tag “{name}” to {count} assets redone",
+                                plural(count),
+                            )
+                        },
+                    ),
                 ),
-            ),
-            &names.tag(*tag)?,
-        ),
+                &names.tag(*tag)?,
+            )
+        }
+        TagCommand::Unlink { tag, assets } => {
+            let count = assets.len();
+            named(
+                &counted(
+                    count,
+                    &pick(
+                        outcome,
+                        || {
+                            ngettext(
+                                "Removing the tag “{name}” from {count} asset undone",
+                                "Removing the tag “{name}” from {count} assets undone",
+                                plural(count),
+                            )
+                        },
+                        || {
+                            ngettext(
+                                "Removing the tag “{name}” from {count} asset redone",
+                                "Removing the tag “{name}” from {count} assets redone",
+                                plural(count),
+                            )
+                        },
+                    ),
+                ),
+                &names.tag(*tag)?,
+            )
+        }
         TagCommand::Rename { tag, .. } => named(
-            &gettext("Renaming undone, the tag is named “{name}” again"),
+            &pick(
+                outcome,
+                || gettext("Renaming undone, the tag is named “{name}” again"),
+                || gettext("Renaming redone, the tag is named “{name}”"),
+            ),
             &names.tag(*tag)?,
         ),
         TagCommand::Merge { from, .. } => named(
-            &gettext("Merging the tag “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Merging the tag “{name}” undone"),
+                || gettext("Merging the tag “{name}” redone"),
+            ),
             &names.tag(*from)?,
         ),
         TagCommand::Delete { tag } | TagCommand::Dissolve { tag } => named(
-            &gettext("Deleting the tag “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Deleting the tag “{name}” undone"),
+                || gettext("Deleting the tag “{name}” redone"),
+            ),
             &names.tag(*tag)?,
         ),
         TagCommand::Move { tag, .. } => named(
-            &gettext("Moving the tag “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Moving the tag “{name}” undone"),
+                || gettext("Moving the tag “{name}” redone"),
+            ),
             &names.tag(*tag)?,
         ),
         TagCommand::Recreate { .. } => return None,
-        TagCommand::Batch(commands) => return describe_tag_batch(commands, names),
+        TagCommand::Batch(commands) => return describe_tag_batch(commands, names, outcome),
     };
     Some(text)
 }
 
-fn describe_smart_collection(command: &SmartCollectionCommand, names: &Names) -> Option<String> {
+fn describe_smart_collection(
+    command: &SmartCollectionCommand,
+    names: &Names,
+    outcome: Outcome,
+) -> Option<String> {
     let text = match command {
         SmartCollectionCommand::Create { collection } => named(
-            &gettext("Creating the smart collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Creating the smart collection “{name}” undone"),
+                || gettext("Creating the smart collection “{name}” redone"),
+            ),
             &collection.name,
         ),
         SmartCollectionCommand::Update { collection } => named(
-            &gettext("Changes to the smart collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Changes to the smart collection “{name}” undone"),
+                || gettext("Changes to the smart collection “{name}” redone"),
+            ),
             &names.smart_collection(collection.id)?,
         ),
-        SmartCollectionCommand::Arrange { .. } => {
-            gettext("Reordering the smart collections undone")
-        }
+        SmartCollectionCommand::Arrange { .. } => pick(
+            outcome,
+            || gettext("Reordering the smart collections undone"),
+            || gettext("Reordering the smart collections redone"),
+        ),
         SmartCollectionCommand::Delete { id } => named(
-            &gettext("Deleting the smart collection “{name}” undone"),
+            &pick(
+                outcome,
+                || gettext("Deleting the smart collection “{name}” undone"),
+                || gettext("Deleting the smart collection “{name}” redone"),
+            ),
             &names.smart_collection(*id)?,
         ),
     };
     Some(text)
 }
 
-fn describe_tag_batch(commands: &[TagCommand], names: &Names) -> Option<String> {
+fn describe_tag_batch(commands: &[TagCommand], names: &Names, outcome: Outcome) -> Option<String> {
     let added = commands
         .iter()
         .filter(|command| matches!(command, TagCommand::Add { .. }))
@@ -297,14 +548,26 @@ fn describe_tag_batch(commands: &[TagCommand], names: &Names) -> Option<String> 
     if added > 1 && added == commands.len() {
         return Some(counted(
             added,
-            &ngettext(
-                "Adding {count} tag undone",
-                "Adding {count} tags undone",
-                plural(added),
+            &pick(
+                outcome,
+                || {
+                    ngettext(
+                        "Adding {count} tag undone",
+                        "Adding {count} tags undone",
+                        plural(added),
+                    )
+                },
+                || {
+                    ngettext(
+                        "Adding {count} tag redone",
+                        "Adding {count} tags redone",
+                        plural(added),
+                    )
+                },
             ),
         ));
     }
-    single(commands, |command| describe_tag(command, names))
+    single(commands, |command| describe_tag(command, names, outcome))
 }
 
 fn single<T>(commands: &[T], describe: impl Fn(&T) -> Option<String>) -> Option<String> {

@@ -595,3 +595,47 @@ fn undoing_and_redoing_a_collection_creation_works() {
         1
     );
 }
+
+#[test]
+fn a_change_is_redone_by_its_stamp_only_while_it_is_the_latest_undone() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    assert_eq!(fixture.library.latest_redoable(), None);
+    fixture.apply(&trash(&[dot]));
+    let stamp = fixture
+        .library
+        .latest_change()
+        .expect("a change is recorded");
+    fixture.undo();
+
+    assert_eq!(fixture.library.latest_redoable(), Some(stamp));
+    let redone = fixture.library.redo_change(stamp).expect("redo succeeds");
+
+    assert_eq!(redone, Some(Change::Asset(trash(&[dot]))));
+    assert_eq!(fixture.shown(AssetView::Trash), vec![dot]);
+    assert_eq!(fixture.library.latest_redoable(), None);
+    assert_eq!(fixture.library.latest_change(), Some(stamp));
+}
+
+#[test]
+fn a_stale_stamp_redoes_nothing() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.apply(&trash(&[dot]));
+    let stamp = fixture
+        .library
+        .latest_change()
+        .expect("a change is recorded");
+    fixture.undo();
+    fixture.apply(&AssetCommand::Rename {
+        asset: dot,
+        name: "Autre".to_owned(),
+    });
+
+    assert_eq!(fixture.library.latest_redoable(), None);
+    assert_eq!(
+        fixture.library.redo_change(stamp).expect("no failure"),
+        None
+    );
+    assert!(fixture.shown(AssetView::Trash).is_empty());
+}

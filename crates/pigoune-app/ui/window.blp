@@ -191,6 +191,33 @@ template $PigouneWindow: Adw.ApplicationWindow {
                       menu-model: import_menu;
                     }
 
+                    [start]
+                    Box history_buttons {
+                      visible: false;
+
+                      Button undo_button {
+                        icon-name: "edit-undo-symbolic";
+                        sensitive: false;
+
+                        accessibility {
+                          label: _("Undo");
+                        }
+                      }
+
+                      Button redo_button {
+                        icon-name: "edit-redo-symbolic";
+                        sensitive: false;
+
+                        accessibility {
+                          label: _("Redo");
+                        }
+                      }
+
+                      styles [
+                        "linked",
+                      ]
+                    }
+
                     [end]
                     MenuButton library_menu_button {
                       primary: true;

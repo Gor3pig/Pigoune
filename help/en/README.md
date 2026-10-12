@@ -336,8 +336,8 @@ to restore assets, with **Restore** in the right-click menu or in the details pa
 empty it for good. Assets in the trash can still be copied, exported or opened with another
 application, but not changed.
 
-Most changes can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd> or with the **Undo** button of
-the message that appears after an action: trashing, moving, tags, favorites, renaming, notes
+Most changes can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd>, with the **Undo** button at the top
+of the sidebar, or with the **Undo** button of the message that appears after an action: trashing, moving, tags, favorites, renaming, notes
 and credits, but also creating, renaming, customizing, moving or deleting a collection, and
 creating, editing, reordering or deleting a smart collection. Imports cannot be undone, and emptying the
 trash clears the undo history. If an import takes an asset out of the trash, the earlier "Move to
@@ -345,7 +345,8 @@ Trash" of that asset is no longer in the undo history. Creating a collection is 
 once assets are imported into it, use **Delete…** instead. When an undo is no longer possible,
 Pigoune says so, leaves that change as it is, and the next <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the
 change before it. A change that was undone can be redone with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
-(or <kbd>Ctrl</kbd>+<kbd>Y</kbd>) until you make another change. A message that follows an action counts only what really changed: assets that
+(or <kbd>Ctrl</kbd>+<kbd>Y</kbd>), with the **Redo** button next to **Undo**, or with the **Redo**
+button of the message that follows an undo, until you make another change. A message that follows an action counts only what really changed: assets that
 were already in the collection or already had the tag are not counted.
 
 ## Your library
