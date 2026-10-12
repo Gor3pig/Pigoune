@@ -198,8 +198,9 @@ impl PigouneLibraryInfoDialog {
         imp.shares.replace(shares);
         imp.storage.replace(Some(storage));
         dialog.show_measure(Measure::Weight);
-        dialog.show_disk_space(root, &storage);
-        dialog.show_thumbnail_bytes(storage.thumbnails);
+        imp.disk_box.set_opacity(0.0);
+        imp.thumbnails_row.set_subtitle(&gettext("Calculating…"));
+        imp.thumbnails_button.set_sensitive(false);
         dialog.show_colors(&colors);
         imp.name_label.set_label(name);
         let place = host_path::shown_path(root).to_string_lossy().to_string();
@@ -207,14 +208,54 @@ impl PigouneLibraryInfoDialog {
         imp.place_label.set_tooltip_text(Some(&place));
         dialog.show_figures(overview);
         imp.location_row.set_subtitle(&place);
-        imp.disk_row.set_subtitle(&disk_text(root));
+        imp.disk_row.set_subtitle(&gettext("Calculating…"));
         imp.created_row.set_visible(overview.created_at.is_some());
         if let Some(created_at) = overview.created_at {
             imp.created_row.set_subtitle(&date_text(created_at));
         }
         imp.format_row
             .set_subtitle(&compatibility_text(overview.format_version));
+        dialog.measure_the_disk_in_the_background();
         dialog
+    }
+
+    fn measure_the_disk_in_the_background(&self) {
+        let root = self.root();
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = dialog)]
+            self,
+            async move {
+                let facts = gio::spawn_blocking(move || DiskFacts {
+                    thumbnails: pigoune_core::thumbnail_cache_bytes_in(&root),
+                    space: disk_space(&root),
+                    kind: disk_text(&root),
+                })
+                .await
+                .unwrap_or_else(|_| DiskFacts {
+                    thumbnails: 0,
+                    space: None,
+                    kind: gettext("Internal disk"),
+                });
+                dialog.show_disk_facts(&facts);
+            }
+        ));
+    }
+
+    fn show_disk_facts(&self, facts: &DiskFacts) {
+        let imp = self.imp();
+        let storage = {
+            let mut stored = imp.storage.borrow_mut();
+            let Some(current) = stored.as_mut() else {
+                return;
+            };
+            current.thumbnails = facts.thumbnails;
+            *current
+        };
+        self.show_thumbnail_bytes(facts.thumbnails);
+        imp.disk_legend.remove_all();
+        self.show_disk_space_of(facts.space, &storage);
+        imp.disk_box.set_opacity(1.0);
+        imp.disk_row.set_subtitle(&facts.kind);
     }
 
     pub fn present_fitting(&self, parent: &impl IsA<gtk::Widget>) {
@@ -467,6 +508,10 @@ impl PigouneLibraryInfoDialog {
     }
 
     fn show_disk_space(&self, root: &Path, storage: &StorageUse) {
+        self.show_disk_space_of(disk_space(root), storage);
+    }
+
+    fn show_disk_space_of(&self, disk: Option<(u64, u64)>, storage: &StorageUse) {
         let imp = self.imp();
         let library_parts = [
             (storage.resources, RESOURCES_COLOR, gettext("Assets {size}")),
@@ -478,7 +523,6 @@ impl PigouneLibraryInfoDialog {
             (storage.database, DATABASE_COLOR, gettext("Database {size}")),
             (storage.trash, TRASH_COLOR, gettext("Trash {size}")),
         ];
-        let disk = disk_space(root);
         let whole = disk.map_or(storage.total(), |(size, _)| size);
         let mut parts: Vec<(u64, &str)> = library_parts
             .iter()
@@ -748,6 +792,12 @@ fn legend_cell(text: &str, align: gtk::Align, classes: &[&str]) -> gtk::Widget {
         label.add_css_class(class);
     }
     label.upcast()
+}
+
+struct DiskFacts {
+    thumbnails: u64,
+    space: Option<(u64, u64)>,
+    kind: String,
 }
 
 fn disk_space(root: &Path) -> Option<(u64, u64)> {

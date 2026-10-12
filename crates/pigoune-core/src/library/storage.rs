@@ -75,6 +75,13 @@ impl Library {
     }
 
     pub fn storage_use(&self) -> Result<StorageUse, LibraryError> {
+        Ok(StorageUse {
+            thumbnails: self.thumbnail_cache_bytes(),
+            ..self.storage_use_without_thumbnails()?
+        })
+    }
+
+    pub fn storage_use_without_thumbnails(&self) -> Result<StorageUse, LibraryError> {
         let bytes = |condition: &str| -> Result<u64, LibraryError> {
             let total: i64 = self.connection.query_row(
                 &format!("SELECT coalesce(sum(byte_size), 0) FROM assets WHERE {condition}"),
@@ -86,7 +93,7 @@ impl Library {
         Ok(StorageUse {
             resources: bytes("trashed_at_unix_ms IS NULL")?,
             trash: bytes("trashed_at_unix_ms IS NOT NULL")?,
-            thumbnails: self.thumbnail_cache_bytes(),
+            thumbnails: 0,
             database: fs::metadata(layout::database_path(&self.root))
                 .map_or(0, |metadata| metadata.len()),
         })

@@ -1534,7 +1534,7 @@ impl PigouneWindow {
                 root: library.root().to_path_buf(),
                 overview: library.overview()?,
                 shares: library.format_shares()?,
-                storage: library.storage_use()?,
+                storage: library.storage_use_without_thumbnails()?,
                 records,
                 record_thumbnails,
                 colors: library.color_shares()?,

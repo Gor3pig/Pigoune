@@ -104,6 +104,18 @@ fn the_overview_counts_what_the_library_holds() {
         storage.total(),
         storage.resources + storage.trash + storage.thumbnails + storage.database
     );
+
+    let quick = library
+        .storage_use_without_thumbnails()
+        .expect("quick storage is read");
+    assert_eq!(quick.thumbnails, 0);
+    assert_eq!(quick.resources, storage.resources);
+    assert_eq!(quick.trash, storage.trash);
+    assert_eq!(quick.database, storage.database);
+    assert_eq!(
+        pigoune_core::thumbnail_cache_bytes_in(library.root()),
+        library.thumbnail_cache_bytes()
+    );
 }
 
 #[test]

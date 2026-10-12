@@ -4,10 +4,15 @@ use std::path::Path;
 
 use super::{Library, LibraryError, layout};
 
+#[must_use]
+pub fn thumbnail_cache_bytes_in(root: &Path) -> u64 {
+    folder_bytes(&layout::thumbnails_dir(root))
+}
+
 impl Library {
     #[must_use]
     pub fn thumbnail_cache_bytes(&self) -> u64 {
-        folder_bytes(&layout::thumbnails_dir(&self.root))
+        thumbnail_cache_bytes_in(&self.root)
     }
 
     pub fn clear_thumbnail_cache(&self) -> Result<(), LibraryError> {
