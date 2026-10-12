@@ -385,3 +385,72 @@ fn undoing_every_random_gesture_restores_the_starting_state() {
         "the sequences barely did anything: {recorded_total} gestures"
     );
 }
+
+fn visible_order_only(snapshot: &str) -> String {
+    let mut section = "";
+    let mut visible = Vec::new();
+    let mut trashed = Vec::new();
+    let mut text = String::new();
+    for line in snapshot.lines() {
+        if let Some(title) = line.strip_prefix("## ") {
+            flush_collections(section, &mut visible, &mut trashed, &mut text);
+            section = title;
+            text.push_str(line);
+            text.push('\n');
+        } else if section == "collections" {
+            if line.ends_with("Integer(1)]") {
+                trashed.push(line);
+            } else {
+                visible.push(line);
+            }
+        } else {
+            text.push_str(line);
+            text.push('\n');
+        }
+    }
+    flush_collections(section, &mut visible, &mut trashed, &mut text);
+    text
+}
+
+fn flush_collections<'a>(
+    section: &str,
+    visible: &mut Vec<&'a str>,
+    trashed: &mut Vec<&'a str>,
+    text: &mut String,
+) {
+    if section != "collections" {
+        return;
+    }
+    trashed.sort_unstable();
+    for line in visible.drain(..).chain(trashed.drain(..)) {
+        text.push_str(line);
+        text.push('\n');
+    }
+}
+
+#[test]
+fn redoing_every_undone_random_gesture_restores_the_final_state() {
+    for seed in 1..=SEQUENCES {
+        let (mut fixture, _, recorded) = play(seed);
+        let after = fixture.snapshot();
+        for step in 0..recorded {
+            let undone = fixture
+                .library
+                .undo()
+                .unwrap_or_else(|error| panic!("seed {seed}, undo {step}/{recorded}: {error}"));
+            assert!(undone.is_some(), "seed {seed}: history ended at {step}");
+        }
+        for step in 0..recorded {
+            let redone = fixture
+                .library
+                .redo()
+                .unwrap_or_else(|error| panic!("seed {seed}, redo {step}/{recorded}: {error}"));
+            assert!(redone.is_some(), "seed {seed}: redo ended at {step}");
+        }
+        assert_eq!(
+            visible_order_only(&fixture.snapshot()),
+            visible_order_only(&after),
+            "seed {seed}: the state differs after redoing {recorded} gestures"
+        );
+    }
+}

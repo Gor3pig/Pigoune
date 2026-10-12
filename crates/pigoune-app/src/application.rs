@@ -46,6 +46,7 @@ fn install_actions(application: &adw::Application) {
     application.set_accels_for_action("win.move-to-collection", &["<Control>m"]);
     application.set_accels_for_action("win.add-tag", &["<Control>t"]);
     application.set_accels_for_action("win.undo", &["<Control>z"]);
+    application.set_accels_for_action("win.redo", &["<Control><Shift>z", "<Control>y"]);
     application.set_accels_for_action("win.preferences", &["<Control>comma"]);
     application.set_accels_for_action("win.search", &["<Control>f"]);
     application.set_accels_for_action("win.copy-selected", &["<Control>c"]);

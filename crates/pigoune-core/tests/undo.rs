@@ -48,6 +48,10 @@ impl Fixture {
         self.library.undo().expect("undo succeeds")
     }
 
+    fn redo(&mut self) -> Option<Change> {
+        self.library.redo().expect("redo succeeds")
+    }
+
     fn shown(&self, view: AssetView) -> Vec<AssetId> {
         let mut ids: Vec<AssetId> = self
             .library
@@ -472,4 +476,122 @@ fn an_import_that_restores_one_resource_keeps_the_trashing_of_the_others() {
 
     assert_eq!(fixture.undo(), Some(Change::Asset(trash(&[circle]))));
     assert_eq!(fixture.shown(AssetView::All), vec![dot, circle]);
+}
+
+#[test]
+fn a_new_library_has_nothing_to_redo() {
+    let mut fixture = Fixture::new();
+
+    assert!(!fixture.library.can_redo());
+    assert_eq!(fixture.redo(), None);
+}
+
+#[test]
+fn redoing_an_undone_trashing_trashes_the_resources_again() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.apply(&trash(&[dot]));
+    fixture.undo();
+
+    assert!(fixture.library.can_redo());
+    let redone = fixture.redo();
+
+    assert_eq!(redone, Some(Change::Asset(trash(&[dot]))));
+    assert!(fixture.shown(AssetView::All).is_empty());
+    assert_eq!(fixture.shown(AssetView::Trash), vec![dot]);
+    assert!(!fixture.library.can_redo());
+    assert!(fixture.library.can_undo());
+}
+
+#[test]
+fn a_redone_change_can_be_undone_again() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.apply(&trash(&[dot]));
+    fixture.undo();
+    fixture.redo();
+
+    fixture.undo();
+
+    assert_eq!(fixture.shown(AssetView::All), vec![dot]);
+}
+
+#[test]
+fn several_undos_are_redone_in_the_original_order() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let first = AssetCommand::Rename {
+        asset: dot,
+        name: "Premier".to_owned(),
+    };
+    let second = AssetCommand::Rename {
+        asset: dot,
+        name: "Second".to_owned(),
+    };
+    fixture.apply(&first);
+    fixture.apply(&second);
+    fixture.undo();
+    fixture.undo();
+
+    fixture.redo();
+    assert_eq!(fixture.name_of(dot), "Premier");
+    fixture.redo();
+    assert_eq!(fixture.name_of(dot), "Second");
+    assert_eq!(fixture.redo(), None);
+}
+
+#[test]
+fn a_new_change_forgets_what_could_be_redone() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    fixture.apply(&trash(&[dot]));
+    fixture.undo();
+
+    fixture.apply(&AssetCommand::Rename {
+        asset: dot,
+        name: "Autre".to_owned(),
+    });
+
+    assert!(!fixture.library.can_redo());
+    assert_eq!(fixture.redo(), None);
+}
+
+#[test]
+fn emptying_the_trash_forgets_what_could_be_redone() {
+    let mut fixture = Fixture::new();
+    let dot = fixture.import("red-dot.png", None);
+    let other = fixture.import("dark-circle.svg", None);
+    fixture.apply(&trash(&[dot]));
+    fixture.apply(&AssetCommand::Rename {
+        asset: other,
+        name: "Autre".to_owned(),
+    });
+    fixture.undo();
+    fixture.apply(&trash(&[other]));
+    fixture.undo();
+
+    fixture.library.empty_trash().expect("trash is emptied");
+
+    assert!(!fixture.library.can_redo());
+}
+
+#[test]
+fn undoing_and_redoing_a_collection_creation_works() {
+    let mut fixture = Fixture::new();
+    fixture.collection("Tech");
+    fixture.undo();
+    assert!(
+        fixture
+            .library
+            .visible_collections()
+            .expect("list")
+            .is_empty()
+    );
+
+    fixture.redo();
+
+    assert_eq!(
+        fixture.library.visible_collections().expect("list").len(),
+        1
+    );
 }

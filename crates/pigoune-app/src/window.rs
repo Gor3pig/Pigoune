@@ -115,6 +115,7 @@ const EDIT_SMART_COLLECTION_ACTION: &str = "win.edit-smart-collection";
 const DELETE_SMART_COLLECTION_ACTION: &str = "win.delete-smart-collection";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
+const REDO_ACTION: &str = "win.redo";
 const PREFERENCES_ACTION: &str = "win.preferences";
 const LIBRARY_INFO_ACTION: &str = "win.library-info";
 const OPEN_RECENT_LIBRARY_ACTION: &str = "win.open-recent-library";
@@ -132,11 +133,12 @@ const SELECT_ALL_ACTION: &str = "win.select-all";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 25] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 26] = [
     SET_WALLPAPER_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
     UNDO_ACTION,
+    REDO_ACTION,
     CLOSE_LIBRARY_ACTION,
     IMPORT_FILES_ACTION,
     IMPORT_FOLDER_ACTION,
@@ -220,7 +222,7 @@ mod imp {
         MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
         NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION,
         OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
-        PASTE_ACTION, PREFERENCES_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION,
+        PASTE_ACTION, PREFERENCES_ACTION, REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION,
         REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
         RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
         SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
@@ -394,6 +396,9 @@ mod imp {
         });
         class.install_action(UNDO_ACTION, None, |window, _, _| {
             window.undo();
+        });
+        class.install_action(REDO_ACTION, None, |window, _, _| {
+            window.redo();
         });
         class.install_action(COPY_SELECTED_ACTION, None, |window, _, _| {
             window.copy_selected();
@@ -2544,6 +2549,32 @@ impl PigouneWindow {
         }
     }
 
+    fn redo(&self) {
+        if self.redo_typing() {
+            return;
+        }
+        let redone = self.change_library(Library::redo);
+        match redone {
+            Some(Ok(Some(_))) => {
+                self.refresh_sidebar();
+                self.refresh_grid();
+                self.show_toast(&gettext("Change redone"));
+            }
+            Some(Ok(None)) => self.show_toast(&gettext("Nothing to redo")),
+            Some(Err(error)) => {
+                self.refresh_sidebar();
+                self.refresh_grid();
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Unable to Redo")),
+                    Some(&error_messages::describe_undo(&error)),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
+    }
+
     fn undo_change(&self, stamp: ChangeStamp) {
         let undone = self.change_library(|library| {
             library
@@ -3159,6 +3190,13 @@ impl PigouneWindow {
             }
         ));
         toasts::announce(&self.imp().toast_overlay, &toast);
+    }
+
+    fn redo_typing(&self) -> bool {
+        GtkWindowExt::focus(self).is_some_and(|focus| {
+            (focus.is::<gtk::Text>() || focus.is::<gtk::TextView>())
+                && focus.activate_action("text.redo", None).is_ok()
+        })
     }
 
     fn undo_typing(&self) -> bool {

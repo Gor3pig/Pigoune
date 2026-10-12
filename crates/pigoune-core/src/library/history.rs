@@ -33,6 +33,7 @@ pub enum UndoError {
 #[derive(Debug, Default)]
 pub struct History {
     entries: VecDeque<Entry>,
+    redoable: Vec<Entry>,
     recorded: u64,
 }
 
@@ -49,6 +50,7 @@ impl History {
             return;
         }
         let done = done.narrowed_to(&inverse);
+        self.redoable.clear();
         if self.entries.len() == HISTORY_LIMIT {
             self.entries.pop_front();
         }
@@ -62,9 +64,11 @@ impl History {
 
     pub fn clear(&mut self) {
         self.entries.clear();
+        self.redoable.clear();
     }
 
     pub fn forget_trashing_of(&mut self, restored: AssetId) {
+        self.redoable.clear();
         self.entries.retain_mut(|entry| {
             let (
                 Change::Asset(AssetCommand::SetTrashed {
@@ -93,6 +97,11 @@ impl Library {
     }
 
     #[must_use]
+    pub fn can_redo(&self) -> bool {
+        !self.history.redoable.is_empty()
+    }
+
+    #[must_use]
     pub fn latest_change(&self) -> Option<ChangeStamp> {
         self.history.entries.back().map(|entry| entry.stamp)
     }
@@ -109,21 +118,42 @@ impl Library {
         let Some(entry) = self.history.entries.pop_back() else {
             return Ok(None);
         };
-        match entry.inverse {
-            Change::Asset(command) => {
-                self.run_asset_command(&command)?;
-            }
-            Change::Collection(command) => {
-                self.run_collection_command(&command)?;
-            }
-            Change::Tag(command) => {
-                self.run_tag_command(&command)?;
-            }
-            Change::SmartCollection(command) => {
-                self.run_smart_collection_command(&command)?;
-            }
-        }
+        let redo = self.run_change(&entry.inverse)?;
+        self.history.redoable.push(Entry {
+            stamp: entry.stamp,
+            done: entry.done.clone(),
+            inverse: redo,
+        });
         Ok(Some(entry.done))
+    }
+
+    pub fn redo(&mut self) -> Result<Option<Change>, UndoError> {
+        let Some(entry) = self.history.redoable.pop() else {
+            return Ok(None);
+        };
+        let inverse = self.run_change(&entry.inverse)?;
+        if self.history.entries.len() == HISTORY_LIMIT {
+            self.history.entries.pop_front();
+        }
+        self.history.entries.push_back(Entry {
+            stamp: entry.stamp,
+            done: entry.done.clone(),
+            inverse,
+        });
+        Ok(Some(entry.done))
+    }
+
+    fn run_change(&mut self, change: &Change) -> Result<Change, UndoError> {
+        Ok(match change {
+            Change::Asset(command) => Change::Asset(self.run_asset_command(command)?),
+            Change::Collection(command) => {
+                Change::Collection(self.run_collection_command(command)?)
+            }
+            Change::Tag(command) => Change::Tag(self.run_tag_command(command)?),
+            Change::SmartCollection(command) => {
+                Change::SmartCollection(self.run_smart_collection_command(command)?)
+            }
+        })
     }
 }
 
