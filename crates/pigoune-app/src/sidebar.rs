@@ -596,6 +596,9 @@ impl PigouneSidebar {
                     (gdk::Key::Delete, Some(AssetView::Collection(id))) => {
                         ("win.delete-collection", id.to_string())
                     }
+                    (gdk::Key::Delete, Some(AssetView::Tag(id))) => {
+                        ("win.delete-tag", id.to_string())
+                    }
                     _ => return glib::Propagation::Proceed,
                 };
                 let _ = sidebar.activate_action(action, Some(&id.to_variant()));

@@ -2307,6 +2307,11 @@ impl PigouneWindow {
 
     fn trash_selected(&self) {
         if self.is_showing_trash() {
+            if !self.targeted_ids().is_empty() {
+                self.show_toast(&gettext(
+                    "These assets are already in the trash. Restore them or empty the trash.",
+                ));
+            }
             return;
         }
         let imp = self.imp();
@@ -5321,7 +5326,13 @@ impl PigouneWindow {
     fn toggle_favorite(&self) {
         let imp = self.imp();
         let selected = self.targeted_assets();
-        if selected.is_empty() || self.is_showing_trash() {
+        if selected.is_empty() {
+            return;
+        }
+        if self.is_showing_trash() {
+            self.show_toast(&gettext(
+                "Restore these assets to add them to the favorites.",
+            ));
             return;
         }
         let favorite = !selected.iter().all(PigouneAssetObject::favorite);
