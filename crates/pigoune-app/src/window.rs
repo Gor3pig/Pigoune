@@ -4604,7 +4604,8 @@ impl PigouneWindow {
             return;
         }
         if self.apply_tag_command(&TagCommand::Move { tag, parent }) {
-            self.go_to_view(AssetView::Tag(tag), Vec::new());
+            self.refresh_sidebar();
+            self.refresh_grid();
             self.refresh_selected_tags();
             let name = self.tag_name(tag).unwrap_or_default();
             let text = match parent.and_then(|parent| self.tag_name(parent)) {
