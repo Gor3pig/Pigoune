@@ -11,80 +11,99 @@ pub type Overrides = HashMap<String, String>;
 pub struct Customizable {
     pub action: &'static str,
     pub defaults: &'static [&'static str],
+    pub locked: bool,
 }
 
 pub const CUSTOMIZABLE: [Customizable; 18] = [
     Customizable {
         action: "win.create-library",
         defaults: &["<Control>n"],
+        locked: false,
     },
     Customizable {
         action: "win.open-library",
         defaults: &["<Control>o"],
+        locked: false,
     },
     Customizable {
         action: "win.import-files",
         defaults: &["<Control>i"],
+        locked: false,
     },
     Customizable {
         action: "win.search",
         defaults: &["<Control>f"],
+        locked: false,
     },
     Customizable {
         action: "win.select-all",
         defaults: &["<Control>a"],
+        locked: true,
     },
     Customizable {
         action: "win.copy-selected",
         defaults: &["<Control>c"],
+        locked: true,
     },
     Customizable {
         action: "win.paste",
         defaults: &["<Control>v"],
+        locked: true,
     },
     Customizable {
         action: "win.toggle-favorite",
         defaults: &["<Control>d"],
+        locked: false,
     },
     Customizable {
         action: "win.add-tag",
         defaults: &["<Control>t"],
+        locked: false,
     },
     Customizable {
         action: "win.add-to-collection",
         defaults: &["<Control>k"],
+        locked: false,
     },
     Customizable {
         action: "win.move-to-collection",
         defaults: &["<Control>m"],
+        locked: false,
     },
     Customizable {
         action: "win.undo",
         defaults: &["<Control>z"],
+        locked: true,
     },
     Customizable {
         action: "win.redo",
         defaults: &["<Control><Shift>z", "<Control>y"],
+        locked: true,
     },
     Customizable {
         action: "win.enlarge-thumbnails",
         defaults: &["<Control>plus", "<Control>equal", "<Control>KP_Add"],
+        locked: false,
     },
     Customizable {
         action: "win.shrink-thumbnails",
         defaults: &["<Control>minus", "<Control>KP_Subtract"],
+        locked: false,
     },
     Customizable {
         action: "win.preferences",
         defaults: &["<Control>comma"],
+        locked: false,
     },
     Customizable {
         action: "app.help",
         defaults: &["F1"],
+        locked: false,
     },
     Customizable {
         action: "app.quit",
         defaults: &["<Control>q"],
+        locked: true,
     },
 ];
 
@@ -195,10 +214,14 @@ pub fn label(action: &str) -> String {
 }
 
 pub fn accelerators(customizable: &Customizable, overrides: &Overrides) -> Vec<String> {
-    match overrides
-        .get(customizable.action)
-        .and_then(|chosen| canonical(chosen))
-    {
+    let chosen = if customizable.locked {
+        None
+    } else {
+        overrides
+            .get(customizable.action)
+            .and_then(|chosen| canonical(chosen))
+    };
+    match chosen {
         Some(chosen) => vec![chosen],
         None => customizable
             .defaults
@@ -488,14 +511,42 @@ mod tests {
 
     #[test]
     fn a_choice_replaces_every_default_of_the_action() {
-        let redo = CUSTOMIZABLE
+        let enlarge = CUSTOMIZABLE
             .iter()
-            .find(|customizable| customizable.action == "win.redo")
-            .expect("redo is customizable");
-        assert_eq!(accelerators(redo, &none()).len(), 2);
+            .find(|customizable| customizable.action == "win.enlarge-thumbnails")
+            .expect("enlarge is customizable");
+        assert_eq!(accelerators(enlarge, &none()).len(), 3);
         assert_eq!(
-            accelerators(redo, &chosen("win.redo", "<Control>j")),
+            accelerators(enlarge, &chosen("win.enlarge-thumbnails", "<Control>j")),
             vec!["<Control>j".to_owned()]
+        );
+    }
+
+    #[test]
+    fn the_standard_shortcuts_are_locked_and_ignore_any_stored_choice() {
+        let locked: Vec<&str> = CUSTOMIZABLE
+            .iter()
+            .filter(|customizable| customizable.locked)
+            .map(|customizable| customizable.action)
+            .collect();
+        assert_eq!(
+            locked,
+            [
+                "win.select-all",
+                "win.copy-selected",
+                "win.paste",
+                "win.undo",
+                "win.redo",
+                "app.quit"
+            ]
+        );
+        let copy = CUSTOMIZABLE
+            .iter()
+            .find(|customizable| customizable.action == "win.copy-selected")
+            .expect("copy is listed");
+        assert_eq!(
+            accelerators(copy, &chosen("win.copy-selected", "<Control>j")),
+            vec!["<Control>c".to_owned()]
         );
     }
 

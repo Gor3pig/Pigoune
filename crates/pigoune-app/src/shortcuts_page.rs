@@ -71,6 +71,11 @@ fn add_row(
         .build();
     row.add_suffix(&shown);
     row.add_suffix(&reset);
+    if customizable.locked {
+        row.set_activatable(false);
+        row.set_subtitle(&gettext("Standard shortcut, it cannot be changed"));
+        row.add_prefix(&gtk::Image::from_icon_name("changes-prevent-symbolic"));
+    }
     row.connect_activated(glib::clone!(
         #[weak]
         dialog,
@@ -117,8 +122,9 @@ fn show(rows: &[ShortcutRow], overrides: &Overrides) {
         let accelerators = shortcuts::usable_accelerators(row.customizable, overrides);
         row.shown
             .set_accelerator(accelerators.first().map_or("", String::as_str));
-        row.reset
-            .set_visible(overrides.contains_key(row.customizable.action));
+        row.reset.set_visible(
+            !row.customizable.locked && overrides.contains_key(row.customizable.action),
+        );
     }
 }
 

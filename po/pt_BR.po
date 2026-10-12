@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 20:39+0200\n"
+"POT-Creation-Date: 2026-10-12 20:42+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -1146,7 +1146,7 @@ msgstr "_Gerenciar a biblioteca"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:5
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:9
-#: crates/pigoune-app/src/shortcuts.rs:175
+#: crates/pigoune-app/src/shortcuts.rs:194
 msgid "New Library"
 msgstr "Nova biblioteca"
 
@@ -1162,7 +1162,7 @@ msgstr "Nova biblioteca"
 #: crates/pigoune-app/src/health_page.rs:605
 #: crates/pigoune-app/ui/smart-collection-dialog.blp:17
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:38
-#: crates/pigoune-app/src/shortcuts_page.rs:133
+#: crates/pigoune-app/src/shortcuts_page.rs:139
 msgid "_Cancel"
 msgstr "_Cancelar"
 
@@ -1824,13 +1824,13 @@ msgstr[1] "Etiqueta “{name}” removida de {count} itens"
 
 #: crates/pigoune-app/src/window.rs:3438
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:73
-#: crates/pigoune-app/src/shortcuts.rs:184
+#: crates/pigoune-app/src/shortcuts.rs:203
 msgid "Add to a Collection"
 msgstr "Adicionar a uma coleção"
 
 #: crates/pigoune-app/src/window.rs:3467
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:78
-#: crates/pigoune-app/src/shortcuts.rs:185
+#: crates/pigoune-app/src/shortcuts.rs:204
 msgid "Move to a Collection"
 msgstr "Mover para uma coleção"
 
@@ -2326,7 +2326,7 @@ msgstr "Solte para importar em “{name}”"
 
 #: crates/pigoune-app/src/window.rs:5695
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:19
-#: crates/pigoune-app/src/shortcuts.rs:177
+#: crates/pigoune-app/src/shortcuts.rs:196
 msgid "Import Files"
 msgstr "Importar arquivos"
 
@@ -2601,7 +2601,7 @@ msgstr "Miniaturas menores"
 
 #: crates/pigoune-app/ui/grid-header.blp:149
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:24
-#: crates/pigoune-app/src/shortcuts.rs:178
+#: crates/pigoune-app/src/shortcuts.rs:197
 msgid "Search"
 msgstr "Pesquisar"
 
@@ -4814,7 +4814,7 @@ msgid "Restore All Shortcuts"
 msgstr "Restaurar todos os atalhos"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:14
-#: crates/pigoune-app/src/shortcuts.rs:176
+#: crates/pigoune-app/src/shortcuts.rs:195
 msgid "Open a Library"
 msgstr "Abrir uma biblioteca"
 
@@ -4823,7 +4823,7 @@ msgid "Open the Detailed Preview"
 msgstr "Abrir a pré-visualização detalhada"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:38
-#: crates/pigoune-app/src/shortcuts.rs:179
+#: crates/pigoune-app/src/shortcuts.rs:198
 msgid "Select All Assets"
 msgstr "Selecionar todos os itens"
 
@@ -4832,12 +4832,12 @@ msgid "Deselect All Assets"
 msgstr "Desmarcar todos os itens"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:48
-#: crates/pigoune-app/src/shortcuts.rs:180
+#: crates/pigoune-app/src/shortcuts.rs:199
 msgid "Copy to the Clipboard"
 msgstr "Copiar para a área de transferência"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:53
-#: crates/pigoune-app/src/shortcuts.rs:181
+#: crates/pigoune-app/src/shortcuts.rs:200
 msgid "Paste Files or an Image to Import"
 msgstr "Colar arquivos ou uma imagem para importar"
 
@@ -4846,12 +4846,12 @@ msgid "Rename the Selected Asset"
 msgstr "Renomear o item selecionado"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:63
-#: crates/pigoune-app/src/shortcuts.rs:182
+#: crates/pigoune-app/src/shortcuts.rs:201
 msgid "Add to or Remove from Favorites"
 msgstr "Adicionar aos favoritos ou removê-los"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:68
-#: crates/pigoune-app/src/shortcuts.rs:183
+#: crates/pigoune-app/src/shortcuts.rs:202
 msgid "Add a Tag"
 msgstr "Adicionar uma etiqueta"
 
@@ -4860,12 +4860,12 @@ msgid "Open the Context Menu"
 msgstr "Abrir o menu de contexto"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:93
-#: crates/pigoune-app/src/shortcuts.rs:186
+#: crates/pigoune-app/src/shortcuts.rs:205
 msgid "Undo"
 msgstr "Desfazer"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:98
-#: crates/pigoune-app/src/shortcuts.rs:187
+#: crates/pigoune-app/src/shortcuts.rs:206
 msgid "Redo"
 msgstr "Refazer"
 
@@ -4890,12 +4890,12 @@ msgid "View"
 msgstr "Visualização"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:131
-#: crates/pigoune-app/src/shortcuts.rs:188
+#: crates/pigoune-app/src/shortcuts.rs:207
 msgid "Enlarge Thumbnails"
 msgstr "Aumentar as miniaturas"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:136
-#: crates/pigoune-app/src/shortcuts.rs:189
+#: crates/pigoune-app/src/shortcuts.rs:208
 msgid "Shrink Thumbnails"
 msgstr "Diminuir as miniaturas"
 
@@ -4928,12 +4928,12 @@ msgid "Show Keyboard Shortcuts"
 msgstr "Mostrar os atalhos de teclado"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:229
-#: crates/pigoune-app/src/shortcuts.rs:191
+#: crates/pigoune-app/src/shortcuts.rs:210
 msgid "Help"
 msgstr "Ajuda"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:234
-#: crates/pigoune-app/src/shortcuts.rs:190
+#: crates/pigoune-app/src/shortcuts.rs:209
 msgid "Preferences"
 msgstr "Preferências"
 
@@ -4942,7 +4942,7 @@ msgid "Close the Window"
 msgstr "Fechar a janela"
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:244
-#: crates/pigoune-app/src/shortcuts.rs:192
+#: crates/pigoune-app/src/shortcuts.rs:211
 msgid "Quit"
 msgstr "Sair"
 
@@ -6526,30 +6526,34 @@ msgstr "_Continuar"
 msgid "Reset to Default"
 msgstr "Restaurar o padrão"
 
-#: crates/pigoune-app/src/shortcuts_page.rs:131
+#: crates/pigoune-app/src/shortcuts_page.rs:76
+msgid "Standard shortcut, it cannot be changed"
+msgstr "Atalho padrão, não pode ser alterado"
+
+#: crates/pigoune-app/src/shortcuts_page.rs:137
 #, rust-format
 msgid "Press the new key combination for “{name}”"
 msgstr "Pressione a nova combinação de teclas para “{name}”"
 
-#: crates/pigoune-app/src/shortcuts_page.rs:132
+#: crates/pigoune-app/src/shortcuts_page.rs:138
 msgid "Set the Shortcut"
 msgstr "Definir o atalho"
 
-#: crates/pigoune-app/src/shortcuts_page.rs:187
+#: crates/pigoune-app/src/shortcuts_page.rs:193
 #, rust-format
 msgid "{shortcut} is already used by “{name}”."
 msgstr "{shortcut} já é usado por “{name}”."
 
-#: crates/pigoune-app/src/shortcuts_page.rs:190
+#: crates/pigoune-app/src/shortcuts_page.rs:196
 msgid "Use Ctrl or Alt with a key, or a function key."
 msgstr "Use Ctrl ou Alt com uma tecla, ou uma tecla de função."
 
-#: crates/pigoune-app/src/shortcuts_page.rs:192
+#: crates/pigoune-app/src/shortcuts_page.rs:198
 #, rust-format
 msgid "{shortcut} is reserved by Pigoune."
 msgstr "{shortcut} é reservado pelo Pigoune."
 
-#: crates/pigoune-app/src/shortcuts_page.rs:194
+#: crates/pigoune-app/src/shortcuts_page.rs:200
 msgid "This key combination is not supported."
 msgstr "Esta combinação de teclas não é compatível."
 
