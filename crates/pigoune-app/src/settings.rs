@@ -14,6 +14,7 @@ pub const SHOW_DETAILS: &str = "show-details";
 pub const SORT_CRITERION: &str = "sort-criterion";
 pub const SORT_REVERSED: &str = "sort-reversed";
 pub const LANGUAGE: &str = "language";
+pub const SHORTCUTS: &str = "shortcuts";
 pub const LAST_SEEN_VERSION: &str = "last-seen-version";
 pub const SHOW_WHATS_NEW: &str = "show-whats-new";
 pub const PREVIEW_BACKGROUND: &str = "preview-background";

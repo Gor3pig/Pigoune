@@ -1245,7 +1245,9 @@ fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
     viewing.append(Some(&gettext("Show in Files")), Some("win.show-in-files"));
     let sharing = gio::Menu::new();
     let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
-    copy.set_attribute_value("accel", Some(&"<Control>c".to_variant()));
+    if let Some(accelerator) = crate::shortcuts::current("win.copy-selected") {
+        copy.set_attribute_value("accel", Some(&accelerator.to_variant()));
+    }
     sharing.append_item(&copy);
     sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
     sharing.append(

@@ -76,6 +76,8 @@ mod search_space;
 mod search_width;
 mod selection_loss;
 mod settings;
+mod shortcuts;
+mod shortcuts_page;
 mod shortened_label;
 mod sidebar;
 mod sidebar_item;

@@ -5,6 +5,7 @@ use gtk::{gio, glib};
 use crate::languages;
 use crate::relaunch;
 use crate::settings;
+use crate::shortcuts_page;
 use crate::toasts;
 
 const PAGES: [&str; 3] = ["general_page", "display_page", "behaviour_page"];
@@ -51,6 +52,12 @@ pub fn present(parent: &impl IsA<gtk::Widget>, settings: &gio::Settings) {
         .collect();
     if let Some(row) = builder.object::<adw::ComboRow>("language_row") {
         follow_language(&row, settings, &dialog, application_of(parent));
+    }
+    if let (Some(group), Some(restore)) = (
+        builder.object::<adw::PreferencesGroup>("shortcuts_group"),
+        builder.object::<adw::ButtonRow>("restore_shortcuts_row"),
+    ) {
+        shortcuts_page::populate(&dialog, &group, &restore, settings);
     }
     dialog.connect_map(move |dialog| fit_to_content(dialog, &pages));
     dialog.present(Some(parent));

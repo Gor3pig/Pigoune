@@ -48,6 +48,7 @@ use crate::preview_flight::Flight;
 use crate::recent_libraries;
 use crate::screen_size::{self, ScreenChoice};
 use crate::settings;
+use crate::shortcuts;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
 use crate::sidebar_item::SidebarEntry;
 use crate::smart_collection_dialog::{
@@ -2194,7 +2195,7 @@ impl PigouneWindow {
         sharing.append_item(&menu_item(
             &gettext("Copy"),
             COPY_SELECTED_ACTION,
-            Some("<Control>c"),
+            shortcuts::current(COPY_SELECTED_ACTION).as_deref(),
         ));
         sharing.append(Some(&gettext("Export To…")), Some(EXPORT_SELECTED_ACTION));
         sharing.append(
@@ -2232,17 +2233,17 @@ impl PigouneWindow {
         organizing.append_item(&menu_item(
             &favorite_label,
             TOGGLE_FAVORITE_ACTION,
-            Some("<Control>d"),
+            shortcuts::current(TOGGLE_FAVORITE_ACTION).as_deref(),
         ));
         organizing.append_item(&menu_item(
             &gettext("Add a Tag…"),
             ADD_TAG_ACTION,
-            Some("<Control>t"),
+            shortcuts::current(ADD_TAG_ACTION).as_deref(),
         ));
         organizing.append_item(&menu_item(
             &gettext("Add to a Collection…"),
             ADD_TO_COLLECTION_ACTION,
-            Some("<Control>k"),
+            shortcuts::current(ADD_TO_COLLECTION_ACTION).as_deref(),
         ));
         self.append_collection_actions(&organizing, &selected);
         let discarding = gio::Menu::new();
@@ -2264,7 +2265,7 @@ impl PigouneWindow {
             menu.append_item(&menu_item(
                 &gettext("Move to a Collection…"),
                 MOVE_TO_COLLECTION_ACTION,
-                Some("<Control>m"),
+                shortcuts::current(MOVE_TO_COLLECTION_ACTION).as_deref(),
             ));
         }
         if let AssetView::Collection(id) = self.displayed_view()
@@ -2610,8 +2611,9 @@ impl PigouneWindow {
                         "{}\n\n{}",
                         error_messages::describe_undo(&error),
                         gettext(
-                            "This change was left as it is. Ctrl+Z now undoes the change before it."
+                            "This change was left as it is. {shortcut} now undoes the change before it."
                         )
+                        .replace("{shortcut}", &shortcuts::current_label(UNDO_ACTION))
                     )),
                 );
                 alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
@@ -5494,9 +5496,12 @@ impl PigouneWindow {
             )));
         } else if view == AssetView::Favorites {
             page.set_title(&gettext("No Favorites"));
-            page.set_description(Some(&gettext(
-                "Add an asset to Favorites with the star in the details panel or with Ctrl+D.",
-            )));
+            page.set_description(Some(
+                &gettext(
+                    "Add an asset to Favorites with the star in the details panel or with {shortcut}.",
+                )
+                .replace("{shortcut}", &shortcuts::current_label(TOGGLE_FAVORITE_ACTION)),
+            ));
         } else if view == AssetView::Unclassified {
             page.set_title(&gettext("No Unclassified Assets"));
             page.set_description(Some(&gettext("Every asset is in at least one collection.")));
@@ -5561,14 +5566,18 @@ impl PigouneWindow {
             #[upgrade_or]
             glib::Propagation::Proceed,
             move |_, key, _, modifiers| {
-                let imports = match key {
-                    gdk::Key::i | gdk::Key::I => true,
-                    gdk::Key::v | gdk::Key::V => !window.text_has_focus(),
-                    _ => false,
+                let pressed = shortcuts::from_key_press(key, modifiers);
+                let is_shortcut_of = |action: &str| {
+                    pressed.is_some()
+                        && shortcuts::current(action)
+                            .and_then(|accelerator| shortcuts::canonical(&accelerator))
+                            == pressed
                 };
+                let imports = is_shortcut_of(IMPORT_FILES_ACTION)
+                    || (is_shortcut_of(PASTE_ACTION) && !window.text_has_focus());
                 let refused =
                     window.imp().library.borrow().is_some() && !window.import_is_possible_here();
-                if imports && refused && modifiers.contains(gdk::ModifierType::CONTROL_MASK) {
+                if imports && refused {
                     window.show_toast(&window.why_import_is_refused());
                 }
                 glib::Propagation::Proceed
@@ -6002,5 +6011,6 @@ fn asset_objects(
 }
 
 fn nothing_to_import_text() -> String {
-    gettext("This drop holds no image. In the browser, use “Copy Image”, then press Ctrl+V")
+    gettext("This drop holds no image. In the browser, use “Copy Image”, then press {shortcut}")
+        .replace("{shortcut}", &shortcuts::current_label(PASTE_ACTION))
 }

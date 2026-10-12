@@ -143,4 +143,20 @@ Adw.PreferencesDialog dialog {
       }
     }
   }
+
+  Adw.PreferencesPage shortcuts_page {
+    title: _("Shortcuts");
+    icon-name: "input-keyboard-symbolic";
+
+    Adw.PreferencesGroup shortcuts_group {
+      title: _("Keyboard Shortcuts");
+      description: _("Select a shortcut to change it");
+    }
+
+    Adw.PreferencesGroup {
+      Adw.ButtonRow restore_shortcuts_row {
+        title: _("Restore All Shortcuts");
+      }
+    }
+  }
 }

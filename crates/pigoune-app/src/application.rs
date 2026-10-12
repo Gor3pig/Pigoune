@@ -8,6 +8,7 @@ use crate::help_url;
 use crate::icon_theme;
 use crate::release_notes;
 use crate::settings;
+use crate::shortcuts;
 use crate::whats_new;
 use crate::window::PigouneWindow;
 
@@ -36,30 +37,7 @@ fn install_actions(application: &adw::Application) {
         .build();
     application.add_action_entries([quit, about, help]);
 
-    application.set_accels_for_action("app.quit", &["<Control>q"]);
-    application.set_accels_for_action("app.help", &["F1"]);
-    application.set_accels_for_action("win.create-library", &["<Control>n"]);
-    application.set_accels_for_action("win.open-library", &["<Control>o"]);
-    application.set_accels_for_action("win.import-files", &["<Control>i"]);
-    application.set_accels_for_action("win.toggle-favorite", &["<Control>d"]);
-    application.set_accels_for_action("win.add-to-collection", &["<Control>k"]);
-    application.set_accels_for_action("win.move-to-collection", &["<Control>m"]);
-    application.set_accels_for_action("win.add-tag", &["<Control>t"]);
-    application.set_accels_for_action("win.undo", &["<Control>z"]);
-    application.set_accels_for_action("win.redo", &["<Control><Shift>z", "<Control>y"]);
-    application.set_accels_for_action("win.preferences", &["<Control>comma"]);
-    application.set_accels_for_action("win.search", &["<Control>f"]);
-    application.set_accels_for_action("win.copy-selected", &["<Control>c"]);
-    application.set_accels_for_action("win.paste", &["<Control>v"]);
-    application.set_accels_for_action("win.select-all", &["<Control>a"]);
-    application.set_accels_for_action(
-        "win.enlarge-thumbnails",
-        &["<Control>plus", "<Control>equal", "<Control>KP_Add"],
-    );
-    application.set_accels_for_action(
-        "win.shrink-thumbnails",
-        &["<Control>minus", "<Control>KP_Subtract"],
-    );
+    shortcuts::apply(application, &shortcuts::stored(&settings::load()));
 }
 
 fn present_main_window(application: &adw::Application) {
@@ -70,6 +48,14 @@ fn present_main_window(application: &adw::Application) {
 
     let settings = settings::load();
     first_launch::apply(&settings);
+    settings.connect_changed(
+        Some(settings::SHORTCUTS),
+        glib::clone!(
+            #[weak]
+            application,
+            move |settings, _| shortcuts::apply(&application, &shortcuts::stored(settings))
+        ),
+    );
     let window = PigouneWindow::new(application, settings.clone());
     window.present();
     whats_new::show_after_update(&window, &settings);
