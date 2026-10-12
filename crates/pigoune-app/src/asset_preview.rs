@@ -11,6 +11,7 @@ use pigoune_core::{Asset, AssetFormat, Dimensions};
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::shortcuts;
 use crate::swipe_steps;
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -1265,24 +1266,29 @@ fn neighbour(current: u32, offset: i32, count: u32) -> Option<u32> {
 
 fn context_menu_model(favorite: bool, editing: bool) -> gio::MenuModel {
     let viewing = gio::Menu::new();
-    viewing.append(Some(&gettext("Open With…")), Some("win.open-with"));
-    viewing.append(Some(&gettext("Show in Files")), Some("win.show-in-files"));
+    viewing.append_item(&shortcuts::menu_item(
+        &gettext("Open With…"),
+        "win.open-with",
+    ));
+    viewing.append_item(&shortcuts::menu_item(
+        &gettext("Show in Files"),
+        "win.show-in-files",
+    ));
     let sharing = gio::Menu::new();
-    let copy = gio::MenuItem::new(Some(&gettext("Copy")), Some("win.copy-selected"));
-    if let Some(accelerator) = crate::shortcuts::current("win.copy-selected") {
-        copy.set_attribute_value("accel", Some(&accelerator.to_variant()));
-    }
-    sharing.append_item(&copy);
-    sharing.append(Some(&gettext("Export To…")), Some("win.export-selected"));
-    sharing.append(
-        Some(&gettext("Convert and Export…")),
-        Some("win.export-selected-as"),
-    );
+    sharing.append_item(&shortcuts::menu_item(&gettext("Copy"), "win.copy-selected"));
+    sharing.append_item(&shortcuts::menu_item(
+        &gettext("Export To…"),
+        "win.export-selected",
+    ));
+    sharing.append_item(&shortcuts::menu_item(
+        &gettext("Convert and Export…"),
+        "win.export-selected-as",
+    ));
     if editing {
-        sharing.append(
-            Some(&gettext("Frame and Set as Wallpaper…")),
-            Some("win.set-wallpaper"),
-        );
+        sharing.append_item(&shortcuts::menu_item(
+            &gettext("Frame and Set as Wallpaper…"),
+            "win.set-wallpaper",
+        ));
     }
     let menu = gio::Menu::new();
     menu.append_section(None, &viewing);

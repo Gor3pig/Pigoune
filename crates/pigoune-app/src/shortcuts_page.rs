@@ -10,6 +10,7 @@ use crate::shortcuts::{self, CUSTOMIZABLE, Customizable, Overrides, Refusal};
 struct ShortcutRow {
     customizable: &'static Customizable,
     shown: adw::ShortcutLabel,
+    none: gtk::Label,
     reset: gtk::Button,
 }
 
@@ -63,6 +64,12 @@ fn add_row(
         .build();
     let shown = adw::ShortcutLabel::new("");
     shown.set_valign(gtk::Align::Center);
+    let none = gtk::Label::builder()
+        .label(gettext("None"))
+        .valign(gtk::Align::Center)
+        .css_classes(["dim-label"])
+        .build();
+    row.add_suffix(&none);
     let reset = gtk::Button::builder()
         .icon_name("edit-undo-symbolic")
         .valign(gtk::Align::Center)
@@ -94,6 +101,7 @@ fn add_row(
     ShortcutRow {
         customizable,
         shown,
+        none,
         reset,
     }
 }
@@ -120,8 +128,10 @@ fn restore_default(
 fn show(rows: &[ShortcutRow], overrides: &Overrides) {
     for row in rows {
         let accelerators = shortcuts::usable_accelerators(row.customizable, overrides);
-        row.shown
-            .set_accelerator(accelerators.first().map_or("", String::as_str));
+        let first = accelerators.first();
+        row.shown.set_accelerator(first.map_or("", String::as_str));
+        row.shown.set_visible(first.is_some());
+        row.none.set_visible(first.is_none());
         row.reset.set_visible(
             !row.customizable.locked && overrides.contains_key(row.customizable.action),
         );

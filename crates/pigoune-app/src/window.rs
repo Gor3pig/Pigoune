@@ -2199,8 +2199,14 @@ impl PigouneWindow {
         ));
         let in_trash = self.is_showing_trash();
         if selected.len() == 1 {
-            viewing.append(Some(&gettext("Open With…")), Some(OPEN_WITH_ACTION));
-            viewing.append(Some(&gettext("Show in Files")), Some(SHOW_IN_FILES_ACTION));
+            viewing.append_item(&shortcuts::menu_item(
+                &gettext("Open With…"),
+                OPEN_WITH_ACTION,
+            ));
+            viewing.append_item(&shortcuts::menu_item(
+                &gettext("Show in Files"),
+                SHOW_IN_FILES_ACTION,
+            ));
         }
         let sharing = gio::Menu::new();
         sharing.append_item(&menu_item(
@@ -2208,20 +2214,26 @@ impl PigouneWindow {
             COPY_SELECTED_ACTION,
             shortcuts::current(COPY_SELECTED_ACTION).as_deref(),
         ));
-        sharing.append(Some(&gettext("Export To…")), Some(EXPORT_SELECTED_ACTION));
-        sharing.append(
-            Some(&gettext("Convert and Export…")),
-            Some(EXPORT_SELECTED_AS_ACTION),
-        );
+        sharing.append_item(&shortcuts::menu_item(
+            &gettext("Export To…"),
+            EXPORT_SELECTED_ACTION,
+        ));
+        sharing.append_item(&shortcuts::menu_item(
+            &gettext("Convert and Export…"),
+            EXPORT_SELECTED_AS_ACTION,
+        ));
         if selected.len() == 1 && !in_trash {
-            sharing.append(
-                Some(&gettext("Frame and Set as Wallpaper…")),
-                Some(SET_WALLPAPER_ACTION),
-            );
+            sharing.append_item(&shortcuts::menu_item(
+                &gettext("Frame and Set as Wallpaper…"),
+                SET_WALLPAPER_ACTION,
+            ));
         }
         if in_trash {
             let restoring = gio::Menu::new();
-            restoring.append(Some(&gettext("_Restore")), Some(RESTORE_SELECTED_ACTION));
+            restoring.append_item(&shortcuts::menu_item(
+                &gettext("_Restore"),
+                RESTORE_SELECTED_ACTION,
+            ));
             let menu = gio::Menu::new();
             menu.append_section(None, &viewing);
             menu.append_section(None, &sharing);
@@ -2294,10 +2306,10 @@ impl PigouneWindow {
             menu.append_item(&item);
         }
         if self.holds_any_collection(selected) {
-            menu.append(
-                Some(&gettext("Remove from All Collections")),
-                Some(REMOVE_FROM_ALL_COLLECTIONS_ACTION),
-            );
+            menu.append_item(&shortcuts::menu_item(
+                &gettext("Remove from All Collections"),
+                REMOVE_FROM_ALL_COLLECTIONS_ACTION,
+            ));
         }
     }
 
@@ -5585,6 +5597,7 @@ impl PigouneWindow {
                             == pressed
                 };
                 let imports = is_shortcut_of(IMPORT_FILES_ACTION)
+                    || is_shortcut_of(IMPORT_FOLDER_ACTION)
                     || (is_shortcut_of(PASTE_ACTION) && !window.text_has_focus());
                 let refused =
                     window.imp().library.borrow().is_some() && !window.import_is_possible_here();
@@ -5968,11 +5981,14 @@ fn is_dismissed(error: &glib::Error) -> bool {
 }
 
 fn menu_item(label: &str, action: &str, accel: Option<&str>) -> gio::MenuItem {
-    let item = gio::MenuItem::new(Some(label), Some(action));
-    if let Some(accel) = accel {
-        item.set_attribute_value("accel", Some(&accel.to_variant()));
+    match accel {
+        Some(accel) => {
+            let item = gio::MenuItem::new(Some(label), Some(action));
+            item.set_attribute_value("accel", Some(&accel.to_variant()));
+            item
+        }
+        None => shortcuts::menu_item(label, action),
     }
-    item
 }
 
 fn ancestors(library: &Library, parent: Option<CollectionId>) -> Vec<CollectionId> {

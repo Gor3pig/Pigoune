@@ -14,7 +14,7 @@ pub struct Customizable {
     pub locked: bool,
 }
 
-pub const CUSTOMIZABLE: [Customizable; 18] = [
+pub const CUSTOMIZABLE: [Customizable; 29] = [
     Customizable {
         action: "win.create-library",
         defaults: &["<Control>n"],
@@ -105,6 +105,61 @@ pub const CUSTOMIZABLE: [Customizable; 18] = [
         defaults: &["<Control>q"],
         locked: true,
     },
+    Customizable {
+        action: "win.import-folder",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.export-selected",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.export-selected-as",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.open-with",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.show-in-files",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.set-wallpaper",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.restore-selected",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.remove-from-all-collections",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.empty-trash",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.new-collection",
+        defaults: &[],
+        locked: false,
+    },
+    Customizable {
+        action: "win.new-smart-collection",
+        defaults: &[],
+        locked: false,
+    },
 ];
 
 const RESERVED: [&str; 21] = [
@@ -185,6 +240,14 @@ pub fn current(action: &str) -> Option<String> {
         .map(ToString::to_string)
 }
 
+pub fn menu_item(label: &str, action: &str) -> gio::MenuItem {
+    let item = gio::MenuItem::new(Some(label), Some(action));
+    if let Some(accelerator) = current(action) {
+        item.set_attribute_value("accel", Some(&accelerator.to_variant()));
+    }
+    item
+}
+
 pub fn current_label(action: &str) -> String {
     current(action).map_or_else(String::new, |accelerator| display(&accelerator))
 }
@@ -209,6 +272,17 @@ pub fn label(action: &str) -> String {
         "win.preferences" => gettext("Preferences"),
         "app.help" => gettext("Help"),
         "app.quit" => gettext("Quit"),
+        "win.import-folder" => gettext("Import a Folder"),
+        "win.export-selected" => gettext("Export Assets"),
+        "win.export-selected-as" => gettext("Convert and Export Assets"),
+        "win.open-with" => gettext("Open With Another Application"),
+        "win.show-in-files" => gettext("Show in Files"),
+        "win.set-wallpaper" => gettext("Set as Wallpaper"),
+        "win.restore-selected" => gettext("Restore Assets"),
+        "win.remove-from-all-collections" => gettext("Remove from All Collections"),
+        "win.empty-trash" => gettext("Empty the Trash"),
+        "win.new-collection" => gettext("New Collection"),
+        "win.new-smart-collection" => gettext("New Smart Collection"),
         other => other.to_owned(),
     }
 }
@@ -363,7 +437,10 @@ mod tests {
 
     #[test]
     fn every_customizable_action_is_listed_in_the_shortcuts_window_with_its_label() {
-        for customizable in &CUSTOMIZABLE {
+        for customizable in CUSTOMIZABLE
+            .iter()
+            .filter(|customizable| !customizable.defaults.is_empty())
+        {
             let action = format!("action-name: \"{}\";", customizable.action);
             let title = format!("title: _(\"{}\");", label(customizable.action));
             let listed = SHORTCUTS_WINDOW
