@@ -57,6 +57,27 @@ pub enum CollectionCommand {
 }
 
 impl CollectionCommand {
+    #[must_use]
+    pub fn affected_assets(&self) -> usize {
+        let mut affected = HashSet::new();
+        self.collect_assets(&mut affected);
+        affected.len()
+    }
+
+    fn collect_assets(&self, affected: &mut HashSet<AssetId>) {
+        match self {
+            Self::AddAssets { assets, .. }
+            | Self::RemoveAssets { assets, .. }
+            | Self::MoveAssets { assets, .. } => affected.extend(assets.iter().copied()),
+            Self::Batch(commands) => {
+                for command in commands {
+                    command.collect_assets(affected);
+                }
+            }
+            _ => {}
+        }
+    }
+
     pub fn removes_assets(&self) -> bool {
         match self {
             Self::RemoveAssets { .. } | Self::MoveAssets { .. } => true,
@@ -106,15 +127,13 @@ impl Library {
                 newcomers.push(*asset);
             }
         }
-        if !newcomers.is_empty() {
-            commands.push(CollectionCommand::AddAssets {
-                collection: target,
-                assets: newcomers,
-            });
-        }
-        if commands.is_empty() {
+        if commands.is_empty() && newcomers.is_empty() {
             return Ok(None);
         }
+        commands.push(CollectionCommand::AddAssets {
+            collection: target,
+            assets: newcomers,
+        });
         Ok(Some(CollectionCommand::Batch(commands)))
     }
 

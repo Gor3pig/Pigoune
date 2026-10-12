@@ -182,6 +182,22 @@ fn capture(
         }
     ));
     alert.add_controller(keys);
+    let application = dialog
+        .root()
+        .and_downcast::<gtk::Window>()
+        .and_then(|window| window.application());
+    if let Some(application) = &application {
+        shortcuts::suspend(application);
+    }
+    alert.connect_closed(glib::clone!(
+        #[strong]
+        settings,
+        move |_| {
+            if let Some(application) = &application {
+                shortcuts::apply(application, &shortcuts::stored(&settings));
+            }
+        }
+    ));
     alert.present(Some(dialog));
 }
 

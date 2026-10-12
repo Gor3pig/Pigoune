@@ -38,7 +38,6 @@ fn install_actions(application: &adw::Application) {
     application.add_action_entries([quit, about, help]);
 
     shortcuts::apply(application, &shortcuts::stored(&settings::load()));
-    application.set_accels_for_action("win.close-window", &["<Control>w"]);
 }
 
 fn present_main_window(application: &adw::Application) {

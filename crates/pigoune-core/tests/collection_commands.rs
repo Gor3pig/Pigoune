@@ -688,6 +688,31 @@ fn moving_a_resource_already_in_the_target_only_leaves_the_others() {
 }
 
 #[test]
+fn a_move_always_names_its_target_and_counts_only_the_assets_that_change() {
+    let mut fixture = Fixture::new();
+    let target = fixture.collection("Cible", None);
+    let other = fixture.collection("Autre", None);
+    let held_twice = fixture.asset_in("red-dot.png", Some(target));
+    fixture.also_in(held_twice, other, "red-dot.png");
+    let unchanged = fixture.asset_in("dark-circle.svg", Some(target));
+
+    let command = fixture
+        .library
+        .move_to_collection_command(&[held_twice, unchanged], target)
+        .expect("command")
+        .expect("something to move");
+
+    assert_eq!(command.affected_assets(), 1);
+    let CollectionCommand::Batch(commands) = &command else {
+        panic!("a move is a batch");
+    };
+    assert!(commands.iter().any(|step| matches!(
+        step,
+        CollectionCommand::AddAssets { collection, .. } if *collection == target
+    )));
+}
+
+#[test]
 fn moving_a_resource_only_in_the_target_has_nothing_to_do() {
     let mut fixture = Fixture::new();
     let target = fixture.collection("Cible", None);

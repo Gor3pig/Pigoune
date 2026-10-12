@@ -3712,8 +3712,8 @@ impl PigouneWindow {
             .borrow()
             .as_ref()
             .and_then(|library| library.unclassify_command(assets).ok().flatten());
-        let count = assets.len();
         let Some(command) = command else {
+            let count = assets.len();
             self.show_toast(
                 &ngettext(
                     "{count} asset is already unclassified",
@@ -3724,6 +3724,7 @@ impl PigouneWindow {
             );
             return;
         };
+        let count = command.affected_assets();
         if self.apply_collection_change(&command, assets) {
             self.show_undoable_toast(
                 &ngettext(
@@ -3758,7 +3759,8 @@ impl PigouneWindow {
                     self.show_already_in_toast(&name, assets.len());
                     return;
                 };
-                let plural = u32::try_from(assets.len()).unwrap_or(u32::MAX);
+                let moved = command.affected_assets();
+                let plural = u32::try_from(moved).unwrap_or(u32::MAX);
                 let message = if command.removes_assets() {
                     ngettext(
                         "{count} asset moved to “{name}” and removed from its other collections",
@@ -3772,7 +3774,7 @@ impl PigouneWindow {
                         plural,
                     )
                 };
-                (command, message, assets.len())
+                (command, message, moved)
             }
             _ => {
                 let fresh = self.assets_outside_collection(to, assets);

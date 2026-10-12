@@ -162,7 +162,9 @@ pub const CUSTOMIZABLE: [Customizable; 29] = [
     },
 ];
 
-const RESERVED: [&str; 21] = [
+const CLOSE_WINDOW_ACTION: &str = "win.close-window";
+const CLOSE_WINDOW_ACCELERATOR: &str = "<Control>w";
+const RESERVED: [&str; 24] = [
     "F2",
     "F10",
     "F11",
@@ -184,6 +186,9 @@ const RESERVED: [&str; 21] = [
     "<Alt>F4",
     "<Alt>Tab",
     "<Control><Shift>Tab",
+    "<Control><Shift>ISO_Left_Tab",
+    "<Control>0",
+    "<Control>1",
 ];
 const FUNCTION_KEYS: std::ops::RangeInclusive<u8> = 1..=12;
 
@@ -228,6 +233,14 @@ pub fn apply(application: &impl IsA<gtk::Application>, overrides: &Overrides) {
         let accelerators: Vec<&str> = accelerators.iter().map(String::as_str).collect();
         application.set_accels_for_action(customizable.action, &accelerators);
     }
+    application.set_accels_for_action(CLOSE_WINDOW_ACTION, &[CLOSE_WINDOW_ACCELERATOR]);
+}
+
+pub fn suspend(application: &impl IsA<gtk::Application>) {
+    for customizable in &CUSTOMIZABLE {
+        application.set_accels_for_action(customizable.action, &[]);
+    }
+    application.set_accels_for_action(CLOSE_WINDOW_ACTION, &[]);
 }
 
 pub fn current(action: &str) -> Option<String> {
@@ -532,6 +545,9 @@ mod tests {
             "<Control>w",
             "<Alt>F4",
             "<Control>Page_Down",
+            "<Control><Shift>ISO_Left_Tab",
+            "<Control>0",
+            "<Control>1",
         ] {
             assert_eq!(
                 validate("win.search", reserved, &none()),
