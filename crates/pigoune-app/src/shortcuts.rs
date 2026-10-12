@@ -336,6 +336,36 @@ mod tests {
         Overrides::from([(action.to_owned(), accelerator.to_owned())])
     }
 
+    const SHORTCUTS_WINDOW: &str = include_str!("../ui/shortcuts-dialog.blp");
+
+    #[test]
+    fn every_customizable_action_is_listed_in_the_shortcuts_window_with_its_label() {
+        for customizable in &CUSTOMIZABLE {
+            let action = format!("action-name: \"{}\";", customizable.action);
+            let title = format!("title: _(\"{}\");", label(customizable.action));
+            let listed = SHORTCUTS_WINDOW
+                .split("Adw.ShortcutsItem")
+                .any(|item| item.contains(&action) && item.contains(&title));
+            assert!(
+                listed,
+                "{} is missing from the shortcuts window or has another title",
+                customizable.action
+            );
+        }
+    }
+
+    #[test]
+    fn the_shortcuts_window_does_not_show_a_customizable_action_as_a_fixed_key() {
+        for item in SHORTCUTS_WINDOW.split("Adw.ShortcutsItem").skip(1) {
+            if item.contains("action-name:") {
+                assert!(
+                    !item.contains("accelerator:"),
+                    "an item mixes an action and a fixed key: {item}"
+                );
+            }
+        }
+    }
+
     #[test]
     fn every_default_is_readable_and_free_of_conflicts() {
         let mut seen: Vec<String> = Vec::new();

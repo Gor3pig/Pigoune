@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 20:32+0200\n"
+"POT-Creation-Date: 2026-10-12 20:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1625,7 +1625,7 @@ msgstr ""
 #: crates/pigoune-app/ui/asset-details.blp:105
 #: crates/pigoune-app/src/asset_preview.rs:1299
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:83
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:200
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:210
 msgid "Move to Trash"
 msgstr ""
 
@@ -2749,17 +2749,17 @@ msgid "%B %-d, %Y at %H:%M"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:180
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:190
 msgid "Fit to Window"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:18
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:185
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:195
 msgid "Actual Size"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:23
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:195
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:205
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:62
 msgid "Full Screen"
 msgstr ""
@@ -2792,13 +2792,13 @@ msgid "Zoom"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:112
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:175
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:185
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:95
 msgid "Zoom Out"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:123
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:170
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:180
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:121
 msgid "Zoom In"
 msgstr ""
@@ -2834,7 +2834,7 @@ msgid "Icon Size"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:342
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:170
 msgid "Previous Frame"
 msgstr ""
 
@@ -2844,17 +2844,17 @@ msgid "Pause"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:368
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:175
 msgid "Next Frame"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:392
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:135
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
 msgid "Previous Asset"
 msgstr ""
 
 #: crates/pigoune-app/ui/asset-preview.blp:411
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:140
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
 msgid "Next Asset"
 msgstr ""
 
@@ -4545,7 +4545,7 @@ msgid "Blue"
 msgstr ""
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:8
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:211
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:221
 msgid "General"
 msgstr ""
 
@@ -4768,8 +4768,7 @@ msgid "Paste Files or an Image to Import"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:58
-#: crates/pigoune-app/src/asset_details.rs:191
-msgid "Rename"
+msgid "Rename the Selected Asset"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:63
@@ -4797,70 +4796,78 @@ msgid "Redo"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:107
-msgid "Rename or Edit the Selected Entry"
+msgid "Move Between Entries"
 msgstr ""
 
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:112
+msgid "Expand or Collapse an Entry"
+msgstr ""
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:117
+msgid "Rename or Edit the Selected Entry"
+msgstr ""
+
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:122
 msgid "Delete the Selected Entry"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:118
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:128
 msgid "View"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:121
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:131
 #: crates/pigoune-app/src/shortcuts.rs:188
 msgid "Enlarge Thumbnails"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:126
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:136
 #: crates/pigoune-app/src/shortcuts.rs:189
 msgid "Shrink Thumbnails"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:132
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:142
 msgid "Detailed Preview"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:145
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
 msgid "First Asset"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:150
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:160
 msgid "Last Asset"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:155
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:165
 msgid "Pause or Play the Animation"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:190
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:200
 msgid "Move the Zoomed Image"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:205
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:215
 msgid "Close the Preview"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:214
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:224
 msgid "Show Keyboard Shortcuts"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:219
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:229
 #: crates/pigoune-app/src/shortcuts.rs:191
 msgid "Help"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:224
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:234
 #: crates/pigoune-app/src/shortcuts.rs:190
 msgid "Preferences"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:229
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:239
 msgid "Close the Window"
 msgstr ""
 
-#: crates/pigoune-app/ui/shortcuts-dialog.blp:234
+#: crates/pigoune-app/ui/shortcuts-dialog.blp:244
 #: crates/pigoune-app/src/shortcuts.rs:192
 msgid "Quit"
 msgstr ""
@@ -5018,6 +5025,10 @@ msgstr ""
 #: crates/pigoune-app/src/asset_colors.rs:23
 msgctxt "resource color"
 msgid "White"
+msgstr ""
+
+#: crates/pigoune-app/src/asset_details.rs:191
+msgid "Rename"
 msgstr ""
 
 #: crates/pigoune-app/src/asset_details.rs:427

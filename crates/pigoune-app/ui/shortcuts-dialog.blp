@@ -31,7 +31,7 @@ Adw.ShortcutsDialog shortcuts_dialog {
 
     Adw.ShortcutsItem {
       title: _("Open the Detailed Preview");
-      accelerator: "space";
+      accelerator: "space Return";
     }
 
     Adw.ShortcutsItem {
@@ -55,7 +55,7 @@ Adw.ShortcutsDialog shortcuts_dialog {
     }
 
     Adw.ShortcutsItem {
-      title: _("Rename");
+      title: _("Rename the Selected Asset");
       accelerator: "F2";
     }
 
@@ -104,6 +104,16 @@ Adw.ShortcutsDialog shortcuts_dialog {
     title: _("Sidebar");
 
     Adw.ShortcutsItem {
+      title: _("Move Between Entries");
+      accelerator: "Up Down";
+    }
+
+    Adw.ShortcutsItem {
+      title: _("Expand or Collapse an Entry");
+      accelerator: "Left Right";
+    }
+
+    Adw.ShortcutsItem {
       title: _("Rename or Edit the Selected Entry");
       accelerator: "F2";
     }
@@ -133,22 +143,22 @@ Adw.ShortcutsDialog shortcuts_dialog {
 
     Adw.ShortcutsItem {
       title: _("Previous Asset");
-      accelerator: "Left";
+      accelerator: "Left KP_Left";
     }
 
     Adw.ShortcutsItem {
       title: _("Next Asset");
-      accelerator: "Right";
+      accelerator: "Right KP_Right";
     }
 
     Adw.ShortcutsItem {
       title: _("First Asset");
-      accelerator: "Home";
+      accelerator: "Home KP_Home";
     }
 
     Adw.ShortcutsItem {
       title: _("Last Asset");
-      accelerator: "End";
+      accelerator: "End KP_End";
     }
 
     Adw.ShortcutsItem {
@@ -168,22 +178,22 @@ Adw.ShortcutsDialog shortcuts_dialog {
 
     Adw.ShortcutsItem {
       title: _("Zoom In");
-      accelerator: "plus";
+      accelerator: "plus equal KP_Add";
     }
 
     Adw.ShortcutsItem {
       title: _("Zoom Out");
-      accelerator: "minus";
+      accelerator: "minus KP_Subtract";
     }
 
     Adw.ShortcutsItem {
       title: _("Fit to Window");
-      accelerator: "0";
+      accelerator: "0 <Control>0 KP_0";
     }
 
     Adw.ShortcutsItem {
       title: _("Actual Size");
-      accelerator: "1";
+      accelerator: "1 <Control>1 KP_1";
     }
 
     Adw.ShortcutsItem {
@@ -198,7 +208,7 @@ Adw.ShortcutsDialog shortcuts_dialog {
 
     Adw.ShortcutsItem {
       title: _("Move to Trash");
-      accelerator: "Delete";
+      accelerator: "Delete KP_Delete";
     }
 
     Adw.ShortcutsItem {
