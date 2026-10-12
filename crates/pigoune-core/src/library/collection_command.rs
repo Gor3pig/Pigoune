@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 
 use rusqlite::{Connection, OptionalExtension, params};
 
@@ -71,6 +71,60 @@ impl Library {
             sub_collections: collections.len().saturating_sub(1),
             trashed_assets,
         })
+    }
+
+    pub fn unclassify_command(
+        &self,
+        assets: &[AssetId],
+    ) -> Result<Option<CollectionCommand>, LibraryError> {
+        let removals = self.removals_outside(assets, None)?;
+        if removals.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(CollectionCommand::Batch(removals)))
+    }
+
+    pub fn move_to_collection_command(
+        &self,
+        assets: &[AssetId],
+        target: CollectionId,
+    ) -> Result<Option<CollectionCommand>, LibraryError> {
+        let mut commands = self.removals_outside(assets, Some(target))?;
+        let mut newcomers = Vec::new();
+        for asset in assets {
+            if !self.collections_of(*asset)?.contains(&target) {
+                newcomers.push(*asset);
+            }
+        }
+        if !newcomers.is_empty() {
+            commands.push(CollectionCommand::AddAssets {
+                collection: target,
+                assets: newcomers,
+            });
+        }
+        if commands.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(CollectionCommand::Batch(commands)))
+    }
+
+    fn removals_outside(
+        &self,
+        assets: &[AssetId],
+        kept: Option<CollectionId>,
+    ) -> Result<Vec<CollectionCommand>, LibraryError> {
+        let mut by_collection: BTreeMap<CollectionId, Vec<AssetId>> = BTreeMap::new();
+        for asset in assets {
+            for collection in self.collections_of(*asset)? {
+                if Some(collection) != kept {
+                    by_collection.entry(collection).or_default().push(*asset);
+                }
+            }
+        }
+        Ok(by_collection
+            .into_iter()
+            .map(|(collection, assets)| CollectionCommand::RemoveAssets { collection, assets })
+            .collect())
     }
 
     pub fn apply_collection_command(

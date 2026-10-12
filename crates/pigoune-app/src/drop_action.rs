@@ -37,12 +37,18 @@ pub fn offer_for_assets(target: AssetView, displayed: AssetView) -> DropOffer {
     match target {
         AssetView::Collection(to) => match displayed {
             AssetView::Collection(from) if from == to => DropOffer::REFUSED,
-            AssetView::Collection(_) => DropOffer::MOVE_OR_COPY,
+            AssetView::Collection(_) | AssetView::All | AssetView::Unclassified => {
+                DropOffer::MOVE_OR_COPY
+            }
             _ => DropOffer::COPY_ONLY,
         },
         AssetView::Tag(_) | AssetView::Favorites => DropOffer::COPY_ONLY,
+        AssetView::Unclassified => match displayed {
+            AssetView::Unclassified => DropOffer::REFUSED,
+            _ => DropOffer::MOVE_ONLY,
+        },
         AssetView::Trash => DropOffer::MOVE_ONLY,
-        AssetView::All | AssetView::Unclassified | AssetView::Smart(_) => DropOffer::REFUSED,
+        AssetView::All | AssetView::Smart(_) => DropOffer::REFUSED,
     }
 }
 
@@ -92,16 +98,20 @@ mod tests {
 
     #[test]
     fn dropping_from_a_view_that_is_not_a_collection_only_adds() {
-        for displayed in [
-            AssetView::All,
-            AssetView::Unclassified,
-            AssetView::Favorites,
-            tag(),
-            smart(),
-        ] {
+        for displayed in [AssetView::Favorites, tag(), smart()] {
             assert_eq!(
                 offer_for_assets(collection(2), displayed),
                 DropOffer::COPY_ONLY
+            );
+        }
+    }
+
+    #[test]
+    fn dropping_from_all_or_unclassified_on_a_collection_moves_by_default() {
+        for displayed in [AssetView::All, AssetView::Unclassified] {
+            assert_eq!(
+                offer_for_assets(collection(2), displayed),
+                DropOffer::MOVE_OR_COPY
             );
         }
     }
@@ -121,9 +131,22 @@ mod tests {
 
     #[test]
     fn the_other_views_receive_nothing() {
-        for target in [AssetView::All, AssetView::Unclassified, smart()] {
+        for target in [AssetView::All, smart()] {
             assert!(offer_for_assets(target, collection(1)).is_refused());
         }
+    }
+
+    #[test]
+    fn unclassified_receives_a_move_except_from_itself() {
+        assert_eq!(
+            offer_for_assets(AssetView::Unclassified, collection(1)),
+            DropOffer::MOVE_ONLY
+        );
+        assert_eq!(
+            offer_for_assets(AssetView::Unclassified, AssetView::All),
+            DropOffer::MOVE_ONLY
+        );
+        assert!(offer_for_assets(AssetView::Unclassified, AssetView::Unclassified).is_refused());
     }
 
     #[test]

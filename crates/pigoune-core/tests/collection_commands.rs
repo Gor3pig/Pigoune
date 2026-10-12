@@ -600,6 +600,116 @@ fn resources_can_be_added_to_a_collection_and_the_addition_undone() {
 }
 
 #[test]
+fn unclassifying_resources_removes_them_from_every_collection_and_can_be_undone() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech", None);
+    let other = fixture.collection("Autre", None);
+    let both = fixture.asset_in("red-dot.png", Some(tech));
+    fixture.also_in(both, other, "red-dot.png");
+    let single = fixture.asset_in("dark-circle.svg", Some(other));
+    let before = fixture.snapshot();
+
+    let command = fixture
+        .library
+        .unclassify_command(&[both, single])
+        .expect("command")
+        .expect("something to remove");
+    let undo = fixture.apply(&command);
+
+    assert!(fixture.shows(AssetView::Unclassified, both));
+    assert!(fixture.shows(AssetView::Unclassified, single));
+    fixture.apply(&undo);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn moving_resources_to_a_collection_leaves_every_other_collection_and_can_be_undone() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech", None);
+    let other = fixture.collection("Autre", None);
+    let target = fixture.collection("Cible", None);
+    let both = fixture.asset_in("red-dot.png", Some(tech));
+    fixture.also_in(both, other, "red-dot.png");
+    let loose = fixture.asset_in("dark-circle.svg", None);
+    let before = fixture.snapshot();
+
+    let command = fixture
+        .library
+        .move_to_collection_command(&[both, loose], target)
+        .expect("command")
+        .expect("something to move");
+    let undo = fixture.apply(&command);
+
+    assert_eq!(fixture.collections_of(both), [target]);
+    assert_eq!(fixture.collections_of(loose), [target]);
+    fixture.apply(&undo);
+    assert_eq!(fixture.snapshot(), before);
+}
+
+#[test]
+fn moving_a_resource_already_in_the_target_only_leaves_the_others() {
+    let mut fixture = Fixture::new();
+    let target = fixture.collection("Cible", None);
+    let other = fixture.collection("Autre", None);
+    let asset = fixture.asset_in("red-dot.png", Some(target));
+    fixture.also_in(asset, other, "red-dot.png");
+
+    let command = fixture
+        .library
+        .move_to_collection_command(&[asset], target)
+        .expect("command")
+        .expect("something to move");
+    fixture.apply(&command);
+
+    assert_eq!(fixture.collections_of(asset), [target]);
+}
+
+#[test]
+fn moving_a_resource_only_in_the_target_has_nothing_to_do() {
+    let mut fixture = Fixture::new();
+    let target = fixture.collection("Cible", None);
+    let asset = fixture.asset_in("red-dot.png", Some(target));
+
+    assert_eq!(
+        fixture
+            .library
+            .move_to_collection_command(&[asset], target)
+            .expect("command"),
+        None
+    );
+}
+
+#[test]
+fn unclassifying_resources_without_collection_gives_nothing_to_do() {
+    let mut fixture = Fixture::new();
+    let loose = fixture.asset_in("red-dot.png", None);
+
+    assert_eq!(
+        fixture
+            .library
+            .unclassify_command(&[loose])
+            .expect("command"),
+        None
+    );
+}
+
+#[test]
+fn unclassifying_ignores_collections_in_the_trash() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech", None);
+    let asset = fixture.asset_in("red-dot.png", Some(tech));
+    fixture.apply(&CollectionCommand::Trash { id: tech });
+
+    assert_eq!(
+        fixture
+            .library
+            .unclassify_command(&[asset])
+            .expect("command"),
+        None
+    );
+}
+
+#[test]
 fn resources_can_be_removed_from_a_collection_and_the_removal_undone() {
     let mut fixture = Fixture::new();
     let tech = fixture.collection("Tech", None);

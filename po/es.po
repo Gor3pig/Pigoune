@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 19:22+0200\n"
+"POT-Creation-Date: 2026-10-12 16:02+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Spanish\n"
@@ -1072,7 +1072,7 @@ msgstr "Bibliotecas recientes"
 msgid "Clear the List"
 msgstr "Vaciar la lista"
 
-#: crates/pigoune-app/ui/window.blp:190 crates/pigoune-app/src/window.rs:5249
+#: crates/pigoune-app/ui/window.blp:190 crates/pigoune-app/src/window.rs:5284
 msgid "Import"
 msgstr "Importar"
 
@@ -1140,9 +1140,9 @@ msgid "New Library"
 msgstr "Nueva biblioteca"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
-#: crates/pigoune-app/src/window.rs:2361 crates/pigoune-app/src/window.rs:3915
-#: crates/pigoune-app/src/window.rs:4093 crates/pigoune-app/src/window.rs:4161
-#: crates/pigoune-app/src/window.rs:4746
+#: crates/pigoune-app/src/window.rs:2361 crates/pigoune-app/src/window.rs:3950
+#: crates/pigoune-app/src/window.rs:4128 crates/pigoune-app/src/window.rs:4196
+#: crates/pigoune-app/src/window.rs:4781
 #: crates/pigoune-app/ui/import-progress-dialog.blp:41
 #: crates/pigoune-app/ui/collection-name-dialog.blp:17
 #: crates/pigoune-app/ui/collection-look-dialog.blp:16
@@ -1155,7 +1155,7 @@ msgid "_Cancel"
 msgstr "_Cancelar"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:24
-#: crates/pigoune-app/src/window.rs:4693
+#: crates/pigoune-app/src/window.rs:4728
 msgid "C_reate"
 msgstr "C_rear"
 
@@ -1442,7 +1442,7 @@ msgstr ""
 "subetiquetas."
 
 #: crates/pigoune-app/src/error_messages.rs:197
-#: crates/pigoune-app/src/window.rs:4299
+#: crates/pigoune-app/src/window.rs:4334
 msgid "A tag name cannot contain a slash."
 msgstr "El nombre de una etiqueta no puede contener una barra."
 
@@ -1508,7 +1508,7 @@ msgid "Unable to Undo"
 msgstr "No se puede deshacer"
 
 #: crates/pigoune-app/src/window.rs:1522 crates/pigoune-app/src/window.rs:2727
-#: crates/pigoune-app/src/window.rs:3987 crates/pigoune-app/src/window.rs:5143
+#: crates/pigoune-app/src/window.rs:4022 crates/pigoune-app/src/window.rs:5178
 #: crates/pigoune-app/src/sidebar.rs:280
 msgid "Unclassified"
 msgstr "Sin clasificar"
@@ -1520,11 +1520,11 @@ msgstr "No se puede leer la biblioteca"
 #: crates/pigoune-app/src/window.rs:1562 crates/pigoune-app/src/window.rs:2551
 #: crates/pigoune-app/src/window.rs:2710 crates/pigoune-app/src/window.rs:2719
 #: crates/pigoune-app/src/window.rs:3095 crates/pigoune-app/src/window.rs:3216
-#: crates/pigoune-app/src/window.rs:3472 crates/pigoune-app/src/window.rs:3672
-#: crates/pigoune-app/src/window.rs:3744 crates/pigoune-app/src/window.rs:3811
-#: crates/pigoune-app/src/window.rs:4121 crates/pigoune-app/src/window.rs:4799
-#: crates/pigoune-app/src/window.rs:4859 crates/pigoune-app/src/window.rs:5224
-#: crates/pigoune-app/src/window.rs:5561
+#: crates/pigoune-app/src/window.rs:3472 crates/pigoune-app/src/window.rs:3707
+#: crates/pigoune-app/src/window.rs:3779 crates/pigoune-app/src/window.rs:3846
+#: crates/pigoune-app/src/window.rs:4156 crates/pigoune-app/src/window.rs:4834
+#: crates/pigoune-app/src/window.rs:4894 crates/pigoune-app/src/window.rs:5259
+#: crates/pigoune-app/src/window.rs:5596
 #: crates/pigoune-app/src/import_report.rs:50
 #: crates/pigoune-app/src/import_report.rs:62
 #: crates/pigoune-app/src/import_report.rs:73
@@ -1776,165 +1776,179 @@ msgstr "Añadir a una colección"
 msgid "Move to a Collection"
 msgstr "Mover a una colección"
 
-#: crates/pigoune-app/src/window.rs:3469 crates/pigoune-app/src/window.rs:4796
+#: crates/pigoune-app/src/window.rs:3469 crates/pigoune-app/src/window.rs:4831
 msgid "Unable to Change the Collections"
 msgstr "No se pueden modificar las colecciones"
 
-#: crates/pigoune-app/src/window.rs:3522
+#: crates/pigoune-app/src/window.rs:3526
+#, rust-format
+msgid "{count} asset is already unclassified"
+msgid_plural "{count} assets are already unclassified"
+msgstr[0] "{count} elemento ya está en “Sin clasificar”"
+msgstr[1] "{count} elementos ya están en “Sin clasificar”"
+
+#: crates/pigoune-app/src/window.rs:3537
+#, rust-format
+msgid "{count} asset removed from all its collections"
+msgid_plural "{count} assets removed from all their collections"
+msgstr[0] "{count} elemento quitado de todas sus colecciones"
+msgstr[1] "{count} elementos quitados de todas sus colecciones"
+
+#: crates/pigoune-app/src/window.rs:3557
 #, rust-format
 msgid "{count} asset moved to “{name}”"
 msgid_plural "{count} assets moved to “{name}”"
 msgstr[0] "{count} elemento movido a “{name}”"
 msgstr[1] "{count} elementos movidos a “{name}”"
 
-#: crates/pigoune-app/src/window.rs:3533
+#: crates/pigoune-app/src/window.rs:3568
 #, rust-format
 msgid "{count} asset is already in “{name}”"
 msgid_plural "{count} assets are already in “{name}”"
 msgstr[0] "{count} elemento ya está en “{name}”"
 msgstr[1] "{count} elementos ya están en “{name}”"
 
-#: crates/pigoune-app/src/window.rs:3549
+#: crates/pigoune-app/src/window.rs:3584
 #, rust-format
 msgid "{count} asset added to “{name}”"
 msgid_plural "{count} assets added to “{name}”"
 msgstr[0] "{count} elemento añadido a “{name}”"
 msgstr[1] "{count} elementos añadidos a “{name}”"
 
-#: crates/pigoune-app/src/window.rs:3623
+#: crates/pigoune-app/src/window.rs:3658
 #, rust-format
 msgid "“{name}” is already in the favorites"
 msgstr "“{name}” ya está en favoritos"
 
-#: crates/pigoune-app/src/window.rs:3626
+#: crates/pigoune-app/src/window.rs:3661
 #, rust-format
 msgid "{count} asset is already in the favorites"
 msgid_plural "{count} assets are already in the favorites"
 msgstr[0] "{count} elemento ya está en favoritos"
 msgstr[1] "{count} elementos ya están en favoritos"
 
-#: crates/pigoune-app/src/window.rs:3651
+#: crates/pigoune-app/src/window.rs:3686
 #, rust-format
 msgid "“{name}” added to the favorites"
 msgstr "“{name}” añadido a favoritos"
 
-#: crates/pigoune-app/src/window.rs:3654
+#: crates/pigoune-app/src/window.rs:3689
 #, rust-format
 msgid "{count} asset added to the favorites"
 msgid_plural "{count} assets added to the favorites"
 msgstr[0] "{count} elemento añadido a favoritos"
 msgstr[1] "{count} elementos añadidos a favoritos"
 
-#: crates/pigoune-app/src/window.rs:3669
+#: crates/pigoune-app/src/window.rs:3704
 msgid "Unable to Change the Favorites"
 msgstr "No se pueden modificar los favoritos"
 
-#: crates/pigoune-app/src/window.rs:3682
+#: crates/pigoune-app/src/window.rs:3717
 #, rust-format
 msgid "{count} asset already has the tag “{name}”"
 msgid_plural "{count} assets already have the tag “{name}”"
 msgstr[0] "{count} elemento ya tiene la etiqueta “{name}”"
 msgstr[1] "{count} elementos ya tienen la etiqueta “{name}”"
 
-#: crates/pigoune-app/src/window.rs:3700
+#: crates/pigoune-app/src/window.rs:3735
 #, rust-format
 msgid "Tag “{name}” added to {count} asset"
 msgid_plural "Tag “{name}” added to {count} assets"
 msgstr[0] "Etiqueta “{name}” añadida a {count} elemento"
 msgstr[1] "Etiqueta “{name}” añadida a {count} elementos"
 
-#: crates/pigoune-app/src/window.rs:3741 crates/pigoune-app/src/window.rs:4856
+#: crates/pigoune-app/src/window.rs:3776 crates/pigoune-app/src/window.rs:4891
 msgid "Unable to Move the Collection"
 msgstr "No se puede mover la colección"
 
-#: crates/pigoune-app/src/window.rs:3808
+#: crates/pigoune-app/src/window.rs:3843
 msgid "Unable to Change the Tags"
 msgstr "No se pueden modificar las etiquetas"
 
-#: crates/pigoune-app/src/window.rs:3834
+#: crates/pigoune-app/src/window.rs:3869
 #, rust-format
 msgid "A tag named “{name}” already exists in “{parent}”."
 msgstr "Ya existe una etiqueta llamada «{name}» en «{parent}»."
 
-#: crates/pigoune-app/src/window.rs:3837
+#: crates/pigoune-app/src/window.rs:3872
 #, rust-format
 msgid "A tag named “{name}” already exists at the top level."
 msgstr "Ya existe una etiqueta llamada «{name}» en el primer nivel."
 
-#: crates/pigoune-app/src/window.rs:3866
+#: crates/pigoune-app/src/window.rs:3901
 msgid "Rename Tag"
 msgstr "Renombrar la etiqueta"
 
-#: crates/pigoune-app/src/window.rs:3867 crates/pigoune-app/src/window.rs:4879
+#: crates/pigoune-app/src/window.rs:3902 crates/pigoune-app/src/window.rs:4914
 msgid "_Rename"
 msgstr "_Renombrar"
 
-#: crates/pigoune-app/src/window.rs:3907
+#: crates/pigoune-app/src/window.rs:3942
 msgid "Merge the Tags?"
 msgstr "¿Combinar las etiquetas?"
 
-#: crates/pigoune-app/src/window.rs:3909
+#: crates/pigoune-app/src/window.rs:3944
 #, rust-format
 msgid "The tag “{into}” already exists. Merge “{from}” into “{into}”?"
 msgstr "La etiqueta “{into}” ya existe. ¿Combinar “{from}” con “{into}”?"
 
-#: crates/pigoune-app/src/window.rs:3916
+#: crates/pigoune-app/src/window.rs:3951
 msgid "_Merge"
 msgstr "_Combinar"
 
-#: crates/pigoune-app/src/window.rs:3953
+#: crates/pigoune-app/src/window.rs:3988
 msgid "Smart Collection"
 msgstr "Colección inteligente"
 
-#: crates/pigoune-app/src/window.rs:3967
+#: crates/pigoune-app/src/window.rs:4002
 #: crates/pigoune-app/src/sidebar_row.rs:206
 msgid "New Smart Collection"
 msgstr "Nueva colección inteligente"
 
-#: crates/pigoune-app/src/window.rs:3968 crates/pigoune-app/src/window.rs:4270
+#: crates/pigoune-app/src/window.rs:4003 crates/pigoune-app/src/window.rs:4305
 msgid "_Create"
 msgstr "_Crear"
 
-#: crates/pigoune-app/src/window.rs:3985 crates/pigoune-app/src/sidebar.rs:276
+#: crates/pigoune-app/src/window.rs:4020 crates/pigoune-app/src/sidebar.rs:276
 msgid "All"
 msgstr "Todo"
 
-#: crates/pigoune-app/src/window.rs:3986 crates/pigoune-app/src/window.rs:5142
+#: crates/pigoune-app/src/window.rs:4021 crates/pigoune-app/src/window.rs:5177
 #: crates/pigoune-app/src/sidebar.rs:277
 msgid "Favorites"
 msgstr "Favoritos"
 
-#: crates/pigoune-app/src/window.rs:4031
+#: crates/pigoune-app/src/window.rs:4066
 msgid "Edit Smart Collection"
 msgstr "Editar la colección inteligente"
 
-#: crates/pigoune-app/src/window.rs:4032
+#: crates/pigoune-app/src/window.rs:4067
 #: crates/pigoune-app/ui/collection-look-dialog.blp:23
 msgid "_Save"
 msgstr "_Guardar"
 
-#: crates/pigoune-app/src/window.rs:4087
+#: crates/pigoune-app/src/window.rs:4122
 #, rust-format
 msgid "Delete the Smart Collection “{name}”?"
 msgstr "¿Eliminar la colección inteligente “{name}”?"
 
-#: crates/pigoune-app/src/window.rs:4089
+#: crates/pigoune-app/src/window.rs:4124
 msgid ""
 "Only the saved search is deleted. The assets it shows stay in the library."
 msgstr ""
 "Solo se elimina la búsqueda guardada. Los elementos que muestra permanecen "
 "en la biblioteca."
 
-#: crates/pigoune-app/src/window.rs:4094 crates/pigoune-app/src/window.rs:4173
-#: crates/pigoune-app/src/window.rs:4747
+#: crates/pigoune-app/src/window.rs:4129 crates/pigoune-app/src/window.rs:4208
+#: crates/pigoune-app/src/window.rs:4782
 msgid "_Delete"
 msgstr "_Eliminar"
 
-#: crates/pigoune-app/src/window.rs:4118
+#: crates/pigoune-app/src/window.rs:4153
 msgid "Unable to Change the Smart Collection"
 msgstr "No se puede modificar la colección inteligente"
 
-#: crates/pigoune-app/src/window.rs:4144
+#: crates/pigoune-app/src/window.rs:4179
 #, rust-format
 msgid "It will be removed from {count} asset. The assets stay in the library."
 msgid_plural ""
@@ -1944,7 +1958,7 @@ msgstr[0] ""
 msgstr[1] ""
 "Se quitará de {count} elementos. Los elementos permanecen en la biblioteca."
 
-#: crates/pigoune-app/src/window.rs:4151
+#: crates/pigoune-app/src/window.rs:4186
 #, rust-format
 msgid "It contains {count} sub-tag. The assets stay in the library."
 msgid_plural "It contains {count} sub-tags. The assets stay in the library."
@@ -1953,96 +1967,96 @@ msgstr[0] ""
 msgstr[1] ""
 "Contiene {count} subetiquetas. Los elementos permanecen en la biblioteca."
 
-#: crates/pigoune-app/src/window.rs:4158
+#: crates/pigoune-app/src/window.rs:4193
 #, rust-format
 msgid "Delete the Tag “{name}”?"
 msgstr "¿Eliminar la etiqueta “{name}”?"
 
-#: crates/pigoune-app/src/window.rs:4165
+#: crates/pigoune-app/src/window.rs:4200
 msgid "Delete and _Move Sub-tags Up"
 msgstr "Eliminar y _subir las subetiquetas"
 
-#: crates/pigoune-app/src/window.rs:4171
+#: crates/pigoune-app/src/window.rs:4206
 msgid "_Delete with Sub-tags"
 msgstr "_Eliminar con las subetiquetas"
 
-#: crates/pigoune-app/src/window.rs:4231
+#: crates/pigoune-app/src/window.rs:4266
 #, rust-format
 msgid "The tag “{name}” was deleted and its sub-tags moved up."
 msgstr "La etiqueta «{name}» se eliminó y sus subetiquetas subieron un nivel."
 
-#: crates/pigoune-app/src/window.rs:4232
+#: crates/pigoune-app/src/window.rs:4267
 #, rust-format
 msgid "The tag “{name}” and its sub-tags were deleted."
 msgstr "La etiqueta «{name}» y sus subetiquetas se eliminaron."
 
-#: crates/pigoune-app/src/window.rs:4233
+#: crates/pigoune-app/src/window.rs:4268
 #, rust-format
 msgid "The tag “{name}” was deleted."
 msgstr "La etiqueta «{name}» se eliminó."
 
-#: crates/pigoune-app/src/window.rs:4240
+#: crates/pigoune-app/src/window.rs:4275
 #, rust-format
 msgid "Showing “{name}”."
 msgstr "Mostrando “{name}”."
 
-#: crates/pigoune-app/src/window.rs:4243
+#: crates/pigoune-app/src/window.rs:4278
 msgid "Showing the whole library."
 msgstr "Mostrando toda la biblioteca."
 
-#: crates/pigoune-app/src/window.rs:4269
+#: crates/pigoune-app/src/window.rs:4304
 msgid "New Sub-tag"
 msgstr "Nueva subetiqueta"
 
-#: crates/pigoune-app/src/window.rs:4329
+#: crates/pigoune-app/src/window.rs:4364
 #, rust-format
 msgid "Move the Tag “{name}”"
 msgstr "Mover la etiqueta «{name}»"
 
-#: crates/pigoune-app/src/window.rs:4330 crates/pigoune-app/src/window.rs:4817
+#: crates/pigoune-app/src/window.rs:4365 crates/pigoune-app/src/window.rs:4852
 msgid "Top Level"
 msgstr "Primer nivel"
 
-#: crates/pigoune-app/src/window.rs:4339
+#: crates/pigoune-app/src/window.rs:4374
 #, rust-format
 msgid "Merge the Tag “{name}” Into"
 msgstr "Combinar la etiqueta «{name}» con"
 
-#: crates/pigoune-app/src/window.rs:4392
+#: crates/pigoune-app/src/window.rs:4427
 #, rust-format
 msgid "The tag “{name}” was moved into “{parent}”."
 msgstr "La etiqueta «{name}» se movió a «{parent}»."
 
-#: crates/pigoune-app/src/window.rs:4396
+#: crates/pigoune-app/src/window.rs:4431
 #, rust-format
 msgid "The tag “{name}” was moved to the top level."
 msgstr "La etiqueta «{name}» se movió al primer nivel."
 
-#: crates/pigoune-app/src/window.rs:4421
+#: crates/pigoune-app/src/window.rs:4456
 #, rust-format
 msgid "The tag “{from}” was merged into “{into}”."
 msgstr "La etiqueta «{from}» se combinó con «{into}»."
 
-#: crates/pigoune-app/src/window.rs:4687
+#: crates/pigoune-app/src/window.rs:4722
 msgid "New Sub-collection"
 msgstr "Nueva subcolección"
 
-#: crates/pigoune-app/src/window.rs:4689 crates/pigoune-app/src/window.rs:4694
+#: crates/pigoune-app/src/window.rs:4724 crates/pigoune-app/src/window.rs:4729
 #: crates/pigoune-app/src/sidebar_row.rs:189
 msgid "New Collection"
 msgstr "Nueva colección"
 
-#: crates/pigoune-app/src/window.rs:4742
+#: crates/pigoune-app/src/window.rs:4777
 #, rust-format
 msgid "Delete the Collection “{name}”?"
 msgstr "¿Eliminar la colección “{name}”?"
 
-#: crates/pigoune-app/src/window.rs:4778
+#: crates/pigoune-app/src/window.rs:4813
 #, rust-format
 msgid "Collection “{name}” deleted"
 msgstr "Colección “{name}” eliminada"
 
-#: crates/pigoune-app/src/window.rs:4781
+#: crates/pigoune-app/src/window.rs:4816
 #, rust-format
 msgid "Collection “{name}” deleted, {count} asset moved to the trash"
 msgid_plural "Collection “{name}” deleted, {count} assets moved to the trash"
@@ -2050,65 +2064,65 @@ msgstr[0] "Colección “{name}” eliminada, {count} elemento movido a la papel
 msgstr[1] ""
 "Colección “{name}” eliminada, {count} elementos movidos a la papelera"
 
-#: crates/pigoune-app/src/window.rs:4820
+#: crates/pigoune-app/src/window.rs:4855
 #, rust-format
 msgid "Move the Collection “{name}”"
 msgstr "Mover la colección «{name}»"
 
-#: crates/pigoune-app/src/window.rs:4845
+#: crates/pigoune-app/src/window.rs:4880
 #, rust-format
 msgid "The collection “{name}” was moved into “{parent}”."
 msgstr "La colección «{name}» se movió a «{parent}»."
 
-#: crates/pigoune-app/src/window.rs:4849
+#: crates/pigoune-app/src/window.rs:4884
 #, rust-format
 msgid "The collection “{name}” was moved to the top level."
 msgstr "La colección «{name}» se movió al primer nivel."
 
-#: crates/pigoune-app/src/window.rs:4878
+#: crates/pigoune-app/src/window.rs:4913
 msgid "Rename Collection"
 msgstr "Renombrar la colección"
 
-#: crates/pigoune-app/src/window.rs:4960
+#: crates/pigoune-app/src/window.rs:4995
 msgid "the whole library"
 msgstr "toda la biblioteca"
 
-#: crates/pigoune-app/src/window.rs:4961
+#: crates/pigoune-app/src/window.rs:4996
 msgid "the trash"
 msgstr "la papelera"
 
-#: crates/pigoune-app/src/window.rs:4966
+#: crates/pigoune-app/src/window.rs:5001
 #, rust-format
 msgid "“{name}”"
 msgstr "“{name}”"
 
-#: crates/pigoune-app/src/window.rs:4994
+#: crates/pigoune-app/src/window.rs:5029
 #, rust-format
 msgid "“{name}”, with its sub-tags"
 msgstr "“{name}”, con sus subetiquetas"
 
-#: crates/pigoune-app/src/window.rs:4997 crates/pigoune-app/src/window.rs:5007
+#: crates/pigoune-app/src/window.rs:5032 crates/pigoune-app/src/window.rs:5042
 msgid "Everywhere"
 msgstr "En todas partes"
 
-#: crates/pigoune-app/src/window.rs:5015 crates/pigoune-app/src/window.rs:5144
+#: crates/pigoune-app/src/window.rs:5050 crates/pigoune-app/src/window.rs:5179
 #: crates/pigoune-app/src/sidebar.rs:334
 #: crates/pigoune-app/ui/preferences-dialog.blp:52
 msgid "Trash"
 msgstr "Papelera"
 
-#: crates/pigoune-app/src/window.rs:5027
+#: crates/pigoune-app/src/window.rs:5062
 #: crates/pigoune-app/ui/grid-header.blp:24
 msgid "Search…"
 msgstr "Buscar…"
 
-#: crates/pigoune-app/src/window.rs:5151
+#: crates/pigoune-app/src/window.rs:5186
 msgid "No asset matches the chosen filters. Clear them to see more assets."
 msgstr ""
 "Ningún elemento coincide con los filtros elegidos. Quítelos para ver más "
 "elementos."
 
-#: crates/pigoune-app/src/window.rs:5154
+#: crates/pigoune-app/src/window.rs:5189
 #, rust-format
 msgid ""
 "No asset in “{name}” matches this search. Select “All” to search everywhere."
@@ -2116,33 +2130,33 @@ msgstr ""
 "Ningún elemento de “{name}” coincide con esta búsqueda. Seleccione “Todo” "
 "para buscar en todas partes."
 
-#: crates/pigoune-app/src/window.rs:5157
+#: crates/pigoune-app/src/window.rs:5192
 msgid "No asset in the library matches this search."
 msgstr "Ningún elemento de la biblioteca coincide con esta búsqueda."
 
-#: crates/pigoune-app/src/window.rs:5163
+#: crates/pigoune-app/src/window.rs:5198
 msgid "No Results"
 msgstr "Sin resultados"
 
-#: crates/pigoune-app/src/window.rs:5165
+#: crates/pigoune-app/src/window.rs:5200
 #, rust-format
 msgid "No Results for “{query}”"
 msgstr "Sin resultados para “{query}”"
 
-#: crates/pigoune-app/src/window.rs:5178
+#: crates/pigoune-app/src/window.rs:5213
 msgid "The Trash Is Empty"
 msgstr "La papelera está vacía"
 
-#: crates/pigoune-app/src/window.rs:5180
+#: crates/pigoune-app/src/window.rs:5215
 msgid "Assets moved to the trash can be restored from here."
 msgstr "Los elementos movidos a la papelera se pueden restaurar desde aquí."
 
-#: crates/pigoune-app/src/window.rs:5185
+#: crates/pigoune-app/src/window.rs:5220
 #, rust-format
 msgid "Nothing Tagged “{name}” or Its Sub-tags"
 msgstr "Nada con la etiqueta “{name}” ni sus subetiquetas"
 
-#: crates/pigoune-app/src/window.rs:5189
+#: crates/pigoune-app/src/window.rs:5224
 msgid ""
 "Add this tag or one of its sub-tags to assets from the details panel, or "
 "drag assets onto it."
@@ -2150,23 +2164,23 @@ msgstr ""
 "Añade esta etiqueta, o una de sus subetiquetas, a elementos desde el panel "
 "de detalles, o arrastra elementos sobre ella."
 
-#: crates/pigoune-app/src/window.rs:5192
+#: crates/pigoune-app/src/window.rs:5227
 #, rust-format
 msgid "No Asset Tagged “{name}”"
 msgstr "Ningún elemento con la etiqueta “{name}”"
 
-#: crates/pigoune-app/src/window.rs:5194
+#: crates/pigoune-app/src/window.rs:5229
 msgid "Add this tag to assets from the details panel, or drag assets onto it."
 msgstr ""
 "Añada esta etiqueta a elementos desde el panel de detalles, o arrastre "
 "elementos hasta ella."
 
-#: crates/pigoune-app/src/window.rs:5199
+#: crates/pigoune-app/src/window.rs:5234
 #, rust-format
 msgid "No Asset in “{name}”"
 msgstr "Ningún elemento en “{name}”"
 
-#: crates/pigoune-app/src/window.rs:5201
+#: crates/pigoune-app/src/window.rs:5236
 msgid ""
 "No asset matches this smart collection yet. Matching assets appear here by "
 "themselves."
@@ -2174,114 +2188,114 @@ msgstr ""
 "Ningún elemento coincide todavía con esta colección inteligente. Los "
 "elementos que coincidan aparecerán aquí por sí solos."
 
-#: crates/pigoune-app/src/window.rs:5204
+#: crates/pigoune-app/src/window.rs:5239
 msgid "No Favorites"
 msgstr "Sin favoritos"
 
-#: crates/pigoune-app/src/window.rs:5206
+#: crates/pigoune-app/src/window.rs:5241
 msgid ""
 "Add an asset to Favorites with the star in the details panel or with Ctrl+D."
 msgstr ""
 "Añada un elemento a favoritos con la estrella del panel de detalles o con "
 "Ctrl+D."
 
-#: crates/pigoune-app/src/window.rs:5209
+#: crates/pigoune-app/src/window.rs:5244
 msgid "No Unclassified Assets"
 msgstr "Ningún elemento sin clasificar"
 
-#: crates/pigoune-app/src/window.rs:5210
+#: crates/pigoune-app/src/window.rs:5245
 msgid "Every asset is in at least one collection."
 msgstr "Todos los elementos están en al menos una colección."
 
-#: crates/pigoune-app/src/window.rs:5212
+#: crates/pigoune-app/src/window.rs:5247
 #, rust-format
 msgid "“{name}” Is Empty"
 msgstr "“{name}” está vacía"
 
-#: crates/pigoune-app/src/window.rs:5214
+#: crates/pigoune-app/src/window.rs:5249
 msgid "Assets imported while this collection is selected are placed in it."
 msgstr ""
 "Los elementos importados mientras esta colección está seleccionada se "
 "colocan en ella."
 
-#: crates/pigoune-app/src/window.rs:5221
+#: crates/pigoune-app/src/window.rs:5256
 msgid "Unable to Show the Library"
 msgstr "No se puede mostrar la biblioteca"
 
-#: crates/pigoune-app/src/window.rs:5257
+#: crates/pigoune-app/src/window.rs:5292
 msgid "Close the preview to import"
 msgstr "Cierre la vista previa para importar"
 
-#: crates/pigoune-app/src/window.rs:5259
+#: crates/pigoune-app/src/window.rs:5294
 msgid "Open All, Unclassified or a collection to import"
 msgstr "Abra Todo, Sin clasificar o una colección para importar"
 
-#: crates/pigoune-app/src/window.rs:5377
+#: crates/pigoune-app/src/window.rs:5412
 #, rust-format
 msgid "Drop to Import Into “{name}”"
 msgstr "Suelte para importar en “{name}”"
 
-#: crates/pigoune-app/src/window.rs:5383
+#: crates/pigoune-app/src/window.rs:5418
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:19
 msgid "Import Files"
 msgstr "Importar archivos"
 
-#: crates/pigoune-app/src/window.rs:5384 crates/pigoune-app/src/window.rs:5396
+#: crates/pigoune-app/src/window.rs:5419 crates/pigoune-app/src/window.rs:5431
 msgid "_Import"
 msgstr "_Importar"
 
-#: crates/pigoune-app/src/window.rs:5395
+#: crates/pigoune-app/src/window.rs:5430
 msgid "Import Folders"
 msgstr "Importar carpetas"
 
-#: crates/pigoune-app/src/window.rs:5499
+#: crates/pigoune-app/src/window.rs:5534
 #, rust-format
 msgid "{count} library removed from the recent libraries"
 msgid_plural "{count} libraries removed from the recent libraries"
 msgstr[0] "{count} biblioteca quitada de las bibliotecas recientes"
 msgstr[1] "{count} bibliotecas quitadas de las bibliotecas recientes"
 
-#: crates/pigoune-app/src/window.rs:5524
+#: crates/pigoune-app/src/window.rs:5559
 #, rust-format
 msgid "Not found in {folder}"
 msgstr "No se encuentra en {folder}"
 
-#: crates/pigoune-app/src/window.rs:5559
+#: crates/pigoune-app/src/window.rs:5594
 #, rust-format
 msgid "Unable to Open “{name}”"
 msgstr "No se puede abrir “{name}”"
 
-#: crates/pigoune-app/src/window.rs:5567
+#: crates/pigoune-app/src/window.rs:5602
 msgid "Images"
 msgstr "Imágenes"
 
-#: crates/pigoune-app/src/window.rs:5572
+#: crates/pigoune-app/src/window.rs:5607
 msgid "All Files"
 msgstr "Todos los archivos"
 
-#: crates/pigoune-app/src/window.rs:5606
+#: crates/pigoune-app/src/window.rs:5641
 #, rust-format
 msgid "Its {count} sub-collection will be deleted too."
 msgid_plural "Its {count} sub-collections will be deleted too."
 msgstr[0] "Su {count} subcolección también se eliminará."
 msgstr[1] "Sus {count} subcolecciones también se eliminarán."
 
-#: crates/pigoune-app/src/window.rs:5616
+#: crates/pigoune-app/src/window.rs:5651
 #, rust-format
 msgid "{count} asset found only here will go to the trash."
 msgid_plural "{count} assets found only here will go to the trash."
 msgstr[0] "{count} elemento que solo está aquí irá a la papelera."
 msgstr[1] "{count} elementos que solo están aquí irán a la papelera."
 
-#: crates/pigoune-app/src/window.rs:5624
+#: crates/pigoune-app/src/window.rs:5659
 msgid "Assets also kept in other collections stay there."
 msgstr "Los elementos que también están en otras colecciones permanecen allí."
 
-#: crates/pigoune-app/src/window.rs:5627
+#: crates/pigoune-app/src/window.rs:5662
 msgid "This collection is empty."
 msgstr "Esta colección está vacía."
 
-#: crates/pigoune-app/src/window.rs:5694
+#: crates/pigoune-app/src/window.rs:5729
 msgid ""
 "This drop holds no image. In the browser, use “Copy Image”, then press Ctrl+V"
 msgstr ""
@@ -5034,172 +5048,179 @@ msgstr "Aún no hay colecciones. Cree una con el botón “+” de la barra late
 msgid "No collection found"
 msgstr "No se encontró ninguna colección"
 
-#: crates/pigoune-app/src/undo_message.rs:15
+#: crates/pigoune-app/src/undo_message.rs:17
 msgid "Last change undone"
 msgstr "Último cambio deshecho"
 
-#: crates/pigoune-app/src/undo_message.rs:24
+#: crates/pigoune-app/src/undo_message.rs:26
 #, rust-format
 msgid "Adding {count} asset to the favorites undone"
 msgid_plural "Adding {count} assets to the favorites undone"
 msgstr[0] "Se deshizo añadir {count} elemento a favoritos"
 msgstr[1] "Se deshizo añadir {count} elementos a favoritos"
 
-#: crates/pigoune-app/src/undo_message.rs:30
+#: crates/pigoune-app/src/undo_message.rs:32
 #, rust-format
 msgid "Removing {count} asset from the favorites undone"
 msgid_plural "Removing {count} assets from the favorites undone"
 msgstr[0] "Se deshizo quitar {count} elemento de favoritos"
 msgstr[1] "Se deshizo quitar {count} elementos de favoritos"
 
-#: crates/pigoune-app/src/undo_message.rs:40
+#: crates/pigoune-app/src/undo_message.rs:42
 #, rust-format
 msgid "Moving {count} asset to the trash undone"
 msgid_plural "Moving {count} assets to the trash undone"
 msgstr[0] "Se deshizo mover {count} elemento a la papelera"
 msgstr[1] "Se deshizo mover {count} elementos a la papelera"
 
-#: crates/pigoune-app/src/undo_message.rs:46
+#: crates/pigoune-app/src/undo_message.rs:48
 #, rust-format
 msgid "Restoring {count} asset undone"
 msgid_plural "Restoring {count} assets undone"
 msgstr[0] "Se deshizo restaurar {count} elemento"
 msgstr[1] "Se deshizo restaurar {count} elementos"
 
-#: crates/pigoune-app/src/undo_message.rs:53
+#: crates/pigoune-app/src/undo_message.rs:55
 #, rust-format
 msgid "Renaming undone, the asset is named “{name}” again"
 msgstr "Cambio de nombre deshecho, el elemento vuelve a llamarse “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:68
+#: crates/pigoune-app/src/undo_message.rs:70
 #, rust-format
 msgid "Note change on “{name}” undone"
 msgstr "Se deshizo el cambio de la nota de “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:69
+#: crates/pigoune-app/src/undo_message.rs:71
 #, rust-format
 msgid "Source change on “{name}” undone"
 msgstr "Se deshizo el cambio de la fuente de “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:70
+#: crates/pigoune-app/src/undo_message.rs:72
 #, rust-format
 msgid "License change on “{name}” undone"
 msgstr "Se deshizo el cambio de la licencia de “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:71
+#: crates/pigoune-app/src/undo_message.rs:73
 #, rust-format
 msgid "Author change on “{name}” undone"
 msgstr "Se deshizo el cambio del autor de “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:78
+#: crates/pigoune-app/src/undo_message.rs:80
 #, rust-format
 msgid "Creating the collection “{name}” undone"
 msgstr "Se deshizo la creación de la colección “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:83
+#: crates/pigoune-app/src/undo_message.rs:85
 #, rust-format
 msgid "Customizing the collection “{name}” undone"
 msgstr "Se deshizo la personalización de la colección “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:87
+#: crates/pigoune-app/src/undo_message.rs:89
 #, rust-format
 msgid "Renaming undone, the collection is named “{name}” again"
 msgstr "Cambio de nombre deshecho, la colección vuelve a llamarse “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:91
+#: crates/pigoune-app/src/undo_message.rs:93
 #, rust-format
 msgid "Deleting the collection “{name}” undone"
 msgstr "Se deshizo la eliminación de la colección “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:98
+#: crates/pigoune-app/src/undo_message.rs:100
 #, rust-format
 msgid "Adding {count} asset to “{name}” undone"
 msgid_plural "Adding {count} assets to “{name}” undone"
 msgstr[0] "Se deshizo añadir {count} elemento a “{name}”"
 msgstr[1] "Se deshizo añadir {count} elementos a “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:109
+#: crates/pigoune-app/src/undo_message.rs:111
 #, rust-format
 msgid "Removing {count} asset from “{name}” undone"
 msgid_plural "Removing {count} assets from “{name}” undone"
 msgstr[0] "Se deshizo quitar {count} elemento de “{name}”"
 msgstr[1] "Se deshizo quitar {count} elementos de “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:120
+#: crates/pigoune-app/src/undo_message.rs:122
 #, rust-format
 msgid "Moving {count} asset to “{name}” undone"
 msgid_plural "Moving {count} assets to “{name}” undone"
 msgstr[0] "Se deshizo mover {count} elemento a “{name}”"
 msgstr[1] "Se deshizo mover {count} elementos a “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:138
+#: crates/pigoune-app/src/undo_message.rs:142
+#, rust-format
+msgid "Removing {count} asset from all its collections undone"
+msgid_plural "Removing {count} assets from all their collections undone"
+msgstr[0] "Se deshizo quitar {count} elemento de todas sus colecciones"
+msgstr[1] "Se deshizo quitar {count} elementos de todas sus colecciones"
+
+#: crates/pigoune-app/src/undo_message.rs:150
 #, rust-format
 msgid "Moving the collection “{name}” undone"
 msgstr "Se deshizo mover la colección “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:141
+#: crates/pigoune-app/src/undo_message.rs:153
 msgid "Change of the collection order undone"
 msgstr "Se deshizo el cambio del orden de las colecciones"
 
-#: crates/pigoune-app/src/undo_message.rs:166
+#: crates/pigoune-app/src/undo_message.rs:192
 #, rust-format
 msgid "Adding the tag “{name}” undone"
 msgstr "Se deshizo añadir la etiqueta “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:171
+#: crates/pigoune-app/src/undo_message.rs:197
 #, rust-format
 msgid "Adding the tag “{name}” to {count} asset undone"
 msgid_plural "Adding the tag “{name}” to {count} assets undone"
 msgstr[0] "Se deshizo añadir la etiqueta “{name}” a {count} elemento"
 msgstr[1] "Se deshizo añadir la etiqueta “{name}” a {count} elementos"
 
-#: crates/pigoune-app/src/undo_message.rs:182
+#: crates/pigoune-app/src/undo_message.rs:208
 #, rust-format
 msgid "Removing the tag “{name}” from {count} asset undone"
 msgid_plural "Removing the tag “{name}” from {count} assets undone"
 msgstr[0] "Se deshizo quitar la etiqueta “{name}” de {count} elemento"
 msgstr[1] "Se deshizo quitar la etiqueta “{name}” de {count} elementos"
 
-#: crates/pigoune-app/src/undo_message.rs:190
+#: crates/pigoune-app/src/undo_message.rs:216
 #, rust-format
 msgid "Renaming undone, the tag is named “{name}” again"
 msgstr "Cambio de nombre deshecho, la etiqueta vuelve a llamarse “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:194
+#: crates/pigoune-app/src/undo_message.rs:220
 #, rust-format
 msgid "Merging the tag “{name}” undone"
 msgstr "Se deshizo combinar la etiqueta “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:198
+#: crates/pigoune-app/src/undo_message.rs:224
 #, rust-format
 msgid "Deleting the tag “{name}” undone"
 msgstr "Se deshizo eliminar la etiqueta “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:202
+#: crates/pigoune-app/src/undo_message.rs:228
 #, rust-format
 msgid "Moving the tag “{name}” undone"
 msgstr "Movimiento de la etiqueta «{name}» deshecho"
 
-#: crates/pigoune-app/src/undo_message.rs:214
+#: crates/pigoune-app/src/undo_message.rs:240
 #, rust-format
 msgid "Creating the smart collection “{name}” undone"
 msgstr "Se deshizo la creación de la colección inteligente “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:218
+#: crates/pigoune-app/src/undo_message.rs:244
 #, rust-format
 msgid "Changes to the smart collection “{name}” undone"
 msgstr "Se deshicieron los cambios de la colección inteligente “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:222
+#: crates/pigoune-app/src/undo_message.rs:248
 msgid "Reordering the smart collections undone"
 msgstr "Se deshizo el nuevo orden de las colecciones inteligentes"
 
-#: crates/pigoune-app/src/undo_message.rs:225
+#: crates/pigoune-app/src/undo_message.rs:251
 #, rust-format
 msgid "Deleting the smart collection “{name}” undone"
 msgstr "Se deshizo la eliminación de la colección inteligente “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:241
+#: crates/pigoune-app/src/undo_message.rs:267
 #, rust-format
 msgid "Adding {count} tag undone"
 msgid_plural "Adding {count} tags undone"
@@ -5230,55 +5251,67 @@ msgstr "En toda la biblioteca"
 msgid "Move {subject} to the trash"
 msgstr "Mover {subject} a la papelera"
 
-#: crates/pigoune-app/src/drop_message.rs:46
+#: crates/pigoune-app/src/drop_message.rs:47
 #, rust-format
 msgid "Move {subject} to the collection {name}"
 msgstr "Mover {subject} a la colección {name}"
 
-#: crates/pigoune-app/src/drop_message.rs:49
+#: crates/pigoune-app/src/drop_message.rs:50
 #, rust-format
 msgid "{subject} is already in the collection {name}"
 msgid_plural "{subject} are already in the collection {name}"
 msgstr[0] "{subject} ya está en la colección {name}"
 msgstr[1] "{subject} ya están en la colección {name}"
 
-#: crates/pigoune-app/src/drop_message.rs:53
+#: crates/pigoune-app/src/drop_message.rs:54
 #, rust-format
 msgid "Add {subject} to the collection {name}"
 msgstr "Añadir {subject} a la colección {name}"
 
-#: crates/pigoune-app/src/drop_message.rs:72
+#: crates/pigoune-app/src/drop_message.rs:73
 #, rust-format
 msgid "{subject} already has the tag {name}"
 msgid_plural "{subject} already have the tag {name}"
 msgstr[0] "{subject} ya tiene la etiqueta {name}"
 msgstr[1] "{subject} ya tienen la etiqueta {name}"
 
-#: crates/pigoune-app/src/drop_message.rs:77
+#: crates/pigoune-app/src/drop_message.rs:78
 #, rust-format
 msgid "Apply the tag {name} to {subject}"
 msgstr "Aplicar la etiqueta {name} a {subject}"
 
-#: crates/pigoune-app/src/drop_message.rs:85
+#: crates/pigoune-app/src/drop_message.rs:88
+#, rust-format
+msgid "Remove {subject} from all collections"
+msgstr "Quitar {subject} de todas las colecciones"
+
+#: crates/pigoune-app/src/drop_message.rs:91
+#, rust-format
+msgid "{subject} is already unclassified"
+msgid_plural "{subject} are already unclassified"
+msgstr[0] "{subject} ya está sin clasificar"
+msgstr[1] "{subject} ya están sin clasificar"
+
+#: crates/pigoune-app/src/drop_message.rs:102
 #, rust-format
 msgid "{subject} is already in Favorites"
 msgid_plural "{subject} are already in Favorites"
 msgstr[0] "{subject} ya está en favoritos"
 msgstr[1] "{subject} ya están en favoritos"
 
-#: crates/pigoune-app/src/drop_message.rs:91
+#: crates/pigoune-app/src/drop_message.rs:108
 #, rust-format
 msgid "Add {subject} to Favorites"
 msgid_plural "Add {subject} to Favorites"
 msgstr[0] "Añadir {subject} a favoritos"
 msgstr[1] "Añadir {subject} a favoritos"
 
-#: crates/pigoune-app/src/drop_message.rs:114
+#: crates/pigoune-app/src/drop_message.rs:131
 #, rust-format
 msgid "{first} and {second}"
 msgstr "{first} y {second}"
 
-#: crates/pigoune-app/src/drop_message.rs:118
+#: crates/pigoune-app/src/drop_message.rs:135
 #, rust-format
 msgid "{name} and {count} other"
 msgid_plural "{name} and {count} others"

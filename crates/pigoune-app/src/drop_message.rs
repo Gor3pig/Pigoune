@@ -24,7 +24,8 @@ pub fn describe(
         }
         AssetView::Tag(tag) => describe_tag(&hovered.assets, tag, &subject, library)?,
         AssetView::Favorites => describe_favorites(&hovered.assets, &subject, library),
-        AssetView::All | AssetView::Unclassified | AssetView::Smart(_) => {
+        AssetView::Unclassified => describe_unclassified(&hovered.assets, &subject, library),
+        AssetView::All | AssetView::Smart(_) => {
             return None;
         }
     };
@@ -45,6 +46,11 @@ fn describe_collection(
         AssetView::Collection(_) if !hovered.keep_source => {
             gettext("Move {subject} to the collection {name}")
         }
+        AssetView::All | AssetView::Unclassified
+            if !hovered.keep_source && has_something_to_move(&hovered.assets, to, library) =>
+        {
+            gettext("Move {subject} to the collection {name}")
+        }
         _ if all_in_collection(&hovered.assets, to, library) => ngettext(
             "{subject} is already in the collection {name}",
             "{subject} are already in the collection {name}",
@@ -53,6 +59,12 @@ fn describe_collection(
         _ => gettext("Add {subject} to the collection {name}"),
     };
     Some(named(&with_subject(&template(&text), subject), &name))
+}
+
+fn has_something_to_move(assets: &[AssetId], to: CollectionId, library: &Library) -> bool {
+    library
+        .move_to_collection_command(assets, to)
+        .is_ok_and(|command| command.is_some())
 }
 
 fn describe_tag(
@@ -77,6 +89,22 @@ fn describe_tag(
         gettext("Apply the tag {name} to {subject}")
     };
     Some(named(&with_subject(&template(&text), subject), &name))
+}
+
+fn describe_unclassified(assets: &[AssetId], subject: &str, library: &Library) -> String {
+    let text = if library
+        .unclassify_command(assets)
+        .is_ok_and(|command| command.is_some())
+    {
+        gettext("Remove {subject} from all collections")
+    } else {
+        ngettext(
+            "{subject} is already unclassified",
+            "{subject} are already unclassified",
+            plural(assets.len()),
+        )
+    };
+    with_subject(&template(&text), subject)
 }
 
 fn describe_favorites(assets: &[AssetId], subject: &str, library: &Library) -> String {

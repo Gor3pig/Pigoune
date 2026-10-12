@@ -3504,7 +3504,42 @@ impl PigouneWindow {
             AssetView::Collection(to) => self.drop_assets_on_collection(to, assets, keep_source),
             AssetView::Tag(tag) => self.drop_assets_on_tag(tag, assets),
             AssetView::Favorites => self.drop_assets_on_favorites(assets),
-            AssetView::All | AssetView::Unclassified | AssetView::Smart(_) => {}
+            AssetView::Unclassified => self.drop_assets_on_unclassified(assets),
+            AssetView::All | AssetView::Smart(_) => {}
+        }
+    }
+
+    fn drop_assets_on_unclassified(&self, assets: &[AssetId]) {
+        if self.displayed_view() == AssetView::Unclassified {
+            return;
+        }
+        let command = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.unclassify_command(assets).ok().flatten());
+        let count = assets.len();
+        let Some(command) = command else {
+            self.show_toast(
+                &ngettext(
+                    "{count} asset is already unclassified",
+                    "{count} assets are already unclassified",
+                    u32::try_from(count).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &count.to_string()),
+            );
+            return;
+        };
+        if self.apply_collection_change(&command, assets) {
+            self.show_undoable_toast(
+                &ngettext(
+                    "{count} asset removed from all its collections",
+                    "{count} assets removed from all their collections",
+                    u32::try_from(count).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &count.to_string()),
+            );
         }
     }
 
@@ -3525,18 +3560,25 @@ impl PigouneWindow {
                 ),
                 assets.len(),
             ),
+            AssetView::All | AssetView::Unclassified if !keep_source => {
+                let Some(command) = self.move_to_collection_command(to, assets) else {
+                    self.show_already_in_toast(&name, assets.len());
+                    return;
+                };
+                (
+                    command,
+                    ngettext(
+                        "{count} asset moved to “{name}”",
+                        "{count} assets moved to “{name}”",
+                        u32::try_from(assets.len()).unwrap_or(u32::MAX),
+                    ),
+                    assets.len(),
+                )
+            }
             _ => {
                 let fresh = self.assets_outside_collection(to, assets);
                 if fresh.is_empty() {
-                    self.show_toast(
-                        &ngettext(
-                            "{count} asset is already in “{name}”",
-                            "{count} assets are already in “{name}”",
-                            u32::try_from(assets.len()).unwrap_or(u32::MAX),
-                        )
-                        .replace("{count}", &assets.len().to_string())
-                        .replace("{name}", &name),
-                    );
+                    self.show_already_in_toast(&name, assets.len());
                     return;
                 }
                 let count = fresh.len();
@@ -3561,6 +3603,31 @@ impl PigouneWindow {
                     .replace("{name}", &name),
             );
         }
+    }
+
+    fn move_to_collection_command(
+        &self,
+        target: CollectionId,
+        assets: &[AssetId],
+    ) -> Option<CollectionCommand> {
+        self.imp().library.borrow().as_ref().and_then(|library| {
+            library
+                .move_to_collection_command(assets, target)
+                .ok()
+                .flatten()
+        })
+    }
+
+    fn show_already_in_toast(&self, name: &str, count: usize) {
+        self.show_toast(
+            &ngettext(
+                "{count} asset is already in “{name}”",
+                "{count} assets are already in “{name}”",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &count.to_string())
+            .replace("{name}", name),
+        );
     }
 
     fn assets_outside_collection(

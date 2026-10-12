@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use gettextrs::{gettext, ngettext};
 use pigoune_core::{
     AssetCommand, AssetId, Change, CollectionCommand, CollectionId, Library,
@@ -133,6 +135,29 @@ fn describe_collection(command: &CollectionCommand, names: &Names) -> Option<Str
 }
 
 fn describe_arrangement(command: &CollectionCommand, names: &Names) -> Option<String> {
+    if let Some(count) = unclassified_count(command) {
+        return Some(counted(
+            count,
+            &ngettext(
+                "Removing {count} asset from all its collections undone",
+                "Removing {count} assets from all their collections undone",
+                plural(count),
+            ),
+        ));
+    }
+    if let Some((count, target)) = moved_into(command) {
+        return Some(named(
+            &counted(
+                count,
+                &ngettext(
+                    "Moving {count} asset to “{name}” undone",
+                    "Moving {count} assets to “{name}” undone",
+                    plural(count),
+                ),
+            ),
+            &names.collection(target)?,
+        ));
+    }
     match moved_collection(command) {
         Some(id) => Some(named(
             &gettext("Moving the collection “{name}” undone"),
@@ -141,6 +166,41 @@ fn describe_arrangement(command: &CollectionCommand, names: &Names) -> Option<St
         None if is_arrangement(command) => Some(gettext("Change of the collection order undone")),
         None => None,
     }
+}
+
+fn unclassified_count(command: &CollectionCommand) -> Option<usize> {
+    let CollectionCommand::Batch(commands) = command else {
+        return None;
+    };
+    let mut distinct = HashSet::new();
+    for command in commands {
+        let CollectionCommand::RemoveAssets { assets, .. } = command else {
+            return None;
+        };
+        distinct.extend(assets.iter().copied());
+    }
+    (!distinct.is_empty()).then_some(distinct.len())
+}
+
+fn moved_into(command: &CollectionCommand) -> Option<(usize, CollectionId)> {
+    let CollectionCommand::Batch(commands) = command else {
+        return None;
+    };
+    let mut distinct: HashSet<AssetId> = HashSet::new();
+    let mut target = None;
+    for command in commands {
+        match command {
+            CollectionCommand::RemoveAssets { assets, .. } => {
+                distinct.extend(assets.iter().copied());
+            }
+            CollectionCommand::AddAssets { collection, assets } if target.is_none() => {
+                target = Some(*collection);
+                distinct.extend(assets.iter().copied());
+            }
+            _ => return None,
+        }
+    }
+    Some((distinct.len(), target?))
 }
 
 fn moved_collection(command: &CollectionCommand) -> Option<CollectionId> {
