@@ -424,6 +424,9 @@ mod imp {
             window.after_menu_closes(super::PigouneWindow::start_renaming_selected);
         });
         class.install_action(ADD_TAG_ACTION, None, |window, _, _| {
+            if !window.can_organize_selection() {
+                return;
+            }
             window.after_menu_closes(|window| {
                 window.imp().grid_header.details_button().set_active(true);
                 window.imp().asset_details.focus_tag_entry();
@@ -2211,17 +2214,27 @@ impl PigouneWindow {
         } else {
             gettext("Add to Favorites")
         };
-        organizing.append(Some(&favorite_label), Some(TOGGLE_FAVORITE_ACTION));
-        organizing.append(Some(&gettext("Add a Tag…")), Some(ADD_TAG_ACTION));
-        organizing.append(
-            Some(&gettext("Add to a Collection…")),
-            Some(ADD_TO_COLLECTION_ACTION),
-        );
+        organizing.append_item(&menu_item(
+            &favorite_label,
+            TOGGLE_FAVORITE_ACTION,
+            Some("<Control>d"),
+        ));
+        organizing.append_item(&menu_item(
+            &gettext("Add a Tag…"),
+            ADD_TAG_ACTION,
+            Some("<Control>t"),
+        ));
+        organizing.append_item(&menu_item(
+            &gettext("Add to a Collection…"),
+            ADD_TO_COLLECTION_ACTION,
+            Some("<Control>k"),
+        ));
         if matches!(self.displayed_view(), AssetView::Collection(_)) {
-            organizing.append(
-                Some(&gettext("Move to a Collection…")),
-                Some(MOVE_TO_COLLECTION_ACTION),
-            );
+            organizing.append_item(&menu_item(
+                &gettext("Move to a Collection…"),
+                MOVE_TO_COLLECTION_ACTION,
+                Some("<Control>m"),
+            ));
         }
         if let AssetView::Collection(id) = self.displayed_view()
             && self.directly_holds_any(id, &selected)
@@ -3309,7 +3322,14 @@ impl PigouneWindow {
         }
     }
 
+    fn can_organize_selection(&self) -> bool {
+        !self.is_showing_trash() && !self.targeted_ids().is_empty()
+    }
+
     fn ask_collection_for_selected(&self) {
+        if !self.can_organize_selection() {
+            return;
+        }
         let Some((shared, all)) = self.selected_collections() else {
             return;
         };
