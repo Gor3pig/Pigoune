@@ -1174,6 +1174,7 @@ impl PigouneWindow {
             settings::store_bool(settings, settings::SMART_COLLECTION_SORT_REVERSED, false);
             settings::store_string(settings, settings::SMART_COLLECTION_SORT, "custom");
         }
+        self.show_undoable_toast(&gettext("The order of the smart collections was changed."));
     }
 
     fn bind_grid_settings(&self, settings: &gio::Settings) {
@@ -3893,13 +3894,17 @@ impl PigouneWindow {
         let Some(plan) = collection_drop::plan(&tree, dragged, drop, custom_order_shown) else {
             return;
         };
+        let changes_parent = plan
+            .commands
+            .iter()
+            .any(|command| matches!(command, CollectionCommand::Move { .. }));
         let applied = self.change_library(|library| {
             library.apply_collection_command(&CollectionCommand::Batch(plan.commands))?;
             let parent = library.collection(dragged)?.and_then(|moved| moved.parent);
-            Ok::<_, pigoune_core::CollectionError>(ancestors(library, parent))
+            Ok::<_, pigoune_core::CollectionError>((ancestors(library, parent), parent))
         });
-        let reveal = match applied {
-            Some(Ok(reveal)) => reveal,
+        let (reveal, parent) = match applied {
+            Some(Ok(placed)) => placed,
             Some(Err(error)) => {
                 let alert = adw::AlertDialog::new(
                     Some(&gettext("Unable to Move the Collection")),
@@ -3917,6 +3922,13 @@ impl PigouneWindow {
         }
         self.refresh_sidebar_revealing(reveal);
         self.refresh_grid();
+        if changes_parent {
+            let name = self.collection_name(dragged).unwrap_or_default();
+            let parent_name = parent.and_then(|parent| self.collection_name(parent));
+            self.show_collection_moved_toast(&name, parent_name.as_deref());
+        } else {
+            self.show_undoable_toast(&gettext("The order of the collections was changed."));
+        }
     }
 
     fn collection_name(&self, id: CollectionId) -> Option<String> {
@@ -4264,17 +4276,22 @@ impl PigouneWindow {
             glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                move |_, _| {
-                    let deleted = window.change_smart_collection(&SmartCollectionCommand::Delete {
-                        id: collection,
-                    });
-                    if let Err(message) = deleted {
-                        window.show_smart_collection_error(&message);
-                    }
-                }
+                move |_, _| window.delete_smart_collection(collection)
             ),
         );
         alert.present(Some(self));
+    }
+
+    fn delete_smart_collection(&self, collection: SmartCollectionId) {
+        let name = self.smart_collection_name(collection).unwrap_or_default();
+        let deleted =
+            self.change_smart_collection(&SmartCollectionCommand::Delete { id: collection });
+        match deleted {
+            Ok(()) => self.show_undoable_toast(
+                &gettext("The smart collection “{name}” was deleted.").replace("{name}", &name),
+            ),
+            Err(message) => self.show_smart_collection_error(&message),
+        }
     }
 
     fn show_smart_collection_error(&self, message: &str) {
@@ -5004,16 +5021,7 @@ impl PigouneWindow {
             Some(Ok(reveal)) => {
                 self.refresh_sidebar_revealing(reveal);
                 self.refresh_grid();
-                let text = match parent_name {
-                    Some(parent_name) => {
-                        gettext("The collection “{name}” was moved into “{parent}”.")
-                            .replace("{name}", &name)
-                            .replace("{parent}", &parent_name)
-                    }
-                    None => gettext("The collection “{name}” was moved to the top level.")
-                        .replace("{name}", &name),
-                };
-                self.show_undoable_toast(&text);
+                self.show_collection_moved_toast(&name, parent_name.as_deref());
             }
             Some(Err(error)) => {
                 let alert = adw::AlertDialog::new(
@@ -5025,6 +5033,17 @@ impl PigouneWindow {
             }
             None => {}
         }
+    }
+
+    fn show_collection_moved_toast(&self, name: &str, parent_name: Option<&str>) {
+        let text = match parent_name {
+            Some(parent_name) => gettext("The collection “{name}” was moved into “{parent}”.")
+                .replace("{name}", name)
+                .replace("{parent}", parent_name),
+            None => gettext("The collection “{name}” was moved to the top level.")
+                .replace("{name}", name),
+        };
+        self.show_undoable_toast(&text);
     }
 
     fn ask_collection_name(&self, id: CollectionId) {
