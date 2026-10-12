@@ -1031,7 +1031,7 @@ impl PigouneWindow {
             self,
             #[upgrade_or]
             drop_action::DropOffer::REFUSED,
-            move |target| drop_action::offer_for_assets(target, window.displayed_view())
+            move |target| drop_action::offer_for_assets(target, window.dragged_from_view())
         ));
         self.imp().sidebar.connect_assets_dropped(glib::clone!(
             #[weak(rename_to = window)]
@@ -3558,7 +3558,7 @@ impl PigouneWindow {
         }
         let text = hovered.and_then(|hovered| {
             let library = imp.library.borrow();
-            drop_message::describe(hovered, self.displayed_view(), library.as_ref()?)
+            drop_message::describe(hovered, self.dragged_from_view(), library.as_ref()?)
         });
         imp.asset_grid.show_drag_caption(text.as_deref());
     }
@@ -3580,7 +3580,7 @@ impl PigouneWindow {
     }
 
     fn drop_assets_on_unclassified(&self, assets: &[AssetId]) {
-        if self.displayed_view() == AssetView::Unclassified {
+        if self.dragged_from_view() == AssetView::Unclassified {
             return;
         }
         let command = self
@@ -3615,7 +3615,7 @@ impl PigouneWindow {
 
     fn drop_assets_on_collection(&self, to: CollectionId, assets: &[AssetId], keep_source: bool) {
         let name = self.collection_name(to).unwrap_or_default();
-        let (command, message, count) = match self.displayed_view() {
+        let (command, message, count) = match self.dragged_from_view() {
             AssetView::Collection(from) if from == to && !keep_source => return,
             AssetView::Collection(from) if !keep_source => (
                 CollectionCommand::MoveAssets {
@@ -5225,6 +5225,10 @@ impl PigouneWindow {
             self.imp().view_chosen_by_click.get(),
         );
         displayed_view::shown(view, everywhere, filter.narrows())
+    }
+
+    fn dragged_from_view(&self) -> AssetView {
+        displayed_view::drop_source(self.imp().current_view.get(), self.displayed_view())
     }
 
     fn displayed_view(&self) -> AssetView {

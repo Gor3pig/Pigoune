@@ -54,6 +54,16 @@ pub fn shown(chosen: AssetView, search_everywhere: bool, searching: bool) -> Ass
     }
 }
 
+const SEARCH_RESULTS_AS_LENS: AssetView = AssetView::Favorites;
+
+pub fn drop_source(chosen: AssetView, shown: AssetView) -> AssetView {
+    if shown == chosen {
+        shown
+    } else {
+        SEARCH_RESULTS_AS_LENS
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use pigoune_core::{CollectionId, SmartCollectionId, TagId};
@@ -78,6 +88,14 @@ mod tests {
             ),
             AssetView::All
         );
+    }
+
+    #[test]
+    fn results_widened_by_a_search_are_not_a_place_to_drag_from() {
+        let widened = shown(collection(), true, true);
+        assert_eq!(drop_source(collection(), widened), SEARCH_RESULTS_AS_LENS);
+        assert_eq!(drop_source(AssetView::All, AssetView::All), AssetView::All);
+        assert_eq!(drop_source(collection(), collection()), collection());
     }
 
     #[test]
