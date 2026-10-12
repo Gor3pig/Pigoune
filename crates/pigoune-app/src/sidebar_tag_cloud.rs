@@ -640,6 +640,13 @@ impl PigouneSidebarTagCloud {
             #[upgrade_or]
             gdk::DragAction::empty(),
             move |target: &gtk::DropTarget, _: f64, _: f64| {
+                let refused = cloud
+                    .sidebar()
+                    .is_some_and(|sidebar| sidebar.drop_offer(view).is_refused());
+                if refused {
+                    cloud.forget_hover(&pill);
+                    return gdk::DragAction::empty();
+                }
                 pill.add_css_class(DROP_HIGHLIGHT);
                 let dragged = target
                     .value()

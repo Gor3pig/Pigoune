@@ -34,6 +34,9 @@ impl DropOffer {
 }
 
 pub fn offer_for_assets(target: AssetView, displayed: AssetView) -> DropOffer {
+    if displayed == AssetView::Trash {
+        return DropOffer::REFUSED;
+    }
     match target {
         AssetView::Collection(to) => match displayed {
             AssetView::Collection(from) if from == to => DropOffer::REFUSED,
@@ -133,6 +136,21 @@ mod tests {
     fn the_other_views_receive_nothing() {
         for target in [AssetView::All, smart()] {
             assert!(offer_for_assets(target, collection(1)).is_refused());
+        }
+    }
+
+    #[test]
+    fn nothing_is_dropped_from_the_trash() {
+        for target in [
+            collection(1),
+            tag(),
+            smart(),
+            AssetView::All,
+            AssetView::Favorites,
+            AssetView::Unclassified,
+            AssetView::Trash,
+        ] {
+            assert!(offer_for_assets(target, AssetView::Trash).is_refused());
         }
     }
 
