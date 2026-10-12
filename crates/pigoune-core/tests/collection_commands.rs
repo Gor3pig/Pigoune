@@ -647,6 +647,29 @@ fn moving_resources_to_a_collection_leaves_every_other_collection_and_can_be_und
 }
 
 #[test]
+fn a_move_tells_whether_resources_leave_other_collections() {
+    let mut fixture = Fixture::new();
+    let tech = fixture.collection("Tech", None);
+    let target = fixture.collection("Cible", None);
+    let classified = fixture.asset_in("red-dot.png", Some(tech));
+    let loose = fixture.asset_in("dark-circle.svg", None);
+
+    let leaving = fixture
+        .library
+        .move_to_collection_command(&[classified], target)
+        .expect("command")
+        .expect("something to move");
+    let joining = fixture
+        .library
+        .move_to_collection_command(&[loose], target)
+        .expect("command")
+        .expect("something to move");
+
+    assert!(leaving.removes_assets());
+    assert!(!joining.removes_assets());
+}
+
+#[test]
 fn moving_a_resource_already_in_the_target_only_leaves_the_others() {
     let mut fixture = Fixture::new();
     let target = fixture.collection("Cible", None);

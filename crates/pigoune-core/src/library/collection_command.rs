@@ -56,6 +56,16 @@ pub enum CollectionCommand {
     Batch(Vec<CollectionCommand>),
 }
 
+impl CollectionCommand {
+    pub fn removes_assets(&self) -> bool {
+        match self {
+            Self::RemoveAssets { .. } | Self::MoveAssets { .. } => true,
+            Self::Batch(commands) => commands.iter().any(Self::removes_assets),
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CollectionRemoval {
     pub sub_collections: usize,

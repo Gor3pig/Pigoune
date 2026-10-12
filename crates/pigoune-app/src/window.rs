@@ -3634,15 +3634,21 @@ impl PigouneWindow {
                     self.show_already_in_toast(&name, assets.len());
                     return;
                 };
-                (
-                    command,
+                let plural = u32::try_from(assets.len()).unwrap_or(u32::MAX);
+                let message = if command.removes_assets() {
+                    ngettext(
+                        "{count} asset moved to “{name}” and removed from its other collections",
+                        "{count} assets moved to “{name}” and removed from their other collections",
+                        plural,
+                    )
+                } else {
                     ngettext(
                         "{count} asset moved to “{name}”",
                         "{count} assets moved to “{name}”",
-                        u32::try_from(assets.len()).unwrap_or(u32::MAX),
-                    ),
-                    assets.len(),
-                )
+                        plural,
+                    )
+                };
+                (command, message, assets.len())
             }
             _ => {
                 let fresh = self.assets_outside_collection(to, assets);

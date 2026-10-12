@@ -41,14 +41,12 @@ fn describe_collection(
 ) -> Option<String> {
     let count = hovered.assets.len();
     let name = library.collection(to).ok()??.name;
+    if let Some(text) = moving_from_everywhere(hovered, current_view, to, library) {
+        return Some(named(&with_subject(&template(&text), subject), &name));
+    }
     let text = match current_view {
         AssetView::Collection(from) if from == to => return None,
         AssetView::Collection(_) if !hovered.keep_source => {
-            gettext("Move {subject} to the collection {name}")
-        }
-        AssetView::All | AssetView::Unclassified
-            if !hovered.keep_source && has_something_to_move(&hovered.assets, to, library) =>
-        {
             gettext("Move {subject} to the collection {name}")
         }
         _ if all_in_collection(&hovered.assets, to, library) => ngettext(
@@ -61,10 +59,27 @@ fn describe_collection(
     Some(named(&with_subject(&template(&text), subject), &name))
 }
 
-fn has_something_to_move(assets: &[AssetId], to: CollectionId, library: &Library) -> bool {
-    library
-        .move_to_collection_command(assets, to)
-        .is_ok_and(|command| command.is_some())
+fn moving_from_everywhere(
+    hovered: &HoveredDrop,
+    current_view: AssetView,
+    to: CollectionId,
+    library: &Library,
+) -> Option<String> {
+    if hovered.keep_source || !matches!(current_view, AssetView::All | AssetView::Unclassified) {
+        return None;
+    }
+    let command = library
+        .move_to_collection_command(&hovered.assets, to)
+        .ok()??;
+    Some(if command.removes_assets() {
+        ngettext(
+            "Move {subject} to the collection {name} and out of its other collections",
+            "Move {subject} to the collection {name} and out of their other collections",
+            plural(hovered.assets.len()),
+        )
+    } else {
+        gettext("Move {subject} to the collection {name}")
+    })
 }
 
 fn describe_tag(
