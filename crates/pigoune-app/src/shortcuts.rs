@@ -88,7 +88,29 @@ pub const CUSTOMIZABLE: [Customizable; 18] = [
     },
 ];
 
-const RESERVED: [&str; 5] = ["F2", "F10", "F11", "<Shift>F10", "<Control>question"];
+const RESERVED: [&str; 21] = [
+    "F2",
+    "F10",
+    "F11",
+    "<Shift>F10",
+    "<Control>question",
+    "<Control>w",
+    "<Control>x",
+    "<Control>BackSpace",
+    "<Control>Delete",
+    "<Control>Left",
+    "<Control>Right",
+    "<Control>Up",
+    "<Control>Down",
+    "<Control>Home",
+    "<Control>End",
+    "<Control>Tab",
+    "<Control>Page_Up",
+    "<Control>Page_Down",
+    "<Alt>F4",
+    "<Alt>Tab",
+    "<Control><Shift>Tab",
+];
 const FUNCTION_KEYS: std::ops::RangeInclusive<u8> = 1..=12;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -369,6 +391,24 @@ mod tests {
             validate("win.search", "<Shift>F10", &none()),
             Err(Refusal::Reserved)
         );
+    }
+
+    #[test]
+    fn the_keys_of_text_editing_and_of_the_window_are_refused() {
+        for reserved in [
+            "<Control>x",
+            "<Control>BackSpace",
+            "<Control>Left",
+            "<Control>w",
+            "<Alt>F4",
+            "<Control>Page_Down",
+        ] {
+            assert_eq!(
+                validate("win.search", reserved, &none()),
+                Err(Refusal::Reserved),
+                "{reserved} should be reserved"
+            );
+        }
     }
 
     #[test]

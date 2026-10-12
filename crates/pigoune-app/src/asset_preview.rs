@@ -200,15 +200,55 @@ mod imp {
             }
         }
 
+        fn bind_zoom_keys(class: &mut <Self as ObjectSubclass>::Class) {
+            for key in [gdk::Key::plus, gdk::Key::equal, gdk::Key::KP_Add] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.imp().zoom_view.zoom_in();
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::minus, gdk::Key::KP_Subtract] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.imp().zoom_view.zoom_out();
+                    glib::Propagation::Stop
+                });
+            }
+            for (key, modifiers) in [
+                (gdk::Key::_0, gdk::ModifierType::empty()),
+                (gdk::Key::KP_0, gdk::ModifierType::empty()),
+                (gdk::Key::_0, gdk::ModifierType::CONTROL_MASK),
+            ] {
+                class.add_binding(key, modifiers, |preview| {
+                    preview.imp().zoom_view.fit_to_view();
+                    glib::Propagation::Stop
+                });
+            }
+            for (key, modifiers) in [
+                (gdk::Key::_1, gdk::ModifierType::empty()),
+                (gdk::Key::KP_1, gdk::ModifierType::empty()),
+                (gdk::Key::_1, gdk::ModifierType::CONTROL_MASK),
+            ] {
+                class.add_binding(key, modifiers, |preview| {
+                    preview.imp().zoom_view.show_actual_size();
+                    glib::Propagation::Stop
+                });
+            }
+            class.bind_template_instance_callbacks();
+        }
+
         fn bind_step_keys(class: &mut <Self as ObjectSubclass>::Class) {
-            class.add_binding(gdk::Key::Left, gdk::ModifierType::empty(), |preview| {
-                preview.step(-1);
-                glib::Propagation::Stop
-            });
-            class.add_binding(gdk::Key::Right, gdk::ModifierType::empty(), |preview| {
-                preview.step(1);
-                glib::Propagation::Stop
-            });
+            for key in [gdk::Key::Left, gdk::Key::KP_Left] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.step(-1);
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::Right, gdk::Key::KP_Right] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.step(1);
+                    glib::Propagation::Stop
+                });
+            }
         }
 
         fn show_action_buttons(&self) {
@@ -238,34 +278,12 @@ mod imp {
             class.install_action("preview.zoom-out", None, |preview, _, _| {
                 preview.imp().zoom_view.zoom_out();
             });
-            for key in [gdk::Key::plus, gdk::Key::equal, gdk::Key::KP_Add] {
-                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
-                    preview.imp().zoom_view.zoom_in();
-                    glib::Propagation::Stop
-                });
-            }
-            for key in [gdk::Key::minus, gdk::Key::KP_Subtract] {
-                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
-                    preview.imp().zoom_view.zoom_out();
-                    glib::Propagation::Stop
-                });
-            }
-            for key in [gdk::Key::_0, gdk::Key::KP_0] {
-                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
-                    preview.imp().zoom_view.fit_to_view();
-                    glib::Propagation::Stop
-                });
-            }
-            for key in [gdk::Key::_1, gdk::Key::KP_1] {
-                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
-                    preview.imp().zoom_view.show_actual_size();
-                    glib::Propagation::Stop
-                });
-            }
-            class.bind_template_instance_callbacks();
+            Self::bind_zoom_keys(class);
             class.add_binding(gdk::Key::Escape, gdk::ModifierType::empty(), |preview| {
                 if preview.is_fullscreen() {
                     preview.set_fullscreen(false);
+                } else if preview.focus_is_in_details() {
+                    preview.grab_focus();
                 } else {
                     preview.close();
                 }
@@ -290,23 +308,29 @@ mod imp {
                 preview.show_context_menu(None);
                 glib::Propagation::Stop
             });
-            class.add_binding(gdk::Key::Delete, gdk::ModifierType::empty(), |preview| {
-                if preview.focus_is_in_details() {
-                    return glib::Propagation::Proceed;
-                }
-                if preview.imp().actionable.get() {
-                    let _ = preview.activate_action("win.trash-selected", None);
-                }
-                glib::Propagation::Stop
-            });
-            class.add_binding(gdk::Key::Home, gdk::ModifierType::empty(), |preview| {
-                preview.show_position(0);
-                glib::Propagation::Stop
-            });
-            class.add_binding(gdk::Key::End, gdk::ModifierType::empty(), |preview| {
-                preview.show_last();
-                glib::Propagation::Stop
-            });
+            for key in [gdk::Key::Delete, gdk::Key::KP_Delete] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    if preview.focus_is_in_details() {
+                        return glib::Propagation::Proceed;
+                    }
+                    if preview.imp().actionable.get() {
+                        let _ = preview.activate_action("win.trash-selected", None);
+                    }
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::Home, gdk::Key::KP_Home] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.show_position(0);
+                    glib::Propagation::Stop
+                });
+            }
+            for key in [gdk::Key::End, gdk::Key::KP_End] {
+                class.add_binding(key, gdk::ModifierType::empty(), |preview| {
+                    preview.show_last();
+                    glib::Propagation::Stop
+                });
+            }
             class.add_binding(gdk::Key::k, gdk::ModifierType::empty(), |preview| {
                 preview.toggle_playing();
                 glib::Propagation::Stop

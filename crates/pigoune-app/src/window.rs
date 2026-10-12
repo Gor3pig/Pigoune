@@ -117,6 +117,7 @@ const DELETE_SMART_COLLECTION_ACTION: &str = "win.delete-smart-collection";
 const DELETE_COLLECTION_ACTION: &str = "win.delete-collection";
 const UNDO_ACTION: &str = "win.undo";
 const REDO_ACTION: &str = "win.redo";
+const CLOSE_WINDOW_ACTION: &str = "win.close-window";
 const PREFERENCES_ACTION: &str = "win.preferences";
 const LIBRARY_INFO_ACTION: &str = "win.library-info";
 const OPEN_RECENT_LIBRARY_ACTION: &str = "win.open-recent-library";
@@ -215,7 +216,7 @@ mod imp {
 
     use super::{
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
-        CLOSE_LIBRARY_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
+        CLOSE_LIBRARY_ACTION, CLOSE_WINDOW_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
         CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
         DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
@@ -400,6 +401,9 @@ mod imp {
         });
         class.install_action(REDO_ACTION, None, |window, _, _| {
             window.redo();
+        });
+        class.install_action(CLOSE_WINDOW_ACTION, None, |window, _, _| {
+            window.close();
         });
         class.install_action(COPY_SELECTED_ACTION, None, |window, _, _| {
             window.copy_selected();
@@ -2163,7 +2167,14 @@ impl PigouneWindow {
 
     fn start_renaming_selected(&self) {
         let imp = self.imp();
-        if !self.is_showing_trash() && imp.asset_grid.selected_asset().is_some() {
+        let selected = self.selected_ids().len();
+        if self.is_showing_trash() {
+            if selected > 0 {
+                self.show_toast(&gettext("Restore this asset to rename it."));
+            }
+        } else if selected > 1 {
+            self.show_toast(&gettext("Select a single asset to rename it."));
+        } else if imp.asset_grid.selected_asset().is_some() {
             imp.grid_header.details_button().set_active(true);
             imp.asset_details.start_renaming();
         }

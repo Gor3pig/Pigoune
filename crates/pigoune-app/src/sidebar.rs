@@ -579,7 +579,7 @@ impl PigouneSidebar {
             #[upgrade_or]
             glib::Propagation::Proceed,
             move |_, key, _, modifiers| {
-                if !modifiers.is_empty() {
+                if !modifiers.is_empty() || !sidebar.focus_is_on_an_entry() {
                     return glib::Propagation::Proceed;
                 }
                 let (action, id) = match (key, sidebar.selected_view()) {
@@ -607,24 +607,26 @@ impl PigouneSidebar {
         ));
         self.imp().list_view.add_controller(keys);
 
-        let menu_keys = gtk::ShortcutController::new();
-        menu_keys.add_shortcut(gtk::Shortcut::new(
-            gtk::ShortcutTrigger::parse_string(MENU_KEYS),
-            Some(gtk::CallbackAction::new(glib::clone!(
-                #[weak(rename_to = sidebar)]
-                self,
-                #[upgrade_or]
-                glib::Propagation::Proceed,
-                move |_, _| {
-                    if sidebar.focused_row().is_some_and(|row| row.open_menu()) {
-                        glib::Propagation::Stop
-                    } else {
-                        glib::Propagation::Proceed
+        for list_view in [self.imp().list_view.get(), self.imp().trash_view.get()] {
+            let menu_keys = gtk::ShortcutController::new();
+            menu_keys.add_shortcut(gtk::Shortcut::new(
+                gtk::ShortcutTrigger::parse_string(MENU_KEYS),
+                Some(gtk::CallbackAction::new(glib::clone!(
+                    #[weak(rename_to = sidebar)]
+                    self,
+                    #[upgrade_or]
+                    glib::Propagation::Proceed,
+                    move |_, _| {
+                        if sidebar.focused_row().is_some_and(|row| row.open_menu()) {
+                            glib::Propagation::Stop
+                        } else {
+                            glib::Propagation::Proceed
+                        }
                     }
-                }
-            ))),
-        ));
-        self.imp().list_view.add_controller(menu_keys);
+                ))),
+            ));
+            list_view.add_controller(menu_keys);
+        }
     }
 
     fn quiet_hover_while_dragging(&self) {
@@ -766,7 +768,8 @@ impl PigouneSidebar {
 
     fn focused_row(&self) -> Option<PigouneSidebarRow> {
         let focus = self.root()?.focus()?;
-        if !focus.is_ancestor(&*self.imp().list_view) {
+        let imp = self.imp();
+        if !focus.is_ancestor(&*imp.list_view) && !focus.is_ancestor(&*imp.trash_view) {
             return None;
         }
         focus

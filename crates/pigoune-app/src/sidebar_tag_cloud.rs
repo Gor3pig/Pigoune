@@ -617,10 +617,15 @@ impl PigouneSidebarTagCloud {
             #[upgrade_or]
             glib::Propagation::Proceed,
             move |_, key, _, modifiers| {
-                if key != gdk::Key::F2 || !modifiers.is_empty() {
+                let action = match key {
+                    gdk::Key::F2 => "win.rename-tag",
+                    gdk::Key::Delete => "win.delete-tag",
+                    _ => return glib::Propagation::Proceed,
+                };
+                if !modifiers.is_empty() {
                     return glib::Propagation::Proceed;
                 }
-                let _ = pill.activate_action("win.rename-tag", Some(&id.to_string().to_variant()));
+                let _ = pill.activate_action(action, Some(&id.to_string().to_variant()));
                 glib::Propagation::Stop
             }
         ));
