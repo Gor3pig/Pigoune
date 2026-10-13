@@ -172,7 +172,6 @@ mod imp {
             grid.set_up_grid();
             grid.resize_with_control_scroll();
             grid.unselect_on_empty_click();
-            grid.hold_back_inert_names_on_secondary_press();
             grid.mark_inert_names();
             grid.lasso_only_from_empty_space();
             grid.follow_visible_width();
@@ -640,25 +639,6 @@ impl PigouneAssetGrid {
         ));
     }
 
-    fn hold_back_inert_names_on_secondary_press(&self) {
-        let click = gtk::GestureClick::builder()
-            .button(gdk::BUTTON_SECONDARY)
-            .propagation_phase(gtk::PropagationPhase::Capture)
-            .build();
-        click.connect_pressed(glib::clone!(
-            #[weak(rename_to = grid)]
-            self,
-            move |_, _, x, y| {
-                grid.restore_held_item();
-                if let Hit::InertName(tile) = grid.hit_at(x, y) {
-                    grid.hold_back_item_of(&tile);
-                }
-            }
-        ));
-        self.restore_item_when_press_ends(&click);
-        self.imp().grid_view.add_controller(click);
-    }
-
     fn mark_inert_names(&self) {
         self.connect_names_clickable_notify(|grid| {
             let grid_view = &grid.imp().grid_view;
@@ -710,18 +690,19 @@ impl PigouneAssetGrid {
         let tile = widget
             .ancestor(PigouneAssetTile::static_type())
             .and_downcast::<PigouneAssetTile>()?;
-        let on_name = widget == tile.name_label().upcast::<gtk::Widget>();
-        Some((tile, on_name))
+        let frame = tile.frame().upcast::<gtk::Widget>();
+        let on_frame = widget == frame || widget.is_ancestor(&frame);
+        Some((tile, on_frame))
     }
 
     fn hit_at(&self, x: f64, y: f64) -> Hit {
-        let Some((tile, on_name)) = self.tile_at(x, y) else {
+        let Some((tile, on_frame)) = self.tile_at(x, y) else {
             return Hit::Space;
         };
         let Some(asset) = tile.asset() else {
             return Hit::Space;
         };
-        if on_name && !self.names_clickable() {
+        if !on_frame && !self.names_clickable() {
             Hit::InertName(tile)
         } else {
             Hit::Thumbnail(asset)
@@ -873,23 +854,6 @@ impl PigouneAssetGrid {
         menu.popup();
     }
 
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "pointer coordinates inside a tile fit in an f32"
-    )]
-    fn is_inert_name_under_drag(&self, tile: &PigouneAssetTile, x: f64, y: f64) -> bool {
-        tile.compute_point(
-            &*self.imp().grid_view,
-            &graphene::Point::new(x as f32, y as f32),
-        )
-        .is_some_and(|point| {
-            matches!(
-                self.hit_at(f64::from(point.x()), f64::from(point.y())),
-                Hit::InertName(_)
-            )
-        })
-    }
-
     fn make_draggable(&self, tile: &PigouneAssetTile) {
         let source = gtk::DragSource::builder()
             .actions(gdk::DragAction::MOVE | gdk::DragAction::COPY)
@@ -901,8 +865,8 @@ impl PigouneAssetGrid {
             tile,
             #[upgrade_or]
             None,
-            move |_, x, y| {
-                if grid.is_inert_name_under_drag(&tile, x, y) {
+            move |_, _, _| {
+                if grid.imp().held_item.borrow().is_some() {
                     return None;
                 }
                 let dragged = grid.assets_dragged_from(&tile.asset()?);
@@ -1030,6 +994,10 @@ impl PigouneAssetGrid {
                         .sync_create()
                         .build();
                     grid.bind_property("animate-on-hover", &tile, "animates-on-hover")
+                        .sync_create()
+                        .build();
+                    grid.bind_property("names-clickable", &tile, "inert-name")
+                        .transform_to(|_, clickable: bool| Some(!clickable))
                         .sync_create()
                         .build();
                     grid.bind_property("show-formats", &tile, "shows-format")

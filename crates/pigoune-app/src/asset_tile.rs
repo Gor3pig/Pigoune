@@ -70,6 +70,8 @@ mod imp {
         pub description: RefCell<String>,
         #[property(get, set)]
         pub animates_on_hover: Cell<bool>,
+        #[property(get, set)]
+        pub inert_name: Cell<bool>,
         #[property(get, set = Self::set_shows_format)]
         pub shows_format: Cell<bool>,
     }
@@ -314,7 +316,11 @@ impl PigouneAssetTile {
         hover.connect_enter(glib::clone!(
             #[weak(rename_to = tile)]
             self,
-            move |_, _, _| tile.start_animation()
+            move |_, _, _| {
+                if !tile.inert_name() {
+                    tile.start_animation();
+                }
+            }
         ));
         hover.connect_leave(glib::clone!(
             #[weak(rename_to = tile)]
@@ -322,6 +328,26 @@ impl PigouneAssetTile {
             move |_| tile.stop_animation()
         ));
         self.add_controller(hover);
+        let frame_hover = gtk::EventControllerMotion::new();
+        frame_hover.connect_enter(glib::clone!(
+            #[weak(rename_to = tile)]
+            self,
+            move |_, _, _| {
+                if tile.inert_name() {
+                    tile.start_animation();
+                }
+            }
+        ));
+        frame_hover.connect_leave(glib::clone!(
+            #[weak(rename_to = tile)]
+            self,
+            move |_| {
+                if tile.inert_name() {
+                    tile.stop_animation();
+                }
+            }
+        ));
+        self.imp().frame.add_controller(frame_hover);
     }
 
     fn start_animation(&self) {
