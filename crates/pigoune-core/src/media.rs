@@ -9,6 +9,7 @@ mod png;
 mod rgb;
 mod shape;
 mod svg;
+mod visual_hash;
 mod webp;
 
 use std::fs::File;
@@ -25,6 +26,7 @@ pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};
 pub use rgb::Rgb;
 pub use shape::{AssetShape, shapes_from_text, shapes_text};
+pub use visual_hash::{VisualHash, visual_hash};
 
 const HEADER_LENGTH: u64 = 4096;
 pub const LARGEST_SIDE: u32 = 65_535;

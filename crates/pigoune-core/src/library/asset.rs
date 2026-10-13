@@ -5,7 +5,7 @@ use std::sync::Arc;
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
 use crate::media::{
-    self, AnimationTiming, AssetFormat, Dimensions, DominantColor, dominant_from_text,
+    self, AnimationTiming, AssetFormat, Dimensions, DominantColor, VisualHash, dominant_from_text,
 };
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use rusqlite::{OptionalExtension, Row, params};
@@ -194,6 +194,34 @@ impl Library {
                 transaction.prepare_cached("UPDATE assets SET colors = ?2 WHERE id = ?1")?;
             for (id, colors) in batch {
                 statement.execute(params![id, media::dominant_text(colors)])?;
+            }
+        }
+        transaction.commit()?;
+        Ok(())
+    }
+
+    pub fn assets_awaiting_visual_hash(&self, limit: usize) -> Result<Vec<AssetId>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id FROM assets WHERE visual_hash IS NULL
+             ORDER BY added_at_unix_ms DESC, id DESC LIMIT ?1",
+        )?;
+        let ids = statement
+            .query_map([i64::try_from(limit).unwrap_or(i64::MAX)], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(ids)
+    }
+
+    pub fn record_visual_hashes_batch(
+        &mut self,
+        batch: &[(AssetId, Option<VisualHash>)],
+    ) -> Result<(), LibraryError> {
+        let transaction = self.connection.transaction()?;
+        {
+            let mut statement =
+                transaction.prepare_cached("UPDATE assets SET visual_hash = ?2 WHERE id = ?1")?;
+            for (id, hash) in batch {
+                let stored: Vec<u8> = hash.map_or_else(Vec::new, |hash| hash.to_bytes().to_vec());
+                statement.execute(params![id, stored])?;
             }
         }
         transaction.commit()?;

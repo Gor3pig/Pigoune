@@ -157,8 +157,11 @@ My logos.pigoune/
   (one limited to Favorites keeps "favorites only"); the screen size itself is never saved: the app gives the library the size
   of the monitor showing its window, in real pixels, and refreshes when it changes. Format 9
   gives each tag an optional parent: tags form a tree, a name is unique among siblings only, and
-  opening a tag also shows the assets of its sub-tags; existing tags become top-level tags. A library
-  created by a newer version of Pigoune is refused with a clear message.
+  opening a tag also shows the assets of its sub-tags; existing tags become top-level tags. Format 10
+  adds a visual fingerprint of 64 bits to each asset, used to find look-alike assets; `visual_hash` in
+  the core computes it from the pixels of a thumbnail (plain background and transparent margins
+  ignored, then a 9 by 8 grid of brightness steps), and two assets are close when few bits differ.
+  A library created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.
 - A library is locked while it is open, so that two windows cannot write to it at once.

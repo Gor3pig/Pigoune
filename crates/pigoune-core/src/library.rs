@@ -8,6 +8,7 @@ mod clock;
 mod collection;
 mod collection_command;
 mod content;
+mod duplicates;
 mod error;
 mod export;
 mod health;
@@ -52,6 +53,7 @@ pub use batch_import::{
 };
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
+pub use duplicates::{DUPLICATE_DISTANCE, SIMILAR_DISTANCE, SimilarAsset, SimilarSearch};
 pub use error::{
     AdoptError, CollectionError, ImportError, LibraryError, RemoveRecordError, ReplaceError,
 };

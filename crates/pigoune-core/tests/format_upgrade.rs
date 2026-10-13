@@ -17,6 +17,7 @@ const FORMAT_BEFORE_COLLECTION_LOOKS: u32 = 4;
 const FORMAT_BEFORE_COLORS: u32 = 5;
 const FORMAT_BEFORE_COLOR_AVERAGES: u32 = 6;
 const FORMAT_BEFORE_SHAPES: u32 = 7;
+const FORMAT_BEFORE_VISUAL_HASHES: u32 = 9;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -53,6 +54,7 @@ fn library_as_saved_by_format_1(workspace: &TempDir, names: &[&str]) -> (PathBuf
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_ANIMATED_PNG_AND_WEBP)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_smart_collections(&connection);
     forget_collection_looks(&connection);
     forget_asset_colors(&connection);
@@ -63,6 +65,12 @@ fn forget_smart_collections(connection: &Connection) {
     connection
         .execute_batch("DROP TABLE smart_collections")
         .expect("smart collections forgotten");
+}
+
+fn forget_visual_hashes(connection: &Connection) {
+    connection
+        .execute_batch("ALTER TABLE assets DROP COLUMN visual_hash;")
+        .expect("visual hashes forgotten");
 }
 
 fn forget_asset_colors(connection: &Connection) {
@@ -179,6 +187,7 @@ impl FlatLibrary {
         connection
             .pragma_update(None, "user_version", FORMAT_BEFORE_BUCKETS)
             .expect("version updated");
+        forget_visual_hashes(&connection);
         forget_smart_collections(&connection);
         forget_collection_looks(&connection);
         forget_asset_colors(&connection);
@@ -331,6 +340,7 @@ fn a_format_3_library_gains_smart_collections() {
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_SMART_COLLECTIONS)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_smart_collections(&connection);
     forget_collection_looks(&connection);
     forget_asset_colors(&connection);
@@ -367,6 +377,7 @@ fn a_format_4_library_keeps_its_collections_and_gains_their_looks() {
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_COLLECTION_LOOKS)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_collection_looks(&connection);
     forget_asset_colors(&connection);
     forget_smart_collection_colors(&connection);
@@ -415,6 +426,7 @@ fn a_format_5_library_analyses_the_colors_of_its_resources_again() {
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_COLORS)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_asset_colors(&connection);
     forget_smart_collection_colors(&connection);
     drop(connection);
@@ -453,6 +465,7 @@ fn a_format_6_library_analyses_its_colors_again_to_learn_their_averages() {
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_COLOR_AVERAGES)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_custom_colors(&connection);
     drop(connection);
 
@@ -482,6 +495,7 @@ fn a_format_7_library_keeps_its_smart_collections_without_shapes() {
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_SHAPES)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_shapes(&connection);
     drop(connection);
 
@@ -525,6 +539,7 @@ fn a_format_7_smart_collection_now_searches_the_whole_library() {
     connection
         .pragma_update(None, "user_version", FORMAT_BEFORE_SHAPES)
         .expect("version updated");
+    forget_visual_hashes(&connection);
     forget_shapes(&connection);
     connection
         .execute(
@@ -557,4 +572,30 @@ fn a_format_7_smart_collection_now_searches_the_whole_library() {
     let mut everything = vec![red, circle];
     everything.sort();
     assert_eq!(shown, everything);
+}
+
+#[test]
+fn a_format_9_library_computes_the_visual_hashes_of_its_resources() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_VISUAL_HASHES)
+        .expect("version updated");
+    forget_visual_hashes(&connection);
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert_eq!(
+        library.assets_awaiting_visual_hash(10).expect("listed"),
+        [red]
+    );
 }
