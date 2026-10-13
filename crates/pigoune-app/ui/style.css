@@ -394,7 +394,7 @@ gridview.names-inert > child .tile-frame:hover {
 }
 
 gridview.asset-grid > child:selected .tile-frame,
-gridview.asset-grid > child:active .tile-frame {
+gridview > child:active .tile-frame:not(.held) {
   background-color: color-mix(in srgb, var(--accent-bg-color) 14%, transparent);
   box-shadow: inset 0 0 0 2px var(--accent-color);
 }

@@ -719,6 +719,7 @@ impl PigouneAssetGrid {
         };
         item.set_selectable(false);
         item.set_activatable(false);
+        tile.frame().add_css_class("held");
         self.imp().held_item.replace(Some(item.downgrade()));
         self.imp().grid_view.set_enable_rubberband(true);
     }
@@ -728,6 +729,9 @@ impl PigouneAssetGrid {
         if let Some(item) = held.and_then(|item| item.upgrade()) {
             item.set_selectable(true);
             item.set_activatable(true);
+            if let Some(tile) = item.child().and_downcast::<PigouneAssetTile>() {
+                tile.frame().remove_css_class("held");
+            }
         }
     }
 
@@ -1021,6 +1025,7 @@ impl PigouneAssetGrid {
                 item.set_selectable(true);
                 item.set_activatable(true);
             }
+            tile.frame().remove_css_class("held");
             tile.show_asset(&asset, &thumbnails);
         });
         factory.connect_unbind(|_, item| {
