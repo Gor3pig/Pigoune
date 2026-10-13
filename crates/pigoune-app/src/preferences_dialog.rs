@@ -20,6 +20,7 @@ pub fn present(parent: &impl IsA<gtk::Widget>, settings: &gio::Settings) {
         ("restore_last_view_row", settings::RESTORE_LAST_VIEW),
         ("show_whats_new_row", settings::SHOW_WHATS_NEW),
         ("show_names_row", settings::SHOW_NAMES),
+        ("names_clickable_row", settings::NAMES_CLICKABLE),
         ("animate_on_hover_row", settings::ANIMATE_ON_HOVER),
         ("show_counts_row", settings::SHOW_COUNTS),
         ("show_tags_row", settings::SHOW_TAGS),

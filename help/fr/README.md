@@ -491,6 +491,10 @@ retrouve un réglage par son nom.
 
 - **Afficher le nom des éléments** sous chaque vignette de la grille. Quand les noms sont
   masqués, survolez une vignette pour voir son nom.
+- **Noms des éléments cliquables** (affiché seulement quand les noms sont affichés) :
+  désactivez-le et le nom devient un simple texte, qui compte comme de l’espace vide : seule
+  la vignette réagit aux clics, aux doubles clics et aux glissers, et un rectangle de
+  sélection peut partir du nom.
 - **Afficher les formats** : une pastille indique le format de chaque élément (SVG, PNG…)
   sur sa vignette.
 - **Fond des vignettes** : blanc, gris, noir ou damier derrière les vignettes, pour voir les

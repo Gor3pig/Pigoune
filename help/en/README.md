@@ -431,6 +431,9 @@ split into four pages; the magnifier at the top finds a setting by its name.
 
 - **Show Asset Names** under each thumbnail of the grid. When names are hidden, hover over a
   thumbnail to see its name.
+- **Clickable Asset Names** (shown only when names are shown): turn it off and the name
+  becomes plain text and counts as empty space: only the thumbnail reacts to clicks,
+  double-clicks and drags, and a selection rectangle can start from the name.
 - **Show Formats**: a badge shows the format of each asset (SVG, PNG…) on its thumbnail.
 - **Thumbnail Background**: white, gray, black or a checkerboard behind the thumbnails, to see
   white or black images and transparent areas.

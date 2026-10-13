@@ -40,6 +40,7 @@ pub const DOUBLE_CLICK_OPENS: &str = "double-click-opens";
 pub const SEARCH_EVERYWHERE: &str = "search-everywhere";
 pub const SHOW_COUNTS: &str = "show-counts";
 pub const SHOW_NAMES: &str = "show-names";
+pub const NAMES_CLICKABLE: &str = "names-clickable";
 pub const RESTORE_LAST_VIEW: &str = "restore-last-view";
 pub const REOPEN_LAST_LIBRARY: &str = "reopen-last-library";
 pub const ANIMATE_ON_HOVER: &str = "animate-on-hover";

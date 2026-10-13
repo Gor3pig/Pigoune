@@ -210,6 +210,11 @@
       <summary>Show asset names</summary>
       <description>Whether the grid shows the name of each asset under its thumbnail.</description>
     </key>
+    <key name="names-clickable" type="b">
+      <default>true</default>
+      <summary>Clickable asset names</summary>
+      <description>Whether clicking, double-clicking or dragging from the name under a thumbnail acts on the asset like the thumbnail does.</description>
+    </key>
     <key name="reopen-last-library" type="b">
       <default>true</default>
       <summary>Reopen the last library at startup</summary>

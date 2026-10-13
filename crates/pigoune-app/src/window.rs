@@ -1222,6 +1222,13 @@ impl PigouneWindow {
             .build();
         settings
             .bind(
+                settings::NAMES_CLICKABLE,
+                &*self.imp().asset_grid,
+                "names-clickable",
+            )
+            .build();
+        settings
+            .bind(
                 settings::ANIMATE_ON_HOVER,
                 &*self.imp().asset_grid,
                 "animate-on-hover",

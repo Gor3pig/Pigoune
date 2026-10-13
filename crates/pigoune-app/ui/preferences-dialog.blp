@@ -75,6 +75,12 @@ Adw.PreferencesDialog dialog {
         subtitle: _("Under each thumbnail");
       }
 
+      Adw.SwitchRow names_clickable_row {
+        visible: bind show_names_row.active;
+        title: _("Clickable Asset Names");
+        subtitle: _("Click, double-click and drag from the name as from the thumbnail");
+      }
+
       Adw.SwitchRow show_formats_row {
         title: _("Show Formats");
         subtitle: _("A badge such as SVG or PNG on each thumbnail");
