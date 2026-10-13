@@ -341,7 +341,8 @@ ses critères.
 - **Retrouvez les éléments qui se ressemblent** avec **Trouver des éléments similaires…** dans le
   menu du clic droit d'un seul élément. Une fenêtre liste ceux qui lui ressemblent, du plus
   proche au plus éloigné, même dans un autre format ou une autre taille, chacun marqué **Presque
-  identique**, **Très proche** ou **Ressemblant** ; en choisir un l'affiche dans Tous. Si
+  identique**, **Très proche** ou **Ressemblant** ; dans chaque mention, ceux dont les
+  couleurs sont les plus proches passent en premier. En choisir un l'affiche dans Tous. Si
   l'élément n'a pas encore été analysé, ou si son dessin est trop simple pour être comparé (une
   seule couleur, ou rien de visible), la fenêtre le dit.
 - **Utilisez une image comme fond d'écran** avec **Cadrer et définir comme fond d'écran…** dans
@@ -458,8 +459,10 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   de nouveau.
 - **Doublons** regroupe les éléments qui se ressemblent, comme le même logo en PNG et en SVG, ou
   en deux tailles. Pigoune analyse le dessin de chaque élément en arrière-plan après l'ouverture
-  d'une bibliothèque ; la page indique combien d'éléments attendent encore. **Rechercher** liste
-  les groupes, la plus grande image en premier. Dans un groupe, **Garder celui-ci** met les
+  d'une bibliothèque ; la page indique combien d'éléments attendent encore. **Rechercher** les compare en
+  arrière-plan, avec une barre de progression et un bouton **Annuler**, puis liste les groupes, la
+  plus grande image en premier. Un groupe montre ses six premiers éléments ; **Afficher les N
+  autres** en ajoute vingt à la fois, et les vignettes se chargent au fil du défilement. Dans un groupe, **Garder celui-ci** met les
   autres à la corbeille, et le message qui apparaît permet d'annuler ; choisir une ligne affiche
   cet élément dans Tous. Rien n'est jamais supprimé sans un clic. Une bibliothèque ouverte avec
   Pigoune 2.10 ou plus récent ne peut plus être ouverte par une version plus ancienne.
