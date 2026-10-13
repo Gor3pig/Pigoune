@@ -388,7 +388,8 @@ gridview.asset-grid > child:selected:hover {
   transition: background-color 150ms ease-out, box-shadow 150ms ease-out;
 }
 
-gridview.asset-grid > child:hover .tile-frame {
+gridview:not(.names-inert) > child:hover .tile-frame,
+gridview.names-inert > child .tile-frame:hover {
   background-color: color-mix(in srgb, currentColor 10%, transparent);
 }
 

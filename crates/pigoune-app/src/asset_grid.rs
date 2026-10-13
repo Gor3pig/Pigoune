@@ -172,6 +172,8 @@ mod imp {
             grid.set_up_grid();
             grid.resize_with_control_scroll();
             grid.unselect_on_empty_click();
+            grid.hold_back_inert_names_on_secondary_press();
+            grid.mark_inert_names();
             grid.lasso_only_from_empty_space();
             grid.follow_visible_width();
         }
@@ -616,6 +618,11 @@ impl PigouneAssetGrid {
                 }
             }
         ));
+        self.restore_item_when_press_ends(&click);
+        self.imp().grid_view.add_controller(click);
+    }
+
+    fn restore_item_when_press_ends(&self, click: &gtk::GestureClick) {
         click.connect_end(glib::clone!(
             #[weak(rename_to = grid)]
             self,
@@ -631,7 +638,36 @@ impl PigouneAssetGrid {
             self,
             move |_, _, _, _, _| grid.restore_held_item()
         ));
+    }
+
+    fn hold_back_inert_names_on_secondary_press(&self) {
+        let click = gtk::GestureClick::builder()
+            .button(gdk::BUTTON_SECONDARY)
+            .propagation_phase(gtk::PropagationPhase::Capture)
+            .build();
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _, x, y| {
+                grid.restore_held_item();
+                if let Hit::InertName(tile) = grid.hit_at(x, y) {
+                    grid.hold_back_item_of(&tile);
+                }
+            }
+        ));
+        self.restore_item_when_press_ends(&click);
         self.imp().grid_view.add_controller(click);
+    }
+
+    fn mark_inert_names(&self) {
+        self.connect_names_clickable_notify(|grid| {
+            let grid_view = &grid.imp().grid_view;
+            if grid.names_clickable() {
+                grid_view.remove_css_class("names-inert");
+            } else {
+                grid_view.add_css_class("names-inert");
+            }
+        });
     }
 
     fn take_focus_from_elsewhere(&self) {
