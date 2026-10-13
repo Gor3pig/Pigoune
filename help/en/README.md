@@ -297,6 +297,11 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 - **Find the file on disk** with **Show in Files** in the right-click menu: your file manager
   opens on the file stored in the library. It is the real file, so do not move, rename or edit
   it from there; if you do, the library health check will point it out.
+- **Find look-alikes** with **Find Similar…** in the right-click menu of a single asset. A
+  window lists the assets that look like it, closest first, even in another format or size,
+  each marked **Almost identical**, **Very close** or **Similar**; choosing one shows it in
+  All. If the asset has not been analyzed yet, or its drawing is too plain to compare (a single
+  color, or nothing visible), the window says so.
 - **Set an image as your wallpaper** with **Frame and Set as Wallpaper…** in the right-click
   menu of the grid or of the preview. A large window shows a virtual screen at the real
   resolution of the screen Pigoune is shown on, for example 1920 × 1080, with the image framed
@@ -395,6 +400,13 @@ after it, in five tabs:
   which can be undone from the message that appears. Assets that are in the trash are not
   reported: their files leave with the trash, and if you restore one, the next check looks at
   it again.
+- **Duplicates** groups the assets that look alike, such as the same logo as a PNG and an SVG,
+  or in two sizes. Pigoune analyzes the drawing of every asset in the background after a library
+  opens; the page says how many assets are still waiting. **Search** lists the groups, the
+  largest image first. In a group, **Keep This One** moves the others to the trash, and the
+  message that appears lets you undo it; choosing a row shows that asset in All. Nothing is ever
+  deleted without a click. A library opened with Pigoune 2.10 or later can no longer be opened by
+  an older version.
 - **Export** copies every asset into a folder you choose. Pigoune creates a folder named after
   the library, with one sub-folder for each collection and sub-collection, and puts the
   original files inside; the page shows an example made from your own library. Assets that

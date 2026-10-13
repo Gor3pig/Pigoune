@@ -338,6 +338,12 @@ ses critères.
   droit : votre gestionnaire de fichiers s'ouvre sur le fichier stocké dans la bibliothèque.
   C'est le vrai fichier : ne le déplacez, ne le renommez et ne le modifiez pas depuis là ; sinon,
   le bilan de santé de la bibliothèque le signalera.
+- **Retrouvez les éléments qui se ressemblent** avec **Trouver des éléments similaires…** dans le
+  menu du clic droit d'un seul élément. Une fenêtre liste ceux qui lui ressemblent, du plus
+  proche au plus éloigné, même dans un autre format ou une autre taille, chacun marqué **Presque
+  identique**, **Très proche** ou **Ressemblant** ; en choisir un l'affiche dans Tous. Si
+  l'élément n'a pas encore été analysé, ou si son dessin est trop simple pour être comparé (une
+  seule couleur, ou rien de visible), la fenêtre le dit.
 - **Utilisez une image comme fond d'écran** avec **Cadrer et définir comme fond d'écran…** dans
   le menu du clic droit de la grille ou de l'aperçu. Une grande fenêtre montre un écran virtuel
   à la résolution réelle de l'écran où se trouve Pigoune, par exemple 1920 × 1080, avec l'image
@@ -450,6 +456,13 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   apparaît. Les éléments qui sont dans la corbeille ne sont pas signalés : leurs fichiers
   partent avec la corbeille, et si vous en restaurez un, la vérification suivante le regarde
   de nouveau.
+- **Doublons** regroupe les éléments qui se ressemblent, comme le même logo en PNG et en SVG, ou
+  en deux tailles. Pigoune analyse le dessin de chaque élément en arrière-plan après l'ouverture
+  d'une bibliothèque ; la page indique combien d'éléments attendent encore. **Rechercher** liste
+  les groupes, la plus grande image en premier. Dans un groupe, **Garder celui-ci** met les
+  autres à la corbeille, et le message qui apparaît permet d'annuler ; choisir une ligne affiche
+  cet élément dans Tous. Rien n'est jamais supprimé sans un clic. Une bibliothèque ouverte avec
+  Pigoune 2.10 ou plus récent ne peut plus être ouverte par une version plus ancienne.
 - **Export** copie tous les éléments dans un dossier de votre choix. Pigoune crée un dossier
   au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place
   les fichiers d'origine ; la page montre un exemple tiré de votre propre bibliothèque. Les
