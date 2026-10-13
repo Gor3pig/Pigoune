@@ -597,14 +597,9 @@ impl PigouneAssetGrid {
             self,
             move |gesture, _, x, y| {
                 grid.restore_held_item();
-                let hit = grid.tile_at(x, y);
-                let inert_name = hit
-                    .as_ref()
-                    .filter(|(_, on_name)| *on_name && !grid.names_clickable())
-                    .map(|(tile, _)| tile.clone());
-                let on_empty_space = inert_name.is_some()
-                    || hit.as_ref().is_none_or(|(tile, _)| tile.asset().is_none());
-                if let Some(tile) = &inert_name {
+                let hit = grid.hit_at(x, y);
+                let on_empty_space = !matches!(hit, Hit::Thumbnail(_));
+                if let Hit::InertName(tile) = &hit {
                     grid.hold_back_item_of(tile);
                 }
                 if on_empty_space {
@@ -630,6 +625,11 @@ impl PigouneAssetGrid {
             #[weak(rename_to = grid)]
             self,
             move |_, _| grid.restore_held_item()
+        ));
+        click.connect_unpaired_release(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _, _, _, _| grid.restore_held_item()
         ));
         self.imp().grid_view.add_controller(click);
     }
@@ -678,14 +678,22 @@ impl PigouneAssetGrid {
         Some((tile, on_name))
     }
 
-    fn is_empty_space_at(&self, x: f64, y: f64) -> bool {
-        self.tile_at(x, y).is_none_or(|(tile, on_name)| {
-            tile.asset().is_none() || (on_name && !self.names_clickable())
-        })
+    fn hit_at(&self, x: f64, y: f64) -> Hit {
+        let Some((tile, on_name)) = self.tile_at(x, y) else {
+            return Hit::Space;
+        };
+        let Some(asset) = tile.asset() else {
+            return Hit::Space;
+        };
+        if on_name && !self.names_clickable() {
+            Hit::InertName(tile)
+        } else {
+            Hit::Thumbnail(asset)
+        }
     }
 
-    fn is_on_inert_name(&self, x: f64, y: f64) -> bool {
-        !self.names_clickable() && self.tile_at(x, y).is_some_and(|(_, on_name)| on_name)
+    fn is_empty_space_at(&self, x: f64, y: f64) -> bool {
+        !matches!(self.hit_at(x, y), Hit::Thumbnail(_))
     }
 
     fn hold_back_item_of(&self, tile: &PigouneAssetTile) {
@@ -704,10 +712,6 @@ impl PigouneAssetGrid {
             item.set_selectable(true);
             item.set_activatable(true);
         }
-    }
-
-    fn asset_at(&self, x: f64, y: f64) -> Option<PigouneAssetObject> {
-        self.tile_at(x, y)?.0.asset()
     }
 
     pub fn connect_context_menu_requested(&self, callback: impl Fn() -> gio::MenuModel + 'static) {
@@ -766,10 +770,7 @@ impl PigouneAssetGrid {
     )]
     fn show_context_menu(&self, x: f64, y: f64, menu_model: &dyn Fn() -> gio::MenuModel) -> bool {
         let imp = self.imp();
-        if self.is_on_inert_name(x, y) {
-            return false;
-        }
-        let Some(asset) = self.asset_at(x, y) else {
+        let Hit::Thumbnail(asset) = self.hit_at(x, y) else {
             return false;
         };
         let Some(point) = imp.grid_view.compute_point(
@@ -840,14 +841,17 @@ impl PigouneAssetGrid {
         clippy::cast_possible_truncation,
         reason = "pointer coordinates inside a tile fit in an f32"
     )]
-    fn name_is_inert_at(&self, tile: &PigouneAssetTile, x: f64, y: f64) -> bool {
-        !self.names_clickable()
-            && tile
-                .name_label()
-                .compute_bounds(tile)
-                .is_some_and(|bounds| {
-                    bounds.contains_point(&graphene::Point::new(x as f32, y as f32))
-                })
+    fn is_inert_name_under_drag(&self, tile: &PigouneAssetTile, x: f64, y: f64) -> bool {
+        tile.compute_point(
+            &*self.imp().grid_view,
+            &graphene::Point::new(x as f32, y as f32),
+        )
+        .is_some_and(|point| {
+            matches!(
+                self.hit_at(f64::from(point.x()), f64::from(point.y())),
+                Hit::InertName(_)
+            )
+        })
     }
 
     fn make_draggable(&self, tile: &PigouneAssetTile) {
@@ -862,7 +866,7 @@ impl PigouneAssetGrid {
             #[upgrade_or]
             None,
             move |_, x, y| {
-                if grid.name_is_inert_at(&tile, x, y) {
+                if grid.is_inert_name_under_drag(&tile, x, y) {
                     return None;
                 }
                 let dragged = grid.assets_dragged_from(&tile.asset()?);
@@ -1133,6 +1137,12 @@ fn whole_pixels(value: f64) -> i32 {
     value.round() as i32
 }
 
+enum Hit {
+    Space,
+    InertName(PigouneAssetTile),
+    Thumbnail(PigouneAssetObject),
+}
+
 fn tile_and_asset(item: &glib::Object) -> Option<(PigouneAssetTile, PigouneAssetObject)> {
     let item = item.downcast_ref::<gtk::ListItem>()?;
     let tile = item.child().and_downcast::<PigouneAssetTile>()?;
@@ -1163,9 +1173,16 @@ mod tests {
     }
 
     #[test]
-    fn space_around_a_thumbnail_is_its_padding_plus_the_gap_between_tiles() {
-        assert_eq!(FRAME_PADDING, 8);
-        assert_eq!(GAP_BETWEEN_TILES, 18);
+    fn space_around_a_thumbnail_matches_the_style_and_the_tile_layout() {
+        let style = include_str!("../ui/style.css");
+        let tile = include_str!("../ui/asset-tile.blp");
+        assert!(style.contains(&format!("border-spacing: {GAP_BETWEEN_TILES}px;")));
+        assert!(style.contains(&format!("padding: {}px;", GAP_BETWEEN_TILES / 2)));
+        assert_eq!(
+            tile.matches(&format!("margin-top: {FRAME_PADDING};"))
+                .count(),
+            2
+        );
         assert_eq!(
             SPACE_AROUND_THUMBNAIL,
             2 * FRAME_PADDING + GAP_BETWEEN_TILES

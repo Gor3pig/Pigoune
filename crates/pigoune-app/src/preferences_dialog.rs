@@ -178,7 +178,7 @@ fn fit_to_content(
     pages: &[adw::PreferencesPage],
     conditional_row: Option<&adw::SwitchRow>,
 ) {
-    let was_visible = conditional_row.is_some_and(WidgetExt::is_visible);
+    let was_visible = conditional_row.is_some_and(WidgetExt::get_visible);
     if let Some(row) = conditional_row {
         row.set_visible(true);
     }
