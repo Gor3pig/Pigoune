@@ -366,6 +366,15 @@ gridview.asset-grid > child overlay.tile-frame.found-19 {
   box-shadow: 0 0 0 10px alpha(@accent_color, 0.002), inset 0 0 0 2px alpha(@accent_color, 0.001);
 }
 
+gridview.asset-grid {
+  padding: 9px;
+  border-spacing: 18px;
+}
+
+gridview.asset-grid > child {
+  padding: 0;
+}
+
 gridview.asset-grid > child,
 gridview.asset-grid > child:hover,
 gridview.asset-grid > child:selected,
