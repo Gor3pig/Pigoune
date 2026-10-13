@@ -185,6 +185,36 @@ fn a_resource_not_yet_analysed_is_reported_as_pending() {
 }
 
 #[test]
+fn the_resources_still_to_analyse_are_counted_without_the_trashed_ones() {
+    let missing = Seed {
+        hash: None,
+        width: 100,
+        height: 100,
+    };
+    let (_workspace, mut library) = library_with(&[
+        seed(1),
+        Seed {
+            hash: None,
+            ..missing
+        },
+        Seed {
+            hash: None,
+            ..missing
+        },
+    ]);
+    assert_eq!(library.count_awaiting_visual_hash().expect("counted"), 2);
+
+    library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: vec![asset_id(3)],
+            trashed: true,
+        })
+        .expect("trashed");
+
+    assert_eq!(library.count_awaiting_visual_hash().expect("counted"), 1);
+}
+
+#[test]
 fn groups_gather_resources_that_are_close_to_each_other_in_a_chain() {
     let base = 0xf0f0_f0f0_f0f0_f0f0_u64;
     let near = flipped(base, &[0, 1, 2, 3]);

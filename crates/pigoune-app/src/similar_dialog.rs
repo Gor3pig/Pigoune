@@ -7,9 +7,8 @@ use gettextrs::gettext;
 use gtk::glib;
 use pigoune_core::AssetId;
 
-use crate::thumbnails;
+use crate::row_thumbnail;
 
-const THUMBNAIL_SIDE: i32 = 48;
 const ALMOST_IDENTICAL_DISTANCE: u32 = 2;
 const VERY_CLOSE_DISTANCE: u32 = 6;
 
@@ -128,25 +127,7 @@ impl PigouneSimilarDialog {
     }
 
     fn row_of(&self, entry: &SimilarEntry) -> adw::ActionRow {
-        let picture = gtk::Picture::builder()
-            .width_request(THUMBNAIL_SIDE)
-            .height_request(THUMBNAIL_SIDE)
-            .content_fit(gtk::ContentFit::Contain)
-            .can_shrink(true)
-            .build();
-        glib::spawn_future_local(glib::clone!(
-            #[weak]
-            picture,
-            #[strong(rename_to = file)]
-            entry.file,
-            #[strong(rename_to = thumbnail_file)]
-            entry.thumbnail_file,
-            async move {
-                if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
-                    picture.set_paintable(Some(&texture));
-                }
-            }
-        ));
+        let picture = row_thumbnail::picture(entry.file.clone(), entry.thumbnail_file.clone());
         let closeness = gtk::Label::builder()
             .label(closeness_text(entry.distance))
             .css_classes(["dim-label"])

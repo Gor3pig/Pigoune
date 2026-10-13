@@ -387,6 +387,14 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
         }
 
         Adw.ViewStackPage {
+          name: "duplicates";
+          title: _("Duplicates");
+          icon-name: "edit-copy-symbolic";
+
+          child: $PigouneDuplicatesPage duplicates_page {};
+        }
+
+        Adw.ViewStackPage {
           name: "export";
           title: _("Export");
           icon-name: "document-send-symbolic";

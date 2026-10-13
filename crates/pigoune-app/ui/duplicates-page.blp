@@ -1,0 +1,86 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneDuplicatesPage: Box {
+  orientation: vertical;
+
+  Stack stack {
+    transition-type: crossfade;
+
+    StackPage {
+      name: "message";
+
+      child: Adw.StatusPage message_page {
+        vexpand: true;
+        icon-name: "edit-copy-symbolic";
+        title: _("Look for Duplicates");
+        description: _("Pigoune compares the drawings of your assets and groups those that look alike, such as the same logo in two formats or sizes. Nothing is changed or deleted until you choose.");
+
+        styles [
+          "compact",
+        ]
+
+        child: Button search_button {
+          label: _("_Search");
+          use-underline: true;
+          halign: center;
+          clicked => $on_search_clicked() swapped;
+
+          styles [
+            "pill",
+            "suggested-action",
+          ]
+        };
+      };
+    }
+
+    StackPage {
+      name: "results";
+
+      child: ScrolledWindow {
+        vexpand: true;
+        hscrollbar-policy: never;
+
+        child: Adw.Clamp {
+          maximum-size: 648;
+          tightening-threshold: 560;
+
+          child: Box {
+            orientation: vertical;
+            spacing: 18;
+            margin-top: 18;
+            margin-bottom: 24;
+            margin-start: 24;
+            margin-end: 24;
+
+            Box {
+              spacing: 12;
+
+              Label caption_label {
+                hexpand: true;
+                xalign: 0;
+                wrap: true;
+
+                styles [
+                  "dim-label",
+                ]
+              }
+
+              Button {
+                label: _("_Search Again");
+                use-underline: true;
+                valign: center;
+                clicked => $on_search_clicked() swapped;
+              }
+            }
+
+            Box groups_box {
+              orientation: vertical;
+              spacing: 18;
+            }
+          };
+        };
+      };
+    }
+  }
+}

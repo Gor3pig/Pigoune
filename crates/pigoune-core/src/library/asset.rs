@@ -211,6 +211,15 @@ impl Library {
         Ok(ids)
     }
 
+    pub fn count_awaiting_visual_hash(&self) -> Result<u64, LibraryError> {
+        Ok(self.connection.query_row(
+            "SELECT COUNT(*) FROM assets
+             WHERE visual_hash IS NULL AND trashed_at_unix_ms IS NULL",
+            [],
+            |row| row.get(0),
+        )?)
+    }
+
     pub fn record_visual_hashes_batch(
         &mut self,
         batch: &[(AssetId, Option<VisualHash>)],

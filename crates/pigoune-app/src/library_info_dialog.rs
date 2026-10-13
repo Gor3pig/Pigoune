@@ -15,6 +15,7 @@ use crate::asset_colors;
 use crate::asset_facts;
 use crate::color_chips;
 use crate::config::VERSION;
+use crate::duplicates_page::DuplicateActions;
 use crate::health_page::HealthActions;
 use crate::host_path;
 use crate::thumbnails;
@@ -56,6 +57,7 @@ mod imp {
     use gtk::prelude::*;
     use pigoune_core::{AssetId, FormatShare, StorageUse};
 
+    use crate::duplicates_page::PigouneDuplicatesPage;
     use crate::health_page::PigouneHealthPage;
     use crate::ring_chart::PigouneRingChart;
     use crate::stacked_bar::PigouneStackedBar;
@@ -121,6 +123,8 @@ mod imp {
         pub format_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub health_page: TemplateChild<PigouneHealthPage>,
+        #[template_child]
+        pub duplicates_page: TemplateChild<PigouneDuplicatesPage>,
         pub root: RefCell<PathBuf>,
         pub shares: RefCell<Vec<FormatShare>>,
         pub storage: RefCell<Option<StorageUse>>,
@@ -140,6 +144,7 @@ mod imp {
             PigouneRingChart::ensure_type();
             PigouneStackedBar::ensure_type();
             PigouneHealthPage::ensure_type();
+            PigouneDuplicatesPage::ensure_type();
             class.bind_template();
             class.bind_template_instance_callbacks();
         }
@@ -168,6 +173,7 @@ impl PigouneLibraryInfoDialog {
         clear_thumbnails: impl Fn() -> Result<(), String> + 'static,
         export_library: impl Fn() + 'static,
         health: HealthActions,
+        duplicates: DuplicateActions,
     ) -> Self {
         let LibraryReport {
             name,
@@ -190,6 +196,7 @@ impl PigouneLibraryInfoDialog {
         imp.export_button.set_sensitive(overview.resources > 0);
         dialog.show_export_outline(&export_outline);
         imp.health_page.connect_actions(health);
+        imp.duplicates_page.connect_actions(duplicates);
         dialog.connect_closed(|dialog| dialog.imp().health_page.cancel());
         imp.root.replace(root.to_path_buf());
         imp.records_box.set_visible(overview.resources > 1);

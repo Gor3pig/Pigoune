@@ -8,10 +8,11 @@ use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
-    CollectionRemoval, Dimensions, HealthPlan, ImportError, ImportSummary, Library, LibraryError,
-    LibraryExportReport, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
-    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
-    TextField, UndoError, VisualHash, dominant_colors, library_display_name, visual_hash,
+    CollectionRemoval, DUPLICATE_DISTANCE, Dimensions, HealthPlan, ImportError, ImportSummary,
+    Library, LibraryError, LibraryExportReport, RgbaImage, SIMILAR_DISTANCE, SimilarSearch,
+    SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
+    TagError, TagId, TextField, UndoError, VisualHash, dominant_colors, library_display_name,
+    visual_hash,
 };
 
 use crate::asset_colors;
@@ -33,6 +34,7 @@ use crate::drop_action;
 use crate::drop_message;
 use crate::drop_places;
 use crate::dropped_content::{self, Dropped, DroppedImage};
+use crate::duplicates_page::{DuplicateActions, DuplicateMember, DuplicateReport};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
@@ -1431,6 +1433,82 @@ impl PigouneWindow {
         }
     }
 
+    fn duplicate_actions(&self) -> DuplicateActions {
+        DuplicateActions {
+            search: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(String::new()),
+                move || window.duplicate_report()
+            )),
+            trash: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |ids: Vec<AssetId>| window.trash_assets(ids)
+            )),
+            undo: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |stamp: ChangeStamp| window.undo_from_health(stamp)
+            )),
+            changed: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move || window.refresh_assets()
+            )),
+            show: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |id| window.show_in_all(id)
+            )),
+        }
+    }
+
+    fn duplicate_report(&self) -> Result<DuplicateReport, String> {
+        let library = self.imp().library.borrow();
+        let library = library.as_ref().ok_or_else(String::new)?;
+        let found = library
+            .duplicate_groups(DUPLICATE_DISTANCE)
+            .map_err(|error| error_messages::describe(&error))?;
+        let pending = library
+            .count_awaiting_visual_hash()
+            .map_err(|error| error_messages::describe(&error))?;
+        let groups = found
+            .into_iter()
+            .map(|group| {
+                let mut members: Vec<(u64, u64, DuplicateMember)> = group
+                    .into_iter()
+                    .filter_map(|id| library.asset(id).ok().flatten())
+                    .map(|asset| {
+                        let pixels = asset
+                            .dimensions
+                            .map_or(0, |size| u64::from(size.width()) * u64::from(size.height()));
+                        let member = DuplicateMember {
+                            id: asset.id,
+                            summary: asset_facts::summary_text(&asset, None),
+                            file: library.file_of(&asset),
+                            thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
+                            name: asset.display_name.clone(),
+                        };
+                        (pixels, asset.byte_size, member)
+                    })
+                    .collect();
+                members.sort_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
+                members
+                    .into_iter()
+                    .map(|(_, _, member)| member)
+                    .collect::<Vec<_>>()
+            })
+            .filter(|group| group.len() > 1)
+            .collect();
+        Ok(DuplicateReport { groups, pending })
+    }
+
     fn replace_stored_file(&self, id: AssetId, copy: &Path) -> Replaced {
         let library = self.imp().library.borrow();
         let Some(library) = library.as_ref() else {
@@ -1452,9 +1530,13 @@ impl PigouneWindow {
     }
 
     fn trash_damaged_resource(&self, id: AssetId) -> Trashed {
+        self.trash_assets(vec![id])
+    }
+
+    fn trash_assets(&self, assets: Vec<AssetId>) -> Trashed {
         let trashed = self.change_library(|library| {
             library.apply_asset_command(&AssetCommand::SetTrashed {
-                assets: vec![id],
+                assets,
                 trashed: true,
             })?;
             Ok::<_, AssetError>(library.latest_change())
@@ -1596,6 +1678,7 @@ impl PigouneWindow {
                         }
                     ),
                     self.health_actions(),
+                    self.duplicate_actions(),
                 )
             })
         });
