@@ -9,9 +9,9 @@ use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
     CollectionRemoval, Dimensions, HealthPlan, ImportError, ImportSummary, Library, LibraryError,
-    LibraryExportReport, SmartCollection, SmartCollectionCommand, SmartCollectionId,
-    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, dominant_colors,
-    library_display_name,
+    LibraryExportReport, RgbaImage, SmartCollection, SmartCollectionCommand, SmartCollectionId,
+    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VisualHash,
+    dominant_colors, library_display_name, visual_hash,
 };
 
 use crate::asset_colors;
@@ -1696,12 +1696,27 @@ impl PigouneWindow {
         }
         let window = self.clone();
         glib::spawn_future_local(async move {
-            window.analyse_pending_colors().await;
+            loop {
+                let colors_recorded = window.analyse_pending_colors().await;
+                let hashes_recorded = window.analyse_pending_visual_hashes().await;
+                if !(colors_recorded && hashes_recorded && window.analysis_is_pending()) {
+                    break;
+                }
+            }
             window.imp().analysing_colors.set(false);
         });
     }
 
-    async fn analyse_pending_colors(&self) {
+    fn analysis_is_pending(&self) -> bool {
+        [
+            self.files_awaiting_colors(),
+            self.files_awaiting_visual_hashes(),
+        ]
+        .iter()
+        .any(|pending| pending.as_ref().is_some_and(|files| !files.is_empty()))
+    }
+
+    async fn analyse_pending_colors(&self) -> bool {
         while let Some(pending) = self.files_awaiting_colors()
             && !pending.is_empty()
         {
@@ -1725,16 +1740,61 @@ impl PigouneWindow {
                 .as_mut()
                 .map(|library| library.record_colors_batch(&analysed));
             if !matches!(recorded, Some(Ok(()))) {
-                return;
+                return false;
             }
             self.show_new_colors();
         }
+        true
+    }
+
+    async fn analyse_pending_visual_hashes(&self) -> bool {
+        while let Some(pending) = self.files_awaiting_visual_hashes()
+            && !pending.is_empty()
+        {
+            let mut analysed = Vec::with_capacity(pending.len());
+            for (id, file, thumbnail_file) in pending {
+                let hash = match thumbnails::thumbnail(&file, &thumbnail_file).await {
+                    Some(texture) => {
+                        let size = u32::try_from(texture.width())
+                            .ok()
+                            .zip(u32::try_from(texture.height()).ok());
+                        let pixels = asset_colors::rgba_pixels(&texture);
+                        gio::spawn_blocking(move || visual_hash_of(size, pixels))
+                            .await
+                            .unwrap_or_default()
+                    }
+                    None => None,
+                };
+                analysed.push((id, hash));
+            }
+            let recorded = self
+                .imp()
+                .library
+                .borrow_mut()
+                .as_mut()
+                .map(|library| library.record_visual_hashes_batch(&analysed));
+            if !matches!(recorded, Some(Ok(()))) {
+                return false;
+            }
+        }
+        true
     }
 
     fn files_awaiting_colors(&self) -> Option<Vec<(AssetId, PathBuf, PathBuf)>> {
+        self.files_awaiting(|library| library.assets_awaiting_colors(COLOR_BATCH))
+    }
+
+    fn files_awaiting_visual_hashes(&self) -> Option<Vec<(AssetId, PathBuf, PathBuf)>> {
+        self.files_awaiting(|library| library.assets_awaiting_visual_hash(COLOR_BATCH))
+    }
+
+    fn files_awaiting(
+        &self,
+        awaiting: impl Fn(&Library) -> Result<Vec<AssetId>, LibraryError>,
+    ) -> Option<Vec<(AssetId, PathBuf, PathBuf)>> {
         let library = self.imp().library.borrow();
         let library = library.as_ref()?;
-        let ids = library.assets_awaiting_colors(COLOR_BATCH).ok()?;
+        let ids = awaiting(library).ok()?;
         Some(
             ids.into_iter()
                 .filter_map(|id| library.asset(id).ok().flatten())
@@ -6160,4 +6220,9 @@ fn asset_objects(
 fn nothing_to_import_text() -> String {
     gettext("This drop holds no image. In the browser, use “Copy Image”, then press {shortcut}")
         .replace("{shortcut}", &shortcuts::current_label(PASTE_ACTION))
+}
+
+fn visual_hash_of(size: Option<(u32, u32)>, pixels: Vec<u8>) -> Option<VisualHash> {
+    let (width, height) = size?;
+    visual_hash(&RgbaImage::new(width, height, pixels)?)
 }
