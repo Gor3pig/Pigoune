@@ -118,7 +118,9 @@ fn restore_default(
             shortcuts::validate(customizable.action, default, &overrides)
         {
             let reason = describe(&Refusal::Taken(other), default);
-            dialog.add_toast(adw::Toast::new(&reason));
+            let toast = adw::Toast::new(&reason);
+            toast.set_use_markup(false);
+            dialog.add_toast(toast);
             return;
         }
     }

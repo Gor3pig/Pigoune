@@ -3110,6 +3110,7 @@ impl PigouneWindow {
             return;
         };
         let progress = adw::Toast::new(&gettext("Exporting “{name}”…").replace("{name}", &name));
+        progress.set_use_markup(false);
         progress.set_timeout(0);
         self.imp().toast_overlay.add_toast(progress.clone());
         let outcome = gio::spawn_blocking(move || plan.run(&destination)).await;
@@ -3195,6 +3196,7 @@ impl PigouneWindow {
             assets.len(),
             settings.format,
         ));
+        progress.set_use_markup(false);
         progress.set_timeout(0);
         self.imp().toast_overlay.add_toast(progress.clone());
         let mut exported = 0;

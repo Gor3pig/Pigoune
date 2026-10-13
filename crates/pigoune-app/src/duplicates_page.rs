@@ -317,7 +317,6 @@ impl PigouneDuplicatesPage {
             return;
         };
         let toast = adw::Toast::new(text);
-        toast.set_use_markup(false);
         if let Some((label, on_click)) = button {
             toast.set_button_label(Some(&label));
             toast.connect_button_clicked(move |_| on_click());

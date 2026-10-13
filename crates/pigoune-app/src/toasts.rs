@@ -47,6 +47,7 @@ fn announce_in(host: &impl ToastHost, toast: &adw::Toast) {
     if let Some(previous) = replaced {
         previous.dismiss();
     }
+    toast.set_use_markup(false);
     toast.set_priority(adw::ToastPriority::High);
     host.add(toast.clone());
 }
