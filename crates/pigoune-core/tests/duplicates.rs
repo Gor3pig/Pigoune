@@ -18,6 +18,7 @@ struct Seed {
     hash: Option<u64>,
     width: u32,
     height: u32,
+    colors: Option<&'static str>,
 }
 
 fn seed(hash: u64) -> Seed {
@@ -25,8 +26,27 @@ fn seed(hash: u64) -> Seed {
         hash: Some(hash),
         width: 100,
         height: 100,
+        colors: None,
     }
 }
+
+fn shaped(hash: u64, width: u32, height: u32) -> Seed {
+    Seed {
+        width,
+        height,
+        ..seed(hash)
+    }
+}
+
+fn colored(hash: u64, colors: &'static str) -> Seed {
+    Seed {
+        colors: Some(colors),
+        ..seed(hash)
+    }
+}
+
+const DARK_AND_LIGHT: &str = "black#080808,white#f0f0f0";
+const BROWN: &str = "brown#704828";
 
 fn library_with(seeds: &[Seed]) -> (TempDir, Library) {
     let workspace = tempfile::tempdir().expect("temporary directory");
@@ -47,8 +67,8 @@ fn insert(root: &Path, seeds: &[Seed]) {
             .execute(
                 "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
                                      width, height, byte_size, content_hash, is_animated,
-                                     embedded_sizes, added_at_unix_ms, visual_hash)
-                 VALUES (?1, ?2, ?3, ?4, 'png', ?5, ?6, 100, ?7, 0, '', ?8, ?9)",
+                                     embedded_sizes, added_at_unix_ms, visual_hash, colors)
+                 VALUES (?1, ?2, ?3, ?4, 'png', ?5, ?6, 100, ?7, 0, '', ?8, ?9, ?10)",
                 params![
                     asset_id(number).to_string(),
                     format!("asset {number}"),
@@ -59,6 +79,7 @@ fn insert(root: &Path, seeds: &[Seed]) {
                     format!("hash-{number}"),
                     i64::try_from(number).expect("small"),
                     blob,
+                    seed.colors,
                 ],
             )
             .expect("asset is inserted");
@@ -172,8 +193,7 @@ fn a_resource_not_yet_analysed_is_reported_as_pending() {
     let (_workspace, library) = library_with(&[
         Seed {
             hash: None,
-            width: 100,
-            height: 100,
+            ..seed(0)
         },
         seed(1),
     ]);
@@ -188,8 +208,7 @@ fn a_resource_not_yet_analysed_is_reported_as_pending() {
 fn the_resources_still_to_analyse_are_counted_without_the_trashed_ones() {
     let missing = Seed {
         hash: None,
-        width: 100,
-        height: 100,
+        ..seed(0)
     };
     let (_workspace, mut library) = library_with(&[
         seed(1),
@@ -235,21 +254,9 @@ fn groups_gather_resources_that_are_close_to_each_other_in_a_chain() {
 #[test]
 fn proportions_that_differ_too_much_keep_resources_apart() {
     let (_workspace, library) = library_with(&[
-        Seed {
-            hash: Some(99),
-            width: 100,
-            height: 100,
-        },
-        Seed {
-            hash: Some(99),
-            width: 300,
-            height: 100,
-        },
-        Seed {
-            hash: Some(99),
-            width: 110,
-            height: 100,
-        },
+        shaped(99, 100, 100),
+        shaped(99, 300, 100),
+        shaped(99, 110, 100),
     ]);
 
     let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
@@ -361,4 +368,94 @@ fn thousands_of_identical_resources_form_one_group_without_trouble() {
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0].len(), 6_000);
     assert!(start.elapsed().as_secs() < 30, "{:?}", start.elapsed());
+}
+
+const WALLPAPER: u64 = 0x0030_30e0_e4c4_c484;
+const SESSION_THUMBNAIL: u64 = 0x3030_64e4_e4c4_c692;
+
+#[test]
+fn a_tall_wallpaper_is_not_offered_as_similar_to_a_square_thumbnail() {
+    let (_workspace, library) = library_with(&[
+        shaped(SESSION_THUMBNAIL, 320, 320),
+        shaped(WALLPAPER, 1440, 2560),
+    ]);
+    assert_eq!(
+        (SESSION_THUMBNAIL ^ WALLPAPER).count_ones(),
+        10,
+        "the real pair that was wrongly matched"
+    );
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert!(similar.is_empty());
+}
+
+#[test]
+fn similar_proportions_may_differ_a_little_but_not_by_much() {
+    let (_workspace, library) = library_with(&[
+        seed(0xabcd_ef01_2345_6789),
+        shaped(0xabcd_ef01_2345_6789, 100, 140),
+        shaped(0xabcd_ef01_2345_6789, 100, 200),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(2), 0)]);
+}
+
+#[test]
+fn a_loose_resemblance_needs_a_color_in_common() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, DARK_AND_LIGHT),
+        colored(flipped(base, &[1, 2, 3, 4, 5, 6, 7, 8]), BROWN),
+        colored(
+            flipped(base, &[9, 10, 11, 12, 13, 14, 15, 16]),
+            "white#ffffff",
+        ),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(3), 8)]);
+}
+
+#[test]
+fn a_very_close_shape_is_offered_even_in_other_colors() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, DARK_AND_LIGHT),
+        colored(flipped(base, &[1, 2, 3]), BROWN),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(2), 3)]);
+}
+
+#[test]
+fn colors_not_known_yet_do_not_hold_a_resemblance_back() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, DARK_AND_LIGHT),
+        seed(flipped(base, &[1, 2, 3, 4, 5, 6, 7, 8])),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(2), 8)]);
+}
+
+#[test]
+fn duplicates_follow_the_same_color_rule() {
+    let base = 0x0f0f_0f0f_0f0f_0f0f_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, DARK_AND_LIGHT),
+        colored(flipped(base, &[1, 2, 3, 4, 5]), BROWN),
+        colored(flipped(base, &[20, 21, 22, 23, 24]), "black#000000"),
+    ]);
+
+    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+
+    assert_eq!(groups, [vec![asset_id(1), asset_id(3)]]);
 }

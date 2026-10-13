@@ -1,12 +1,16 @@
 use std::collections::HashMap;
 
+use rusqlite::OptionalExtension;
+
 use super::{AssetId, Library, LibraryError};
-use crate::media::VisualHash;
+use crate::media::{AssetColor, VisualHash, dominant_from_text};
 
 pub const DUPLICATE_DISTANCE: u32 = 6;
 pub const SIMILAR_DISTANCE: u32 = 10;
 const HASH_BITS: u32 = 64;
-const LARGEST_PROPORTION_GAP: f64 = 1.25;
+const DUPLICATE_PROPORTION_GAP: f64 = 1.25;
+const SIMILAR_PROPORTION_GAP: f64 = 1.5;
+const TRUSTED_SHAPE_DISTANCE: u32 = 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SimilarAsset {
@@ -25,6 +29,14 @@ struct Fingerprint {
     asset: AssetId,
     hash: VisualHash,
     proportion: Option<f64>,
+    families: Option<Vec<AssetColor>>,
+}
+
+enum Stored {
+    Missing,
+    Pending,
+    Unusable,
+    Ready(Fingerprint),
 }
 
 impl Library {
@@ -33,36 +45,20 @@ impl Library {
         id: AssetId,
         max_distance: u32,
     ) -> Result<SimilarSearch, LibraryError> {
-        let stored: Option<Option<Vec<u8>>> = self
-            .connection
-            .query_row(
-                "SELECT visual_hash FROM assets WHERE id = ?1",
-                [id],
-                |row| row.get(0),
-            )
-            .map(Some)
-            .or_else(|error| match error {
-                rusqlite::Error::QueryReturnedNoRows => Ok(None),
-                other => Err(other),
-            })?;
-        let Some(stored) = stored else {
-            return Ok(SimilarSearch::NoFingerprint);
-        };
-        let Some(bytes) = stored else {
-            return Ok(SimilarSearch::Pending);
-        };
-        let Some(target) = VisualHash::from_bytes(&bytes) else {
-            return Ok(SimilarSearch::NoFingerprint);
+        let target = match self.stored_fingerprint(id)? {
+            Stored::Missing | Stored::Unusable => return Ok(SimilarSearch::NoFingerprint),
+            Stored::Pending => return Ok(SimilarSearch::Pending),
+            Stored::Ready(target) => target,
         };
         let mut similar: Vec<SimilarAsset> = self
             .fingerprints()?
             .into_iter()
             .filter(|other| other.asset != id)
+            .filter(|other| resembles(&target, other, max_distance, SIMILAR_PROPORTION_GAP))
             .map(|other| SimilarAsset {
                 asset: other.asset,
-                distance: target.distance(other.hash),
+                distance: target.hash.distance(other.hash),
             })
-            .filter(|similar| similar.distance <= max_distance)
             .collect();
         similar.sort_by_key(|similar| (similar.distance, similar.asset));
         Ok(SimilarSearch::Found(similar))
@@ -77,45 +73,91 @@ impl Library {
 
     fn fingerprints(&self) -> Result<Vec<Fingerprint>, LibraryError> {
         let mut statement = self.connection.prepare(
-            "SELECT id, visual_hash, width, height FROM assets
+            "SELECT id, visual_hash, width, height, colors FROM assets
              WHERE trashed_at_unix_ms IS NULL AND length(visual_hash) = ?1
              ORDER BY id",
         )?;
-        let rows = statement.query_map([VisualHash::BYTE_LENGTH], |row| {
-            Ok((
-                row.get::<_, AssetId>(0)?,
-                row.get::<_, Vec<u8>>(1)?,
-                row.get::<_, Option<u32>>(2)?,
-                row.get::<_, Option<u32>>(3)?,
-            ))
-        })?;
+        let rows = statement.query_map([VisualHash::BYTE_LENGTH], fingerprint_from_row)?;
         let mut fingerprints = Vec::new();
         for row in rows {
-            let (asset, bytes, width, height) = row?;
-            let Some(hash) = VisualHash::from_bytes(&bytes) else {
-                continue;
-            };
-            let proportion = width
-                .zip(height)
-                .filter(|(width, height)| *width > 0 && *height > 0)
-                .map(|(width, height)| f64::from(width) / f64::from(height));
-            fingerprints.push(Fingerprint {
-                asset,
-                hash,
-                proportion,
-            });
+            if let Some(fingerprint) = row? {
+                fingerprints.push(fingerprint);
+            }
         }
         Ok(fingerprints)
     }
+
+    fn stored_fingerprint(&self, id: AssetId) -> Result<Stored, LibraryError> {
+        let row = self
+            .connection
+            .query_row(
+                "SELECT id, visual_hash, width, height, colors FROM assets WHERE id = ?1",
+                [id],
+                |row| {
+                    let pending = row.get::<_, Option<Vec<u8>>>(1)?.is_none();
+                    Ok((pending, fingerprint_from_row(row)?))
+                },
+            )
+            .optional()?;
+        Ok(match row {
+            None => Stored::Missing,
+            Some((true, _)) => Stored::Pending,
+            Some((false, None)) => Stored::Unusable,
+            Some((false, Some(fingerprint))) => Stored::Ready(fingerprint),
+        })
+    }
 }
 
-fn similar_proportions(first: Option<f64>, second: Option<f64>) -> bool {
+fn fingerprint_from_row(row: &rusqlite::Row) -> rusqlite::Result<Option<Fingerprint>> {
+    let bytes: Option<Vec<u8>> = row.get(1)?;
+    let Some(hash) = bytes.and_then(|bytes| VisualHash::from_bytes(&bytes)) else {
+        return Ok(None);
+    };
+    let width: Option<u32> = row.get(2)?;
+    let height: Option<u32> = row.get(3)?;
+    let colors: Option<String> = row.get(4)?;
+    Ok(Some(Fingerprint {
+        asset: row.get(0)?,
+        hash,
+        proportion: width
+            .zip(height)
+            .filter(|(width, height)| *width > 0 && *height > 0)
+            .map(|(width, height)| f64::from(width) / f64::from(height)),
+        families: colors.map(|text| {
+            dominant_from_text(&text)
+                .into_iter()
+                .map(|color| color.family)
+                .collect()
+        }),
+    }))
+}
+
+fn similar_proportions(first: Option<f64>, second: Option<f64>, largest_gap: f64) -> bool {
     match (first, second) {
-        (Some(first), Some(second)) => {
-            first.max(second) / first.min(second) <= LARGEST_PROPORTION_GAP
+        (Some(first), Some(second)) => first.max(second) / first.min(second) <= largest_gap,
+        _ => true,
+    }
+}
+
+fn share_a_color(first: &Fingerprint, second: &Fingerprint) -> bool {
+    match (&first.families, &second.families) {
+        (Some(first), Some(second)) if !first.is_empty() && !second.is_empty() => {
+            first.iter().any(|family| second.contains(family))
         }
         _ => true,
     }
+}
+
+fn resembles(
+    first: &Fingerprint,
+    second: &Fingerprint,
+    max_distance: u32,
+    proportion_gap: f64,
+) -> bool {
+    let distance = first.hash.distance(second.hash);
+    distance <= max_distance
+        && similar_proportions(first.proportion, second.proportion, proportion_gap)
+        && (distance <= TRUSTED_SHAPE_DISTANCE || share_a_color(first, second))
 }
 
 fn join_close_fingerprints(fingerprints: &[Fingerprint], max_distance: u32, groups: &mut Groups) {
@@ -135,9 +177,7 @@ fn join_close_fingerprints(fingerprints: &[Fingerprint], max_distance: u32, grou
                         continue;
                     }
                     let (a, b) = (&fingerprints[*first], &fingerprints[*second]);
-                    if a.hash.distance(b.hash) <= max_distance
-                        && similar_proportions(a.proportion, b.proportion)
-                    {
+                    if resembles(a, b, max_distance, DUPLICATE_PROPORTION_GAP) {
                         groups.join(*first, *second);
                     }
                 }
