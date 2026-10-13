@@ -64,7 +64,8 @@ pour chaque élément.
 ### Retrouver
 Recherche instantanée et filtres par type, par orientation, par couleur ou par favori, même parmi des milliers
 d’éléments, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
-collection ou un tag vous montre où se trouve l’élément.
+collection ou un tag vous montre où se trouve l’élément. Un clic droit sur un élément trouve ceux qui
+lui ressemblent, et la page Doublons regroupe le même logo en deux formats ou deux tailles.
 
 </td>
 <td width="50%" valign="top">

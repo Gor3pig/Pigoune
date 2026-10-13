@@ -63,6 +63,22 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "2.10.0" => vec![
+            Point {
+                icon: "edit-find-symbolic",
+                title: gettext("Find Look-Alikes"),
+                text: gettext(
+                    "Right-click an asset and choose Find Similar to see the assets that look like it, closest first.",
+                ),
+            },
+            Point {
+                icon: "edit-copy-symbolic",
+                title: gettext("Duplicates"),
+                text: gettext(
+                    "The new Duplicates tab of Manage Library groups assets that look alike, such as the same logo in two formats. Keep one, and the others go to the trash.",
+                ),
+            },
+        ],
         "2.9.0" => vec![
             Point {
                 icon: "input-mouse-symbolic",
