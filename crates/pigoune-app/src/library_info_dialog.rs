@@ -197,7 +197,10 @@ impl PigouneLibraryInfoDialog {
         dialog.show_export_outline(&export_outline);
         imp.health_page.connect_actions(health);
         imp.duplicates_page.connect_actions(duplicates);
-        dialog.connect_closed(|dialog| dialog.imp().health_page.cancel());
+        dialog.connect_closed(|dialog| {
+            dialog.imp().health_page.cancel();
+            dialog.imp().duplicates_page.cancel();
+        });
         imp.root.replace(root.to_path_buf());
         imp.records_box.set_visible(overview.resources > 1);
         dialog.show_records(&records, &record_thumbnails);

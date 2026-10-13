@@ -34,7 +34,7 @@ use crate::drop_action;
 use crate::drop_message;
 use crate::drop_places;
 use crate::dropped_content::{self, Dropped, DroppedImage};
-use crate::duplicates_page::{DuplicateActions, DuplicateMember, DuplicateReport};
+use crate::duplicates_page::{DuplicateActions, DuplicateMember, PlannedSearch};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
@@ -1435,13 +1435,20 @@ impl PigouneWindow {
 
     fn duplicate_actions(&self) -> DuplicateActions {
         DuplicateActions {
-            search: Box::new(glib::clone!(
+            plan: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_else]
                 || Err(String::new()),
-                move || window.duplicate_report()
+                move || window.duplicate_plan()
             )),
+            members: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move |ids: &[AssetId]| window.duplicate_members(ids)
+            )),
+            thumbnails: self.imp().asset_grid.thumbnail_cache(),
             trash: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1469,44 +1476,33 @@ impl PigouneWindow {
         }
     }
 
-    fn duplicate_report(&self) -> Result<DuplicateReport, String> {
+    fn duplicate_plan(&self) -> Result<PlannedSearch, String> {
         let library = self.imp().library.borrow();
         let library = library.as_ref().ok_or_else(String::new)?;
-        let found = library
-            .duplicate_groups(DUPLICATE_DISTANCE)
+        let plan = library
+            .duplicate_plan(DUPLICATE_DISTANCE)
             .map_err(|error| error_messages::describe(&error))?;
         let pending = library
             .count_awaiting_visual_hash()
             .map_err(|error| error_messages::describe(&error))?;
-        let groups = found
-            .into_iter()
-            .map(|group| {
-                let mut members: Vec<(u64, u64, DuplicateMember)> = group
-                    .into_iter()
-                    .filter_map(|id| library.asset(id).ok().flatten())
-                    .map(|asset| {
-                        let pixels = asset
-                            .dimensions
-                            .map_or(0, |size| u64::from(size.width()) * u64::from(size.height()));
-                        let member = DuplicateMember {
-                            id: asset.id,
-                            summary: asset_facts::summary_text(&asset, None),
-                            file: library.file_of(&asset),
-                            thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
-                            name: asset.display_name.clone(),
-                        };
-                        (pixels, asset.byte_size, member)
-                    })
-                    .collect();
-                members.sort_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
-                members
-                    .into_iter()
-                    .map(|(_, _, member)| member)
-                    .collect::<Vec<_>>()
+        Ok(PlannedSearch { plan, pending })
+    }
+
+    fn duplicate_members(&self, ids: &[AssetId]) -> Vec<DuplicateMember> {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return Vec::new();
+        };
+        ids.iter()
+            .filter_map(|id| library.asset(*id).ok().flatten())
+            .map(|asset| DuplicateMember {
+                id: asset.id,
+                summary: asset_facts::summary_text(&asset, None),
+                file: library.file_of(&asset),
+                thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
+                name: asset.display_name,
             })
-            .filter(|group| group.len() > 1)
-            .collect();
-        Ok(DuplicateReport { groups, pending })
+            .collect()
     }
 
     fn replace_stored_file(&self, id: AssetId, copy: &Path) -> Replaced {

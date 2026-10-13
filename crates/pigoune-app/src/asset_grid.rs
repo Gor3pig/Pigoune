@@ -894,6 +894,10 @@ impl PigouneAssetGrid {
         tile.add_controller(source);
     }
 
+    pub fn thumbnail_cache(&self) -> Rc<ThumbnailCache> {
+        self.imp().thumbnails.clone()
+    }
+
     pub fn connect_export_copies(&self, export: impl Fn(&[AssetId]) -> Vec<PathBuf> + 'static) {
         self.imp().export_copies.replace(Some(Rc::new(export)));
     }

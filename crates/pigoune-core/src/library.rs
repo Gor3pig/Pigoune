@@ -54,8 +54,8 @@ pub use batch_import::{
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use duplicates::{
-    ALMOST_IDENTICAL_DISTANCE, DUPLICATE_DISTANCE, SIMILAR_DISTANCE, SimilarAsset, SimilarSearch,
-    VERY_CLOSE_DISTANCE,
+    ALMOST_IDENTICAL_DISTANCE, DUPLICATE_DISTANCE, DuplicatePlan, DuplicateProgress,
+    SIMILAR_DISTANCE, SimilarAsset, SimilarSearch, VERY_CLOSE_DISTANCE,
 };
 pub use error::{
     AdoptError, CollectionError, ImportError, LibraryError, RemoveRecordError, ReplaceError,

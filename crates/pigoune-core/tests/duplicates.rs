@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -261,7 +262,7 @@ fn proportions_that_differ_too_much_keep_resources_apart() {
 
     let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
 
-    assert_eq!(groups, [vec![asset_id(1), asset_id(3)]]);
+    assert_eq!(groups, [vec![asset_id(3), asset_id(1)]]);
 }
 
 #[test]
@@ -500,4 +501,67 @@ fn unknown_colors_come_after_known_ones_of_the_same_closeness() {
     let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
 
     assert_eq!(similar, [(asset_id(3), 2), (asset_id(2), 1)]);
+}
+
+#[test]
+fn a_group_lists_its_largest_image_first() {
+    let (_workspace, library) = library_with(&[
+        shaped(77, 100, 100),
+        shaped(77, 200, 200),
+        shaped(77, 150, 150),
+    ]);
+
+    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+
+    assert_eq!(groups, [vec![asset_id(2), asset_id(3), asset_id(1)]]);
+}
+
+#[test]
+fn a_plan_finds_the_same_groups_as_the_direct_search() {
+    let hashes = clustered_hashes(1500, 120);
+    let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
+    let (_workspace, library) = library_with(&seeds);
+
+    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+    let found = plan
+        .run(|_| ControlFlow::Continue(()))
+        .expect("not canceled");
+
+    assert_eq!(
+        found,
+        library.duplicate_groups(SIDE_BY_SIDE).expect("grouped")
+    );
+}
+
+#[test]
+fn a_plan_reports_a_progress_that_only_grows_and_ends_complete() {
+    let hashes = clustered_hashes(800, 60);
+    let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
+    let (_workspace, library) = library_with(&seeds);
+    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+
+    let mut reports = Vec::new();
+    plan.run(|progress| {
+        reports.push((progress.done, progress.total));
+        ControlFlow::Continue(())
+    })
+    .expect("not canceled");
+
+    assert!(reports.len() > 2);
+    assert!(reports.windows(2).all(|pair| pair[0].0 <= pair[1].0));
+    assert!(reports.iter().all(|(done, total)| done <= total));
+    let (done, total) = *reports.last().expect("reported");
+    assert_eq!(done, total);
+}
+
+#[test]
+fn a_plan_can_be_canceled() {
+    let hashes = clustered_hashes(800, 60);
+    let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
+    let (_workspace, library) = library_with(&seeds);
+    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+
+    let found = plan.run(|_| ControlFlow::Break(()));
+
+    assert!(found.is_none());
 }

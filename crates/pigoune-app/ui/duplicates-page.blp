@@ -20,16 +20,42 @@ template $PigouneDuplicatesPage: Box {
           "compact",
         ]
 
-        child: Button search_button {
-          label: _("_Search");
-          use-underline: true;
+        child: Box {
+          orientation: vertical;
+          spacing: 18;
           halign: center;
-          clicked => $on_search_clicked() swapped;
+          width-request: 340;
 
-          styles [
-            "pill",
-            "suggested-action",
-          ]
+          Button search_button {
+            label: _("_Search");
+            use-underline: true;
+            halign: center;
+            clicked => $on_search_clicked() swapped;
+
+            styles [
+              "pill",
+              "suggested-action",
+            ]
+          }
+
+          Box progress_box {
+            orientation: vertical;
+            spacing: 12;
+            visible: false;
+
+            ProgressBar progress_bar {}
+
+            Button cancel_button {
+              label: _("_Cancel");
+              use-underline: true;
+              halign: center;
+              clicked => $on_cancel_clicked() swapped;
+
+              styles [
+                "pill",
+              ]
+            }
+          }
         };
       };
     }
@@ -37,7 +63,7 @@ template $PigouneDuplicatesPage: Box {
     StackPage {
       name: "results";
 
-      child: ScrolledWindow {
+      child: ScrolledWindow scroller {
         vexpand: true;
         hscrollbar-policy: never;
 
