@@ -36,7 +36,7 @@ impl Rgb {
         self.distance_to(other) <= CLOSE_DISTANCE
     }
 
-    fn distance_to(self, other: Self) -> f64 {
+    pub(crate) fn distance_to(self, other: Self) -> f64 {
         let [l1, a1, b1] = self.oklab();
         let [l2, a2, b2] = other.oklab();
         ((l1 - l2).powi(2) + (a1 - a2).powi(2) + (b1 - b2).powi(2)).sqrt()

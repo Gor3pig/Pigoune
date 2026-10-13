@@ -5,12 +5,9 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::glib;
-use pigoune_core::AssetId;
+use pigoune_core::{ALMOST_IDENTICAL_DISTANCE, AssetId, VERY_CLOSE_DISTANCE};
 
 use crate::row_thumbnail;
-
-const ALMOST_IDENTICAL_DISTANCE: u32 = 2;
-const VERY_CLOSE_DISTANCE: u32 = 6;
 
 type ShowInAll = Rc<dyn Fn(AssetId)>;
 

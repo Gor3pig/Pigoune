@@ -3,10 +3,12 @@ use std::collections::HashMap;
 use rusqlite::OptionalExtension;
 
 use super::{AssetId, Library, LibraryError};
-use crate::media::{AssetColor, VisualHash, dominant_from_text};
+use crate::media::{DominantColor, VisualHash, dominant_from_text};
 
 pub const DUPLICATE_DISTANCE: u32 = 6;
 pub const SIMILAR_DISTANCE: u32 = 10;
+pub const ALMOST_IDENTICAL_DISTANCE: u32 = 2;
+pub const VERY_CLOSE_DISTANCE: u32 = 6;
 const HASH_BITS: u32 = 64;
 const DUPLICATE_PROPORTION_GAP: f64 = 1.25;
 const SIMILAR_PROPORTION_GAP: f64 = 1.5;
@@ -29,7 +31,7 @@ struct Fingerprint {
     asset: AssetId,
     hash: VisualHash,
     proportion: Option<f64>,
-    families: Option<Vec<AssetColor>>,
+    colors: Option<Vec<DominantColor>>,
 }
 
 enum Stored {
@@ -50,17 +52,30 @@ impl Library {
             Stored::Pending => return Ok(SimilarSearch::Pending),
             Stored::Ready(target) => target,
         };
-        let mut similar: Vec<SimilarAsset> = self
+        let mut ranked: Vec<(SimilarAsset, f64)> = self
             .fingerprints()?
             .into_iter()
             .filter(|other| other.asset != id)
             .filter(|other| resembles(&target, other, max_distance, SIMILAR_PROPORTION_GAP))
-            .map(|other| SimilarAsset {
-                asset: other.asset,
-                distance: target.hash.distance(other.hash),
+            .map(|other| {
+                let similar = SimilarAsset {
+                    asset: other.asset,
+                    distance: target.hash.distance(other.hash),
+                };
+                (
+                    similar,
+                    palette_gap(&target, &other).unwrap_or(f64::INFINITY),
+                )
             })
             .collect();
-        similar.sort_by_key(|similar| (similar.distance, similar.asset));
+        ranked.sort_by(|(first, first_gap), (second, second_gap)| {
+            closeness_rank(first.distance)
+                .cmp(&closeness_rank(second.distance))
+                .then(first_gap.total_cmp(second_gap))
+                .then(first.distance.cmp(&second.distance))
+                .then(first.asset.cmp(&second.asset))
+        });
+        let similar = ranked.into_iter().map(|(similar, _)| similar).collect();
         Ok(SimilarSearch::Found(similar))
     }
 
@@ -123,12 +138,7 @@ fn fingerprint_from_row(row: &rusqlite::Row) -> rusqlite::Result<Option<Fingerpr
             .zip(height)
             .filter(|(width, height)| *width > 0 && *height > 0)
             .map(|(width, height)| f64::from(width) / f64::from(height)),
-        families: colors.map(|text| {
-            dominant_from_text(&text)
-                .into_iter()
-                .map(|color| color.family)
-                .collect()
-        }),
+        colors: colors.map(|text| dominant_from_text(&text)),
     }))
 }
 
@@ -139,13 +149,47 @@ fn similar_proportions(first: Option<f64>, second: Option<f64>, largest_gap: f64
     }
 }
 
+fn known_colors(fingerprint: &Fingerprint) -> Option<&[DominantColor]> {
+    fingerprint
+        .colors
+        .as_deref()
+        .filter(|colors| !colors.is_empty())
+}
+
 fn share_a_color(first: &Fingerprint, second: &Fingerprint) -> bool {
-    match (&first.families, &second.families) {
-        (Some(first), Some(second)) if !first.is_empty() && !second.is_empty() => {
-            first.iter().any(|family| second.contains(family))
-        }
+    match (known_colors(first), known_colors(second)) {
+        (Some(first), Some(second)) => first
+            .iter()
+            .any(|color| second.iter().any(|other| other.family == color.family)),
         _ => true,
     }
+}
+
+fn closeness_rank(distance: u32) -> u8 {
+    if distance <= ALMOST_IDENTICAL_DISTANCE {
+        0
+    } else if distance <= VERY_CLOSE_DISTANCE {
+        1
+    } else {
+        2
+    }
+}
+
+fn palette_gap(first: &Fingerprint, second: &Fingerprint) -> Option<f64> {
+    let (first, second) = (known_colors(first)?, known_colors(second)?);
+    Some(directed_gap(first, second).max(directed_gap(second, first)))
+}
+
+fn directed_gap(from: &[DominantColor], to: &[DominantColor]) -> f64 {
+    let total: f64 = from
+        .iter()
+        .map(|color| {
+            to.iter()
+                .map(|other| color.average.distance_to(other.average))
+                .fold(f64::INFINITY, f64::min)
+        })
+        .sum();
+    total / f64::from(u32::try_from(from.len()).unwrap_or(u32::MAX))
 }
 
 fn resembles(

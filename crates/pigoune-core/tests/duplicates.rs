@@ -459,3 +459,45 @@ fn duplicates_follow_the_same_color_rule() {
 
     assert_eq!(groups, [vec![asset_id(1), asset_id(3)]]);
 }
+
+#[test]
+fn within_the_same_closeness_the_closest_colors_come_first() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, "blue#3050c0"),
+        colored(flipped(base, &[1]), "red#c03030"),
+        colored(flipped(base, &[2, 3]), "blue#3458c4"),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(3), 2), (asset_id(2), 1)]);
+}
+
+#[test]
+fn a_nearer_shape_still_beats_better_colors() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, "blue#3050c0"),
+        colored(flipped(base, &[1]), "red#c03030"),
+        colored(flipped(base, &[2, 3, 4, 5, 6]), "blue#3050c0"),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(2), 1), (asset_id(3), 5)]);
+}
+
+#[test]
+fn unknown_colors_come_after_known_ones_of_the_same_closeness() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        colored(base, "blue#3050c0"),
+        seed(flipped(base, &[1])),
+        colored(flipped(base, &[2, 3]), "red#c03030"),
+    ]);
+
+    let similar = found(library.similar_assets(asset_id(1), 10).expect("searched"));
+
+    assert_eq!(similar, [(asset_id(3), 2), (asset_id(2), 1)]);
+}
