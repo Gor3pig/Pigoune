@@ -63,6 +63,22 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "2.9.0" => vec![
+            Point {
+                icon: "input-mouse-symbolic",
+                title: gettext("Precise Clicks"),
+                text: gettext(
+                    "Clicking next to a thumbnail no longer selects it: the clickable area is exactly the thumbnail and its name.",
+                ),
+            },
+            Point {
+                icon: "font-select-symbolic",
+                title: gettext("Names as Plain Text"),
+                text: gettext(
+                    "A new option in Preferences, under Display, makes asset names plain text, so a selection rectangle can start from them.",
+                ),
+            },
+        ],
         "2.8.0" => vec![
             Point {
                 icon: "edit-undo-symbolic",
