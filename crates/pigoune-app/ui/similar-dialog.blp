@@ -1,0 +1,62 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneSimilarDialog: Adw.Dialog {
+  title: _("Similar Assets");
+  content-width: 480;
+  content-height: 560;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {}
+
+    content: Stack stack {
+      transition-type: crossfade;
+
+      StackPage {
+        name: "message";
+
+        child: Adw.StatusPage message_page {
+          icon-name: "edit-find-symbolic";
+        };
+      }
+
+      StackPage {
+        name: "results";
+
+        child: ScrolledWindow {
+          hscrollbar-policy: never;
+
+          child: Adw.Clamp {
+            margin-top: 12;
+            margin-bottom: 24;
+            margin-start: 12;
+            margin-end: 12;
+
+            child: Box {
+              orientation: vertical;
+              spacing: 12;
+
+              Label caption_label {
+                xalign: 0;
+                wrap: true;
+
+                styles [
+                  "dim-label",
+                ]
+              }
+
+              ListBox results_list {
+                selection-mode: none;
+
+                styles [
+                  "boxed-list",
+                ]
+              }
+            };
+          };
+        };
+      }
+    };
+  };
+}

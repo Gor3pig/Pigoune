@@ -9,12 +9,13 @@ use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
     CollectionRemoval, Dimensions, HealthPlan, ImportError, ImportSummary, Library, LibraryError,
-    LibraryExportReport, RgbaImage, SmartCollection, SmartCollectionCommand, SmartCollectionId,
-    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VisualHash,
-    dominant_colors, library_display_name, visual_hash,
+    LibraryExportReport, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
+    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
+    TextField, UndoError, VisualHash, dominant_colors, library_display_name, visual_hash,
 };
 
 use crate::asset_colors;
+use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::clipboard_content;
@@ -51,6 +52,7 @@ use crate::settings;
 use crate::shortcuts;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
 use crate::sidebar_item::SidebarEntry;
+use crate::similar_dialog::{PigouneSimilarDialog, SimilarEntry, SimilarOutcome};
 use crate::smart_collection_dialog::{
     PigouneSmartCollectionDialog, SmartCollectionDraft, free_name,
 };
@@ -96,6 +98,7 @@ const OPEN_PREVIEW_ACTION: &str = "win.open-preview";
 const OPEN_WITH_ACTION: &str = "win.open-with";
 const SHOW_IN_FILES_ACTION: &str = "win.show-in-files";
 const SET_WALLPAPER_ACTION: &str = "win.set-wallpaper";
+const FIND_SIMILAR_ACTION: &str = "win.find-similar";
 const FALLBACK_SCREEN: (u32, u32) = (1920, 1080);
 const RENAME_ASSET_ACTION: &str = "win.rename-asset";
 const ADD_TAG_ACTION: &str = "win.add-tag";
@@ -135,8 +138,10 @@ const SELECT_ALL_ACTION: &str = "win.select-all";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 26] = [
+const MOST_SIMILAR_SHOWN: usize = 50;
+const OPEN_LIBRARY_ACTIONS: [&str; 27] = [
     SET_WALLPAPER_ACTION,
+    FIND_SIMILAR_ACTION,
     SEARCH_ACTION,
     LIBRARY_INFO_ACTION,
     UNDO_ACTION,
@@ -226,16 +231,16 @@ mod imp {
         CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
         DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
         ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
-        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, MERGE_TAG_ACTION,
-        MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
-        NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION,
-        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
-        PASTE_ACTION, PREFERENCES_ACTION, REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
-        SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer, UNDO_ACTION,
-        collection_parameter, smart_collection_parameter, tag_parameter,
+        FIND_SIMILAR_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION,
+        MERGE_TAG_ACTION, MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION,
+        NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION,
+        NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
+        OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION, PREFERENCES_ACTION,
+        REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION, REMOVE_FROM_COLLECTION_ACTION,
+        RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
+        SEARCH_ACTION, SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION,
+        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer,
+        UNDO_ACTION, collection_parameter, smart_collection_parameter, tag_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -440,6 +445,9 @@ mod imp {
         });
         class.install_action(SET_WALLPAPER_ACTION, None, |window, _, _| {
             window.prepare_selected_as_wallpaper();
+        });
+        class.install_action(FIND_SIMILAR_ACTION, None, |window, _, _| {
+            window.after_menu_closes(super::PigouneWindow::find_similar_to_selected);
         });
         class.install_action(OPEN_PREVIEW_ACTION, None, |window, _, _| {
             window.after_menu_closes(|window| window.open_preview(None));
@@ -2290,6 +2298,13 @@ impl PigouneWindow {
                 &gettext("Show in Files"),
                 SHOW_IN_FILES_ACTION,
             ));
+            if !in_trash {
+                viewing.append_item(&menu_item(
+                    &gettext("Find Similar…"),
+                    FIND_SIMILAR_ACTION,
+                    None,
+                ));
+            }
         }
         let sharing = gio::Menu::new();
         sharing.append_item(&menu_item(
@@ -3665,6 +3680,53 @@ impl PigouneWindow {
         if let Some(reveal) = reveal {
             self.go_to_view(AssetView::Collection(id), reveal);
         }
+    }
+
+    fn find_similar_to_selected(&self) {
+        let selected = self.imp().asset_grid.selected_assets();
+        let [only] = selected.as_slice() else {
+            return;
+        };
+        let Some((name, outcome)) = self.similar_outcome(only.id()) else {
+            return;
+        };
+        let dialog = PigouneSimilarDialog::new();
+        dialog.connect_show_in_all(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |id| window.show_in_all(id)
+        ));
+        dialog.show_outcome(&name, outcome);
+        dialog.present(Some(self));
+    }
+
+    fn similar_outcome(&self, id: AssetId) -> Option<(String, SimilarOutcome)> {
+        let library = self.imp().library.borrow();
+        let library = library.as_ref()?;
+        let asset = library.asset(id).ok().flatten()?;
+        let outcome = match library.similar_assets(id, SIMILAR_DISTANCE).ok()? {
+            SimilarSearch::Pending => SimilarOutcome::Pending,
+            SimilarSearch::NoFingerprint => SimilarOutcome::NoFingerprint,
+            SimilarSearch::Found(similar) if similar.is_empty() => SimilarOutcome::NothingSimilar,
+            SimilarSearch::Found(similar) => SimilarOutcome::Found(
+                similar
+                    .into_iter()
+                    .take(MOST_SIMILAR_SHOWN)
+                    .filter_map(|similar| {
+                        let other = library.asset(similar.asset).ok().flatten()?;
+                        Some(SimilarEntry {
+                            id: other.id,
+                            summary: asset_facts::summary_text(&other, None),
+                            distance: similar.distance,
+                            file: library.file_of(&other),
+                            thumbnail_file: library.thumbnail_file(other.id, THUMBNAIL_PIXELS),
+                            name: other.display_name,
+                        })
+                    })
+                    .collect(),
+            ),
+        };
+        Some((asset.display_name, outcome))
     }
 
     fn show_in_all(&self, id: AssetId) {

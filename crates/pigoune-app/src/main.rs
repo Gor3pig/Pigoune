@@ -83,6 +83,7 @@ mod sidebar;
 mod sidebar_item;
 mod sidebar_row;
 mod sidebar_tag_cloud;
+mod similar_dialog;
 mod smart_collection_dialog;
 mod smart_collection_sort;
 mod square_space;
