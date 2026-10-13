@@ -266,12 +266,6 @@ mod tests {
             let original = picture(256, 0.0, CLEAR, INK, shape);
             let large = hash(&original);
             let small = hash(&original.resized(48, 48));
-            eprintln!(
-                "DBG {} {:016x} {:016x}",
-                large.distance(small),
-                large.bits(),
-                small.bits()
-            );
             assert!(large.distance(small) <= 6, "{}", large.distance(small));
         }
     }

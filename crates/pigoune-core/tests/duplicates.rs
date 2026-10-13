@@ -349,3 +349,16 @@ fn grouping_forty_thousand_resources_stays_quick() {
     assert!(!groups.is_empty());
     assert!(start.elapsed().as_secs() < 60, "{:?}", start.elapsed());
 }
+
+#[test]
+fn thousands_of_identical_resources_form_one_group_without_trouble() {
+    let seeds: Vec<Seed> = (0..6_000).map(|_| seed(0xdead_beef_0bad_f00d)).collect();
+    let (_workspace, library) = library_with(&seeds);
+
+    let start = Instant::now();
+    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+
+    assert_eq!(groups.len(), 1);
+    assert_eq!(groups[0].len(), 6_000);
+    assert!(start.elapsed().as_secs() < 30, "{:?}", start.elapsed());
+}

@@ -71,9 +71,7 @@ impl Library {
     pub fn duplicate_groups(&self, max_distance: u32) -> Result<Vec<Vec<AssetId>>, LibraryError> {
         let fingerprints = self.fingerprints()?;
         let mut groups = Groups::new(fingerprints.len());
-        for (first, second) in close_pairs(&fingerprints, max_distance) {
-            groups.join(first, second);
-        }
+        join_close_fingerprints(&fingerprints, max_distance, &mut groups);
         Ok(groups.into_groups(&fingerprints))
     }
 
@@ -120,9 +118,8 @@ fn similar_proportions(first: Option<f64>, second: Option<f64>) -> bool {
     }
 }
 
-fn close_pairs(fingerprints: &[Fingerprint], max_distance: u32) -> Vec<(usize, usize)> {
+fn join_close_fingerprints(fingerprints: &[Fingerprint], max_distance: u32, groups: &mut Groups) {
     let bands = max_distance + 1;
-    let mut pairs = Vec::new();
     for band in 0..bands {
         let mut buckets: HashMap<u64, Vec<usize>> = HashMap::new();
         for (index, fingerprint) in fingerprints.iter().enumerate() {
@@ -134,17 +131,19 @@ fn close_pairs(fingerprints: &[Fingerprint], max_distance: u32) -> Vec<(usize, u
         for members in buckets.values() {
             for (position, first) in members.iter().enumerate() {
                 for second in &members[position + 1..] {
+                    if groups.root(*first) == groups.root(*second) {
+                        continue;
+                    }
                     let (a, b) = (&fingerprints[*first], &fingerprints[*second]);
                     if a.hash.distance(b.hash) <= max_distance
                         && similar_proportions(a.proportion, b.proportion)
                     {
-                        pairs.push((*first, *second));
+                        groups.join(*first, *second);
                     }
                 }
             }
         }
     }
-    pairs
 }
 
 fn band_of(bits: u64, band: u32, bands: u32) -> u64 {
