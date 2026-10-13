@@ -73,7 +73,7 @@ mod imp {
         pub drag_caption: RefCell<Option<gtk::Label>>,
         pub selection_callback: RefCell<Option<super::SelectionCallback>>,
         pub removing: Cell<bool>,
-        pub inert_cell: RefCell<Option<glib::WeakRef<gtk::Widget>>>,
+        pub held_item: RefCell<Option<glib::WeakRef<gtk::ListItem>>>,
     }
 
     impl Default for PigouneAssetGrid {
@@ -101,7 +101,7 @@ mod imp {
                 drag_caption: RefCell::default(),
                 selection_callback: RefCell::default(),
                 removing: Cell::default(),
-                inert_cell: RefCell::default(),
+                held_item: RefCell::default(),
             }
         }
     }
@@ -174,7 +174,6 @@ mod imp {
             grid.unselect_on_empty_click();
             grid.lasso_only_from_empty_space();
             grid.follow_visible_width();
-            grid.release_inert_name_when_context_changes();
         }
     }
 
@@ -508,7 +507,15 @@ impl PigouneAssetGrid {
         let callback = Rc::new(callback);
         let grid_view = &self.imp().grid_view;
         let on_activate = Rc::clone(&callback);
-        grid_view.connect_activate(move |_, position| on_activate(Some(position)));
+        grid_view.connect_activate(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, position| {
+                if grid.imp().held_item.borrow().is_none() {
+                    on_activate(Some(position));
+                }
+            }
+        ));
         let space = gtk::EventControllerKey::new();
         space.set_propagation_phase(gtk::PropagationPhase::Capture);
         space.connect_key_pressed(move |_, key, _, modifiers| {
@@ -589,7 +596,17 @@ impl PigouneAssetGrid {
             #[weak(rename_to = grid)]
             self,
             move |gesture, _, x, y| {
-                let on_empty_space = grid.asset_at(x, y).is_none();
+                grid.restore_held_item();
+                let hit = grid.tile_at(x, y);
+                let inert_name = hit
+                    .as_ref()
+                    .filter(|(_, on_name)| *on_name && !grid.names_clickable())
+                    .map(|(tile, _)| tile.clone());
+                let on_empty_space = inert_name.is_some()
+                    || hit.as_ref().is_none_or(|(tile, _)| tile.asset().is_none());
+                if let Some(tile) = &inert_name {
+                    grid.hold_back_item_of(tile);
+                }
                 if on_empty_space {
                     grid.take_focus_from_elsewhere();
                 }
@@ -603,6 +620,16 @@ impl PigouneAssetGrid {
                     selection.unselect_all();
                 }
             }
+        ));
+        click.connect_end(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _| grid.restore_held_item()
+        ));
+        click.connect_cancel(glib::clone!(
+            #[weak(rename_to = grid)]
+            self,
+            move |_, _| grid.restore_held_item()
         ));
         self.imp().grid_view.add_controller(click);
     }
@@ -629,12 +656,8 @@ impl PigouneAssetGrid {
                 let pressing = motion
                     .current_event_state()
                     .intersects(gdk::ModifierType::BUTTON1_MASK);
-                if pressing {
-                    return;
-                }
-                grid.make_inert_the_name_under(x, y);
-                let on_empty_space = grid.asset_at(x, y).is_none();
-                if grid.imp().grid_view.enables_rubberband() != on_empty_space {
+                let on_empty_space = grid.is_empty_space_at(x, y);
+                if !pressing && grid.imp().grid_view.enables_rubberband() != on_empty_space {
                     glib::idle_add_local_once(glib::clone!(
                         #[weak]
                         grid,
@@ -643,90 +666,48 @@ impl PigouneAssetGrid {
                 }
             }
         ));
-        motion.connect_leave(glib::clone!(
-            #[weak(rename_to = grid)]
-            self,
-            move |_| grid.release_inert_cell()
-        ));
         self.imp().grid_view.add_controller(motion);
     }
 
-    fn make_inert_the_name_under(&self, x: f64, y: f64) {
-        if self.names_clickable() {
-            self.release_inert_cell();
-            return;
-        }
-        if let Some(cell) = self.inert_cell() {
-            if name_of(&cell).is_some_and(|name| self.name_contains(&name, x, y)) {
-                return;
-            }
-            self.release_inert_cell();
-        }
-        let Some((cell, _)) = self.name_at(x, y) else {
-            return;
-        };
-        self.imp().inert_cell.replace(Some(cell.downgrade()));
-        glib::idle_add_local_once(glib::clone!(
-            #[weak]
-            cell,
-            move || cell.set_can_target(false)
-        ));
-    }
-
-    fn name_at(&self, x: f64, y: f64) -> Option<(gtk::Widget, gtk::Label)> {
+    fn tile_at(&self, x: f64, y: f64) -> Option<(PigouneAssetTile, bool)> {
         let widget = self.imp().grid_view.pick(x, y, gtk::PickFlags::DEFAULT)?;
         let tile = widget
             .ancestor(PigouneAssetTile::static_type())
             .and_downcast::<PigouneAssetTile>()?;
-        let name = tile.name_label();
-        if widget != name.clone().upcast::<gtk::Widget>() {
-            return None;
+        let on_name = widget == tile.name_label().upcast::<gtk::Widget>();
+        Some((tile, on_name))
+    }
+
+    fn is_empty_space_at(&self, x: f64, y: f64) -> bool {
+        self.tile_at(x, y).is_none_or(|(tile, on_name)| {
+            tile.asset().is_none() || (on_name && !self.names_clickable())
+        })
+    }
+
+    fn is_on_inert_name(&self, x: f64, y: f64) -> bool {
+        !self.names_clickable() && self.tile_at(x, y).is_some_and(|(_, on_name)| on_name)
+    }
+
+    fn hold_back_item_of(&self, tile: &PigouneAssetTile) {
+        let Some(item) = tile.list_item() else {
+            return;
+        };
+        item.set_selectable(false);
+        item.set_activatable(false);
+        self.imp().held_item.replace(Some(item.downgrade()));
+        self.imp().grid_view.set_enable_rubberband(true);
+    }
+
+    fn restore_held_item(&self) {
+        let held = self.imp().held_item.take();
+        if let Some(item) = held.and_then(|item| item.upgrade()) {
+            item.set_selectable(true);
+            item.set_activatable(true);
         }
-        Some((tile.parent()?, name))
-    }
-
-    fn inert_cell(&self) -> Option<gtk::Widget> {
-        self.imp().inert_cell.borrow().as_ref()?.upgrade()
-    }
-
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "pointer coordinates inside the grid fit in an f32"
-    )]
-    fn name_contains(&self, name: &gtk::Label, x: f64, y: f64) -> bool {
-        name.compute_bounds(&*self.imp().grid_view)
-            .is_some_and(|bounds| bounds.contains_point(&graphene::Point::new(x as f32, y as f32)))
-    }
-
-    fn release_inert_cell(&self) {
-        let released = self.imp().inert_cell.take();
-        if let Some(cell) = released.and_then(|cell| cell.upgrade()) {
-            cell.set_can_target(true);
-        }
-    }
-
-    fn release_inert_name_when_context_changes(&self) {
-        self.connect_names_clickable_notify(Self::release_inert_cell);
-        self.connect_show_names_notify(Self::release_inert_cell);
-        self.imp()
-            .scrolled_window
-            .vadjustment()
-            .connect_value_changed(glib::clone!(
-                #[weak(rename_to = grid)]
-                self,
-                move |_| grid.release_inert_cell()
-            ));
     }
 
     fn asset_at(&self, x: f64, y: f64) -> Option<PigouneAssetObject> {
-        let widget = self.imp().grid_view.pick(x, y, gtk::PickFlags::DEFAULT)?;
-        let tile = match widget.downcast::<PigouneAssetTile>() {
-            Ok(tile) => tile,
-            Err(widget) => widget
-                .ancestor(PigouneAssetTile::static_type())
-                .and_downcast::<PigouneAssetTile>()?,
-        };
-        tile.asset()
+        self.tile_at(x, y)?.0.asset()
     }
 
     pub fn connect_context_menu_requested(&self, callback: impl Fn() -> gio::MenuModel + 'static) {
@@ -785,6 +766,9 @@ impl PigouneAssetGrid {
     )]
     fn show_context_menu(&self, x: f64, y: f64, menu_model: &dyn Fn() -> gio::MenuModel) -> bool {
         let imp = self.imp();
+        if self.is_on_inert_name(x, y) {
+            return false;
+        }
         let Some(asset) = self.asset_at(x, y) else {
             return false;
         };
@@ -852,6 +836,20 @@ impl PigouneAssetGrid {
         menu.popup();
     }
 
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "pointer coordinates inside a tile fit in an f32"
+    )]
+    fn name_is_inert_at(&self, tile: &PigouneAssetTile, x: f64, y: f64) -> bool {
+        !self.names_clickable()
+            && tile
+                .name_label()
+                .compute_bounds(tile)
+                .is_some_and(|bounds| {
+                    bounds.contains_point(&graphene::Point::new(x as f32, y as f32))
+                })
+    }
+
     fn make_draggable(&self, tile: &PigouneAssetTile) {
         let source = gtk::DragSource::builder()
             .actions(gdk::DragAction::MOVE | gdk::DragAction::COPY)
@@ -863,7 +861,10 @@ impl PigouneAssetGrid {
             tile,
             #[upgrade_or]
             None,
-            move |_, _, _| {
+            move |_, x, y| {
+                if grid.name_is_inert_at(&tile, x, y) {
+                    return None;
+                }
                 let dragged = grid.assets_dragged_from(&tile.asset()?);
                 Some(grid.drag_content(dragged))
             }
@@ -998,6 +999,7 @@ impl PigouneAssetGrid {
                     tile.bind_property("description", item, "accessible-label")
                         .sync_create()
                         .build();
+                    tile.attach_list_item(item);
                     item.set_child(Some(&tile));
                 }
             }
@@ -1007,13 +1009,14 @@ impl PigouneAssetGrid {
             let Some((tile, asset)) = tile_and_asset(item) else {
                 return;
             };
+            if let Some(item) = item.downcast_ref::<gtk::ListItem>() {
+                item.set_selectable(true);
+                item.set_activatable(true);
+            }
             tile.show_asset(&asset, &thumbnails);
         });
         factory.connect_unbind(|_, item| {
             if let Some((tile, _)) = tile_and_asset(item) {
-                if let Some(cell) = tile.parent() {
-                    cell.set_can_target(true);
-                }
                 tile.forget_asset();
             }
         });
@@ -1130,12 +1133,6 @@ fn whole_pixels(value: f64) -> i32 {
     value.round() as i32
 }
 
-fn name_of(cell: &gtk::Widget) -> Option<gtk::Label> {
-    cell.first_child()
-        .and_downcast::<PigouneAssetTile>()
-        .map(|tile| tile.name_label())
-}
-
 fn tile_and_asset(item: &glib::Object) -> Option<(PigouneAssetTile, PigouneAssetObject)> {
     let item = item.downcast_ref::<gtk::ListItem>()?;
     let tile = item.child().and_downcast::<PigouneAssetTile>()?;
@@ -1151,7 +1148,10 @@ impl Default for PigouneAssetGrid {
 
 #[cfg(test)]
 mod tests {
-    use super::{allowed_tile_size, next_larger_step, next_smaller_step};
+    use super::{
+        FRAME_PADDING, GAP_BETWEEN_TILES, SPACE_AROUND_THUMBNAIL, allowed_tile_size,
+        next_larger_step, next_smaller_step,
+    };
 
     #[test]
     fn requested_sizes_stay_within_the_allowed_range() {
@@ -1160,6 +1160,16 @@ mod tests {
         assert_eq!(allowed_tile_size(next_smaller_step(64)), 64);
         assert_eq!(allowed_tile_size(40), 64);
         assert_eq!(allowed_tile_size(150), 150);
+    }
+
+    #[test]
+    fn space_around_a_thumbnail_is_its_padding_plus_the_gap_between_tiles() {
+        assert_eq!(FRAME_PADDING, 8);
+        assert_eq!(GAP_BETWEEN_TILES, 18);
+        assert_eq!(
+            SPACE_AROUND_THUMBNAIL,
+            2 * FRAME_PADDING + GAP_BETWEEN_TILES
+        );
     }
 
     #[test]

@@ -60,7 +60,8 @@ pub fn present(parent: &impl IsA<gtk::Widget>, settings: &gio::Settings) {
     ) {
         shortcuts_page::populate(&dialog, &group, &restore, settings);
     }
-    dialog.connect_map(move |dialog| fit_to_content(dialog, &pages));
+    let conditional_row = builder.object::<adw::SwitchRow>("names_clickable_row");
+    dialog.connect_map(move |dialog| fit_to_content(dialog, &pages, conditional_row.as_ref()));
     dialog.present(Some(parent));
 }
 
@@ -172,7 +173,15 @@ fn whole_number(value: f64) -> i32 {
     value.round() as i32
 }
 
-fn fit_to_content(dialog: &adw::PreferencesDialog, pages: &[adw::PreferencesPage]) {
+fn fit_to_content(
+    dialog: &adw::PreferencesDialog,
+    pages: &[adw::PreferencesPage],
+    conditional_row: Option<&adw::SwitchRow>,
+) {
+    let was_visible = conditional_row.is_some_and(WidgetExt::is_visible);
+    if let Some(row) = conditional_row {
+        row.set_visible(true);
+    }
     let width = dialog.content_width();
     let content = pages
         .iter()
@@ -183,6 +192,9 @@ fn fit_to_content(dialog: &adw::PreferencesDialog, pages: &[adw::PreferencesPage
     let header = descendant::<adw::HeaderBar>(dialog.upcast_ref()).map_or(0, |header| {
         header.measure(gtk::Orientation::Vertical, width).1
     });
+    if let Some(row) = conditional_row {
+        row.set_visible(was_visible);
+    }
     if content > 0 {
         dialog.set_content_height(content + header);
     }

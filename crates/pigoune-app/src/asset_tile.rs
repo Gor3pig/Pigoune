@@ -61,6 +61,7 @@ mod imp {
         pub favorite_badge: TemplateChild<gtk::Image>,
         pub favorite_binding: RefCell<Option<glib::Binding>>,
         pub name_bindings: RefCell<Vec<glib::Binding>>,
+        pub list_item: RefCell<Option<glib::WeakRef<gtk::ListItem>>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
         pub animation: RefCell<Option<glib::JoinHandle<()>>>,
         pub asset: RefCell<Option<PigouneAssetObject>>,
@@ -236,6 +237,14 @@ impl PigouneAssetTile {
             .borrow()
             .as_ref()
             .is_some_and(|shown| shown.id() == id)
+    }
+
+    pub fn attach_list_item(&self, item: &gtk::ListItem) {
+        self.imp().list_item.replace(Some(item.downgrade()));
+    }
+
+    pub fn list_item(&self) -> Option<gtk::ListItem> {
+        self.imp().list_item.borrow().as_ref()?.upgrade()
     }
 
     pub fn forget_asset(&self) {
