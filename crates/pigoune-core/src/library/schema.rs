@@ -6,6 +6,7 @@ use super::{LibraryError, animation_recheck, buckets};
 
 pub const CURRENT_FORMAT_VERSION: u32 = 11;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
+const PAGE_CACHE_KIB: i64 = 65_536;
 
 enum Migration {
     Statements(&'static str),
@@ -42,6 +43,7 @@ pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError>
     connection.pragma_update(None, "journal_mode", "DELETE")?;
     connection.pragma_update(None, "synchronous", "FULL")?;
     connection.busy_timeout(std::time::Duration::from_secs(5))?;
+    connection.pragma_update(None, "cache_size", -PAGE_CACHE_KIB)?;
     Ok(())
 }
 
@@ -122,7 +124,21 @@ fn is_not_a_database(error: &rusqlite::Error) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
+    use super::{
+        CURRENT_FORMAT_VERSION, PAGE_CACHE_KIB, configure_connection, oldest_compatible_version,
+    };
+
+    #[test]
+    fn a_connection_keeps_a_page_cache_large_enough_for_a_whole_library() {
+        let connection = rusqlite::Connection::open_in_memory().expect("opens");
+
+        configure_connection(&connection).expect("configured");
+
+        let size: i64 = connection
+            .pragma_query_value(None, "cache_size", |row| row.get(0))
+            .expect("readable");
+        assert_eq!(size, -PAGE_CACHE_KIB);
+    }
 
     #[test]
     fn every_format_names_the_first_version_of_pigoune_able_to_read_it() {
