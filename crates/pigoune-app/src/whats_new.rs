@@ -63,6 +63,22 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "2.11.0" => vec![
+            Point {
+                icon: "user-trash-symbolic",
+                title: gettext("Safer Duplicates"),
+                text: gettext(
+                    "Nothing goes to the trash unless you tick it yourself, and Pigoune checks every asset again just before moving it.",
+                ),
+            },
+            Point {
+                icon: "color-select-symbolic",
+                title: gettext("Finer Comparison"),
+                text: gettext(
+                    "Pigoune now compares colors and details, so assets that only share an outline are no longer grouped. It analyzes your library again in the background.",
+                ),
+            },
+        ],
         "2.10.0" => vec![
             Point {
                 icon: "edit-find-symbolic",
@@ -123,34 +139,6 @@ fn points_of(version: &str) -> Vec<Point> {
                 text: gettext(
                     "The Manage Library window opens at once, even for a library on a slow disk.",
                 ),
-            },
-        ],
-        "2.7.0" => vec![
-            Point {
-                icon: "folder-pictures-symbolic",
-                title: gettext("More Icons"),
-                text: gettext(
-                    "Choose from 294 icons in 13 themes for your collections, and find one quickly with the search field.",
-                ),
-            },
-            Point {
-                icon: "edit-find-symbolic",
-                title: gettext("Faster Searching"),
-                text: gettext(
-                    "Searching, filtering and the numbers in the sidebar are several times faster on large libraries.",
-                ),
-            },
-            Point {
-                icon: "view-grid-symbolic",
-                title: gettext("Steadier Grid"),
-                text: gettext(
-                    "Marking a favorite, adding a tag or renaming an asset no longer rebuilds the grid, so your scroll position and selection stay put.",
-                ),
-            },
-            Point {
-                icon: "drive-harddisk-symbolic",
-                title: gettext("Quicker Library Window"),
-                text: gettext("The records of Manage Library now show their thumbnails at once."),
             },
         ],
         _ => Vec::new(),
