@@ -1,3 +1,4 @@
+use std::cell::{Cell, RefCell};
 use std::ops::ControlFlow;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -8,9 +9,11 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
-use pigoune_core::{AssetId, ChangeStamp, DuplicatePlan, DuplicateProgress};
+use pigoune_core::{
+    AssetId, ChangeStamp, ConfirmedRemoval, DuplicateKind, DuplicatePlan, DuplicateProgress,
+};
 
-use crate::health_page::{Refusal, Replaced, Trashed};
+use crate::health_page::{Refusal, Replaced};
 use crate::row_thumbnail;
 use crate::thumbnails::ThumbnailCache;
 use crate::toasts;
@@ -41,11 +44,40 @@ pub struct WaitingThumbnail {
 
 pub type MembersLoader = Box<dyn Fn(&[AssetId]) -> Vec<DuplicateMember>>;
 
+pub struct Attachments {
+    pub collections: usize,
+    pub tags: usize,
+    pub favorite: bool,
+    pub note: bool,
+}
+
+pub enum RemovalFailure {
+    Changed,
+    Refused(Refusal),
+}
+
+pub type Removed = Result<ChangeStamp, RemovalFailure>;
+
+struct MemberControls {
+    id: AssetId,
+    tick: gtk::CheckButton,
+    kept: gtk::Label,
+}
+
+struct GroupState {
+    reference: Cell<AssetId>,
+    ticked: RefCell<Vec<AssetId>>,
+    rows: RefCell<Vec<MemberControls>>,
+    first_radio: RefCell<Option<gtk::CheckButton>>,
+    action: gtk::Button,
+}
+
 pub struct DuplicateActions {
     pub plan: Box<dyn Fn() -> Result<PlannedSearch, String>>,
     pub members: MembersLoader,
     pub thumbnails: Rc<ThumbnailCache>,
-    pub trash: Box<dyn Fn(Vec<AssetId>) -> Trashed>,
+    pub remove: Box<dyn Fn(&ConfirmedRemoval) -> Removed>,
+    pub attachments: Box<dyn Fn(AssetId) -> Attachments>,
     pub undo: Box<dyn Fn(ChangeStamp) -> Replaced>,
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
@@ -62,7 +94,7 @@ mod imp {
     use gtk::glib;
 
     use super::{DuplicateActions, DuplicateMember, WaitingThumbnail};
-    use pigoune_core::AssetId;
+    use pigoune_core::{AssetId, DuplicateKind};
 
     #[derive(Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/github/gor3pig/Pigoune/ui/duplicates-page.ui")]
@@ -92,6 +124,8 @@ mod imp {
         pub pending: Cell<u64>,
         pub cancel_requested: RefCell<Option<Arc<AtomicBool>>>,
         pub scroll_followed: Cell<bool>,
+        pub removing: Cell<bool>,
+        pub kinds: RefCell<HashMap<AssetId, DuplicateKind>>,
     }
 
     #[glib::object_subclass]
@@ -188,7 +222,22 @@ impl PigouneDuplicatesPage {
                 page.imp().cancel_requested.replace(None);
                 match found {
                     Some(groups) => {
-                        page.imp().groups.replace(groups);
+                        let imp = page.imp();
+                        {
+                            let mut kinds = imp.kinds.borrow_mut();
+                            kinds.clear();
+                            for member in groups.iter().flat_map(|group| group.members.iter()) {
+                                kinds.insert(member.asset, member.kind);
+                            }
+                        }
+                        imp.groups.replace(
+                            groups
+                                .iter()
+                                .map(|group| {
+                                    group.members.iter().map(|member| member.asset).collect()
+                                })
+                                .collect(),
+                        );
                         page.show_groups();
                     }
                     None => page.show_idle(),
@@ -208,7 +257,8 @@ impl PigouneDuplicatesPage {
 
     fn show_idle(&self) {
         let imp = self.imp();
-        imp.message_page.set_title(&gettext("Look for Duplicates"));
+        imp.message_page
+            .set_title(&gettext("Look for Possible Duplicates"));
         imp.message_page.set_description(Some(&gettext(
             "Pigoune compares the drawings of your assets and groups those that look alike, such as the same logo in two formats or sizes. Nothing is changed or deleted until you choose.",
         )));
@@ -387,12 +437,37 @@ impl PigouneDuplicatesPage {
     }
 
     fn group_widget(&self, group: &[AssetId]) -> adw::PreferencesGroup {
+        let action = gtk::Button::builder()
+            .valign(gtk::Align::Center)
+            .sensitive(false)
+            .build();
+        action.add_css_class("destructive-action");
+        let state = Rc::new(GroupState {
+            reference: Cell::new(group[0]),
+            ticked: RefCell::new(Vec::new()),
+            rows: RefCell::new(Vec::new()),
+            first_radio: RefCell::new(None),
+            action: action.clone(),
+        });
+        Self::refresh_action(&state);
         let widget = adw::PreferencesGroup::builder()
             .title(
-                gettext("{count} assets look alike").replace("{count}", &group.len().to_string()),
+                gettext("{count} possible duplicates")
+                    .replace("{count}", &group.len().to_string()),
             )
+            .description(gettext(
+                "Choose the asset to keep, then tick the assets to move to the trash. Nothing is ticked for you.",
+            ))
+            .header_suffix(&action)
             .build();
-        self.append_members(&widget, &Rc::new(group.to_vec()), 0, MEMBERS_SHOWN);
+        action.connect_clicked(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            #[strong]
+            state,
+            move |_| page.confirm(&state)
+        ));
+        self.append_members(&widget, &Rc::new(group.to_vec()), &state, 0, MEMBERS_SHOWN);
         widget
     }
 
@@ -400,19 +475,19 @@ impl PigouneDuplicatesPage {
         &self,
         widget: &adw::PreferencesGroup,
         group: &Rc<Vec<AssetId>>,
+        state: &Rc<GroupState>,
         start: usize,
         batch: usize,
     ) {
         let end = (start + batch).min(group.len());
         self.ensure_details(&group[start..end]);
-        let key = group[0];
         for id in &group[start..end] {
             if let Some(member) = self.imp().details.borrow().get(id) {
-                widget.add(&self.member_row(key, member));
+                widget.add(&self.member_row(state, member));
             }
         }
         if end < group.len() {
-            widget.add(&self.show_more_row(widget, group, end));
+            widget.add(&self.show_more_row(widget, group, state, end));
         }
     }
 
@@ -420,6 +495,7 @@ impl PigouneDuplicatesPage {
         &self,
         widget: &adw::PreferencesGroup,
         group: &Rc<Vec<AssetId>>,
+        state: &Rc<GroupState>,
         next: usize,
     ) -> adw::ActionRow {
         let hidden = group.len() - next;
@@ -434,42 +510,135 @@ impl PigouneDuplicatesPage {
             widget,
             #[strong]
             group,
+            #[strong]
+            state,
             move |row| {
                 widget.remove(row);
-                page.append_members(&widget, &group, next, MORE_MEMBERS_SHOWN);
+                page.append_members(&widget, &group, &state, next, MORE_MEMBERS_SHOWN);
                 page.load_visible_thumbnails_later();
             }
         ));
         row
     }
 
-    fn member_row(&self, key: AssetId, member: &DuplicateMember) -> adw::ActionRow {
+    fn member_row(&self, state: &Rc<GroupState>, member: &DuplicateMember) -> adw::ActionRow {
         let row = adw::ActionRow::builder()
             .title(&member.name)
             .subtitle(&member.summary)
             .use_markup(false)
             .activatable(true)
             .build();
-        row.add_prefix(&self.thumbnail_of(member));
-        let keep = gtk::Button::builder()
-            .label(gettext("_Keep This One"))
-            .use_underline(true)
+        let radio = gtk::CheckButton::builder()
             .valign(gtk::Align::Center)
-            .tooltip_text(gettext("Move the other assets of this group to the trash"))
+            .tooltip_text(gettext("Keep this asset"))
             .build();
-        let kept = member.id;
-        keep.connect_clicked(glib::clone!(
-            #[weak(rename_to = page)]
-            self,
-            move |_| page.keep(key, kept)
+        if let Some(first) = state.first_radio.borrow().as_ref() {
+            radio.set_group(Some(first));
+        } else {
+            state.first_radio.replace(Some(radio.clone()));
+        }
+        let id = member.id;
+        let is_reference = state.reference.get() == id;
+        radio.set_active(is_reference);
+        radio.connect_toggled(glib::clone!(
+            #[strong]
+            state,
+            move |radio| {
+                if radio.is_active() {
+                    Self::choose_reference(&state, id);
+                }
+            }
         ));
-        row.add_suffix(&keep);
+        let tick = gtk::CheckButton::builder()
+            .label(gettext("Move to Trash"))
+            .valign(gtk::Align::Center)
+            .visible(!is_reference)
+            .build();
+        tick.connect_toggled(glib::clone!(
+            #[strong]
+            state,
+            move |tick| Self::tick_changed(&state, id, tick.is_active())
+        ));
+        let kind = self.imp().kinds.borrow().get(&id).copied();
+        let kind_label = gtk::Label::builder()
+            .label(match kind {
+                Some(DuplicateKind::VisuallyIdentical) => gettext("Identical"),
+                Some(DuplicateKind::Probable) => gettext("Probable"),
+                None => String::new(),
+            })
+            .tooltip_text(gettext("Compared with the largest asset of the group"))
+            .css_classes(["dim-label"])
+            .valign(gtk::Align::Center)
+            .visible(kind.is_some() && state.reference.get() != id)
+            .build();
+        let kept = gtk::Label::builder()
+            .label(gettext("Kept"))
+            .css_classes(["dim-label"])
+            .valign(gtk::Align::Center)
+            .visible(is_reference)
+            .build();
+        state.rows.borrow_mut().push(MemberControls {
+            id,
+            tick: tick.clone(),
+            kept: kept.clone(),
+        });
+        row.add_prefix(&radio);
+        row.add_prefix(&self.thumbnail_of(member));
+        row.add_suffix(&kind_label);
+        row.add_suffix(&tick);
+        row.add_suffix(&kept);
         row.connect_activated(glib::clone!(
             #[weak(rename_to = page)]
             self,
-            move |_| page.show_resource(kept)
+            move |_| page.show_resource(id)
         ));
         row
+    }
+
+    fn choose_reference(state: &Rc<GroupState>, id: AssetId) {
+        state.reference.set(id);
+        let controls: Vec<(AssetId, gtk::CheckButton, gtk::Label)> = state
+            .rows
+            .borrow()
+            .iter()
+            .map(|row| (row.id, row.tick.clone(), row.kept.clone()))
+            .collect();
+        for (row_id, tick, kept) in controls {
+            let is_reference = row_id == id;
+            if is_reference {
+                tick.set_active(false);
+            }
+            tick.set_visible(!is_reference);
+            kept.set_visible(is_reference);
+        }
+        Self::refresh_action(state);
+    }
+
+    fn tick_changed(state: &Rc<GroupState>, id: AssetId, on: bool) {
+        {
+            let mut ticked = state.ticked.borrow_mut();
+            ticked.retain(|known| *known != id);
+            if on && state.reference.get() != id {
+                ticked.push(id);
+            }
+        }
+        Self::refresh_action(state);
+    }
+
+    fn refresh_action(state: &Rc<GroupState>) {
+        let count = state.ticked.borrow().len();
+        let label = if count == 0 {
+            gettext("Move to the Trash…")
+        } else {
+            ngettext(
+                "Move {count} Asset to the Trash…",
+                "Move {count} Assets to the Trash…",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &count.to_string())
+        };
+        state.action.set_label(&label);
+        state.action.set_sensitive(count > 0);
     }
 
     fn thumbnail_of(&self, member: &DuplicateMember) -> gtk::Picture {
@@ -490,29 +659,138 @@ impl PigouneDuplicatesPage {
         picture
     }
 
-    fn keep(&self, key: AssetId, kept: AssetId) {
+    fn confirm(&self, state: &Rc<GroupState>) {
         let imp = self.imp();
         let Some(actions) = imp.actions.borrow().clone() else {
             return;
         };
-        let Some(position) = imp.groups.borrow().iter().position(|group| group[0] == key) else {
+        let chosen = state.ticked.borrow().clone();
+        let kept = state.reference.get();
+        let Ok(removal) = ConfirmedRemoval::new(kept, chosen) else {
             return;
         };
-        let group = imp.groups.borrow()[position].clone();
-        let others: Vec<AssetId> = group.iter().copied().filter(|id| *id != kept).collect();
-        let count = others.len();
-        match (actions.trash)(others) {
-            Ok(stamp) => {
-                imp.groups.borrow_mut().remove(position);
-                (actions.changed)();
-                self.show_groups();
-                self.offer_undo(stamp, position, group, count);
+        let kept_name = imp
+            .details
+            .borrow()
+            .get(&kept)
+            .map(|member| member.name.clone())
+            .unwrap_or_default();
+        let count = removal.chosen().len();
+        let body = ngettext(
+            "Keep “{name}” and move {count} other asset to the trash, where it stays for 30 days.",
+            "Keep “{name}” and move {count} other assets to the trash, where they stay for 30 days.",
+            u32::try_from(count).unwrap_or(u32::MAX),
+        )
+        .replace("{name}", &kept_name)
+        .replace("{count}", &count.to_string());
+        let list = gtk::ListBox::builder()
+            .selection_mode(gtk::SelectionMode::None)
+            .css_classes(["boxed-list"])
+            .build();
+        for id in removal.chosen() {
+            if let Some(member) = imp.details.borrow().get(id) {
+                let attached = attachments_text(&(actions.attachments)(*id));
+                let row = adw::ActionRow::builder()
+                    .title(&member.name)
+                    .subtitle(format!("{} · {attached}", member.summary))
+                    .use_markup(false)
+                    .build();
+                row.add_prefix(&row_thumbnail::picture(
+                    member.file.clone(),
+                    member.thumbnail_file.clone(),
+                ));
+                list.append(&row);
             }
-            Err(refusal) => self.show_refusal(&refusal),
         }
+        let scroller = gtk::ScrolledWindow::builder()
+            .hscrollbar_policy(gtk::PolicyType::Never)
+            .propagate_natural_height(true)
+            .max_content_height(260)
+            .child(&list)
+            .build();
+        let note = gtk::Label::builder()
+            .label(gettext(
+                "Their collections, tags and notes stay with them in the trash. The asset you keep does not inherit them.",
+            ))
+            .wrap(true)
+            .xalign(0.0)
+            .css_classes(["dim-label", "caption"])
+            .build();
+        let extra = gtk::Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(12)
+            .build();
+        extra.append(&scroller);
+        extra.append(&note);
+        let dialog = adw::AlertDialog::new(Some(&gettext("Move to the Trash?")), Some(&body));
+        dialog.set_extra_child(Some(&extra));
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("trash", &gettext("_Move to Trash"));
+        dialog.set_response_appearance("trash", adw::ResponseAppearance::Destructive);
+        dialog.set_default_response(Some("cancel"));
+        dialog.set_close_response("cancel");
+        dialog.connect_response(
+            Some("trash"),
+            glib::clone!(
+                #[weak(rename_to = page)]
+                self,
+                move |_, _| page.remove(&removal)
+            ),
+        );
+        dialog.present(Some(self));
     }
 
-    fn offer_undo(&self, stamp: ChangeStamp, position: usize, group: Vec<AssetId>, count: usize) {
+    fn remove(&self, removal: &ConfirmedRemoval) {
+        let imp = self.imp();
+        if imp.removing.replace(true) {
+            return;
+        }
+        let Some(actions) = imp.actions.borrow().clone() else {
+            imp.removing.set(false);
+            return;
+        };
+        match (actions.remove)(removal) {
+            Ok(stamp) => {
+                let chosen = removal.chosen();
+                {
+                    let mut groups = imp.groups.borrow_mut();
+                    for group in groups.iter_mut() {
+                        if group.contains(&removal.kept()) {
+                            group.retain(|id| !chosen.contains(id));
+                        }
+                    }
+                    groups.retain(|group| group.len() > 1);
+                }
+                (actions.changed)();
+                self.show_groups();
+                self.offer_undo(stamp, chosen.len());
+            }
+            Err(RemovalFailure::Changed) => self.show_changed(),
+            Err(RemovalFailure::Refused(refusal)) => self.show_refusal(&refusal),
+        }
+        imp.removing.set(false);
+    }
+
+    fn show_changed(&self) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("The Assets Changed")),
+            Some(&gettext(
+                "Some assets changed since the search, so nothing was moved to the trash. Pigoune searches again.",
+            )),
+        );
+        alert.add_response("close", &gettext("_Close"));
+        alert.connect_response(
+            None,
+            glib::clone!(
+                #[weak(rename_to = page)]
+                self,
+                move |_, _| page.on_search_clicked()
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn offer_undo(&self, stamp: ChangeStamp, count: usize) {
         let text = ngettext(
             "{count} asset moved to the trash",
             "{count} assets moved to the trash",
@@ -522,24 +800,19 @@ impl PigouneDuplicatesPage {
         let undo: Box<dyn Fn()> = Box::new(glib::clone!(
             #[weak(rename_to = page)]
             self,
-            move || page.undo_keeping(stamp, position, group.clone())
+            move || page.undo_removal(stamp)
         ));
         self.show_toast(&text, Some((gettext("_Undo"), undo)));
     }
 
-    fn undo_keeping(&self, stamp: ChangeStamp, position: usize, group: Vec<AssetId>) {
-        let imp = self.imp();
-        let Some(actions) = imp.actions.borrow().clone() else {
+    fn undo_removal(&self, stamp: ChangeStamp) {
+        let Some(actions) = self.imp().actions.borrow().clone() else {
             return;
         };
         match (actions.undo)(stamp) {
             Ok(()) => {
                 (actions.changed)();
-                let mut groups = imp.groups.borrow_mut();
-                let position = position.min(groups.len());
-                groups.insert(position, group);
-                drop(groups);
-                self.show_groups();
+                self.on_search_clicked();
             }
             Err(refusal) => self.show_refusal(&refusal),
         }
@@ -577,5 +850,40 @@ impl PigouneDuplicatesPage {
             toast.connect_button_clicked(move |_| on_click());
         }
         toasts::announce(&overlay, &toast);
+    }
+}
+
+fn attachments_text(attached: &Attachments) -> String {
+    let mut parts = Vec::new();
+    if attached.collections > 0 {
+        parts.push(
+            ngettext(
+                "{count} collection",
+                "{count} collections",
+                u32::try_from(attached.collections).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &attached.collections.to_string()),
+        );
+    }
+    if attached.tags > 0 {
+        parts.push(
+            ngettext(
+                "{count} tag",
+                "{count} tags",
+                u32::try_from(attached.tags).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &attached.tags.to_string()),
+        );
+    }
+    if attached.favorite {
+        parts.push(gettext("Favorite"));
+    }
+    if attached.note {
+        parts.push(gettext("Has a note"));
+    }
+    if parts.is_empty() {
+        gettext("No collection, tag or note")
+    } else {
+        parts.join(" · ")
     }
 }

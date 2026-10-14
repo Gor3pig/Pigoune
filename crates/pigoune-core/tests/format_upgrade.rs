@@ -18,6 +18,7 @@ const FORMAT_BEFORE_COLORS: u32 = 5;
 const FORMAT_BEFORE_COLOR_AVERAGES: u32 = 6;
 const FORMAT_BEFORE_SHAPES: u32 = 7;
 const FORMAT_BEFORE_VISUAL_HASHES: u32 = 9;
+const FORMAT_BEFORE_VISUAL_DETAILS: u32 = 10;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -69,7 +70,10 @@ fn forget_smart_collections(connection: &Connection) {
 
 fn forget_visual_hashes(connection: &Connection) {
     connection
-        .execute_batch("ALTER TABLE assets DROP COLUMN visual_hash;")
+        .execute_batch(
+            "ALTER TABLE assets DROP COLUMN visual_detail;
+             ALTER TABLE assets DROP COLUMN visual_hash;",
+        )
         .expect("visual hashes forgotten");
 }
 
@@ -586,6 +590,34 @@ fn a_format_9_library_computes_the_visual_hashes_of_its_resources() {
         .pragma_update(None, "user_version", FORMAT_BEFORE_VISUAL_HASHES)
         .expect("version updated");
     forget_visual_hashes(&connection);
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert_eq!(
+        library.assets_awaiting_visual_hash(10).expect("listed"),
+        [red]
+    );
+}
+
+#[test]
+fn a_format_10_library_computes_the_visual_details_of_its_resources() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .pragma_update(None, "user_version", FORMAT_BEFORE_VISUAL_DETAILS)
+        .expect("version updated");
+    connection
+        .execute_batch("ALTER TABLE assets DROP COLUMN visual_detail;")
+        .expect("visual details forgotten");
     drop(connection);
 
     let library = Library::open(&root).expect("library opens");

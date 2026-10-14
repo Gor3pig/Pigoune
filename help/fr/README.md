@@ -462,9 +462,18 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   d'une bibliothèque ; la page indique combien d'éléments attendent encore. **Rechercher** les compare en
   arrière-plan, avec une barre de progression et un bouton **Annuler**, puis liste les groupes, la
   plus grande image en premier. Un groupe montre ses six premiers éléments ; **Afficher les N
-  autres** en ajoute vingt à la fois, et les vignettes se chargent au fil du défilement. Dans un groupe, **Garder celui-ci** met les
-  autres à la corbeille, et le message qui apparaît permet d'annuler ; choisir une ligne affiche
-  cet élément dans Tous. Rien n'est jamais supprimé sans un clic. Une bibliothèque ouverte avec
+  autres** en ajoute vingt à la fois, et les vignettes se chargent au fil du défilement. Chaque groupe n'est qu'une suggestion : les
+  éléments se ressemblent, ce qui ne les rend pas identiques. Pigoune compare les dessins en
+  deux temps, puis marque chaque élément **Identique** ou **Probable** par rapport au plus
+  grand, et un groupe ne réunit que des éléments qui s'accordent tous entre eux, 40 au plus à la fois. Choisissez l'élément à garder avec
+  son bouton rond (la plus grande image est choisie d'abord, et la choisir ne supprime rien),
+  puis cochez **Mettre à la corbeille** sur chaque élément à retirer : rien n'est coché à votre
+  place. Le bouton du groupe **Mettre N éléments à la corbeille…** ouvre un récapitulatif de ce
+  qui est gardé et de ce qui part à la corbeille, avec les collections, tags et notes qui
+  restent derrière ; seuls les éléments cochés sont déplacés, et Annuler ne change rien. Si les
+  éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le
+  message qui apparaît permet d'annuler, et la corbeille garde les éléments 30 jours ; choisir
+  une ligne affiche cet élément dans Tous. Une bibliothèque ouverte avec
   Pigoune 2.10 ou plus récent ne peut plus être ouverte par une version plus ancienne.
 - **Export** copie tous les éléments dans un dossier de votre choix. Pigoune crée un dossier
   au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place

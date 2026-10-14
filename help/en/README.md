@@ -405,9 +405,17 @@ after it, in five tabs:
   opens; the page says how many assets are still waiting. **Search** compares them in the
   background, with a progress bar and a **Cancel** button, then lists the groups, the largest
   image first. A group shows its first six assets; **Show More** adds twenty at a time, and the
-  thumbnails load as you scroll. In a group, **Keep This One** moves the others to the trash, and the
-  message that appears lets you undo it; choosing a row shows that asset in All. Nothing is ever
-  deleted without a click. A library opened with Pigoune 2.10 or later can no longer be opened by
+  thumbnails load as you scroll. Each group is only a suggestion: the assets
+  look alike, which does not make them identical. Pigoune compares the drawings in two steps,
+  then marks each asset **Identical** or **Probable** against the largest one, and a group only
+  holds assets that all agree with each other, at most 40 at a time. Pick the asset to keep with its round button
+  (the largest image is picked first, and picking it deletes nothing), then tick **Move to Trash**
+  on each asset you want to remove: nothing is ticked for you. The group button **Move N Assets
+  to the Trash…** opens a summary of what is kept and what goes to the trash, with the
+  collections, tags and notes that stay behind; only the assets you ticked are moved, and Cancel
+  changes nothing. If the assets changed since the search, Pigoune moves nothing and searches
+  again. The message that appears lets you undo it, and the trash keeps assets for 30 days;
+  choosing a row shows that asset in All. A library opened with Pigoune 2.10 or later can no longer be opened by
   an older version.
 - **Export** copies every asset into a folder you choose. Pigoune creates a folder named after
   the library, with one sub-folder for each collection and sub-collection, and puts the

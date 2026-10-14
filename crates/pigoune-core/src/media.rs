@@ -9,6 +9,7 @@ mod png;
 mod rgb;
 mod shape;
 mod svg;
+mod visual_detail;
 mod visual_hash;
 mod webp;
 
@@ -26,6 +27,7 @@ pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};
 pub use rgb::Rgb;
 pub use shape::{AssetShape, shapes_from_text, shapes_text};
+pub use visual_detail::{VisualAnalysis, VisualDetail, visual_analysis, visual_detail};
 pub use visual_hash::{VisualHash, visual_hash};
 
 const HEADER_LENGTH: u64 = 4096;

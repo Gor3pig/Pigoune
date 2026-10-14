@@ -8,6 +8,7 @@ mod clock;
 mod collection;
 mod collection_command;
 mod content;
+mod duplicate_removal;
 mod duplicates;
 mod error;
 mod export;
@@ -53,8 +54,10 @@ pub use batch_import::{
 };
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
+pub use duplicate_removal::{ConfirmedRemoval, MOST_CHOSEN_AT_ONCE, RemovalError};
 pub use duplicates::{
-    ALMOST_IDENTICAL_DISTANCE, DUPLICATE_DISTANCE, DuplicatePlan, DuplicateProgress,
+    ALMOST_IDENTICAL_DISTANCE, DUPLICATE_DISTANCE, DuplicateGroup, DuplicateKind, DuplicatePlan,
+    DuplicateProgress, GroupMember, IDENTICAL_DETAIL_GAP, MOST_IN_A_GROUP, PROBABLE_DETAIL_GAP,
     SIMILAR_DISTANCE, SimilarAsset, SimilarSearch, VERY_CLOSE_DISTANCE,
 };
 pub use error::{

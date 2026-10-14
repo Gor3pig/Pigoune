@@ -69,7 +69,7 @@ pub fn visual_hash(image: &RgbaImage) -> Option<VisualHash> {
     Some(VisualHash(bits))
 }
 
-fn without_plain_background(image: &RgbaImage) -> RgbaImage {
+pub(super) fn without_plain_background(image: &RgbaImage) -> RgbaImage {
     let mut pixels = image.pixels().to_vec();
     let is_opaque = pixels
         .as_chunks::<CHANNELS>()
@@ -123,7 +123,7 @@ fn color_distance(first: [u8; 3], second: [u8; 3]) -> u32 {
         .sum()
 }
 
-fn trimmed_to_visible(image: &RgbaImage) -> Option<RgbaImage> {
+pub(super) fn trimmed_to_visible(image: &RgbaImage) -> Option<RgbaImage> {
     let width = image.width() as usize;
     let mut bounds: Option<(usize, usize, usize, usize)> = None;
     for (index, pixel) in image.pixels().as_chunks::<CHANNELS>().0.iter().enumerate() {
@@ -181,7 +181,7 @@ fn gray_grid(image: &RgbaImage) -> Option<Vec<u8>> {
     Some(grid)
 }
 
-fn cell_bounds(index: usize, cells: usize, length: usize) -> (usize, usize) {
+pub(super) fn cell_bounds(index: usize, cells: usize, length: usize) -> (usize, usize) {
     let first = index * length / cells;
     let last = ((index + 1) * length).div_ceil(cells);
     (first, last.max(first + 1).min(length))

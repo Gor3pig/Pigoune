@@ -4,18 +4,20 @@ use std::ops::ControlFlow;
 use rusqlite::OptionalExtension;
 
 use super::{AssetId, Library, LibraryError};
-use crate::media::{DominantColor, VisualHash, dominant_from_text};
+use crate::media::{DominantColor, VisualDetail, VisualHash, dominant_from_text};
 
-pub const DUPLICATE_DISTANCE: u32 = 6;
+pub const DUPLICATE_DISTANCE: u32 = 4;
+pub const IDENTICAL_DETAIL_GAP: f64 = 7.0;
+pub const PROBABLE_DETAIL_GAP: f64 = 14.0;
+pub const MOST_IN_A_GROUP: usize = 40;
 pub const SIMILAR_DISTANCE: u32 = 10;
 pub const ALMOST_IDENTICAL_DISTANCE: u32 = 2;
 pub const VERY_CLOSE_DISTANCE: u32 = 6;
 const HASH_BITS: u32 = 64;
-const DUPLICATE_PROPORTION_GAP: f64 = 1.25;
+pub(super) const DUPLICATE_PROPORTION_GAP: f64 = 1.25;
 const SIMILAR_PROPORTION_GAP: f64 = 1.5;
 const TRUSTED_SHAPE_DISTANCE: u32 = 4;
-const PROGRESS_UNITS_PER_BAND: u64 = 1000;
-const BUCKETS_PER_REPORT: usize = 64;
+const STEPS_PER_REPORT: usize = 64;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SimilarAsset {
@@ -30,12 +32,30 @@ pub enum SimilarSearch {
     Found(Vec<SimilarAsset>),
 }
 
-struct Fingerprint {
+pub(super) struct Fingerprint {
     asset: AssetId,
     hash: VisualHash,
     proportion: Option<f64>,
     colors: Option<Vec<DominantColor>>,
+    detail: Option<VisualDetail>,
     size_rank: (u64, u64),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DuplicateKind {
+    VisuallyIdentical,
+    Probable,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GroupMember {
+    pub asset: AssetId,
+    pub kind: DuplicateKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DuplicateGroup {
+    pub members: Vec<GroupMember>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,7 +69,7 @@ pub struct DuplicatePlan {
     max_distance: u32,
 }
 
-enum Stored {
+pub(super) enum Stored {
     Missing,
     Pending,
     Unusable,
@@ -68,7 +88,7 @@ impl Library {
             Stored::Ready(target) => target,
         };
         let mut ranked: Vec<(SimilarAsset, f64)> = self
-            .fingerprints()?
+            .fingerprints(false)?
             .into_iter()
             .filter(|other| other.asset != id)
             .filter(|other| resembles(&target, other, max_distance, SIMILAR_PROPORTION_GAP))
@@ -96,22 +116,33 @@ impl Library {
 
     pub fn duplicate_plan(&self, max_distance: u32) -> Result<DuplicatePlan, LibraryError> {
         Ok(DuplicatePlan {
-            fingerprints: self.fingerprints()?,
+            fingerprints: self.fingerprints(true)?,
             max_distance,
         })
     }
 
     pub fn duplicate_groups(&self, max_distance: u32) -> Result<Vec<Vec<AssetId>>, LibraryError> {
         let plan = self.duplicate_plan(max_distance)?;
-        Ok(plan.run(|_| ControlFlow::Continue(())).unwrap_or_default())
+        let groups = plan.run(|_| ControlFlow::Continue(())).unwrap_or_default();
+        Ok(groups
+            .into_iter()
+            .map(|group| {
+                group
+                    .members
+                    .into_iter()
+                    .map(|member| member.asset)
+                    .collect()
+            })
+            .collect())
     }
 
-    fn fingerprints(&self) -> Result<Vec<Fingerprint>, LibraryError> {
-        let mut statement = self.connection.prepare(
-            "SELECT id, visual_hash, width, height, colors, byte_size FROM assets
+    fn fingerprints(&self, with_detail: bool) -> Result<Vec<Fingerprint>, LibraryError> {
+        let detail_column = if with_detail { "visual_detail" } else { "NULL" };
+        let mut statement = self.connection.prepare(&format!(
+            "SELECT id, visual_hash, width, height, colors, byte_size, {detail_column} FROM assets
              WHERE trashed_at_unix_ms IS NULL AND length(visual_hash) = ?1
-             ORDER BY id",
-        )?;
+             ORDER BY id"
+        ))?;
         let rows = statement.query_map([VisualHash::BYTE_LENGTH], fingerprint_from_row)?;
         let mut fingerprints = Vec::new();
         for row in rows {
@@ -122,11 +153,11 @@ impl Library {
         Ok(fingerprints)
     }
 
-    fn stored_fingerprint(&self, id: AssetId) -> Result<Stored, LibraryError> {
+    pub(super) fn stored_fingerprint(&self, id: AssetId) -> Result<Stored, LibraryError> {
         let row = self
             .connection
             .query_row(
-                "SELECT id, visual_hash, width, height, colors, byte_size FROM assets WHERE id = ?1",
+                "SELECT id, visual_hash, width, height, colors, byte_size, visual_detail FROM assets WHERE id = ?1",
                 [id],
                 |row| {
                     let pending = row.get::<_, Option<Vec<u8>>>(1)?.is_none();
@@ -152,6 +183,7 @@ fn fingerprint_from_row(row: &rusqlite::Row) -> rusqlite::Result<Option<Fingerpr
     let height: Option<u32> = row.get(3)?;
     let colors: Option<String> = row.get(4)?;
     let byte_size: u64 = row.get(5)?;
+    let detail: Option<Vec<u8>> = row.get(6)?;
     Ok(Some(Fingerprint {
         asset: row.get(0)?,
         hash,
@@ -160,6 +192,7 @@ fn fingerprint_from_row(row: &rusqlite::Row) -> rusqlite::Result<Option<Fingerpr
             .filter(|(width, height)| *width > 0 && *height > 0)
             .map(|(width, height)| f64::from(width) / f64::from(height)),
         colors: colors.map(|text| dominant_from_text(&text)),
+        detail: detail.and_then(|bytes| VisualDetail::from_bytes(&bytes)),
         size_rank: (
             width
                 .zip(height)
@@ -219,7 +252,7 @@ fn directed_gap(from: &[DominantColor], to: &[DominantColor]) -> f64 {
     total / f64::from(u32::try_from(from.len()).unwrap_or(u32::MAX))
 }
 
-fn resembles(
+pub(super) fn resembles(
     first: &Fingerprint,
     second: &Fingerprint,
     max_distance: u32,
@@ -231,55 +264,125 @@ fn resembles(
         && (distance <= TRUSTED_SHAPE_DISTANCE || share_a_color(first, second))
 }
 
+pub(super) fn duplicate_kind(first: &Fingerprint, second: &Fingerprint) -> Option<DuplicateKind> {
+    if first.hash.distance(second.hash) > DUPLICATE_DISTANCE
+        || !similar_proportions(
+            first.proportion,
+            second.proportion,
+            DUPLICATE_PROPORTION_GAP,
+        )
+    {
+        return None;
+    }
+    let gap = first.detail.as_ref()?.gap(second.detail.as_ref()?);
+    if gap <= IDENTICAL_DETAIL_GAP {
+        Some(DuplicateKind::VisuallyIdentical)
+    } else if gap <= PROBABLE_DETAIL_GAP {
+        Some(DuplicateKind::Probable)
+    } else {
+        None
+    }
+}
+
 impl DuplicatePlan {
     #[must_use]
     pub fn run(
         &self,
         mut progress: impl FnMut(DuplicateProgress) -> ControlFlow<()>,
-    ) -> Option<Vec<Vec<AssetId>>> {
+    ) -> Option<Vec<DuplicateGroup>> {
         let fingerprints = &self.fingerprints;
+        let total = u64::try_from(fingerprints.len()).unwrap_or(u64::MAX);
         let bands = self.max_distance + 1;
-        let total = u64::from(bands) * PROGRESS_UNITS_PER_BAND;
-        let mut groups = Groups::new(fingerprints.len());
-        for band in 0..bands {
-            let mut buckets: HashMap<u64, Vec<usize>> = HashMap::new();
-            for (index, fingerprint) in fingerprints.iter().enumerate() {
-                buckets
+        let mut buckets: Vec<HashMap<u64, Vec<usize>>> = vec![HashMap::new(); bands as usize];
+        for (index, fingerprint) in fingerprints.iter().enumerate() {
+            for band in 0..bands {
+                buckets[band as usize]
                     .entry(band_of(fingerprint.hash.bits(), band, bands))
                     .or_default()
                     .push(index);
             }
-            let bucket_count = u64::try_from(buckets.len().max(1)).unwrap_or(u64::MAX);
-            for (number, members) in buckets.values().enumerate() {
-                if number % BUCKETS_PER_REPORT == 0 {
-                    let within =
-                        u64::try_from(number).unwrap_or(0) * PROGRESS_UNITS_PER_BAND / bucket_count;
-                    let done = u64::from(band) * PROGRESS_UNITS_PER_BAND + within;
-                    if progress(DuplicateProgress { done, total }).is_break() {
-                        return None;
+        }
+        let mut order: Vec<usize> = (0..fingerprints.len()).collect();
+        order.sort_by(|a, b| {
+            fingerprints[*b]
+                .size_rank
+                .cmp(&fingerprints[*a].size_rank)
+                .then(fingerprints[*a].asset.cmp(&fingerprints[*b].asset))
+        });
+        let mut taken = vec![false; fingerprints.len()];
+        let mut seen = vec![0_u32; fingerprints.len()];
+        let mut groups = Vec::new();
+        for (step, reference) in order.iter().copied().enumerate() {
+            if step % STEPS_PER_REPORT == 0 {
+                let done = u64::try_from(step).unwrap_or(0);
+                if progress(DuplicateProgress { done, total }).is_break() {
+                    return None;
+                }
+            }
+            if taken[reference] {
+                continue;
+            }
+            taken[reference] = true;
+            let stamp = u32::try_from(step + 1).unwrap_or(u32::MAX);
+            let mut candidates: Vec<(usize, DuplicateKind)> = Vec::new();
+            for band in 0..bands {
+                let value = band_of(fingerprints[reference].hash.bits(), band, bands);
+                for candidate in &buckets[band as usize][&value] {
+                    if taken[*candidate] || seen[*candidate] == stamp {
+                        continue;
+                    }
+                    seen[*candidate] = stamp;
+                    if let Some(kind) =
+                        duplicate_kind(&fingerprints[reference], &fingerprints[*candidate])
+                    {
+                        candidates.push((*candidate, kind));
                     }
                 }
-                self.join_bucket(members, &mut groups);
             }
+            candidates.sort_by(|(a, _), (b, _)| {
+                fingerprints[*b]
+                    .size_rank
+                    .cmp(&fingerprints[*a].size_rank)
+                    .then(fingerprints[*a].asset.cmp(&fingerprints[*b].asset))
+            });
+            let mut accepted: Vec<(usize, DuplicateKind)> = Vec::new();
+            for (candidate, kind) in candidates {
+                if accepted.len() + 1 >= MOST_IN_A_GROUP {
+                    break;
+                }
+                let agrees_with_all = accepted.iter().all(|(member, _)| {
+                    duplicate_kind(&fingerprints[*member], &fingerprints[candidate]).is_some()
+                });
+                if agrees_with_all {
+                    accepted.push((candidate, kind));
+                }
+            }
+            if accepted.is_empty() {
+                continue;
+            }
+            let mut members = vec![GroupMember {
+                asset: fingerprints[reference].asset,
+                kind: DuplicateKind::VisuallyIdentical,
+            }];
+            for (candidate, kind) in accepted {
+                taken[candidate] = true;
+                members.push(GroupMember {
+                    asset: fingerprints[candidate].asset,
+                    kind,
+                });
+            }
+            groups.push(DuplicateGroup { members });
         }
         if progress(DuplicateProgress { done: total, total }).is_break() {
             return None;
         }
-        Some(groups.into_groups(fingerprints))
-    }
-
-    fn join_bucket(&self, members: &[usize], groups: &mut Groups) {
-        for (position, first) in members.iter().enumerate() {
-            for second in &members[position + 1..] {
-                if groups.root(*first) == groups.root(*second) {
-                    continue;
-                }
-                let (a, b) = (&self.fingerprints[*first], &self.fingerprints[*second]);
-                if resembles(a, b, self.max_distance, DUPLICATE_PROPORTION_GAP) {
-                    groups.join(*first, *second);
-                }
-            }
-        }
+        groups.sort_by(|a, b| {
+            b.members
+                .len()
+                .cmp(&a.members.len())
+                .then(a.members[0].asset.cmp(&b.members[0].asset))
+        });
+        Some(groups)
     }
 }
 
@@ -289,50 +392,4 @@ fn band_of(bits: u64, band: u32, bands: u32) -> u64 {
         value = (value << 1) | ((bits >> position) & 1);
     }
     value
-}
-
-struct Groups {
-    parent: Vec<usize>,
-}
-
-impl Groups {
-    fn new(count: usize) -> Self {
-        Self {
-            parent: (0..count).collect(),
-        }
-    }
-
-    fn root(&mut self, mut index: usize) -> usize {
-        while self.parent[index] != index {
-            self.parent[index] = self.parent[self.parent[index]];
-            index = self.parent[index];
-        }
-        index
-    }
-
-    fn join(&mut self, first: usize, second: usize) {
-        let (first, second) = (self.root(first), self.root(second));
-        self.parent[first.max(second)] = first.min(second);
-    }
-
-    fn into_groups(mut self, fingerprints: &[Fingerprint]) -> Vec<Vec<AssetId>> {
-        let mut by_root: HashMap<usize, Vec<&Fingerprint>> = HashMap::new();
-        for (index, fingerprint) in fingerprints.iter().enumerate() {
-            let root = self.root(index);
-            by_root.entry(root).or_default().push(fingerprint);
-        }
-        let mut groups: Vec<Vec<AssetId>> = by_root
-            .into_values()
-            .filter(|group| group.len() > 1)
-            .map(|mut group| {
-                group.sort_by(|a, b| b.size_rank.cmp(&a.size_rank).then(a.asset.cmp(&b.asset)));
-                group
-                    .into_iter()
-                    .map(|fingerprint| fingerprint.asset)
-                    .collect()
-            })
-            .collect();
-        groups.sort_by(|a, b| b.len().cmp(&a.len()).then(a[0].cmp(&b[0])));
-        groups
-    }
 }

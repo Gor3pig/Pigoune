@@ -8,11 +8,11 @@ use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
-    CollectionRemoval, DUPLICATE_DISTANCE, Dimensions, HealthPlan, ImportError, ImportSummary,
-    Library, LibraryError, LibraryExportReport, RgbaImage, SIMILAR_DISTANCE, SimilarSearch,
-    SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
-    TagError, TagId, TextField, UndoError, VisualHash, dominant_colors, library_display_name,
-    visual_hash,
+    CollectionRemoval, ConfirmedRemoval, DUPLICATE_DISTANCE, Dimensions, HealthPlan, ImportError,
+    ImportSummary, Library, LibraryError, LibraryExportReport, RemovalError, RgbaImage,
+    SIMILAR_DISTANCE, SimilarSearch, SmartCollection, SmartCollectionCommand, SmartCollectionId,
+    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VisualAnalysis,
+    dominant_colors, library_display_name, visual_analysis,
 };
 
 use crate::asset_colors;
@@ -34,7 +34,9 @@ use crate::drop_action;
 use crate::drop_message;
 use crate::drop_places;
 use crate::dropped_content::{self, Dropped, DroppedImage};
-use crate::duplicates_page::{DuplicateActions, DuplicateMember, PlannedSearch};
+use crate::duplicates_page::{
+    Attachments, DuplicateActions, DuplicateMember, PlannedSearch, RemovalFailure, Removed,
+};
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
@@ -1449,12 +1451,24 @@ impl PigouneWindow {
                 move |ids: &[AssetId]| window.duplicate_members(ids)
             )),
             thumbnails: self.imp().asset_grid.thumbnail_cache(),
-            trash: Box::new(glib::clone!(
+            remove: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_else]
-                || Err(Refusal::default()),
-                move |ids: Vec<AssetId>| window.trash_assets(ids)
+                || Err(RemovalFailure::Changed),
+                move |removal: &ConfirmedRemoval| window.remove_duplicates(removal)
+            )),
+            attachments: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Attachments {
+                    collections: 0,
+                    tags: 0,
+                    favorite: false,
+                    note: false,
+                },
+                move |id: AssetId| window.duplicate_attachments(id)
             )),
             undo: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
@@ -1473,6 +1487,45 @@ impl PigouneWindow {
                 self,
                 move |id| window.show_in_all(id)
             )),
+        }
+    }
+
+    fn remove_duplicates(&self, removal: &ConfirmedRemoval) -> Removed {
+        let outcome = self.change_library(|library| library.trash_confirmed_duplicates(removal));
+        match outcome {
+            Some(Ok(stamp)) => Ok(stamp),
+            Some(Err(RemovalError::Asset(error))) => Err(RemovalFailure::Refused(Refusal {
+                title: gettext("Unable to Change the Asset"),
+                body: error_messages::describe_asset(&error),
+                try_again: false,
+            })),
+            Some(Err(RemovalError::Library(error))) => Err(RemovalFailure::Refused(Refusal {
+                title: gettext("Unable to Change the Asset"),
+                body: error_messages::describe(&error),
+                try_again: false,
+            })),
+            Some(Err(_)) | None => Err(RemovalFailure::Changed),
+        }
+    }
+
+    fn duplicate_attachments(&self, id: AssetId) -> Attachments {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return Attachments {
+                collections: 0,
+                tags: 0,
+                favorite: false,
+                note: false,
+            };
+        };
+        let asset = library.asset(id).ok().flatten();
+        Attachments {
+            collections: library.collections_of(id).map_or(0, |found| found.len()),
+            tags: library.tags_of(id).map_or(0, |found| found.len()),
+            favorite: asset.as_ref().is_some_and(|asset| asset.is_favorite),
+            note: asset
+                .as_ref()
+                .is_some_and(|asset| !asset.note.trim().is_empty()),
         }
     }
 
@@ -1846,7 +1899,7 @@ impl PigouneWindow {
                             .ok()
                             .zip(u32::try_from(texture.height()).ok());
                         let pixels = asset_colors::rgba_pixels(&texture);
-                        gio::spawn_blocking(move || visual_hash_of(size, pixels))
+                        gio::spawn_blocking(move || visual_analysis_of(size, pixels))
                             .await
                             .unwrap_or_default()
                     }
@@ -1859,7 +1912,7 @@ impl PigouneWindow {
                 .library
                 .borrow_mut()
                 .as_mut()
-                .map(|library| library.record_visual_hashes_batch(&analysed));
+                .map(|library| library.record_visual_analysis_batch(&analysed));
             if !matches!(recorded, Some(Ok(()))) {
                 return false;
             }
@@ -6365,7 +6418,7 @@ fn nothing_to_import_text() -> String {
         .replace("{shortcut}", &shortcuts::current_label(PASTE_ACTION))
 }
 
-fn visual_hash_of(size: Option<(u32, u32)>, pixels: Vec<u8>) -> Option<VisualHash> {
+fn visual_analysis_of(size: Option<(u32, u32)>, pixels: Vec<u8>) -> Option<VisualAnalysis> {
     let (width, height) = size?;
-    visual_hash(&RgbaImage::new(width, height, pixels)?)
+    visual_analysis(&RgbaImage::new(width, height, pixels)?)
 }

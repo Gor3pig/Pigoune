@@ -161,6 +161,7 @@ My logos.pigoune/
   adds a visual fingerprint of 64 bits to each asset, used to find look-alike assets; `visual_hash` in
   the core computes it from the pixels of a thumbnail (plain background and transparent margins
   ignored, then a 9 by 8 grid of brightness steps), and two assets are close when few bits differ.
+  Format 11 adds a detailed signature of 16 by 16 colored cells to each asset, computed in the same background pass; the hash only proposes candidates, and two assets are offered as possible duplicates only when the hash, the proportions and the detailed signatures all agree, in groups where every pair agrees. Assets are only ever moved to the trash from an explicit, confirmed selection that the core checks again at that moment.
   A library created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.

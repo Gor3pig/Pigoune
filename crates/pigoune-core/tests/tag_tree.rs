@@ -419,6 +419,7 @@ fn a_format_8_library_keeps_its_tags_as_top_level_tags() {
              DROP TABLE tags;
              ALTER TABLE old_tags RENAME TO tags;
              ALTER TABLE old_asset_tags RENAME TO asset_tags;
+             ALTER TABLE assets DROP COLUMN visual_detail;
              ALTER TABLE assets DROP COLUMN visual_hash;
              PRAGMA user_version = 8;",
         )
@@ -463,6 +464,7 @@ fn rebuild_as_format_8(root: &Path, renames: &str) {
              ALTER TABLE old_tags RENAME TO tags;
              ALTER TABLE old_asset_tags RENAME TO asset_tags;
              {renames}
+             ALTER TABLE assets DROP COLUMN visual_detail;
              ALTER TABLE assets DROP COLUMN visual_hash;
              PRAGMA user_version = 8;"
         ))
