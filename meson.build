@@ -1,6 +1,6 @@
 project(
   'pigoune',
-  version: '2.11.0',
+  version: '2.11.1',
   license: 'GPL-3.0-or-later',
   meson_version: '>= 1.5.0',
 )
