@@ -401,9 +401,9 @@ after it, in five tabs:
   reported: their files leave with the trash, and if you restore one, the next check looks at
   it again.
 - **Duplicates** groups the assets that look alike, such as the same logo as a PNG and an SVG,
-  or in two sizes. Pigoune analyzes the drawing of every asset in the background after a library
-  opens; the page says how many assets are still waiting. **Search** compares them in the
-  background, with a progress bar and a **Cancel** button, then lists the groups, the largest
+  or in two sizes. Pigoune analyzes the drawing of every asset quietly in the background, only while you
+  are not using it, and the Overview tab shows how far it has got; the page says how many assets are still waiting. **Search**
+  first looks closely, once, at the assets that could be duplicates, then compares them, with a progress bar and a **Cancel** button, and lists the groups, the largest
   image first. A group shows its first six assets; **Show More** adds twenty at a time, and the
   thumbnails load as you scroll. Each group is only a suggestion: the assets
   look alike, which does not make them identical. Pigoune compares the drawings in two steps,

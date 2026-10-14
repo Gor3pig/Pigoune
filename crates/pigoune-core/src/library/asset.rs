@@ -5,7 +5,7 @@ use std::sync::Arc;
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
 use crate::media::{
-    self, AnimationTiming, AssetFormat, Dimensions, DominantColor, VisualAnalysis,
+    self, AnimationTiming, AssetFormat, Dimensions, DominantColor, VisualAnalysis, VisualDetail,
     dominant_from_text,
 };
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
@@ -203,7 +203,7 @@ impl Library {
 
     pub fn assets_awaiting_visual_hash(&self, limit: usize) -> Result<Vec<AssetId>, LibraryError> {
         let mut statement = self.connection.prepare(
-            "SELECT id FROM assets WHERE visual_hash IS NULL OR visual_detail IS NULL
+            "SELECT id FROM assets WHERE visual_hash IS NULL
              ORDER BY added_at_unix_ms DESC, id DESC LIMIT ?1",
         )?;
         let ids = statement
@@ -215,10 +215,38 @@ impl Library {
     pub fn count_awaiting_visual_hash(&self) -> Result<u64, LibraryError> {
         Ok(self.connection.query_row(
             "SELECT COUNT(*) FROM assets
-             WHERE (visual_hash IS NULL OR visual_detail IS NULL) AND trashed_at_unix_ms IS NULL",
+             WHERE visual_hash IS NULL AND trashed_at_unix_ms IS NULL",
             [],
             |row| row.get(0),
         )?)
+    }
+
+    pub fn analysis_backlog(&self) -> Result<(u64, u64), LibraryError> {
+        Ok(self.connection.query_row(
+            "SELECT COUNT(CASE WHEN colors IS NULL OR visual_hash IS NULL THEN 1 END), COUNT(*)
+             FROM assets WHERE trashed_at_unix_ms IS NULL",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )?)
+    }
+
+    pub fn record_visual_details_batch(
+        &mut self,
+        batch: &[(AssetId, Option<VisualDetail>)],
+    ) -> Result<(), LibraryError> {
+        let transaction = self.connection.transaction()?;
+        {
+            let mut statement =
+                transaction.prepare_cached("UPDATE assets SET visual_detail = ?2 WHERE id = ?1")?;
+            for (id, detail) in batch {
+                let bytes = detail
+                    .as_ref()
+                    .map_or_else(Vec::new, |detail| detail.as_bytes().to_vec());
+                statement.execute(params![id, bytes])?;
+            }
+        }
+        transaction.commit()?;
+        Ok(())
     }
 
     pub fn record_visual_analysis_batch(

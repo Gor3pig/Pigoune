@@ -13,6 +13,7 @@ use pigoune_core::{
 
 use crate::asset_colors;
 use crate::asset_facts;
+use crate::chart_slices::ratio;
 use crate::color_chips;
 use crate::config::VERSION;
 use crate::duplicates_page::DuplicateActions;
@@ -35,6 +36,9 @@ const RECORD_THUMBNAIL_SIDE: i32 = 40;
 type ShowCallback = Box<dyn Fn(AssetId)>;
 type ClearCallback = Box<dyn Fn() -> Result<(), String>>;
 type ExportCallback = Box<dyn Fn()>;
+pub type AnalysisCallback = Box<dyn Fn() -> (u64, u64)>;
+
+const ANALYSIS_REFRESH_SECONDS: u32 = 2;
 
 pub struct LibraryReport {
     pub name: String,
@@ -71,6 +75,13 @@ mod imp {
         pub name_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub place_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub analysis_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub analysis_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub analysis_bar: TemplateChild<gtk::ProgressBar>,
+        pub analysis: RefCell<Option<super::AnalysisCallback>>,
         #[template_child]
         pub figures_list: TemplateChild<gtk::ListBox>,
         #[template_child]
@@ -172,6 +183,7 @@ impl PigouneLibraryInfoDialog {
         on_show: impl Fn(AssetId) + 'static,
         clear_thumbnails: impl Fn() -> Result<(), String> + 'static,
         export_library: impl Fn() + 'static,
+        analysis: impl Fn() -> (u64, u64) + 'static,
         health: HealthActions,
         duplicates: DuplicateActions,
     ) -> Self {
@@ -193,6 +205,10 @@ impl PigouneLibraryInfoDialog {
         imp.clear_thumbnails
             .replace(Some(Box::new(clear_thumbnails)));
         imp.export_library.replace(Some(Box::new(export_library)));
+        imp.analysis.replace(Some(Box::new(analysis)));
+        if dialog.show_analysis() {
+            dialog.keep_analysis_current();
+        }
         imp.export_button.set_sensitive(overview.resources > 0);
         dialog.show_export_outline(&export_outline);
         imp.health_page.connect_actions(health);
@@ -227,6 +243,50 @@ impl PigouneLibraryInfoDialog {
             .set_subtitle(&compatibility_text(overview.format_version));
         dialog.measure_the_disk_in_the_background();
         dialog
+    }
+
+    fn keep_analysis_current(&self) {
+        glib::timeout_add_seconds_local(
+            ANALYSIS_REFRESH_SECONDS,
+            glib::clone!(
+                #[weak(rename_to = dialog)]
+                self,
+                #[upgrade_or]
+                glib::ControlFlow::Break,
+                move || {
+                    if dialog.show_analysis() {
+                        glib::ControlFlow::Continue
+                    } else {
+                        glib::ControlFlow::Break
+                    }
+                }
+            ),
+        );
+    }
+
+    fn show_analysis(&self) -> bool {
+        let imp = self.imp();
+        let (waiting, total) = imp
+            .analysis
+            .borrow()
+            .as_ref()
+            .map_or((0, 0), |backlog| backlog());
+        imp.analysis_box.set_visible(waiting > 0);
+        if waiting == 0 {
+            return false;
+        }
+        let done = total.saturating_sub(waiting);
+        imp.analysis_label.set_label(
+            &ngettext(
+                "Analysis in progress: {done} of {total} asset. Pigoune works quietly, only while you are not using it.",
+                "Analysis in progress: {done} of {total} assets. Pigoune works quietly, only while you are not using it.",
+                u32::try_from(total).unwrap_or(u32::MAX),
+            )
+            .replace("{done}", &done.to_string())
+            .replace("{total}", &total.to_string()),
+        );
+        imp.analysis_bar.set_fraction(ratio(done, total));
+        true
     }
 
     fn measure_the_disk_in_the_background(&self) {

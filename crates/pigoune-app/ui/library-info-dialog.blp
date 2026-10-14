@@ -86,6 +86,26 @@ template $PigouneLibraryInfoDialog: Adw.Dialog {
                   }
                 }
 
+                Box analysis_box {
+                  orientation: vertical;
+                  spacing: 6;
+                  visible: false;
+
+                  Label analysis_label {
+                    halign: start;
+                    xalign: 0;
+                    wrap: true;
+                    justify: left;
+
+                    styles [
+                      "caption",
+                      "dim-label",
+                    ]
+                  }
+
+                  ProgressBar analysis_bar {}
+                }
+
                 ListBox figures_list {
                   selection-mode: none;
 

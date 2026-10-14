@@ -1,3 +1,4 @@
+mod analysis_pace;
 mod animation;
 mod animation_player;
 mod application;

@@ -151,8 +151,9 @@ My logos.pigoune/
   thirteen color families and keeps the average color of each; format 7 analyzes every asset
   again to record these averages, and lets a smart collection save a custom color, matched
   when it is close to an average as the eye sees it (OKLab distance). The app analyzes assets
-  with no colors yet in the background, one batch at a time, after opening a library and after
-  each import. Format 8 lets a smart collection save shapes (landscape, portrait, square) and
+  with no colors yet in the background, one asset at a time, starting two seconds after a library
+  opens and after each import, and only while the user is calm: `analysis_pace` pauses the pass
+  while keys, pointer or scrolling are active, and a library change stops a pass in progress. Format 8 lets a smart collection save shapes (landscape, portrait, square) and
   "fits my screen", and turns every older smart collection into a search of the whole library
   (one limited to Favorites keeps "favorites only"); the screen size itself is never saved: the app gives the library the size
   of the monitor showing its window, in real pixels, and refreshes when it changes. Format 9
@@ -161,7 +162,7 @@ My logos.pigoune/
   adds a visual fingerprint of 64 bits to each asset, used to find look-alike assets; `visual_hash` in
   the core computes it from the pixels of a thumbnail (plain background and transparent margins
   ignored, then a 9 by 8 grid of brightness steps), and two assets are close when few bits differ.
-  Format 11 adds a detailed signature of 16 by 16 colored cells to each asset, computed in the same background pass; the hash only proposes candidates, and two assets are offered as possible duplicates only when the hash, the proportions and the detailed signatures all agree, in groups where every pair agrees. Assets are only ever moved to the trash from an explicit, confirmed selection that the core checks again at that moment.
+  Format 11 adds a detailed signature of 16 by 16 colored cells to each asset, computed for a new asset in the background pass and, for an asset that only has a hash, once when a duplicate search needs it (candidates only, with a progress bar); the hash only proposes candidates, and two assets are offered as possible duplicates only when the hash, the proportions and the detailed signatures all agree, in groups where every pair agrees. Assets are only ever moved to the trash from an explicit, confirmed selection that the core checks again at that moment.
   A library created by a newer version of Pigoune is refused with a clear message.
 - SQLite runs with `journal_mode=DELETE` and `synchronous=FULL`: a library is a single file at
   rest and survives power failures.

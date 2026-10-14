@@ -605,7 +605,7 @@ fn a_format_9_library_computes_the_visual_hashes_of_its_resources() {
 }
 
 #[test]
-fn a_format_10_library_computes_the_visual_details_of_its_resources() {
+fn a_format_10_library_keeps_its_hashes_and_accepts_visual_details() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
     let red = import(&mut library, "red-dot.png");
@@ -616,18 +616,26 @@ fn a_format_10_library_computes_the_visual_details_of_its_resources() {
         .pragma_update(None, "user_version", FORMAT_BEFORE_VISUAL_DETAILS)
         .expect("version updated");
     connection
-        .execute_batch("ALTER TABLE assets DROP COLUMN visual_detail;")
+        .execute_batch(
+            "ALTER TABLE assets DROP COLUMN visual_detail;
+             UPDATE assets SET visual_hash = x'0000000000000001';",
+        )
         .expect("visual details forgotten");
     drop(connection);
 
-    let library = Library::open(&root).expect("library opens");
+    let mut library = Library::open(&root).expect("library opens");
 
     assert_eq!(
         library.format_version().expect("version readable"),
         CURRENT_FORMAT_VERSION
     );
-    assert_eq!(
-        library.assets_awaiting_visual_hash(10).expect("listed"),
-        [red]
+    assert!(
+        library
+            .assets_awaiting_visual_hash(10)
+            .expect("listed")
+            .is_empty()
     );
+    library
+        .record_visual_details_batch(&[(red, None)])
+        .expect("details accepted");
 }

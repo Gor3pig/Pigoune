@@ -458,9 +458,9 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   partent avec la corbeille, et si vous en restaurez un, la vérification suivante le regarde
   de nouveau.
 - **Doublons** regroupe les éléments qui se ressemblent, comme le même logo en PNG et en SVG, ou
-  en deux tailles. Pigoune analyse le dessin de chaque élément en arrière-plan après l'ouverture
-  d'une bibliothèque ; la page indique combien d'éléments attendent encore. **Rechercher** les compare en
-  arrière-plan, avec une barre de progression et un bouton **Annuler**, puis liste les groupes, la
+  en deux tailles. Pigoune analyse discrètement le dessin de chaque élément en arrière-plan, seulement
+  quand vous ne l'utilisez pas, et l'onglet Aperçu montre où il en est ; la page indique combien d'éléments attendent encore. **Rechercher**
+  regarde d'abord de près, une seule fois, les éléments qui pourraient être des doublons, puis les compare, avec une barre de progression et un bouton **Annuler**, et liste les groupes, la
   plus grande image en premier. Un groupe montre ses six premiers éléments ; **Afficher les N
   autres** en ajoute vingt à la fois, et les vignettes se chargent au fil du défilement. Chaque groupe n'est qu'une suggestion : les
   éléments se ressemblent, ce qui ne les rend pas identiques. Pigoune compare les dessins en

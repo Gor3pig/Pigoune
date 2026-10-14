@@ -1,6 +1,8 @@
 use std::cell::{Cell, RefCell};
+use std::future::Future;
 use std::ops::ControlFlow;
 use std::path::PathBuf;
+use std::pin::Pin;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -13,6 +15,7 @@ use pigoune_core::{
     AssetId, ChangeStamp, ConfirmedRemoval, DuplicateKind, DuplicatePlan, DuplicateProgress,
 };
 
+use crate::chart_slices::ratio;
 use crate::health_page::{Refusal, Replaced};
 use crate::row_thumbnail;
 use crate::thumbnails::ThumbnailCache;
@@ -22,6 +25,7 @@ const GROUPS_SHOWN: usize = 20;
 const MEMBERS_SHOWN: usize = 6;
 const MORE_MEMBERS_SHOWN: usize = 20;
 const THUMBNAIL_MARGIN: f64 = 300.0;
+const PAINT_DELAY: std::time::Duration = std::time::Duration::from_millis(40);
 
 #[derive(Clone)]
 pub struct DuplicateMember {
@@ -41,6 +45,13 @@ pub struct WaitingThumbnail {
     picture: glib::WeakRef<gtk::Picture>,
     member: DuplicateMember,
 }
+
+pub type Preparing = Box<
+    dyn Fn(
+        Arc<AtomicBool>,
+        Rc<dyn Fn(u64, u64)>,
+    ) -> Pin<Box<dyn Future<Output = Result<bool, String>>>>,
+>;
 
 pub type MembersLoader = Box<dyn Fn(&[AssetId]) -> Vec<DuplicateMember>>;
 
@@ -85,6 +96,7 @@ pub struct DuplicateActions {
     pub undo: Box<dyn Fn(ChangeStamp) -> Replaced>,
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
+    pub prepare: Preparing,
     pub compare: Box<dyn Fn(AssetId, AssetId) -> Option<DuplicateKind>>,
     pub trash_expires: Box<dyn Fn() -> bool>,
 }
@@ -193,17 +205,50 @@ impl PigouneDuplicatesPage {
         let Some(actions) = imp.actions.borrow().clone() else {
             return;
         };
+        let canceled = Arc::new(AtomicBool::new(false));
+        imp.cancel_requested.replace(Some(Arc::clone(&canceled)));
+        self.show_running();
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            async move { page.search(actions, canceled).await }
+        ));
+    }
+
+    async fn search(&self, actions: Rc<DuplicateActions>, canceled: Arc<AtomicBool>) {
+        let imp = self.imp();
+        glib::timeout_future(PAINT_DELAY).await;
+        let progress: Rc<dyn Fn(u64, u64)> = Rc::new(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            move |done, total| page.show_preparation(done, total)
+        ));
+        match (actions.prepare)(Arc::clone(&canceled), progress).await {
+            Ok(true) => {}
+            Ok(false) => {
+                imp.cancel_requested.replace(None);
+                imp.search_again.set(false);
+                self.show_idle();
+                return;
+            }
+            Err(message) => {
+                imp.cancel_requested.replace(None);
+                imp.search_again.set(false);
+                self.show_message(&gettext("The Search Failed"), &message);
+                return;
+            }
+        }
         let planned = match (actions.plan)() {
             Ok(planned) => planned,
             Err(message) => {
+                imp.cancel_requested.replace(None);
+                imp.search_again.set(false);
                 self.show_message(&gettext("The Search Failed"), &message);
                 return;
             }
         };
         imp.pending.set(planned.pending);
-        let canceled = Arc::new(AtomicBool::new(false));
-        imp.cancel_requested.replace(Some(Arc::clone(&canceled)));
-        self.show_running();
+        self.show_comparing();
         let (sender, receiver) = async_channel::unbounded();
         let plan = planned.plan;
         let work = gio::spawn_blocking(move || {
@@ -225,39 +270,53 @@ impl PigouneDuplicatesPage {
                 }
             }
         ));
-        glib::spawn_future_local(glib::clone!(
-            #[weak(rename_to = page)]
-            self,
-            async move {
-                let found = work.await.ok().flatten();
-                let imp = page.imp();
-                imp.cancel_requested.replace(None);
-                let again = imp.search_again.replace(false);
-                match found {
-                    Some(_) if again => page.on_search_clicked(),
-                    Some(groups) => {
-                        imp.selections.borrow_mut().clear();
-                        {
-                            let mut kinds = imp.kinds.borrow_mut();
-                            kinds.clear();
-                            for member in groups.iter().flat_map(|group| group.members.iter()) {
-                                kinds.insert(member.asset, member.kind);
-                            }
-                        }
-                        imp.groups.replace(
-                            groups
-                                .iter()
-                                .map(|group| {
-                                    group.members.iter().map(|member| member.asset).collect()
-                                })
-                                .collect(),
-                        );
-                        page.show_groups();
+        let found = work.await.ok().flatten();
+        imp.cancel_requested.replace(None);
+        let again = imp.search_again.replace(false);
+        match found {
+            Some(_) if again => self.on_search_clicked(),
+            Some(groups) => {
+                imp.selections.borrow_mut().clear();
+                {
+                    let mut kinds = imp.kinds.borrow_mut();
+                    kinds.clear();
+                    for member in groups.iter().flat_map(|group| group.members.iter()) {
+                        kinds.insert(member.asset, member.kind);
                     }
-                    None => page.show_idle(),
                 }
+                imp.groups.replace(
+                    groups
+                        .iter()
+                        .map(|group| group.members.iter().map(|member| member.asset).collect())
+                        .collect(),
+                );
+                self.show_groups();
             }
+            None => self.show_idle(),
+        }
+    }
+
+    fn show_preparation(&self, done: u64, total: u64) {
+        let imp = self.imp();
+        imp.message_page.set_description(Some(
+            &ngettext(
+                "Pigoune is analyzing the details of {count} asset, once. Nothing is changed.",
+                "Pigoune is analyzing the details of {count} assets, once. Nothing is changed.",
+                u32::try_from(total).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &total.to_string()),
         ));
+        if total > 0 {
+            imp.progress_bar.set_fraction(ratio(done, total));
+        }
+    }
+
+    fn show_comparing(&self) {
+        let imp = self.imp();
+        imp.message_page.set_description(Some(&gettext(
+            "Pigoune is comparing the drawings of your assets. Nothing is changed.",
+        )));
+        imp.progress_bar.set_fraction(0.0);
     }
 
     fn show_progress(&self, progress: DuplicateProgress) {

@@ -1,5 +1,9 @@
+use std::future::Future;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
@@ -12,9 +16,10 @@ use pigoune_core::{
     ImportSummary, Library, LibraryError, LibraryExportReport, RemovalError, RgbaImage,
     SIMILAR_DISTANCE, SimilarSearch, SmartCollection, SmartCollectionCommand, SmartCollectionId,
     TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VisualAnalysis,
-    dominant_colors, library_display_name, visual_analysis,
+    VisualDetail, dominant_colors, library_display_name, visual_analysis,
 };
 
+use crate::analysis_pace;
 use crate::asset_colors;
 use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
@@ -290,6 +295,8 @@ mod imp {
         pub update_banner: TemplateChild<adw::Banner>,
         pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
         pub analysing_colors: Cell<bool>,
+        pub activity: crate::analysis_pace::Activity,
+        pub library_generation: Cell<u32>,
         pub library_actions_enabled: Cell<bool>,
         pub update_news: RefCell<Option<UpdateNews>>,
         #[template_child]
@@ -693,6 +700,7 @@ impl PigouneWindow {
         window.follow_details_panel();
         window.follow_sidebar_panel();
         window.type_to_search();
+        window.watch_activity();
         window
             .imp()
             .settings
@@ -800,6 +808,17 @@ impl PigouneWindow {
         let button = &imp.grid_header.details_button();
         imp.details_split
             .set_show_sidebar(button.is_visible() && button.is_active());
+    }
+
+    fn watch_activity(&self) {
+        let activity = self.imp().activity.clone();
+        let events = gtk::EventControllerLegacy::new();
+        events.set_propagation_phase(gtk::PropagationPhase::Capture);
+        events.connect_event(move |_, _| {
+            activity.noticed();
+            glib::Propagation::Proceed
+        });
+        self.add_controller(events);
     }
 
     fn type_to_search(&self) {
@@ -1481,6 +1500,18 @@ impl PigouneWindow {
                 self,
                 move |id| window.show_in_all(id)
             )),
+            prepare: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || {
+                    Box::pin(async { Ok(true) })
+                        as Pin<Box<dyn Future<Output = Result<bool, String>>>>
+                },
+                move |canceled: Arc<AtomicBool>, progress: Rc<dyn Fn(u64, u64)>| {
+                    window.prepare_duplicates(canceled, progress)
+                }
+            )),
             compare: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1736,6 +1767,12 @@ impl PigouneWindow {
                             });
                         }
                     ),
+                    glib::clone!(
+                        #[weak(rename_to = window)]
+                        self,
+                        #[upgrade_or_default]
+                        move || window.analysis_backlog()
+                    ),
                     self.health_actions(),
                     self.duplicate_actions(),
                 )
@@ -1818,6 +1855,8 @@ impl PigouneWindow {
         let mut library = library;
         library.set_screen(imp.screen.get());
         imp.library.replace(Some(library));
+        imp.library_generation
+            .set(imp.library_generation.get().wrapping_add(1));
         self.store_recent_libraries(&recent_libraries::with_opened(
             &self.recent_library_paths(),
             &path,
@@ -1833,11 +1872,16 @@ impl PigouneWindow {
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move || {
-                window.empty_expired_trash();
-                window.analyse_colors();
-            }
+            move || window.empty_expired_trash()
         ));
+        glib::timeout_add_local_once(
+            analysis_pace::START_DELAY,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move || window.analyse_colors()
+            ),
+        );
     }
 
     fn analyse_colors(&self) {
@@ -1866,12 +1910,51 @@ impl PigouneWindow {
         .any(|pending| pending.as_ref().is_some_and(|files| !files.is_empty()))
     }
 
+    async fn wait_for_calm_in(&self, generation: u32) -> bool {
+        self.imp().activity.wait_for_calm().await;
+        self.imp().library_generation.get() == generation
+    }
+
+    fn record_colors(&self, analysed: &[(AssetId, Vec<pigoune_core::DominantColor>)]) -> bool {
+        let recorded = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.record_colors_batch(analysed));
+        let done = matches!(recorded, Some(Ok(())));
+        if done {
+            self.show_new_colors();
+        }
+        done
+    }
+
+    fn record_analyses(&self, analysed: &[(AssetId, Option<VisualAnalysis>)]) -> bool {
+        let recorded = self
+            .imp()
+            .library
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.record_visual_analysis_batch(analysed));
+        matches!(recorded, Some(Ok(())))
+    }
+
     async fn analyse_pending_colors(&self) -> bool {
+        let generation = self.imp().library_generation.get();
         while let Some(pending) = self.files_awaiting_colors()
             && !pending.is_empty()
         {
             let mut analysed = Vec::with_capacity(pending.len());
             for (id, file, thumbnail_file) in pending {
+                if !self.imp().activity.is_calm()
+                    && !analysed.is_empty()
+                    && !self.record_colors(&std::mem::take(&mut analysed))
+                {
+                    return false;
+                }
+                if !self.wait_for_calm_in(generation).await {
+                    return false;
+                }
                 let colors = match thumbnails::thumbnail(&file, &thumbnail_file).await {
                     Some(texture) => {
                         let pixels = asset_colors::rgba_pixels(&texture);
@@ -1883,51 +1966,138 @@ impl PigouneWindow {
                 };
                 analysed.push((id, colors));
             }
-            let recorded = self
-                .imp()
-                .library
-                .borrow_mut()
-                .as_mut()
-                .map(|library| library.record_colors_batch(&analysed));
-            if !matches!(recorded, Some(Ok(()))) {
+            if !self.record_colors(&analysed) {
                 return false;
             }
-            self.show_new_colors();
         }
         true
     }
 
     async fn analyse_pending_visual_hashes(&self) -> bool {
+        let generation = self.imp().library_generation.get();
         while let Some(pending) = self.files_awaiting_visual_hashes()
             && !pending.is_empty()
         {
             let mut analysed = Vec::with_capacity(pending.len());
             for (id, file, thumbnail_file) in pending {
-                let hash = match thumbnails::thumbnail(&file, &thumbnail_file).await {
-                    Some(texture) => {
-                        let size = u32::try_from(texture.width())
-                            .ok()
-                            .zip(u32::try_from(texture.height()).ok());
-                        let pixels = asset_colors::rgba_pixels(&texture);
-                        gio::spawn_blocking(move || visual_analysis_of(size, pixels))
-                            .await
-                            .unwrap_or_default()
-                    }
-                    None => None,
-                };
-                analysed.push((id, hash));
+                if !self.imp().activity.is_calm()
+                    && !analysed.is_empty()
+                    && !self.record_analyses(&std::mem::take(&mut analysed))
+                {
+                    return false;
+                }
+                if !self.wait_for_calm_in(generation).await {
+                    return false;
+                }
+                let analysis = analyse_drawing(&file, &thumbnail_file).await.flatten();
+                analysed.push((id, analysis));
             }
-            let recorded = self
-                .imp()
-                .library
-                .borrow_mut()
-                .as_mut()
-                .map(|library| library.record_visual_analysis_batch(&analysed));
-            if !matches!(recorded, Some(Ok(()))) {
+            if !self.record_analyses(&analysed) {
                 return false;
             }
         }
         true
+    }
+
+    async fn analyse_for_search(
+        &self,
+        waiting: Vec<(AssetId, PathBuf, PathBuf)>,
+        details_only: bool,
+        canceled: &AtomicBool,
+        progress: &dyn Fn(u64, u64),
+    ) -> Result<bool, String> {
+        let total = u64::try_from(waiting.len()).unwrap_or(u64::MAX);
+        let mut done = 0_u64;
+        progress(done, total);
+        for chunk in waiting.chunks(COLOR_BATCH) {
+            let mut analysed = Vec::with_capacity(chunk.len());
+            for (id, file, thumbnail_file) in chunk {
+                if canceled.load(Ordering::Relaxed) {
+                    break;
+                }
+                if let Some(analysis) = analyse_drawing(file, thumbnail_file).await {
+                    analysed.push((*id, analysis));
+                }
+            }
+            self.record_for_search(&analysed, details_only)?;
+            if canceled.load(Ordering::Relaxed) {
+                return Ok(false);
+            }
+            done += u64::try_from(chunk.len()).unwrap_or(0);
+            progress(done, total);
+        }
+        Ok(true)
+    }
+
+    fn record_for_search(
+        &self,
+        analysed: &[(AssetId, Option<VisualAnalysis>)],
+        details_only: bool,
+    ) -> Result<(), String> {
+        let mut library = self.imp().library.borrow_mut();
+        let library = library.as_mut().ok_or_else(String::new)?;
+        let recorded = if details_only {
+            let details: Vec<(AssetId, Option<VisualDetail>)> = analysed
+                .iter()
+                .map(|(id, analysis)| {
+                    (
+                        *id,
+                        analysis.as_ref().map(|analysis| analysis.detail.clone()),
+                    )
+                })
+                .collect();
+            library.record_visual_details_batch(&details)
+        } else {
+            library.record_visual_analysis_batch(analysed)
+        };
+        recorded.map_err(|error| error_messages::describe(&error))
+    }
+
+    async fn analyse_duplicate_candidates(
+        &self,
+        canceled: &AtomicBool,
+        progress: &dyn Fn(u64, u64),
+    ) -> Result<bool, String> {
+        let unhashed = self
+            .files_awaiting(|library| library.assets_awaiting_visual_hash(usize::MAX))
+            .unwrap_or_default();
+        if !unhashed.is_empty()
+            && !self
+                .analyse_for_search(unhashed, false, canceled, progress)
+                .await?
+        {
+            return Ok(false);
+        }
+        let candidates = self
+            .files_awaiting(Library::duplicate_candidates_awaiting_detail)
+            .unwrap_or_default();
+        if candidates.is_empty() {
+            return Ok(true);
+        }
+        self.analyse_for_search(candidates, true, canceled, progress)
+            .await
+    }
+
+    fn prepare_duplicates(
+        &self,
+        canceled: Arc<AtomicBool>,
+        progress: Rc<dyn Fn(u64, u64)>,
+    ) -> Pin<Box<dyn Future<Output = Result<bool, String>>>> {
+        let window = self.clone();
+        Box::pin(async move {
+            window
+                .analyse_duplicate_candidates(&canceled, progress.as_ref())
+                .await
+        })
+    }
+
+    fn analysis_backlog(&self) -> (u64, u64) {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.analysis_backlog().ok())
+            .unwrap_or_default()
     }
 
     fn files_awaiting_colors(&self) -> Option<Vec<(AssetId, PathBuf, PathBuf)>> {
@@ -6426,6 +6596,19 @@ fn asset_objects(
 fn nothing_to_import_text() -> String {
     gettext("This drop holds no image. In the browser, use “Copy Image”, then press {shortcut}")
         .replace("{shortcut}", &shortcuts::current_label(PASTE_ACTION))
+}
+
+async fn analyse_drawing(file: &Path, thumbnail_file: &Path) -> Option<Option<VisualAnalysis>> {
+    let texture = thumbnails::thumbnail(file, thumbnail_file).await?;
+    let size = u32::try_from(texture.width())
+        .ok()
+        .zip(u32::try_from(texture.height()).ok());
+    let pixels = asset_colors::rgba_pixels(&texture);
+    Some(
+        gio::spawn_blocking(move || visual_analysis_of(size, pixels))
+            .await
+            .unwrap_or_default(),
+    )
 }
 
 fn visual_analysis_of(size: Option<(u32, u32)>, pixels: Vec<u8>) -> Option<VisualAnalysis> {

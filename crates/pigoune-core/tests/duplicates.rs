@@ -938,3 +938,85 @@ fn the_kind_between_two_assets_follows_the_kept_one() {
     assert_eq!(kind(2, 3), Some(DuplicateKind::Probable));
     assert_eq!(kind(1, 4), None);
 }
+
+#[test]
+fn only_assets_with_a_close_neighbour_wait_for_their_detail() {
+    let (_workspace, library) = library_with(&[
+        without_detail(9),
+        seed(9),
+        without_detail(0xffff_0000_ffff_0000),
+        without_detail(0x00ff_ff00_00ff_ff00),
+    ]);
+
+    let waiting = library
+        .duplicate_candidates_awaiting_detail()
+        .expect("candidates");
+
+    assert_eq!(waiting, vec![asset_id(1)]);
+}
+
+#[test]
+fn recording_details_lets_the_waiting_assets_be_grouped() {
+    let (_workspace, mut library) = library_with(&[without_detail(9), without_detail(9)]);
+    assert!(library.duplicate_groups().expect("grouped").is_empty());
+    let detail = VisualDetail::from_bytes(&detail_for(9, 0)).expect("a detail");
+
+    library
+        .record_visual_details_batch(&[
+            (asset_id(1), Some(detail.clone())),
+            (asset_id(2), Some(detail)),
+        ])
+        .expect("recorded");
+
+    assert_eq!(library.duplicate_groups().expect("grouped").len(), 1);
+    assert!(
+        library
+            .duplicate_candidates_awaiting_detail()
+            .expect("candidates")
+            .is_empty()
+    );
+}
+
+#[test]
+fn an_asset_whose_detail_cannot_be_computed_stops_waiting() {
+    let (_workspace, mut library) = library_with(&[without_detail(9), seed(9)]);
+
+    library
+        .record_visual_details_batch(&[(asset_id(1), None)])
+        .expect("recorded");
+
+    assert!(
+        library
+            .duplicate_candidates_awaiting_detail()
+            .expect("candidates")
+            .is_empty()
+    );
+    assert!(library.duplicate_groups().expect("grouped").is_empty());
+}
+
+#[test]
+fn the_background_pass_ignores_assets_that_only_lack_a_detail() {
+    let (_workspace, library) = library_with(&[without_detail(9), seed(9)]);
+
+    assert!(
+        library
+            .assets_awaiting_visual_hash(10)
+            .expect("waiting")
+            .is_empty()
+    );
+    assert_eq!(library.count_awaiting_visual_hash().expect("count"), 0);
+}
+
+#[test]
+fn the_backlog_counts_the_assets_missing_colors_or_a_hash() {
+    let (_workspace, library) = library_with(&[
+        colored(1, BROWN),
+        seed(2),
+        Seed {
+            hash: None,
+            ..seed(3)
+        },
+    ]);
+
+    assert_eq!(library.analysis_backlog().expect("backlog"), (2, 3));
+}

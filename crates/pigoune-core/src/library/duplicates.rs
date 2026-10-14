@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ops::ControlFlow;
 
 use rusqlite::OptionalExtension;
@@ -124,6 +124,49 @@ impl Library {
         Ok(DuplicatePlan {
             fingerprints: self.fingerprints(true)?,
         })
+    }
+
+    pub fn duplicate_candidates_awaiting_detail(&self) -> Result<Vec<AssetId>, LibraryError> {
+        let awaiting = self.assets_without_detail()?;
+        if awaiting.is_empty() {
+            return Ok(Vec::new());
+        }
+        let fingerprints = self.fingerprints(false)?;
+        let bands = DUPLICATE_DISTANCE + 1;
+        let buckets = band_buckets(&fingerprints, bands);
+        let found = fingerprints
+            .iter()
+            .filter(|fingerprint| awaiting.contains(&fingerprint.asset))
+            .filter(|fingerprint| {
+                (0..bands).any(|band| {
+                    let value = band_of(fingerprint.hash.bits(), band, bands);
+                    buckets[band as usize][&value].iter().any(|index| {
+                        let other = &fingerprints[*index];
+                        other.asset != fingerprint.asset
+                            && fingerprint.hash.distance(other.hash) <= DUPLICATE_DISTANCE
+                            && similar_proportions(
+                                fingerprint.proportion,
+                                other.proportion,
+                                DUPLICATE_PROPORTION_GAP,
+                            )
+                    })
+                })
+            })
+            .map(|fingerprint| fingerprint.asset)
+            .collect();
+        Ok(found)
+    }
+
+    fn assets_without_detail(&self) -> Result<HashSet<AssetId>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id FROM assets
+             WHERE trashed_at_unix_ms IS NULL AND length(visual_hash) = ?1
+               AND visual_detail IS NULL",
+        )?;
+        let ids = statement
+            .query_map([VisualHash::BYTE_LENGTH], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(ids)
     }
 
     pub fn duplicate_groups(&self) -> Result<Vec<Vec<AssetId>>, LibraryError> {
@@ -311,15 +354,7 @@ impl DuplicatePlan {
         let fingerprints = &self.fingerprints;
         let total = u64::try_from(fingerprints.len()).unwrap_or(u64::MAX);
         let bands = DUPLICATE_DISTANCE + 1;
-        let mut buckets: Vec<HashMap<u64, Vec<usize>>> = vec![HashMap::new(); bands as usize];
-        for (index, fingerprint) in fingerprints.iter().enumerate() {
-            for band in 0..bands {
-                buckets[band as usize]
-                    .entry(band_of(fingerprint.hash.bits(), band, bands))
-                    .or_default()
-                    .push(index);
-            }
-        }
+        let buckets = band_buckets(fingerprints, bands);
         let mut order: Vec<usize> = (0..fingerprints.len()).collect();
         order.sort_by(|a, b| {
             fingerprints[*b]
@@ -402,6 +437,19 @@ impl DuplicatePlan {
         });
         Some(groups)
     }
+}
+
+fn band_buckets(fingerprints: &[Fingerprint], bands: u32) -> Vec<HashMap<u64, Vec<usize>>> {
+    let mut buckets: Vec<HashMap<u64, Vec<usize>>> = vec![HashMap::new(); bands as usize];
+    for (index, fingerprint) in fingerprints.iter().enumerate() {
+        for band in 0..bands {
+            buckets[band as usize]
+                .entry(band_of(fingerprint.hash.bits(), band, bands))
+                .or_default()
+                .push(index);
+        }
+    }
+    buckets
 }
 
 fn band_of(bits: u64, band: u32, bands: u32) -> u64 {
