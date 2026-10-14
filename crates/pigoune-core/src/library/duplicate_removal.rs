@@ -72,7 +72,7 @@ impl Library {
         &mut self,
         removal: &ConfirmedRemoval,
     ) -> Result<ChangeStamp, RemovalError> {
-        let kept = match self.stored_fingerprint(removal.kept)? {
+        let kept = match self.stored_fingerprint(removal.kept, true)? {
             Stored::Ready(fingerprint) if self.is_available(removal.kept)? => fingerprint,
             _ => return Err(RemovalError::NotAvailable(removal.kept)),
         };
@@ -80,28 +80,29 @@ impl Library {
             if !self.is_available(*id)? {
                 return Err(RemovalError::NotAvailable(*id));
             }
-            match self.stored_fingerprint(*id)? {
+            match self.stored_fingerprint(*id, true)? {
                 Stored::Ready(other) if duplicate_kind(&kept, &other).is_some() => {}
                 _ => return Err(RemovalError::NotAlike(*id)),
             }
         }
+        let before = self.latest_change();
         let inverse = self.apply_asset_command(&AssetCommand::SetTrashed {
             assets: removal.chosen.clone(),
             trashed: true,
         })?;
-        let stamp = self.latest_change();
+        let after = self.latest_change();
         let changed: HashSet<AssetId> = match &inverse {
             AssetCommand::SetTrashed { assets, .. } => assets.iter().copied().collect(),
             _ => HashSet::new(),
         };
         let confirmed: HashSet<AssetId> = removal.chosen.iter().copied().collect();
-        match stamp {
-            Some(stamp) if changed == confirmed => Ok(stamp),
-            Some(stamp) => {
+        match after {
+            Some(stamp) if after != before && changed == confirmed => Ok(stamp),
+            Some(stamp) if after != before => {
                 let _ = self.undo_change(stamp);
                 Err(RemovalError::BeyondTheChoice)
             }
-            None => Err(RemovalError::BeyondTheChoice),
+            _ => Err(RemovalError::BeyondTheChoice),
         }
     }
 

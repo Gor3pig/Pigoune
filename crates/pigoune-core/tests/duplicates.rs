@@ -300,7 +300,7 @@ fn a_chain_of_resemblances_never_becomes_one_group() {
         seed(0x1234_5678_9abc_def0),
     ]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert_eq!(groups, [vec![asset_id(1), asset_id(2)]]);
 }
@@ -312,7 +312,7 @@ fn proportions_that_differ_too_much_keep_resources_apart() {
         shaped(99, 110, 100),
     ]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert_eq!(groups, [vec![asset_id(3), asset_id(1)]]);
 }
@@ -326,7 +326,7 @@ fn trashed_resources_never_appear_in_groups() {
         })
         .expect("trashed");
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert_eq!(groups, [vec![asset_id(1), asset_id(3)]]);
 }
@@ -368,7 +368,7 @@ fn every_pair_inside_a_group_is_verified() {
     let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
     let (_workspace, library) = library_with(&seeds);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert!(groups.len() > 20);
     for group in &groups {
@@ -393,7 +393,7 @@ fn grouping_forty_thousand_resources_stays_quick() {
     let (_workspace, library) = library_with(&seeds);
 
     let start = Instant::now();
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert!(!groups.is_empty());
     assert!(start.elapsed().as_secs() < 60, "{:?}", start.elapsed());
@@ -405,7 +405,7 @@ fn thousands_of_identical_resources_are_split_into_small_groups() {
     let (_workspace, library) = library_with(&seeds);
 
     let start = Instant::now();
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert!(groups.iter().all(|group| group.len() <= MOST_IN_A_GROUP));
     assert_eq!(groups.iter().map(Vec::len).sum::<usize>(), 6_000);
@@ -493,7 +493,7 @@ fn the_same_shape_in_another_color_is_not_a_duplicate() {
     let (_workspace, library) =
         library_with(&[seed(base), tinted(base, 120), seed(flipped(base, &[20]))]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert_eq!(groups, [vec![asset_id(1), asset_id(3)]]);
 }
@@ -547,7 +547,7 @@ fn a_group_lists_its_largest_image_first() {
         shaped(77, 150, 150),
     ]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert_eq!(groups, [vec![asset_id(2), asset_id(3), asset_id(1)]]);
 }
@@ -558,7 +558,7 @@ fn a_plan_finds_the_same_groups_as_the_direct_search() {
     let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
     let (_workspace, library) = library_with(&seeds);
 
-    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+    let plan = library.duplicate_plan().expect("planned");
     let found: Vec<Vec<AssetId>> = plan
         .run(|_| ControlFlow::Continue(()))
         .expect("not canceled")
@@ -572,17 +572,14 @@ fn a_plan_finds_the_same_groups_as_the_direct_search() {
         })
         .collect();
 
-    assert_eq!(
-        found,
-        library.duplicate_groups(SIDE_BY_SIDE).expect("grouped")
-    );
+    assert_eq!(found, library.duplicate_groups().expect("grouped"));
 }
 #[test]
 fn a_plan_reports_a_progress_that_only_grows_and_ends_complete() {
     let hashes = clustered_hashes(800, 60);
     let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
     let (_workspace, library) = library_with(&seeds);
-    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+    let plan = library.duplicate_plan().expect("planned");
 
     let mut reports = Vec::new();
     plan.run(|progress| {
@@ -603,7 +600,7 @@ fn a_plan_can_be_canceled() {
     let hashes = clustered_hashes(800, 60);
     let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
     let (_workspace, library) = library_with(&seeds);
-    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+    let plan = library.duplicate_plan().expect("planned");
 
     let found = plan.run(|_| ControlFlow::Break(()));
 
@@ -801,7 +798,7 @@ fn identical_and_probable_duplicates_are_told_apart() {
         seed(flipped(base, &[2, 3, 4])),
     ]);
 
-    let plan = library.duplicate_plan(SIDE_BY_SIDE).expect("planned");
+    let plan = library.duplicate_plan().expect("planned");
     let groups = plan.run(|_| ControlFlow::Continue(())).expect("done");
 
     assert_eq!(groups.len(), 1);
@@ -829,7 +826,7 @@ fn a_silhouette_in_common_is_not_enough_to_be_a_duplicate() {
         looking_like(silhouette, 0x00ff_ff00_00ff_ff00),
     ]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert!(groups.is_empty());
 }
@@ -838,7 +835,7 @@ fn a_silhouette_in_common_is_not_enough_to_be_a_duplicate() {
 fn assets_without_a_detail_are_not_offered_as_duplicates() {
     let (_workspace, library) = library_with(&[seed(9), without_detail(9)]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert!(groups.is_empty());
 }
@@ -857,7 +854,7 @@ fn a_library_of_icons_sharing_one_silhouette_is_not_swallowed_by_one_group() {
     let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
     let (_workspace, library) = library_with(&seeds);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert!(groups.len() >= 5);
     assert!(
@@ -876,7 +873,68 @@ fn two_resemblances_of_one_asset_that_differ_from_each_other_are_not_grouped_tog
         seed(flipped(base, &[3, 4, 5])),
     ]);
 
-    let groups = library.duplicate_groups(SIDE_BY_SIDE).expect("grouped");
+    let groups = library.duplicate_groups().expect("grouped");
 
     assert_eq!(groups, [vec![asset_id(1), asset_id(2)]]);
+}
+
+#[test]
+fn every_cluster_of_near_identical_assets_comes_out_as_one_group() {
+    let mut state = 5_u64;
+    let mut hashes: Vec<u64> = Vec::new();
+    let mut clusters: Vec<Vec<usize>> = Vec::new();
+    for _ in 0..120 {
+        let center = pseudo_random(&mut state);
+        let size = usize::try_from(pseudo_random(&mut state) % 5).expect("small") + 2;
+        let mut members = Vec::new();
+        for _ in 0..size {
+            let wobble = pseudo_random(&mut state) % 65;
+            let hash = if wobble < 64 {
+                center ^ (1 << wobble)
+            } else {
+                center
+            };
+            hashes.push(hash);
+            members.push(hashes.len());
+        }
+        clusters.push(members);
+    }
+    let seeds: Vec<Seed> = hashes.iter().map(|hash| seed(*hash)).collect();
+    let (_workspace, library) = library_with(&seeds);
+
+    let groups = library.duplicate_groups().expect("grouped");
+
+    let mut found: Vec<Vec<usize>> = groups
+        .iter()
+        .map(|group| {
+            let mut numbers: Vec<usize> = group.iter().map(|id| number_of(*id)).collect();
+            numbers.sort_unstable();
+            numbers
+        })
+        .collect();
+    found.sort();
+    clusters.sort();
+    assert_eq!(found, clusters);
+}
+
+#[test]
+fn the_kind_between_two_assets_follows_the_kept_one() {
+    let base = 0x0123_4567_89ab_cdef_u64;
+    let (_workspace, library) = library_with(&[
+        seed(base),
+        seed(flipped(base, &[1])),
+        seed(flipped(base, &[2, 3, 4])),
+        seed(!base),
+    ]);
+
+    let kind = |first: usize, second: usize| {
+        library
+            .duplicate_kind_between(asset_id(first), asset_id(second))
+            .expect("compared")
+    };
+
+    assert_eq!(kind(1, 2), Some(DuplicateKind::VisuallyIdentical));
+    assert_eq!(kind(1, 3), Some(DuplicateKind::Probable));
+    assert_eq!(kind(2, 3), Some(DuplicateKind::Probable));
+    assert_eq!(kind(1, 4), None);
 }

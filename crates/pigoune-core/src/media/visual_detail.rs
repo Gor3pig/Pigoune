@@ -1,8 +1,6 @@
 use crate::raster::RgbaImage;
 
-use super::visual_hash::{
-    VisualHash, cell_bounds, trimmed_to_visible, visual_hash, without_plain_background,
-};
+use super::visual_hash::{VisualHash, cell_bounds, hash_of_normalized, normalized};
 
 const CHANNELS: usize = 4;
 pub const DETAIL_SIDE: usize = 16;
@@ -22,9 +20,10 @@ pub struct VisualAnalysis {
 
 #[must_use]
 pub fn visual_analysis(image: &RgbaImage) -> Option<VisualAnalysis> {
+    let trimmed = normalized(image)?;
     Some(VisualAnalysis {
-        hash: visual_hash(image)?,
-        detail: visual_detail(image)?,
+        hash: hash_of_normalized(&trimmed)?,
+        detail: detail_of_normalized(&trimmed),
     })
 }
 
@@ -70,8 +69,10 @@ fn cell_gap(first: &[u8], second: &[u8]) -> f64 {
 
 #[must_use]
 pub fn visual_detail(image: &RgbaImage) -> Option<VisualDetail> {
-    let keyed = without_plain_background(image);
-    let trimmed = trimmed_to_visible(&keyed)?;
+    Some(detail_of_normalized(&normalized(image)?))
+}
+
+fn detail_of_normalized(trimmed: &RgbaImage) -> VisualDetail {
     let (width, height) = (trimmed.width() as usize, trimmed.height() as usize);
     let pixels = trimmed.pixels();
     let mut detail = Vec::with_capacity(DETAIL_BYTES);
@@ -102,7 +103,7 @@ pub fn visual_detail(image: &RgbaImage) -> Option<VisualDetail> {
             ]);
         }
     }
-    Some(VisualDetail(detail.into()))
+    VisualDetail(detail.into())
 }
 
 #[cfg(test)]

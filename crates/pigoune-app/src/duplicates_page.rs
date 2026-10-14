@@ -44,6 +44,7 @@ pub struct WaitingThumbnail {
 
 pub type MembersLoader = Box<dyn Fn(&[AssetId]) -> Vec<DuplicateMember>>;
 
+#[derive(Default)]
 pub struct Attachments {
     pub collections: usize,
     pub tags: usize,
@@ -58,13 +59,16 @@ pub enum RemovalFailure {
 
 pub type Removed = Result<ChangeStamp, RemovalFailure>;
 
-struct MemberControls {
+pub struct MemberControls {
     id: AssetId,
     tick: gtk::CheckButton,
     kept: gtk::Label,
+    kind: gtk::Label,
 }
 
-struct GroupState {
+pub struct GroupState {
+    key: AssetId,
+    actions: Rc<DuplicateActions>,
     reference: Cell<AssetId>,
     ticked: RefCell<Vec<AssetId>>,
     rows: RefCell<Vec<MemberControls>>,
@@ -81,7 +85,11 @@ pub struct DuplicateActions {
     pub undo: Box<dyn Fn(ChangeStamp) -> Replaced>,
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
+    pub compare: Box<dyn Fn(AssetId, AssetId) -> Option<DuplicateKind>>,
+    pub trash_expires: Box<dyn Fn() -> bool>,
 }
+
+type Selection = (AssetId, Vec<AssetId>);
 
 mod imp {
     use std::cell::{Cell, RefCell};
@@ -93,7 +101,7 @@ mod imp {
     use adw::subclass::prelude::*;
     use gtk::glib;
 
-    use super::{DuplicateActions, DuplicateMember, WaitingThumbnail};
+    use super::{DuplicateActions, DuplicateMember, GroupState, Selection, WaitingThumbnail};
     use pigoune_core::{AssetId, DuplicateKind};
 
     #[derive(Default, gtk::CompositeTemplate)]
@@ -124,7 +132,9 @@ mod imp {
         pub pending: Cell<u64>,
         pub cancel_requested: RefCell<Option<Arc<AtomicBool>>>,
         pub scroll_followed: Cell<bool>,
-        pub removing: Cell<bool>,
+        pub search_again: Cell<bool>,
+        pub states: RefCell<Vec<Rc<GroupState>>>,
+        pub selections: RefCell<HashMap<AssetId, Selection>>,
         pub kinds: RefCell<HashMap<AssetId, DuplicateKind>>,
     }
 
@@ -177,6 +187,7 @@ impl PigouneDuplicatesPage {
     fn on_search_clicked(&self) {
         let imp = self.imp();
         if imp.cancel_requested.borrow().is_some() {
+            imp.search_again.set(true);
             return;
         }
         let Some(actions) = imp.actions.borrow().clone() else {
@@ -219,10 +230,13 @@ impl PigouneDuplicatesPage {
             self,
             async move {
                 let found = work.await.ok().flatten();
-                page.imp().cancel_requested.replace(None);
+                let imp = page.imp();
+                imp.cancel_requested.replace(None);
+                let again = imp.search_again.replace(false);
                 match found {
+                    Some(_) if again => page.on_search_clicked(),
                     Some(groups) => {
-                        let imp = page.imp();
+                        imp.selections.borrow_mut().clear();
                         {
                             let mut kinds = imp.kinds.borrow_mut();
                             kinds.clear();
@@ -303,6 +317,10 @@ impl PigouneDuplicatesPage {
             imp.groups_box.remove(&child);
         }
         imp.waiting.borrow_mut().clear();
+        let Some(actions) = imp.actions.borrow().clone() else {
+            return;
+        };
+        imp.states.borrow_mut().clear();
         let shown: Vec<Vec<AssetId>> = imp
             .groups
             .borrow()
@@ -316,7 +334,9 @@ impl PigouneDuplicatesPage {
             .collect();
         self.ensure_details(&first_rows);
         for group in &shown {
-            imp.groups_box.append(&self.group_widget(group));
+            if imp.details.borrow().contains_key(&group[0]) {
+                imp.groups_box.append(&self.group_widget(&actions, group));
+            }
         }
         imp.stack.set_visible_child_name("results");
         self.follow_scrolling();
@@ -436,19 +456,38 @@ impl PigouneDuplicatesPage {
         .replace("{count}", &pending.to_string())
     }
 
-    fn group_widget(&self, group: &[AssetId]) -> adw::PreferencesGroup {
+    fn group_widget(
+        &self,
+        actions: &Rc<DuplicateActions>,
+        group: &[AssetId],
+    ) -> adw::PreferencesGroup {
+        let imp = self.imp();
         let action = gtk::Button::builder()
             .valign(gtk::Align::Center)
             .sensitive(false)
             .build();
         action.add_css_class("destructive-action");
+        let saved = imp.selections.borrow().get(&group[0]).cloned();
+        let (reference, ticked) = match saved {
+            Some((reference, ticked)) if group.contains(&reference) => (
+                reference,
+                ticked
+                    .into_iter()
+                    .filter(|id| *id != reference && group.contains(id))
+                    .collect(),
+            ),
+            _ => (group[0], Vec::new()),
+        };
         let state = Rc::new(GroupState {
-            reference: Cell::new(group[0]),
-            ticked: RefCell::new(Vec::new()),
+            key: group[0],
+            actions: Rc::clone(actions),
+            reference: Cell::new(reference),
+            ticked: RefCell::new(ticked),
             rows: RefCell::new(Vec::new()),
             first_radio: RefCell::new(None),
             action: action.clone(),
         });
+        imp.states.borrow_mut().push(Rc::clone(&state));
         Self::refresh_action(&state);
         let widget = adw::PreferencesGroup::builder()
             .title(
@@ -463,7 +502,7 @@ impl PigouneDuplicatesPage {
         action.connect_clicked(glib::clone!(
             #[weak(rename_to = page)]
             self,
-            #[strong]
+            #[weak]
             state,
             move |_| page.confirm(&state)
         ));
@@ -541,7 +580,7 @@ impl PigouneDuplicatesPage {
         let is_reference = state.reference.get() == id;
         radio.set_active(is_reference);
         radio.connect_toggled(glib::clone!(
-            #[strong]
+            #[weak]
             state,
             move |radio| {
                 if radio.is_active() {
@@ -549,27 +588,31 @@ impl PigouneDuplicatesPage {
                 }
             }
         ));
+        let kind = if is_reference {
+            None
+        } else if state.reference.get() == state.key {
+            self.imp().kinds.borrow().get(&id).copied()
+        } else {
+            (state.actions.compare)(state.reference.get(), id)
+        };
         let tick = gtk::CheckButton::builder()
             .label(gettext("Move to Trash"))
             .valign(gtk::Align::Center)
             .visible(!is_reference)
+            .sensitive(kind.is_some())
+            .active(kind.is_some() && state.ticked.borrow().contains(&id))
             .build();
         tick.connect_toggled(glib::clone!(
-            #[strong]
+            #[weak]
             state,
             move |tick| Self::tick_changed(&state, id, tick.is_active())
         ));
-        let kind = self.imp().kinds.borrow().get(&id).copied();
         let kind_label = gtk::Label::builder()
-            .label(match kind {
-                Some(DuplicateKind::VisuallyIdentical) => gettext("Identical"),
-                Some(DuplicateKind::Probable) => gettext("Probable"),
-                None => String::new(),
-            })
-            .tooltip_text(gettext("Compared with the largest asset of the group"))
+            .label(kind_text(kind))
+            .tooltip_text(gettext("Compared with the asset you keep"))
             .css_classes(["dim-label"])
             .valign(gtk::Align::Center)
-            .visible(kind.is_some() && state.reference.get() != id)
+            .visible(!is_reference)
             .build();
         let kept = gtk::Label::builder()
             .label(gettext("Kept"))
@@ -581,6 +624,7 @@ impl PigouneDuplicatesPage {
             id,
             tick: tick.clone(),
             kept: kept.clone(),
+            kind: kind_label.clone(),
         });
         row.add_prefix(&radio);
         row.add_prefix(&self.thumbnail_of(member));
@@ -597,19 +641,28 @@ impl PigouneDuplicatesPage {
 
     fn choose_reference(state: &Rc<GroupState>, id: AssetId) {
         state.reference.set(id);
-        let controls: Vec<(AssetId, gtk::CheckButton, gtk::Label)> = state
+        state.ticked.borrow_mut().retain(|known| *known != id);
+        let controls: Vec<(AssetId, gtk::CheckButton, gtk::Label, gtk::Label)> = state
             .rows
             .borrow()
             .iter()
-            .map(|row| (row.id, row.tick.clone(), row.kept.clone()))
+            .map(|row| (row.id, row.tick.clone(), row.kept.clone(), row.kind.clone()))
             .collect();
-        for (row_id, tick, kept) in controls {
+        for (row_id, tick, kept, kind_label) in controls {
             let is_reference = row_id == id;
-            if is_reference {
+            let kind = if is_reference {
+                None
+            } else {
+                (state.actions.compare)(id, row_id)
+            };
+            if is_reference || kind.is_none() {
                 tick.set_active(false);
             }
+            tick.set_sensitive(kind.is_some());
             tick.set_visible(!is_reference);
             kept.set_visible(is_reference);
+            kind_label.set_label(&kind_text(kind));
+            kind_label.set_visible(!is_reference);
         }
         Self::refresh_action(state);
     }
@@ -669,6 +722,15 @@ impl PigouneDuplicatesPage {
         let Ok(removal) = ConfirmedRemoval::new(kept, chosen) else {
             return;
         };
+        let known = removal
+            .chosen()
+            .iter()
+            .chain([&kept])
+            .all(|id| imp.details.borrow().contains_key(id));
+        if !known {
+            self.show_changed();
+            return;
+        }
         let kept_name = imp
             .details
             .borrow()
@@ -676,13 +738,22 @@ impl PigouneDuplicatesPage {
             .map(|member| member.name.clone())
             .unwrap_or_default();
         let count = removal.chosen().len();
-        let body = ngettext(
-            "Keep “{name}” and move {count} other asset to the trash, where it stays for 30 days.",
-            "Keep “{name}” and move {count} other assets to the trash, where they stay for 30 days.",
-            u32::try_from(count).unwrap_or(u32::MAX),
-        )
-        .replace("{name}", &kept_name)
-        .replace("{count}", &count.to_string());
+        let count_text = u32::try_from(count).unwrap_or(u32::MAX);
+        let body = if (actions.trash_expires)() {
+            ngettext(
+                "Keep “{name}” and move {count} other asset to the trash, where it stays for 30 days.",
+                "Keep “{name}” and move {count} other assets to the trash, where they stay for 30 days.",
+                count_text,
+            )
+        } else {
+            ngettext(
+                "Keep “{name}” and move {count} other asset to the trash, where it stays until the trash is emptied.",
+                "Keep “{name}” and move {count} other assets to the trash, where they stay until the trash is emptied.",
+                count_text,
+            )
+        }
+        .replace("{count}", &count.to_string())
+        .replace("{name}", &kept_name);
         let list = gtk::ListBox::builder()
             .selection_mode(gtk::SelectionMode::None)
             .css_classes(["boxed-list"])
@@ -742,16 +813,13 @@ impl PigouneDuplicatesPage {
 
     fn remove(&self, removal: &ConfirmedRemoval) {
         let imp = self.imp();
-        if imp.removing.replace(true) {
-            return;
-        }
         let Some(actions) = imp.actions.borrow().clone() else {
-            imp.removing.set(false);
             return;
         };
         match (actions.remove)(removal) {
             Ok(stamp) => {
                 let chosen = removal.chosen();
+                self.save_selections(removal.kept());
                 {
                     let mut groups = imp.groups.borrow_mut();
                     for group in groups.iter_mut() {
@@ -768,7 +836,21 @@ impl PigouneDuplicatesPage {
             Err(RemovalFailure::Changed) => self.show_changed(),
             Err(RemovalFailure::Refused(refusal)) => self.show_refusal(&refusal),
         }
-        imp.removing.set(false);
+    }
+
+    fn save_selections(&self, except_reference: AssetId) {
+        let imp = self.imp();
+        let mut selections = imp.selections.borrow_mut();
+        for state in imp.states.borrow().iter() {
+            if state.reference.get() == except_reference {
+                selections.remove(&state.key);
+            } else {
+                selections.insert(
+                    state.key,
+                    (state.reference.get(), state.ticked.borrow().clone()),
+                );
+            }
+        }
     }
 
     fn show_changed(&self) {
@@ -850,6 +932,14 @@ impl PigouneDuplicatesPage {
             toast.connect_button_clicked(move |_| on_click());
         }
         toasts::announce(&overlay, &toast);
+    }
+}
+
+fn kind_text(kind: Option<DuplicateKind>) -> String {
+    match kind {
+        Some(DuplicateKind::VisuallyIdentical) => gettext("Identical"),
+        Some(DuplicateKind::Probable) => gettext("Probable"),
+        None => gettext("Different"),
     }
 }
 

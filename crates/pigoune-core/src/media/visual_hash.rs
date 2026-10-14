@@ -52,9 +52,15 @@ impl VisualHash {
 
 #[must_use]
 pub fn visual_hash(image: &RgbaImage) -> Option<VisualHash> {
-    let keyed = without_plain_background(image);
-    let trimmed = trimmed_to_visible(&keyed)?;
-    let grid = gray_grid(&trimmed)?;
+    hash_of_normalized(&normalized(image)?)
+}
+
+pub(super) fn normalized(image: &RgbaImage) -> Option<RgbaImage> {
+    trimmed_to_visible(&without_plain_background(image))
+}
+
+pub(super) fn hash_of_normalized(trimmed: &RgbaImage) -> Option<VisualHash> {
+    let grid = gray_grid(trimmed)?;
     let lightest = *grid.iter().max()?;
     let darkest = *grid.iter().min()?;
     if lightest - darkest < FLAT_RANGE {
@@ -69,7 +75,7 @@ pub fn visual_hash(image: &RgbaImage) -> Option<VisualHash> {
     Some(VisualHash(bits))
 }
 
-pub(super) fn without_plain_background(image: &RgbaImage) -> RgbaImage {
+fn without_plain_background(image: &RgbaImage) -> RgbaImage {
     let mut pixels = image.pixels().to_vec();
     let is_opaque = pixels
         .as_chunks::<CHANNELS>()
@@ -123,7 +129,7 @@ fn color_distance(first: [u8; 3], second: [u8; 3]) -> u32 {
         .sum()
 }
 
-pub(super) fn trimmed_to_visible(image: &RgbaImage) -> Option<RgbaImage> {
+fn trimmed_to_visible(image: &RgbaImage) -> Option<RgbaImage> {
     let width = image.width() as usize;
     let mut bounds: Option<(usize, usize, usize, usize)> = None;
     for (index, pixel) in image.pixels().as_chunks::<CHANNELS>().0.iter().enumerate() {

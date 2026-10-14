@@ -8,7 +8,7 @@ use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
-    CollectionRemoval, ConfirmedRemoval, DUPLICATE_DISTANCE, Dimensions, HealthPlan, ImportError,
+    CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateKind, HealthPlan, ImportError,
     ImportSummary, Library, LibraryError, LibraryExportReport, RemovalError, RgbaImage,
     SIMILAR_DISTANCE, SimilarSearch, SmartCollection, SmartCollectionCommand, SmartCollectionId,
     TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VisualAnalysis,
@@ -1461,13 +1461,7 @@ impl PigouneWindow {
             attachments: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
-                #[upgrade_or_else]
-                || Attachments {
-                    collections: 0,
-                    tags: 0,
-                    favorite: false,
-                    note: false,
-                },
+                #[upgrade_or_default]
                 move |id: AssetId| window.duplicate_attachments(id)
             )),
             undo: Box::new(glib::clone!(
@@ -1487,7 +1481,28 @@ impl PigouneWindow {
                 self,
                 move |id| window.show_in_all(id)
             )),
+            compare: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move |first: AssetId, second: AssetId| window.duplicate_kind_between(first, second)
+            )),
+            trash_expires: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move || window.settings().boolean(settings::AUTO_EMPTY_TRASH)
+            )),
         }
+    }
+
+    fn duplicate_kind_between(&self, first: AssetId, second: AssetId) -> Option<DuplicateKind> {
+        let library = self.imp().library.borrow();
+        library
+            .as_ref()?
+            .duplicate_kind_between(first, second)
+            .ok()
+            .flatten()
     }
 
     fn remove_duplicates(&self, removal: &ConfirmedRemoval) -> Removed {
@@ -1511,12 +1526,7 @@ impl PigouneWindow {
     fn duplicate_attachments(&self, id: AssetId) -> Attachments {
         let library = self.imp().library.borrow();
         let Some(library) = library.as_ref() else {
-            return Attachments {
-                collections: 0,
-                tags: 0,
-                favorite: false,
-                note: false,
-            };
+            return Attachments::default();
         };
         let asset = library.asset(id).ok().flatten();
         Attachments {
@@ -1533,7 +1543,7 @@ impl PigouneWindow {
         let library = self.imp().library.borrow();
         let library = library.as_ref().ok_or_else(String::new)?;
         let plan = library
-            .duplicate_plan(DUPLICATE_DISTANCE)
+            .duplicate_plan()
             .map_err(|error| error_messages::describe(&error))?;
         let pending = library
             .count_awaiting_visual_hash()

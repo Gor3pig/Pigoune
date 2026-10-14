@@ -14,7 +14,7 @@ pub const SIMILAR_DISTANCE: u32 = 10;
 pub const ALMOST_IDENTICAL_DISTANCE: u32 = 2;
 pub const VERY_CLOSE_DISTANCE: u32 = 6;
 const HASH_BITS: u32 = 64;
-pub(super) const DUPLICATE_PROPORTION_GAP: f64 = 1.25;
+const DUPLICATE_PROPORTION_GAP: f64 = 1.25;
 const SIMILAR_PROPORTION_GAP: f64 = 1.5;
 const TRUSTED_SHAPE_DISTANCE: u32 = 4;
 const STEPS_PER_REPORT: usize = 64;
@@ -58,6 +58,13 @@ pub struct DuplicateGroup {
     pub members: Vec<GroupMember>,
 }
 
+impl DuplicateGroup {
+    #[must_use]
+    pub fn assets(&self) -> Vec<AssetId> {
+        self.members.iter().map(|member| member.asset).collect()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DuplicateProgress {
     pub done: u64,
@@ -66,7 +73,6 @@ pub struct DuplicateProgress {
 
 pub struct DuplicatePlan {
     fingerprints: Vec<Fingerprint>,
-    max_distance: u32,
 }
 
 pub(super) enum Stored {
@@ -82,7 +88,7 @@ impl Library {
         id: AssetId,
         max_distance: u32,
     ) -> Result<SimilarSearch, LibraryError> {
-        let target = match self.stored_fingerprint(id)? {
+        let target = match self.stored_fingerprint(id, false)? {
             Stored::Missing | Stored::Unusable => return Ok(SimilarSearch::NoFingerprint),
             Stored::Pending => return Ok(SimilarSearch::Pending),
             Stored::Ready(target) => target,
@@ -114,26 +120,30 @@ impl Library {
         Ok(SimilarSearch::Found(similar))
     }
 
-    pub fn duplicate_plan(&self, max_distance: u32) -> Result<DuplicatePlan, LibraryError> {
+    pub fn duplicate_plan(&self) -> Result<DuplicatePlan, LibraryError> {
         Ok(DuplicatePlan {
             fingerprints: self.fingerprints(true)?,
-            max_distance,
         })
     }
 
-    pub fn duplicate_groups(&self, max_distance: u32) -> Result<Vec<Vec<AssetId>>, LibraryError> {
-        let plan = self.duplicate_plan(max_distance)?;
+    pub fn duplicate_groups(&self) -> Result<Vec<Vec<AssetId>>, LibraryError> {
+        let plan = self.duplicate_plan()?;
         let groups = plan.run(|_| ControlFlow::Continue(())).unwrap_or_default();
-        Ok(groups
-            .into_iter()
-            .map(|group| {
-                group
-                    .members
-                    .into_iter()
-                    .map(|member| member.asset)
-                    .collect()
-            })
-            .collect())
+        Ok(groups.iter().map(DuplicateGroup::assets).collect())
+    }
+
+    pub fn duplicate_kind_between(
+        &self,
+        first: AssetId,
+        second: AssetId,
+    ) -> Result<Option<DuplicateKind>, LibraryError> {
+        let (Stored::Ready(first), Stored::Ready(second)) = (
+            self.stored_fingerprint(first, true)?,
+            self.stored_fingerprint(second, true)?,
+        ) else {
+            return Ok(None);
+        };
+        Ok(duplicate_kind(&first, &second))
     }
 
     fn fingerprints(&self, with_detail: bool) -> Result<Vec<Fingerprint>, LibraryError> {
@@ -153,11 +163,19 @@ impl Library {
         Ok(fingerprints)
     }
 
-    pub(super) fn stored_fingerprint(&self, id: AssetId) -> Result<Stored, LibraryError> {
+    pub(super) fn stored_fingerprint(
+        &self,
+        id: AssetId,
+        with_detail: bool,
+    ) -> Result<Stored, LibraryError> {
+        let detail_column = if with_detail { "visual_detail" } else { "NULL" };
         let row = self
             .connection
             .query_row(
-                "SELECT id, visual_hash, width, height, colors, byte_size, visual_detail FROM assets WHERE id = ?1",
+                &format!(
+                    "SELECT id, visual_hash, width, height, colors, byte_size, {detail_column}
+                     FROM assets WHERE id = ?1"
+                ),
                 [id],
                 |row| {
                     let pending = row.get::<_, Option<Vec<u8>>>(1)?.is_none();
@@ -252,7 +270,7 @@ fn directed_gap(from: &[DominantColor], to: &[DominantColor]) -> f64 {
     total / f64::from(u32::try_from(from.len()).unwrap_or(u32::MAX))
 }
 
-pub(super) fn resembles(
+fn resembles(
     first: &Fingerprint,
     second: &Fingerprint,
     max_distance: u32,
@@ -292,7 +310,7 @@ impl DuplicatePlan {
     ) -> Option<Vec<DuplicateGroup>> {
         let fingerprints = &self.fingerprints;
         let total = u64::try_from(fingerprints.len()).unwrap_or(u64::MAX);
-        let bands = self.max_distance + 1;
+        let bands = DUPLICATE_DISTANCE + 1;
         let mut buckets: Vec<HashMap<u64, Vec<usize>>> = vec![HashMap::new(); bands as usize];
         for (index, fingerprint) in fingerprints.iter().enumerate() {
             for band in 0..bands {
