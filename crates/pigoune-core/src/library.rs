@@ -1,5 +1,6 @@
 mod adopt;
 mod animation_recheck;
+mod annotated;
 mod asset;
 mod asset_command;
 mod batch_import;
@@ -49,6 +50,7 @@ use crate::media::Dimensions;
 use history::History;
 use staging::StagingDir;
 
+pub use annotated::{AnnotatedImage, Annotations};
 pub use asset::Asset;
 pub use asset_command::{AssetCommand, AssetError, TextField};
 pub use batch_import::{
@@ -63,7 +65,8 @@ pub use duplicates::{
     SIMILAR_DISTANCE, SimilarAsset, SimilarSearch, VERY_CLOSE_DISTANCE,
 };
 pub use error::{
-    AdoptError, CollectionError, ImportError, LibraryError, RemoveRecordError, ReplaceError,
+    AdoptError, AnnotatedError, CollectionError, ImportError, LibraryError, RemoveRecordError,
+    ReplaceError,
 };
 pub use export::{CopyFailure, CopyReport};
 pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};

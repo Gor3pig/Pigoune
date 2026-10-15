@@ -259,3 +259,46 @@ mod tests {
         assert!(matches!(database_error, LibraryError::Database(_)));
     }
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum AnnotatedError {
+    #[error("the resource {0} does not exist")]
+    AssetNotFound(AssetId),
+    #[error("the resource {0} has no annotations")]
+    NotAnnotated(AssetId),
+    #[error("this image is already stored as the resource {0}")]
+    AlreadyPresent(AssetId),
+    #[error("{0} is not a PNG image")]
+    NotPng(PathBuf),
+    #[error("{0} could not be read")]
+    Unreadable(PathBuf),
+    #[error("the file name of {0} is reserved by Pigoune")]
+    ReservedName(PathBuf),
+    #[error(transparent)]
+    Library(#[from] LibraryError),
+}
+
+impl From<ImportError> for AnnotatedError {
+    fn from(error: ImportError) -> Self {
+        match error {
+            ImportError::UnsupportedFormat(path) => Self::NotPng(path),
+            ImportError::Unreadable(path) => Self::Unreadable(path),
+            ImportError::CollectionNotFound(_) => Self::Library(LibraryError::Io(
+                io::Error::other("no collection is involved"),
+            )),
+            ImportError::Library(error) => Self::Library(error),
+        }
+    }
+}
+
+impl From<rusqlite::Error> for AnnotatedError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
+
+impl From<io::Error> for AnnotatedError {
+    fn from(error: io::Error) -> Self {
+        Self::Library(error.into())
+    }
+}
