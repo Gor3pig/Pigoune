@@ -15,6 +15,7 @@ pub enum Outline {
     Ellipse,
     Segment,
     Region,
+    Stroke,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -195,8 +196,71 @@ pub const PIXELATE: ToolDefinition = ToolDefinition {
     options: &[CELL],
 };
 
-pub const DEFINITIONS: [&ToolDefinition; 6] =
-    [&RECTANGLE, &ELLIPSE, &LINE, &ARROW, &BLUR, &PIXELATE];
+pub const SMOOTH: OptionSpec = OptionSpec {
+    id: "smooth",
+    kind: OptionKind::Toggle,
+    default: DefaultValue::Toggle(true),
+    shown_if: None,
+};
+
+const YELLOW: Color = Color {
+    r: 0xf6,
+    g: 0xd3,
+    b: 0x2d,
+    a: 255,
+};
+
+pub const HIGHLIGHT_COLOR: OptionSpec = OptionSpec {
+    id: "color",
+    kind: OptionKind::Color,
+    default: DefaultValue::Color(YELLOW),
+    shown_if: None,
+};
+
+pub const HIGHLIGHT_OPACITY: OptionSpec = OptionSpec {
+    id: "opacity",
+    kind: OptionKind::Opacity,
+    default: DefaultValue::Number(0.4),
+    shown_if: None,
+};
+
+pub const HIGHLIGHT_WIDTH: OptionSpec = OptionSpec {
+    id: "width",
+    kind: OptionKind::Number {
+        min: 4.0,
+        max: 80.0,
+        step: 1.0,
+    },
+    default: DefaultValue::Number(24.0),
+    shown_if: None,
+};
+
+pub const PEN: ToolDefinition = ToolDefinition {
+    kind: "pen",
+    geometry: GeometryKind::Polyline,
+    outline: Outline::Stroke,
+    hides_content: false,
+    options: &[COLOR, OPACITY, WIDTH, SMOOTH],
+};
+
+pub const HIGHLIGHTER: ToolDefinition = ToolDefinition {
+    kind: "highlighter",
+    geometry: GeometryKind::Polyline,
+    outline: Outline::Stroke,
+    hides_content: false,
+    options: &[HIGHLIGHT_COLOR, HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, SMOOTH],
+};
+
+pub const DEFINITIONS: [&ToolDefinition; 8] = [
+    &RECTANGLE,
+    &ELLIPSE,
+    &LINE,
+    &ARROW,
+    &PEN,
+    &HIGHLIGHTER,
+    &BLUR,
+    &PIXELATE,
+];
 
 #[must_use]
 pub fn definition(kind: &str) -> Option<&'static ToolDefinition> {
