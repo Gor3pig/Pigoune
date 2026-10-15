@@ -1,9 +1,16 @@
-CREATE TABLE IF NOT EXISTS ignored_duplicates (
-    first_asset TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-    second_asset TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-    ignored_at_unix_ms INTEGER NOT NULL,
-    PRIMARY KEY (first_asset, second_asset),
-    CHECK (first_asset < second_asset)
+CREATE TABLE IF NOT EXISTS ignored_duplicate_actions (
+    id TEXT PRIMARY KEY NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('group', 'member')),
+    subject_asset TEXT REFERENCES assets (id) ON DELETE CASCADE,
+    created_at_unix_ms INTEGER NOT NULL
 ) STRICT;
 
-CREATE INDEX IF NOT EXISTS ignored_duplicates_by_second ON ignored_duplicates (second_asset);
+CREATE TABLE IF NOT EXISTS ignored_duplicate_members (
+    action_id TEXT NOT NULL REFERENCES ignored_duplicate_actions (id) ON DELETE CASCADE,
+    asset_id TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
+    kept_apart INTEGER NOT NULL DEFAULT 0 CHECK (kept_apart IN (0, 1)),
+    PRIMARY KEY (action_id, asset_id)
+) STRICT;
+
+CREATE INDEX IF NOT EXISTS ignored_duplicate_members_by_asset ON ignored_duplicate_members (asset_id);
+CREATE INDEX IF NOT EXISTS ignored_duplicate_actions_by_subject ON ignored_duplicate_actions (subject_asset);

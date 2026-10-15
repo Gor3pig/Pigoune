@@ -718,129 +718,19 @@ fn losing_the_details_file_only_makes_the_details_wait_again() {
 }
 
 #[test]
-fn a_format_12_library_turns_its_ignored_pairs_into_group_actions() {
+fn a_format_11_library_gains_the_tables_of_ignored_duplicates() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let library = Library::create(workspace.path(), "Avant").expect("library is created");
     let root = library.root().to_path_buf();
     drop(library);
     let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
-    for number in 1..=6 {
-        connection
-            .execute(
-                "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
-                                     width, height, byte_size, content_hash, is_animated,
-                                     embedded_sizes, added_at_unix_ms)
-                 VALUES (?1, ?2, ?3, ?4, 'png', 10, 10, 10, ?5, 0, '', ?6)",
-                rusqlite::params![
-                    format!("00000000-0000-7000-8000-{number:012}"),
-                    format!("asset {number}"),
-                    format!("a{number}.png"),
-                    format!("files/zz/{number}/a{number}.png"),
-                    format!("h{number}"),
-                    number
-                ],
-            )
-            .expect("asset");
-    }
-    let pair = |first: u32, second: u32| {
-        format!(
-            "INSERT INTO ignored_duplicates VALUES ('00000000-0000-7000-8000-{first:012}',
-             '00000000-0000-7000-8000-{second:012}', 1000)"
-        )
-    };
-    connection
-        .execute_batch(&format!(
-            "DROP TABLE ignored_duplicate_members;
-             DROP TABLE ignored_duplicate_actions;
-             CREATE TABLE ignored_duplicates (
-                 first_asset TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-                 second_asset TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-                 ignored_at_unix_ms INTEGER NOT NULL,
-                 PRIMARY KEY (first_asset, second_asset)
-             ) STRICT;
-             {}; {}; {};
-             PRAGMA user_version = 12;",
-            pair(1, 2),
-            pair(2, 3),
-            pair(5, 6)
-        ))
-        .expect("format 12 simulated");
-    drop(connection);
-
-    let library = Library::open(&root).expect("library opens");
-
-    assert_eq!(
-        library.format_version().expect("version readable"),
-        CURRENT_FORMAT_VERSION
-    );
-    let mut groups: Vec<usize> = library
-        .ignored_duplicate_entries()
-        .expect("entries")
-        .iter()
-        .map(|entry| entry.assets.len())
-        .collect();
-    groups.sort_unstable();
-    assert_eq!(groups, [2, 3]);
-    drop(library);
-    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
-    let old: i64 = connection
-        .query_row(
-            "SELECT count(*) FROM sqlite_master WHERE name = 'ignored_duplicates'",
-            [],
-            |row| row.get(0),
-        )
-        .expect("tables counted");
-    assert_eq!(old, 0);
-}
-
-#[test]
-fn a_format_13_library_keeps_its_ignored_groups_when_it_learns_who_they_are_kept_apart_from() {
-    let workspace = tempfile::tempdir().expect("temporary directory");
-    let library = Library::create(workspace.path(), "Avant").expect("library is created");
-    let root = library.root().to_path_buf();
-    drop(library);
-    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
-    for number in 1..=3 {
-        connection
-            .execute(
-                "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
-                                     width, height, byte_size, content_hash, is_animated,
-                                     embedded_sizes, added_at_unix_ms)
-                 VALUES (?1, ?2, ?3, ?4, 'png', 10, 10, 10, ?5, 0, '', ?6)",
-                rusqlite::params![
-                    format!("00000000-0000-7000-8000-{number:012}"),
-                    format!("asset {number}"),
-                    format!("a{number}.png"),
-                    format!("files/zz/{number}/a{number}.png"),
-                    format!("h{number}"),
-                    number
-                ],
-            )
-            .expect("asset");
-    }
     connection
         .execute_batch(
             "DROP TABLE ignored_duplicate_members;
              DROP TABLE ignored_duplicate_actions;
-             CREATE TABLE ignored_duplicate_actions (
-                 id TEXT PRIMARY KEY NOT NULL,
-                 kind TEXT NOT NULL CHECK (kind IN ('group', 'member')),
-                 subject_asset TEXT REFERENCES assets (id) ON DELETE CASCADE,
-                 created_at_unix_ms INTEGER NOT NULL
-             ) STRICT;
-             CREATE TABLE ignored_duplicate_members (
-                 action_id TEXT NOT NULL REFERENCES ignored_duplicate_actions (id) ON DELETE CASCADE,
-                 asset_id TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
-                 PRIMARY KEY (action_id, asset_id)
-             ) STRICT;
-             INSERT INTO ignored_duplicate_actions
-                 VALUES ('00000000-0000-7000-8000-0000000000a1', 'group', NULL, 1000);
-             INSERT INTO ignored_duplicate_members
-                 VALUES ('00000000-0000-7000-8000-0000000000a1', '00000000-0000-7000-8000-000000000001'),
-                        ('00000000-0000-7000-8000-0000000000a1', '00000000-0000-7000-8000-000000000002');
-             PRAGMA user_version = 13;",
+             PRAGMA user_version = 11;",
         )
-        .expect("format 13 simulated");
+        .expect("format 11 simulated");
     drop(connection);
 
     let library = Library::open(&root).expect("library opens");
@@ -849,8 +739,11 @@ fn a_format_13_library_keeps_its_ignored_groups_when_it_learns_who_they_are_kept
         library.format_version().expect("version readable"),
         CURRENT_FORMAT_VERSION
     );
-    let entries = library.ignored_duplicate_entries().expect("entries");
-    assert_eq!(entries.len(), 1);
-    assert_eq!(entries[0].assets.len(), 2);
-    assert!(entries[0].against.is_empty());
+    assert_eq!(library.ignored_duplicate_count().expect("counted"), 0);
+    assert!(
+        library
+            .ignored_duplicate_entries()
+            .expect("listed")
+            .is_empty()
+    );
 }
