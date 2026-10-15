@@ -413,7 +413,8 @@ Une bibliothèque est un simple dossier dont le nom se termine par `.pigoune`. I
   petits sous-dossiers pour que même une très grande bibliothèque reste facile à manipuler ;
 - `library.db`, la base de données qui contient les collections, les tags et toutes les
   autres informations ;
-- `cache/`, les vignettes, que Pigoune peut refaire à tout moment.
+- `cache/`, les vignettes et les signatures détaillées des dessins, que Pigoune peut refaire
+  à tout moment.
 
 Comme tout se trouve dans ce dossier, une bibliothèque est **portable** : copiez-la sur un
 disque externe ou sur un autre ordinateur et ouvrez-la là-bas avec Pigoune. Pour la
@@ -467,8 +468,8 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   deux temps, puis marque chaque élément **Identique** ou **Probable** par rapport au plus
   grand, et un groupe ne réunit que des éléments qui s'accordent tous entre eux, 40 au plus à la fois. Choisissez l'élément à garder avec
   son bouton rond (la plus grande image est choisie d'abord, et la choisir ne supprime rien),
-  puis cochez **Mettre à la corbeille** sur chaque élément à retirer : rien n'est coché à votre
-  place. Le bouton du groupe **Mettre N éléments à la corbeille…** ouvre un récapitulatif de ce
+  puis cochez la case (« Mettre à la corbeille ») de chaque élément à retirer : rien n'est coché à votre
+  place. Dès qu'une case est cochée, le bouton du groupe **Mettre N éléments à la corbeille…** apparaît et ouvre un récapitulatif de ce
   qui est gardé et de ce qui part à la corbeille, avec les collections, tags et notes qui
   restent derrière ; seuls les éléments cochés sont déplacés, et Annuler ne change rien. Si les
   éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le

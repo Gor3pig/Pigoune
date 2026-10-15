@@ -361,7 +361,8 @@ A library is a regular folder whose name ends with `.pigoune`. It contains:
 - `files/`, a copy of every asset, with its original file name, sorted into small subfolders
   so that even very large libraries stay easy to handle;
 - `library.db`, the database holding collections, tags and all other information;
-- `cache/`, thumbnails that Pigoune can rebuild at any time.
+- `cache/`, the thumbnails and the detailed signatures of the drawings, which Pigoune can
+  rebuild at any time.
 
 Because everything is inside this folder, a library is **portable**: copy it to an external
 drive or to another computer and open it there with Pigoune. To back it up, copy the whole
@@ -409,9 +410,9 @@ after it, in five tabs:
   look alike, which does not make them identical. Pigoune compares the drawings in two steps,
   then marks each asset **Identical** or **Probable** against the largest one, and a group only
   holds assets that all agree with each other, at most 40 at a time. Pick the asset to keep with its round button
-  (the largest image is picked first, and picking it deletes nothing), then tick **Move to Trash**
-  on each asset you want to remove: nothing is ticked for you. The group button **Move N Assets
-  to the Trash…** opens a summary of what is kept and what goes to the trash, with the
+  (the largest image is picked first, and picking it deletes nothing), then tick the box
+  (“Move to Trash”) on each asset you want to remove: nothing is ticked for you. Once something is ticked, the group button **Move N Assets
+  to the Trash…** appears and opens a summary of what is kept and what goes to the trash, with the
   collections, tags and notes that stay behind; only the assets you ticked are moved, and Cancel
   changes nothing. If the assets changed since the search, Pigoune moves nothing and searches
   again. The message that appears lets you undo it, and the trash keeps assets for 30 days;

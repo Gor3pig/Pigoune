@@ -94,8 +94,13 @@ impl Library {
             resources: bytes("trashed_at_unix_ms IS NULL")?,
             trash: bytes("trashed_at_unix_ms IS NOT NULL")?,
             thumbnails: 0,
-            database: fs::metadata(layout::database_path(&self.root))
-                .map_or(0, |metadata| metadata.len()),
+            database: [
+                layout::database_path(&self.root),
+                layout::details_path(&self.root),
+            ]
+            .iter()
+            .map(|file| fs::metadata(file).map_or(0, |metadata| metadata.len()))
+            .sum(),
         })
     }
 }

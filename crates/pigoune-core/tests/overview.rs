@@ -100,6 +100,11 @@ fn the_overview_counts_what_the_library_holds() {
     );
     assert_eq!(storage.trash, size_of("blue-photo.jpg"));
     assert!(storage.database > 0);
+    let on_disk = |name: &str| fs::metadata(library.root().join(name)).expect("file").len();
+    assert_eq!(
+        storage.database,
+        on_disk("library.db") + on_disk("cache/visual-details.db")
+    );
     assert_eq!(
         storage.total(),
         storage.resources + storage.trash + storage.thumbnails + storage.database

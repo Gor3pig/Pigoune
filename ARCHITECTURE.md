@@ -129,6 +129,7 @@ My logos.pigoune/
 ├── files/
 │   └── <xx>/<uuid>/<original-name>      one folder per asset, keeping the original file name
 └── cache/
+    ├── visual-details.db           detailed signatures for duplicates, recomputed when missing
     └── thumbnails/<pixels>/<xx>/<uuid>.png   disposable, regenerated when missing
 ```
 
