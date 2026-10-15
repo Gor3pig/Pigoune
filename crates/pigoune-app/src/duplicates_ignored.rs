@@ -3,7 +3,7 @@ use std::rc::Rc;
 use adw::prelude::*;
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use gettextrs::{gettext, ngettext};
-use gtk::glib;
+use gtk::{gio, glib};
 use pigoune_core::{AssetId, ChangeStamp};
 
 use crate::duplicates_page::{DuplicateActions, GroupState, PigouneDuplicatesPage};
@@ -22,20 +22,38 @@ impl PigouneDuplicatesPage {
         };
         let count = (actions.ignoring.ignored_groups)().len();
         let viewing = imp.viewing_ignored.get();
-        let label = if viewing {
-            gettext("Back to _Results")
-        } else {
-            gettext("_Ignored ({count})").replace("{count}", &count.to_string())
-        };
+        let label = gettext("_Ignored ({count})").replace("{count}", &count.to_string());
         imp.ignored_button.set_use_underline(true);
         imp.ignored_button.set_label(&label);
-        imp.ignored_button.set_visible(viewing || count > 0);
+        imp.ignored_button.set_visible(count > 0);
         imp.message_ignored_button.set_use_underline(true);
-        imp.message_ignored_button
-            .set_label(&gettext("_Ignored ({count})").replace("{count}", &count.to_string()));
+        imp.message_ignored_button.set_label(&label);
         imp.message_ignored_button
             .set_visible(!viewing && count > 0);
-        imp.show_all_button.set_visible(viewing);
+        imp.results_bar.set_visible(!viewing);
+        imp.ignored_bar.set_visible(viewing);
+    }
+
+    pub(crate) fn more_menu(label: &str, entries: Vec<(String, Box<dyn Fn()>)>) -> gtk::MenuButton {
+        let menu = gio::Menu::new();
+        let group = gio::SimpleActionGroup::new();
+        for (index, (title, handler)) in entries.into_iter().enumerate() {
+            let name = format!("entry{index}");
+            let action = gio::SimpleAction::new(&name, None);
+            action.connect_activate(move |_, _| handler());
+            group.add_action(&action);
+            menu.append(Some(&title), Some(&format!("more.{name}")));
+        }
+        let button = gtk::MenuButton::builder()
+            .icon_name("view-more-symbolic")
+            .tooltip_text(label)
+            .valign(gtk::Align::Center)
+            .css_classes(["flat"])
+            .menu_model(&menu)
+            .build();
+        button.update_property(&[gtk::accessible::Property::Label(label)]);
+        button.insert_action_group("more", Some(&group));
+        button
     }
 
     pub(crate) fn toggle_ignored_view(&self) {
@@ -78,7 +96,7 @@ impl PigouneDuplicatesPage {
         while let Some(child) = imp.groups_box.first_child() {
             imp.groups_box.remove(&child);
         }
-        imp.caption_label.set_label(&ignored_caption(total));
+        imp.ignored_caption_label.set_label(&ignored_caption(total));
         for group in shown {
             imp.groups_box.append(&self.ignored_group_widget(group));
         }
@@ -94,7 +112,8 @@ impl PigouneDuplicatesPage {
             .valign(gtk::Align::Center)
             .build();
         let widget = adw::PreferencesGroup::builder()
-            .title(
+            .title(self.group_name(group))
+            .description(
                 ngettext(
                     "{count} ignored asset",
                     "{count} ignored assets",

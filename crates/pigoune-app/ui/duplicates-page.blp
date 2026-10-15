@@ -85,43 +85,76 @@ template $PigouneDuplicatesPage: Box {
             margin-start: 24;
             margin-end: 24;
 
-            Box {
-              orientation: vertical;
-              spacing: 8;
+            Box results_bar {
+              spacing: 12;
 
               Label caption_label {
+                hexpand: true;
                 xalign: 0;
                 wrap: true;
+                valign: center;
 
                 styles [
                   "dim-label",
                 ]
               }
 
-              Box {
-                spacing: 6;
-                halign: end;
+              Button ignored_button {
+                valign: center;
+                visible: false;
+                clicked => $on_ignored_clicked() swapped;
+              }
 
-                Button ignored_button {
-                  valign: center;
-                  visible: false;
-                  clicked => $on_ignored_clicked() swapped;
+              Button {
+                label: _("_Search Again");
+                use-underline: true;
+                valign: center;
+                clicked => $on_search_clicked() swapped;
+              }
+            }
+
+            Box ignored_bar {
+              orientation: vertical;
+              spacing: 8;
+              visible: false;
+
+              Box {
+                spacing: 12;
+
+                Button back_button {
+                  label: _("Back to _Results");
+                  use-underline: true;
+                  clicked => $on_back_clicked() swapped;
+                }
+
+                Box {
+                  hexpand: true;
                 }
 
                 Button show_all_button {
                   label: _("Show _All Again…");
                   use-underline: true;
-                  valign: center;
-                  visible: false;
                   clicked => $on_show_all_clicked() swapped;
                 }
+              }
 
-                Button {
-                  label: _("_Search Again");
-                  use-underline: true;
-                  valign: center;
-                  clicked => $on_search_clicked() swapped;
-                }
+              Label {
+                label: _("Ignored Duplicates");
+                xalign: 0;
+                margin-top: 6;
+
+                styles [
+                  "title-3",
+                ]
+              }
+
+              Label ignored_caption_label {
+                xalign: 0;
+                wrap: true;
+
+                styles [
+                  "dim-label",
+                ]
               }
             }
 

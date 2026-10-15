@@ -474,7 +474,7 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le
   message qui apparaît permet d'annuler, et la corbeille garde les éléments 30 jours ; choisir
   une ligne affiche cet élément dans Tous. Quand des éléments qui se ressemblent ne sont pas des
-  doublons, **Ignorer le groupe** en haut d'un groupe, ou **Pas un doublon** sur une ligne,
+  doublons, **Ignorer le groupe** dans le menu « ⋯ » d'un groupe, ou **Pas un doublon** dans le menu « ⋯ » d'une ligne,
   empêche Pigoune de proposer ces éléments comme doublons les uns des autres, et le message
   permet d'annuler. Une nouvelle image qui ressemble à l'un d'eux reste proposée avec celui-ci.
   **Ignorés (N)** en haut de la page liste les groupes ignorés, avec **Ne plus ignorer** pour

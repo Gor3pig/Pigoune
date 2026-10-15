@@ -16,6 +16,7 @@ use pigoune_core::{
 };
 
 use crate::chart_slices::ratio;
+use crate::group_name;
 use crate::health_page::{Refusal, Replaced};
 use crate::row_thumbnail;
 use crate::thumbnails::ThumbnailCache;
@@ -146,6 +147,14 @@ mod imp {
         pub ignored_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub show_all_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub back_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub results_bar: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub ignored_bar: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub ignored_caption_label: TemplateChild<gtk::Label>,
         pub viewing_ignored: Cell<bool>,
         pub results_stale: Cell<bool>,
         #[template_child]
@@ -224,6 +233,11 @@ impl PigouneDuplicatesPage {
     }
 
     #[template_callback]
+    fn on_back_clicked(&self) {
+        self.leave_ignored_view();
+    }
+
+    #[template_callback]
     fn on_show_all_clicked(&self) {
         self.confirm_show_all();
     }
@@ -242,7 +256,6 @@ impl PigouneDuplicatesPage {
         imp.cancel_requested.replace(Some(Arc::clone(&canceled)));
         imp.viewing_ignored.set(false);
         imp.results_stale.set(false);
-        imp.show_all_button.set_visible(false);
         self.show_running();
         glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = page)]
@@ -531,16 +544,20 @@ impl PigouneDuplicatesPage {
             u32::try_from(total).unwrap_or(u32::MAX),
         )
         .replace("{count}", &total.to_string());
+        text = format!(
+            "{text}. {}",
+            gettext("Choose the asset to keep, then tick the assets to move to the trash.")
+        );
         if total > GROUPS_SHOWN {
             text = format!(
-                "{text}. {}",
+                "{text} {}",
                 gettext("The first {count} are shown; deal with them, then search again.")
                     .replace("{count}", &GROUPS_SHOWN.to_string())
             );
         }
         let pending = self.imp().pending.get();
         if pending > 0 {
-            text = format!("{text}. {}", Self::pending_text(pending));
+            text = format!("{text} {}", Self::pending_text(pending));
         }
         text
     }
@@ -562,17 +579,9 @@ impl PigouneDuplicatesPage {
         let imp = self.imp();
         let action = gtk::Button::builder()
             .valign(gtk::Align::Center)
-            .sensitive(false)
+            .visible(false)
             .build();
         action.add_css_class("destructive-action");
-        let ignore = gtk::Button::builder()
-            .label(gettext("Ignore Group"))
-            .tooltip_text(gettext(
-                "Stop offering these assets as duplicates of each other",
-            ))
-            .valign(gtk::Align::Center)
-            .css_classes(["flat"])
-            .build();
         let saved = imp.selections.borrow().get(&group[0]).cloned();
         let (reference, ticked) = match saved {
             Some((reference, ticked)) if group.contains(&reference) => (
@@ -596,23 +605,31 @@ impl PigouneDuplicatesPage {
         });
         imp.states.borrow_mut().push(Rc::clone(&state));
         Self::refresh_action(&state);
+        let more = Self::more_menu(
+            &gettext("Group Actions"),
+            vec![(
+                gettext("Ignore Group"),
+                Box::new(glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    #[weak]
+                    state,
+                    move || page.ignore_group_of(&state)
+                )),
+            )],
+        );
         let widget = adw::PreferencesGroup::builder()
-            .title(
-                gettext("{count} possible duplicates")
-                    .replace("{count}", &group.len().to_string()),
+            .title(self.group_name(group))
+            .description(
+                ngettext(
+                    "{count} similar asset",
+                    "{count} similar assets",
+                    u32::try_from(group.len()).unwrap_or(u32::MAX),
+                )
+                .replace("{count}", &group.len().to_string()),
             )
-            .description(gettext(
-                "Choose the asset to keep, then tick the assets to move to the trash. Nothing is ticked for you.",
-            ))
-            .header_suffix(&Self::group_buttons(&action, &ignore))
+            .header_suffix(&Self::group_buttons(&action, &more))
             .build();
-        ignore.connect_clicked(glib::clone!(
-            #[weak(rename_to = page)]
-            self,
-            #[weak]
-            state,
-            move |_| page.ignore_group_of(&state)
-        ));
         action.connect_clicked(glib::clone!(
             #[weak(rename_to = page)]
             self,
@@ -624,13 +641,25 @@ impl PigouneDuplicatesPage {
         widget
     }
 
-    fn group_buttons(action: &gtk::Button, ignore: &gtk::Button) -> gtk::Box {
+    pub(crate) fn group_name(&self, group: &[AssetId]) -> String {
+        let details = self.imp().details.borrow();
+        let names: Vec<&str> = group
+            .iter()
+            .take(MEMBERS_SHOWN)
+            .filter_map(|id| details.get(id))
+            .map(|member| member.name.as_str())
+            .collect();
+        let fallback = names.first().copied().unwrap_or_default();
+        glib::markup_escape_text(&group_name::common_name(&names, fallback)).to_string()
+    }
+
+    fn group_buttons(action: &gtk::Button, more: &gtk::MenuButton) -> gtk::Box {
         let buttons = gtk::Box::builder()
             .spacing(6)
             .valign(gtk::Align::Center)
             .build();
-        buttons.append(ignore);
         buttons.append(action);
+        buttons.append(more);
         buttons
     }
 
@@ -720,12 +749,13 @@ impl PigouneDuplicatesPage {
             (state.actions.compare)(state.reference.get(), id)
         };
         let tick = gtk::CheckButton::builder()
-            .label(gettext("Move to Trash"))
+            .tooltip_text(gettext("Move to Trash"))
             .valign(gtk::Align::Center)
             .visible(!is_reference)
             .sensitive(kind.is_some())
             .active(kind.is_some() && state.ticked.borrow().contains(&id))
             .build();
+        tick.update_property(&[gtk::accessible::Property::Label(&gettext("Move to Trash"))]);
         tick.connect_toggled(glib::clone!(
             #[weak]
             state,
@@ -755,22 +785,20 @@ impl PigouneDuplicatesPage {
         row.add_suffix(&kind_label);
         row.add_suffix(&tick);
         row.add_suffix(&kept);
-        let separate = gtk::Button::builder()
-            .label(gettext("Not a Duplicate"))
-            .tooltip_text(gettext(
-                "Stop offering this asset as a duplicate of the others in this group",
-            ))
-            .valign(gtk::Align::Center)
-            .css_classes(["flat"])
-            .build();
-        separate.connect_clicked(glib::clone!(
-            #[weak(rename_to = page)]
-            self,
-            #[weak]
-            state,
-            move |_| page.ignore_member_of(&state, id)
-        ));
-        row.add_suffix(&separate);
+        let more = Self::more_menu(
+            &gettext("Asset Actions"),
+            vec![(
+                gettext("Not a Duplicate"),
+                Box::new(glib::clone!(
+                    #[weak(rename_to = page)]
+                    self,
+                    #[weak]
+                    state,
+                    move || page.ignore_member_of(&state, id)
+                )),
+            )],
+        );
+        row.add_suffix(&more);
         row.connect_activated(glib::clone!(
             #[weak(rename_to = page)]
             self,
@@ -820,18 +848,14 @@ impl PigouneDuplicatesPage {
 
     fn refresh_action(state: &Rc<GroupState>) {
         let count = state.ticked.borrow().len();
-        let label = if count == 0 {
-            gettext("Move to the Trash…")
-        } else {
-            ngettext(
-                "Move {count} Asset to the Trash…",
-                "Move {count} Assets to the Trash…",
-                u32::try_from(count).unwrap_or(u32::MAX),
-            )
-            .replace("{count}", &count.to_string())
-        };
+        let label = ngettext(
+            "Move {count} Asset to the Trash…",
+            "Move {count} Assets to the Trash…",
+            u32::try_from(count).unwrap_or(u32::MAX),
+        )
+        .replace("{count}", &count.to_string());
         state.action.set_label(&label);
-        state.action.set_sensitive(count > 0);
+        state.action.set_visible(count > 0);
     }
 
     pub(crate) fn thumbnail_of(&self, member: &DuplicateMember) -> gtk::Picture {
