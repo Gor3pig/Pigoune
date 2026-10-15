@@ -1,13 +1,30 @@
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, Point, Rect, Shape, Stroke, arrow_head, handles, shape_bounds,
+    AnnotationDocument, Color, Geometry, Point, Rect, Shape, arrow_head, dash_pattern, handles,
+    head_size_factor, shape_bounds,
 };
 
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
 const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
 pub const HANDLE_SIZE: f32 = 10.0;
+
+type Renderer = fn(&gtk::Snapshot, &Shape);
+
+const RENDERERS: [(&str, Renderer); 6] = [
+    ("rectangle", draw_rectangle),
+    ("ellipse", draw_ellipse),
+    ("line", draw_line),
+    ("arrow", draw_arrow),
+    ("blur", draw_nothing_yet),
+    ("pixelate", draw_nothing_yet),
+];
+
+#[cfg(test)]
+fn drawn_kinds() -> impl Iterator<Item = &'static str> {
+    RENDERERS.iter().map(|(kind, _)| *kind)
+}
 
 fn rgba(color: Color) -> gdk::RGBA {
     gdk::RGBA::new(
@@ -22,25 +39,34 @@ fn graphene_rect(rect: Rect) -> graphene::Rect {
     graphene::Rect::new(rect.x, rect.y, rect.width, rect.height)
 }
 
-fn line_stroke(stroke: Stroke) -> gsk::Stroke {
-    let line = gsk::Stroke::new(stroke.width.max(0.5));
-    line.set_line_cap(gsk::LineCap::Round);
-    line.set_line_join(gsk::LineJoin::Round);
-    line
+fn stroke_of(shape: &Shape, rounded: bool) -> gsk::Stroke {
+    let width = shape.number("width").max(0.5);
+    let stroke = gsk::Stroke::new(width);
+    stroke.set_line_join(gsk::LineJoin::Round);
+    let dash = shape.choice("dash");
+    if let Some(pattern) = dash_pattern(dash, width) {
+        stroke.set_dash(&pattern);
+    }
+    stroke.set_line_cap(if rounded || dash == "dotted" {
+        gsk::LineCap::Round
+    } else {
+        gsk::LineCap::Butt
+    });
+    stroke
 }
 
-fn rectangle_path(bounds: Rect) -> gsk::Path {
-    let builder = gsk::PathBuilder::new();
-    builder.add_rect(&graphene_rect(bounds));
-    builder.to_path()
+fn box_of(shape: &Shape) -> Option<Rect> {
+    match shape.geometry {
+        Geometry::Box(rect) => Some(rect),
+        _ => None,
+    }
 }
 
-fn ellipse_path(bounds: Rect) -> gsk::Path {
-    let half = graphene::Size::new(bounds.width / 2.0, bounds.height / 2.0);
-    let rounded = gsk::RoundedRect::new(graphene_rect(bounds), half, half, half, half);
-    let builder = gsk::PathBuilder::new();
-    builder.add_rounded_rect(&rounded);
-    builder.to_path()
+fn ends_of(shape: &Shape) -> Option<(Point, Point)> {
+    match shape.geometry {
+        Geometry::TwoPoints { from, to } => Some((from, to)),
+        _ => None,
+    }
 }
 
 fn segment_path(from: Point, to: Point) -> gsk::Path {
@@ -50,17 +76,20 @@ fn segment_path(from: Point, to: Point) -> gsk::Path {
     builder.to_path()
 }
 
-fn polyline_path(points: &[Point]) -> gsk::Path {
+fn rounded_rectangle_path(bounds: Rect, radius: f32) -> gsk::Path {
+    let limit = bounds.width.min(bounds.height) / 2.0;
+    let corner = graphene::Size::new(radius.min(limit), radius.min(limit));
+    let rounded = gsk::RoundedRect::new(graphene_rect(bounds), corner, corner, corner, corner);
     let builder = gsk::PathBuilder::new();
-    if let Some((first, rest)) = points.split_first() {
-        builder.move_to(first.x, first.y);
-        if rest.is_empty() {
-            builder.line_to(first.x, first.y);
-        }
-        for point in rest {
-            builder.line_to(point.x, point.y);
-        }
-    }
+    builder.add_rounded_rect(&rounded);
+    builder.to_path()
+}
+
+fn ellipse_path(bounds: Rect) -> gsk::Path {
+    let half = graphene::Size::new(bounds.width / 2.0, bounds.height / 2.0);
+    let rounded = gsk::RoundedRect::new(graphene_rect(bounds), half, half, half, half);
+    let builder = gsk::PathBuilder::new();
+    builder.add_rounded_rect(&rounded);
     builder.to_path()
 }
 
@@ -73,57 +102,91 @@ pub fn append_document(snapshot: &gtk::Snapshot, document: &AnnotationDocument) 
 }
 
 pub fn append_shape(snapshot: &gtk::Snapshot, shape: &Shape) {
-    match shape {
-        Shape::Rectangle {
-            bounds,
-            stroke,
-            fill,
-        } => append_closed(snapshot, &rectangle_path(*bounds), *stroke, *fill),
-        Shape::Ellipse {
-            bounds,
-            stroke,
-            fill,
-        } => append_closed(snapshot, &ellipse_path(*bounds), *stroke, *fill),
-        Shape::Line { from, to, stroke } => {
-            snapshot.append_stroke(
-                &segment_path(*from, *to),
-                &line_stroke(*stroke),
-                &rgba(stroke.color),
-            );
-        }
-        Shape::Arrow { from, to, stroke } => append_arrow(snapshot, *from, *to, *stroke),
-        Shape::Pen { points, stroke } | Shape::Highlighter { points, stroke } => {
-            snapshot.append_stroke(
-                &polyline_path(points),
-                &line_stroke(*stroke),
-                &rgba(stroke.color),
-            );
-        }
-        Shape::Text { .. } | Shape::Step { .. } | Shape::Blur { .. } | Shape::Pixelate { .. } => {}
+    if let Some((_, renderer)) = RENDERERS.iter().find(|(kind, _)| *kind == shape.kind) {
+        renderer(snapshot, shape);
     }
 }
 
-fn append_closed(snapshot: &gtk::Snapshot, path: &gsk::Path, stroke: Stroke, fill: Option<Color>) {
-    if let Some(fill) = fill {
+fn draw_closed(snapshot: &gtk::Snapshot, shape: &Shape, path: &gsk::Path) {
+    if let Some(fill) = shape.fill_color() {
         snapshot.append_fill(path, gsk::FillRule::Winding, &rgba(fill));
     }
-    let outline = gsk::Stroke::new(stroke.width.max(0.5));
-    outline.set_line_join(gsk::LineJoin::Round);
-    snapshot.append_stroke(path, &outline, &rgba(stroke.color));
+    snapshot.append_stroke(path, &stroke_of(shape, false), &rgba(shape.stroke_color()));
 }
 
-fn append_arrow(snapshot: &gtk::Snapshot, from: Point, to: Point, stroke: Stroke) {
-    let head = arrow_head(from, to, stroke.width);
-    let color = rgba(stroke.color);
-    snapshot.append_stroke(&segment_path(from, head.base), &line_stroke(stroke), &color);
-    let triangle = gsk::PathBuilder::new();
-    triangle.move_to(head.tip.x, head.tip.y);
-    triangle.line_to(head.left.x, head.left.y);
-    triangle.line_to(head.right.x, head.right.y);
-    triangle.close();
-    snapshot.append_fill(&triangle.to_path(), gsk::FillRule::Winding, &color);
-    snapshot.append_stroke(&triangle.to_path(), &line_stroke(stroke), &color);
+fn draw_rectangle(snapshot: &gtk::Snapshot, shape: &Shape) {
+    if let Some(bounds) = box_of(shape) {
+        let path = rounded_rectangle_path(bounds, shape.number("corner_radius"));
+        draw_closed(snapshot, shape, &path);
+    }
 }
+
+fn draw_ellipse(snapshot: &gtk::Snapshot, shape: &Shape) {
+    if let Some(bounds) = box_of(shape) {
+        draw_closed(snapshot, shape, &ellipse_path(bounds));
+    }
+}
+
+fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape) {
+    if let Some((from, to)) = ends_of(shape) {
+        snapshot.append_stroke(
+            &segment_path(from, to),
+            &stroke_of(shape, true),
+            &rgba(shape.stroke_color()),
+        );
+    }
+}
+
+fn head_path(tip: Point, left: Point, right: Point, closed: bool) -> gsk::Path {
+    let builder = gsk::PathBuilder::new();
+    builder.move_to(left.x, left.y);
+    builder.line_to(tip.x, tip.y);
+    builder.line_to(right.x, right.y);
+    if closed {
+        builder.close();
+    }
+    builder.to_path()
+}
+
+fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape) {
+    let Some((from, to)) = ends_of(shape) else {
+        return;
+    };
+    let width = shape.number("width");
+    let factor = head_size_factor(shape.choice("head_size"));
+    let color = rgba(shape.stroke_color());
+    let head_style = shape.choice("head");
+    let solid = gsk::Stroke::new(width.max(0.5));
+    solid.set_line_join(gsk::LineJoin::Round);
+    solid.set_line_cap(gsk::LineCap::Round);
+    let end = arrow_head(from, to, width, factor);
+    let start = arrow_head(to, from, width, factor);
+    let double = head_style == "double";
+    let shaft_from = if double { start.base } else { from };
+    let shaft_to = if head_style == "none" { to } else { end.base };
+    snapshot.append_stroke(
+        &segment_path(shaft_from, shaft_to),
+        &stroke_of(shape, true),
+        &color,
+    );
+    let mut heads = Vec::new();
+    match head_style {
+        "none" => {}
+        "double" => heads.extend([end, start]),
+        _ => heads.push(end),
+    }
+    for head in heads {
+        let path = head_path(head.tip, head.left, head.right, head_style != "open");
+        if head_style == "open" {
+            snapshot.append_stroke(&path, &solid, &color);
+        } else {
+            snapshot.append_fill(&path, gsk::FillRule::Winding, &color);
+            snapshot.append_stroke(&path, &solid, &color);
+        }
+    }
+}
+
+fn draw_nothing_yet(_snapshot: &gtk::Snapshot, _shape: &Shape) {}
 
 pub fn append_selection(
     snapshot: &gtk::Snapshot,
@@ -166,5 +229,27 @@ pub fn append_selection(
         let builder = gsk::PathBuilder::new();
         builder.add_rect(&square);
         snapshot.append_stroke(&builder.to_path(), &gsk::Stroke::new(1.5), &accent);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use pigoune_core::annotations::definitions;
+
+    use super::drawn_kinds;
+
+    #[test]
+    fn every_registered_annotation_tool_has_a_renderer() {
+        let drawn: HashSet<&str> = drawn_kinds().collect();
+        for definition in definitions() {
+            assert!(
+                drawn.contains(definition.kind),
+                "{} has no renderer",
+                definition.kind
+            );
+        }
+        assert_eq!(drawn.len(), definitions().len());
     }
 }

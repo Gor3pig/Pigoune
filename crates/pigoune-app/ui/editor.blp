@@ -155,57 +155,9 @@ template $PigouneEditor: Adw.Bin {
               }
             }
 
-            Adw.PreferencesGroup style_group {
-              ListBoxRow {
-                activatable: false;
-                selectable: false;
+            Adw.PreferencesGroup style_group {}
 
-                child: Box color_swatches {
-                  spacing: 8;
-                  margin-top: 12;
-                  margin-bottom: 12;
-                  margin-start: 12;
-                  margin-end: 12;
-                  halign: start;
-                };
-              }
-
-              Adw.ActionRow {
-                title: _("Thickness");
-
-                [suffix]
-                Scale thickness_scale {
-                  width-request: 140;
-                  valign: center;
-                  draw-value: false;
-
-                  adjustment: Adjustment {
-                    lower: 1;
-                    upper: 60;
-                    value: 6;
-                  };
-                }
-              }
-
-              Adw.ActionRow {
-                title: _("Opacity");
-
-                [suffix]
-                Scale opacity_scale {
-                  width-request: 140;
-                  valign: center;
-                  draw-value: false;
-
-                  adjustment: Adjustment {
-                    lower: 5;
-                    upper: 100;
-                    value: 100;
-                  };
-                }
-              }
-            }
-
-Adw.PreferencesGroup {
+            Adw.PreferencesGroup {
               title: _("Layers");
               description: _("Nothing to show yet");
             }

@@ -41,7 +41,7 @@ pub fn index_of(color: Color) -> Option<usize> {
 mod tests {
     use std::collections::HashSet;
 
-    use pigoune_core::annotations::{Color, Style};
+    use pigoune_core::annotations::{COLOR, Color, DefaultValue};
 
     use super::{COLORS, index_of};
 
@@ -71,6 +71,9 @@ mod tests {
 
     #[test]
     fn the_default_drawing_color_is_the_first_swatch() {
-        assert_eq!(index_of(Style::default().color), Some(0));
+        let DefaultValue::Color(default) = COLOR.default else {
+            panic!("the color option has a color default");
+        };
+        assert_eq!(index_of(default), Some(0));
     }
 }

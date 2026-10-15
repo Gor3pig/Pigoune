@@ -1,4 +1,5 @@
 use gettextrs::gettext;
+use pigoune_core::annotations::{ARROW, ELLIPSE, LINE, RECTANGLE, ToolDefinition};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum EditorTool {
@@ -84,6 +85,28 @@ impl EditorTool {
         }
     }
 
+    pub fn definition(self) -> Option<&'static ToolDefinition> {
+        match self {
+            Self::Rectangle => Some(&RECTANGLE),
+            Self::Ellipse => Some(&ELLIPSE),
+            Self::Line => Some(&LINE),
+            Self::Arrow => Some(&ARROW),
+            _ => None,
+        }
+    }
+
+    pub fn from_kind(kind: &str) -> Option<Self> {
+        match kind {
+            "rectangle" => Some(Self::Rectangle),
+            "ellipse" => Some(Self::Ellipse),
+            "line" => Some(Self::Line),
+            "arrow" => Some(Self::Arrow),
+            "blur" => Some(Self::Blur),
+            "pixelate" => Some(Self::Pixelate),
+            _ => None,
+        }
+    }
+
     pub fn from_name(name: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|tool| tool.name() == name)
     }
@@ -102,6 +125,18 @@ mod tests {
             assert_eq!(EditorTool::from_name(tool.name()), Some(tool));
         }
         assert_eq!(EditorTool::from_name("lasso"), None);
+    }
+
+    #[test]
+    fn every_registered_annotation_tool_has_a_button_and_a_drawable_one_is_found_again() {
+        for definition in pigoune_core::annotations::definitions() {
+            let tool = EditorTool::from_kind(definition.kind)
+                .unwrap_or_else(|| panic!("{} has no button", definition.kind));
+            if let Some(found) = tool.definition() {
+                assert_eq!(found.kind, definition.kind);
+            }
+        }
+        assert!(EditorTool::from_kind("lasso").is_none());
     }
 
     #[test]
