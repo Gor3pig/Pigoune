@@ -40,6 +40,7 @@ mod dropped_content;
 mod duplicates_ignored;
 mod duplicates_page;
 mod editor;
+mod editor_options;
 mod editor_palette;
 mod editor_tool;
 mod error_messages;

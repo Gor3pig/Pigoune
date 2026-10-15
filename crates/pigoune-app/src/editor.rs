@@ -6,12 +6,12 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib, graphene, pango};
 use pigoune_core::annotations::{
-    CursorKind, DrawingTool, Handle, Interaction, Point, Style, Tool, restyled, style_of,
+    CursorKind, Handle, Interaction, Options, Point, Shape, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_render;
 use crate::asset_preview::zoom_text;
-use crate::editor_palette;
+use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
 use crate::zoom_view::PointerEvent;
 
@@ -21,12 +21,14 @@ const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
 
 mod imp {
-    use super::{Cell, ClosedCallback, RefCell};
+    use super::{Cell, ClosedCallback, OptionRow, RefCell};
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
 
-    use pigoune_core::annotations::{AnnotationDocument, EditSession, Interaction, Style};
+    use std::collections::HashMap;
+
+    use pigoune_core::annotations::{AnnotationDocument, EditSession, Interaction, Options};
 
     use crate::editor_tool::EditorTool;
     use crate::zoom_view::PigouneZoomView;
@@ -34,7 +36,7 @@ mod imp {
     pub struct Drawing {
         pub session: EditSession,
         pub interaction: Interaction,
-        pub style: Style,
+        pub tool_options: HashMap<&'static str, Options>,
     }
 
     impl Default for Drawing {
@@ -42,7 +44,7 @@ mod imp {
             Self {
                 session: EditSession::new(AnnotationDocument::default()),
                 interaction: Interaction::new(),
-                style: Style::default(),
+                tool_options: HashMap::new(),
             }
         }
     }
@@ -89,14 +91,9 @@ mod imp {
         pub redo_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub annotations_label: TemplateChild<gtk::Label>,
-        #[template_child]
-        pub color_swatches: TemplateChild<gtk::Box>,
-        #[template_child]
-        pub thickness_scale: TemplateChild<gtk::Scale>,
-        #[template_child]
-        pub opacity_scale: TemplateChild<gtk::Scale>,
         pub drawing: RefCell<Drawing>,
-        pub swatches: RefCell<Vec<gtk::ToggleButton>>,
+        pub option_rows: RefCell<Vec<OptionRow>>,
+        pub panel_kind: Cell<Option<&'static str>>,
         pub updating_controls: Cell<bool>,
         pub slider_gesture: Cell<bool>,
         #[property(get, set)]
@@ -156,6 +153,7 @@ impl PigouneEditor {
         imp.drawing.replace(imp::Drawing::default());
         imp.zoom_view
             .show_image(Some(&texture), width, height, false);
+        self.update_panel();
         self.refresh();
         Ok(())
     }
@@ -186,11 +184,10 @@ impl PigouneEditor {
     fn prepare(&self) {
         let imp = self.imp();
         self.fill_tools_grid();
-        self.fill_swatches();
-        self.follow_sliders();
         self.connect_drawing();
         self.listen_to_keys();
         self.show_active_tool();
+        self.update_panel();
         self.follow_zoom();
         self.connect_compact_notify(Self::place_panel);
         imp.bar_icon
@@ -269,12 +266,10 @@ impl PigouneEditor {
     }
 
     fn current_tool(&self) -> Tool {
-        match self.imp().active_tool.get() {
-            EditorTool::Select => Tool::Select,
-            EditorTool::Rectangle => Tool::Draw(DrawingTool::Rectangle),
-            EditorTool::Ellipse => Tool::Draw(DrawingTool::Ellipse),
-            EditorTool::Line => Tool::Draw(DrawingTool::Line),
-            EditorTool::Arrow => Tool::Draw(DrawingTool::Arrow),
+        let tool = self.imp().active_tool.get();
+        match (tool, tool.definition()) {
+            (EditorTool::Select, _) => Tool::Select,
+            (_, Some(definition)) => Tool::Draw(definition),
             _ => Tool::Unsupported,
         }
     }
@@ -328,13 +323,19 @@ impl PigouneEditor {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
             match event {
-                PointerEvent::Press(point) => drawing.interaction.press(
-                    &mut drawing.session,
-                    tool,
-                    &drawing.style,
-                    image_point(point),
-                    reach,
-                ),
+                PointerEvent::Press(point) => {
+                    let options = match tool {
+                        Tool::Draw(definition) => remembered_options(drawing, definition),
+                        _ => Options::new(),
+                    };
+                    drawing.interaction.press(
+                        &mut drawing.session,
+                        tool,
+                        &options,
+                        image_point(point),
+                        reach,
+                    )
+                }
                 PointerEvent::Drag(point) => {
                     drawing
                         .interaction
@@ -364,7 +365,7 @@ impl PigouneEditor {
     }
 
     fn after_edit(&self) {
-        self.sync_controls_with_selection();
+        self.update_panel();
         self.refresh();
     }
 
@@ -458,140 +459,119 @@ impl PigouneEditor {
         handled
     }
 
-    fn fill_swatches(&self) {
-        let imp = self.imp();
-        let mut first: Option<gtk::ToggleButton> = None;
-        let mut buttons = Vec::new();
-        for (index, color) in editor_palette::COLORS.iter().enumerate() {
-            let button = gtk::ToggleButton::new();
-            button.add_css_class("annotation-swatch");
-            button.add_css_class(&format!("swatch-{index}"));
-            let name = editor_palette::color_name(index);
-            button.set_tooltip_text(Some(&name));
-            button.update_property(&[gtk::accessible::Property::Label(&name)]);
-            match &first {
-                Some(first) => button.set_group(Some(first)),
-                None => first = Some(button.clone()),
+    fn notifier(&self) -> Notify {
+        let editor = self.downgrade();
+        std::rc::Rc::new(move |event| {
+            if let Some(editor) = editor.upgrade() {
+                editor.option_event(event);
             }
-            let color = *color;
-            button.connect_toggled(glib::clone!(
-                #[weak(rename_to = editor)]
-                self,
-                move |button| {
-                    if button.is_active() {
-                        editor.color_chosen(color);
-                    }
+        })
+    }
+
+    fn target_kind(&self) -> Option<&'static str> {
+        let drawing = self.imp().drawing.borrow();
+        if let Some(shape) = drawing.session.selected_shape() {
+            return shape.definition().map(|definition| definition.kind);
+        }
+        match self.current_tool() {
+            Tool::Draw(definition) => Some(definition.kind),
+            _ => None,
+        }
+    }
+
+    fn target_options(&self, definition: &'static ToolDefinition) -> Options {
+        let mut drawing = self.imp().drawing.borrow_mut();
+        match drawing.session.selected_shape() {
+            Some(shape) if shape.kind == definition.kind => complete_options(definition, shape),
+            _ => remembered_options(&mut drawing, definition),
+        }
+    }
+
+    fn update_panel(&self) {
+        let imp = self.imp();
+        let kind = self.target_kind();
+        let definition = kind.and_then(pigoune_core::annotations::definition);
+        if imp.panel_kind.get() != kind {
+            for row in imp.option_rows.take() {
+                imp.style_group.remove(&row.widget);
+            }
+            imp.panel_kind.set(kind);
+            if let Some(definition) = definition {
+                let rows = editor_options::build_rows(definition, &self.notifier());
+                for row in &rows {
+                    imp.style_group.add(&row.widget);
                 }
-            ));
-            imp.color_swatches.append(&button);
-            buttons.push(button);
+                imp.option_rows.replace(rows);
+            }
         }
-        if let Some(first) = buttons.first() {
-            first.set_active(true);
-        }
-        imp.swatches.replace(buttons);
-    }
-
-    fn follow_sliders(&self) {
-        let imp = self.imp();
-        for scale in [&*imp.thickness_scale, &*imp.opacity_scale] {
-            scale.connect_value_changed(glib::clone!(
-                #[weak(rename_to = editor)]
-                self,
-                move |_| editor.style_changed()
-            ));
-            let click = gtk::GestureClick::new();
-            click.set_propagation_phase(gtk::PropagationPhase::Capture);
-            click.connect_pressed(glib::clone!(
-                #[weak(rename_to = editor)]
-                self,
-                move |_, _, _, _| editor.slider_pressed()
-            ));
-            click.connect_released(glib::clone!(
-                #[weak(rename_to = editor)]
-                self,
-                move |_, _, _, _| editor.slider_released()
-            ));
-            scale.add_controller(click);
-        }
-    }
-
-    fn slider_pressed(&self) {
-        let imp = self.imp();
-        let mut drawing = imp.drawing.borrow_mut();
-        if let Some(id) = drawing.session.selected()
-            && drawing.session.begin_change(id)
-        {
-            imp.slider_gesture.set(true);
-        }
-    }
-
-    fn slider_released(&self) {
-        let imp = self.imp();
-        if imp.slider_gesture.replace(false) {
-            imp.drawing.borrow_mut().session.end_change();
-            self.after_edit();
-        }
-    }
-
-    fn color_chosen(&self, color: pigoune_core::annotations::Color) {
-        if self.imp().updating_controls.get() {
+        imp.style_group.set_visible(definition.is_some());
+        let Some(definition) = definition else {
             return;
+        };
+        if let Some(tool) = kind.and_then(EditorTool::from_kind) {
+            imp.style_group.set_title(&tool.label());
         }
-        let mut style = self.imp().drawing.borrow().style;
-        style.color = color;
-        self.apply_style(style);
+        let options = self.target_options(definition);
+        imp.updating_controls.set(true);
+        editor_options::show_values(&imp.option_rows.borrow(), &options);
+        imp.updating_controls.set(false);
     }
 
-    fn style_changed(&self) {
+    fn option_event(&self, event: OptionEvent) {
         let imp = self.imp();
         if imp.updating_controls.get() {
             return;
         }
-        let mut style = imp.drawing.borrow().style;
-        style.width = point_to_f32(imp.thickness_scale.value());
-        style.opacity = point_to_f32(imp.opacity_scale.value() / 100.0);
-        self.apply_style(style);
+        match event {
+            OptionEvent::SliderPressed => {
+                let mut drawing = imp.drawing.borrow_mut();
+                if let Some(id) = drawing.session.selected()
+                    && drawing.session.begin_change(id)
+                {
+                    imp.slider_gesture.set(true);
+                }
+            }
+            OptionEvent::SliderReleased => {
+                if imp.slider_gesture.replace(false) {
+                    imp.drawing.borrow_mut().session.end_change();
+                    self.after_edit();
+                }
+            }
+            OptionEvent::Changed(id, value) => self.apply_option(id, &value),
+        }
     }
 
-    fn apply_style(&self, style: Style) {
+    fn apply_option(&self, id: &str, value: &Value) {
         let imp = self.imp();
+        let Some(kind) = imp.panel_kind.get() else {
+            return;
+        };
+        let Some(definition) = pigoune_core::annotations::definition(kind) else {
+            return;
+        };
         {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
-            drawing.style = style;
-            if imp.slider_gesture.get() {
-                if let Some(shape) = drawing.session.selected_shape() {
-                    let shape = restyled(shape, &style);
-                    drawing.session.preview(shape);
+            drawing
+                .tool_options
+                .entry(definition.kind)
+                .or_insert_with(|| Options::defaults(definition.options))
+                .set(id, value.clone());
+            let selected_kind = drawing
+                .session
+                .selected_shape()
+                .map(|shape| shape.kind.clone());
+            if selected_kind.as_deref() == Some(kind) {
+                if imp.slider_gesture.get() {
+                    drawing.session.preview_option(id, value.clone());
+                } else {
+                    drawing.session.set_option_on_selected(id, value.clone());
                 }
-            } else {
-                drawing.session.restyle_selected(&style);
             }
         }
+        let options = self.target_options(definition);
+        editor_options::update_visibility(&imp.option_rows.borrow(), &options);
         self.refresh();
-    }
-
-    fn sync_controls_with_selection(&self) {
-        let imp = self.imp();
-        let style = {
-            let drawing = imp.drawing.borrow();
-            drawing.session.selected_shape().and_then(style_of)
-        };
-        let Some(style) = style else {
-            return;
-        };
-        imp.updating_controls.set(true);
-        imp.drawing.borrow_mut().style = style;
-        imp.thickness_scale.set_value(f64::from(style.width));
-        imp.opacity_scale
-            .set_value(f64::from(style.opacity) * 100.0);
-        if let Some(index) = editor_palette::index_of(style.color)
-            && let Some(button) = imp.swatches.borrow().get(index)
-        {
-            button.set_active(true);
-        }
-        imp.updating_controls.set(false);
     }
 
     fn tool_changed(&self) {
@@ -606,13 +586,13 @@ impl PigouneEditor {
         }
         imp.zoom_view.set_cursor_override(None);
         self.show_active_tool();
+        self.update_panel();
         imp.zoom_view.queue_draw();
     }
 
     fn show_active_tool(&self) {
         let imp = self.imp();
         let tool = imp.active_tool.get();
-        imp.style_group.set_title(&tool.label());
         imp.bar_icon.set_icon_name(Some(tool.icon_name()));
         imp.bar_label.set_label(&tool.label());
     }
@@ -672,4 +652,20 @@ fn cursor_name(kind: CursorKind) -> Option<&'static str> {
             Handle::Start | Handle::End => "crosshair",
         }),
     }
+}
+
+fn remembered_options(drawing: &mut imp::Drawing, definition: &'static ToolDefinition) -> Options {
+    drawing
+        .tool_options
+        .entry(definition.kind)
+        .or_insert_with(|| Options::defaults(definition.options))
+        .clone()
+}
+
+fn complete_options(definition: &ToolDefinition, shape: &Shape) -> Options {
+    let mut options = Options::defaults(definition.options);
+    for (id, value) in shape.options.as_map() {
+        options.set(id, value.clone());
+    }
+    options
 }
