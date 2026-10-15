@@ -190,10 +190,13 @@ impl Library {
         ) else {
             return Ok(None);
         };
+        let Some(kind) = duplicate_kind(&first, &second) else {
+            return Ok(None);
+        };
         if self.is_ignored_duplicate(first.asset, second.asset)? {
             return Ok(None);
         }
-        Ok(duplicate_kind(&first, &second))
+        Ok(Some(kind))
     }
 
     fn fingerprints(&self, with_detail: bool) -> Result<Vec<Fingerprint>, LibraryError> {

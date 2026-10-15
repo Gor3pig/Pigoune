@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use rusqlite::params;
 
-use super::{AssetId, Library, LibraryError, clock, ignored_duplicates, layout};
+use super::{AssetId, Library, LibraryError, clock, details_store, ignored_duplicates, layout};
 
 pub const TRASH_RETENTION: Duration = Duration::from_hours(30 * 24);
 
@@ -40,12 +40,7 @@ impl Library {
         )?;
         ignored_duplicates::forget_dead_actions(&transaction)?;
         transaction.commit()?;
-        for id in &removed {
-            let _ = self.connection.execute(
-                "DELETE FROM details.asset_details WHERE asset_id = ?1",
-                [id],
-            );
-        }
+        details_store::forget(&mut self.connection, &removed);
         if !removed.is_empty() || removed_collections > 0 {
             self.history.clear();
         }

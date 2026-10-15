@@ -43,7 +43,7 @@ impl PigouneDuplicatesPage {
         imp.message_ignored_button.set_use_underline(true);
         imp.message_ignored_button.set_label(&label);
         imp.message_ignored_button
-            .set_visible(!viewing && count > 0);
+            .set_visible(!viewing && count > 0 && imp.cancel_requested.borrow().is_none());
         imp.results_bar.set_visible(!viewing);
         imp.ignored_bar.set_visible(viewing);
     }

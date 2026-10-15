@@ -4,6 +4,22 @@ use rusqlite::{Connection, OptionalExtension, params};
 
 use super::{AssetId, Change, ChangeStamp, IgnoreId, Library, LibraryError, clock};
 
+const LIVE_SHARES: &str = "WITH live AS (
+    SELECT m.action_id AS action_id,
+           sum(m.kept_apart = 0) AS inside,
+           sum(m.kept_apart = 1) AS apart
+    FROM ignored_duplicate_members m
+    JOIN assets a ON a.id = m.asset_id
+    WHERE a.trashed_at_unix_ms IS NULL
+    GROUP BY m.action_id)";
+
+const VISIBLE_GROUP: &str =
+    "(k.kind = 'group' AND live.inside >= 1 AND (live.inside >= 2 OR live.apart >= 1))";
+
+const VISIBLE_MEMBER: &str = "(k.kind = 'member' AND live.inside + live.apart >= 1
+    AND EXISTS (SELECT 1 FROM assets s
+                WHERE s.id = k.subject_asset AND s.trashed_at_unix_ms IS NULL))";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IgnoreKind {
     Group,
@@ -288,12 +304,16 @@ impl Library {
             let present = members.remove(&action).unwrap_or_default();
             let kept_apart = apart.remove(&action).unwrap_or_default();
             match (IgnoreKind::from_text(&kind), subject) {
-                (IgnoreKind::Group, _) if present.len() >= 2 => entries.push(IgnoredEntry {
-                    action,
-                    kind: IgnoreKind::Group,
-                    assets: present.into_iter().collect(),
-                    against: kept_apart.into_iter().collect(),
-                }),
+                (IgnoreKind::Group, _)
+                    if !present.is_empty() && (present.len() >= 2 || !kept_apart.is_empty()) =>
+                {
+                    entries.push(IgnoredEntry {
+                        action,
+                        kind: IgnoreKind::Group,
+                        assets: present.into_iter().collect(),
+                        against: kept_apart.into_iter().collect(),
+                    });
+                }
                 (IgnoreKind::Member, Some(subject))
                     if subject_available == Some(true) && !present.is_empty() =>
                 {
@@ -312,18 +332,12 @@ impl Library {
 
     pub fn ignored_duplicate_count(&self) -> Result<usize, LibraryError> {
         let count: i64 = self.connection.query_row(
-            "SELECT count(*) FROM ignored_duplicate_actions k WHERE
-               (k.kind = 'group' AND (
-                  SELECT count(*) FROM ignored_duplicate_members m
-                  JOIN assets a ON a.id = m.asset_id
-                  WHERE m.action_id = k.id AND m.kept_apart = 0
-                    AND a.trashed_at_unix_ms IS NULL) >= 2)
-            OR (k.kind = 'member'
-                AND EXISTS (SELECT 1 FROM assets a WHERE a.id = k.subject_asset
-                            AND a.trashed_at_unix_ms IS NULL)
-                AND EXISTS (SELECT 1 FROM ignored_duplicate_members m
-                            JOIN assets a ON a.id = m.asset_id
-                            WHERE m.action_id = k.id AND a.trashed_at_unix_ms IS NULL))",
+            &format!(
+                "{LIVE_SHARES}
+                 SELECT count(*) FROM ignored_duplicate_actions k
+                 JOIN live ON live.action_id = k.id
+                 WHERE {VISIBLE_GROUP} OR {VISIBLE_MEMBER}"
+            ),
             [],
             |row| row.get(0),
         )?;
@@ -332,24 +346,21 @@ impl Library {
 
     pub fn ignored_asset_count(&self) -> Result<usize, LibraryError> {
         let count: i64 = self.connection.query_row(
-            "SELECT count(DISTINCT asset) FROM (
-                SELECT m.asset_id AS asset
-                FROM ignored_duplicate_members m
-                JOIN ignored_duplicate_actions k ON k.id = m.action_id
-                JOIN assets a ON a.id = m.asset_id
-                WHERE k.kind = 'group' AND m.kept_apart = 0 AND a.trashed_at_unix_ms IS NULL
-                  AND (SELECT count(*) FROM ignored_duplicate_members o
-                       JOIN assets b ON b.id = o.asset_id
-                       WHERE o.action_id = k.id AND o.kept_apart = 0
-                         AND b.trashed_at_unix_ms IS NULL) >= 2
-                UNION ALL
-                SELECT k.subject_asset
-                FROM ignored_duplicate_actions k
-                JOIN assets a ON a.id = k.subject_asset
-                WHERE k.kind = 'member' AND a.trashed_at_unix_ms IS NULL
-                  AND EXISTS (SELECT 1 FROM ignored_duplicate_members o
-                              JOIN assets b ON b.id = o.asset_id
-                              WHERE o.action_id = k.id AND b.trashed_at_unix_ms IS NULL))",
+            &format!(
+                "{LIVE_SHARES}
+                 SELECT count(DISTINCT asset) FROM (
+                    SELECT m.asset_id AS asset
+                    FROM ignored_duplicate_members m
+                    JOIN ignored_duplicate_actions k ON k.id = m.action_id
+                    JOIN live ON live.action_id = k.id
+                    JOIN assets a ON a.id = m.asset_id
+                    WHERE {VISIBLE_GROUP} AND m.kept_apart = 0 AND a.trashed_at_unix_ms IS NULL
+                    UNION ALL
+                    SELECT k.subject_asset
+                    FROM ignored_duplicate_actions k
+                    JOIN live ON live.action_id = k.id
+                    WHERE {VISIBLE_MEMBER})"
+            ),
             [],
             |row| row.get(0),
         )?;
@@ -442,7 +453,13 @@ pub(super) fn forget_dead_actions(connection: &Connection) -> rusqlite::Result<(
         "DELETE FROM ignored_duplicate_actions
          WHERE kind = 'group'
            AND (SELECT count(*) FROM ignored_duplicate_members
-                WHERE action_id = id AND kept_apart = 0) < 2;
+                WHERE action_id = id AND kept_apart = 0) < 1;
+         DELETE FROM ignored_duplicate_actions
+         WHERE kind = 'group'
+           AND (SELECT count(*) FROM ignored_duplicate_members
+                WHERE action_id = id AND kept_apart = 0) < 2
+           AND (SELECT count(*) FROM ignored_duplicate_members
+                WHERE action_id = id AND kept_apart = 1) < 1;
          DELETE FROM ignored_duplicate_actions
          WHERE kind = 'member'
            AND (SELECT count(*) FROM ignored_duplicate_members WHERE action_id = id) < 1;",

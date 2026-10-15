@@ -1,9 +1,10 @@
 use std::fs;
+use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
-use rusqlite::Connection;
+use rusqlite::{Connection, ErrorCode};
 
-use super::{LibraryError, layout};
+use super::{AssetId, LibraryError, layout};
 
 const SCHEMA: &str = "CREATE TABLE IF NOT EXISTS details.asset_details (
     asset_id TEXT PRIMARY KEY NOT NULL,
@@ -14,12 +15,13 @@ const FILE_SETTINGS: &str = "PRAGMA details.journal_mode = DELETE;
 
 pub fn attach(connection: &Connection, root: &Path) -> Result<(), LibraryError> {
     let path = layout::details_path(root);
-    if open_attached(connection, &path)
-        .and_then(|()| check_intact(connection))
-        .is_ok()
-    {
-        forget_orphans(connection);
-        return Ok(());
+    match open_attached(connection, &path).and_then(|()| check_intact(connection)) {
+        Ok(()) => {
+            forget_orphans(connection);
+            return Ok(());
+        }
+        Err(error) if is_damage(&error) => {}
+        Err(error) => return Err(error.into()),
     }
     let _ = connection.execute_batch("DETACH DATABASE details");
     let _ = fs::remove_file(&path);
@@ -31,9 +33,39 @@ fn open_attached(connection: &Connection, path: &Path) -> rusqlite::Result<()> {
     if !path.exists() {
         fs::File::create(path).map_err(io_error)?;
     }
-    connection.execute("ATTACH DATABASE ?1 AS details", [path.to_string_lossy()])?;
+    connection.execute(
+        "ATTACH DATABASE ?1 AS details",
+        [path.as_os_str().as_bytes()],
+    )?;
     connection.execute_batch(FILE_SETTINGS)?;
     connection.execute_batch(SCHEMA)
+}
+
+fn is_damage(error: &rusqlite::Error) -> bool {
+    matches!(
+        error,
+        rusqlite::Error::SqliteFailure(failure, _)
+            if matches!(failure.code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase)
+    )
+}
+
+pub fn forget(connection: &mut Connection, assets: &[AssetId]) {
+    let _ = forget_in_one_transaction(connection, assets);
+}
+
+fn forget_in_one_transaction(
+    connection: &mut Connection,
+    assets: &[AssetId],
+) -> rusqlite::Result<()> {
+    let transaction = connection.transaction()?;
+    {
+        let mut statement =
+            transaction.prepare_cached("DELETE FROM details.asset_details WHERE asset_id = ?1")?;
+        for asset in assets {
+            statement.execute([asset])?;
+        }
+    }
+    transaction.commit()
 }
 
 fn check_intact(connection: &Connection) -> rusqlite::Result<()> {

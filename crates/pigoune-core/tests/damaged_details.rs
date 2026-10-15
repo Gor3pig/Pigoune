@@ -195,3 +195,44 @@ fn details_left_behind_by_deleted_assets_are_forgotten_on_opening() {
     drop(library);
     assert_eq!(rows(&root), [id(1).to_string(), id(3).to_string()]);
 }
+
+#[test]
+fn a_details_file_that_cannot_be_opened_is_not_thrown_away() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let (_workspace, library) = library_of(50);
+    let root = library.root().to_path_buf();
+    drop(library);
+    let path = details_file(&root);
+    let size = fs::metadata(&path).expect("details file exists").len();
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o000)).expect("locked");
+
+    let opened = Library::open(&root);
+
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).expect("unlocked");
+    assert!(opened.is_err());
+    assert_eq!(fs::metadata(&path).expect("still there").len(), size);
+    drop(opened);
+    let library = Library::open(&root).expect("opens again");
+    drop(library);
+    assert_eq!(rows(&root).len(), 50);
+}
+
+#[test]
+fn a_library_under_a_path_that_is_not_valid_text_still_opens() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let parent = workspace.path().join(OsStr::from_bytes(b"caf\xe9"));
+    fs::create_dir(&parent).expect("odd folder");
+    let library = Library::create(&parent, "Essai").expect("library is created");
+    let root = library.root().to_path_buf();
+    drop(library);
+
+    let library = Library::open(&root).expect("library opens");
+
+    drop(library);
+    assert!(rows(&root).is_empty());
+    assert!(details_file(&root).is_file());
+}

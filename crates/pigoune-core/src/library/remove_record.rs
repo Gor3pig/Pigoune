@@ -1,8 +1,8 @@
 use std::fs;
 
-use super::ignored_duplicates;
 use super::trash::forget_thumbnails;
 use super::{AssetId, Library, RemoveRecordError, layout};
+use super::{details_store, ignored_duplicates};
 
 impl Library {
     pub fn remove_record_of_missing_file(&mut self, id: AssetId) -> Result<(), RemoveRecordError> {
@@ -18,10 +18,7 @@ impl Library {
         transaction.execute("DELETE FROM assets WHERE id = ?1", [id])?;
         ignored_duplicates::forget_dead_actions(&transaction)?;
         transaction.commit()?;
-        let _ = self.connection.execute(
-            "DELETE FROM details.asset_details WHERE asset_id = ?1",
-            [id],
-        );
+        details_store::forget(&mut self.connection, &[id]);
         self.history.clear();
         forget_thumbnails(&self.root, id);
         if inside && let Some(folder) = file.parent() {

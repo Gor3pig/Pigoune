@@ -715,11 +715,11 @@ fn the_count_of_ignored_entries_always_matches_the_list() {
 
     trash(&mut library, &[1], true);
     assert_eq!(counted(&library), entries(&library).len());
-    assert_eq!(counted(&library), 1);
+    assert_eq!(counted(&library), 2);
 
     trash(&mut library, &[5], true);
     assert_eq!(counted(&library), entries(&library).len());
-    assert_eq!(counted(&library), 0);
+    assert_eq!(counted(&library), 1);
 
     trash(&mut library, &[1, 5], false);
     assert_eq!(counted(&library), entries(&library).len());
@@ -756,8 +756,60 @@ fn the_count_of_ignored_assets_counts_each_asset_once() {
 
     trash(&mut library, &[1], true);
     assert_eq!(counted(&library), listed(&library));
-    assert_eq!(counted(&library), 2);
+    assert_eq!(counted(&library), 3);
     trash(&mut library, &[5], true);
     assert_eq!(counted(&library), listed(&library));
-    assert_eq!(counted(&library), 1);
+    assert_eq!(counted(&library), 2);
+}
+
+#[test]
+fn a_group_left_with_one_asset_stays_while_it_still_keeps_others_apart() {
+    let (_w, mut library) = library_of(3);
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+
+    trash(&mut library, &[2], true);
+
+    let listed = entries(&library);
+    assert_eq!(listed.len(), 1);
+    assert_eq!(shown(&listed[0]), (IgnoreKind::Group, vec![1], vec![3]));
+    assert_eq!(library.ignored_duplicate_count().expect("count"), 1);
+    assert_eq!(library.ignored_asset_count().expect("count"), 1);
+    assert!(library.is_ignored_duplicate(id(1), id(3)).expect("checked"));
+}
+
+#[test]
+fn deleting_for_good_one_asset_of_a_group_keeps_what_it_kept_apart() {
+    let (_w, mut library) = library_of(3);
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+    trash(&mut library, &[2], true);
+
+    library.empty_trash().expect("emptied");
+
+    let listed = entries(&library);
+    assert_eq!(listed.len(), 1);
+    assert_eq!(shown(&listed[0]), (IgnoreKind::Group, vec![1], vec![3]));
+    assert!(library.is_ignored_duplicate(id(1), id(3)).expect("checked"));
+    assert!(results(&library).is_empty());
+
+    trash(&mut library, &[1], true);
+    library.empty_trash().expect("emptied");
+
+    assert!(entries(&library).is_empty());
+}
+
+#[test]
+fn deleting_for_good_the_others_of_a_single_asset_group_forgets_it() {
+    let (_w, mut library) = library_of(3);
+    library
+        .ignore_duplicate_group(&ids(&[1, 2, 3]))
+        .expect("ignored");
+    trash(&mut library, &[2, 3], true);
+
+    library.empty_trash().expect("emptied");
+
+    assert!(entries(&library).is_empty());
 }
