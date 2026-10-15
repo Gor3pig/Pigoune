@@ -1,5 +1,5 @@
 use gtk::prelude::*;
-use gtk::{gdk, graphene, gsk};
+use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Point, Rect, Shape, arrow_head, dash_pattern,
     handles, head_size_factor, shape_bounds,
@@ -10,15 +10,21 @@ const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
 pub const HANDLE_SIZE: f32 = 10.0;
 
-type Renderer = fn(&gtk::Snapshot, &Shape);
+pub struct Draw<'a> {
+    pub pango: &'a pango::Context,
+    pub ordinal: u32,
+}
 
-const RENDERERS: [(&str, Renderer); 8] = [
+type Renderer = fn(&gtk::Snapshot, &Shape, &Draw);
+
+const RENDERERS: [(&str, Renderer); 9] = [
     ("rectangle", draw_rectangle),
     ("ellipse", draw_ellipse),
     ("line", draw_line),
     ("arrow", draw_arrow),
     ("pen", draw_pen),
     ("highlighter", draw_highlighter),
+    ("step", draw_step),
     ("blur", draw_nothing_yet),
     ("pixelate", draw_nothing_yet),
 ];
@@ -95,17 +101,34 @@ fn ellipse_path(bounds: Rect) -> gsk::Path {
     builder.to_path()
 }
 
-pub fn append_document(snapshot: &gtk::Snapshot, document: &AnnotationDocument) {
+pub fn append_document(
+    snapshot: &gtk::Snapshot,
+    document: &AnnotationDocument,
+    context: &pango::Context,
+) {
     for object in &document.objects {
         if let Some(shape) = object.shape() {
-            append_shape(snapshot, shape);
+            let ordinal = document.ordinal(object.id).unwrap_or(1);
+            append_shape(snapshot, shape, ordinal, context);
         }
     }
 }
 
-pub fn append_shape(snapshot: &gtk::Snapshot, shape: &Shape) {
+pub fn append_shape(
+    snapshot: &gtk::Snapshot,
+    shape: &Shape,
+    ordinal: u32,
+    context: &pango::Context,
+) {
     if let Some((_, renderer)) = RENDERERS.iter().find(|(kind, _)| *kind == shape.kind) {
-        renderer(snapshot, shape);
+        renderer(
+            snapshot,
+            shape,
+            &Draw {
+                pango: context,
+                ordinal,
+            },
+        );
     }
 }
 
@@ -116,20 +139,20 @@ fn draw_closed(snapshot: &gtk::Snapshot, shape: &Shape, path: &gsk::Path) {
     snapshot.append_stroke(path, &stroke_of(shape, false), &rgba(shape.stroke_color()));
 }
 
-fn draw_rectangle(snapshot: &gtk::Snapshot, shape: &Shape) {
+fn draw_rectangle(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     if let Some(bounds) = box_of(shape) {
         let path = rounded_rectangle_path(bounds, shape.number("corner_radius"));
         draw_closed(snapshot, shape, &path);
     }
 }
 
-fn draw_ellipse(snapshot: &gtk::Snapshot, shape: &Shape) {
+fn draw_ellipse(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     if let Some(bounds) = box_of(shape) {
         draw_closed(snapshot, shape, &ellipse_path(bounds));
     }
 }
 
-fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape) {
+fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     if let Some((from, to)) = ends_of(shape) {
         snapshot.append_stroke(
             &segment_path(from, to),
@@ -150,7 +173,7 @@ fn head_path(tip: Point, left: Point, right: Point, closed: bool) -> gsk::Path {
     builder.to_path()
 }
 
-fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape) {
+fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     let Some((from, to)) = ends_of(shape) else {
         return;
     };
@@ -233,15 +256,85 @@ fn draw_free_stroke(snapshot: &gtk::Snapshot, shape: &Shape, cap: gsk::LineCap) 
     );
 }
 
-fn draw_pen(snapshot: &gtk::Snapshot, shape: &Shape) {
+fn draw_pen(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     draw_free_stroke(snapshot, shape, gsk::LineCap::Round);
 }
 
-fn draw_highlighter(snapshot: &gtk::Snapshot, shape: &Shape) {
+fn draw_highlighter(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     draw_free_stroke(snapshot, shape, gsk::LineCap::Square);
 }
 
-fn draw_nothing_yet(_snapshot: &gtk::Snapshot, _shape: &Shape) {}
+fn text_color_over(color: Color) -> Color {
+    let luminance =
+        0.2126 * f32::from(color.r) + 0.7152 * f32::from(color.g) + 0.0722 * f32::from(color.b);
+    if luminance > 153.0 {
+        Color {
+            r: 0x24,
+            g: 0x1f,
+            b: 0x31,
+            a: 255,
+        }
+    } else {
+        Color {
+            r: 255,
+            g: 255,
+            b: 255,
+            a: 255,
+        }
+    }
+}
+
+fn draw_step(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
+    let Geometry::Anchor(center) = shape.geometry else {
+        return;
+    };
+    let radius = shape.number("size");
+    let color = shape.stroke_color();
+    let outlined = shape.choice("style") == "outlined";
+    let disc = gsk::PathBuilder::new();
+    disc.add_circle(&graphene::Point::new(center.x, center.y), radius);
+    let path = disc.to_path();
+    let text = if outlined {
+        snapshot.append_fill(
+            &path,
+            gsk::FillRule::Winding,
+            &gdk::RGBA::new(1.0, 1.0, 1.0, 0.92 * f32::from(color.a) / 255.0),
+        );
+        let ring = gsk::Stroke::new((radius * 0.16).max(1.5));
+        snapshot.append_stroke(&path, &ring, &rgba(color));
+        color
+    } else {
+        snapshot.append_fill(&path, gsk::FillRule::Winding, &rgba(color));
+        text_color_over(color)
+    };
+    let digits = draw.ordinal.to_string();
+    let scale = match digits.len() {
+        1 => 1.15,
+        2 => 0.95,
+        _ => 0.75,
+    };
+    let layout = pango::Layout::new(draw.pango);
+    layout.set_text(&digits);
+    let mut font = pango::FontDescription::from_string("Sans Bold");
+    font.set_absolute_size(f64::from(radius * scale) * f64::from(pango::SCALE));
+    layout.set_font_description(Some(&font));
+    let (width, height) = layout.pixel_size();
+    snapshot.save();
+    snapshot.translate(&graphene::Point::new(
+        center.x - f32::from(i16::try_from(width).unwrap_or(0)) / 2.0,
+        center.y - f32::from(i16::try_from(height).unwrap_or(0)) / 2.0,
+    ));
+    snapshot.append_layout(
+        &layout,
+        &rgba(Color {
+            a: if outlined { color.a } else { 255 },
+            ..text
+        }),
+    );
+    snapshot.restore();
+}
+
+fn draw_nothing_yet(_snapshot: &gtk::Snapshot, _shape: &Shape, _draw: &Draw) {}
 
 pub fn append_selection(
     snapshot: &gtk::Snapshot,

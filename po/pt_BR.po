@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 00:06+0200\n"
+"POT-Creation-Date: 2026-10-16 00:14+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -1434,16 +1434,16 @@ msgstr "_Escolher…"
 msgid "translator-credits"
 msgstr "Gor3pig"
 
-#: crates/pigoune-app/src/editor.rs:466
+#: crates/pigoune-app/src/editor.rs:468
 #, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
-#: crates/pigoune-app/src/editor.rs:569 crates/pigoune-app/ui/editor.blp:99
+#: crates/pigoune-app/src/editor.rs:571 crates/pigoune-app/ui/editor.blp:99
 msgid "No annotations"
 msgstr "Sem anotações"
 
-#: crates/pigoune-app/src/editor.rs:571
+#: crates/pigoune-app/src/editor.rs:573
 #, rust-format
 msgid "Annotations: {count}"
 msgstr "Anotações: {count}"
@@ -1492,50 +1492,66 @@ msgid "Smooth Line"
 msgstr "Traço suavizado"
 
 #: crates/pigoune-app/src/editor_options.rs:49
+msgid "Badge Size"
+msgstr "Tamanho do selo"
+
+#: crates/pigoune-app/src/editor_options.rs:50
+msgid "Badge Style"
+msgstr "Estilo do selo"
+
+#: crates/pigoune-app/src/editor_options.rs:51
 msgid "Blur Radius"
 msgstr "Raio do desfoque"
 
-#: crates/pigoune-app/src/editor_options.rs:50
+#: crates/pigoune-app/src/editor_options.rs:52
 msgid "Cell Size"
 msgstr "Tamanho da célula"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Solid Line"
 msgstr "Contínua"
 
-#: crates/pigoune-app/src/editor_options.rs:58
+#: crates/pigoune-app/src/editor_options.rs:60
 msgid "Dashed Line"
 msgstr "Tracejada"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:61
 msgid "Dotted Line"
 msgstr "Pontilhada"
 
-#: crates/pigoune-app/src/editor_options.rs:60
+#: crates/pigoune-app/src/editor_options.rs:62
 msgid "Filled Triangle"
 msgstr "Triângulo cheio"
 
-#: crates/pigoune-app/src/editor_options.rs:61
+#: crates/pigoune-app/src/editor_options.rs:63
 msgid "Open Head"
 msgstr "Ponta aberta"
 
-#: crates/pigoune-app/src/editor_options.rs:62
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Both Ends"
 msgstr "Nas duas pontas"
 
-#: crates/pigoune-app/src/editor_options.rs:63
+#: crates/pigoune-app/src/editor_options.rs:65
 msgid "No Head"
 msgstr "Sem ponta"
 
-#: crates/pigoune-app/src/editor_options.rs:64
+#: crates/pigoune-app/src/editor_options.rs:66
+msgid "Filled Badge"
+msgstr "Selo preenchido"
+
+#: crates/pigoune-app/src/editor_options.rs:67
+msgid "Outlined Badge"
+msgstr "Selo com contorno"
+
+#: crates/pigoune-app/src/editor_options.rs:68
 msgid "Small Head"
 msgstr "Ponta pequena"
 
-#: crates/pigoune-app/src/editor_options.rs:65
+#: crates/pigoune-app/src/editor_options.rs:69
 msgid "Medium Head"
 msgstr "Ponta média"
 
-#: crates/pigoune-app/src/editor_options.rs:66
+#: crates/pigoune-app/src/editor_options.rs:70
 msgid "Large Head"
 msgstr "Ponta grande"
 
