@@ -1,7 +1,8 @@
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, CursorKind, DrawingTool, EditSession, Handle, Interaction, Point,
-    Rect, Shape, Stroke, Style, Tool, shape_bounds,
+    ARROW, AnnotationDocument, CursorKind, ELLIPSE, EditSession, Geometry, Handle, Interaction,
+    LINE, Options, Point, RECTANGLE, Rect, Shape, Tool, number_to_value, shape_bounds,
 };
+use serde_json::json;
 
 const REACH: f32 = 6.0;
 
@@ -14,24 +15,20 @@ fn same(left: f32, right: f32) -> bool {
 }
 
 fn rectangle(x: f32, y: f32, width: f32, height: f32) -> Shape {
-    Shape::Rectangle {
-        bounds: Rect {
+    Shape::new(
+        "rectangle",
+        Geometry::Box(Rect {
             x,
             y,
             width,
             height,
-        },
-        stroke: Stroke {
-            color: Color {
-                r: 1,
-                g: 2,
-                b: 3,
-                a: 255,
-            },
-            width: 4.0,
-        },
-        fill: None,
-    }
+        }),
+        Options::defaults(RECTANGLE.options).with("width", number_to_value(4.0)),
+    )
+}
+
+fn drawing_options() -> Options {
+    Options::defaults(RECTANGLE.options)
 }
 
 fn bounds(session: &EditSession, id: u32) -> Rect {
@@ -45,7 +42,7 @@ fn drag(
     from: Point,
     to: Point,
 ) -> bool {
-    let claimed = interaction.press(session, tool, &Style::default(), from, REACH);
+    let claimed = interaction.press(session, tool, &drawing_options(), from, REACH);
     if claimed {
         let middle = point(f32::midpoint(from.x, to.x), f32::midpoint(from.y, to.y));
         interaction.drag(session, middle);
@@ -64,7 +61,7 @@ fn fresh() -> (Interaction, EditSession) {
 #[test]
 fn dragging_with_a_drawing_tool_adds_one_selected_shape() {
     let (mut interaction, mut session) = fresh();
-    let tool = Tool::Draw(DrawingTool::Rectangle);
+    let tool = Tool::Draw(&RECTANGLE);
 
     assert!(drag(
         &mut interaction,
@@ -85,12 +82,12 @@ fn dragging_with_a_drawing_tool_adds_one_selected_shape() {
 #[test]
 fn the_shape_is_only_pending_until_the_button_is_released() {
     let (mut interaction, mut session) = fresh();
-    let tool = Tool::Draw(DrawingTool::Arrow);
+    let tool = Tool::Draw(&ARROW);
 
     interaction.press(
         &mut session,
         tool,
-        &Style::default(),
+        &drawing_options(),
         point(0.0, 0.0),
         REACH,
     );
@@ -108,7 +105,7 @@ fn the_shape_is_only_pending_until_the_button_is_released() {
 #[test]
 fn a_click_with_a_drawing_tool_adds_nothing() {
     let (mut interaction, mut session) = fresh();
-    let tool = Tool::Draw(DrawingTool::Ellipse);
+    let tool = Tool::Draw(&ELLIPSE);
 
     drag(
         &mut interaction,
@@ -123,27 +120,24 @@ fn a_click_with_a_drawing_tool_adds_nothing() {
 }
 
 #[test]
-fn the_new_shape_takes_the_current_style() {
+fn the_new_shape_takes_the_options_given_with_the_press() {
     let (mut interaction, mut session) = fresh();
-    let style = Style {
-        width: 15.0,
-        opacity: 0.5,
-        ..Style::default()
-    };
+    let options = Options::defaults(ARROW.options)
+        .with("width", number_to_value(15.0))
+        .with("head", json!("open"));
     interaction.press(
         &mut session,
-        Tool::Draw(DrawingTool::Line),
-        &style,
+        Tool::Draw(&ARROW),
+        &options,
         point(0.0, 0.0),
         REACH,
     );
     interaction.release(&mut session, point(50.0, 50.0));
 
-    let Some(Shape::Line { stroke, .. }) = session.selected_shape() else {
-        panic!("a line");
-    };
-    assert!(same(stroke.width, 15.0));
-    assert_eq!(stroke.color.a, 128);
+    let shape = session.selected_shape().expect("an arrow");
+    assert_eq!(shape.kind, "arrow");
+    assert!(same(shape.number("width"), 15.0));
+    assert_eq!(shape.choice("head"), "open");
 }
 
 #[test]
@@ -155,7 +149,7 @@ fn a_drawing_tool_never_grabs_an_existing_shape() {
     drag(
         &mut interaction,
         &mut session,
-        Tool::Draw(DrawingTool::Rectangle),
+        Tool::Draw(&RECTANGLE),
         point(0.0, 50.0),
         point(200.0, 90.0),
     );
@@ -172,7 +166,7 @@ fn an_unsupported_tool_lets_the_view_pan() {
     assert!(!interaction.press(
         &mut session,
         Tool::Unsupported,
-        &Style::default(),
+        &drawing_options(),
         point(0.0, 50.0),
         REACH
     ));
@@ -210,7 +204,7 @@ fn a_press_on_empty_space_deselects_and_lets_the_view_pan() {
     let claimed = interaction.press(
         &mut session,
         Tool::Select,
-        &Style::default(),
+        &drawing_options(),
         point(500.0, 500.0),
         REACH,
     );
@@ -250,7 +244,7 @@ fn a_handle_wins_over_a_shape_underneath() {
     interaction.press(
         &mut session,
         Tool::Select,
-        &Style::default(),
+        &drawing_options(),
         point(150.0, 100.0),
         REACH,
     );
@@ -269,7 +263,7 @@ fn escape_cancels_a_move_in_progress() {
     interaction.press(
         &mut session,
         Tool::Select,
-        &Style::default(),
+        &drawing_options(),
         point(100.0, 130.0),
         REACH,
     );
@@ -289,8 +283,8 @@ fn cancelling_a_drawing_discards_the_pending_shape() {
     let (mut interaction, mut session) = fresh();
     interaction.press(
         &mut session,
-        Tool::Draw(DrawingTool::Rectangle),
-        &Style::default(),
+        Tool::Draw(&RECTANGLE),
+        &drawing_options(),
         point(0.0, 0.0),
         REACH,
     );
@@ -314,7 +308,7 @@ fn a_move_that_goes_nowhere_leaves_no_history() {
     interaction.press(
         &mut session,
         Tool::Select,
-        &Style::default(),
+        &drawing_options(),
         point(100.0, 130.0),
         REACH,
     );
@@ -343,7 +337,7 @@ fn the_cursor_tells_what_a_click_would_do() {
     );
     assert_eq!(cursor(Tool::Select, 400.0, 400.0), CursorKind::Default);
     assert_eq!(
-        cursor(Tool::Draw(DrawingTool::Arrow), 400.0, 400.0),
+        cursor(Tool::Draw(&ARROW), 400.0, 400.0),
         CursorKind::Crosshair
     );
     assert_eq!(cursor(Tool::Unsupported, 100.0, 110.0), CursorKind::Default);
@@ -362,8 +356,8 @@ fn starting_to_draw_drops_the_previous_selection() {
 
     interaction.press(
         &mut session,
-        Tool::Draw(DrawingTool::Line),
-        &Style::default(),
+        Tool::Draw(&LINE),
+        &drawing_options(),
         point(300.0, 300.0),
         REACH,
     );

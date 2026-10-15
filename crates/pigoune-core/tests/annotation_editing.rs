@@ -1,205 +1,126 @@
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, DrawingTool, EditSession, Font, Handle, Point, Rect, Shape, Stroke,
-    Style, arrow_head, handles, hit, rect_between, resized, restyled, shape_bounds,
-    shape_from_drag, style_of, translated,
+    ARROW, AnnotationDocument, BLUR, ELLIPSE, EditSession, Geometry, Handle, LINE, Options, Point,
+    RECTANGLE, Rect, Shape, ToolDefinition, arrow_head, handles, head_size_factor, hit,
+    number_to_value, rect_between, resized, shape_bounds, shape_from_drag, translated,
 };
+use serde_json::json;
 
 fn point(x: f32, y: f32) -> Point {
     Point { x, y }
 }
 
-fn color(a: u8) -> Color {
-    Color {
-        r: 10,
-        g: 20,
-        b: 30,
-        a,
-    }
-}
-
-fn stroke(width: f32) -> Stroke {
-    Stroke {
-        color: color(255),
-        width,
-    }
+fn options_of(tool: &ToolDefinition) -> Options {
+    Options::defaults(tool.options).with("width", number_to_value(4.0))
 }
 
 fn rectangle(x: f32, y: f32, width: f32, height: f32) -> Shape {
-    Shape::Rectangle {
-        bounds: Rect {
+    Shape::new(
+        "rectangle",
+        Geometry::Box(Rect {
             x,
             y,
             width,
             height,
-        },
-        stroke: stroke(4.0),
-        fill: None,
-    }
-}
-
-fn filled(shape: Shape) -> Shape {
-    match shape {
-        Shape::Rectangle { bounds, stroke, .. } => Shape::Rectangle {
-            bounds,
-            stroke,
-            fill: Some(color(255)),
-        },
-        Shape::Ellipse { bounds, stroke, .. } => Shape::Ellipse {
-            bounds,
-            stroke,
-            fill: Some(color(255)),
-        },
-        other => other,
-    }
+        }),
+        options_of(&RECTANGLE),
+    )
 }
 
 fn ellipse(x: f32, y: f32, width: f32, height: f32) -> Shape {
-    Shape::Ellipse {
-        bounds: Rect {
+    Shape::new(
+        "ellipse",
+        Geometry::Box(Rect {
             x,
             y,
             width,
             height,
-        },
-        stroke: stroke(4.0),
-        fill: None,
-    }
+        }),
+        options_of(&ELLIPSE),
+    )
 }
 
 fn line(from: Point, to: Point) -> Shape {
-    Shape::Line {
-        from,
-        to,
-        stroke: stroke(4.0),
-    }
+    Shape::new("line", Geometry::TwoPoints { from, to }, options_of(&LINE))
+}
+
+fn arrow(from: Point, to: Point) -> Shape {
+    Shape::new(
+        "arrow",
+        Geometry::TwoPoints { from, to },
+        options_of(&ARROW),
+    )
 }
 
 fn blur(x: f32, y: f32, width: f32, height: f32) -> Shape {
-    Shape::Blur {
-        bounds: Rect {
+    Shape::new(
+        "blur",
+        Geometry::Box(Rect {
             x,
             y,
             width,
             height,
-        },
-        radius: 8.0,
-    }
+        }),
+        Options::defaults(BLUR.options),
+    )
 }
 
-fn float(number: u32) -> f32 {
-    f32::from(u16::try_from(number).expect("a small number"))
+fn filled(shape: &Shape) -> Shape {
+    shape.with_option("fill", json!(true))
 }
 
 fn same(left: f32, right: f32) -> bool {
     (left - right).abs() < 1e-4
 }
 
+fn float(number: u32) -> f32 {
+    f32::from(u16::try_from(number).expect("a small number"))
+}
+
 fn bounds_of(shape: &Shape) -> Rect {
     shape_bounds(shape).expect("the shape has bounds")
 }
 
+fn drag_shape(tool: &ToolDefinition, from: Point, to: Point) -> Option<Shape> {
+    shape_from_drag(tool, from, to, &Options::defaults(tool.options))
+}
+
 #[test]
 fn dragging_a_tool_makes_the_matching_shape_whatever_the_direction() {
-    let style = Style::default();
-    for tool in [
-        DrawingTool::Rectangle,
-        DrawingTool::Ellipse,
-        DrawingTool::Line,
-        DrawingTool::Arrow,
-    ] {
-        let forward = shape_from_drag(tool, point(10.0, 20.0), point(110.0, 70.0), &style);
-        let backward = shape_from_drag(tool, point(110.0, 70.0), point(10.0, 20.0), &style);
-        assert!(forward.is_some(), "{tool:?}");
-        assert_eq!(
-            bounds_of(&forward.expect("shape")),
-            bounds_of(&backward.expect("shape"))
-        );
+    for tool in [&RECTANGLE, &ELLIPSE, &LINE, &ARROW] {
+        let forward = drag_shape(tool, point(10.0, 20.0), point(110.0, 70.0)).expect("shape");
+        let backward = drag_shape(tool, point(110.0, 70.0), point(10.0, 20.0)).expect("shape");
+        assert_eq!(forward.kind, tool.kind);
+        assert_eq!(bounds_of(&forward), bounds_of(&backward));
     }
-    let Some(Shape::Rectangle { bounds, .. }) = shape_from_drag(
-        DrawingTool::Rectangle,
-        point(110.0, 70.0),
-        point(10.0, 20.0),
-        &style,
-    ) else {
-        panic!("a rectangle");
-    };
+    let shape = drag_shape(&RECTANGLE, point(110.0, 70.0), point(10.0, 20.0)).expect("shape");
     assert_eq!(
-        bounds,
-        Rect {
+        shape.geometry,
+        Geometry::Box(Rect {
             x: 10.0,
             y: 20.0,
             width: 100.0,
             height: 50.0
-        }
+        })
     );
 }
 
 #[test]
 fn a_tiny_drag_makes_nothing() {
-    for tool in [DrawingTool::Rectangle, DrawingTool::Arrow] {
-        assert!(
-            shape_from_drag(tool, point(5.0, 5.0), point(6.0, 7.0), &Style::default()).is_none()
-        );
-        assert!(
-            shape_from_drag(tool, point(5.0, 5.0), point(5.0, 5.0), &Style::default()).is_none()
-        );
+    for tool in [&RECTANGLE, &ARROW] {
+        assert!(drag_shape(tool, point(5.0, 5.0), point(6.0, 7.0)).is_none());
+        assert!(drag_shape(tool, point(5.0, 5.0), point(5.0, 5.0)).is_none());
     }
 }
 
 #[test]
-fn the_style_is_applied_with_the_opacity_as_alpha() {
-    let style = Style {
-        color: Color {
-            r: 1,
-            g: 2,
-            b: 3,
-            a: 255,
-        },
-        width: 9.0,
-        opacity: 0.5,
-    };
-    let Some(Shape::Line { stroke, .. }) =
-        shape_from_drag(DrawingTool::Line, point(0.0, 0.0), point(50.0, 0.0), &style)
-    else {
-        panic!("a line");
-    };
-    assert!(same(stroke.width, 9.0));
-    assert_eq!((stroke.color.r, stroke.color.g, stroke.color.b), (1, 2, 3));
-    assert_eq!(stroke.color.a, 128);
-    let back = style_of(&Shape::Line {
-        from: point(0.0, 0.0),
-        to: point(1.0, 1.0),
-        stroke,
-    })
-    .expect("a style");
-    assert!(same(back.width, 9.0));
-    assert!((back.opacity - 0.5).abs() < 0.01);
-    assert_eq!(back.color.a, 255);
-}
-
-#[test]
-fn restyling_changes_only_the_style() {
-    let style = Style {
-        color: Color {
-            r: 7,
-            g: 8,
-            b: 9,
-            a: 255,
-        },
-        width: 12.0,
-        opacity: 0.25,
-    };
-    let before = rectangle(10.0, 10.0, 40.0, 30.0);
-    let after = restyled(&before, &style);
-    assert_eq!(shape_bounds(&before), shape_bounds(&after));
-    assert_ne!(before, after);
-    let read = style_of(&after).expect("a style");
-    assert!(same(read.width, 12.0));
-    assert_eq!(
-        restyled(&blur(0.0, 0.0, 5.0, 5.0), &style),
-        blur(0.0, 0.0, 5.0, 5.0)
-    );
-    assert!(style_of(&blur(0.0, 0.0, 5.0, 5.0)).is_none());
+fn the_options_given_to_the_drag_end_up_in_the_shape() {
+    let options = Options::defaults(ARROW.options)
+        .with("width", number_to_value(9.0))
+        .with("head", json!("double"));
+    let shape =
+        shape_from_drag(&ARROW, point(0.0, 0.0), point(50.0, 0.0), &options).expect("shape");
+    assert!(same(shape.number("width"), 9.0));
+    assert_eq!(shape.choice("head"), "double");
 }
 
 #[test]
@@ -216,7 +137,7 @@ fn an_unfilled_rectangle_is_hit_on_its_edge_only() {
 
 #[test]
 fn a_filled_rectangle_is_hit_inside_too() {
-    let shape = filled(rectangle(100.0, 100.0, 200.0, 100.0));
+    let shape = filled(&rectangle(100.0, 100.0, 200.0, 100.0));
     assert!(hit(&shape, point(200.0, 150.0), 0.0));
     assert!(!hit(&shape, point(320.0, 150.0), 0.0));
 }
@@ -230,7 +151,7 @@ fn an_ellipse_is_hit_on_its_outline() {
     assert!(hit(&shape, point(200.0, 200.0), 3.0));
     assert!(!hit(&shape, point(200.0, 150.0), 3.0));
     assert!(!hit(&shape, point(105.0, 105.0), 1.0));
-    assert!(hit(&filled(shape), point(200.0, 150.0), 0.0));
+    assert!(hit(&filled(&shape), point(200.0, 150.0), 0.0));
 }
 
 #[test]
@@ -250,15 +171,19 @@ fn a_line_and_an_arrow_are_hit_near_the_segment() {
     assert!(!hit(&segment, point(50.0, 6.0), 2.0));
     assert!(!hit(&segment, point(120.0, 0.0), 2.0));
     assert!(hit(&segment, point(102.0, 0.0), 2.0));
-    let arrow = Shape::Arrow {
-        from: point(0.0, 0.0),
-        to: point(100.0, 100.0),
-        stroke: stroke(4.0),
-    };
-    assert!(hit(&arrow, point(50.0, 51.0), 2.0));
-    assert!(!hit(&arrow, point(50.0, 70.0), 2.0));
+    let diagonal = arrow(point(0.0, 0.0), point(100.0, 100.0));
+    assert!(hit(&diagonal, point(50.0, 51.0), 2.0));
+    assert!(!hit(&diagonal, point(50.0, 70.0), 2.0));
     let dot = line(point(5.0, 5.0), point(5.0, 5.0));
     assert!(hit(&dot, point(6.0, 5.0), 2.0));
+}
+
+#[test]
+fn a_thicker_stroke_is_easier_to_hit() {
+    let thin = line(point(0.0, 0.0), point(100.0, 0.0));
+    let thick = thin.with_option("width", number_to_value(30.0));
+    assert!(!hit(&thin, point(50.0, 12.0), 1.0));
+    assert!(hit(&thick, point(50.0, 12.0), 1.0));
 }
 
 #[test]
@@ -266,6 +191,21 @@ fn a_blur_is_hit_anywhere_inside() {
     let shape = blur(10.0, 10.0, 100.0, 50.0);
     assert!(hit(&shape, point(60.0, 30.0), 0.0));
     assert!(!hit(&shape, point(200.0, 30.0), 0.0));
+}
+
+#[test]
+fn an_unknown_tool_is_never_hit() {
+    let strange = Shape::new(
+        "lasso",
+        Geometry::Box(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 50.0,
+            height: 50.0,
+        }),
+        Options::new(),
+    );
+    assert!(!hit(&strange, point(25.0, 25.0), 5.0));
 }
 
 #[test]
@@ -297,18 +237,8 @@ fn a_rectangle_has_eight_handles_and_a_line_two() {
             (Handle::End, point(3.0, 4.0))
         ]
     );
-    let text = Shape::Text {
-        origin: point(0.0, 0.0),
-        content: "x".to_owned(),
-        font: Font {
-            family: "Sans".to_owned(),
-            size: 12.0,
-            bold: false,
-            italic: false,
-        },
-        color: color(255),
-    };
-    assert!(handles(&text).is_empty());
+    let anchored = Shape::new("text", Geometry::Anchor(point(0.0, 0.0)), Options::new());
+    assert!(handles(&anchored).is_empty());
 }
 
 #[test]
@@ -366,6 +296,15 @@ fn resizing_moves_the_dragged_edges_only() {
 }
 
 #[test]
+fn resizing_keeps_the_options_of_the_shape() {
+    let shape = rectangle(0.0, 0.0, 10.0, 10.0).with_option("corner_radius", json!(7));
+    let moved = resized(&shape, Handle::Right, point(40.0, 0.0));
+    assert_eq!(moved.options, shape.options);
+    assert_eq!(moved.kind, shape.kind);
+    assert_eq!(translated(&shape, 3.0, 3.0).options, shape.options);
+}
+
+#[test]
 fn dragging_a_handle_past_the_opposite_side_flips_the_shape() {
     let shape = ellipse(100.0, 100.0, 100.0, 50.0);
     let flipped = resized(&shape, Handle::Right, point(60.0, 0.0));
@@ -405,34 +344,31 @@ fn resizing_a_line_moves_one_end() {
 }
 
 #[test]
-fn translating_moves_every_kind_of_shape() {
+fn translating_moves_every_kind_of_geometry() {
+    let polyline = Shape::new(
+        "pen",
+        Geometry::Polyline(vec![point(0.0, 0.0), point(5.0, 5.0)]),
+        Options::new(),
+    );
     let shapes = [
         rectangle(0.0, 0.0, 10.0, 10.0),
         ellipse(0.0, 0.0, 10.0, 10.0),
         line(point(0.0, 0.0), point(10.0, 10.0)),
         blur(0.0, 0.0, 10.0, 10.0),
-        Shape::Pen {
-            points: vec![point(0.0, 0.0), point(5.0, 5.0)],
-            stroke: stroke(2.0),
-        },
+        polyline,
     ];
     for shape in shapes {
         let moved = translated(&shape, 7.0, -3.0);
         let (before, after) = (bounds_of(&shape), bounds_of(&moved));
-        assert_eq!((after.x - before.x, after.y - before.y), (7.0, -3.0));
-        assert_eq!((after.width, after.height), (before.width, before.height));
+        assert!(same(after.x - before.x, 7.0) && same(after.y - before.y, -3.0));
+        assert!(same(after.width, before.width) && same(after.height, before.height));
         assert_eq!(translated(&moved, -7.0, 3.0), shape);
     }
-    let step = Shape::Step {
-        center: point(1.0, 2.0),
-        number: 1,
-        radius: 10.0,
-        color: color(255),
-    };
-    let Shape::Step { center, .. } = translated(&step, 4.0, 4.0) else {
-        panic!("a step");
-    };
-    assert_eq!(center, point(5.0, 6.0));
+    let anchored = Shape::new("text", Geometry::Anchor(point(1.0, 2.0)), Options::new());
+    assert_eq!(
+        translated(&anchored, 4.0, 4.0).geometry,
+        Geometry::Anchor(point(5.0, 6.0))
+    );
 }
 
 #[test]
@@ -506,10 +442,10 @@ fn the_topmost_object_wins_the_click_and_unknown_tools_are_skipped() {
     let document = AnnotationDocument::from_json(
         r#"{"version":1,"objects":[
             {"id":1,"kind":"rectangle","bounds":{"x":0.0,"y":0.0,"width":100.0,"height":100.0},
-             "stroke":{"color":{"r":1,"g":2,"b":3,"a":255},"width":4.0},"fill":{"r":1,"g":2,"b":3,"a":255}},
+             "options":{"width":4.0,"fill":true}},
             {"id":2,"kind":"lasso","points":[]},
             {"id":3,"kind":"rectangle","bounds":{"x":50.0,"y":50.0,"width":100.0,"height":100.0},
-             "stroke":{"color":{"r":1,"g":2,"b":3,"a":255},"width":4.0},"fill":{"r":1,"g":2,"b":3,"a":255}}
+             "options":{"width":4.0,"fill":true}}
         ]}"#,
     )
     .expect("read");
@@ -565,8 +501,8 @@ fn a_gesture_that_changes_nothing_leaves_no_history() {
     let depth_before = session.can_redo();
 
     assert!(session.begin_change(id));
-    let same = session.shape_of(id).cloned().expect("shape");
-    session.preview(same);
+    let same_shape = session.shape_of(id).cloned().expect("shape");
+    session.preview(same_shape);
     assert!(!session.end_change());
 
     assert_eq!(session.can_redo(), depth_before);
@@ -602,23 +538,46 @@ fn history_is_blocked_while_a_gesture_is_running() {
 }
 
 #[test]
-fn restyling_the_selection_is_one_undoable_change() {
+fn changing_an_option_of_the_selection_is_one_undoable_change() {
     let mut session = session();
-    let id = session.add(rectangle(0.0, 0.0, 10.0, 10.0));
+    let id = session.add(arrow(point(0.0, 0.0), point(50.0, 0.0)));
     let original = session.shape_of(id).cloned().expect("shape");
-    let style = Style {
-        width: 11.0,
-        opacity: 0.4,
-        ..Style::default()
-    };
 
-    assert!(session.restyle_selected(&style));
-    assert_ne!(session.shape_of(id), Some(&original));
-    assert!(!session.restyle_selected(&style));
+    assert!(session.set_option_on_selected("head", json!("double")));
+    assert_eq!(
+        session.shape_of(id).expect("shape").choice("head"),
+        "double"
+    );
+    assert!(!session.set_option_on_selected("head", json!("double")));
     assert!(session.undo());
     assert_eq!(session.shape_of(id), Some(&original));
+    assert!(session.redo());
+    assert_eq!(
+        session.shape_of(id).expect("shape").choice("head"),
+        "double"
+    );
     session.select(None);
-    assert!(!session.restyle_selected(&style));
+    assert!(!session.set_option_on_selected("head", json!("open")));
+}
+
+#[test]
+fn a_slider_gesture_on_an_option_is_one_undoable_change() {
+    let mut session = session();
+    let id = session.add(arrow(point(0.0, 0.0), point(50.0, 0.0)));
+    let original = session.shape_of(id).cloned().expect("shape");
+
+    assert!(session.begin_change(id));
+    for width in [8, 12, 20, 30] {
+        session.preview_option("width", number_to_value(float(width)));
+    }
+    assert!(session.end_change());
+
+    assert!(same(
+        session.shape_of(id).expect("shape").number("width"),
+        30.0
+    ));
+    assert!(session.undo());
+    assert_eq!(session.shape_of(id), Some(&original));
 }
 
 #[test]
@@ -690,57 +649,68 @@ fn undoing_everything_then_redoing_everything_gives_the_same_states() {
     };
     let mut edits = session();
     let mut states = vec![edits.document().to_json().expect("json")];
+    let ids = |edits: &EditSession| -> Vec<u32> {
+        edits.document().objects.iter().map(|o| o.id).collect()
+    };
     for _ in 0..300 {
-        let changed = match next(5) {
+        let changed = match next(6) {
             0 | 1 => {
                 let x = float(next(500));
                 let shape = match next(3) {
                     0 => rectangle(x, 10.0, 40.0, 30.0),
                     1 => ellipse(x, 10.0, 40.0, 30.0),
-                    _ => line(point(x, 0.0), point(x + 20.0, 30.0)),
+                    _ => arrow(point(x, 0.0), point(x + 20.0, 30.0)),
                 };
                 edits.add(shape);
                 true
             }
             2 => {
-                let ids: Vec<u32> = edits.document().objects.iter().map(|o| o.id).collect();
-                if ids.is_empty() {
+                let all = ids(&edits);
+                if all.is_empty() {
                     false
                 } else {
-                    edits.select(Some(
-                        ids[usize::try_from(next(u32::try_from(ids.len()).expect("few")))
-                            .expect("index")],
-                    ));
+                    let pick = usize::try_from(next(u32::try_from(all.len()).expect("few")))
+                        .expect("index");
+                    edits.select(Some(all[pick]));
                     edits.remove_selected()
                 }
             }
             3 => {
-                let ids: Vec<u32> = edits.document().objects.iter().map(|o| o.id).collect();
-                if ids.is_empty() {
+                let all = ids(&edits);
+                if all.is_empty() {
                     false
                 } else {
-                    let id = ids[usize::try_from(next(u32::try_from(ids.len()).expect("few")))
-                        .expect("index")];
+                    let pick = usize::try_from(next(u32::try_from(all.len()).expect("few")))
+                        .expect("index");
+                    let id = all[pick];
                     let original = edits.shape_of(id).cloned().expect("shape");
                     edits.begin_change(id);
                     edits.preview(translated(&original, float(next(50)) + 1.0, 2.0));
                     edits.end_change()
                 }
             }
-            _ => {
-                let ids: Vec<u32> = edits.document().objects.iter().map(|o| o.id).collect();
-                if ids.is_empty() {
+            4 => {
+                let all = ids(&edits);
+                if all.is_empty() {
                     false
                 } else {
-                    edits.select(Some(
-                        ids[usize::try_from(next(u32::try_from(ids.len()).expect("few")))
-                            .expect("index")],
-                    ));
-                    let style = Style {
-                        width: float(next(30)) + 1.0,
-                        ..Style::default()
-                    };
-                    edits.restyle_selected(&style)
+                    let pick = usize::try_from(next(u32::try_from(all.len()).expect("few")))
+                        .expect("index");
+                    edits.select(Some(all[pick]));
+                    edits.set_option_on_selected("width", number_to_value(float(next(30)) + 1.0))
+                }
+            }
+            _ => {
+                let all = ids(&edits);
+                if all.is_empty() {
+                    false
+                } else {
+                    let pick = usize::try_from(next(u32::try_from(all.len()).expect("few")))
+                        .expect("index");
+                    edits.select(Some(all[pick]));
+                    let choices = ["solid", "dashed", "dotted"];
+                    let choice = choices[usize::try_from(next(3)).expect("index")];
+                    edits.set_option_on_selected("dash", json!(choice))
                 }
             }
         };
@@ -764,7 +734,12 @@ fn undoing_everything_then_redoing_everything_gives_the_same_states() {
 
 #[test]
 fn an_arrow_head_points_at_the_end_and_is_symmetric() {
-    let head = arrow_head(point(0.0, 0.0), point(100.0, 0.0), 4.0);
+    let head = arrow_head(
+        point(0.0, 0.0),
+        point(100.0, 0.0),
+        4.0,
+        head_size_factor("medium"),
+    );
     assert_eq!(head.tip, point(100.0, 0.0));
     assert!(same(head.base.y, 0.0));
     assert!(head.base.x < 100.0);
@@ -777,8 +752,9 @@ fn an_arrow_head_points_at_the_end_and_is_symmetric() {
 
 #[test]
 fn an_arrow_head_grows_with_the_stroke_and_follows_the_direction() {
-    let thin = arrow_head(point(0.0, 0.0), point(0.0, 200.0), 2.0);
-    let thick = arrow_head(point(0.0, 0.0), point(0.0, 200.0), 20.0);
+    let factor = head_size_factor("medium");
+    let thin = arrow_head(point(0.0, 0.0), point(0.0, 200.0), 2.0, factor);
+    let thick = arrow_head(point(0.0, 0.0), point(0.0, 200.0), 20.0, factor);
     assert!(thick.base.y < thin.base.y);
     assert!(same(thin.left.y, thin.right.y));
     assert!(same(thin.left.x, -thin.right.x));
@@ -786,10 +762,11 @@ fn an_arrow_head_grows_with_the_stroke_and_follows_the_direction() {
 
 #[test]
 fn an_arrow_head_never_reaches_past_a_short_arrow() {
-    let head = arrow_head(point(0.0, 0.0), point(10.0, 0.0), 30.0);
+    let factor = head_size_factor("large");
+    let head = arrow_head(point(0.0, 0.0), point(10.0, 0.0), 30.0, factor);
     assert!(head.base.x > 0.0);
     assert!(head.base.x < 10.0);
-    let still = arrow_head(point(5.0, 5.0), point(5.0, 5.0), 4.0);
+    let still = arrow_head(point(5.0, 5.0), point(5.0, 5.0), 4.0, factor);
     for corner in [still.tip, still.left, still.right, still.base] {
         assert!(corner.x.is_finite() && corner.y.is_finite());
     }
