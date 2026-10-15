@@ -20,6 +20,28 @@ const VISIBLE_MEMBER: &str = "(k.kind = 'member' AND live.inside + live.apart >=
     AND EXISTS (SELECT 1 FROM assets s
                 WHERE s.id = k.subject_asset AND s.trashed_at_unix_ms IS NULL))";
 
+const PAIR_IS_IGNORED: &str = "
+    SELECT 1 FROM ignored_duplicate_members inside
+      JOIN ignored_duplicate_actions k ON k.id = inside.action_id
+      JOIN ignored_duplicate_members other ON other.action_id = k.id
+     WHERE k.kind = 'group' AND inside.kept_apart = 0
+       AND inside.asset_id = ?1 AND other.asset_id = ?2
+    UNION ALL
+    SELECT 1 FROM ignored_duplicate_members inside
+      JOIN ignored_duplicate_actions k ON k.id = inside.action_id
+      JOIN ignored_duplicate_members other ON other.action_id = k.id
+     WHERE k.kind = 'group' AND inside.kept_apart = 0
+       AND inside.asset_id = ?2 AND other.asset_id = ?1
+    UNION ALL
+    SELECT 1 FROM ignored_duplicate_actions k
+      JOIN ignored_duplicate_members other ON other.action_id = k.id
+     WHERE k.kind = 'member' AND k.subject_asset = ?1 AND other.asset_id = ?2
+    UNION ALL
+    SELECT 1 FROM ignored_duplicate_actions k
+      JOIN ignored_duplicate_members other ON other.action_id = k.id
+     WHERE k.kind = 'member' AND k.subject_asset = ?2 AND other.asset_id = ?1
+    LIMIT 1";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IgnoreKind {
     Group,
@@ -219,6 +241,13 @@ impl Library {
     }
 
     fn cluster_around(&self, seeds: &[AssetId]) -> Result<Vec<AssetId>, DuplicateError> {
+        let mut distinct: Vec<AssetId> = Vec::with_capacity(seeds.len());
+        for seed in seeds {
+            if !distinct.contains(seed) {
+                distinct.push(*seed);
+            }
+        }
+        let seeds = distinct.as_slice();
         if seeds.len() < 2 {
             return Err(DuplicateError::NothingChanged);
         }
@@ -416,31 +445,9 @@ impl Library {
         first: AssetId,
         second: AssetId,
     ) -> Result<bool, LibraryError> {
-        let has = |condition: &str, asset: &str| {
-            format!(
-                "EXISTS (SELECT 1 FROM ignored_duplicate_members m
-                         WHERE m.action_id = k.id AND {condition} AND m.asset_id = {asset})"
-            )
-        };
-        let sql = format!(
-            "SELECT 1 FROM ignored_duplicate_actions k WHERE
-               (k.kind = 'group' AND (
-                  ({} AND {})
-                  OR ({} AND {})))
-            OR (k.kind = 'member' AND (
-                  (k.subject_asset = ?1 AND {})
-                  OR (k.subject_asset = ?2 AND {})))
-             LIMIT 1",
-            has("m.kept_apart = 0", "?1"),
-            has("1", "?2"),
-            has("m.kept_apart = 0", "?2"),
-            has("1", "?1"),
-            has("1", "?2"),
-            has("1", "?1"),
-        );
-        Ok(self
-            .connection
-            .query_row(&sql, params![first, second], |_| Ok(()))
+        let mut statement = self.connection.prepare_cached(PAIR_IS_IGNORED)?;
+        Ok(statement
+            .query_row(params![first, second], |_| Ok(()))
             .optional()?
             .is_some())
     }

@@ -81,7 +81,8 @@ impl PigouneDuplicatesPage {
     pub(crate) fn leave_ignored_view(&self) {
         let imp = self.imp();
         imp.viewing_ignored.set(false);
-        if imp.results_stale.replace(false) {
+        let stale = imp.results_stale.replace(false);
+        if stale && !imp.groups.borrow().is_empty() {
             self.on_search_clicked();
         } else if imp.groups.borrow().is_empty() {
             self.show_idle();
@@ -94,6 +95,7 @@ impl PigouneDuplicatesPage {
         let imp = self.imp();
         imp.last_snapshot.replace(None);
         if imp.viewing_ignored.get() {
+            imp.results_stale.set(true);
             self.show_ignored();
         } else if imp.stack.visible_child_name().as_deref() == Some("results") {
             if self.is_mapped() {
@@ -117,6 +119,7 @@ impl PigouneDuplicatesPage {
     pub(crate) fn show_after_undo(&self, stamp: ChangeStamp) {
         let imp = self.imp();
         if imp.viewing_ignored.get() {
+            imp.results_stale.set(true);
             self.show_ignored();
             return;
         }

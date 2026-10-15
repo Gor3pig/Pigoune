@@ -190,13 +190,10 @@ impl Library {
         ) else {
             return Ok(None);
         };
-        let Some(kind) = duplicate_kind(&first, &second) else {
-            return Ok(None);
-        };
-        if self.is_ignored_duplicate(first.asset, second.asset)? {
+        if !same_shape(&first, &second) || self.is_ignored_duplicate(first.asset, second.asset)? {
             return Ok(None);
         }
-        Ok(Some(kind))
+        Ok(detail_kind(&first, &second))
     }
 
     fn fingerprints(&self, with_detail: bool) -> Result<Vec<Fingerprint>, LibraryError> {
@@ -348,16 +345,16 @@ fn resembles(
         && (distance <= TRUSTED_SHAPE_DISTANCE || share_a_color(first, second))
 }
 
-pub(super) fn duplicate_kind(first: &Fingerprint, second: &Fingerprint) -> Option<DuplicateKind> {
-    if first.hash.distance(second.hash) > DUPLICATE_DISTANCE
-        || !similar_proportions(
+fn same_shape(first: &Fingerprint, second: &Fingerprint) -> bool {
+    first.hash.distance(second.hash) <= DUPLICATE_DISTANCE
+        && similar_proportions(
             first.proportion,
             second.proportion,
             DUPLICATE_PROPORTION_GAP,
         )
-    {
-        return None;
-    }
+}
+
+fn detail_kind(first: &Fingerprint, second: &Fingerprint) -> Option<DuplicateKind> {
     let gap = first.detail.as_ref()?.gap(second.detail.as_ref()?);
     if gap <= IDENTICAL_DETAIL_GAP {
         Some(DuplicateKind::VisuallyIdentical)
@@ -368,13 +365,24 @@ pub(super) fn duplicate_kind(first: &Fingerprint, second: &Fingerprint) -> Optio
     }
 }
 
+pub(super) fn duplicate_kind(first: &Fingerprint, second: &Fingerprint) -> Option<DuplicateKind> {
+    if same_shape(first, second) {
+        detail_kind(first, second)
+    } else {
+        None
+    }
+}
+
 impl DuplicatePlan {
     fn kind_between(&self, first: usize, second: usize) -> Option<DuplicateKind> {
         let (first, second) = (&self.fingerprints[first], &self.fingerprints[second]);
+        if !same_shape(first, second) {
+            return None;
+        }
         if !self.ignored.is_empty() && self.ignored.contains(first.asset, second.asset) {
             return None;
         }
-        duplicate_kind(first, second)
+        detail_kind(first, second)
     }
 
     pub(super) fn cluster_of(&self, seeds: &[AssetId]) -> Result<Vec<AssetId>, AssetId> {

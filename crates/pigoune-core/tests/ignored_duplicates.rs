@@ -809,3 +809,14 @@ fn deleting_for_good_the_others_of_a_single_asset_group_forgets_it() {
 
     assert!(entries(&library).is_empty());
 }
+
+#[test]
+fn the_same_asset_twice_is_not_a_group() {
+    let (_w, mut library) = library_of(3);
+
+    assert!(matches!(
+        library.ignore_duplicate_group(&[id(1), id(1)]),
+        Err(DuplicateError::NothingChanged)
+    ));
+    assert!(entries(&library).is_empty());
+}
