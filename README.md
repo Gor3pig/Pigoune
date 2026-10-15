@@ -62,7 +62,7 @@ tags and favorites, plus a note, a source, a license and an author for each asse
 Instant search and filters by type, orientation, color or favorite, even among thousands of assets, with
 words combined by "and" or "or" in one click. Clicking a collection or a tag shows you where an asset
 lives. Right-click an asset to find the ones that look like it, and the Duplicates page groups the
-same logo in two formats or sizes.
+same logo in two formats or sizes, and lets you ignore look-alikes that are not duplicates.
 
 </td>
 <td width="50%" valign="top">

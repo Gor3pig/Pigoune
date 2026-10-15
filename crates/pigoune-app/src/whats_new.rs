@@ -63,6 +63,22 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "2.12.0" => vec![
+            Point {
+                icon: "view-conceal-symbolic",
+                title: gettext("Ignore What Is Not a Duplicate"),
+                text: gettext(
+                    "Ignore a whole group, or a single asset, when look-alikes are not duplicates. The Ignored button lists them and brings them back, and Undo works too.",
+                ),
+            },
+            Point {
+                icon: "view-list-symbolic",
+                title: gettext("A Lighter Duplicates Tab"),
+                text: gettext(
+                    "The trash button only appears once you tick something, and the detailed analysis is kept in its own file so the library stays small.",
+                ),
+            },
+        ],
         "2.11.0" => vec![
             Point {
                 icon: "user-trash-symbolic",
