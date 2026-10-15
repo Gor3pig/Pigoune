@@ -275,6 +275,8 @@ pub enum AnnotatedError {
     #[error("the file name of {0} is reserved by Pigoune")]
     ReservedName(PathBuf),
     #[error(transparent)]
+    Document(#[from] crate::annotations::DocumentError),
+    #[error(transparent)]
     Library(#[from] LibraryError),
 }
 

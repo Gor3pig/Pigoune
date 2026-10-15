@@ -1,3 +1,4 @@
+pub mod annotations;
 pub mod library;
 mod media;
 mod raster;
