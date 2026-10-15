@@ -1,6 +1,17 @@
+mod geometry;
+mod interaction;
+mod session;
+
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Map, Value};
+
+pub use geometry::{
+    ArrowHead, DrawingTool, Handle, Style, arrow_head, handles, hit, rect_between, resized,
+    restyled, shape_bounds, shape_from_drag, style_of, translated,
+};
+pub use interaction::{CursorKind, Interaction, Tool};
+pub use session::EditSession;
 
 pub const DOCUMENT_VERSION: u32 = 1;
 pub const MAX_DOCUMENT_BYTES: usize = 16 * 1024 * 1024;

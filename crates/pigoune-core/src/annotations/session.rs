@@ -1,0 +1,264 @@
+use super::geometry::{self, Style};
+use super::{AnnotationDocument, AnnotationObject, ObjectContent, Point, Shape};
+
+const HISTORY_LIMIT: usize = 500;
+
+#[derive(Debug, Clone)]
+enum Edit {
+    Added {
+        index: usize,
+        object: AnnotationObject,
+    },
+    Removed {
+        index: usize,
+        object: AnnotationObject,
+    },
+    Changed {
+        id: u32,
+        before: Shape,
+        after: Shape,
+    },
+}
+
+#[derive(Debug, Clone)]
+struct Gesture {
+    id: u32,
+    before: Shape,
+}
+
+#[derive(Debug, Clone)]
+pub struct EditSession {
+    document: AnnotationDocument,
+    selected: Option<u32>,
+    undo: Vec<Edit>,
+    redo: Vec<Edit>,
+    gesture: Option<Gesture>,
+    saved_at: Option<usize>,
+}
+
+impl EditSession {
+    #[must_use]
+    pub fn new(document: AnnotationDocument) -> Self {
+        Self {
+            document,
+            selected: None,
+            undo: Vec::new(),
+            redo: Vec::new(),
+            gesture: None,
+            saved_at: Some(0),
+        }
+    }
+
+    #[must_use]
+    pub fn document(&self) -> &AnnotationDocument {
+        &self.document
+    }
+
+    #[must_use]
+    pub fn selected(&self) -> Option<u32> {
+        self.selected
+    }
+
+    #[must_use]
+    pub fn selected_shape(&self) -> Option<&Shape> {
+        self.shape_of(self.selected?)
+    }
+
+    #[must_use]
+    pub fn shape_of(&self, id: u32) -> Option<&Shape> {
+        self.document
+            .objects
+            .iter()
+            .find(|object| object.id == id)
+            .and_then(AnnotationObject::shape)
+    }
+
+    #[must_use]
+    pub fn count(&self) -> usize {
+        self.document.objects.len()
+    }
+
+    #[must_use]
+    pub fn can_undo(&self) -> bool {
+        self.gesture.is_none() && !self.undo.is_empty()
+    }
+
+    #[must_use]
+    pub fn can_redo(&self) -> bool {
+        self.gesture.is_none() && !self.redo.is_empty()
+    }
+
+    #[must_use]
+    pub fn is_modified(&self) -> bool {
+        self.gesture.is_some() || self.saved_at != Some(self.undo.len())
+    }
+
+    pub fn mark_saved(&mut self) {
+        self.saved_at = Some(self.undo.len());
+    }
+
+    pub fn select(&mut self, id: Option<u32>) {
+        self.selected = id.filter(|id| self.shape_of(*id).is_some());
+    }
+
+    #[must_use]
+    pub fn hit_test(&self, point: Point, tolerance: f32) -> Option<u32> {
+        self.document
+            .objects
+            .iter()
+            .rev()
+            .find(|object| {
+                object
+                    .shape()
+                    .is_some_and(|shape| geometry::hit(shape, point, tolerance))
+            })
+            .map(|object| object.id)
+    }
+
+    pub fn add(&mut self, shape: Shape) -> u32 {
+        let id = self.document.next_object_id();
+        let object = AnnotationObject::new(id, shape);
+        let index = self.document.objects.len();
+        self.document.objects.push(object.clone());
+        self.record(Edit::Added { index, object });
+        self.selected = Some(id);
+        id
+    }
+
+    pub fn remove_selected(&mut self) -> bool {
+        let Some(id) = self.selected else {
+            return false;
+        };
+        let Some(index) = self.document.objects.iter().position(|o| o.id == id) else {
+            return false;
+        };
+        let object = self.document.objects.remove(index);
+        self.selected = None;
+        self.record(Edit::Removed { index, object });
+        true
+    }
+
+    pub fn begin_change(&mut self, id: u32) -> bool {
+        if self.gesture.is_some() {
+            return false;
+        }
+        let Some(before) = self.shape_of(id).cloned() else {
+            return false;
+        };
+        self.gesture = Some(Gesture { id, before });
+        true
+    }
+
+    pub fn preview(&mut self, shape: Shape) {
+        let Some(gesture) = &self.gesture else {
+            return;
+        };
+        let id = gesture.id;
+        self.set_shape(id, shape);
+    }
+
+    pub fn end_change(&mut self) -> bool {
+        let Some(gesture) = self.gesture.take() else {
+            return false;
+        };
+        let Some(after) = self.shape_of(gesture.id).cloned() else {
+            return false;
+        };
+        if after == gesture.before {
+            return false;
+        }
+        self.record(Edit::Changed {
+            id: gesture.id,
+            before: gesture.before,
+            after,
+        });
+        true
+    }
+
+    pub fn cancel_change(&mut self) {
+        if let Some(gesture) = self.gesture.take() {
+            self.set_shape(gesture.id, gesture.before);
+        }
+    }
+
+    pub fn restyle_selected(&mut self, style: &Style) -> bool {
+        let Some(id) = self.selected else {
+            return false;
+        };
+        let Some(before) = self.shape_of(id).cloned() else {
+            return false;
+        };
+        let after = geometry::restyled(&before, style);
+        if after == before {
+            return false;
+        }
+        self.set_shape(id, after.clone());
+        self.record(Edit::Changed { id, before, after });
+        true
+    }
+
+    pub fn undo(&mut self) -> bool {
+        if self.gesture.is_some() {
+            return false;
+        }
+        let Some(edit) = self.undo.pop() else {
+            return false;
+        };
+        self.apply(&edit, true);
+        self.redo.push(edit);
+        true
+    }
+
+    pub fn redo(&mut self) -> bool {
+        if self.gesture.is_some() {
+            return false;
+        }
+        let Some(edit) = self.redo.pop() else {
+            return false;
+        };
+        self.apply(&edit, false);
+        self.undo.push(edit);
+        true
+    }
+
+    fn record(&mut self, edit: Edit) {
+        if self.saved_at.is_some_and(|saved| saved > self.undo.len()) {
+            self.saved_at = None;
+        }
+        self.redo.clear();
+        self.undo.push(edit);
+        if self.undo.len() > HISTORY_LIMIT {
+            self.undo.remove(0);
+            self.saved_at = self.saved_at.and_then(|saved| saved.checked_sub(1));
+        }
+    }
+
+    fn set_shape(&mut self, id: u32, shape: Shape) {
+        if let Some(object) = self.document.objects.iter_mut().find(|o| o.id == id)
+            && let ObjectContent::Known { shape: current, .. } = &mut object.content
+        {
+            *current = shape;
+        }
+    }
+
+    fn apply(&mut self, edit: &Edit, backwards: bool) {
+        match (edit, backwards) {
+            (Edit::Added { index, object }, false) | (Edit::Removed { index, object }, true) => {
+                let index = (*index).min(self.document.objects.len());
+                self.document.objects.insert(index, object.clone());
+                self.selected = Some(object.id);
+            }
+            (Edit::Added { object, .. }, true) | (Edit::Removed { object, .. }, false) => {
+                self.document.objects.retain(|other| other.id != object.id);
+                if self.selected == Some(object.id) {
+                    self.selected = None;
+                }
+            }
+            (Edit::Changed { id, before, after }, _) => {
+                let shape = if backwards { before } else { after };
+                self.set_shape(*id, shape.clone());
+                self.selected = Some(*id);
+            }
+        }
+    }
+}
