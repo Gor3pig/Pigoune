@@ -38,6 +38,8 @@ mod drop_places;
 mod dropped_content;
 mod duplicates_ignored;
 mod duplicates_page;
+mod editor;
+mod editor_tool;
 mod error_messages;
 mod export_as_dialog;
 mod export_size;

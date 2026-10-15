@@ -39,6 +39,7 @@ template $PigouneWindow: Adw.ApplicationWindow {
       grid_header.narrow: true;
       grid_header.tight: true;
       asset_preview.compact: true;
+      editor.compact: true;
     }
   }
 
@@ -337,6 +338,12 @@ template $PigouneWindow: Adw.ApplicationWindow {
           name: "preview";
 
           child: $PigouneAssetPreview asset_preview {};
+        }
+
+        StackPage {
+          name: "editor";
+
+          child: $PigouneEditor editor {};
         }
       };
     };

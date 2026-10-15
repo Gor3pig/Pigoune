@@ -1250,7 +1250,7 @@ fn vector_pixels_for(dimensions: Option<Dimensions>, zoom: f64, scale_factor: i3
     (wanted.max(0.0) as u32).clamp(SMALLEST_RENDER_PIXELS, LARGEST_VECTOR_PIXELS)
 }
 
-fn zoom_text(zoom: f64) -> String {
+pub fn zoom_text(zoom: f64) -> String {
     gettext("{percent}%").replace("{percent}", &format!("{:.0}", zoom * 100.0))
 }
 

@@ -21,6 +21,7 @@
     <file compressed="true" preprocess="xml-stripblanks">ui/smart-collection-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/preferences-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/grid-header.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/editor.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/filter-popover.ui</file>
     <file compressed="true" preprocess="xml-stripblanks" alias="shortcuts-dialog.ui">ui/shortcuts-dialog.ui</file>
     <file compressed="true">style.css</file>
@@ -172,6 +173,14 @@
     <file>icons/scalable/actions/gradient-symbolic.svg</file>
     <file>icons/scalable/actions/swatches-symbolic.svg</file>
     <file>icons/scalable/actions/crop-symbolic.svg</file>
+    <file>icons/scalable/actions/cursor-symbolic.svg</file>
+    <file>icons/scalable/actions/rectangle-symbolic.svg</file>
+    <file>icons/scalable/actions/circle-symbolic.svg</file>
+    <file>icons/scalable/actions/line-segment-symbolic.svg</file>
+    <file>icons/scalable/actions/arrow-up-right-symbolic.svg</file>
+    <file>icons/scalable/actions/text-t-symbolic.svg</file>
+    <file>icons/scalable/actions/number-circle-one-symbolic.svg</file>
+    <file>icons/scalable/actions/grid-four-symbolic.svg</file>
     <file>icons/scalable/actions/frame-corners-symbolic.svg</file>
     <file>icons/scalable/actions/perspective-symbolic.svg</file>
     <file>icons/scalable/actions/signature-symbolic.svg</file>
