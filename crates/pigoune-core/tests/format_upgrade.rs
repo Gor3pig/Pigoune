@@ -684,6 +684,14 @@ fn a_format_11_library_moves_its_visual_details_out_of_the_assets_table() {
         .expect("columns counted");
     assert_eq!(columns, 0);
     assert_eq!(stored_details(&root), [(red.to_string(), 1024)]);
+    let ignored_table: i64 = connection
+        .query_row(
+            "SELECT count(*) FROM sqlite_master WHERE name = 'ignored_duplicates'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("tables counted");
+    assert_eq!(ignored_table, 1);
 }
 
 #[test]

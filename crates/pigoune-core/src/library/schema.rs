@@ -117,7 +117,10 @@ fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<
         Migration::Statements(statements) => Ok(connection.execute_batch(statements)?),
         Migration::RecheckAnimations => animation_recheck::mark_animated_assets(connection, root),
         Migration::RecordBucketedPaths => buckets::record_bucketed_paths(connection),
-        Migration::MoveVisualDetails => details_store::move_out_of_assets(connection, root),
+        Migration::MoveVisualDetails => {
+            connection.execute_batch(include_str!("migrations/v12.sql"))?;
+            details_store::move_out_of_assets(connection, root)
+        }
     }
 }
 

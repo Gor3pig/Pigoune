@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
 use super::{
-    AssetCommand, AssetError, AssetId, CollectionCommand, CollectionError, Library,
-    SmartCollectionCommand, SmartCollectionError, TagCommand, TagError,
+    AssetCommand, AssetError, AssetId, CollectionCommand, CollectionError, DuplicateCommand,
+    DuplicateError, Library, SmartCollectionCommand, SmartCollectionError, TagCommand, TagError,
 };
 
 pub const HISTORY_LIMIT: usize = 100;
@@ -13,6 +13,7 @@ pub enum Change {
     Collection(CollectionCommand),
     Tag(TagCommand),
     SmartCollection(SmartCollectionCommand),
+    Duplicate(DuplicateCommand),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,6 +29,8 @@ pub enum UndoError {
     Tag(#[from] TagError),
     #[error(transparent)]
     SmartCollection(#[from] SmartCollectionError),
+    #[error(transparent)]
+    Duplicate(#[from] DuplicateError),
 }
 
 #[derive(Debug, Default)]
@@ -166,6 +169,7 @@ impl Library {
             Change::SmartCollection(command) => {
                 Change::SmartCollection(self.run_smart_collection_command(command)?)
             }
+            Change::Duplicate(command) => Change::Duplicate(self.run_duplicate_command(command)?),
         })
     }
 }
@@ -215,6 +219,18 @@ impl Change {
                 tag,
                 assets: assets.clone(),
             }),
+            (
+                Self::Duplicate(DuplicateCommand::Ignore { .. }),
+                Self::Duplicate(DuplicateCommand::Unignore { pairs }),
+            ) => Self::Duplicate(DuplicateCommand::Ignore {
+                pairs: pairs.clone(),
+            }),
+            (
+                Self::Duplicate(DuplicateCommand::Unignore { .. }),
+                Self::Duplicate(DuplicateCommand::Ignore { pairs }),
+            ) => Self::Duplicate(DuplicateCommand::Unignore {
+                pairs: pairs.clone(),
+            }),
             (done, _) => done,
         }
     }
@@ -225,6 +241,7 @@ impl Change {
             Self::Collection(command) => command.changes_nothing(),
             Self::Tag(command) => command.changes_nothing(),
             Self::SmartCollection(_) => false,
+            Self::Duplicate(command) => command.changes_nothing(),
         }
     }
 }

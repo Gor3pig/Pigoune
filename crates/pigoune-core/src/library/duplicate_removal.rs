@@ -81,7 +81,9 @@ impl Library {
                 return Err(RemovalError::NotAvailable(*id));
             }
             match self.stored_fingerprint(*id, true)? {
-                Stored::Ready(other) if duplicate_kind(&kept, &other).is_some() => {}
+                Stored::Ready(other)
+                    if duplicate_kind(&kept, &other).is_some()
+                        && !self.is_ignored_duplicate(removal.kept, *id)? => {}
                 _ => return Err(RemovalError::NotAlike(*id)),
             }
         }

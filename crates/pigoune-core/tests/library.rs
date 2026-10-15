@@ -86,6 +86,7 @@ fn a_new_library_contains_every_table_of_the_format() {
             "asset_tags",
             "assets",
             "collections",
+            "ignored_duplicates",
             "smart_collections",
             "tags"
         ]

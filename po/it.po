@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 22:52+0200\n"
+"POT-Creation-Date: 2026-10-15 09:21+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Italian\n"
@@ -1593,7 +1593,8 @@ msgstr "Le raccolte sono cambiate nel frattempo. Riprova."
 
 #: crates/pigoune-app/src/error_messages.rs:142
 #: crates/pigoune-app/src/error_messages.rs:156
-#: crates/pigoune-app/src/error_messages.rs:194
+#: crates/pigoune-app/src/error_messages.rs:174
+#: crates/pigoune-app/src/error_messages.rs:204
 msgid "This asset no longer exists."
 msgstr "Questo elemento non esiste più."
 
@@ -1614,50 +1615,58 @@ msgstr "Questa icona o questo colore non può essere usato per una raccolta."
 msgid "Enter a name for the asset."
 msgstr "Inserisci un nome per l’elemento."
 
-#: crates/pigoune-app/src/error_messages.rs:173
+#: crates/pigoune-app/src/error_messages.rs:175
+msgid "This group of assets is too large to ignore."
+msgstr "Questo gruppo di elementi è troppo grande per essere ignorato."
+
+#: crates/pigoune-app/src/error_messages.rs:176
+msgid "Nothing changed."
+msgstr "Non è cambiato nulla."
+
+#: crates/pigoune-app/src/error_messages.rs:183
 msgid "Enter a name for the smart collection."
 msgstr "Inserisci un nome per la raccolta intelligente."
 
-#: crates/pigoune-app/src/error_messages.rs:175
+#: crates/pigoune-app/src/error_messages.rs:185
 msgid "Another smart collection already has this name."
 msgstr "Un'altra raccolta intelligente ha già questo nome."
 
-#: crates/pigoune-app/src/error_messages.rs:177
+#: crates/pigoune-app/src/error_messages.rs:187
 msgid "This smart collection no longer exists."
 msgstr "Questa raccolta intelligente non esiste più."
 
-#: crates/pigoune-app/src/error_messages.rs:179
+#: crates/pigoune-app/src/error_messages.rs:189
 msgid "The smart collections changed in the meantime. Try again."
 msgstr "Le raccolte intelligenti sono cambiate nel frattempo. Riprova."
 
-#: crates/pigoune-app/src/error_messages.rs:187
+#: crates/pigoune-app/src/error_messages.rs:197
 msgid "Enter a name for the tag."
 msgstr "Inserisci un nome per l'etichetta."
 
-#: crates/pigoune-app/src/error_messages.rs:189
+#: crates/pigoune-app/src/error_messages.rs:199
 msgid "A tag is a single word: join several words with a hyphen."
 msgstr "Un'etichetta è una sola parola: unisci più parole con un trattino."
 
-#: crates/pigoune-app/src/error_messages.rs:191
+#: crates/pigoune-app/src/error_messages.rs:201
 #, rust-format
 msgid "A tag has at most {count} characters."
 msgstr "Un'etichetta ha al massimo {count} caratteri."
 
-#: crates/pigoune-app/src/error_messages.rs:193
+#: crates/pigoune-app/src/error_messages.rs:203
 msgid "This tag no longer exists."
 msgstr "Questa etichetta non esiste più."
 
-#: crates/pigoune-app/src/error_messages.rs:195
+#: crates/pigoune-app/src/error_messages.rs:205
 msgid "Another tag already has this name."
 msgstr "Un'altra etichetta ha già questo nome."
 
-#: crates/pigoune-app/src/error_messages.rs:196
+#: crates/pigoune-app/src/error_messages.rs:206
 msgid "A tag cannot be moved into itself or one of its sub-tags."
 msgstr ""
 "Un’etichetta non può essere spostata dentro se stessa o dentro una delle sue "
 "sotto-etichette."
 
-#: crates/pigoune-app/src/error_messages.rs:197
+#: crates/pigoune-app/src/error_messages.rs:207
 #: crates/pigoune-app/src/window.rs:5142
 msgid "A tag name cannot contain a slash."
 msgstr "Il nome di un’etichetta non può contenere una barra."
@@ -5446,210 +5455,210 @@ msgstr ""
 msgid "No collection found"
 msgstr "Nessuna raccolta trovata"
 
-#: crates/pigoune-app/src/undo_message.rs:37
+#: crates/pigoune-app/src/undo_message.rs:38
 msgid "Last change undone"
 msgstr "Ultima modifica annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:38
+#: crates/pigoune-app/src/undo_message.rs:39
 msgid "Last change redone"
 msgstr "Ultima modifica ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:49
+#: crates/pigoune-app/src/undo_message.rs:50
 #, rust-format
 msgid "Adding {count} asset to the favorites undone"
 msgid_plural "Adding {count} assets to the favorites undone"
 msgstr[0] "Aggiunta di {count} elemento ai preferiti annullata"
 msgstr[1] "Aggiunta di {count} elementi ai preferiti annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:56
+#: crates/pigoune-app/src/undo_message.rs:57
 #, rust-format
 msgid "Adding {count} asset to the favorites redone"
 msgid_plural "Adding {count} assets to the favorites redone"
 msgstr[0] "Aggiunta di {count} elemento ai preferiti ripristinata"
 msgstr[1] "Aggiunta di {count} elementi ai preferiti ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:67
+#: crates/pigoune-app/src/undo_message.rs:68
 #, rust-format
 msgid "Removing {count} asset from the favorites undone"
 msgid_plural "Removing {count} assets from the favorites undone"
 msgstr[0] "Rimozione di {count} elemento dai preferiti annullata"
 msgstr[1] "Rimozione di {count} elementi dai preferiti annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:74
+#: crates/pigoune-app/src/undo_message.rs:75
 #, rust-format
 msgid "Removing {count} asset from the favorites redone"
 msgid_plural "Removing {count} assets from the favorites redone"
 msgstr[0] "Rimozione di {count} elemento dai preferiti ripristinata"
 msgstr[1] "Rimozione di {count} elementi dai preferiti ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:89
+#: crates/pigoune-app/src/undo_message.rs:90
 #, rust-format
 msgid "Moving {count} asset to the trash undone"
 msgid_plural "Moving {count} assets to the trash undone"
 msgstr[0] "Spostamento di {count} elemento nel cestino annullato"
 msgstr[1] "Spostamento di {count} elementi nel cestino annullato"
 
-#: crates/pigoune-app/src/undo_message.rs:96
+#: crates/pigoune-app/src/undo_message.rs:97
 #, rust-format
 msgid "Moving {count} asset to the trash redone"
 msgid_plural "Moving {count} assets to the trash redone"
 msgstr[0] "Spostamento di {count} elemento nel cestino ripristinato"
 msgstr[1] "Spostamento di {count} elementi nel cestino ripristinato"
 
-#: crates/pigoune-app/src/undo_message.rs:107
+#: crates/pigoune-app/src/undo_message.rs:108
 #, rust-format
 msgid "Restoring {count} asset undone"
 msgid_plural "Restoring {count} assets undone"
 msgstr[0] "Ripristino di {count} elemento annullato"
 msgstr[1] "Ripristino di {count} elementi annullato"
 
-#: crates/pigoune-app/src/undo_message.rs:114
+#: crates/pigoune-app/src/undo_message.rs:115
 #, rust-format
 msgid "Restoring {count} asset redone"
 msgid_plural "Restoring {count} assets redone"
 msgstr[0] "Ripristino di {count} elemento ripristinato"
 msgstr[1] "Ripristino di {count} elementi ripristinato"
 
-#: crates/pigoune-app/src/undo_message.rs:135
+#: crates/pigoune-app/src/undo_message.rs:136
 #, rust-format
 msgid "Renaming undone, the asset is named “{name}” again"
 msgstr "Rinomina annullata, l’elemento si chiama di nuovo “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:136
+#: crates/pigoune-app/src/undo_message.rs:137
 #, rust-format
 msgid "Renaming redone, the asset is named “{name}”"
 msgstr "Rinomina ripristinata, l’elemento si chiama “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:154
+#: crates/pigoune-app/src/undo_message.rs:155
 #, rust-format
 msgid "Note change on “{name}” undone"
 msgstr "Modifica della nota di “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:155
+#: crates/pigoune-app/src/undo_message.rs:156
 #, rust-format
 msgid "Note change on “{name}” redone"
 msgstr "Modifica della nota di “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:159
+#: crates/pigoune-app/src/undo_message.rs:160
 #, rust-format
 msgid "Source change on “{name}” undone"
 msgstr "Modifica della fonte di “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:160
+#: crates/pigoune-app/src/undo_message.rs:161
 #, rust-format
 msgid "Source change on “{name}” redone"
 msgstr "Modifica della fonte di “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:164
+#: crates/pigoune-app/src/undo_message.rs:165
 #, rust-format
 msgid "License change on “{name}” undone"
 msgstr "Modifica della licenza di “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:165
+#: crates/pigoune-app/src/undo_message.rs:166
 #, rust-format
 msgid "License change on “{name}” redone"
 msgstr "Modifica della licenza di “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:169
+#: crates/pigoune-app/src/undo_message.rs:170
 #, rust-format
 msgid "Author change on “{name}” undone"
 msgstr "Modifica dell'autore di “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:170
+#: crates/pigoune-app/src/undo_message.rs:171
 #, rust-format
 msgid "Author change on “{name}” redone"
 msgstr "Modifica dell'autore di “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:184
+#: crates/pigoune-app/src/undo_message.rs:185
 #, rust-format
 msgid "Creating the collection “{name}” undone"
 msgstr "Creazione della raccolta “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:185
+#: crates/pigoune-app/src/undo_message.rs:186
 #, rust-format
 msgid "Creating the collection “{name}” redone"
 msgstr "Creazione della raccolta “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:193
+#: crates/pigoune-app/src/undo_message.rs:194
 #, rust-format
 msgid "Customizing the collection “{name}” undone"
 msgstr "Personalizzazione della raccolta “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:194
+#: crates/pigoune-app/src/undo_message.rs:195
 #, rust-format
 msgid "Customizing the collection “{name}” redone"
 msgstr "Personalizzazione della raccolta “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:201
+#: crates/pigoune-app/src/undo_message.rs:202
 #, rust-format
 msgid "Renaming undone, the collection is named “{name}” again"
 msgstr "Rinomina annullata, la raccolta si chiama di nuovo “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:202
+#: crates/pigoune-app/src/undo_message.rs:203
 #, rust-format
 msgid "Renaming redone, the collection is named “{name}”"
 msgstr "Rinomina ripristinata, la raccolta si chiama “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:209
+#: crates/pigoune-app/src/undo_message.rs:210
 #, rust-format
 msgid "Deleting the collection “{name}” undone"
 msgstr "Eliminazione della raccolta “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:210
+#: crates/pigoune-app/src/undo_message.rs:211
 #, rust-format
 msgid "Deleting the collection “{name}” redone"
 msgstr "Eliminazione della raccolta “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:223
+#: crates/pigoune-app/src/undo_message.rs:224
 #, rust-format
 msgid "Adding {count} asset to “{name}” undone"
 msgid_plural "Adding {count} assets to “{name}” undone"
 msgstr[0] "Aggiunta di {count} elemento a “{name}” annullata"
 msgstr[1] "Aggiunta di {count} elementi a “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:230
+#: crates/pigoune-app/src/undo_message.rs:231
 #, rust-format
 msgid "Adding {count} asset to “{name}” redone"
 msgid_plural "Adding {count} assets to “{name}” redone"
 msgstr[0] "Aggiunta di {count} elemento a “{name}” ripristinata"
 msgstr[1] "Aggiunta di {count} elementi a “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:249
+#: crates/pigoune-app/src/undo_message.rs:250
 #, rust-format
 msgid "Removing {count} asset from “{name}” undone"
 msgid_plural "Removing {count} assets from “{name}” undone"
 msgstr[0] "Rimozione di {count} elemento da “{name}” annullata"
 msgstr[1] "Rimozione di {count} elementi da “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:256
+#: crates/pigoune-app/src/undo_message.rs:257
 #, rust-format
 msgid "Removing {count} asset from “{name}” redone"
 msgid_plural "Removing {count} assets from “{name}” redone"
 msgstr[0] "Rimozione di {count} elemento da “{name}” ripristinata"
 msgstr[1] "Rimozione di {count} elementi da “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:284
+#: crates/pigoune-app/src/undo_message.rs:285
 #, rust-format
 msgid "Moving {count} asset to “{name}” undone"
 msgid_plural "Moving {count} assets to “{name}” undone"
 msgstr[0] "Spostamento di {count} elemento in “{name}” annullato"
 msgstr[1] "Spostamento di {count} elementi in “{name}” annullato"
 
-#: crates/pigoune-app/src/undo_message.rs:291
+#: crates/pigoune-app/src/undo_message.rs:292
 #, rust-format
 msgid "Moving {count} asset to “{name}” redone"
 msgid_plural "Moving {count} assets to “{name}” redone"
 msgstr[0] "Spostamento di {count} elemento in “{name}” ripristinato"
 msgstr[1] "Spostamento di {count} elementi in “{name}” ripristinato"
 
-#: crates/pigoune-app/src/undo_message.rs:312
+#: crates/pigoune-app/src/undo_message.rs:313
 #, rust-format
 msgid "Removing {count} asset from all its collections undone"
 msgid_plural "Removing {count} assets from all their collections undone"
 msgstr[0] "Rimozione di {count} elemento da tutte le sue raccolte annullata"
 msgstr[1] "Rimozione di {count} elementi da tutte le loro raccolte annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:319
+#: crates/pigoune-app/src/undo_message.rs:320
 #, rust-format
 msgid "Removing {count} asset from all its collections redone"
 msgid_plural "Removing {count} assets from all their collections redone"
@@ -5657,148 +5666,148 @@ msgstr[0] "Rimozione di {count} elemento da tutte le sue raccolte ripristinata"
 msgstr[1] ""
 "Rimozione di {count} elementi da tutte le loro raccolte ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:337
+#: crates/pigoune-app/src/undo_message.rs:338
 #, rust-format
 msgid "Moving the collection “{name}” undone"
 msgstr "Spostamento della raccolta “{name}” annullato"
 
-#: crates/pigoune-app/src/undo_message.rs:338
+#: crates/pigoune-app/src/undo_message.rs:339
 #, rust-format
 msgid "Moving the collection “{name}” redone"
 msgstr "Spostamento della raccolta “{name}” ripristinato"
 
-#: crates/pigoune-app/src/undo_message.rs:344
+#: crates/pigoune-app/src/undo_message.rs:345
 msgid "Change of the collection order undone"
 msgstr "Modifica dell'ordine delle raccolte annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:345
+#: crates/pigoune-app/src/undo_message.rs:346
 msgid "Change of the collection order redone"
 msgstr "Modifica dell'ordine delle raccolte ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:409
+#: crates/pigoune-app/src/undo_message.rs:410
 #, rust-format
 msgid "Adding the tag “{name}” undone"
 msgstr "Aggiunta dell'etichetta “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:410
+#: crates/pigoune-app/src/undo_message.rs:411
 #, rust-format
 msgid "Adding the tag “{name}” redone"
 msgstr "Aggiunta dell'etichetta “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:423
+#: crates/pigoune-app/src/undo_message.rs:424
 #, rust-format
 msgid "Adding the tag “{name}” to {count} asset undone"
 msgid_plural "Adding the tag “{name}” to {count} assets undone"
 msgstr[0] "Aggiunta dell’etichetta “{name}” a {count} elemento annullata"
 msgstr[1] "Aggiunta dell’etichetta “{name}” a {count} elementi annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:430
+#: crates/pigoune-app/src/undo_message.rs:431
 #, rust-format
 msgid "Adding the tag “{name}” to {count} asset redone"
 msgid_plural "Adding the tag “{name}” to {count} assets redone"
 msgstr[0] "Aggiunta dell’etichetta “{name}” a {count} elemento ripristinata"
 msgstr[1] "Aggiunta dell’etichetta “{name}” a {count} elementi ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:449
+#: crates/pigoune-app/src/undo_message.rs:450
 #, rust-format
 msgid "Removing the tag “{name}” from {count} asset undone"
 msgid_plural "Removing the tag “{name}” from {count} assets undone"
 msgstr[0] "Rimozione dell’etichetta “{name}” da {count} elemento annullata"
 msgstr[1] "Rimozione dell’etichetta “{name}” da {count} elementi annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:456
+#: crates/pigoune-app/src/undo_message.rs:457
 #, rust-format
 msgid "Removing the tag “{name}” from {count} asset redone"
 msgid_plural "Removing the tag “{name}” from {count} assets redone"
 msgstr[0] "Rimozione dell’etichetta “{name}” da {count} elemento ripristinata"
 msgstr[1] "Rimozione dell’etichetta “{name}” da {count} elementi ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:469
+#: crates/pigoune-app/src/undo_message.rs:470
 #, rust-format
 msgid "Renaming undone, the tag is named “{name}” again"
 msgstr "Rinomina annullata, l'etichetta si chiama di nuovo “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:470
+#: crates/pigoune-app/src/undo_message.rs:471
 #, rust-format
 msgid "Renaming redone, the tag is named “{name}”"
 msgstr "Rinomina ripristinata, l'etichetta si chiama “{name}”"
 
-#: crates/pigoune-app/src/undo_message.rs:477
+#: crates/pigoune-app/src/undo_message.rs:478
 #, rust-format
 msgid "Merging the tag “{name}” undone"
 msgstr "Unione dell'etichetta “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:478
+#: crates/pigoune-app/src/undo_message.rs:479
 #, rust-format
 msgid "Merging the tag “{name}” redone"
 msgstr "Unione dell'etichetta “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:485
+#: crates/pigoune-app/src/undo_message.rs:486
 #, rust-format
 msgid "Deleting the tag “{name}” undone"
 msgstr "Eliminazione dell'etichetta “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:486
+#: crates/pigoune-app/src/undo_message.rs:487
 #, rust-format
 msgid "Deleting the tag “{name}” redone"
 msgstr "Eliminazione dell'etichetta “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:493
+#: crates/pigoune-app/src/undo_message.rs:494
 #, rust-format
 msgid "Moving the tag “{name}” undone"
 msgstr "Spostamento dell’etichetta «{name}» annullato"
 
-#: crates/pigoune-app/src/undo_message.rs:494
+#: crates/pigoune-app/src/undo_message.rs:495
 #, rust-format
 msgid "Moving the tag “{name}” redone"
 msgstr "Spostamento dell’etichetta «{name}» ripristinato"
 
-#: crates/pigoune-app/src/undo_message.rs:513
+#: crates/pigoune-app/src/undo_message.rs:514
 #, rust-format
 msgid "Creating the smart collection “{name}” undone"
 msgstr "Creazione della raccolta intelligente “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:514
+#: crates/pigoune-app/src/undo_message.rs:515
 #, rust-format
 msgid "Creating the smart collection “{name}” redone"
 msgstr "Creazione della raccolta intelligente “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:521
+#: crates/pigoune-app/src/undo_message.rs:522
 #, rust-format
 msgid "Changes to the smart collection “{name}” undone"
 msgstr "Modifiche alla raccolta intelligente “{name}” annullate"
 
-#: crates/pigoune-app/src/undo_message.rs:522
+#: crates/pigoune-app/src/undo_message.rs:523
 #, rust-format
 msgid "Changes to the smart collection “{name}” redone"
 msgstr "Modifiche alla raccolta intelligente “{name}” ripristinate"
 
-#: crates/pigoune-app/src/undo_message.rs:528
+#: crates/pigoune-app/src/undo_message.rs:529
 msgid "Reordering the smart collections undone"
 msgstr "Riordino delle raccolte intelligenti annullato"
 
-#: crates/pigoune-app/src/undo_message.rs:529
+#: crates/pigoune-app/src/undo_message.rs:530
 msgid "Reordering the smart collections redone"
 msgstr "Riordino delle raccolte intelligenti ripristinato"
 
-#: crates/pigoune-app/src/undo_message.rs:534
+#: crates/pigoune-app/src/undo_message.rs:535
 #, rust-format
 msgid "Deleting the smart collection “{name}” undone"
 msgstr "Eliminazione della raccolta intelligente “{name}” annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:535
+#: crates/pigoune-app/src/undo_message.rs:536
 #, rust-format
 msgid "Deleting the smart collection “{name}” redone"
 msgstr "Eliminazione della raccolta intelligente “{name}” ripristinata"
 
-#: crates/pigoune-app/src/undo_message.rs:555
+#: crates/pigoune-app/src/undo_message.rs:556
 #, rust-format
 msgid "Adding {count} tag undone"
 msgid_plural "Adding {count} tags undone"
 msgstr[0] "Aggiunta di {count} etichetta annullata"
 msgstr[1] "Aggiunta di {count} etichette annullata"
 
-#: crates/pigoune-app/src/undo_message.rs:562
+#: crates/pigoune-app/src/undo_message.rs:563
 #, rust-format
 msgid "Adding {count} tag redone"
 msgid_plural "Adding {count} tags redone"

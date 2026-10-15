@@ -2,8 +2,8 @@ use gettextrs::gettext;
 
 use crate::health_page::Refusal;
 use pigoune_core::{
-    AdoptError, AssetError, CollectionError, LONGEST_TAG_NAME, LibraryError, RemoveRecordError,
-    ReplaceError, SmartCollectionError, TagError, UndoError,
+    AdoptError, AssetError, CollectionError, DuplicateError, LONGEST_TAG_NAME, LibraryError,
+    RemoveRecordError, ReplaceError, SmartCollectionError, TagError, UndoError,
 };
 
 pub fn describe_adoption(error: &AdoptError, name: &str, known_name: Option<&str>) -> Refusal {
@@ -165,6 +165,16 @@ pub fn describe_undo(error: &UndoError) -> String {
         UndoError::Collection(error) => describe_collection(error),
         UndoError::Tag(error) => describe_tag(error),
         UndoError::SmartCollection(error) => describe_smart_collection(error),
+        UndoError::Duplicate(error) => describe_duplicate(error),
+    }
+}
+
+pub fn describe_duplicate(error: &DuplicateError) -> String {
+    match error {
+        DuplicateError::NotFound(_) => gettext("This asset no longer exists."),
+        DuplicateError::TooLarge(_) => gettext("This group of assets is too large to ignore."),
+        DuplicateError::NothingChanged => gettext("Nothing changed."),
+        DuplicateError::Library(error) => describe(error),
     }
 }
 

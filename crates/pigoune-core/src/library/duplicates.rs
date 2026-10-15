@@ -3,6 +3,7 @@ use std::ops::ControlFlow;
 
 use rusqlite::OptionalExtension;
 
+use super::ignored_duplicates::{AssetPair, ordered_pair};
 use super::{AssetId, Library, LibraryError};
 use crate::media::{DominantColor, VisualDetail, VisualHash, dominant_from_text};
 
@@ -73,6 +74,7 @@ pub struct DuplicateProgress {
 
 pub struct DuplicatePlan {
     fingerprints: Vec<Fingerprint>,
+    ignored: HashSet<AssetPair>,
 }
 
 pub(super) enum Stored {
@@ -123,6 +125,7 @@ impl Library {
     pub fn duplicate_plan(&self) -> Result<DuplicatePlan, LibraryError> {
         Ok(DuplicatePlan {
             fingerprints: self.fingerprints(true)?,
+            ignored: self.ignored_pairs()?,
         })
     }
 
@@ -187,6 +190,9 @@ impl Library {
         ) else {
             return Ok(None);
         };
+        if self.is_ignored_duplicate(first.asset, second.asset)? {
+            return Ok(None);
+        }
         Ok(duplicate_kind(&first, &second))
     }
 
@@ -360,6 +366,18 @@ pub(super) fn duplicate_kind(first: &Fingerprint, second: &Fingerprint) -> Optio
 }
 
 impl DuplicatePlan {
+    fn kind_between(&self, first: usize, second: usize) -> Option<DuplicateKind> {
+        let (first, second) = (&self.fingerprints[first], &self.fingerprints[second]);
+        if !self.ignored.is_empty()
+            && self
+                .ignored
+                .contains(&ordered_pair(first.asset, second.asset))
+        {
+            return None;
+        }
+        duplicate_kind(first, second)
+    }
+
     #[must_use]
     pub fn run(
         &self,
@@ -399,9 +417,7 @@ impl DuplicatePlan {
                         continue;
                     }
                     seen[*candidate] = stamp;
-                    if let Some(kind) =
-                        duplicate_kind(&fingerprints[reference], &fingerprints[*candidate])
-                    {
+                    if let Some(kind) = self.kind_between(reference, *candidate) {
                         candidates.push((*candidate, kind));
                     }
                 }
@@ -417,9 +433,9 @@ impl DuplicatePlan {
                 if accepted.len() + 1 >= MOST_IN_A_GROUP {
                     break;
                 }
-                let agrees_with_all = accepted.iter().all(|(member, _)| {
-                    duplicate_kind(&fingerprints[*member], &fingerprints[candidate]).is_some()
-                });
+                let agrees_with_all = accepted
+                    .iter()
+                    .all(|(member, _)| self.kind_between(*member, candidate).is_some());
                 if agrees_with_all {
                     accepted.push((candidate, kind));
                 }

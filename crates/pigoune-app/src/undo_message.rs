@@ -30,6 +30,7 @@ pub fn describe(change: &Change, library: &Library, outcome: Outcome) -> String 
         Change::Collection(command) => describe_collection(command, &names, outcome),
         Change::Tag(command) => describe_tag(command, &names, outcome),
         Change::SmartCollection(command) => describe_smart_collection(command, &names, outcome),
+        Change::Duplicate(_) => None,
     };
     described.unwrap_or_else(|| {
         pick(
