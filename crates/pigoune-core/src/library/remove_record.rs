@@ -14,13 +14,14 @@ impl Library {
         if inside && !matches!(fs::exists(&file), Ok(false)) {
             return Err(RemoveRecordError::FileStillThere(id));
         }
-        self.connection
-            .execute("DELETE FROM assets WHERE id = ?1", [id])?;
-        self.connection.execute(
+        let transaction = self.connection.transaction()?;
+        transaction.execute("DELETE FROM assets WHERE id = ?1", [id])?;
+        ignored_duplicates::forget_dead_actions(&transaction)?;
+        transaction.commit()?;
+        let _ = self.connection.execute(
             "DELETE FROM details.asset_details WHERE asset_id = ?1",
             [id],
-        )?;
-        ignored_duplicates::forget_dead_actions(&self.connection)?;
+        );
         self.history.clear();
         forget_thumbnails(&self.root, id);
         if inside && let Some(folder) = file.parent() {

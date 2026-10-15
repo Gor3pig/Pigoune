@@ -14,7 +14,11 @@ const FILE_SETTINGS: &str = "PRAGMA details.journal_mode = DELETE;
 
 pub fn attach(connection: &Connection, root: &Path) -> Result<(), LibraryError> {
     let path = layout::details_path(root);
-    if open_attached(connection, &path).is_ok() {
+    if open_attached(connection, &path)
+        .and_then(|()| check_intact(connection))
+        .is_ok()
+    {
+        forget_orphans(connection);
         return Ok(());
     }
     let _ = connection.execute_batch("DETACH DATABASE details");
@@ -30,6 +34,27 @@ fn open_attached(connection: &Connection, path: &Path) -> rusqlite::Result<()> {
     connection.execute("ATTACH DATABASE ?1 AS details", [path.to_string_lossy()])?;
     connection.execute_batch(FILE_SETTINGS)?;
     connection.execute_batch(SCHEMA)
+}
+
+fn check_intact(connection: &Connection) -> rusqlite::Result<()> {
+    let verdict: String =
+        connection.pragma_query_value(Some("details"), "quick_check", |row| row.get(0))?;
+    if verdict == "ok" {
+        Ok(())
+    } else {
+        Err(rusqlite::Error::SqliteFailure(
+            rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_CORRUPT),
+            None,
+        ))
+    }
+}
+
+fn forget_orphans(connection: &Connection) {
+    let _ = connection.execute(
+        "DELETE FROM details.asset_details
+         WHERE asset_id NOT IN (SELECT id FROM main.assets)",
+        [],
+    );
 }
 
 pub fn move_out_of_assets(connection: &Connection, root: &Path) -> Result<(), LibraryError> {

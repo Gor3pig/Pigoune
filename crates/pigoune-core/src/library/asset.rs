@@ -237,7 +237,8 @@ impl Library {
         let transaction = self.connection.transaction()?;
         {
             let mut statement = transaction.prepare_cached(
-                "INSERT OR REPLACE INTO details.asset_details (asset_id, detail) VALUES (?1, ?2)",
+                "INSERT OR REPLACE INTO details.asset_details (asset_id, detail)
+                 SELECT ?1, ?2 WHERE EXISTS (SELECT 1 FROM main.assets WHERE id = ?1)",
             )?;
             for (id, detail) in batch {
                 let bytes = detail
@@ -254,24 +255,35 @@ impl Library {
         &mut self,
         batch: &[(AssetId, Option<VisualAnalysis>)],
     ) -> Result<(), LibraryError> {
+        let mut analyses: Vec<(&AssetId, Vec<u8>, Vec<u8>)> = Vec::with_capacity(batch.len());
+        for (id, analysis) in batch {
+            let (hash, detail): (Vec<u8>, Vec<u8>) = analysis.as_ref().map_or_else(
+                || (Vec::new(), Vec::new()),
+                |analysis| {
+                    (
+                        analysis.hash.to_bytes().to_vec(),
+                        analysis.detail.as_bytes().to_vec(),
+                    )
+                },
+            );
+            analyses.push((id, hash, detail));
+        }
         let transaction = self.connection.transaction()?;
         {
             let mut hashes =
                 transaction.prepare_cached("UPDATE assets SET visual_hash = ?2 WHERE id = ?1")?;
-            let mut details = transaction.prepare_cached(
-                "INSERT OR REPLACE INTO details.asset_details (asset_id, detail) VALUES (?1, ?2)",
-            )?;
-            for (id, analysis) in batch {
-                let (hash, detail): (Vec<u8>, Vec<u8>) = analysis.as_ref().map_or_else(
-                    || (Vec::new(), Vec::new()),
-                    |analysis| {
-                        (
-                            analysis.hash.to_bytes().to_vec(),
-                            analysis.detail.as_bytes().to_vec(),
-                        )
-                    },
-                );
+            for (id, hash, _) in &analyses {
                 hashes.execute(params![id, hash])?;
+            }
+        }
+        transaction.commit()?;
+        let transaction = self.connection.transaction()?;
+        {
+            let mut details = transaction.prepare_cached(
+                "INSERT OR REPLACE INTO details.asset_details (asset_id, detail)
+                 SELECT ?1, ?2 WHERE EXISTS (SELECT 1 FROM main.assets WHERE id = ?1)",
+            )?;
+            for (id, _, detail) in &analyses {
                 details.execute(params![id, detail])?;
             }
         }
