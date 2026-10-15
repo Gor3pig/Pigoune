@@ -6,7 +6,8 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib, graphene, pango};
 use pigoune_core::annotations::{
-    CursorKind, Handle, Interaction, Options, Point, Shape, Tool, ToolDefinition, Value,
+    CropEditor, CropRatio, CursorKind, Handle, Interaction, Options, Point, Shape, Tool,
+    ToolDefinition, Value,
 };
 
 use crate::annotation_render;
@@ -28,7 +29,9 @@ mod imp {
 
     use std::collections::HashMap;
 
-    use pigoune_core::annotations::{AnnotationDocument, EditSession, Interaction, Options};
+    use pigoune_core::annotations::{
+        AnnotationDocument, CropEditor, EditSession, Interaction, Options,
+    };
 
     use crate::editor_tool::EditorTool;
     use crate::zoom_view::PigouneZoomView;
@@ -37,6 +40,7 @@ mod imp {
         pub session: EditSession,
         pub interaction: Interaction,
         pub tool_options: HashMap<&'static str, Options>,
+        pub crop_editor: Option<CropEditor>,
     }
 
     impl Default for Drawing {
@@ -45,6 +49,7 @@ mod imp {
                 session: EditSession::new(AnnotationDocument::default()),
                 interaction: Interaction::new(),
                 tool_options: HashMap::new(),
+                crop_editor: None,
             }
         }
     }
@@ -91,6 +96,13 @@ mod imp {
         pub redo_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub annotations_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub crop_group: TemplateChild<adw::PreferencesGroup>,
+        #[template_child]
+        pub crop_ratio_row: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub crop_size_row: TemplateChild<adw::ActionRow>,
+        pub image_size: Cell<(u32, u32)>,
         pub drawing: RefCell<Drawing>,
         pub option_rows: RefCell<Vec<OptionRow>>,
         pub panel_kind: Cell<Option<&'static str>>,
@@ -151,6 +163,7 @@ impl PigouneEditor {
         let height = u32::try_from(texture.height()).unwrap_or(1);
         let imp = self.imp();
         imp.drawing.replace(imp::Drawing::default());
+        imp.image_size.set((width, height));
         imp.zoom_view
             .show_image(Some(&texture), width, height, false);
         self.update_panel();
@@ -159,7 +172,9 @@ impl PigouneEditor {
     }
 
     pub fn close(&self) {
-        self.imp().zoom_view.show_image(None, 1, 1, false);
+        let imp = self.imp();
+        imp.drawing.borrow_mut().crop_editor = None;
+        imp.zoom_view.show_image(None, 1, 1, false);
     }
 
     #[template_callback]
@@ -171,20 +186,23 @@ impl PigouneEditor {
 
     #[template_callback]
     fn on_undo_clicked(&self) {
-        self.imp().drawing.borrow_mut().session.undo();
-        self.after_edit();
+        self.undo();
     }
 
     #[template_callback]
     fn on_redo_clicked(&self) {
-        self.imp().drawing.borrow_mut().session.redo();
-        self.after_edit();
+        self.redo();
     }
 
     fn prepare(&self) {
         let imp = self.imp();
         self.fill_tools_grid();
         self.connect_drawing();
+        imp.crop_ratio_row.connect_selected_notify(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| editor.change_crop_ratio()
+        ));
         self.listen_to_keys();
         self.show_active_tool();
         self.update_panel();
@@ -284,7 +302,8 @@ impl PigouneEditor {
         imp.zoom_view.connect_overlay(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |snapshot, bounds, zoom| editor.draw_overlay(snapshot, bounds, zoom)
+            move |snapshot, visible, whole, zoom| editor
+                .draw_overlay(snapshot, visible, whole, zoom)
         ));
         imp.zoom_view.connect_pointer(glib::clone!(
             #[weak(rename_to = editor)]
@@ -295,12 +314,18 @@ impl PigouneEditor {
         ));
     }
 
-    fn draw_overlay(&self, snapshot: &gtk::Snapshot, bounds: &graphene::Rect, zoom: f64) {
+    fn draw_overlay(
+        &self,
+        snapshot: &gtk::Snapshot,
+        visible: &graphene::Rect,
+        whole: &graphene::Rect,
+        zoom: f64,
+    ) {
         let drawing = self.imp().drawing.borrow();
         let scale = point_to_f32(zoom);
         snapshot.save();
-        snapshot.push_clip(bounds);
-        snapshot.translate(&graphene::Point::new(bounds.x(), bounds.y()));
+        snapshot.push_clip(visible);
+        snapshot.translate(&graphene::Point::new(whole.x(), whole.y()));
         snapshot.scale(scale, scale);
         annotation_render::append_document(snapshot, drawing.session.document());
         if let Some(pending) = drawing.interaction.pending() {
@@ -308,15 +333,20 @@ impl PigouneEditor {
         }
         snapshot.pop();
         snapshot.restore();
-        if drawing.interaction.pending().is_none()
+        if let Some(crop) = &drawing.crop_editor {
+            annotation_render::append_crop(snapshot, crop, whole, scale);
+        } else if drawing.interaction.pending().is_none()
             && let Some(shape) = drawing.session.selected_shape()
         {
-            annotation_render::append_selection(snapshot, shape, bounds, scale);
+            annotation_render::append_selection(snapshot, shape, whole, scale);
         }
     }
 
     fn handle_pointer(&self, event: PointerEvent) -> bool {
         let imp = self.imp();
+        if imp.active_tool.get() == EditorTool::Crop {
+            return self.handle_crop_pointer(event);
+        }
         let tool = self.current_tool();
         let reach = self.reach();
         let claimed = {
@@ -364,6 +394,166 @@ impl PigouneEditor {
         claimed
     }
 
+    fn handle_crop_pointer(&self, event: PointerEvent) -> bool {
+        let imp = self.imp();
+        let reach = self.reach();
+        let claimed = {
+            let mut drawing = imp.drawing.borrow_mut();
+            let Some(crop) = drawing.crop_editor.as_mut() else {
+                return false;
+            };
+            match event {
+                PointerEvent::Press(point) => crop.press(image_point(point), reach),
+                PointerEvent::Drag(point) => {
+                    crop.drag(image_point(point));
+                    true
+                }
+                PointerEvent::Release(point) => {
+                    crop.release(image_point(point));
+                    true
+                }
+                PointerEvent::Hover(point) => {
+                    let kind = crop.cursor(image_point(point), reach);
+                    drop(drawing);
+                    imp.zoom_view.set_cursor_override(cursor_name(kind));
+                    return false;
+                }
+            }
+        };
+        self.sync_crop_panel();
+        imp.zoom_view.queue_draw();
+        claimed
+    }
+
+    fn start_cropping(&self) {
+        let imp = self.imp();
+        let (width, height) = imp.image_size.get();
+        {
+            let mut drawing = imp.drawing.borrow_mut();
+            drawing.session.select(None);
+            let current = drawing.session.crop();
+            drawing.crop_editor = Some(CropEditor::new(width, height, current));
+        }
+        imp.zoom_view.set_crop(None);
+    }
+
+    fn stop_cropping(&self) {
+        let imp = self.imp();
+        imp.drawing.borrow_mut().crop_editor = None;
+        self.show_session_crop();
+    }
+
+    fn show_session_crop(&self) {
+        let imp = self.imp();
+        let crop = imp.drawing.borrow().session.crop();
+        imp.zoom_view.set_crop(crop.map(|crop| {
+            (
+                f64::from(crop.x),
+                f64::from(crop.y),
+                f64::from(crop.width),
+                f64::from(crop.height),
+            )
+        }));
+    }
+
+    fn sync_crop_panel(&self) {
+        let imp = self.imp();
+        let drawing = imp.drawing.borrow();
+        let Some(crop) = &drawing.crop_editor else {
+            return;
+        };
+        let (width, height) = crop.size();
+        let text = gettext("{width} × {height} px")
+            .replace("{width}", &width.to_string())
+            .replace("{height}", &height.to_string());
+        let index = CropRatio::ALL
+            .iter()
+            .position(|ratio| *ratio == crop.ratio())
+            .and_then(|index| u32::try_from(index).ok())
+            .unwrap_or(0);
+        drop(drawing);
+        imp.crop_size_row.set_subtitle(&text);
+        imp.updating_controls.set(true);
+        imp.crop_ratio_row.set_selected(index);
+        imp.updating_controls.set(false);
+    }
+
+    fn reload_crop_editor(&self) {
+        let imp = self.imp();
+        let mut guard = imp.drawing.borrow_mut();
+        let drawing = &mut *guard;
+        let current = drawing.session.crop();
+        if let Some(crop) = drawing.crop_editor.as_mut() {
+            crop.load(current);
+        }
+    }
+
+    fn finish_cropping(&self, apply: bool) {
+        let imp = self.imp();
+        {
+            let mut guard = imp.drawing.borrow_mut();
+            let drawing = &mut *guard;
+            if let Some(crop) = drawing.crop_editor.as_mut() {
+                if apply {
+                    drawing.session.set_crop(crop.crop());
+                } else {
+                    crop.discard();
+                }
+            }
+        }
+        self.select_tool(EditorTool::Select);
+        self.after_edit();
+    }
+
+    fn select_tool(&self, tool: EditorTool) {
+        let imp = self.imp();
+        if let Some((_, button)) = imp
+            .tool_buttons
+            .borrow()
+            .iter()
+            .find(|(candidate, _)| *candidate == tool)
+        {
+            button.set_active(true);
+        }
+    }
+
+    fn change_crop_ratio(&self) {
+        let imp = self.imp();
+        if imp.updating_controls.get() {
+            return;
+        }
+        let Some(ratio) = usize::try_from(imp.crop_ratio_row.selected())
+            .ok()
+            .and_then(|index| CropRatio::ALL.get(index).copied())
+        else {
+            return;
+        };
+        if let Some(crop) = imp.drawing.borrow_mut().crop_editor.as_mut() {
+            crop.set_ratio(ratio);
+        }
+        self.sync_crop_panel();
+        imp.zoom_view.queue_draw();
+    }
+
+    #[template_callback]
+    fn on_crop_apply_clicked(&self) {
+        self.finish_cropping(true);
+    }
+
+    #[template_callback]
+    fn on_crop_cancel_clicked(&self) {
+        self.finish_cropping(false);
+    }
+
+    #[template_callback]
+    fn on_crop_reset_clicked(&self) {
+        if let Some(crop) = self.imp().drawing.borrow_mut().crop_editor.as_mut() {
+            crop.reset();
+        }
+        self.sync_crop_panel();
+        self.imp().zoom_view.queue_draw();
+    }
+
     fn after_edit(&self) {
         self.update_panel();
         self.refresh();
@@ -408,6 +598,14 @@ impl PigouneEditor {
             gdk::Key::z | gdk::Key::Z if control => self.undo(),
             gdk::Key::y | gdk::Key::Y if control => self.redo(),
             gdk::Key::Delete | gdk::Key::BackSpace => self.delete_selection(),
+            gdk::Key::Return | gdk::Key::KP_Enter if self.is_cropping() => {
+                self.finish_cropping(true);
+                true
+            }
+            gdk::Key::Escape if self.is_cropping() => {
+                self.finish_cropping(false);
+                true
+            }
             gdk::Key::Escape => self.escape(),
             _ => false,
         };
@@ -418,10 +616,14 @@ impl PigouneEditor {
         }
     }
 
+    fn is_cropping(&self) -> bool {
+        self.imp().drawing.borrow().crop_editor.is_some()
+    }
+
     fn undo(&self) -> bool {
         let done = self.imp().drawing.borrow_mut().session.undo();
         if done {
-            self.after_edit();
+            self.after_history_move();
         }
         done
     }
@@ -429,9 +631,18 @@ impl PigouneEditor {
     fn redo(&self) -> bool {
         let done = self.imp().drawing.borrow_mut().session.redo();
         if done {
-            self.after_edit();
+            self.after_history_move();
         }
         done
+    }
+
+    fn after_history_move(&self) {
+        if self.imp().drawing.borrow().crop_editor.is_some() {
+            self.reload_crop_editor();
+        } else {
+            self.show_session_crop();
+        }
+        self.after_edit();
     }
 
     fn delete_selection(&self) -> bool {
@@ -469,6 +680,9 @@ impl PigouneEditor {
     }
 
     fn target_kind(&self) -> Option<&'static str> {
+        if self.imp().active_tool.get() == EditorTool::Crop {
+            return None;
+        }
         let drawing = self.imp().drawing.borrow();
         if let Some(shape) = drawing.session.selected_shape() {
             return shape.definition().map(|definition| definition.kind);
@@ -504,7 +718,13 @@ impl PigouneEditor {
                 imp.option_rows.replace(rows);
             }
         }
-        imp.style_group.set_visible(definition.is_some());
+        let cropping = imp.active_tool.get() == EditorTool::Crop;
+        imp.crop_group.set_visible(cropping);
+        imp.style_group
+            .set_visible(definition.is_some() && !cropping);
+        if cropping {
+            self.sync_crop_panel();
+        }
         let Some(definition) = definition else {
             return;
         };
@@ -576,6 +796,8 @@ impl PigouneEditor {
 
     fn tool_changed(&self) {
         let imp = self.imp();
+        let cropping = imp.active_tool.get() == EditorTool::Crop;
+        let was_cropping = imp.drawing.borrow().crop_editor.is_some();
         {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -583,6 +805,11 @@ impl PigouneEditor {
             if !matches!(self.current_tool(), Tool::Select) {
                 drawing.session.select(None);
             }
+        }
+        if cropping && !was_cropping {
+            self.start_cropping();
+        } else if !cropping && was_cropping {
+            self.stop_cropping();
         }
         imp.zoom_view.set_cursor_override(None);
         self.show_active_tool();

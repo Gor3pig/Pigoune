@@ -157,6 +157,71 @@ template $PigouneEditor: Adw.Bin {
 
             Adw.PreferencesGroup style_group {}
 
+            Adw.PreferencesGroup crop_group {
+              title: _("Crop");
+              visible: false;
+
+              Adw.ComboRow crop_ratio_row {
+                title: _("Aspect Ratio");
+
+                model: StringList {
+                  strings [
+                    _("Free"),
+                    _("Same as Image"),
+                    _("Square"),
+                    "4:3",
+                    "16:9",
+                  ]
+                };
+              }
+
+              Adw.ActionRow crop_size_row {
+                title: _("Crop Size");
+
+                styles [
+                  "property",
+                ]
+              }
+
+              ListBoxRow {
+                activatable: false;
+                selectable: false;
+
+                child: Box {
+                  orientation: vertical;
+                  spacing: 6;
+                  margin-top: 12;
+                  margin-bottom: 12;
+                  margin-start: 12;
+                  margin-end: 12;
+
+                  Button {
+                    label: _("Apply");
+                    clicked => $on_crop_apply_clicked() swapped;
+
+                    styles [
+                      "suggested-action",
+                    ]
+                  }
+
+                  Box {
+                    spacing: 6;
+                    homogeneous: true;
+
+                    Button {
+                      label: _("Cancel");
+                      clicked => $on_crop_cancel_clicked() swapped;
+                    }
+
+                    Button {
+                      label: _("Reset");
+                      clicked => $on_crop_reset_clicked() swapped;
+                    }
+                  }
+                };
+              }
+            }
+
             Adw.PreferencesGroup {
               title: _("Layers");
               description: _("Nothing to show yet");

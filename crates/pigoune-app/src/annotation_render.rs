@@ -1,8 +1,8 @@
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, Geometry, Point, Rect, Shape, arrow_head, dash_pattern, handles,
-    head_size_factor, shape_bounds,
+    AnnotationDocument, Color, CropEditor, Geometry, Point, Rect, Shape, arrow_head, dash_pattern,
+    handles, head_size_factor, shape_bounds,
 };
 
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
@@ -222,6 +222,66 @@ pub fn append_selection(
         let square = graphene::Rect::new(
             center.x - HANDLE_SIZE / 2.0,
             center.y - HANDLE_SIZE / 2.0,
+            HANDLE_SIZE,
+            HANDLE_SIZE,
+        );
+        snapshot.append_color(&gdk::RGBA::new(1.0, 1.0, 1.0, 1.0), &square);
+        let builder = gsk::PathBuilder::new();
+        builder.add_rect(&square);
+        snapshot.append_stroke(&builder.to_path(), &gsk::Stroke::new(1.5), &accent);
+    }
+}
+
+pub fn append_crop(
+    snapshot: &gtk::Snapshot,
+    editor: &CropEditor,
+    whole: &graphene::Rect,
+    zoom: f32,
+) {
+    let frame = editor.frame();
+    let left = whole.x() + frame.x * zoom;
+    let top = whole.y() + frame.y * zoom;
+    let width = frame.width * zoom;
+    let height = frame.height * zoom;
+    let shade = gdk::RGBA::new(0.0, 0.0, 0.0, 0.55);
+    let (right, bottom) = (whole.x() + whole.width(), whole.y() + whole.height());
+    for rect in [
+        graphene::Rect::new(whole.x(), whole.y(), whole.width(), top - whole.y()),
+        graphene::Rect::new(
+            whole.x(),
+            top + height,
+            whole.width(),
+            bottom - top - height,
+        ),
+        graphene::Rect::new(whole.x(), top, left - whole.x(), height),
+        graphene::Rect::new(left + width, top, right - left - width, height),
+    ] {
+        if rect.width() > 0.0 && rect.height() > 0.0 {
+            snapshot.append_color(&shade, &rect);
+        }
+    }
+    let guide = gdk::RGBA::new(1.0, 1.0, 1.0, 0.45);
+    let thirds = gsk::PathBuilder::new();
+    for step in [1.0_f32, 2.0] {
+        thirds.move_to(left + width * step / 3.0, top);
+        thirds.line_to(left + width * step / 3.0, top + height);
+        thirds.move_to(left, top + height * step / 3.0);
+        thirds.line_to(left + width, top + height * step / 3.0);
+    }
+    snapshot.append_stroke(&thirds.to_path(), &gsk::Stroke::new(1.0), &guide);
+    let outline = gsk::PathBuilder::new();
+    outline.add_rect(&graphene::Rect::new(left, top, width, height));
+    snapshot.append_stroke(
+        &outline.to_path(),
+        &gsk::Stroke::new(2.0),
+        &gdk::RGBA::new(1.0, 1.0, 1.0, 1.0),
+    );
+    let (red, green, blue) = SELECTION_COLOR;
+    let accent = gdk::RGBA::new(red, green, blue, 1.0);
+    for (_, point) in editor.handle_points() {
+        let square = graphene::Rect::new(
+            whole.x() + point.x * zoom - HANDLE_SIZE / 2.0,
+            whole.y() + point.y * zoom - HANDLE_SIZE / 2.0,
             HANDLE_SIZE,
             HANDLE_SIZE,
         );

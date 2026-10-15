@@ -18,7 +18,7 @@ const PIXEL_GRID_OPACITY: f32 = 0.15;
 const SPRING_BACK_MILLISECONDS: u32 = 300;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
-type OverlayCallback = Rc<dyn Fn(&gtk::Snapshot, &graphene::Rect, f64)>;
+type OverlayCallback = Rc<dyn Fn(&gtk::Snapshot, &graphene::Rect, &graphene::Rect, f64)>;
 type PointerCallback = Rc<dyn Fn(PointerEvent) -> bool>;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -42,6 +42,8 @@ mod imp {
     pub struct PigouneZoomView {
         pub texture: RefCell<Option<gdk::Texture>>,
         pub image: Cell<Size>,
+        pub full: Cell<Size>,
+        pub crop_origin: Cell<Point>,
         pub is_vector: Cell<bool>,
         pub fits: Cell<bool>,
         pub zoom: Cell<f64>,
@@ -69,6 +71,11 @@ mod imp {
                     width: 1.0,
                     height: 1.0,
                 }),
+                full: Cell::new(Size {
+                    width: 1.0,
+                    height: 1.0,
+                }),
+                crop_origin: Cell::new(Point { x: 0.0, y: 0.0 }),
                 is_vector: Cell::default(),
                 fits: Cell::new(true),
                 zoom: Cell::new(1.0),
@@ -133,7 +140,7 @@ impl PigouneZoomView {
 
     pub fn connect_overlay(
         &self,
-        callback: impl Fn(&gtk::Snapshot, &graphene::Rect, f64) + 'static,
+        callback: impl Fn(&gtk::Snapshot, &graphene::Rect, &graphene::Rect, f64) + 'static,
     ) {
         self.imp().overlay.replace(Some(Rc::new(callback)));
         self.queue_draw();
@@ -153,9 +160,10 @@ impl PigouneZoomView {
     pub fn view_to_image(&self, x: f64, y: f64) -> Point {
         let bounds = self.image_bounds();
         let zoom = self.zoom();
+        let origin = self.imp().crop_origin.get();
         Point {
-            x: (x - f64::from(bounds.x())) / zoom,
-            y: (y - f64::from(bounds.y())) / zoom,
+            x: (x - f64::from(bounds.x())) / zoom + origin.x,
+            y: (y - f64::from(bounds.y())) / zoom + origin.y,
         }
     }
 
@@ -177,11 +185,29 @@ impl PigouneZoomView {
     ) {
         let imp = self.imp();
         imp.texture.replace(texture.cloned());
-        imp.image.set(Size {
+        let size = Size {
             width: f64::from(width.max(1)),
             height: f64::from(height.max(1)),
-        });
+        };
+        imp.image.set(size);
+        imp.full.set(size);
+        imp.crop_origin.set(Point { x: 0.0, y: 0.0 });
         imp.is_vector.set(is_vector);
+        self.fit_to_view();
+    }
+
+    pub fn set_crop(&self, crop: Option<(f64, f64, f64, f64)>) {
+        let imp = self.imp();
+        if let Some((x, y, width, height)) = crop {
+            imp.crop_origin.set(Point { x, y });
+            imp.image.set(Size {
+                width: width.max(1.0),
+                height: height.max(1.0),
+            });
+        } else {
+            imp.crop_origin.set(Point { x: 0.0, y: 0.0 });
+            imp.image.set(imp.full.get());
+        }
         self.fit_to_view();
     }
 
@@ -410,11 +436,18 @@ impl PigouneZoomView {
             return;
         };
         let zoom = imp.zoom.get();
-        let image = imp.image.get();
+        let full = imp.full.get();
         let bounds = self.image_bounds();
+        let origin = imp.crop_origin.get();
+        let whole = graphene::Rect::new(
+            bounds.x() - point_to_f32(origin.x * zoom),
+            bounds.y() - point_to_f32(origin.y * zoom),
+            point_to_f32(full.width * zoom),
+            point_to_f32(full.height * zoom),
+        );
         let filter = if zoom_math::shows_sharp_pixels(
             zoom,
-            image.width,
+            full.width,
             f64::from(texture.width()),
             imp.is_vector.get(),
         ) {
@@ -422,7 +455,9 @@ impl PigouneZoomView {
         } else {
             gsk::ScalingFilter::Trilinear
         };
-        snapshot.append_scaled_texture(&texture, filter, &bounds);
+        snapshot.push_clip(&bounds);
+        snapshot.append_scaled_texture(&texture, filter, &whole);
+        snapshot.pop();
         if imp.shows_pixel_grid.get() && zoom_math::shows_pixel_grid(zoom, imp.is_vector.get()) {
             self.draw_pixel_grid(snapshot, &bounds, zoom);
         }
@@ -431,7 +466,7 @@ impl PigouneZoomView {
         }
         let overlay = imp.overlay.borrow().clone();
         if let Some(overlay) = overlay {
-            overlay(snapshot, &bounds, zoom);
+            overlay(snapshot, &bounds, &whole, zoom);
         }
     }
 
@@ -599,4 +634,13 @@ impl Default for PigouneZoomView {
     fn default() -> Self {
         glib::Object::new()
     }
+}
+
+fn point_to_f32(value: f64) -> f32 {
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "drawing coordinates fit easily in f32"
+    )]
+    let narrowed = value as f32;
+    narrowed
 }
