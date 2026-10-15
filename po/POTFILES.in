@@ -4,6 +4,8 @@ data/io.github.gor3pig.Pigoune.gschema.xml
 crates/pigoune-app/ui/window.blp
 crates/pigoune-app/ui/new-library-dialog.blp
 crates/pigoune-app/src/application.rs
+crates/pigoune-app/src/editor.rs
+crates/pigoune-app/src/editor_tool.rs
 crates/pigoune-app/src/error_messages.rs
 crates/pigoune-app/src/new_library_dialog.rs
 crates/pigoune-app/src/window.rs
@@ -43,6 +45,7 @@ crates/pigoune-app/src/collection_chooser.rs
 crates/pigoune-app/src/undo_message.rs
 crates/pigoune-app/src/grid_header.rs
 crates/pigoune-app/src/drop_message.rs
+crates/pigoune-app/ui/editor.blp
 crates/pigoune-app/ui/export-as-dialog.blp
 crates/pigoune-app/src/export_as_dialog.rs
 crates/pigoune-app/src/conversion_report.rs

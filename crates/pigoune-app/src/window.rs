@@ -88,6 +88,7 @@ const EMPTY_PAGE: &str = "empty";
 const ASSETS_PAGE: &str = "assets";
 const MAIN_PAGE: &str = "main";
 const PREVIEW_PAGE: &str = "preview";
+const EDITOR_PAGE: &str = "editor";
 const OPENING_FLIGHT_MILLISECONDS: u32 = 250;
 const CLOSING_FLIGHT_MILLISECONDS: u32 = 200;
 const COUNTS_REFRESH_DELAY: std::time::Duration = std::time::Duration::from_millis(350);
@@ -229,6 +230,7 @@ mod imp {
     use std::rc::Rc;
 
     use crate::asset_preview::PigouneAssetPreview;
+    use crate::editor::PigouneEditor;
     use crate::flatpak_updates::FlatpakUpdates;
     use crate::grid_header::PigouneGridHeader;
     use crate::preview_flight::PigounePreviewFlight;
@@ -311,6 +313,8 @@ mod imp {
         pub window_stack: TemplateChild<gtk::Stack>,
         #[template_child]
         pub asset_preview: TemplateChild<PigouneAssetPreview>,
+        #[template_child]
+        pub editor: TemplateChild<PigouneEditor>,
         #[template_child]
         pub preview_flight: TemplateChild<PigounePreviewFlight>,
         #[template_child]
@@ -507,6 +511,7 @@ mod imp {
             PigouneAssetGrid::ensure_type();
             PigouneAssetDetails::ensure_type();
             PigouneAssetPreview::ensure_type();
+            PigouneEditor::ensure_type();
             PigounePreviewFlight::ensure_type();
             PigouneSidebar::ensure_type();
             PigouneGridHeader::ensure_type();
@@ -694,6 +699,7 @@ impl PigouneWindow {
         }
         window.describe_selected_asset();
         window.connect_preview();
+        window.connect_editor();
         window.follow_sidebar(&settings);
         window.follow_trash_confirmation(&settings);
         window.follow_search();
@@ -1967,6 +1973,7 @@ impl PigouneWindow {
     }
 
     fn show_library(&self, library: Library) {
+        self.leave_editor();
         let imp = self.imp();
         imp.window_title.set_title(&library.name());
         let path = library.root().to_string_lossy().into_owned();
@@ -1991,6 +1998,7 @@ impl PigouneWindow {
         imp.history_buttons.set_visible(true);
         self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
+        self.open_editor_for_testing();
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -5412,6 +5420,52 @@ impl PigouneWindow {
         ));
     }
 
+    fn connect_editor(&self) {
+        self.imp().editor.connect_closed(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move || window.leave_editor()
+        ));
+    }
+
+    fn open_editor(&self, image: &Path) -> Result<(), glib::Error> {
+        let imp = self.imp();
+        imp.editor.open(image)?;
+        self.set_library_actions_enabled(false);
+        imp.window_stack.set_visible_child_name(EDITOR_PAGE);
+        self.refresh_import_availability();
+        Ok(())
+    }
+
+    fn leave_editor(&self) {
+        let imp = self.imp();
+        if !self.is_editing() {
+            return;
+        }
+        imp.editor.close();
+        imp.window_stack.set_visible_child_name(MAIN_PAGE);
+        self.set_library_actions_enabled(imp.library.borrow().is_some());
+        self.refresh_import_availability();
+        imp.asset_grid.focus_selected_later();
+    }
+
+    fn is_editing(&self) -> bool {
+        self.imp().window_stack.visible_child_name().as_deref() == Some(EDITOR_PAGE)
+    }
+
+    fn open_editor_for_testing(&self) {
+        static ALREADY_OPENED: AtomicBool = AtomicBool::new(false);
+        let Some(image) = std::env::var_os("PIGOUNE_EDIT") else {
+            return;
+        };
+        if ALREADY_OPENED.swap(true, Ordering::Relaxed) {
+            return;
+        }
+        if let Err(error) = self.open_editor(Path::new(&image)) {
+            eprintln!("{error}");
+        }
+    }
+
     fn lend_details_to_preview(&self, lent: bool) {
         let imp = self.imp();
         let details = imp.asset_details.get().upcast::<gtk::Widget>();
@@ -6225,7 +6279,9 @@ impl PigouneWindow {
     }
 
     fn import_is_possible_here(&self) -> bool {
-        drop_places::accepts_files(self.imp().current_view.get()) && !self.is_previewing()
+        drop_places::accepts_files(self.imp().current_view.get())
+            && !self.is_previewing()
+            && !self.is_editing()
     }
 
     fn refresh_import_availability(&self) {
@@ -6246,6 +6302,8 @@ impl PigouneWindow {
     fn why_import_is_refused(&self) -> String {
         if self.is_previewing() {
             gettext("Close the preview to import")
+        } else if self.is_editing() {
+            gettext("Close the editor to import")
         } else {
             gettext("Open All, Unclassified or a collection to import")
         }
@@ -6290,7 +6348,7 @@ impl PigouneWindow {
         for action in [CREATE_LIBRARY_ACTION, OPEN_LIBRARY_ACTION] {
             self.action_set_enabled(action, !importing);
         }
-        self.set_library_actions_enabled(!importing);
+        self.set_library_actions_enabled(!importing && !self.is_editing());
     }
 
     fn accept_dropped_files(&self) {

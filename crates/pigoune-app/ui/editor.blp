@@ -1,0 +1,237 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PigouneEditor: Adw.Bin {
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      show-title: false;
+
+      [start]
+      Button {
+        tooltip-text: _("Back to the Library");
+        visible: bind template.compact inverted;
+        clicked => $on_back_clicked() swapped;
+
+        child: Adw.ButtonContent {
+          icon-name: "go-previous-symbolic";
+          label: _("Library");
+        };
+      }
+
+      [start]
+      Button {
+        icon-name: "go-previous-symbolic";
+        tooltip-text: _("Back to the Library");
+        visible: bind template.compact;
+        clicked => $on_back_clicked() swapped;
+      }
+
+      [start]
+      Button undo_button {
+        icon-name: "edit-undo-symbolic";
+        tooltip-text: _("Undo");
+        sensitive: false;
+      }
+
+      [start]
+      Button redo_button {
+        icon-name: "edit-redo-symbolic";
+        tooltip-text: _("Redo");
+        sensitive: false;
+      }
+
+      [end]
+      Button save_button {
+        label: _("Save");
+        sensitive: false;
+
+        styles [
+          "suggested-action",
+        ]
+      }
+
+      [end]
+      MenuButton output_button {
+        icon-name: "view-more-symbolic";
+        tooltip-text: _("Copy or Export");
+        sensitive: false;
+      }
+    }
+
+    content: Adw.BottomSheet bottom_sheet {
+      full-width: true;
+      reveal-bottom-bar: bind template.compact;
+
+      content: Adw.OverlaySplitView split_view {
+        sidebar-position: end;
+        min-sidebar-width: 300;
+        max-sidebar-width: 360;
+        sidebar-width-fraction: 0.28;
+        collapsed: bind template.compact;
+        show-sidebar: bind template.compact inverted;
+
+        content: $PigouneZoomView zoom_view {};
+
+        sidebar: Adw.Bin sidebar_bin {
+          child: ScrolledWindow panel {
+            hscrollbar-policy: never;
+            min-content-height: 360;
+
+            child: Box {
+              orientation: vertical;
+              spacing: 24;
+              margin-top: 12;
+              margin-bottom: 12;
+              margin-start: 12;
+              margin-end: 12;
+
+              Adw.PreferencesGroup tools_group {
+                title: _("Tools");
+
+                Grid tools_grid {
+                  column-spacing: 6;
+                  row-spacing: 6;
+                  column-homogeneous: true;
+                }
+              }
+
+              Adw.PreferencesGroup style_group {
+                Adw.ActionRow {
+                  title: _("Color");
+                  sensitive: false;
+                }
+
+                Adw.ActionRow {
+                  title: _("Thickness");
+                  sensitive: false;
+
+                  [suffix]
+                  Scale {
+                    width-request: 110;
+                    valign: center;
+                    draw-value: false;
+                    adjustment: Adjustment {
+                      lower: 1;
+                      upper: 100;
+                      value: 30;
+                    };
+                  }
+                }
+
+                Adw.ActionRow {
+                  title: _("Opacity");
+                  sensitive: false;
+
+                  [suffix]
+                  Scale {
+                    width-request: 110;
+                    valign: center;
+                    draw-value: false;
+                    adjustment: Adjustment {
+                      lower: 1;
+                      upper: 100;
+                      value: 100;
+                    };
+                  }
+                }
+              }
+
+              Adw.PreferencesGroup {
+                title: _("Layers");
+                description: _("Nothing to show yet");
+              }
+
+              Adw.PreferencesGroup {
+                title: _("Frame");
+
+                Adw.SwitchRow {
+                  title: _("Border, Shadow and Background");
+                  sensitive: false;
+                }
+              }
+            };
+          };
+        };
+      };
+
+      sheet: Adw.Bin sheet_bin {};
+
+      bottom-bar: Box {
+        spacing: 10;
+        margin-top: 8;
+        margin-bottom: 8;
+        margin-start: 12;
+        margin-end: 12;
+
+        Image bar_icon {}
+
+        Label bar_label {
+          styles [
+            "heading",
+          ]
+        }
+
+        Label {
+          hexpand: true;
+          halign: end;
+          label: _("Tools and Settings");
+
+          styles [
+            "dim-label",
+          ]
+        }
+
+        Image {
+          icon-name: "go-up-symbolic";
+        }
+      };
+    };
+
+    [bottom]
+    Box status_bar {
+      spacing: 6;
+      visible: bind template.compact inverted;
+
+      styles [
+        "toolbar",
+      ]
+
+      Button zoom_out_button {
+        icon-name: "zoom-out-symbolic";
+        tooltip-text: _("Zoom Out");
+
+        styles [
+          "flat",
+        ]
+      }
+
+      Button zoom_button {
+        tooltip-text: _("Fit to Window");
+
+        styles [
+          "flat",
+        ]
+      }
+
+      Button zoom_in_button {
+        icon-name: "zoom-in-symbolic";
+        tooltip-text: _("Zoom In");
+
+        styles [
+          "flat",
+        ]
+      }
+
+      Label annotations_label {
+        hexpand: true;
+        halign: end;
+        label: _("No annotations");
+
+        styles [
+          "dim-label",
+        ]
+      }
+    }
+  };
+}
