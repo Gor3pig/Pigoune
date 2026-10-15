@@ -327,9 +327,11 @@ impl PigouneEditor {
         snapshot.push_clip(visible);
         snapshot.translate(&graphene::Point::new(whole.x(), whole.y()));
         snapshot.scale(scale, scale);
-        annotation_render::append_document(snapshot, drawing.session.document());
+        let context = self.pango_context();
+        annotation_render::append_document(snapshot, drawing.session.document(), &context);
         if let Some(pending) = drawing.interaction.pending() {
-            annotation_render::append_shape(snapshot, pending);
+            let ordinal = drawing.session.document().next_ordinal(&pending.kind);
+            annotation_render::append_shape(snapshot, pending, ordinal, &context);
         }
         snapshot.pop();
         snapshot.restore();
