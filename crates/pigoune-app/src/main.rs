@@ -1,6 +1,7 @@
 mod analysis_pace;
 mod animation;
 mod animation_player;
+mod annotation_render;
 mod application;
 mod asset_colors;
 mod asset_details;
@@ -39,6 +40,7 @@ mod dropped_content;
 mod duplicates_ignored;
 mod duplicates_page;
 mod editor;
+mod editor_palette;
 mod editor_tool;
 mod error_messages;
 mod export_as_dialog;

@@ -44,6 +44,7 @@ template $PigouneEditor: Adw.Bin {
             icon-name: "edit-undo-symbolic";
             tooltip-text: _("Undo");
             sensitive: false;
+            clicked => $on_undo_clicked() swapped;
           }
 
           [start]
@@ -51,6 +52,7 @@ template $PigouneEditor: Adw.Bin {
             icon-name: "edit-redo-symbolic";
             tooltip-text: _("Redo");
             sensitive: false;
+            clicked => $on_redo_clicked() swapped;
           }
         }
 
@@ -154,39 +156,48 @@ template $PigouneEditor: Adw.Bin {
             }
 
             Adw.PreferencesGroup style_group {
-              Adw.ActionRow {
-                title: _("Color");
-                sensitive: false;
+              ListBoxRow {
+                activatable: false;
+                selectable: false;
+
+                child: Box color_swatches {
+                  spacing: 8;
+                  margin-top: 12;
+                  margin-bottom: 12;
+                  margin-start: 12;
+                  margin-end: 12;
+                  halign: start;
+                };
               }
 
               Adw.ActionRow {
                 title: _("Thickness");
-                sensitive: false;
 
                 [suffix]
-                Scale {
-                  width-request: 110;
+                Scale thickness_scale {
+                  width-request: 140;
                   valign: center;
                   draw-value: false;
+
                   adjustment: Adjustment {
                     lower: 1;
-                    upper: 100;
-                    value: 30;
+                    upper: 60;
+                    value: 6;
                   };
                 }
               }
 
               Adw.ActionRow {
                 title: _("Opacity");
-                sensitive: false;
 
                 [suffix]
-                Scale {
-                  width-request: 110;
+                Scale opacity_scale {
+                  width-request: 140;
                   valign: center;
                   draw-value: false;
+
                   adjustment: Adjustment {
-                    lower: 1;
+                    lower: 5;
                     upper: 100;
                     value: 100;
                   };
@@ -194,7 +205,7 @@ template $PigouneEditor: Adw.Bin {
               }
             }
 
-            Adw.PreferencesGroup {
+Adw.PreferencesGroup {
               title: _("Layers");
               description: _("Nothing to show yet");
             }
