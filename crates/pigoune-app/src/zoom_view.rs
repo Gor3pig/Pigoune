@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{gdk, glib, graphene, gsk};
@@ -16,6 +18,16 @@ const PIXEL_GRID_OPACITY: f32 = 0.15;
 const SPRING_BACK_MILLISECONDS: u32 = 300;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
+type OverlayCallback = Rc<dyn Fn(&gtk::Snapshot, &graphene::Rect, f64)>;
+type PointerCallback = Rc<dyn Fn(PointerEvent) -> bool>;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum PointerEvent {
+    Press(Point),
+    Drag(Point),
+    Release(Point),
+    Hover(Point),
+}
 
 mod imp {
     use std::cell::{Cell, RefCell};
@@ -24,7 +36,7 @@ mod imp {
     use gtk::prelude::*;
     use gtk::{gdk, glib};
 
-    use super::ZoomChangedCallback;
+    use super::{OverlayCallback, PointerCallback, ZoomChangedCallback};
     use crate::zoom_math::{Point, Size};
 
     pub struct PigouneZoomView {
@@ -41,6 +53,11 @@ mod imp {
         pub shows_pixel_grid: Cell<bool>,
         pub pinch_start: Cell<f64>,
         pub on_zoom_changed: RefCell<Option<ZoomChangedCallback>>,
+        pub overlay: RefCell<Option<OverlayCallback>>,
+        pub on_pointer: RefCell<Option<PointerCallback>>,
+        pub claimed: Cell<bool>,
+        pub drag_origin: Cell<Point>,
+        pub cursor_override: RefCell<Option<String>>,
         pub spring: RefCell<Option<adw::TimedAnimation>>,
     }
 
@@ -63,6 +80,11 @@ mod imp {
                 shows_pixel_grid: Cell::default(),
                 pinch_start: Cell::new(1.0),
                 on_zoom_changed: RefCell::default(),
+                overlay: RefCell::default(),
+                on_pointer: RefCell::default(),
+                claimed: Cell::default(),
+                drag_origin: Cell::new(Point { x: 0.0, y: 0.0 }),
+                cursor_override: RefCell::default(),
                 spring: RefCell::default(),
             }
         }
@@ -107,6 +129,39 @@ glib::wrapper! {
 impl PigouneZoomView {
     pub fn connect_zoom_changed(&self, callback: impl Fn(f64) + 'static) {
         self.imp().on_zoom_changed.replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_overlay(
+        &self,
+        callback: impl Fn(&gtk::Snapshot, &graphene::Rect, f64) + 'static,
+    ) {
+        self.imp().overlay.replace(Some(Rc::new(callback)));
+        self.queue_draw();
+    }
+
+    pub fn connect_pointer(&self, callback: impl Fn(PointerEvent) -> bool + 'static) {
+        self.imp().on_pointer.replace(Some(Rc::new(callback)));
+    }
+
+    pub fn set_cursor_override(&self, name: Option<&str>) {
+        self.imp()
+            .cursor_override
+            .replace(name.map(ToOwned::to_owned));
+        self.update_cursor();
+    }
+
+    pub fn view_to_image(&self, x: f64, y: f64) -> Point {
+        let bounds = self.image_bounds();
+        let zoom = self.zoom();
+        Point {
+            x: (x - f64::from(bounds.x())) / zoom,
+            y: (y - f64::from(bounds.y())) / zoom,
+        }
+    }
+
+    fn send_pointer(&self, event: PointerEvent) -> bool {
+        let callback = self.imp().on_pointer.borrow().clone();
+        callback.is_some_and(|callback| callback(event))
     }
 
     pub fn zoom(&self) -> f64 {
@@ -300,6 +355,10 @@ impl PigouneZoomView {
 
     fn update_cursor(&self) {
         let imp = self.imp();
+        if let Some(name) = imp.cursor_override.borrow().as_deref() {
+            self.set_cursor_from_name(Some(name));
+            return;
+        }
         let cursor = match (imp.texture.borrow().is_some(), imp.dragging.get()) {
             (false, _) => None,
             (true, false) => Some(MOVABLE_CURSOR),
@@ -370,6 +429,10 @@ impl PigouneZoomView {
         if imp.shows_bounds.get() {
             draw_bounds(snapshot, &bounds, &self.color());
         }
+        let overlay = imp.overlay.borrow().clone();
+        if let Some(overlay) = overlay {
+            overlay(snapshot, &bounds, zoom);
+        }
     }
 
     fn listen_to_drag(&self) {
@@ -377,9 +440,15 @@ impl PigouneZoomView {
         drag.connect_drag_begin(glib::clone!(
             #[weak(rename_to = view)]
             self,
-            move |_, _, _| {
+            move |_, x, y| {
                 view.stop_spring();
                 let imp = view.imp();
+                imp.drag_origin.set(Point { x, y });
+                let claimed = view.send_pointer(PointerEvent::Press(view.view_to_image(x, y)));
+                imp.claimed.set(claimed);
+                if claimed {
+                    return;
+                }
                 imp.drag_start.set(imp.center.get());
                 imp.dragging.set(true);
                 view.update_cursor();
@@ -388,8 +457,15 @@ impl PigouneZoomView {
         drag.connect_drag_end(glib::clone!(
             #[weak(rename_to = view)]
             self,
-            move |_, _, _| {
-                view.imp().dragging.set(false);
+            move |_, offset_x, offset_y| {
+                let imp = view.imp();
+                if imp.claimed.replace(false) {
+                    let origin = imp.drag_origin.get();
+                    let point = view.view_to_image(origin.x + offset_x, origin.y + offset_y);
+                    view.send_pointer(PointerEvent::Release(point));
+                    return;
+                }
+                imp.dragging.set(false);
                 view.update_cursor();
                 view.spring_back();
             }
@@ -399,6 +475,12 @@ impl PigouneZoomView {
             self,
             move |_, offset_x, offset_y| {
                 let imp = view.imp();
+                if imp.claimed.get() {
+                    let origin = imp.drag_origin.get();
+                    let point = view.view_to_image(origin.x + offset_x, origin.y + offset_y);
+                    view.send_pointer(PointerEvent::Drag(point));
+                    return;
+                }
                 if offset_x != 0.0 || offset_y != 0.0 {
                     imp.fits.set(false);
                 }
@@ -425,7 +507,10 @@ impl PigouneZoomView {
         motion.connect_motion(glib::clone!(
             #[weak(rename_to = view)]
             self,
-            move |_, x, y| view.imp().pointer.set(Some(Point { x, y }))
+            move |_, x, y| {
+                view.imp().pointer.set(Some(Point { x, y }));
+                view.send_pointer(PointerEvent::Hover(view.view_to_image(x, y)));
+            }
         ));
         motion.connect_leave(glib::clone!(
             #[weak(rename_to = view)]
@@ -477,7 +562,7 @@ impl PigouneZoomView {
             #[weak(rename_to = view)]
             self,
             move |_, presses, x, y| {
-                if presses != 2 {
+                if presses != 2 || view.imp().on_pointer.borrow().is_some() {
                     return;
                 }
                 if view.imp().fits.get() {

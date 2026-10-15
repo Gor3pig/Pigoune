@@ -836,3 +836,48 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
 .editor-panel {
   background-color: @secondary_sidebar_bg_color;
 }
+
+button.annotation-swatch {
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  border-radius: 9999px;
+  border: 1px solid alpha(black, 0.25);
+  background-image: none;
+}
+
+button.annotation-swatch:checked {
+  box-shadow: 0 0 0 2px @window_bg_color, 0 0 0 4px @accent_bg_color;
+}
+
+button.annotation-swatch.swatch-0 {
+  background-color: #e01b24;
+}
+
+button.annotation-swatch.swatch-1 {
+  background-color: #ff7800;
+}
+
+button.annotation-swatch.swatch-2 {
+  background-color: #f6d32d;
+}
+
+button.annotation-swatch.swatch-3 {
+  background-color: #33d17a;
+}
+
+button.annotation-swatch.swatch-4 {
+  background-color: #3584e4;
+}
+
+button.annotation-swatch.swatch-5 {
+  background-color: #9141ac;
+}
+
+button.annotation-swatch.swatch-6 {
+  background-color: #241f31;
+}
+
+button.annotation-swatch.swatch-7 {
+  background-color: #ffffff;
+}

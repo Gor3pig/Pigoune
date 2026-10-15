@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 22:18+0200\n"
+"POT-Creation-Date: 2026-10-15 22:43+0200\n"
 "PO-Revision-Date: 2026-10-01 00:00+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: French\n"
@@ -1639,13 +1639,13 @@ msgstr "Importer"
 
 #: crates/pigoune-app/ui/window.blp:204 crates/pigoune-app/src/window.rs:3116
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:93
-#: crates/pigoune-app/ui/editor.blp:31 crates/pigoune-app/src/shortcuts.rs:281
+#: crates/pigoune-app/ui/editor.blp:45 crates/pigoune-app/src/shortcuts.rs:281
 msgid "Undo"
 msgstr "Annuler"
 
 #: crates/pigoune-app/ui/window.blp:213 crates/pigoune-app/src/window.rs:3118
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:98
-#: crates/pigoune-app/ui/editor.blp:38 crates/pigoune-app/src/shortcuts.rs:282
+#: crates/pigoune-app/ui/editor.blp:53 crates/pigoune-app/src/shortcuts.rs:282
 msgid "Redo"
 msgstr "Rétablir"
 
@@ -1770,6 +1770,48 @@ msgstr "_Choisir…"
 #: crates/pigoune-app/src/application.rs:98
 msgid "translator-credits"
 msgstr "Gor3pig"
+
+#: crates/pigoune-app/src/editor.rs:378 crates/pigoune-app/ui/editor.blp:99
+msgid "No annotations"
+msgstr "Aucune annotation"
+
+#: crates/pigoune-app/src/editor.rs:380
+msgid "Annotations: {count}"
+msgstr "Annotations : {count}"
+
+#: crates/pigoune-app/src/editor_palette.rs:23
+msgid "Red"
+msgstr "Rouge"
+
+#: crates/pigoune-app/src/editor_palette.rs:24
+msgid "Orange"
+msgstr "Orange"
+
+#: crates/pigoune-app/src/editor_palette.rs:25
+msgid "Yellow"
+msgstr "Jaune"
+
+#: crates/pigoune-app/src/editor_palette.rs:26
+msgid "Green"
+msgstr "Vert"
+
+#: crates/pigoune-app/src/editor_palette.rs:27
+msgid "Blue"
+msgstr "Bleu"
+
+#: crates/pigoune-app/src/editor_palette.rs:28
+msgid "Purple"
+msgstr "Violet"
+
+#: crates/pigoune-app/src/editor_palette.rs:29
+#: crates/pigoune-app/ui/preferences-dialog.blp:98
+msgid "Black"
+msgstr "Noir"
+
+#: crates/pigoune-app/src/editor_palette.rs:30
+#: crates/pigoune-app/ui/preferences-dialog.blp:96
+msgid "White"
+msgstr "Blanc"
 
 #: crates/pigoune-app/src/editor_tool.rs:72
 msgid "Select"
@@ -3331,7 +3373,6 @@ msgstr "La taille de votre écran n’a pas pu être détectée"
 
 #: crates/pigoune-app/src/filter_choices.rs:269
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
-#: crates/pigoune-app/ui/editor.blp:99
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:267
 msgid "Color"
 msgstr "Couleur"
@@ -3516,7 +3557,7 @@ msgstr "%-d %B %Y à %H:%M"
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:190
-#: crates/pigoune-app/ui/editor.blp:208
+#: crates/pigoune-app/ui/editor.blp:80
 msgid "Fit to Window"
 msgstr "Ajuster à la fenêtre"
 
@@ -3545,13 +3586,13 @@ msgstr "Afficher la bande de vignettes"
 
 #: crates/pigoune-app/ui/asset-preview.blp:61
 #: crates/pigoune-app/ui/asset-preview.blp:74
-#: crates/pigoune-app/ui/editor.blp:10 crates/pigoune-app/ui/editor.blp:23
+#: crates/pigoune-app/ui/editor.blp:24 crates/pigoune-app/ui/editor.blp:37
 msgid "Back to the Library"
 msgstr "Revenir à la bibliothèque"
 
 #: crates/pigoune-app/ui/asset-preview.blp:67
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:6
-#: crates/pigoune-app/ui/editor.blp:16
+#: crates/pigoune-app/ui/editor.blp:30
 msgid "Library"
 msgstr "Bibliothèque"
 
@@ -3562,14 +3603,14 @@ msgstr "Zoom"
 
 #: crates/pigoune-app/ui/asset-preview.blp:112
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:185
-#: crates/pigoune-app/ui/editor.blp:200
+#: crates/pigoune-app/ui/editor.blp:72
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:95
 msgid "Zoom Out"
 msgstr "Zoom arrière"
 
 #: crates/pigoune-app/ui/asset-preview.blp:123
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:180
-#: crates/pigoune-app/ui/editor.blp:217
+#: crates/pigoune-app/ui/editor.blp:89
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:121
 msgid "Zoom In"
 msgstr "Zoom avant"
@@ -5427,17 +5468,9 @@ msgstr "Aide à voir les images blanches ou noires"
 msgid "Default"
 msgstr "Par défaut"
 
-#: crates/pigoune-app/ui/preferences-dialog.blp:96
-msgid "White"
-msgstr "Blanc"
-
 #: crates/pigoune-app/ui/preferences-dialog.blp:97
 msgid "Gray"
 msgstr "Gris"
-
-#: crates/pigoune-app/ui/preferences-dialog.blp:98
-msgid "Black"
-msgstr "Noir"
 
 #: crates/pigoune-app/ui/preferences-dialog.blp:99
 msgid "Checkerboard"
@@ -6398,49 +6431,45 @@ msgid_plural "{name} and {count} others"
 msgstr[0] "{name} et {count} autre"
 msgstr[1] "{name} et {count} autres"
 
-#: crates/pigoune-app/ui/editor.blp:44
+#: crates/pigoune-app/ui/editor.blp:120
 msgid "Save"
 msgstr "Enregistrer"
 
-#: crates/pigoune-app/ui/editor.blp:55
+#: crates/pigoune-app/ui/editor.blp:131
 msgid "Copy or Export"
 msgstr "Copier ou exporter"
 
-#: crates/pigoune-app/ui/editor.blp:88
+#: crates/pigoune-app/ui/editor.blp:149
 msgid "Tools"
 msgstr "Outils"
 
-#: crates/pigoune-app/ui/editor.blp:104
+#: crates/pigoune-app/ui/editor.blp:174
 msgid "Thickness"
 msgstr "Épaisseur"
 
-#: crates/pigoune-app/ui/editor.blp:121
+#: crates/pigoune-app/ui/editor.blp:191
 msgid "Opacity"
 msgstr "Opacité"
 
-#: crates/pigoune-app/ui/editor.blp:139
+#: crates/pigoune-app/ui/editor.blp:209
 msgid "Layers"
 msgstr "Calques"
 
-#: crates/pigoune-app/ui/editor.blp:140
+#: crates/pigoune-app/ui/editor.blp:210
 msgid "Nothing to show yet"
 msgstr "Rien à afficher pour l’instant"
 
-#: crates/pigoune-app/ui/editor.blp:144
+#: crates/pigoune-app/ui/editor.blp:214
 msgid "Frame"
 msgstr "Habillage"
 
-#: crates/pigoune-app/ui/editor.blp:147
+#: crates/pigoune-app/ui/editor.blp:217
 msgid "Border, Shadow and Background"
 msgstr "Bordure, ombre et arrière-plan"
 
-#: crates/pigoune-app/ui/editor.blp:176
+#: crates/pigoune-app/ui/editor.blp:246
 msgid "Tools and Settings"
 msgstr "Outils et réglages"
-
-#: crates/pigoune-app/ui/editor.blp:227
-msgid "No annotations"
-msgstr "Aucune annotation"
 
 #: crates/pigoune-app/ui/export-as-dialog.blp:26
 #: crates/pigoune-app/ui/library-info-dialog.blp:466
