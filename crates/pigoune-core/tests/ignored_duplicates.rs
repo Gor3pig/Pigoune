@@ -241,16 +241,20 @@ fn what_is_already_ignored_cannot_be_ignored_again_as_one_group() {
 }
 
 #[test]
-fn ignoring_a_group_ignores_every_asset_that_still_looks_like_it() {
+fn ignoring_a_group_keeps_it_apart_from_every_asset_that_still_looks_like_it() {
     let (_w, mut library) = library_of(3);
 
     let outcome = library
         .ignore_duplicate_group(&ids(&[1, 2]))
         .expect("ignored");
 
-    assert_eq!(outcome.covered, 3);
+    assert_eq!(outcome.covered, 2);
     assert!(results(&library).is_empty());
-    assert_eq!(entries(&library).len(), 1);
+    let listed = entries(&library);
+    assert_eq!(listed.len(), 1);
+    assert_eq!(shown(&listed[0]), (IgnoreKind::Group, vec![1, 2], vec![3]));
+    assert!(library.is_ignored_duplicate(id(1), id(3)).expect("checked"));
+    assert!(library.is_ignored_duplicate(id(3), id(2)).expect("checked"));
 }
 
 #[test]
@@ -544,19 +548,90 @@ fn unknown_trashed_or_single_assets_are_refused() {
 }
 
 #[test]
-fn ignoring_a_group_of_a_larger_cluster_ignores_the_whole_cluster() {
+fn ignoring_a_group_of_a_larger_cluster_lists_only_that_group() {
     let (_w, mut library) = library_of(100);
     let first = library.duplicate_groups().expect("groups");
     assert_eq!(first.iter().map(Vec::len).collect::<Vec<_>>(), [40, 40, 20]);
 
     let outcome = library.ignore_duplicate_group(&first[0]).expect("ignored");
 
-    assert_eq!(outcome.covered, 100);
-    assert!(results(&library).is_empty());
-    assert_eq!(entries(&library).len(), 1);
-    assert_eq!(entries(&library)[0].assets.len(), 100);
+    assert_eq!(outcome.covered, 40);
+    let listed = entries(&library);
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].assets.len(), 40);
+    assert_eq!(listed[0].against.len(), 60);
     library.undo().expect("undone");
     assert_eq!(library.duplicate_groups().expect("groups").len(), 3);
+}
+
+#[test]
+fn the_other_groups_of_the_cluster_are_still_offered_without_the_ignored_group() {
+    let (_w, mut library) = library_of(100);
+    let first = library.duplicate_groups().expect("groups");
+
+    library.ignore_duplicate_group(&first[0]).expect("ignored");
+
+    let remaining = library.duplicate_groups().expect("groups");
+    assert_eq!(remaining.iter().map(Vec::len).collect::<Vec<_>>(), [40, 20]);
+    let ignored: Vec<AssetId> = first[0].clone();
+    assert!(
+        remaining
+            .iter()
+            .flatten()
+            .all(|asset| !ignored.contains(asset))
+    );
+}
+
+#[test]
+fn a_cluster_of_two_groups_keeps_the_second_one_after_ignoring_the_first() {
+    let (_w, mut library) = library_of_clusters(&[(3, 9), (2, OTHER_DRAWING)]);
+
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+
+    assert!(library.is_ignored_duplicate(id(1), id(3)).expect("checked"));
+    assert!(!library.is_ignored_duplicate(id(4), id(5)).expect("checked"));
+    assert_eq!(results(&library), [vec![4, 5]]);
+}
+
+#[test]
+fn undoing_and_redoing_the_ignoring_of_a_group_keeps_who_it_was_kept_apart_from() {
+    let (_w, mut library) = library_of(4);
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+    let before = entries(&library);
+
+    library.undo().expect("undone");
+    assert!(entries(&library).is_empty());
+    library.redo().expect("redone");
+
+    assert_eq!(entries(&library), before);
+    assert_eq!(
+        shown(&before[0]),
+        (IgnoreKind::Group, vec![1, 2], vec![3, 4])
+    );
+}
+
+#[test]
+fn trashing_an_asset_kept_apart_hides_it_from_the_entry_until_restored() {
+    let (_w, mut library) = library_of(3);
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+
+    trash(&mut library, &[3], true);
+    assert_eq!(
+        shown(&entries(&library)[0]),
+        (IgnoreKind::Group, vec![1, 2], vec![])
+    );
+    trash(&mut library, &[3], false);
+
+    assert_eq!(
+        shown(&entries(&library)[0]),
+        (IgnoreKind::Group, vec![1, 2], vec![3])
+    );
 }
 
 #[test]
@@ -568,7 +643,7 @@ fn a_dense_cluster_stays_quick_to_ignore_and_to_show_again() {
     let outcome = library.ignore_duplicate_group(&first[0]).expect("ignored");
     library.unignore_all_duplicates().expect("shown again");
 
-    assert_eq!(outcome.covered, 400);
+    assert_eq!(outcome.covered, first[0].len());
     assert!(start.elapsed().as_secs() < 5, "{:?}", start.elapsed());
 }
 

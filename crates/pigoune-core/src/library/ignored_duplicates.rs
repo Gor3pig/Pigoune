@@ -33,6 +33,7 @@ pub struct IgnoreAction {
     pub kind: IgnoreKind,
     pub subject: Option<AssetId>,
     pub members: Vec<AssetId>,
+    pub kept_apart: Vec<AssetId>,
     pub created_at_unix_ms: i64,
 }
 
@@ -92,6 +93,7 @@ impl From<rusqlite::Error> for DuplicateError {
 #[derive(Default)]
 pub(super) struct IgnoredSets {
     groups: HashMap<AssetId, Vec<u32>>,
+    apart: HashMap<AssetId, Vec<u32>>,
     subjects: HashMap<AssetId, Vec<u32>>,
     targets: HashMap<AssetId, Vec<u32>>,
 }
@@ -110,6 +112,8 @@ impl IgnoredSets {
 
     pub(super) fn contains(&self, first: AssetId, second: AssetId) -> bool {
         share(self.groups.get(&first), self.groups.get(&second))
+            || share(self.groups.get(&first), self.apart.get(&second))
+            || share(self.groups.get(&second), self.apart.get(&first))
             || share(self.subjects.get(&first), self.targets.get(&second))
             || share(self.subjects.get(&second), self.targets.get(&first))
     }
@@ -121,7 +125,17 @@ impl Library {
         group: &[AssetId],
     ) -> Result<IgnoreOutcome, DuplicateError> {
         let cluster = self.cluster_around(group)?;
-        self.record_ignore(IgnoreKind::Group, None, cluster)
+        let members: BTreeSet<AssetId> = group.iter().copied().collect();
+        let kept_apart = cluster
+            .into_iter()
+            .filter(|asset| !members.contains(asset))
+            .collect();
+        self.record_ignore(
+            IgnoreKind::Group,
+            None,
+            members.into_iter().collect(),
+            kept_apart,
+        )
     }
 
     pub fn ignore_duplicate_member(
@@ -136,7 +150,7 @@ impl Library {
             .into_iter()
             .filter(|asset| *asset != member)
             .collect();
-        self.record_ignore(IgnoreKind::Member, Some(member), against)
+        self.record_ignore(IgnoreKind::Member, Some(member), against, Vec::new())
     }
 
     pub fn unignore_duplicate_action(
@@ -213,6 +227,7 @@ impl Library {
         kind: IgnoreKind,
         subject: Option<AssetId>,
         members: Vec<AssetId>,
+        kept_apart: Vec<AssetId>,
     ) -> Result<IgnoreOutcome, DuplicateError> {
         let covered = members.len() + usize::from(subject.is_some());
         let action = IgnoreAction {
@@ -220,6 +235,7 @@ impl Library {
             kind,
             subject,
             members,
+            kept_apart,
             created_at_unix_ms: clock::now_unix_ms(),
         };
         let stamp = self.change_duplicates(&DuplicateCommand::Ignore(action))?;
@@ -238,15 +254,19 @@ impl Library {
 
     pub fn ignored_duplicate_entries(&self) -> Result<Vec<IgnoredEntry>, LibraryError> {
         let mut members: HashMap<IgnoreId, BTreeSet<AssetId>> = HashMap::new();
+        let mut apart: HashMap<IgnoreId, BTreeSet<AssetId>> = HashMap::new();
         let mut statement = self.connection.prepare(
-            "SELECT m.action_id, m.asset_id
+            "SELECT m.action_id, m.asset_id, m.kept_apart
              FROM ignored_duplicate_members m
              JOIN assets a ON a.id = m.asset_id
              WHERE a.trashed_at_unix_ms IS NULL",
         )?;
-        for row in statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))? {
-            let (action, asset): (IgnoreId, AssetId) = row?;
-            members.entry(action).or_default().insert(asset);
+        for row in statement.query_map([], |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get::<_, bool>(2)?))
+        })? {
+            let (action, asset, kept_apart): (IgnoreId, AssetId, bool) = row?;
+            let side = if kept_apart { &mut apart } else { &mut members };
+            side.entry(action).or_default().insert(asset);
         }
         let mut statement = self.connection.prepare(
             "SELECT k.id, k.kind, k.subject_asset,
@@ -266,12 +286,13 @@ impl Library {
         for row in rows {
             let (action, kind, subject, subject_available) = row?;
             let present = members.remove(&action).unwrap_or_default();
+            let kept_apart = apart.remove(&action).unwrap_or_default();
             match (IgnoreKind::from_text(&kind), subject) {
                 (IgnoreKind::Group, _) if present.len() >= 2 => entries.push(IgnoredEntry {
                     action,
                     kind: IgnoreKind::Group,
                     assets: present.into_iter().collect(),
-                    against: Vec::new(),
+                    against: kept_apart.into_iter().collect(),
                 }),
                 (IgnoreKind::Member, Some(subject))
                     if subject_available == Some(true) && !present.is_empty() =>
@@ -318,14 +339,21 @@ impl Library {
         }
         let mut statement = self
             .connection
-            .prepare("SELECT action_id, asset_id FROM ignored_duplicate_members")?;
-        for row in statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))? {
-            let (action, asset): (IgnoreId, AssetId) = row?;
+            .prepare("SELECT action_id, asset_id, kept_apart FROM ignored_duplicate_members")?;
+        for row in statement.query_map([], |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get::<_, bool>(2)?))
+        })? {
+            let (action, asset, kept_apart): (IgnoreId, AssetId, bool) = row?;
             let Some(&slot) = index.get(&action) else {
                 continue;
             };
-            match kinds.get(&slot) {
-                Some(IgnoreKind::Group) => sets.groups.entry(asset).or_default().push(slot),
+            match (kinds.get(&slot), kept_apart) {
+                (Some(IgnoreKind::Group), false) => {
+                    sets.groups.entry(asset).or_default().push(slot);
+                }
+                (Some(IgnoreKind::Group), true) => {
+                    sets.apart.entry(asset).or_default().push(slot);
+                }
                 _ => sets.targets.entry(asset).or_default().push(slot),
             }
         }
@@ -337,15 +365,27 @@ impl Library {
         first: AssetId,
         second: AssetId,
     ) -> Result<bool, LibraryError> {
-        let in_action = "EXISTS (SELECT 1 FROM ignored_duplicate_members m
-                                 WHERE m.action_id = k.id AND m.asset_id = ";
+        let has = |condition: &str, asset: &str| {
+            format!(
+                "EXISTS (SELECT 1 FROM ignored_duplicate_members m
+                         WHERE m.action_id = k.id AND {condition} AND m.asset_id = {asset})"
+            )
+        };
         let sql = format!(
             "SELECT 1 FROM ignored_duplicate_actions k WHERE
-               (k.kind = 'group' AND {in_action}?1) AND {in_action}?2))
-            OR (k.kind = 'member' AND
-                ((k.subject_asset = ?1 AND {in_action}?2))
-                 OR (k.subject_asset = ?2 AND {in_action}?1))))
-             LIMIT 1"
+               (k.kind = 'group' AND (
+                  ({} AND {})
+                  OR ({} AND {})))
+            OR (k.kind = 'member' AND (
+                  (k.subject_asset = ?1 AND {})
+                  OR (k.subject_asset = ?2 AND {})))
+             LIMIT 1",
+            has("m.kept_apart = 0", "?1"),
+            has("1", "?2"),
+            has("m.kept_apart = 0", "?2"),
+            has("1", "?1"),
+            has("1", "?2"),
+            has("1", "?1"),
         );
         Ok(self
             .connection
@@ -359,7 +399,8 @@ pub(super) fn forget_dead_actions(connection: &Connection) -> rusqlite::Result<(
     connection.execute_batch(
         "DELETE FROM ignored_duplicate_actions
          WHERE kind = 'group'
-           AND (SELECT count(*) FROM ignored_duplicate_members WHERE action_id = id) < 2;
+           AND (SELECT count(*) FROM ignored_duplicate_members
+                WHERE action_id = id AND kept_apart = 0) < 2;
          DELETE FROM ignored_duplicate_actions
          WHERE kind = 'member'
            AND (SELECT count(*) FROM ignored_duplicate_members WHERE action_id = id) < 1;",
@@ -388,11 +429,14 @@ fn apply(
                 ],
             )?;
             let mut insert = connection.prepare(
-                "INSERT OR IGNORE INTO ignored_duplicate_members (action_id, asset_id)
-                 SELECT ?1, id FROM assets WHERE id = ?2",
+                "INSERT OR IGNORE INTO ignored_duplicate_members (action_id, asset_id, kept_apart)
+                 SELECT ?1, id, ?3 FROM assets WHERE id = ?2",
             )?;
             for member in &action.members {
-                insert.execute(params![action.id, member])?;
+                insert.execute(params![action.id, member, false])?;
+            }
+            for member in &action.kept_apart {
+                insert.execute(params![action.id, member, true])?;
             }
             Ok(DuplicateCommand::Unignore(action.id))
         }
@@ -415,17 +459,25 @@ fn apply(
                 return Err(DuplicateError::UnknownAction(*id));
             };
             let mut statement = connection.prepare(
-                "SELECT asset_id FROM ignored_duplicate_members WHERE action_id = ?1 ORDER BY asset_id",
+                "SELECT asset_id, kept_apart FROM ignored_duplicate_members
+                 WHERE action_id = ?1 ORDER BY asset_id",
             )?;
-            let members = statement
-                .query_map([id], |row| row.get(0))?
-                .collect::<Result<Vec<AssetId>, _>>()?;
+            let stored_members = statement
+                .query_map([id], |row| {
+                    Ok((row.get::<_, AssetId>(0)?, row.get::<_, bool>(1)?))
+                })?
+                .collect::<Result<Vec<_>, _>>()?;
+            let (kept_apart, members): (Vec<_>, Vec<_>) =
+                stored_members.into_iter().partition(|(_, apart)| *apart);
+            let members = members.into_iter().map(|(asset, _)| asset).collect();
+            let kept_apart = kept_apart.into_iter().map(|(asset, _)| asset).collect();
             connection.execute("DELETE FROM ignored_duplicate_actions WHERE id = ?1", [id])?;
             Ok(DuplicateCommand::Ignore(IgnoreAction {
                 id: *id,
                 kind: IgnoreKind::from_text(&kind),
                 subject,
                 members,
+                kept_apart,
                 created_at_unix_ms,
             }))
         }
@@ -502,5 +554,18 @@ pub(super) fn convert_pairs(connection: &Connection) -> Result<(), LibraryError>
         }
     }
     connection.execute_batch("DROP TABLE ignored_duplicates")?;
+    Ok(())
+}
+
+pub(super) fn add_kept_apart(connection: &Connection) -> Result<(), LibraryError> {
+    let present: i64 = connection.query_row(
+        "SELECT count(*) FROM pragma_table_info('ignored_duplicate_members')
+         WHERE name = 'kept_apart'",
+        [],
+        |row| row.get(0),
+    )?;
+    if present == 0 {
+        connection.execute_batch(include_str!("migrations/v14.sql"))?;
+    }
     Ok(())
 }

@@ -309,11 +309,7 @@ impl PigouneDuplicatesPage {
         let before = self.snapshot_results();
         match (actions.ignoring.ignore_group)(&state.members) {
             Ok(outcome) => {
-                let covered: HashSet<AssetId> = self
-                    .ignored_entries()
-                    .first()
-                    .map(|entry| entry.assets.iter().copied().collect())
-                    .unwrap_or_default();
+                let covered: HashSet<AssetId> = state.members.iter().copied().collect();
                 self.imp()
                     .groups
                     .borrow_mut()

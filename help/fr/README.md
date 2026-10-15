@@ -476,9 +476,10 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   une ligne affiche cet élément dans Tous. Quand des éléments qui se ressemblent ne sont pas des
   doublons, **Ignorer le groupe** dans le menu « ⋯ » d'un groupe, ou **Pas un doublon** dans le menu « ⋯ » d'une ligne,
   empêche Pigoune de proposer ces éléments comme doublons les uns des autres, et le message
-  permet d'annuler. Ignorer un groupe couvre aussi les autres éléments qui lui ressemblent, même au-delà des
-  quarante premiers affichés : il ne revient pas en morceaux. Une nouvelle image qui ressemble
-  à l'un d'eux reste proposée avec celui-ci. **Ignorés (N)** en haut de la page liste ce que
+  permet d'annuler. Ignorer un groupe ne concerne que les éléments de ce groupe : ils ne sont plus proposés
+  ensemble, ni avec les autres éléments qui leur ressemblent, et ces autres éléments restent
+  proposés dans leurs propres groupes. Une nouvelle image qui ressemble à l'un d'eux reste
+  proposée avec celui-ci. **Ignorés (N)** en haut de la page liste ce que
   vous avez ignoré, une entrée à chaque fois : un groupe, ou un seul élément avec ceux dont il
   est écarté. **Ne plus ignorer** défait exactement une entrée, et **Tout réafficher…** toutes.
   Le même bouton est là quand vous rouvrez « Gérer la bibliothèque », et Annuler (Ctrl+Z)
