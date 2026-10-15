@@ -24,10 +24,10 @@ pub use serde_json::Value;
 pub use session::EditSession;
 pub use shape::{Geometry, Shape};
 pub use tools::{
-    ARROW, BLUR, CELL, COLOR, CORNER_RADIUS, DASH, DASH_CHOICES, ELLIPSE, FILL, FILL_OPACITY,
-    GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, HIGHLIGHT_COLOR,
-    HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, LINE, OPACITY, Outline, PEN, PIXELATE, RADIUS,
-    RECTANGLE, SMOOTH, ToolDefinition, WIDTH, definition, definitions,
+    ARROW, BADGE_SIZE, BADGE_STYLE, BLUR, CELL, COLOR, CORNER_RADIUS, DASH, DASH_CHOICES, ELLIPSE,
+    FILL, FILL_OPACITY, GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES,
+    HIGHLIGHT_COLOR, HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, LINE, OPACITY, Outline, PEN,
+    PIXELATE, RADIUS, RECTANGLE, SMOOTH, STEP, ToolDefinition, WIDTH, definition, definitions,
 };
 
 pub const DOCUMENT_VERSION: u32 = 1;
@@ -181,6 +181,36 @@ impl AnnotationDocument {
             .map(|object| object.id)
             .max()
             .map_or(1, |highest| highest.saturating_add(1))
+    }
+
+    #[must_use]
+    pub fn ordinal(&self, id: u32) -> Option<u32> {
+        let kind = &self
+            .objects
+            .iter()
+            .find(|object| object.id == id)?
+            .shape()?
+            .kind;
+        let mut ordinal = 0;
+        for object in &self.objects {
+            if object.shape().is_some_and(|shape| &shape.kind == kind) {
+                ordinal += 1;
+            }
+            if object.id == id {
+                return Some(ordinal);
+            }
+        }
+        None
+    }
+
+    #[must_use]
+    pub fn next_ordinal(&self, kind: &str) -> u32 {
+        let count = self
+            .objects
+            .iter()
+            .filter(|object| object.shape().is_some_and(|shape| shape.kind == kind))
+            .count();
+        u32::try_from(count).map_or(u32::MAX, |count| count.saturating_add(1))
     }
 
     #[must_use]

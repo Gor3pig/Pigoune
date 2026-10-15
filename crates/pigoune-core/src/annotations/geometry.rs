@@ -105,6 +105,16 @@ pub fn shape_from_drag(
 }
 
 #[must_use]
+pub fn shape_from_anchor(
+    definition: &ToolDefinition,
+    at: Point,
+    options: &Options,
+) -> Option<Shape> {
+    (definition.geometry == GeometryKind::Anchor)
+        .then(|| Shape::new(definition.kind, Geometry::Anchor(at), options.clone()))
+}
+
+#[must_use]
 pub fn shape_from_points(
     definition: &ToolDefinition,
     points: &[Point],
@@ -210,7 +220,18 @@ pub fn shape_bounds(shape: &Shape) -> Option<Rect> {
             }
             Some(rect_between(low, high))
         }
-        Geometry::Anchor(_) => None,
+        Geometry::Anchor(at) => {
+            let definition = shape.definition()?;
+            (definition.outline == Outline::Disc).then(|| {
+                let radius = shape.number("size");
+                Rect {
+                    x: at.x - radius,
+                    y: at.y - radius,
+                    width: radius * 2.0,
+                    height: radius * 2.0,
+                }
+            })
+        }
     }
 }
 
@@ -342,6 +363,9 @@ pub fn hit(shape: &Shape, point: Point, tolerance: f32) -> bool {
         }
         (Geometry::Box(bounds), Outline::Region) => {
             contains(expanded(normalized(*bounds), tolerance), point)
+        }
+        (Geometry::Anchor(at), Outline::Disc) => {
+            (at.x - point.x).hypot(at.y - point.y) <= shape.number("size") + tolerance
         }
         (Geometry::Polyline(points), Outline::Stroke) => match points.as_slice() {
             [] => false,

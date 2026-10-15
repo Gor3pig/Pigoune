@@ -87,6 +87,7 @@ impl Interaction {
                     options: options.clone(),
                     points: vec![point],
                 };
+                self.pending = geometry::shape_from_anchor(definition, point, options);
                 true
             }
             Tool::Select => self.press_select(session, point, reach),
@@ -126,7 +127,9 @@ impl Interaction {
                 options,
                 points,
             } => {
-                if definition.geometry == GeometryKind::Polyline {
+                if definition.geometry == GeometryKind::Anchor {
+                    self.pending = geometry::shape_from_anchor(definition, point, options);
+                } else if definition.geometry == GeometryKind::Polyline {
                     if geometry::next_stroke_point(points, point) {
                         points.push(point);
                     }

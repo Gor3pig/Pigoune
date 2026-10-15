@@ -16,6 +16,7 @@ pub enum Outline {
     Segment,
     Region,
     Stroke,
+    Disc,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -251,13 +252,42 @@ pub const HIGHLIGHTER: ToolDefinition = ToolDefinition {
     options: &[HIGHLIGHT_COLOR, HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, SMOOTH],
 };
 
-pub const DEFINITIONS: [&ToolDefinition; 8] = [
+pub const BADGE_STYLE_CHOICES: [&str; 2] = ["filled", "outlined"];
+
+pub const BADGE_SIZE: OptionSpec = OptionSpec {
+    id: "size",
+    kind: OptionKind::Number {
+        min: 8.0,
+        max: 60.0,
+        step: 1.0,
+    },
+    default: DefaultValue::Number(16.0),
+    shown_if: None,
+};
+
+pub const BADGE_STYLE: OptionSpec = OptionSpec {
+    id: "style",
+    kind: OptionKind::Choice(&BADGE_STYLE_CHOICES),
+    default: DefaultValue::Choice("filled"),
+    shown_if: None,
+};
+
+pub const STEP: ToolDefinition = ToolDefinition {
+    kind: "step",
+    geometry: GeometryKind::Anchor,
+    outline: Outline::Disc,
+    hides_content: false,
+    options: &[COLOR, OPACITY, BADGE_SIZE, BADGE_STYLE],
+};
+
+pub const DEFINITIONS: [&ToolDefinition; 9] = [
     &RECTANGLE,
     &ELLIPSE,
     &LINE,
     &ARROW,
     &PEN,
     &HIGHLIGHTER,
+    &STEP,
     &BLUR,
     &PIXELATE,
 ];
