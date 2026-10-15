@@ -137,11 +137,10 @@ fn trash(library: &mut Library, list: &[usize], trashed: bool) {
 fn ignoring_a_group_of_two_lists_exactly_that_group() {
     let (_w, mut library) = library_of(2);
 
-    let outcome = library
+    library
         .ignore_duplicate_group(&ids(&[1, 2]))
         .expect("ignored");
 
-    assert_eq!(outcome.covered, 2);
     assert!(results(&library).is_empty());
     let listed = entries(&library);
     assert_eq!(listed.len(), 1);
@@ -244,11 +243,10 @@ fn what_is_already_ignored_cannot_be_ignored_again_as_one_group() {
 fn ignoring_a_group_keeps_it_apart_from_every_asset_that_still_looks_like_it() {
     let (_w, mut library) = library_of(3);
 
-    let outcome = library
+    library
         .ignore_duplicate_group(&ids(&[1, 2]))
         .expect("ignored");
 
-    assert_eq!(outcome.covered, 2);
     assert!(results(&library).is_empty());
     let listed = entries(&library);
     assert_eq!(listed.len(), 1);
@@ -553,9 +551,8 @@ fn ignoring_a_group_of_a_larger_cluster_lists_only_that_group() {
     let first = library.duplicate_groups().expect("groups");
     assert_eq!(first.iter().map(Vec::len).collect::<Vec<_>>(), [40, 40, 20]);
 
-    let outcome = library.ignore_duplicate_group(&first[0]).expect("ignored");
+    library.ignore_duplicate_group(&first[0]).expect("ignored");
 
-    assert_eq!(outcome.covered, 40);
     let listed = entries(&library);
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0].assets.len(), 40);
@@ -640,10 +637,9 @@ fn a_dense_cluster_stays_quick_to_ignore_and_to_show_again() {
     let first = library.duplicate_groups().expect("groups");
     let start = std::time::Instant::now();
 
-    let outcome = library.ignore_duplicate_group(&first[0]).expect("ignored");
+    library.ignore_duplicate_group(&first[0]).expect("ignored");
     library.unignore_all_duplicates().expect("shown again");
 
-    assert_eq!(outcome.covered, first[0].len());
     assert!(start.elapsed().as_secs() < 5, "{:?}", start.elapsed());
 }
 

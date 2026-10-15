@@ -10,6 +10,7 @@ const SCHEMA: &str = "CREATE TABLE IF NOT EXISTS details.asset_details (
     asset_id TEXT PRIMARY KEY NOT NULL,
     detail BLOB NOT NULL
 )";
+const DETAILS_CACHE_KIB: i64 = 65_536;
 const FILE_SETTINGS: &str = "PRAGMA details.journal_mode = DELETE;
     PRAGMA details.synchronous = NORMAL;";
 
@@ -25,6 +26,9 @@ pub fn attach(connection: &Connection, root: &Path) -> Result<(), LibraryError> 
     }
     let _ = connection.execute_batch("DETACH DATABASE details");
     let _ = fs::remove_file(&path);
+    let mut journal = path.clone().into_os_string();
+    journal.push("-journal");
+    let _ = fs::remove_file(journal);
     open_attached(connection, &path)?;
     Ok(())
 }
@@ -38,6 +42,7 @@ fn open_attached(connection: &Connection, path: &Path) -> rusqlite::Result<()> {
         [path.as_os_str().as_bytes()],
     )?;
     connection.execute_batch(FILE_SETTINGS)?;
+    connection.pragma_update(Some("details"), "cache_size", -DETAILS_CACHE_KIB)?;
     connection.execute_batch(SCHEMA)
 }
 

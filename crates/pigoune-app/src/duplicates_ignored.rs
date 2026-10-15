@@ -187,7 +187,7 @@ impl PigouneDuplicatesPage {
             .build();
         let mut named: Vec<AssetId> = entry.assets.clone();
         if entry.kind == IgnoreKind::Member {
-            named.extend(entry.against.iter().copied());
+            named.extend(entry.against.first().copied());
         }
         let widget = adw::PreferencesGroup::builder()
             .title(self.group_name(&named))
@@ -325,7 +325,7 @@ impl PigouneDuplicatesPage {
                     .borrow_mut()
                     .iter_mut()
                     .for_each(|group| group.retain(|id| !covered.contains(id)));
-                self.after_ignoring(outcome, before, state, true);
+                self.after_ignoring(outcome, before, true);
             }
             Err(refusal) => self.show_refusal(&refusal),
         }
@@ -350,32 +350,19 @@ impl PigouneDuplicatesPage {
                         group.retain(|id| *id != member);
                     }
                 });
-                self.after_ignoring(outcome, before, state, false);
+                self.after_ignoring(outcome, before, false);
             }
             Err(refusal) => self.show_refusal(&refusal),
         }
     }
 
-    fn after_ignoring(
-        &self,
-        outcome: IgnoreOutcome,
-        before: ResultsSnapshot,
-        state: &Rc<GroupState>,
-        group: bool,
-    ) {
+    fn after_ignoring(&self, outcome: IgnoreOutcome, before: ResultsSnapshot, group: bool) {
         let imp = self.imp();
         imp.last_snapshot.replace(Some((outcome.stamp, before)));
         self.keep_selections();
         imp.groups.borrow_mut().retain(|group| group.len() > 1);
         self.show_groups();
-        let text = if outcome.covered > state.members.len() {
-            ngettext(
-                "{count} asset ignored",
-                "{count} assets ignored",
-                u32::try_from(outcome.covered).unwrap_or(u32::MAX),
-            )
-            .replace("{count}", &outcome.covered.to_string())
-        } else if group {
+        let text = if group {
             gettext("Group ignored")
         } else {
             gettext("Asset ignored")

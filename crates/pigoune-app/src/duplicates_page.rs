@@ -131,7 +131,7 @@ pub type Selection = (AssetId, Vec<AssetId>);
 
 mod imp {
     use std::cell::{Cell, RefCell};
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
     use std::rc::Rc;
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
@@ -191,6 +191,7 @@ mod imp {
         pub states: RefCell<Vec<Rc<GroupState>>>,
         pub selections: RefCell<HashMap<AssetId, Selection>>,
         pub kinds: RefCell<HashMap<AssetId, DuplicateKind>>,
+        pub kinds_reference: RefCell<HashSet<AssetId>>,
     }
 
     #[glib::object_subclass]
@@ -340,6 +341,13 @@ impl PigouneDuplicatesPage {
             Some(groups) => {
                 imp.selections.borrow_mut().clear();
                 {
+                    imp.kinds_reference.replace(
+                        groups
+                            .iter()
+                            .filter_map(|group| group.members.first())
+                            .map(|member| member.asset)
+                            .collect(),
+                    );
                     let mut kinds = imp.kinds.borrow_mut();
                     kinds.clear();
                     for member in groups.iter().flat_map(|group| group.members.iter()) {
@@ -757,7 +765,9 @@ impl PigouneDuplicatesPage {
         ));
         let kind = if is_reference {
             None
-        } else if state.reference.get() == state.key {
+        } else if state.reference.get() == state.key
+            && self.imp().kinds_reference.borrow().contains(&state.key)
+        {
             self.imp().kinds.borrow().get(&id).copied()
         } else {
             (state.actions.compare)(state.reference.get(), id)

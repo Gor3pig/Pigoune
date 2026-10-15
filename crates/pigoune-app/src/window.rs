@@ -1538,7 +1538,8 @@ impl PigouneWindow {
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
                 move |group: &[AssetId]| window
-                    .change_ignoring(|library| library.ignore_duplicate_group(group))
+                    .change_ignoring(&ignoring_failure_title(), |library| library
+                        .ignore_duplicate_group(group))
             )),
             ignore_member: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
@@ -1546,7 +1547,8 @@ impl PigouneWindow {
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
                 move |member: AssetId, others: &[AssetId]| window
-                    .change_ignoring(|library| library.ignore_duplicate_member(member, others))
+                    .change_ignoring(&ignoring_failure_title(), |library| library
+                        .ignore_duplicate_member(member, others))
             )),
             unignore: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
@@ -1554,14 +1556,18 @@ impl PigouneWindow {
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
                 move |action: IgnoreId| window
-                    .change_ignoring(|library| library.unignore_duplicate_action(action))
+                    .change_ignoring(&showing_again_failure_title(), |library| library
+                        .unignore_duplicate_action(action))
             )),
             unignore_all: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
-                move || window.change_ignoring(Library::unignore_all_duplicates)
+                move || window.change_ignoring(
+                    &showing_again_failure_title(),
+                    Library::unignore_all_duplicates
+                )
             )),
             ignored_entries: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
@@ -1586,12 +1592,13 @@ impl PigouneWindow {
 
     fn change_ignoring<T>(
         &self,
+        title: &str,
         change: impl FnOnce(&mut Library) -> Result<T, DuplicateError>,
     ) -> Result<T, Refusal> {
         match self.change_library(change) {
             Some(Ok(done)) => Ok(done),
             Some(Err(error)) => Err(Refusal {
-                title: gettext("Unable to Ignore"),
+                title: title.to_string(),
                 body: error_messages::describe_duplicate(&error),
                 try_again: false,
             }),
@@ -6731,4 +6738,12 @@ async fn analyse_drawing(file: &Path, thumbnail_file: &Path) -> Option<Option<Vi
 fn visual_analysis_of(size: Option<(u32, u32)>, pixels: Vec<u8>) -> Option<VisualAnalysis> {
     let (width, height) = size?;
     visual_analysis(&RgbaImage::new(width, height, pixels)?)
+}
+
+fn ignoring_failure_title() -> String {
+    gettext("Unable to Ignore")
+}
+
+fn showing_again_failure_title() -> String {
+    gettext("Unable to Show Again")
 }

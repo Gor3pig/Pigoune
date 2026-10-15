@@ -73,7 +73,6 @@ impl DuplicateCommand {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IgnoreOutcome {
     pub stamp: ChangeStamp,
-    pub covered: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -245,7 +244,6 @@ impl Library {
         members: Vec<AssetId>,
         kept_apart: Vec<AssetId>,
     ) -> Result<IgnoreOutcome, DuplicateError> {
-        let covered = members.len() + usize::from(subject.is_some());
         let action = IgnoreAction {
             id: IgnoreId::generate(),
             kind,
@@ -255,7 +253,7 @@ impl Library {
             created_at_unix_ms: clock::now_unix_ms(),
         };
         let stamp = self.change_duplicates(&DuplicateCommand::Ignore(action))?;
-        Ok(IgnoreOutcome { stamp, covered })
+        Ok(IgnoreOutcome { stamp })
     }
 
     fn ignore_action_ids(&self) -> Result<Vec<IgnoreId>, LibraryError> {
@@ -626,5 +624,9 @@ pub(super) fn add_kept_apart(connection: &Connection) -> Result<(), LibraryError
     if present == 0 {
         connection.execute_batch(include_str!("migrations/v14.sql"))?;
     }
+    connection.execute_batch(
+        "CREATE INDEX IF NOT EXISTS ignored_duplicate_actions_by_subject
+         ON ignored_duplicate_actions (subject_asset)",
+    )?;
     Ok(())
 }
