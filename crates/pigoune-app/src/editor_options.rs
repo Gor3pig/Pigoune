@@ -45,6 +45,7 @@ pub fn option_label(id: &str) -> Option<String> {
         "corner_radius" => gettext("Corner Radius"),
         "fill" => gettext("Fill Shape"),
         "fill_opacity" => gettext("Fill Opacity"),
+        "smooth" => gettext("Smooth Line"),
         "radius" => gettext("Blur Radius"),
         "cell" => gettext("Cell Size"),
         _ => return None,

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 23:55+0200\n"
+"POT-Creation-Date: 2026-10-16 00:06+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Polish\n"
@@ -1435,6 +1435,7 @@ msgid "translator-credits"
 msgstr "Gor3pig"
 
 #: crates/pigoune-app/src/editor.rs:466
+#, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
@@ -1487,50 +1488,54 @@ msgid "Fill Opacity"
 msgstr "Krycie wypełnienia"
 
 #: crates/pigoune-app/src/editor_options.rs:48
+msgid "Smooth Line"
+msgstr "Wygładź linię"
+
+#: crates/pigoune-app/src/editor_options.rs:49
 msgid "Blur Radius"
 msgstr "Promień rozmycia"
 
-#: crates/pigoune-app/src/editor_options.rs:49
+#: crates/pigoune-app/src/editor_options.rs:50
 msgid "Cell Size"
 msgstr "Rozmiar komórki"
 
-#: crates/pigoune-app/src/editor_options.rs:56
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Solid Line"
 msgstr "Ciągła"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:58
 msgid "Dashed Line"
 msgstr "Kreskowana"
 
-#: crates/pigoune-app/src/editor_options.rs:58
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Dotted Line"
 msgstr "Kropkowana"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:60
 msgid "Filled Triangle"
 msgstr "Pełny trójkąt"
 
-#: crates/pigoune-app/src/editor_options.rs:60
+#: crates/pigoune-app/src/editor_options.rs:61
 msgid "Open Head"
 msgstr "Otwarty grot"
 
-#: crates/pigoune-app/src/editor_options.rs:61
+#: crates/pigoune-app/src/editor_options.rs:62
 msgid "Both Ends"
 msgstr "Z obu stron"
 
-#: crates/pigoune-app/src/editor_options.rs:62
+#: crates/pigoune-app/src/editor_options.rs:63
 msgid "No Head"
 msgstr "Bez grotu"
 
-#: crates/pigoune-app/src/editor_options.rs:63
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Small Head"
 msgstr "Mały grot"
 
-#: crates/pigoune-app/src/editor_options.rs:64
+#: crates/pigoune-app/src/editor_options.rs:65
 msgid "Medium Head"
 msgstr "Średni grot"
 
-#: crates/pigoune-app/src/editor_options.rs:65
+#: crates/pigoune-app/src/editor_options.rs:66
 msgid "Large Head"
 msgstr "Duży grot"
 
@@ -1568,53 +1573,53 @@ msgstr "Czarne"
 msgid "White"
 msgstr "Białe"
 
-#: crates/pigoune-app/src/editor_tool.rs:73
+#: crates/pigoune-app/src/editor_tool.rs:75
 msgid "Select"
 msgstr "Zaznacz"
 
-#: crates/pigoune-app/src/editor_tool.rs:74
+#: crates/pigoune-app/src/editor_tool.rs:76
 #: crates/pigoune-app/ui/editor.blp:161
 msgid "Crop"
 msgstr "Przytnij"
 
-#: crates/pigoune-app/src/editor_tool.rs:75
+#: crates/pigoune-app/src/editor_tool.rs:77
 msgid "Rectangle"
 msgstr "Prostokąt"
 
-#: crates/pigoune-app/src/editor_tool.rs:76
+#: crates/pigoune-app/src/editor_tool.rs:78
 msgid "Ellipse"
 msgstr "Elipsa"
 
-#: crates/pigoune-app/src/editor_tool.rs:77
+#: crates/pigoune-app/src/editor_tool.rs:79
 msgid "Line"
 msgstr "Linia"
 
-#: crates/pigoune-app/src/editor_tool.rs:78
+#: crates/pigoune-app/src/editor_tool.rs:80
 msgid "Arrow"
 msgstr "Strzałka"
 
-#: crates/pigoune-app/src/editor_tool.rs:79
+#: crates/pigoune-app/src/editor_tool.rs:81
 msgid "Text"
 msgstr "Tekst"
 
-#: crates/pigoune-app/src/editor_tool.rs:80
+#: crates/pigoune-app/src/editor_tool.rs:82
 msgid "Steps"
 msgstr "Kroki"
 
-#: crates/pigoune-app/src/editor_tool.rs:81
+#: crates/pigoune-app/src/editor_tool.rs:83
 msgid "Pen"
 msgstr "Pióro"
 
-#: crates/pigoune-app/src/editor_tool.rs:82
+#: crates/pigoune-app/src/editor_tool.rs:84
 msgid "Highlighter"
 msgstr "Zakreślacz"
 
-#: crates/pigoune-app/src/editor_tool.rs:83
+#: crates/pigoune-app/src/editor_tool.rs:85
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:277
 msgid "Blur"
 msgstr "Rozmycie"
 
-#: crates/pigoune-app/src/editor_tool.rs:84
+#: crates/pigoune-app/src/editor_tool.rs:86
 msgid "Pixelate"
 msgstr "Pikselizuj"
 
@@ -6263,34 +6268,34 @@ msgid "Crop Size"
 msgstr "Rozmiar kadrowania"
 
 #: crates/pigoune-app/ui/editor.blp:199
-msgid "Reset"
-msgstr "Resetuj"
-
-#: crates/pigoune-app/ui/editor.blp:204
-msgid "Cancel"
-msgstr "Anuluj"
-
-#: crates/pigoune-app/ui/editor.blp:209
 msgid "Apply"
 msgstr "Zastosuj"
 
-#: crates/pigoune-app/ui/editor.blp:221
+#: crates/pigoune-app/ui/editor.blp:212
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: crates/pigoune-app/ui/editor.blp:217
+msgid "Reset"
+msgstr "Resetuj"
+
+#: crates/pigoune-app/ui/editor.blp:226
 msgid "Layers"
 msgstr "Warstwy"
 
-#: crates/pigoune-app/ui/editor.blp:222
+#: crates/pigoune-app/ui/editor.blp:227
 msgid "Nothing to show yet"
 msgstr "Na razie nic do pokazania"
 
-#: crates/pigoune-app/ui/editor.blp:226
+#: crates/pigoune-app/ui/editor.blp:231
 msgid "Frame"
 msgstr "Ramka"
 
-#: crates/pigoune-app/ui/editor.blp:229
+#: crates/pigoune-app/ui/editor.blp:234
 msgid "Border, Shadow and Background"
 msgstr "Obramowanie, cień i tło"
 
-#: crates/pigoune-app/ui/editor.blp:258
+#: crates/pigoune-app/ui/editor.blp:263
 msgid "Tools and Settings"
 msgstr "Narzędzia i ustawienia"
 
