@@ -38,6 +38,12 @@ impl Library {
              WHERE trashed_at_unix_ms IS NOT NULL AND trashed_at_unix_ms <= ?1",
             params![limit_unix_ms],
         )?;
+        for id in &removed {
+            transaction.execute(
+                "DELETE FROM details.asset_details WHERE asset_id = ?1",
+                [id],
+            )?;
+        }
         transaction.commit()?;
         if !removed.is_empty() || removed_collections > 0 {
             self.history.clear();

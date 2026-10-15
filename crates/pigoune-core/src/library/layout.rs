@@ -6,6 +6,7 @@ pub const LIBRARY_EXTENSION: &str = "pigoune";
 pub const DATABASE_FILE_NAME: &str = "library.db";
 pub const FILES_DIR_NAME: &str = "files";
 pub const CACHE_DIR_NAME: &str = "cache";
+const DETAILS_FILE_NAME: &str = "visual-details.db";
 const THUMBNAILS_DIR_NAME: &str = "thumbnails";
 const EXPORT_DIR_NAME: &str = "export";
 const CLIPBOARD_DIR_NAME: &str = "clipboard";
@@ -55,6 +56,10 @@ pub fn files_dir(root: &Path) -> PathBuf {
 
 pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
     files_dir(root).join(bucket_name(id)).join(id.to_string())
+}
+
+pub fn details_path(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME).join(DETAILS_FILE_NAME)
 }
 
 pub fn thumbnails_dir(root: &Path) -> PathBuf {

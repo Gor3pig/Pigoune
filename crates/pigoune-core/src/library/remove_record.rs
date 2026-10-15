@@ -15,6 +15,10 @@ impl Library {
         }
         self.connection
             .execute("DELETE FROM assets WHERE id = ?1", [id])?;
+        self.connection.execute(
+            "DELETE FROM details.asset_details WHERE asset_id = ?1",
+            [id],
+        )?;
         self.history.clear();
         forget_thumbnails(&self.root, id);
         if inside && let Some(folder) = file.parent() {

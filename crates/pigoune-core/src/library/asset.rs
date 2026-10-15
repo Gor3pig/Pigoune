@@ -236,8 +236,9 @@ impl Library {
     ) -> Result<(), LibraryError> {
         let transaction = self.connection.transaction()?;
         {
-            let mut statement =
-                transaction.prepare_cached("UPDATE assets SET visual_detail = ?2 WHERE id = ?1")?;
+            let mut statement = transaction.prepare_cached(
+                "INSERT OR REPLACE INTO details.asset_details (asset_id, detail) VALUES (?1, ?2)",
+            )?;
             for (id, detail) in batch {
                 let bytes = detail
                     .as_ref()
@@ -255,8 +256,10 @@ impl Library {
     ) -> Result<(), LibraryError> {
         let transaction = self.connection.transaction()?;
         {
-            let mut statement = transaction.prepare_cached(
-                "UPDATE assets SET visual_hash = ?2, visual_detail = ?3 WHERE id = ?1",
+            let mut hashes =
+                transaction.prepare_cached("UPDATE assets SET visual_hash = ?2 WHERE id = ?1")?;
+            let mut details = transaction.prepare_cached(
+                "INSERT OR REPLACE INTO details.asset_details (asset_id, detail) VALUES (?1, ?2)",
             )?;
             for (id, analysis) in batch {
                 let (hash, detail): (Vec<u8>, Vec<u8>) = analysis.as_ref().map_or_else(
@@ -268,7 +271,8 @@ impl Library {
                         )
                     },
                 );
-                statement.execute(params![id, hash, detail])?;
+                hashes.execute(params![id, hash])?;
+                details.execute(params![id, detail])?;
             }
         }
         transaction.commit()?;

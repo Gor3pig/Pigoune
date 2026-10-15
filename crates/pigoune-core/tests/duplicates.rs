@@ -108,6 +108,8 @@ fn library_with(seeds: &[Seed]) -> (TempDir, Library) {
 
 fn insert(root: &Path, seeds: &[Seed]) {
     let mut connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    let details =
+        Connection::open(root.join("cache").join("visual-details.db")).expect("details file opens");
     let transaction = connection.transaction().expect("transaction starts");
     for (index, seed) in seeds.iter().enumerate() {
         let number = index + 1;
@@ -120,8 +122,8 @@ fn insert(root: &Path, seeds: &[Seed]) {
             .execute(
                 "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
                                      width, height, byte_size, content_hash, is_animated,
-                                     embedded_sizes, added_at_unix_ms, visual_hash, colors, visual_detail)
-                 VALUES (?1, ?2, ?3, ?4, 'png', ?5, ?6, 100, ?7, 0, '', ?8, ?9, ?10, ?11)",
+                                     embedded_sizes, added_at_unix_ms, visual_hash, colors)
+                 VALUES (?1, ?2, ?3, ?4, 'png', ?5, ?6, 100, ?7, 0, '', ?8, ?9, ?10)",
                 params![
                     asset_id(number).to_string(),
                     format!("asset {number}"),
@@ -133,10 +135,17 @@ fn insert(root: &Path, seeds: &[Seed]) {
                     i64::try_from(number).expect("small"),
                     blob,
                     seed.colors,
-                    detail,
                 ],
             )
             .expect("asset is inserted");
+        if let Some(detail) = detail {
+            details
+                .execute(
+                    "INSERT INTO asset_details (asset_id, detail) VALUES (?1, ?2)",
+                    params![asset_id(number).to_string(), detail],
+                )
+                .expect("detail is inserted");
+        }
     }
     transaction.commit().expect("transaction commits");
 }
@@ -1019,4 +1028,30 @@ fn the_backlog_counts_the_assets_missing_colors_or_a_hash() {
     ]);
 
     assert_eq!(library.analysis_backlog().expect("backlog"), (2, 3));
+}
+
+#[test]
+fn emptying_the_trash_forgets_the_details_of_the_deleted_assets() {
+    let (_workspace, mut library) = library_with(&[seed(9), seed(9)]);
+    library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: vec![asset_id(1)],
+            trashed: true,
+        })
+        .expect("trashed");
+
+    library.empty_trash().expect("emptied");
+
+    let root = library.root().to_path_buf();
+    drop(library);
+    let details =
+        Connection::open(root.join("cache").join("visual-details.db")).expect("details file opens");
+    let remaining: Vec<String> = details
+        .prepare("SELECT asset_id FROM asset_details")
+        .expect("prepared")
+        .query_map([], |row| row.get(0))
+        .expect("queried")
+        .collect::<Result<_, _>>()
+        .expect("rows");
+    assert_eq!(remaining, [asset_id(2).to_string()]);
 }

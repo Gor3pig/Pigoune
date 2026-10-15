@@ -159,9 +159,10 @@ impl Library {
 
     fn assets_without_detail(&self) -> Result<HashSet<AssetId>, LibraryError> {
         let mut statement = self.connection.prepare(
-            "SELECT id FROM assets
-             WHERE trashed_at_unix_ms IS NULL AND length(visual_hash) = ?1
-               AND visual_detail IS NULL",
+            "SELECT a.id FROM assets a
+             LEFT JOIN details.asset_details d ON d.asset_id = a.id
+             WHERE a.trashed_at_unix_ms IS NULL AND length(a.visual_hash) = ?1
+               AND d.asset_id IS NULL",
         )?;
         let ids = statement
             .query_map([VisualHash::BYTE_LENGTH], |row| row.get(0))?
@@ -190,11 +191,12 @@ impl Library {
     }
 
     fn fingerprints(&self, with_detail: bool) -> Result<Vec<Fingerprint>, LibraryError> {
-        let detail_column = if with_detail { "visual_detail" } else { "NULL" };
+        let (detail_column, detail_join) = detail_sql(with_detail);
         let mut statement = self.connection.prepare(&format!(
-            "SELECT id, visual_hash, width, height, colors, byte_size, {detail_column} FROM assets
-             WHERE trashed_at_unix_ms IS NULL AND length(visual_hash) = ?1
-             ORDER BY id"
+            "SELECT a.id, a.visual_hash, a.width, a.height, a.colors, a.byte_size, {detail_column}
+             FROM assets a {detail_join}
+             WHERE a.trashed_at_unix_ms IS NULL AND length(a.visual_hash) = ?1
+             ORDER BY a.id"
         ))?;
         let rows = statement.query_map([VisualHash::BYTE_LENGTH], fingerprint_from_row)?;
         let mut fingerprints = Vec::new();
@@ -211,13 +213,14 @@ impl Library {
         id: AssetId,
         with_detail: bool,
     ) -> Result<Stored, LibraryError> {
-        let detail_column = if with_detail { "visual_detail" } else { "NULL" };
+        let (detail_column, detail_join) = detail_sql(with_detail);
         let row = self
             .connection
             .query_row(
                 &format!(
-                    "SELECT id, visual_hash, width, height, colors, byte_size, {detail_column}
-                     FROM assets WHERE id = ?1"
+                    "SELECT a.id, a.visual_hash, a.width, a.height, a.colors, a.byte_size,
+                            {detail_column}
+                     FROM assets a {detail_join} WHERE a.id = ?1"
                 ),
                 [id],
                 |row| {
@@ -232,6 +235,17 @@ impl Library {
             Some((false, None)) => Stored::Unusable,
             Some((false, Some(fingerprint))) => Stored::Ready(fingerprint),
         })
+    }
+}
+
+fn detail_sql(with_detail: bool) -> (&'static str, &'static str) {
+    if with_detail {
+        (
+            "d.detail",
+            "LEFT JOIN details.asset_details d ON d.asset_id = a.id",
+        )
+    } else {
+        ("NULL", "")
     }
 }
 

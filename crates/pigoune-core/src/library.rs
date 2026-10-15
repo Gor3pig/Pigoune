@@ -8,6 +8,7 @@ mod clock;
 mod collection;
 mod collection_command;
 mod content;
+mod details_store;
 mod duplicate_removal;
 mod duplicates;
 mod error;
@@ -141,10 +142,15 @@ impl Library {
         schema::ensure_is_writable(&connection)?;
         schema::configure_connection(&connection)?;
         schema::ensure_is_intact(&connection)?;
+        let found_version = schema::read_format_version(&connection)?;
         schema::migrate_to_current_version(&mut connection, root)?;
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
+        details_store::attach(&connection, root)?;
+        if found_version < schema::CURRENT_FORMAT_VERSION {
+            let _ = connection.execute_batch("VACUUM");
+        }
         buckets::move_into_buckets(root);
         remove_unfinished_imports(root);
         export::forget_exports(root);

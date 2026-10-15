@@ -70,10 +70,7 @@ fn forget_smart_collections(connection: &Connection) {
 
 fn forget_visual_hashes(connection: &Connection) {
     connection
-        .execute_batch(
-            "ALTER TABLE assets DROP COLUMN visual_detail;
-             ALTER TABLE assets DROP COLUMN visual_hash;",
-        )
+        .execute_batch("ALTER TABLE assets DROP COLUMN visual_hash;")
         .expect("visual hashes forgotten");
 }
 
@@ -616,10 +613,7 @@ fn a_format_10_library_keeps_its_hashes_and_accepts_visual_details() {
         .pragma_update(None, "user_version", FORMAT_BEFORE_VISUAL_DETAILS)
         .expect("version updated");
     connection
-        .execute_batch(
-            "ALTER TABLE assets DROP COLUMN visual_detail;
-             UPDATE assets SET visual_hash = x'0000000000000001';",
-        )
+        .execute_batch("UPDATE assets SET visual_hash = x'0000000000000001';")
         .expect("visual details forgotten");
     drop(connection);
 
@@ -638,4 +632,79 @@ fn a_format_10_library_keeps_its_hashes_and_accepts_visual_details() {
     library
         .record_visual_details_batch(&[(red, None)])
         .expect("details accepted");
+}
+
+fn details_file(root: &std::path::Path) -> std::path::PathBuf {
+    root.join("cache").join("visual-details.db")
+}
+
+fn stored_details(root: &std::path::Path) -> Vec<(String, usize)> {
+    let connection = Connection::open(details_file(root)).expect("details file opens");
+    let mut statement = connection
+        .prepare("SELECT asset_id, length(detail) FROM asset_details ORDER BY asset_id")
+        .expect("prepared");
+    statement
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+        .expect("queried")
+        .collect::<Result<_, _>>()
+        .expect("rows")
+}
+
+#[test]
+fn a_format_11_library_moves_its_visual_details_out_of_the_assets_table() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute_batch(
+            "ALTER TABLE assets ADD COLUMN visual_detail BLOB;
+             UPDATE assets SET visual_hash = x'0000000000000001', visual_detail = randomblob(1024);
+             PRAGMA user_version = 11;",
+        )
+        .expect("format 11 simulated");
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    let columns: i64 = connection
+        .query_row(
+            "SELECT count(*) FROM pragma_table_info('assets') WHERE name = 'visual_detail'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("columns counted");
+    assert_eq!(columns, 0);
+    assert_eq!(stored_details(&root), [(red.to_string(), 1024)]);
+}
+
+#[test]
+fn losing_the_details_file_only_makes_the_details_wait_again() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute_batch("UPDATE assets SET visual_hash = x'0000000000000001';")
+        .expect("hash recorded");
+    drop(connection);
+    std::fs::write(details_file(&root), b"not a database").expect("file spoiled");
+
+    let mut library = Library::open(&root).expect("library opens in spite of the spoiled file");
+    library
+        .record_visual_details_batch(&[(red, None)])
+        .expect("details accepted again");
+
+    drop(library);
+    assert_eq!(stored_details(&root), [(red.to_string(), 0)]);
 }
