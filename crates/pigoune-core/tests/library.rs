@@ -82,6 +82,7 @@ fn a_new_library_contains_every_table_of_the_format() {
     assert_eq!(
         table_names(&database_path),
         [
+            "asset_annotations",
             "asset_collections",
             "asset_tags",
             "assets",

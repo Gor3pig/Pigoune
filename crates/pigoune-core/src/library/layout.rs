@@ -15,6 +15,7 @@ const PASTED_DIR_NAME: &str = "pasted";
 
 const MAX_NAME_BYTES: usize = 200;
 const BUCKET_NAME_LENGTH: usize = 2;
+pub const ORIGINAL_FILE_NAME: &str = "original.png";
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
 
 pub fn library_folder_name(requested_name: &str) -> Result<String, LibraryError> {
@@ -113,6 +114,10 @@ pub fn stored_path(id: AssetId, original_file_name: &str) -> String {
         "{FILES_DIR_NAME}/{}/{id}/{original_file_name}",
         bucket_name(id)
     )
+}
+
+pub fn original_stored_path(id: AssetId) -> String {
+    stored_path(id, ORIGINAL_FILE_NAME)
 }
 
 pub fn unfinished_import_dir(root: &Path, id: AssetId) -> PathBuf {

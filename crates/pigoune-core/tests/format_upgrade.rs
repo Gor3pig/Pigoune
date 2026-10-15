@@ -747,3 +747,39 @@ fn a_format_11_library_gains_the_tables_of_ignored_duplicates() {
             .is_empty()
     );
 }
+
+#[test]
+fn a_format_12_library_gains_the_annotations_table_and_keeps_its_resources() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let red = import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute_batch(
+            "DROP TABLE asset_annotations;
+             PRAGMA user_version = 12;",
+        )
+        .expect("format 12 simulated");
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert!(library.asset(red).expect("query").is_some());
+    assert_eq!(library.annotations(red).expect("query"), None);
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    let tables: i64 = connection
+        .query_row(
+            "SELECT count(*) FROM sqlite_master WHERE name = 'asset_annotations'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("tables counted");
+    assert_eq!(tables, 1);
+}

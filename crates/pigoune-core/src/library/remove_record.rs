@@ -22,6 +22,7 @@ impl Library {
         self.history.clear();
         forget_thumbnails(&self.root, id);
         if inside && let Some(folder) = file.parent() {
+            let _ = fs::remove_file(self.root.join(layout::original_stored_path(id)));
             let _ = fs::remove_dir(folder);
         }
         Ok(())

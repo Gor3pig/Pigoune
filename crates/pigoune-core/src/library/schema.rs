@@ -4,7 +4,7 @@ use rusqlite::{Connection, ErrorCode};
 
 use super::{LibraryError, animation_recheck, buckets, details_store};
 
-pub const CURRENT_FORMAT_VERSION: u32 = 12;
+pub const CURRENT_FORMAT_VERSION: u32 = 13;
 pub const FORMAT_MOVING_VISUAL_DETAILS: u32 = 12;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 const PAGE_CACHE_KIB: i64 = 65_536;
@@ -17,7 +17,7 @@ enum Migration {
 }
 
 const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = [
-    "1.0", "1.4", "1.5", "1.6", "2.0", "2.0", "2.0", "2.2", "2.5", "2.10", "2.11", "2.12",
+    "1.0", "1.4", "1.5", "1.6", "2.0", "2.0", "2.0", "2.2", "2.5", "2.10", "2.11", "2.12", "3.0",
 ];
 
 #[must_use]
@@ -39,6 +39,7 @@ const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::Statements(include_str!("migrations/v10.sql")),
     Migration::Statements(include_str!("migrations/v11.sql")),
     Migration::MoveVisualDetails,
+    Migration::Statements(include_str!("migrations/v13.sql")),
 ];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
@@ -161,6 +162,7 @@ mod tests {
         assert_eq!(oldest_compatible_version(10), Some("2.10"));
         assert_eq!(oldest_compatible_version(11), Some("2.11"));
         assert_eq!(oldest_compatible_version(12), Some("2.12"));
+        assert_eq!(oldest_compatible_version(13), Some("3.0"));
         assert!(oldest_compatible_version(CURRENT_FORMAT_VERSION).is_some());
         assert_eq!(oldest_compatible_version(0), None);
         assert_eq!(oldest_compatible_version(CURRENT_FORMAT_VERSION + 1), None);

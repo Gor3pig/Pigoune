@@ -20,6 +20,7 @@ pub struct HealthTarget {
 pub struct HealthPlan {
     root: PathBuf,
     targets: Vec<HealthTarget>,
+    originals: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,10 +75,27 @@ impl Library {
                 })
             })?
             .collect::<Result<_, _>>()?;
+        let originals = self.annotated_originals()?;
         Ok(HealthPlan {
             root: self.root.clone(),
             targets,
+            originals,
         })
+    }
+}
+
+impl Library {
+    fn annotated_originals(&self) -> Result<Vec<PathBuf>, LibraryError> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT asset_id FROM asset_annotations")?;
+        let ids: Vec<AssetId> = statement
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(ids
+            .into_iter()
+            .map(|id| PathBuf::from(layout::original_stored_path(id)))
+            .collect())
     }
 }
 
@@ -133,6 +151,7 @@ impl HealthPlan {
             .targets
             .iter()
             .map(|target| target.stored_path.as_path())
+            .chain(self.originals.iter().map(PathBuf::as_path))
             .collect();
         let mut found = Vec::new();
         collect_files(&self.root, &layout::files_dir(&self.root), &mut found);
