@@ -1,3 +1,4 @@
+mod crop;
 mod geometry;
 mod interaction;
 mod options;
@@ -9,6 +10,7 @@ use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Map;
 
+pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
     ArrowHead, Handle, arrow_head, dash_pattern, handles, head_size_factor, hit, rect_between,
     resized, shape_bounds, shape_from_drag, translated,
