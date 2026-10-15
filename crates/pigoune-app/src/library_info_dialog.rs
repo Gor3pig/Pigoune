@@ -178,6 +178,10 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneLibraryInfoDialog {
+    pub fn history_changed(&self) {
+        self.imp().duplicates_page.history_changed();
+    }
+
     pub fn new(
         report: LibraryReport,
         on_show: impl Fn(AssetId) + 'static,

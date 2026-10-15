@@ -686,7 +686,7 @@ fn a_format_11_library_moves_its_visual_details_out_of_the_assets_table() {
     assert_eq!(stored_details(&root), [(red.to_string(), 1024)]);
     let ignored_table: i64 = connection
         .query_row(
-            "SELECT count(*) FROM sqlite_master WHERE name = 'ignored_duplicates'",
+            "SELECT count(*) FROM sqlite_master WHERE name = 'ignored_duplicate_actions'",
             [],
             |row| row.get(0),
         )
@@ -715,4 +715,80 @@ fn losing_the_details_file_only_makes_the_details_wait_again() {
 
     drop(library);
     assert_eq!(stored_details(&root), [(red.to_string(), 0)]);
+}
+
+#[test]
+fn a_format_12_library_turns_its_ignored_pairs_into_group_actions() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let library = Library::create(workspace.path(), "Avant").expect("library is created");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    for number in 1..=6 {
+        connection
+            .execute(
+                "INSERT INTO assets (id, display_name, original_file_name, stored_path, format,
+                                     width, height, byte_size, content_hash, is_animated,
+                                     embedded_sizes, added_at_unix_ms)
+                 VALUES (?1, ?2, ?3, ?4, 'png', 10, 10, 10, ?5, 0, '', ?6)",
+                rusqlite::params![
+                    format!("00000000-0000-7000-8000-{number:012}"),
+                    format!("asset {number}"),
+                    format!("a{number}.png"),
+                    format!("files/zz/{number}/a{number}.png"),
+                    format!("h{number}"),
+                    number
+                ],
+            )
+            .expect("asset");
+    }
+    let pair = |first: u32, second: u32| {
+        format!(
+            "INSERT INTO ignored_duplicates VALUES ('00000000-0000-7000-8000-{first:012}',
+             '00000000-0000-7000-8000-{second:012}', 1000)"
+        )
+    };
+    connection
+        .execute_batch(&format!(
+            "DROP TABLE ignored_duplicate_members;
+             DROP TABLE ignored_duplicate_actions;
+             CREATE TABLE ignored_duplicates (
+                 first_asset TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
+                 second_asset TEXT NOT NULL REFERENCES assets (id) ON DELETE CASCADE,
+                 ignored_at_unix_ms INTEGER NOT NULL,
+                 PRIMARY KEY (first_asset, second_asset)
+             ) STRICT;
+             {}; {}; {};
+             PRAGMA user_version = 12;",
+            pair(1, 2),
+            pair(2, 3),
+            pair(5, 6)
+        ))
+        .expect("format 12 simulated");
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    let mut groups: Vec<usize> = library
+        .ignored_duplicate_entries()
+        .expect("entries")
+        .iter()
+        .map(|entry| entry.assets.len())
+        .collect();
+    groups.sort_unstable();
+    assert_eq!(groups, [2, 3]);
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    let old: i64 = connection
+        .query_row(
+            "SELECT count(*) FROM sqlite_master WHERE name = 'ignored_duplicates'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("tables counted");
+    assert_eq!(old, 0);
 }

@@ -1,12 +1,15 @@
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::ObjectSubclassIsExt;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
-use pigoune_core::{AssetId, ChangeStamp};
+use pigoune_core::{AssetId, ChangeStamp, IgnoreId, IgnoreKind, IgnoreOutcome, IgnoredEntry};
 
-use crate::duplicates_page::{DuplicateActions, GroupState, PigouneDuplicatesPage};
+use crate::duplicates_page::{
+    DuplicateActions, GroupState, PigouneDuplicatesPage, ResultsSnapshot,
+};
 
 const IGNORED_GROUPS_SHOWN: usize = 50;
 
@@ -15,12 +18,15 @@ impl PigouneDuplicatesPage {
         self.imp().actions.borrow().clone()
     }
 
+    fn ignored_entries(&self) -> Vec<IgnoredEntry> {
+        self.actions()
+            .map(|actions| (actions.ignoring.ignored_entries)())
+            .unwrap_or_default()
+    }
+
     pub(crate) fn refresh_ignored_buttons(&self) {
         let imp = self.imp();
-        let Some(actions) = self.actions() else {
-            return;
-        };
-        let count = (actions.ignoring.ignored_groups)().len();
+        let count = self.ignored_entries().len();
         let viewing = imp.viewing_ignored.get();
         let label = gettext("_Ignored ({count})").replace("{count}", &count.to_string());
         imp.ignored_button.set_use_underline(true);
@@ -76,20 +82,67 @@ impl PigouneDuplicatesPage {
         }
     }
 
+    pub(crate) fn history_changed(&self) {
+        let imp = self.imp();
+        imp.last_snapshot.replace(None);
+        if imp.viewing_ignored.get() {
+            self.show_ignored();
+        } else if imp.stack.visible_child_name().as_deref() == Some("results") {
+            self.on_search_clicked();
+        } else {
+            self.refresh_ignored_buttons();
+        }
+    }
+
+    pub(crate) fn show_after_undo(&self, stamp: ChangeStamp) {
+        let imp = self.imp();
+        if imp.viewing_ignored.get() {
+            self.show_ignored();
+            return;
+        }
+        let kept = imp.last_snapshot.take();
+        match kept {
+            Some((kept_stamp, snapshot)) if kept_stamp == stamp => {
+                imp.groups.replace(snapshot.groups);
+                imp.selections.replace(snapshot.selections);
+                self.show_groups();
+            }
+            _ => self.on_search_clicked(),
+        }
+    }
+
+    pub(crate) fn snapshot_results(&self) -> ResultsSnapshot {
+        let imp = self.imp();
+        ResultsSnapshot {
+            groups: imp.groups.borrow().clone(),
+            selections: imp
+                .states
+                .borrow()
+                .iter()
+                .map(|state| {
+                    (
+                        state.key,
+                        (state.reference.get(), state.ticked.borrow().clone()),
+                    )
+                })
+                .collect(),
+        }
+    }
+
     pub(crate) fn show_ignored(&self) {
         let imp = self.imp();
-        let Some(actions) = self.actions() else {
-            return;
-        };
-        let groups = (actions.ignoring.ignored_groups)();
-        if groups.is_empty() {
+        let entries = self.ignored_entries();
+        if entries.is_empty() {
             self.leave_ignored_view();
             return;
         }
         imp.viewing_ignored.set(true);
-        let total = groups.len();
-        let shown = &groups[..total.min(IGNORED_GROUPS_SHOWN)];
-        let ids: Vec<AssetId> = shown.iter().flatten().copied().collect();
+        let total = entries.len();
+        let shown = &entries[..total.min(IGNORED_GROUPS_SHOWN)];
+        let ids: Vec<AssetId> = shown
+            .iter()
+            .flat_map(|entry| entry.assets.iter().chain(entry.against.iter()).copied())
+            .collect();
         self.ensure_details(&ids);
         imp.states.borrow_mut().clear();
         imp.waiting.borrow_mut().clear();
@@ -97,8 +150,8 @@ impl PigouneDuplicatesPage {
             imp.groups_box.remove(&child);
         }
         imp.ignored_caption_label.set_label(&ignored_caption(total));
-        for group in shown {
-            imp.groups_box.append(&self.ignored_group_widget(group));
+        for entry in shown {
+            imp.groups_box.append(&self.ignored_entry_widget(entry));
         }
         imp.stack.set_visible_child_name("results");
         self.follow_scrolling();
@@ -106,38 +159,32 @@ impl PigouneDuplicatesPage {
         self.refresh_ignored_buttons();
     }
 
-    fn ignored_group_widget(&self, group: &[AssetId]) -> adw::PreferencesGroup {
+    fn ignored_entry_widget(&self, entry: &IgnoredEntry) -> adw::PreferencesGroup {
         let stop = gtk::Button::builder()
             .label(gettext("Stop Ignoring"))
             .valign(gtk::Align::Center)
             .build();
+        let mut named: Vec<AssetId> = entry.assets.clone();
+        named.extend(entry.against.iter().copied());
         let widget = adw::PreferencesGroup::builder()
-            .title(self.group_name(group))
-            .description(
-                ngettext(
-                    "{count} ignored asset",
-                    "{count} ignored assets",
-                    u32::try_from(group.len()).unwrap_or(u32::MAX),
-                )
-                .replace("{count}", &group.len().to_string()),
-            )
+            .title(self.group_name(&named))
+            .description(self.ignored_description(entry))
             .header_suffix(&stop)
             .build();
-        let members = group.to_vec();
+        let action = entry.action;
         stop.connect_clicked(glib::clone!(
             #[weak(rename_to = page)]
             self,
-            move |_| page.stop_ignoring(&members)
+            move |_| page.stop_ignoring(action)
         ));
-        for id in group {
+        for id in &entry.assets {
             let Some(member) = self.imp().details.borrow().get(id).cloned() else {
                 continue;
             };
             let id = member.id;
             let row = adw::ActionRow::builder()
-                .title(&member.name)
-                .subtitle(&member.summary)
-                .use_markup(false)
+                .title(glib::markup_escape_text(&member.name))
+                .subtitle(glib::markup_escape_text(&member.summary))
                 .activatable(true)
                 .build();
             row.add_prefix(&self.thumbnail_of(&member));
@@ -151,11 +198,41 @@ impl PigouneDuplicatesPage {
         widget
     }
 
-    fn stop_ignoring(&self, group: &[AssetId]) {
+    fn ignored_description(&self, entry: &IgnoredEntry) -> String {
+        if entry.kind == IgnoreKind::Group {
+            return ngettext(
+                "{count} ignored asset",
+                "{count} ignored assets",
+                u32::try_from(entry.assets.len()).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &entry.assets.len().to_string());
+        }
+        let details = self.imp().details.borrow();
+        let name = entry
+            .against
+            .first()
+            .and_then(|id| details.get(id))
+            .map(|member| glib::markup_escape_text(&member.name).to_string())
+            .unwrap_or_default();
+        let others = entry.against.len().saturating_sub(1);
+        if others == 0 {
+            gettext("Not offered with “{name}”").replace("{name}", &name)
+        } else {
+            ngettext(
+                "Not offered with “{name}” and {count} other asset",
+                "Not offered with “{name}” and {count} other assets",
+                u32::try_from(others).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &others.to_string())
+            .replace("{name}", &name)
+        }
+    }
+
+    fn stop_ignoring(&self, action: IgnoreId) {
         let Some(actions) = self.actions() else {
             return;
         };
-        match (actions.ignoring.unignore_group)(group) {
+        match (actions.ignoring.unignore)(action) {
             Ok(stamp) => self.after_showing_again(stamp, &gettext("Group shown again")),
             Err(refusal) => self.show_refusal(&refusal),
         }
@@ -168,9 +245,7 @@ impl PigouneDuplicatesPage {
     }
 
     pub(crate) fn confirm_show_all(&self) {
-        let count = self
-            .actions()
-            .map_or(0, |actions| (actions.ignoring.ignored_groups)().len());
+        let count = self.ignored_entries().len();
         if count == 0 {
             return;
         }
@@ -218,15 +293,20 @@ impl PigouneDuplicatesPage {
         let Some(actions) = self.actions() else {
             return;
         };
+        let before = self.snapshot_results();
         match (actions.ignoring.ignore_group)(&state.members) {
-            Ok(stamp) => {
-                let key = state.key;
-                self.after_ignoring(
-                    stamp,
-                    state,
-                    |group| !group.contains(&key),
-                    &gettext("Group ignored"),
-                );
+            Ok(outcome) => {
+                let covered: HashSet<AssetId> = self
+                    .ignored_entries()
+                    .first()
+                    .map(|entry| entry.assets.iter().copied().collect())
+                    .unwrap_or_default();
+                self.imp()
+                    .groups
+                    .borrow_mut()
+                    .iter_mut()
+                    .for_each(|group| group.retain(|id| !covered.contains(id)));
+                self.after_ignoring(outcome, before, state, true);
             }
             Err(refusal) => self.show_refusal(&refusal),
         }
@@ -242,15 +322,16 @@ impl PigouneDuplicatesPage {
             .copied()
             .filter(|other| *other != member)
             .collect();
+        let before = self.snapshot_results();
         match (actions.ignoring.ignore_member)(member, &others) {
-            Ok(stamp) => {
+            Ok(outcome) => {
                 let key = state.key;
                 self.imp().groups.borrow_mut().iter_mut().for_each(|group| {
                     if group.contains(&key) {
                         group.retain(|id| *id != member);
                     }
                 });
-                self.after_ignoring(stamp, state, |_| true, &gettext("Asset ignored"));
+                self.after_ignoring(outcome, before, state, false);
             }
             Err(refusal) => self.show_refusal(&refusal),
         }
@@ -258,20 +339,29 @@ impl PigouneDuplicatesPage {
 
     fn after_ignoring(
         &self,
-        stamp: ChangeStamp,
+        outcome: IgnoreOutcome,
+        before: ResultsSnapshot,
         state: &Rc<GroupState>,
-        keep: impl Fn(&Vec<AssetId>) -> bool,
-        text: &str,
+        group: bool,
     ) {
         let imp = self.imp();
+        imp.last_snapshot.replace(Some((outcome.stamp, before)));
         self.save_selections(state.reference.get());
-        {
-            let mut groups = imp.groups.borrow_mut();
-            groups.retain(|group| keep(group));
-            groups.retain(|group| group.len() > 1);
-        }
+        imp.groups.borrow_mut().retain(|group| group.len() > 1);
         self.show_groups();
-        self.offer_undo_text(stamp, text);
+        let text = if outcome.covered > state.members.len() {
+            ngettext(
+                "{count} asset ignored",
+                "{count} assets ignored",
+                u32::try_from(outcome.covered).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &outcome.covered.to_string())
+        } else if group {
+            gettext("Group ignored")
+        } else {
+            gettext("Asset ignored")
+        };
+        self.offer_undo_text(outcome.stamp, &text);
     }
 }
 

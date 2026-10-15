@@ -13,6 +13,7 @@ pub fn common_name(names: &[&str], fallback: &str) -> String {
             .map(|(left, _)| left)
             .collect()
     });
+    let shared = whole_words(names, &shared);
     let trimmed = shared
         .trim_end_matches(SEPARATORS)
         .trim_start_matches(SEPARATORS);
@@ -20,6 +21,23 @@ pub fn common_name(names: &[&str], fallback: &str) -> String {
         trimmed.to_string()
     } else {
         fallback.to_string()
+    }
+}
+
+fn whole_words(names: &[&str], shared: &str) -> String {
+    let length = shared.chars().count();
+    let ends_a_word = shared.ends_with(SEPARATORS)
+        || names.iter().all(|name| {
+            name.chars()
+                .nth(length)
+                .is_none_or(|next| SEPARATORS.contains(&next))
+        });
+    if ends_a_word {
+        return shared.to_string();
+    }
+    match shared.rfind(SEPARATORS) {
+        Some(position) => shared[..position].to_string(),
+        None => shared.to_string(),
     }
 }
 
@@ -51,6 +69,15 @@ mod tests {
     fn names_with_nothing_in_common_give_the_fallback() {
         assert_eq!(common_name(&["logo", "marque-2024"], "logo"), "logo");
         assert_eq!(common_name(&["ab-1", "ab-2"], "ab-1"), "ab-1");
+    }
+
+    #[test]
+    fn a_name_is_cut_at_the_last_whole_word() {
+        assert_eq!(
+            common_name(&["vecteur-01564", "vecteur-07416"], "vecteur-01564"),
+            "vecteur"
+        );
+        assert_eq!(common_name(&["icon1", "icon2"], "icon1"), "icon");
     }
 
     #[test]

@@ -3,7 +3,7 @@ use std::ops::ControlFlow;
 
 use rusqlite::OptionalExtension;
 
-use super::ignored_duplicates::{AssetPair, ordered_pair};
+use super::ignored_duplicates::IgnoredSets;
 use super::{AssetId, Library, LibraryError};
 use crate::media::{DominantColor, VisualDetail, VisualHash, dominant_from_text};
 
@@ -74,7 +74,7 @@ pub struct DuplicateProgress {
 
 pub struct DuplicatePlan {
     fingerprints: Vec<Fingerprint>,
-    ignored: HashSet<AssetPair>,
+    ignored: IgnoredSets,
 }
 
 pub(super) enum Stored {
@@ -125,7 +125,7 @@ impl Library {
     pub fn duplicate_plan(&self) -> Result<DuplicatePlan, LibraryError> {
         Ok(DuplicatePlan {
             fingerprints: self.fingerprints(true)?,
-            ignored: self.ignored_pairs()?,
+            ignored: self.ignored_sets()?,
         })
     }
 
@@ -368,14 +368,52 @@ pub(super) fn duplicate_kind(first: &Fingerprint, second: &Fingerprint) -> Optio
 impl DuplicatePlan {
     fn kind_between(&self, first: usize, second: usize) -> Option<DuplicateKind> {
         let (first, second) = (&self.fingerprints[first], &self.fingerprints[second]);
-        if !self.ignored.is_empty()
-            && self
-                .ignored
-                .contains(&ordered_pair(first.asset, second.asset))
-        {
+        if !self.ignored.is_empty() && self.ignored.contains(first.asset, second.asset) {
             return None;
         }
         duplicate_kind(first, second)
+    }
+
+    pub(super) fn cluster_of(&self, seeds: &[AssetId]) -> Result<Vec<AssetId>, AssetId> {
+        let positions: HashMap<AssetId, usize> = self
+            .fingerprints
+            .iter()
+            .enumerate()
+            .map(|(position, fingerprint)| (fingerprint.asset, position))
+            .collect();
+        let start = *positions.get(&seeds[0]).ok_or(seeds[0])?;
+        let bands = DUPLICATE_DISTANCE + 1;
+        let buckets = band_buckets(&self.fingerprints, bands);
+        let mut reached = vec![false; self.fingerprints.len()];
+        reached[start] = true;
+        let mut queue = vec![start];
+        while let Some(current) = queue.pop() {
+            for band in 0..bands {
+                let value = band_of(self.fingerprints[current].hash.bits(), band, bands);
+                for candidate in &buckets[band as usize][&value] {
+                    if !reached[*candidate] && self.kind_between(current, *candidate).is_some() {
+                        reached[*candidate] = true;
+                        queue.push(*candidate);
+                    }
+                }
+            }
+        }
+        for seed in seeds {
+            if !positions
+                .get(seed)
+                .is_some_and(|position| reached[*position])
+            {
+                return Err(*seed);
+            }
+        }
+        let mut cluster: Vec<AssetId> = reached
+            .iter()
+            .enumerate()
+            .filter(|(_, reached)| **reached)
+            .map(|(position, _)| self.fingerprints[position].asset)
+            .collect();
+        cluster.sort_unstable();
+        Ok(cluster)
     }
 
     #[must_use]

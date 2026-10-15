@@ -1,5 +1,6 @@
 use std::fs;
 
+use super::ignored_duplicates;
 use super::trash::forget_thumbnails;
 use super::{AssetId, Library, RemoveRecordError, layout};
 
@@ -19,6 +20,7 @@ impl Library {
             "DELETE FROM details.asset_details WHERE asset_id = ?1",
             [id],
         )?;
+        ignored_duplicates::forget_dead_actions(&self.connection)?;
         self.history.clear();
         forget_thumbnails(&self.root, id);
         if inside && let Some(folder) = file.parent() {

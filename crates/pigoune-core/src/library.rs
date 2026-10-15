@@ -68,8 +68,10 @@ pub use error::{
 pub use export::{CopyFailure, CopyReport};
 pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
-pub use id::{AssetId, CollectionId, SmartCollectionId, TagId};
-pub use ignored_duplicates::{AssetPair, DuplicateCommand, DuplicateError, ordered_pair};
+pub use id::{AssetId, CollectionId, IgnoreId, SmartCollectionId, TagId};
+pub use ignored_duplicates::{
+    DuplicateCommand, DuplicateError, IgnoreAction, IgnoreKind, IgnoreOutcome, IgnoredEntry,
+};
 pub use import::ImportOutcome;
 pub use layout::{
     CACHE_DIR_NAME, DATABASE_FILE_NAME, FILES_DIR_NAME, LIBRARY_EXTENSION, library_display_name,

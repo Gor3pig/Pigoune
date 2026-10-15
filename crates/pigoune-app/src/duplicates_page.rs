@@ -1,4 +1,5 @@
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::future::Future;
 use std::ops::ControlFlow;
 use std::path::PathBuf;
@@ -13,6 +14,7 @@ use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{
     AssetId, ChangeStamp, ConfirmedRemoval, DuplicateKind, DuplicatePlan, DuplicateProgress,
+    IgnoreId, IgnoreOutcome, IgnoredEntry,
 };
 
 use crate::chart_slices::ratio;
@@ -72,16 +74,22 @@ pub enum RemovalFailure {
 pub type Removed = Result<ChangeStamp, RemovalFailure>;
 
 pub type Ignored = Result<ChangeStamp, Refusal>;
-pub type IgnoreGroup = Box<dyn Fn(&[AssetId]) -> Ignored>;
-pub type IgnoreMember = Box<dyn Fn(AssetId, &[AssetId]) -> Ignored>;
-pub type IgnoredGroups = Box<dyn Fn() -> Vec<Vec<AssetId>>>;
+pub type IgnoredDone = Result<IgnoreOutcome, Refusal>;
+pub type IgnoreGroup = Box<dyn Fn(&[AssetId]) -> IgnoredDone>;
+pub type IgnoreMember = Box<dyn Fn(AssetId, &[AssetId]) -> IgnoredDone>;
+pub type IgnoredEntries = Box<dyn Fn() -> Vec<IgnoredEntry>>;
 
 pub struct IgnoringActions {
     pub ignore_group: IgnoreGroup,
     pub ignore_member: IgnoreMember,
-    pub unignore_group: IgnoreGroup,
+    pub unignore: Box<dyn Fn(IgnoreId) -> Ignored>,
     pub unignore_all: Box<dyn Fn() -> Ignored>,
-    pub ignored_groups: IgnoredGroups,
+    pub ignored_entries: IgnoredEntries,
+}
+
+pub struct ResultsSnapshot {
+    pub groups: Vec<Vec<AssetId>>,
+    pub selections: HashMap<AssetId, Selection>,
 }
 
 pub struct MemberControls {
@@ -96,7 +104,7 @@ pub struct GroupState {
     pub(crate) members: Vec<AssetId>,
     actions: Rc<DuplicateActions>,
     pub(crate) reference: Cell<AssetId>,
-    ticked: RefCell<Vec<AssetId>>,
+    pub(crate) ticked: RefCell<Vec<AssetId>>,
     rows: RefCell<Vec<MemberControls>>,
     first_radio: RefCell<Option<gtk::CheckButton>>,
     action: gtk::Button,
@@ -117,7 +125,7 @@ pub struct DuplicateActions {
     pub trash_expires: Box<dyn Fn() -> bool>,
 }
 
-type Selection = (AssetId, Vec<AssetId>);
+pub type Selection = (AssetId, Vec<AssetId>);
 
 mod imp {
     use std::cell::{Cell, RefCell};
@@ -177,6 +185,7 @@ mod imp {
         pub cancel_requested: RefCell<Option<Arc<AtomicBool>>>,
         pub scroll_followed: Cell<bool>,
         pub search_again: Cell<bool>,
+        pub last_snapshot: RefCell<Option<(pigoune_core::ChangeStamp, super::ResultsSnapshot)>>,
         pub states: RefCell<Vec<Rc<GroupState>>>,
         pub selections: RefCell<HashMap<AssetId, Selection>>,
         pub kinds: RefCell<HashMap<AssetId, DuplicateKind>>,
@@ -213,6 +222,7 @@ glib::wrapper! {
 impl PigouneDuplicatesPage {
     pub fn connect_actions(&self, actions: DuplicateActions) {
         self.imp().actions.replace(Some(Rc::new(actions)));
+        self.refresh_ignored_buttons();
     }
 
     pub fn cancel(&self) {
@@ -256,6 +266,7 @@ impl PigouneDuplicatesPage {
         imp.cancel_requested.replace(Some(Arc::clone(&canceled)));
         imp.viewing_ignored.set(false);
         imp.results_stale.set(false);
+        imp.last_snapshot.replace(None);
         self.show_running();
         glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = page)]
@@ -980,8 +991,10 @@ impl PigouneDuplicatesPage {
         let Some(actions) = imp.actions.borrow().clone() else {
             return;
         };
+        let before = self.snapshot_results();
         match (actions.remove)(removal) {
             Ok(stamp) => {
+                imp.last_snapshot.replace(Some((stamp, before)));
                 let chosen = removal.chosen();
                 self.save_selections(removal.kept());
                 {
@@ -1062,11 +1075,7 @@ impl PigouneDuplicatesPage {
         match (actions.undo)(stamp) {
             Ok(()) => {
                 (actions.changed)();
-                if self.imp().viewing_ignored.get() {
-                    self.show_ignored();
-                } else {
-                    self.on_search_clicked();
-                }
+                self.show_after_undo(stamp);
             }
             Err(refusal) => self.show_refusal(&refusal),
         }

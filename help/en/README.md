@@ -417,10 +417,12 @@ after it, in five tabs:
   again. The message that appears lets you undo it, and the trash keeps assets for 30 days;
   choosing a row shows that asset in All. When some look-alikes are not duplicates, **Ignore
   Group** in the “⋯” menu of a group, or **Not a Duplicate** in the “⋯” menu of one row, stops Pigoune from offering
-  those assets as duplicates of each other, and the message lets you undo it. A new image that
-  looks like one of them is still offered with that one. **Ignored (N)** at the top of the page
-  lists the ignored groups, with **Stop Ignoring** for each and **Show All Again…** for all of
-  them. A library opened with Pigoune 2.10 or later can no longer be opened by
+  those assets as duplicates of each other, and the message lets you undo it. Ignoring a group also covers the other assets that look like it, even those beyond the first
+  forty shown, so it does not come back in pieces. A new image that looks like one of them is
+  still offered with that one. **Ignored (N)** at the top of the page lists what you ignored,
+  one entry for each time: a group, or a single asset with the assets it is kept apart from.
+  **Stop Ignoring** undoes exactly one entry, and **Show All Again…** all of them. The same
+  button is there when you reopen Manage Library, and Undo (Ctrl+Z) keeps the page up to date. A library opened with Pigoune 2.10 or later can no longer be opened by
   an older version.
 - **Export** copies every asset into a folder you choose. Pigoune creates a folder named after
   the library, with one sub-folder for each collection and sub-collection, and puts the

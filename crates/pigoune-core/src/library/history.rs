@@ -219,18 +219,6 @@ impl Change {
                 tag,
                 assets: assets.clone(),
             }),
-            (
-                Self::Duplicate(DuplicateCommand::Ignore { .. }),
-                Self::Duplicate(DuplicateCommand::Unignore { pairs }),
-            ) => Self::Duplicate(DuplicateCommand::Ignore {
-                pairs: pairs.clone(),
-            }),
-            (
-                Self::Duplicate(DuplicateCommand::Unignore { .. }),
-                Self::Duplicate(DuplicateCommand::Ignore { pairs }),
-            ) => Self::Duplicate(DuplicateCommand::Unignore {
-                pairs: pairs.clone(),
-            }),
             (done, _) => done,
         }
     }

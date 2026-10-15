@@ -172,7 +172,9 @@ pub fn describe_undo(error: &UndoError) -> String {
 pub fn describe_duplicate(error: &DuplicateError) -> String {
     match error {
         DuplicateError::NotFound(_) => gettext("This asset no longer exists."),
-        DuplicateError::TooLarge(_) => gettext("This group of assets is too large to ignore."),
+        DuplicateError::NotAvailable(_) => gettext("This asset is in the trash."),
+        DuplicateError::NotAlike(_) => gettext("These assets no longer look alike."),
+        DuplicateError::UnknownAction(_) => gettext("These ignored duplicates no longer exist."),
         DuplicateError::NothingChanged => gettext("Nothing changed."),
         DuplicateError::Library(error) => describe(error),
     }

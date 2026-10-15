@@ -43,12 +43,12 @@ pub fn describe(change: &Change, library: &Library, outcome: Outcome) -> String 
 
 fn describe_duplicate(command: &DuplicateCommand, outcome: Outcome) -> String {
     match command {
-        DuplicateCommand::Ignore { .. } => pick(
+        DuplicateCommand::Ignore(_) => pick(
             outcome,
             || gettext("Ignoring duplicates undone"),
             || gettext("Ignoring duplicates redone"),
         ),
-        DuplicateCommand::Unignore { .. } => pick(
+        DuplicateCommand::Unignore(_) | DuplicateCommand::Batch(_) => pick(
             outcome,
             || gettext("Showing ignored duplicates again undone"),
             || gettext("Showing ignored duplicates again redone"),

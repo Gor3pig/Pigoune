@@ -13,10 +13,11 @@ use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
     CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind, HealthPlan,
-    ImportError, ImportSummary, Library, LibraryError, LibraryExportReport, RemovalError,
-    RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection, SmartCollectionCommand,
-    SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
-    VisualAnalysis, VisualDetail, dominant_colors, library_display_name, visual_analysis,
+    IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError, LibraryExportReport,
+    RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
+    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
+    TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors, library_display_name,
+    visual_analysis,
 };
 
 use crate::analysis_pace;
@@ -40,8 +41,8 @@ use crate::drop_message;
 use crate::drop_places;
 use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::duplicates_page::{
-    Attachments, DuplicateActions, DuplicateMember, Ignored, IgnoringActions, PlannedSearch,
-    RemovalFailure, Removed,
+    Attachments, DuplicateActions, DuplicateMember, IgnoringActions, PlannedSearch, RemovalFailure,
+    Removed,
 };
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
@@ -1537,7 +1538,7 @@ impl PigouneWindow {
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
                 move |group: &[AssetId]| window
-                    .change_ignored(|library| library.ignore_duplicate_group(group))
+                    .change_ignoring(|library| library.ignore_duplicate_group(group))
             )),
             ignore_member: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
@@ -1545,38 +1546,38 @@ impl PigouneWindow {
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
                 move |member: AssetId, others: &[AssetId]| window
-                    .change_ignored(|library| library.ignore_duplicate_member(member, others))
+                    .change_ignoring(|library| library.ignore_duplicate_member(member, others))
             )),
-            unignore_group: Box::new(glib::clone!(
+            unignore: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
-                move |group: &[AssetId]| window
-                    .change_ignored(|library| library.unignore_duplicate_group(group))
+                move |action: IgnoreId| window
+                    .change_ignoring(|library| library.unignore_duplicate_action(action))
             )),
             unignore_all: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_else]
                 || Err(Refusal::default()),
-                move || window.change_ignored(Library::unignore_all_duplicates)
+                move || window.change_ignoring(Library::unignore_all_duplicates)
             )),
-            ignored_groups: Box::new(glib::clone!(
+            ignored_entries: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_default]
-                move || window.ignored_duplicate_groups()
+                move || window.ignored_duplicate_entries()
             )),
         }
     }
 
-    fn change_ignored(
+    fn change_ignoring<T>(
         &self,
-        change: impl FnOnce(&mut Library) -> Result<ChangeStamp, DuplicateError>,
-    ) -> Ignored {
+        change: impl FnOnce(&mut Library) -> Result<T, DuplicateError>,
+    ) -> Result<T, Refusal> {
         match self.change_library(change) {
-            Some(Ok(stamp)) => Ok(stamp),
+            Some(Ok(done)) => Ok(done),
             Some(Err(error)) => Err(Refusal {
                 title: gettext("Unable to Ignore"),
                 body: error_messages::describe_duplicate(&error),
@@ -1586,13 +1587,22 @@ impl PigouneWindow {
         }
     }
 
-    fn ignored_duplicate_groups(&self) -> Vec<Vec<AssetId>> {
+    fn ignored_duplicate_entries(&self) -> Vec<IgnoredEntry> {
         self.imp()
             .library
             .borrow()
             .as_ref()
-            .and_then(|library| library.ignored_duplicate_groups().ok())
+            .and_then(|library| library.ignored_duplicate_entries().ok())
             .unwrap_or_default()
+    }
+
+    fn refresh_open_library_info(&self) {
+        if let Some(dialog) = self
+            .visible_dialog()
+            .and_downcast::<PigouneLibraryInfoDialog>()
+        {
+            dialog.history_changed();
+        }
     }
 
     fn duplicate_kind_between(&self, first: AssetId, second: AssetId) -> Option<DuplicateKind> {
@@ -3146,6 +3156,7 @@ impl PigouneWindow {
             Some(Ok(Some(message))) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
+                self.refresh_open_library_info();
                 self.show_undoable_toast(&message);
             }
             Some(Ok(None)) if tell_when_nothing => self.show_toast(&gettext("Nothing to redo")),
@@ -3185,6 +3196,7 @@ impl PigouneWindow {
             Some(Ok(Some(message))) => {
                 self.refresh_sidebar();
                 self.refresh_grid();
+                self.refresh_open_library_info();
                 self.show_redoable_toast(&message);
             }
             Some(Ok(None)) if tell_when_nothing => self.show_toast(&gettext("Nothing to undo")),
