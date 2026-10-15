@@ -152,7 +152,7 @@ impl Library {
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
         details_store::attach(&connection, root)?;
-        if found_version < schema::CURRENT_FORMAT_VERSION {
+        if found_version < schema::FORMAT_MOVING_VISUAL_DETAILS {
             let _ = connection.execute_batch("VACUUM");
         }
         buckets::move_into_buckets(root);

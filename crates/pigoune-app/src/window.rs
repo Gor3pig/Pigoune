@@ -1569,6 +1569,18 @@ impl PigouneWindow {
                 #[upgrade_or_default]
                 move || window.ignored_duplicate_entries()
             )),
+            ignored_count: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move || window.ignored_duplicate_count()
+            )),
+            ignored_asset_count: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move || window.ignored_asset_count()
+            )),
         }
     }
 
@@ -1593,6 +1605,24 @@ impl PigouneWindow {
             .borrow()
             .as_ref()
             .and_then(|library| library.ignored_duplicate_entries().ok())
+            .unwrap_or_default()
+    }
+
+    fn ignored_duplicate_count(&self) -> usize {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.ignored_duplicate_count().ok())
+            .unwrap_or_default()
+    }
+
+    fn ignored_asset_count(&self) -> usize {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.ignored_asset_count().ok())
             .unwrap_or_default()
     }
 

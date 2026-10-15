@@ -24,9 +24,17 @@ impl PigouneDuplicatesPage {
             .unwrap_or_default()
     }
 
+    fn ignored_count(&self) -> usize {
+        self.actions()
+            .map(|actions| (actions.ignoring.ignored_count)())
+            .unwrap_or_default()
+    }
+
     pub(crate) fn refresh_ignored_buttons(&self) {
         let imp = self.imp();
-        let count = self.ignored_entries().len();
+        let count = self
+            .actions()
+            .map_or(0, |actions| (actions.ignoring.ignored_asset_count)());
         let viewing = imp.viewing_ignored.get();
         let label = gettext("_Ignored ({count})").replace("{count}", &count.to_string());
         imp.ignored_button.set_use_underline(true);
@@ -153,7 +161,7 @@ impl PigouneDuplicatesPage {
         let shown = &entries[..total.min(IGNORED_GROUPS_SHOWN)];
         let ids: Vec<AssetId> = shown
             .iter()
-            .flat_map(|entry| entry.assets.iter().chain(entry.against.iter()).copied())
+            .flat_map(|entry| entry.assets.iter().chain(entry.against.first()).copied())
             .collect();
         self.ensure_details(&ids);
         self.keep_selections();
@@ -178,7 +186,9 @@ impl PigouneDuplicatesPage {
             .valign(gtk::Align::Center)
             .build();
         let mut named: Vec<AssetId> = entry.assets.clone();
-        named.extend(entry.against.iter().copied());
+        if entry.kind == IgnoreKind::Member {
+            named.extend(entry.against.iter().copied());
+        }
         let widget = adw::PreferencesGroup::builder()
             .title(self.group_name(&named))
             .description(self.ignored_description(entry))
@@ -258,7 +268,7 @@ impl PigouneDuplicatesPage {
     }
 
     pub(crate) fn confirm_show_all(&self) {
-        let count = self.ignored_entries().len();
+        let count = self.ignored_count();
         if count == 0 {
             return;
         }

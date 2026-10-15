@@ -480,8 +480,8 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   permet d'annuler. Ignorer un groupe ne concerne que les éléments de ce groupe : ils ne sont plus proposés
   ensemble, ni avec les autres éléments qui leur ressemblent, et ces autres éléments restent
   proposés dans leurs propres groupes. Une nouvelle image qui ressemble à l'un d'eux reste
-  proposée avec celui-ci. **Ignorés (N)** en haut de la page liste ce que
-  vous avez ignoré, une entrée à chaque fois : un groupe, ou un seul élément avec ceux dont il
+  proposée avec celui-ci. **Ignorés (N)** en haut de la page compte les éléments que
+  vous avez ignorés et les liste, une entrée à chaque fois : un groupe, ou un seul élément avec ceux dont il
   est écarté. **Ne plus ignorer** défait exactement une entrée, et **Tout réafficher…** toutes.
   Le même bouton est là quand vous rouvrez « Gérer la bibliothèque », et Annuler (Ctrl+Z)
   garde la page à jour. Une bibliothèque ouverte avec

@@ -420,7 +420,7 @@ after it, in five tabs:
   Group** in the “⋯” menu of a group, or **Not a Duplicate** in the “⋯” menu of one row, stops Pigoune from offering
   those assets as duplicates of each other, and the message lets you undo it. Ignoring a group only concerns the assets of that group: they are no longer offered with each
   other, nor with the other assets that look like them, and those other assets are still offered
-  in their own groups. A new image that looks like one of them is still offered with that one. **Ignored (N)** at the top of the page lists what you ignored,
+  in their own groups. A new image that looks like one of them is still offered with that one. **Ignored (N)** at the top of the page counts the assets you ignored and lists them,
   one entry for each time: a group, or a single asset with the assets it is kept apart from.
   **Stop Ignoring** undoes exactly one entry, and **Show All Again…** all of them. The same
   button is there when you reopen Manage Library, and Undo (Ctrl+Z) keeps the page up to date. A library opened with Pigoune 2.10 or later can no longer be opened by

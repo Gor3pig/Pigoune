@@ -85,6 +85,8 @@ pub struct IgnoringActions {
     pub unignore: Box<dyn Fn(IgnoreId) -> Ignored>,
     pub unignore_all: Box<dyn Fn() -> Ignored>,
     pub ignored_entries: IgnoredEntries,
+    pub ignored_count: Box<dyn Fn() -> usize>,
+    pub ignored_asset_count: Box<dyn Fn() -> usize>,
 }
 
 pub struct ResultsSnapshot {

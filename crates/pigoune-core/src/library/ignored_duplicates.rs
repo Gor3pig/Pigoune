@@ -311,7 +311,49 @@ impl Library {
     }
 
     pub fn ignored_duplicate_count(&self) -> Result<usize, LibraryError> {
-        Ok(self.ignored_duplicate_entries()?.len())
+        let count: i64 = self.connection.query_row(
+            "SELECT count(*) FROM ignored_duplicate_actions k WHERE
+               (k.kind = 'group' AND (
+                  SELECT count(*) FROM ignored_duplicate_members m
+                  JOIN assets a ON a.id = m.asset_id
+                  WHERE m.action_id = k.id AND m.kept_apart = 0
+                    AND a.trashed_at_unix_ms IS NULL) >= 2)
+            OR (k.kind = 'member'
+                AND EXISTS (SELECT 1 FROM assets a WHERE a.id = k.subject_asset
+                            AND a.trashed_at_unix_ms IS NULL)
+                AND EXISTS (SELECT 1 FROM ignored_duplicate_members m
+                            JOIN assets a ON a.id = m.asset_id
+                            WHERE m.action_id = k.id AND a.trashed_at_unix_ms IS NULL))",
+            [],
+            |row| row.get(0),
+        )?;
+        Ok(usize::try_from(count).unwrap_or(0))
+    }
+
+    pub fn ignored_asset_count(&self) -> Result<usize, LibraryError> {
+        let count: i64 = self.connection.query_row(
+            "SELECT count(DISTINCT asset) FROM (
+                SELECT m.asset_id AS asset
+                FROM ignored_duplicate_members m
+                JOIN ignored_duplicate_actions k ON k.id = m.action_id
+                JOIN assets a ON a.id = m.asset_id
+                WHERE k.kind = 'group' AND m.kept_apart = 0 AND a.trashed_at_unix_ms IS NULL
+                  AND (SELECT count(*) FROM ignored_duplicate_members o
+                       JOIN assets b ON b.id = o.asset_id
+                       WHERE o.action_id = k.id AND o.kept_apart = 0
+                         AND b.trashed_at_unix_ms IS NULL) >= 2
+                UNION ALL
+                SELECT k.subject_asset
+                FROM ignored_duplicate_actions k
+                JOIN assets a ON a.id = k.subject_asset
+                WHERE k.kind = 'member' AND a.trashed_at_unix_ms IS NULL
+                  AND EXISTS (SELECT 1 FROM ignored_duplicate_members o
+                              JOIN assets b ON b.id = o.asset_id
+                              WHERE o.action_id = k.id AND b.trashed_at_unix_ms IS NULL))",
+            [],
+            |row| row.get(0),
+        )?;
+        Ok(usize::try_from(count).unwrap_or(0))
     }
 
     pub(super) fn ignored_sets(&self) -> Result<IgnoredSets, LibraryError> {

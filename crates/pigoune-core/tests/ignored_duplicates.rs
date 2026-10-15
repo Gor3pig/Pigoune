@@ -697,3 +697,67 @@ fn no_group_ever_holds_an_ignored_pair() {
         }
     }
 }
+
+#[test]
+fn the_count_of_ignored_entries_always_matches_the_list() {
+    let (_w, mut library) = library_of_clusters(&[(4, 9), (3, OTHER_DRAWING)]);
+    let counted = |library: &Library| library.ignored_duplicate_count().expect("count");
+    assert_eq!(counted(&library), 0);
+
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+    library
+        .ignore_duplicate_member(id(5), &ids(&[6, 7]))
+        .expect("ignored");
+    assert_eq!(counted(&library), entries(&library).len());
+    assert_eq!(counted(&library), 2);
+
+    trash(&mut library, &[1], true);
+    assert_eq!(counted(&library), entries(&library).len());
+    assert_eq!(counted(&library), 1);
+
+    trash(&mut library, &[5], true);
+    assert_eq!(counted(&library), entries(&library).len());
+    assert_eq!(counted(&library), 0);
+
+    trash(&mut library, &[1, 5], false);
+    assert_eq!(counted(&library), entries(&library).len());
+    assert_eq!(counted(&library), 2);
+}
+
+#[test]
+fn the_count_of_ignored_assets_counts_each_asset_once() {
+    let (_w, mut library) = library_of_clusters(&[(4, 9), (3, OTHER_DRAWING)]);
+    let counted = |library: &Library| library.ignored_asset_count().expect("count");
+    let listed = |library: &Library| {
+        let mut all: Vec<usize> = entries(library)
+            .iter()
+            .flat_map(|entry| entry.assets.iter().map(|asset| n(*asset)))
+            .collect();
+        all.sort_unstable();
+        all.dedup();
+        all.len()
+    };
+    assert_eq!(counted(&library), 0);
+
+    library
+        .ignore_duplicate_group(&ids(&[1, 2]))
+        .expect("ignored");
+    assert_eq!(counted(&library), 2);
+    library
+        .ignore_duplicate_member(id(3), &ids(&[4]))
+        .expect("ignored");
+    library
+        .ignore_duplicate_member(id(5), &ids(&[6, 7]))
+        .expect("ignored");
+    assert_eq!(counted(&library), 4);
+    assert_eq!(counted(&library), listed(&library));
+
+    trash(&mut library, &[1], true);
+    assert_eq!(counted(&library), listed(&library));
+    assert_eq!(counted(&library), 2);
+    trash(&mut library, &[5], true);
+    assert_eq!(counted(&library), listed(&library));
+    assert_eq!(counted(&library), 1);
+}

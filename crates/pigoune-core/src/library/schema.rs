@@ -5,6 +5,7 @@ use rusqlite::{Connection, ErrorCode};
 use super::{LibraryError, animation_recheck, buckets, details_store, ignored_duplicates};
 
 pub const CURRENT_FORMAT_VERSION: u32 = 14;
+pub const FORMAT_MOVING_VISUAL_DETAILS: u32 = 12;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 const PAGE_CACHE_KIB: i64 = 65_536;
 
