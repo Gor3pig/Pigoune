@@ -1,6 +1,6 @@
 use pigoune_core::annotations::{
-    ARROW, AnnotationDocument, BLUR, ELLIPSE, EditSession, Geometry, Handle, LINE, Options, Point,
-    RECTANGLE, Rect, Shape, ToolDefinition, arrow_head, handles, head_size_factor, hit,
+    ARROW, AnnotationDocument, BLUR, Crop, ELLIPSE, EditSession, Geometry, Handle, LINE, Options,
+    Point, RECTANGLE, Rect, Shape, ToolDefinition, arrow_head, handles, head_size_factor, hit,
     number_to_value, rect_between, resized, shape_bounds, shape_from_drag, translated,
 };
 use serde_json::json;
@@ -770,4 +770,64 @@ fn an_arrow_head_never_reaches_past_a_short_arrow() {
     for corner in [still.tip, still.left, still.right, still.base] {
         assert!(corner.x.is_finite() && corner.y.is_finite());
     }
+}
+
+fn a_crop() -> Crop {
+    Crop {
+        x: 10,
+        y: 20,
+        width: 300,
+        height: 200,
+    }
+}
+
+#[test]
+fn a_crop_is_one_undoable_change_of_the_document() {
+    let mut session = session();
+    assert_eq!(session.crop(), None);
+
+    assert!(session.set_crop(Some(a_crop())));
+    assert_eq!(session.crop(), Some(a_crop()));
+    assert_eq!(session.document().crop, Some(a_crop()));
+    assert!(!session.set_crop(Some(a_crop())));
+
+    assert!(session.undo());
+    assert_eq!(session.crop(), None);
+    assert!(session.redo());
+    assert_eq!(session.crop(), Some(a_crop()));
+    assert!(session.set_crop(None));
+    assert!(session.undo());
+    assert_eq!(session.crop(), Some(a_crop()));
+}
+
+#[test]
+fn a_crop_counts_as_a_change_since_the_last_save_and_is_written_with_the_document() {
+    let mut session = session();
+    session.mark_saved();
+
+    session.set_crop(Some(a_crop()));
+
+    assert!(session.is_modified());
+    let written: serde_json::Value =
+        serde_json::from_str(&session.document().to_json().expect("written")).expect("json");
+    assert_eq!(written["crop"]["width"], 300);
+    session.undo();
+    assert!(!session.is_modified());
+}
+
+#[test]
+fn a_crop_and_the_shapes_share_one_history_in_order() {
+    let mut session = session();
+    session.add(rectangle(0.0, 0.0, 10.0, 10.0));
+    session.set_crop(Some(a_crop()));
+    session.add(ellipse(0.0, 0.0, 10.0, 10.0));
+
+    session.undo();
+    assert_eq!(session.count(), 1);
+    assert_eq!(session.crop(), Some(a_crop()));
+    session.undo();
+    assert_eq!(session.crop(), None);
+    assert_eq!(session.count(), 1);
+    session.undo();
+    assert_eq!(session.count(), 0);
 }

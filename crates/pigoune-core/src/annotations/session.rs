@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use super::geometry;
-use super::{AnnotationDocument, AnnotationObject, ObjectContent, Point, Shape};
+use super::{AnnotationDocument, AnnotationObject, Crop, ObjectContent, Point, Shape};
 
 const HISTORY_LIMIT: usize = 500;
 
@@ -19,6 +19,10 @@ enum Edit {
         id: u32,
         before: Shape,
         after: Shape,
+    },
+    Cropped {
+        before: Option<Crop>,
+        after: Option<Crop>,
     },
 }
 
@@ -115,6 +119,24 @@ impl EditSession {
                     .is_some_and(|shape| geometry::hit(shape, point, tolerance))
             })
             .map(|object| object.id)
+    }
+
+    #[must_use]
+    pub fn crop(&self) -> Option<Crop> {
+        self.document.crop
+    }
+
+    pub fn set_crop(&mut self, crop: Option<Crop>) -> bool {
+        let before = self.document.crop;
+        if before == crop {
+            return false;
+        }
+        self.document.crop = crop;
+        self.record(Edit::Cropped {
+            before,
+            after: crop,
+        });
+        true
     }
 
     pub fn add(&mut self, shape: Shape) -> u32 {
@@ -271,6 +293,9 @@ impl EditSession {
                 if self.selected == Some(object.id) {
                     self.selected = None;
                 }
+            }
+            (Edit::Cropped { before, after }, _) => {
+                self.document.crop = if backwards { *before } else { *after };
             }
             (Edit::Changed { id, before, after }, _) => {
                 let shape = if backwards { before } else { after };
