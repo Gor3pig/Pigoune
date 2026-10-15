@@ -88,10 +88,22 @@ impl PigouneDuplicatesPage {
         if imp.viewing_ignored.get() {
             self.show_ignored();
         } else if imp.stack.visible_child_name().as_deref() == Some("results") {
-            self.on_search_clicked();
+            if self.is_mapped() {
+                self.on_search_clicked();
+            } else {
+                self.forget_results();
+            }
         } else {
             self.refresh_ignored_buttons();
         }
+    }
+
+    fn forget_results(&self) {
+        let imp = self.imp();
+        imp.groups.borrow_mut().clear();
+        imp.selections.borrow_mut().clear();
+        imp.states.borrow_mut().clear();
+        self.show_idle();
     }
 
     pub(crate) fn show_after_undo(&self, stamp: ChangeStamp) {
@@ -144,6 +156,7 @@ impl PigouneDuplicatesPage {
             .flat_map(|entry| entry.assets.iter().chain(entry.against.iter()).copied())
             .collect();
         self.ensure_details(&ids);
+        self.keep_selections();
         imp.states.borrow_mut().clear();
         imp.waiting.borrow_mut().clear();
         while let Some(child) = imp.groups_box.first_child() {
@@ -346,7 +359,7 @@ impl PigouneDuplicatesPage {
     ) {
         let imp = self.imp();
         imp.last_snapshot.replace(Some((outcome.stamp, before)));
-        self.save_selections(state.reference.get());
+        self.keep_selections();
         imp.groups.borrow_mut().retain(|group| group.len() > 1);
         self.show_groups();
         let text = if outcome.covered > state.members.len() {

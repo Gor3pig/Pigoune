@@ -409,6 +409,7 @@ impl PigouneDuplicatesPage {
             "Pigoune is comparing the drawings of your assets. Nothing is changed.",
         )));
         imp.search_button.set_visible(false);
+        imp.message_ignored_button.set_visible(false);
         imp.progress_bar.set_fraction(0.0);
         imp.cancel_button.set_sensitive(true);
         imp.progress_box.set_visible(true);
@@ -1016,10 +1017,18 @@ impl PigouneDuplicatesPage {
     }
 
     pub(crate) fn save_selections(&self, except_reference: AssetId) {
+        self.store_selections(Some(except_reference));
+    }
+
+    pub(crate) fn keep_selections(&self) {
+        self.store_selections(None);
+    }
+
+    fn store_selections(&self, except_reference: Option<AssetId>) {
         let imp = self.imp();
         let mut selections = imp.selections.borrow_mut();
         for state in imp.states.borrow().iter() {
-            if state.reference.get() == except_reference {
+            if Some(state.reference.get()) == except_reference {
                 selections.remove(&state.key);
             } else {
                 selections.insert(

@@ -1727,7 +1727,14 @@ impl PigouneWindow {
                 body: error_messages::describe_undo(&error),
                 try_again: false,
             }),
-            Some(Ok(_)) | None => Ok(()),
+            Some(Ok(Some(_))) | None => Ok(()),
+            Some(Ok(None)) => Err(Refusal {
+                title: gettext("Unable to Undo"),
+                body: gettext(
+                    "Something else was changed since, so this change can no longer be undone here.",
+                ),
+                try_again: false,
+            }),
         }
     }
 
