@@ -12,8 +12,9 @@ use serde_json::Map;
 
 pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
-    ArrowHead, Handle, arrow_head, dash_pattern, handles, head_size_factor, hit, rect_between,
-    resized, shape_bounds, shape_from_drag, translated,
+    ArrowHead, Handle, arrow_head, dash_pattern, handles, head_size_factor, hit, next_stroke_point,
+    rect_between, resized, shape_bounds, shape_from_drag, shape_from_points, simplified,
+    translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use options::{
@@ -24,8 +25,9 @@ pub use session::EditSession;
 pub use shape::{Geometry, Shape};
 pub use tools::{
     ARROW, BLUR, CELL, COLOR, CORNER_RADIUS, DASH, DASH_CHOICES, ELLIPSE, FILL, FILL_OPACITY,
-    GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, LINE, OPACITY, Outline,
-    PIXELATE, RADIUS, RECTANGLE, ToolDefinition, WIDTH, definition, definitions,
+    GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, HIGHLIGHT_COLOR,
+    HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, LINE, OPACITY, Outline, PEN, PIXELATE, RADIUS,
+    RECTANGLE, SMOOTH, ToolDefinition, WIDTH, definition, definitions,
 };
 
 pub const DOCUMENT_VERSION: u32 = 1;

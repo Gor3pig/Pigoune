@@ -1,6 +1,6 @@
 use super::geometry::{self, Handle};
 use super::session::EditSession;
-use super::tools::ToolDefinition;
+use super::tools::{GeometryKind, ToolDefinition};
 use super::{Options, Point, Shape};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -25,6 +25,7 @@ enum State {
         definition: &'static ToolDefinition,
         from: Point,
         options: Options,
+        points: Vec<Point>,
     },
     Moving {
         origin: Point,
@@ -84,6 +85,7 @@ impl Interaction {
                     definition,
                     from: point,
                     options: options.clone(),
+                    points: vec![point],
                 };
                 true
             }
@@ -116,14 +118,22 @@ impl Interaction {
     }
 
     pub fn drag(&mut self, session: &mut EditSession, point: Point) {
-        match &self.state {
+        match &mut self.state {
             State::Idle => {}
             State::Drawing {
                 definition,
                 from,
                 options,
+                points,
             } => {
-                self.pending = geometry::shape_from_drag(definition, *from, point, options);
+                if definition.geometry == GeometryKind::Polyline {
+                    if geometry::next_stroke_point(points, point) {
+                        points.push(point);
+                    }
+                    self.pending = geometry::shape_from_points(definition, points, options, false);
+                } else {
+                    self.pending = geometry::shape_from_drag(definition, *from, point, options);
+                }
             }
             State::Moving { origin, original } => {
                 session.preview(geometry::translated(
@@ -142,8 +152,18 @@ impl Interaction {
         self.drag(session, point);
         match std::mem::replace(&mut self.state, State::Idle) {
             State::Idle => {}
-            State::Drawing { .. } => {
-                if let Some(shape) = self.pending.take() {
+            State::Drawing {
+                definition,
+                options,
+                points,
+                ..
+            } => {
+                let finished = if definition.geometry == GeometryKind::Polyline {
+                    geometry::shape_from_points(definition, &points, &options, true)
+                } else {
+                    self.pending.take()
+                };
+                if let Some(shape) = finished {
                     session.add(shape);
                 }
             }

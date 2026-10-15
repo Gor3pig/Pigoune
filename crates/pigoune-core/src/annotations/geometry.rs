@@ -3,6 +3,8 @@ use super::tools::{GeometryKind, Outline, ToolDefinition};
 use super::{Options, Point, Rect};
 
 const SMALLEST_DRAG: f32 = 3.0;
+const SMALLEST_POINT_STEP: f32 = 1.0;
+const SIMPLIFY_TOLERANCE: f32 = 0.8;
 const SMALLEST_ARROW_HEAD: f32 = 12.0;
 const ARROW_HEAD_SPREAD: f32 = 0.53;
 const LONGEST_HEAD_SHARE: f32 = 0.9;
@@ -100,6 +102,73 @@ pub fn shape_from_drag(
         GeometryKind::Polyline | GeometryKind::Anchor => return None,
     };
     Some(Shape::new(definition.kind, geometry, options.clone()))
+}
+
+#[must_use]
+pub fn shape_from_points(
+    definition: &ToolDefinition,
+    points: &[Point],
+    options: &Options,
+    finished: bool,
+) -> Option<Shape> {
+    if definition.geometry != GeometryKind::Polyline {
+        return None;
+    }
+    let first = *points.first()?;
+    let reach = points
+        .iter()
+        .map(|point| (point.x - first.x).hypot(point.y - first.y))
+        .fold(0.0_f32, f32::max);
+    if reach < SMALLEST_DRAG {
+        return None;
+    }
+    let kept = if finished {
+        simplified(points, SIMPLIFY_TOLERANCE)
+    } else {
+        points.to_vec()
+    };
+    Some(Shape::new(
+        definition.kind,
+        Geometry::Polyline(kept),
+        options.clone(),
+    ))
+}
+
+#[must_use]
+pub fn next_stroke_point(points: &[Point], candidate: Point) -> bool {
+    points.last().is_none_or(|last| {
+        (candidate.x - last.x).hypot(candidate.y - last.y) >= SMALLEST_POINT_STEP
+    })
+}
+
+#[must_use]
+pub fn simplified(points: &[Point], tolerance: f32) -> Vec<Point> {
+    if points.len() < 3 {
+        return points.to_vec();
+    }
+    let mut keep = vec![false; points.len()];
+    keep[0] = true;
+    keep[points.len() - 1] = true;
+    let mut pending = vec![(0, points.len() - 1)];
+    while let Some((start, end)) = pending.pop() {
+        let mut farthest = (0.0_f32, start);
+        for index in start + 1..end {
+            let distance = distance_to_segment(points[index], points[start], points[end]);
+            if distance > farthest.0 {
+                farthest = (distance, index);
+            }
+        }
+        if farthest.0 > tolerance {
+            keep[farthest.1] = true;
+            pending.push((start, farthest.1));
+            pending.push((farthest.1, end));
+        }
+    }
+    points
+        .iter()
+        .zip(keep)
+        .filter_map(|(point, kept)| kept.then_some(*point))
+        .collect()
 }
 
 #[must_use]
@@ -274,6 +343,13 @@ pub fn hit(shape: &Shape, point: Point, tolerance: f32) -> bool {
         (Geometry::Box(bounds), Outline::Region) => {
             contains(expanded(normalized(*bounds), tolerance), point)
         }
+        (Geometry::Polyline(points), Outline::Stroke) => match points.as_slice() {
+            [] => false,
+            [only] => (only.x - point.x).hypot(only.y - point.y) <= reach,
+            _ => points
+                .windows(2)
+                .any(|pair| distance_to_segment(point, pair[0], pair[1]) <= reach),
+        },
         _ => false,
     }
 }
