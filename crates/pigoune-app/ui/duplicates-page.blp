@@ -38,6 +38,12 @@ template $PigouneDuplicatesPage: Box {
             ]
           }
 
+          Button message_ignored_button {
+            halign: center;
+            visible: false;
+            clicked => $on_ignored_clicked() swapped;
+          }
+
           Box progress_box {
             orientation: vertical;
             spacing: 12;
@@ -80,10 +86,10 @@ template $PigouneDuplicatesPage: Box {
             margin-end: 24;
 
             Box {
-              spacing: 12;
+              orientation: vertical;
+              spacing: 8;
 
               Label caption_label {
-                hexpand: true;
                 xalign: 0;
                 wrap: true;
 
@@ -92,11 +98,30 @@ template $PigouneDuplicatesPage: Box {
                 ]
               }
 
-              Button {
-                label: _("_Search Again");
-                use-underline: true;
-                valign: center;
-                clicked => $on_search_clicked() swapped;
+              Box {
+                spacing: 6;
+                halign: end;
+
+                Button ignored_button {
+                  valign: center;
+                  visible: false;
+                  clicked => $on_ignored_clicked() swapped;
+                }
+
+                Button show_all_button {
+                  label: _("Show _All Again…");
+                  use-underline: true;
+                  valign: center;
+                  visible: false;
+                  clicked => $on_show_all_clicked() swapped;
+                }
+
+                Button {
+                  label: _("_Search Again");
+                  use-underline: true;
+                  valign: center;
+                  clicked => $on_search_clicked() swapped;
+                }
               }
             }
 

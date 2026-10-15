@@ -415,7 +415,12 @@ after it, in five tabs:
   collections, tags and notes that stay behind; only the assets you ticked are moved, and Cancel
   changes nothing. If the assets changed since the search, Pigoune moves nothing and searches
   again. The message that appears lets you undo it, and the trash keeps assets for 30 days;
-  choosing a row shows that asset in All. A library opened with Pigoune 2.10 or later can no longer be opened by
+  choosing a row shows that asset in All. When some look-alikes are not duplicates, **Ignore
+  Group** at the top of a group, or **Not a Duplicate** on one row, stops Pigoune from offering
+  those assets as duplicates of each other, and the message lets you undo it. A new image that
+  looks like one of them is still offered with that one. **Ignored (N)** at the top of the page
+  lists the ignored groups, with **Stop Ignoring** for each and **Show All Again…** for all of
+  them. A library opened with Pigoune 2.10 or later can no longer be opened by
   an older version.
 - **Export** copies every asset into a folder you choose. Pigoune creates a folder named after
   the library, with one sub-folder for each collection and sub-collection, and puts the

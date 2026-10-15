@@ -36,6 +36,7 @@ mod drop_action;
 mod drop_message;
 mod drop_places;
 mod dropped_content;
+mod duplicates_ignored;
 mod duplicates_page;
 mod error_messages;
 mod export_as_dialog;

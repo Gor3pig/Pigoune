@@ -12,11 +12,11 @@ use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
     AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
     ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
-    CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateKind, HealthPlan, ImportError,
-    ImportSummary, Library, LibraryError, LibraryExportReport, RemovalError, RgbaImage,
-    SIMILAR_DISTANCE, SimilarSearch, SmartCollection, SmartCollectionCommand, SmartCollectionId,
-    TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VisualAnalysis,
-    VisualDetail, dominant_colors, library_display_name, visual_analysis,
+    CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind, HealthPlan,
+    ImportError, ImportSummary, Library, LibraryError, LibraryExportReport, RemovalError,
+    RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection, SmartCollectionCommand,
+    SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError,
+    VisualAnalysis, VisualDetail, dominant_colors, library_display_name, visual_analysis,
 };
 
 use crate::analysis_pace;
@@ -40,7 +40,8 @@ use crate::drop_message;
 use crate::drop_places;
 use crate::dropped_content::{self, Dropped, DroppedImage};
 use crate::duplicates_page::{
-    Attachments, DuplicateActions, DuplicateMember, PlannedSearch, RemovalFailure, Removed,
+    Attachments, DuplicateActions, DuplicateMember, Ignored, IgnoringActions, PlannedSearch,
+    RemovalFailure, Removed,
 };
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
@@ -1512,6 +1513,7 @@ impl PigouneWindow {
                     window.prepare_duplicates(canceled, progress)
                 }
             )),
+            ignoring: self.ignoring_actions(),
             compare: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
@@ -1525,6 +1527,72 @@ impl PigouneWindow {
                 move || window.settings().boolean(settings::AUTO_EMPTY_TRASH)
             )),
         }
+    }
+
+    fn ignoring_actions(&self) -> IgnoringActions {
+        IgnoringActions {
+            ignore_group: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |group: &[AssetId]| window
+                    .change_ignored(|library| library.ignore_duplicate_group(group))
+            )),
+            ignore_member: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |member: AssetId, others: &[AssetId]| window
+                    .change_ignored(|library| library.ignore_duplicate_member(member, others))
+            )),
+            unignore_group: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |group: &[AssetId]| window
+                    .change_ignored(|library| library.unignore_duplicate_group(group))
+            )),
+            unignore_all: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move || window.change_ignored(Library::unignore_all_duplicates)
+            )),
+            ignored_groups: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move || window.ignored_duplicate_groups()
+            )),
+        }
+    }
+
+    fn change_ignored(
+        &self,
+        change: impl FnOnce(&mut Library) -> Result<ChangeStamp, DuplicateError>,
+    ) -> Ignored {
+        match self.change_library(change) {
+            Some(Ok(stamp)) => Ok(stamp),
+            Some(Err(error)) => Err(Refusal {
+                title: gettext("Unable to Ignore"),
+                body: error_messages::describe_duplicate(&error),
+                try_again: false,
+            }),
+            None => Err(Refusal::default()),
+        }
+    }
+
+    fn ignored_duplicate_groups(&self) -> Vec<Vec<AssetId>> {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.ignored_duplicate_groups().ok())
+            .unwrap_or_default()
     }
 
     fn duplicate_kind_between(&self, first: AssetId, second: AssetId) -> Option<DuplicateKind> {

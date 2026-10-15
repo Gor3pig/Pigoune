@@ -473,7 +473,12 @@ bibliothèque ouverte et vous en occuper, en cinq onglets :
   restent derrière ; seuls les éléments cochés sont déplacés, et Annuler ne change rien. Si les
   éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le
   message qui apparaît permet d'annuler, et la corbeille garde les éléments 30 jours ; choisir
-  une ligne affiche cet élément dans Tous. Une bibliothèque ouverte avec
+  une ligne affiche cet élément dans Tous. Quand des éléments qui se ressemblent ne sont pas des
+  doublons, **Ignorer le groupe** en haut d'un groupe, ou **Pas un doublon** sur une ligne,
+  empêche Pigoune de proposer ces éléments comme doublons les uns des autres, et le message
+  permet d'annuler. Une nouvelle image qui ressemble à l'un d'eux reste proposée avec celui-ci.
+  **Ignorés (N)** en haut de la page liste les groupes ignorés, avec **Ne plus ignorer** pour
+  chacun et **Tout réafficher…** pour tous. Une bibliothèque ouverte avec
   Pigoune 2.10 ou plus récent ne peut plus être ouverte par une version plus ancienne.
 - **Export** copie tous les éléments dans un dossier de votre choix. Pigoune crée un dossier
   au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place

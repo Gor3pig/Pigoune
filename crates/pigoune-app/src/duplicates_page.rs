@@ -70,6 +70,19 @@ pub enum RemovalFailure {
 
 pub type Removed = Result<ChangeStamp, RemovalFailure>;
 
+pub type Ignored = Result<ChangeStamp, Refusal>;
+pub type IgnoreGroup = Box<dyn Fn(&[AssetId]) -> Ignored>;
+pub type IgnoreMember = Box<dyn Fn(AssetId, &[AssetId]) -> Ignored>;
+pub type IgnoredGroups = Box<dyn Fn() -> Vec<Vec<AssetId>>>;
+
+pub struct IgnoringActions {
+    pub ignore_group: IgnoreGroup,
+    pub ignore_member: IgnoreMember,
+    pub unignore_group: IgnoreGroup,
+    pub unignore_all: Box<dyn Fn() -> Ignored>,
+    pub ignored_groups: IgnoredGroups,
+}
+
 pub struct MemberControls {
     id: AssetId,
     tick: gtk::CheckButton,
@@ -78,9 +91,10 @@ pub struct MemberControls {
 }
 
 pub struct GroupState {
-    key: AssetId,
+    pub(crate) key: AssetId,
+    pub(crate) members: Vec<AssetId>,
     actions: Rc<DuplicateActions>,
-    reference: Cell<AssetId>,
+    pub(crate) reference: Cell<AssetId>,
     ticked: RefCell<Vec<AssetId>>,
     rows: RefCell<Vec<MemberControls>>,
     first_radio: RefCell<Option<gtk::CheckButton>>,
@@ -97,6 +111,7 @@ pub struct DuplicateActions {
     pub changed: Box<dyn Fn()>,
     pub show: Box<dyn Fn(AssetId)>,
     pub prepare: Preparing,
+    pub ignoring: IgnoringActions,
     pub compare: Box<dyn Fn(AssetId, AssetId) -> Option<DuplicateKind>>,
     pub trash_expires: Box<dyn Fn() -> bool>,
 }
@@ -125,6 +140,14 @@ mod imp {
         pub message_page: TemplateChild<adw::StatusPage>,
         #[template_child]
         pub search_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub message_ignored_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub ignored_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub show_all_button: TemplateChild<gtk::Button>,
+        pub viewing_ignored: Cell<bool>,
+        pub results_stale: Cell<bool>,
         #[template_child]
         pub progress_box: TemplateChild<gtk::Box>,
         #[template_child]
@@ -196,7 +219,17 @@ impl PigouneDuplicatesPage {
     }
 
     #[template_callback]
-    fn on_search_clicked(&self) {
+    fn on_ignored_clicked(&self) {
+        self.toggle_ignored_view();
+    }
+
+    #[template_callback]
+    fn on_show_all_clicked(&self) {
+        self.confirm_show_all();
+    }
+
+    #[template_callback]
+    pub(crate) fn on_search_clicked(&self) {
         let imp = self.imp();
         if imp.cancel_requested.borrow().is_some() {
             imp.search_again.set(true);
@@ -207,6 +240,9 @@ impl PigouneDuplicatesPage {
         };
         let canceled = Arc::new(AtomicBool::new(false));
         imp.cancel_requested.replace(Some(Arc::clone(&canceled)));
+        imp.viewing_ignored.set(false);
+        imp.results_stale.set(false);
+        imp.show_all_button.set_visible(false);
         self.show_running();
         glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = page)]
@@ -328,7 +364,7 @@ impl PigouneDuplicatesPage {
         }
     }
 
-    fn show_idle(&self) {
+    pub(crate) fn show_idle(&self) {
         let imp = self.imp();
         imp.message_page
             .set_title(&gettext("Look for Possible Duplicates"));
@@ -339,6 +375,7 @@ impl PigouneDuplicatesPage {
         imp.search_button.set_visible(true);
         imp.progress_box.set_visible(false);
         imp.stack.set_visible_child_name("message");
+        self.refresh_ignored_buttons();
     }
 
     fn show_running(&self) {
@@ -354,7 +391,7 @@ impl PigouneDuplicatesPage {
         imp.stack.set_visible_child_name("message");
     }
 
-    fn show_message(&self, title: &str, description: &str) {
+    pub(crate) fn show_message(&self, title: &str, description: &str) {
         let imp = self.imp();
         imp.message_page.set_title(title);
         imp.message_page.set_description(Some(description));
@@ -362,9 +399,10 @@ impl PigouneDuplicatesPage {
         imp.search_button.set_visible(true);
         imp.progress_box.set_visible(false);
         imp.stack.set_visible_child_name("message");
+        self.refresh_ignored_buttons();
     }
 
-    fn show_groups(&self) {
+    pub(crate) fn show_groups(&self) {
         let imp = self.imp();
         let total = imp.groups.borrow().len();
         if total == 0 {
@@ -398,11 +436,12 @@ impl PigouneDuplicatesPage {
             }
         }
         imp.stack.set_visible_child_name("results");
+        self.refresh_ignored_buttons();
         self.follow_scrolling();
         self.load_visible_thumbnails_later();
     }
 
-    fn ensure_details(&self, ids: &[AssetId]) {
+    pub(crate) fn ensure_details(&self, ids: &[AssetId]) {
         let imp = self.imp();
         let Some(actions) = imp.actions.borrow().clone() else {
             return;
@@ -423,7 +462,7 @@ impl PigouneDuplicatesPage {
             .extend(loaded.into_iter().map(|member| (member.id, member)));
     }
 
-    fn follow_scrolling(&self) {
+    pub(crate) fn follow_scrolling(&self) {
         let imp = self.imp();
         if imp.scroll_followed.replace(true) {
             return;
@@ -437,7 +476,7 @@ impl PigouneDuplicatesPage {
             ));
     }
 
-    fn load_visible_thumbnails_later(&self) {
+    pub(crate) fn load_visible_thumbnails_later(&self) {
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = page)]
             self,
@@ -526,6 +565,14 @@ impl PigouneDuplicatesPage {
             .sensitive(false)
             .build();
         action.add_css_class("destructive-action");
+        let ignore = gtk::Button::builder()
+            .label(gettext("Ignore Group"))
+            .tooltip_text(gettext(
+                "Stop offering these assets as duplicates of each other",
+            ))
+            .valign(gtk::Align::Center)
+            .css_classes(["flat"])
+            .build();
         let saved = imp.selections.borrow().get(&group[0]).cloned();
         let (reference, ticked) = match saved {
             Some((reference, ticked)) if group.contains(&reference) => (
@@ -539,6 +586,7 @@ impl PigouneDuplicatesPage {
         };
         let state = Rc::new(GroupState {
             key: group[0],
+            members: group.to_vec(),
             actions: Rc::clone(actions),
             reference: Cell::new(reference),
             ticked: RefCell::new(ticked),
@@ -556,8 +604,15 @@ impl PigouneDuplicatesPage {
             .description(gettext(
                 "Choose the asset to keep, then tick the assets to move to the trash. Nothing is ticked for you.",
             ))
-            .header_suffix(&action)
+            .header_suffix(&Self::group_buttons(&action, &ignore))
             .build();
+        ignore.connect_clicked(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            #[weak]
+            state,
+            move |_| page.ignore_group_of(&state)
+        ));
         action.connect_clicked(glib::clone!(
             #[weak(rename_to = page)]
             self,
@@ -567,6 +622,16 @@ impl PigouneDuplicatesPage {
         ));
         self.append_members(&widget, &Rc::new(group.to_vec()), &state, 0, MEMBERS_SHOWN);
         widget
+    }
+
+    fn group_buttons(action: &gtk::Button, ignore: &gtk::Button) -> gtk::Box {
+        let buttons = gtk::Box::builder()
+            .spacing(6)
+            .valign(gtk::Align::Center)
+            .build();
+        buttons.append(ignore);
+        buttons.append(action);
+        buttons
     }
 
     fn append_members(
@@ -690,6 +755,22 @@ impl PigouneDuplicatesPage {
         row.add_suffix(&kind_label);
         row.add_suffix(&tick);
         row.add_suffix(&kept);
+        let separate = gtk::Button::builder()
+            .label(gettext("Not a Duplicate"))
+            .tooltip_text(gettext(
+                "Stop offering this asset as a duplicate of the others in this group",
+            ))
+            .valign(gtk::Align::Center)
+            .css_classes(["flat"])
+            .build();
+        separate.connect_clicked(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            #[weak]
+            state,
+            move |_| page.ignore_member_of(&state, id)
+        ));
+        row.add_suffix(&separate);
         row.connect_activated(glib::clone!(
             #[weak(rename_to = page)]
             self,
@@ -753,7 +834,7 @@ impl PigouneDuplicatesPage {
         state.action.set_sensitive(count > 0);
     }
 
-    fn thumbnail_of(&self, member: &DuplicateMember) -> gtk::Picture {
+    pub(crate) fn thumbnail_of(&self, member: &DuplicateMember) -> gtk::Picture {
         let imp = self.imp();
         let picture = row_thumbnail::blank();
         let remembered = imp
@@ -897,7 +978,7 @@ impl PigouneDuplicatesPage {
         }
     }
 
-    fn save_selections(&self, except_reference: AssetId) {
+    pub(crate) fn save_selections(&self, except_reference: AssetId) {
         let imp = self.imp();
         let mut selections = imp.selections.borrow_mut();
         for state in imp.states.borrow().iter() {
@@ -938,12 +1019,16 @@ impl PigouneDuplicatesPage {
             u32::try_from(count).unwrap_or(u32::MAX),
         )
         .replace("{count}", &count.to_string());
+        self.offer_undo_text(stamp, &text);
+    }
+
+    pub(crate) fn offer_undo_text(&self, stamp: ChangeStamp, text: &str) {
         let undo: Box<dyn Fn()> = Box::new(glib::clone!(
             #[weak(rename_to = page)]
             self,
             move || page.undo_removal(stamp)
         ));
-        self.show_toast(&text, Some((gettext("_Undo"), undo)));
+        self.show_toast(text, Some((gettext("_Undo"), undo)));
     }
 
     fn undo_removal(&self, stamp: ChangeStamp) {
@@ -953,13 +1038,17 @@ impl PigouneDuplicatesPage {
         match (actions.undo)(stamp) {
             Ok(()) => {
                 (actions.changed)();
-                self.on_search_clicked();
+                if self.imp().viewing_ignored.get() {
+                    self.show_ignored();
+                } else {
+                    self.on_search_clicked();
+                }
             }
             Err(refusal) => self.show_refusal(&refusal),
         }
     }
 
-    fn show_resource(&self, id: AssetId) {
+    pub(crate) fn show_resource(&self, id: AssetId) {
         let Some(actions) = self.imp().actions.borrow().clone() else {
             return;
         };
@@ -972,13 +1061,13 @@ impl PigouneDuplicatesPage {
         (actions.show)(id);
     }
 
-    fn show_refusal(&self, refusal: &Refusal) {
+    pub(crate) fn show_refusal(&self, refusal: &Refusal) {
         let alert = adw::AlertDialog::new(Some(&refusal.title), Some(&refusal.body));
         alert.add_response("close", &gettext("_Close"));
         alert.present(Some(self));
     }
 
-    fn show_toast(&self, text: &str, button: Option<(String, Box<dyn Fn()>)>) {
+    pub(crate) fn show_toast(&self, text: &str, button: Option<(String, Box<dyn Fn()>)>) {
         let Some(overlay) = self
             .ancestor(adw::ToastOverlay::static_type())
             .and_downcast::<adw::ToastOverlay>()

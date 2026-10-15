@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use gettextrs::{gettext, ngettext};
 use pigoune_core::{
-    AssetCommand, AssetId, Change, CollectionCommand, CollectionId, Library,
+    AssetCommand, AssetId, Change, CollectionCommand, CollectionId, DuplicateCommand, Library,
     SmartCollectionCommand, SmartCollectionId, TagCommand, TagId, TextField,
 };
 
@@ -30,7 +30,7 @@ pub fn describe(change: &Change, library: &Library, outcome: Outcome) -> String 
         Change::Collection(command) => describe_collection(command, &names, outcome),
         Change::Tag(command) => describe_tag(command, &names, outcome),
         Change::SmartCollection(command) => describe_smart_collection(command, &names, outcome),
-        Change::Duplicate(_) => None,
+        Change::Duplicate(command) => Some(describe_duplicate(command, outcome)),
     };
     described.unwrap_or_else(|| {
         pick(
@@ -39,6 +39,21 @@ pub fn describe(change: &Change, library: &Library, outcome: Outcome) -> String 
             || gettext("Last change redone"),
         )
     })
+}
+
+fn describe_duplicate(command: &DuplicateCommand, outcome: Outcome) -> String {
+    match command {
+        DuplicateCommand::Ignore { .. } => pick(
+            outcome,
+            || gettext("Ignoring duplicates undone"),
+            || gettext("Ignoring duplicates redone"),
+        ),
+        DuplicateCommand::Unignore { .. } => pick(
+            outcome,
+            || gettext("Showing ignored duplicates again undone"),
+            || gettext("Showing ignored duplicates again redone"),
+        ),
+    }
 }
 
 fn favorite_text(favorite: bool, count: usize, outcome: Outcome) -> String {
