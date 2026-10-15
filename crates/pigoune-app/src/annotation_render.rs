@@ -12,11 +12,13 @@ pub const HANDLE_SIZE: f32 = 10.0;
 
 type Renderer = fn(&gtk::Snapshot, &Shape);
 
-const RENDERERS: [(&str, Renderer); 6] = [
+const RENDERERS: [(&str, Renderer); 8] = [
     ("rectangle", draw_rectangle),
     ("ellipse", draw_ellipse),
     ("line", draw_line),
     ("arrow", draw_arrow),
+    ("pen", draw_pen),
+    ("highlighter", draw_highlighter),
     ("blur", draw_nothing_yet),
     ("pixelate", draw_nothing_yet),
 ];
@@ -184,6 +186,59 @@ fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape) {
             snapshot.append_stroke(&path, &solid, &color);
         }
     }
+}
+
+fn stroke_path(points: &[Point], smooth: bool) -> gsk::Path {
+    let builder = gsk::PathBuilder::new();
+    match points {
+        [] => {}
+        [only] => {
+            builder.move_to(only.x, only.y);
+            builder.line_to(only.x, only.y);
+        }
+        [first, rest @ ..] => {
+            builder.move_to(first.x, first.y);
+            if smooth && points.len() >= 3 {
+                for pair in points[1..].windows(2) {
+                    let middle = Point {
+                        x: f32::midpoint(pair[0].x, pair[1].x),
+                        y: f32::midpoint(pair[0].y, pair[1].y),
+                    };
+                    builder.quad_to(pair[0].x, pair[0].y, middle.x, middle.y);
+                }
+                if let Some(last) = rest.last() {
+                    builder.line_to(last.x, last.y);
+                }
+            } else {
+                for point in rest {
+                    builder.line_to(point.x, point.y);
+                }
+            }
+        }
+    }
+    builder.to_path()
+}
+
+fn draw_free_stroke(snapshot: &gtk::Snapshot, shape: &Shape, cap: gsk::LineCap) {
+    let Geometry::Polyline(points) = &shape.geometry else {
+        return;
+    };
+    let stroke = gsk::Stroke::new(shape.number("width").max(0.5));
+    stroke.set_line_join(gsk::LineJoin::Round);
+    stroke.set_line_cap(cap);
+    snapshot.append_stroke(
+        &stroke_path(points, shape.toggle("smooth")),
+        &stroke,
+        &rgba(shape.stroke_color()),
+    );
+}
+
+fn draw_pen(snapshot: &gtk::Snapshot, shape: &Shape) {
+    draw_free_stroke(snapshot, shape, gsk::LineCap::Round);
+}
+
+fn draw_highlighter(snapshot: &gtk::Snapshot, shape: &Shape) {
+    draw_free_stroke(snapshot, shape, gsk::LineCap::Square);
 }
 
 fn draw_nothing_yet(_snapshot: &gtk::Snapshot, _shape: &Shape) {}

@@ -1,5 +1,7 @@
 use gettextrs::gettext;
-use pigoune_core::annotations::{ARROW, ELLIPSE, LINE, RECTANGLE, ToolDefinition};
+use pigoune_core::annotations::{
+    ARROW, ELLIPSE, HIGHLIGHTER, LINE, PEN, RECTANGLE, ToolDefinition,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum EditorTool {
@@ -91,6 +93,8 @@ impl EditorTool {
             Self::Ellipse => Some(&ELLIPSE),
             Self::Line => Some(&LINE),
             Self::Arrow => Some(&ARROW),
+            Self::Pen => Some(&PEN),
+            Self::Highlighter => Some(&HIGHLIGHTER),
             _ => None,
         }
     }
@@ -101,6 +105,8 @@ impl EditorTool {
             "ellipse" => Some(Self::Ellipse),
             "line" => Some(Self::Line),
             "arrow" => Some(Self::Arrow),
+            "pen" => Some(Self::Pen),
+            "highlighter" => Some(Self::Highlighter),
             "blur" => Some(Self::Blur),
             "pixelate" => Some(Self::Pixelate),
             _ => None,
