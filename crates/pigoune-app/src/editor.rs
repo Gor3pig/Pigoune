@@ -10,7 +10,7 @@ use crate::editor_tool::EditorTool;
 
 type ClosedCallback = Box<dyn Fn()>;
 
-const TOOLS_PER_ROW: usize = 4;
+const TOOLS_PER_ROW: usize = 3;
 
 mod imp {
     use super::{Cell, ClosedCallback, RefCell};
@@ -28,7 +28,15 @@ mod imp {
         #[template_child]
         pub tools_grid: TemplateChild<gtk::Grid>,
         #[template_child]
-        pub sidebar_bin: TemplateChild<adw::Bin>,
+        pub panel_view: TemplateChild<adw::ToolbarView>,
+        #[template_child]
+        pub left_header: TemplateChild<adw::HeaderBar>,
+        #[template_child]
+        pub right_header: TemplateChild<adw::HeaderBar>,
+        #[template_child]
+        pub save_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub output_button: TemplateChild<gtk::MenuButton>,
         #[template_child]
         pub sheet_bin: TemplateChild<adw::Bin>,
         #[template_child]
@@ -52,6 +60,7 @@ mod imp {
         #[property(get, set)]
         pub compact: Cell<bool>,
         pub active_tool: Cell<EditorTool>,
+        pub output_in_left_header: Cell<bool>,
         pub tool_buttons: RefCell<Vec<(EditorTool, gtk::ToggleButton)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
     }
@@ -168,18 +177,35 @@ impl PigouneEditor {
     fn place_panel(&self) {
         let imp = self.imp();
         let panel = imp.panel.get();
-        let (from, to) = if self.compact() {
-            (&*imp.sidebar_bin, &*imp.sheet_bin)
+        let compact = self.compact();
+        if compact {
+            imp.panel_view.set_content(gtk::Widget::NONE);
+            imp.sheet_bin.set_child(Some(&panel));
         } else {
-            (&*imp.sheet_bin, &*imp.sidebar_bin)
-        };
-        if from.child().is_some_and(|child| child == panel) {
-            from.set_child(gtk::Widget::NONE);
-            to.set_child(Some(&panel));
-        }
-        if !self.compact() {
+            imp.sheet_bin.set_child(gtk::Widget::NONE);
+            imp.panel_view.set_content(Some(&panel));
             imp.bottom_sheet.set_open(false);
         }
+        self.place_output_buttons();
+    }
+
+    fn place_output_buttons(&self) {
+        let imp = self.imp();
+        let save = imp.save_button.get();
+        let output = imp.output_button.get();
+        let compact = self.compact();
+        if imp.output_in_left_header.replace(compact) == compact {
+            return;
+        }
+        let (from, to) = if compact {
+            (&*imp.right_header, &*imp.left_header)
+        } else {
+            (&*imp.left_header, &*imp.right_header)
+        };
+        from.remove(&save);
+        from.remove(&output);
+        to.pack_end(&save);
+        to.pack_end(&output);
     }
 
     fn show_active_tool(&self) {

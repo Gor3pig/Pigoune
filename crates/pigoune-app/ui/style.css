@@ -832,3 +832,7 @@ gridview.asset-grid.tiles-checkerboard > child .tile-frame {
   padding: 8px 14px;
   border-radius: 9999px;
 }
+
+.editor-panel {
+  background-color: @secondary_sidebar_bg_color;
+}
