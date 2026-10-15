@@ -1,11 +1,12 @@
-use super::geometry::{self, DrawingTool, Handle, Style};
+use super::geometry::{self, Handle};
 use super::session::EditSession;
-use super::{Point, Shape};
+use super::tools::ToolDefinition;
+use super::{Options, Point, Shape};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Tool {
     Select,
-    Draw(DrawingTool),
+    Draw(&'static ToolDefinition),
     Unsupported,
 }
 
@@ -21,9 +22,9 @@ pub enum CursorKind {
 enum State {
     Idle,
     Drawing {
-        tool: DrawingTool,
+        definition: &'static ToolDefinition,
         from: Point,
-        style: Style,
+        options: Options,
     },
     Moving {
         origin: Point,
@@ -70,19 +71,19 @@ impl Interaction {
         &mut self,
         session: &mut EditSession,
         tool: Tool,
-        style: &Style,
+        options: &Options,
         point: Point,
         reach: f32,
     ) -> bool {
         self.cancel(session);
         match tool {
             Tool::Unsupported => false,
-            Tool::Draw(drawing) => {
+            Tool::Draw(definition) => {
                 session.select(None);
                 self.state = State::Drawing {
-                    tool: drawing,
+                    definition,
                     from: point,
-                    style: *style,
+                    options: options.clone(),
                 };
                 true
             }
@@ -117,8 +118,12 @@ impl Interaction {
     pub fn drag(&mut self, session: &mut EditSession, point: Point) {
         match &self.state {
             State::Idle => {}
-            State::Drawing { tool, from, style } => {
-                self.pending = geometry::shape_from_drag(*tool, *from, point, style);
+            State::Drawing {
+                definition,
+                from,
+                options,
+            } => {
+                self.pending = geometry::shape_from_drag(definition, *from, point, options);
             }
             State::Moving { origin, original } => {
                 session.preview(geometry::translated(

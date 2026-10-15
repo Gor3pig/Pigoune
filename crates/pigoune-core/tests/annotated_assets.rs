@@ -2,7 +2,9 @@ use std::fs;
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 
-use pigoune_core::annotations::{AnnotationDocument, AnnotationObject, DocumentError, Rect, Shape};
+use pigoune_core::annotations::{
+    AnnotationDocument, AnnotationObject, BLUR, DocumentError, Geometry, Options, Rect, Shape,
+};
 use pigoune_core::{
     AnnotatedError, AnnotatedImage, AssetColor, AssetCommand, AssetId, AssetView, DominantColor,
     ImportOutcome, Library, Rgb,
@@ -14,22 +16,21 @@ fn plain_document() -> AnnotationDocument {
     AnnotationDocument::default()
 }
 
-fn document_with_a_blur() -> AnnotationDocument {
-    AnnotationDocument::new(
-        None,
-        vec![AnnotationObject::new(
-            1,
-            Shape::Blur {
-                bounds: Rect {
-                    x: 1.0,
-                    y: 2.0,
-                    width: 30.0,
-                    height: 40.0,
-                },
-                radius: 8.0,
-            },
-        )],
+fn blur_shape(x: f32) -> Shape {
+    Shape::new(
+        "blur",
+        Geometry::Box(Rect {
+            x,
+            y: 2.0,
+            width: 30.0,
+            height: 40.0,
+        }),
+        Options::defaults(BLUR.options),
     )
+}
+
+fn document_with_a_blur() -> AnnotationDocument {
+    AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur_shape(1.0))])
 }
 
 fn sample(name: &str) -> PathBuf {
@@ -570,21 +571,8 @@ fn a_document_that_cannot_be_written_is_refused_without_a_trace() {
     let mut fixture = Fixture::new();
     let rendered = fixture.png("cap.png", 1);
     let original = fixture.png("o.png", 2);
-    let broken = AnnotationDocument::new(
-        None,
-        vec![AnnotationObject::new(
-            1,
-            Shape::Blur {
-                bounds: Rect {
-                    x: f32::NAN,
-                    y: 0.0,
-                    width: 1.0,
-                    height: 1.0,
-                },
-                radius: 1.0,
-            },
-        )],
-    );
+    let broken =
+        AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur_shape(f32::NAN))]);
 
     let result = fixture.library.import_annotated(AnnotatedImage {
         rendered: &rendered,

@@ -1,4 +1,6 @@
-use super::geometry::{self, Style};
+use serde_json::Value;
+
+use super::geometry;
 use super::{AnnotationDocument, AnnotationObject, ObjectContent, Point, Shape};
 
 const HISTORY_LIMIT: usize = 500;
@@ -181,20 +183,36 @@ impl EditSession {
         }
     }
 
-    pub fn restyle_selected(&mut self, style: &Style) -> bool {
-        let Some(id) = self.selected else {
+    pub fn set_option_on_selected(&mut self, id: &str, value: Value) -> bool {
+        let Some(selected) = self.selected else {
             return false;
         };
-        let Some(before) = self.shape_of(id).cloned() else {
+        let Some(before) = self.shape_of(selected).cloned() else {
             return false;
         };
-        let after = geometry::restyled(&before, style);
+        let after = before.with_option(id, value);
         if after == before {
             return false;
         }
-        self.set_shape(id, after.clone());
-        self.record(Edit::Changed { id, before, after });
+        self.set_shape(selected, after.clone());
+        self.record(Edit::Changed {
+            id: selected,
+            before,
+            after,
+        });
         true
+    }
+
+    pub fn preview_option(&mut self, id: &str, value: Value) {
+        let Some(gesture) = &self.gesture else {
+            return;
+        };
+        let target = gesture.id;
+        let Some(current) = self.shape_of(target) else {
+            return;
+        };
+        let changed = current.with_option(id, value);
+        self.set_shape(target, changed);
     }
 
     pub fn undo(&mut self) -> bool {

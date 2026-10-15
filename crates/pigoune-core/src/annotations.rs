@@ -1,33 +1,33 @@
 mod geometry;
 mod interaction;
+mod options;
 mod session;
+mod shape;
+mod tools;
 
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{Map, Value};
+use serde_json::Map;
 
 pub use geometry::{
-    ArrowHead, DrawingTool, Handle, Style, arrow_head, handles, hit, rect_between, resized,
-    restyled, shape_bounds, shape_from_drag, style_of, translated,
+    ArrowHead, Handle, arrow_head, dash_pattern, handles, head_size_factor, hit, rect_between,
+    resized, shape_bounds, shape_from_drag, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
+pub use options::{
+    DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,
+};
+pub use serde_json::Value;
 pub use session::EditSession;
+pub use shape::{Geometry, Shape};
+pub use tools::{
+    ARROW, BLUR, CELL, COLOR, CORNER_RADIUS, DASH, DASH_CHOICES, ELLIPSE, FILL, FILL_OPACITY,
+    GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, LINE, OPACITY, Outline,
+    PIXELATE, RADIUS, RECTANGLE, ToolDefinition, WIDTH, definition, definitions,
+};
 
 pub const DOCUMENT_VERSION: u32 = 1;
 pub const MAX_DOCUMENT_BYTES: usize = 16 * 1024 * 1024;
-
-const KNOWN_KINDS: [&str; 10] = [
-    "rectangle",
-    "ellipse",
-    "line",
-    "arrow",
-    "text",
-    "step",
-    "pen",
-    "highlighter",
-    "blur",
-    "pixelate",
-];
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum DocumentError {
@@ -63,112 +63,12 @@ pub struct Color {
     pub a: u8,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct Stroke {
-    pub color: Color,
-    pub width: f32,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Font {
-    pub family: String,
-    pub size: f32,
-    pub bold: bool,
-    pub italic: bool,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Crop {
     pub x: u32,
     pub y: u32,
     pub width: u32,
     pub height: u32,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case")]
-pub enum Shape {
-    Rectangle {
-        bounds: Rect,
-        stroke: Stroke,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        fill: Option<Color>,
-    },
-    Ellipse {
-        bounds: Rect,
-        stroke: Stroke,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        fill: Option<Color>,
-    },
-    Line {
-        from: Point,
-        to: Point,
-        stroke: Stroke,
-    },
-    Arrow {
-        from: Point,
-        to: Point,
-        stroke: Stroke,
-    },
-    Text {
-        origin: Point,
-        content: String,
-        font: Font,
-        color: Color,
-    },
-    Step {
-        center: Point,
-        number: u32,
-        radius: f32,
-        color: Color,
-    },
-    Pen {
-        points: Vec<Point>,
-        stroke: Stroke,
-    },
-    Highlighter {
-        points: Vec<Point>,
-        stroke: Stroke,
-    },
-    Blur {
-        bounds: Rect,
-        radius: f32,
-    },
-    Pixelate {
-        bounds: Rect,
-        cell: u32,
-    },
-}
-
-impl Shape {
-    #[must_use]
-    pub fn hides_content(&self) -> bool {
-        matches!(self, Self::Blur { .. } | Self::Pixelate { .. })
-    }
-
-    fn numbers_are_finite(&self) -> bool {
-        let point = |point: &Point| point.x.is_finite() && point.y.is_finite();
-        let rect = |rect: &Rect| {
-            [rect.x, rect.y, rect.width, rect.height]
-                .iter()
-                .all(|number| number.is_finite())
-        };
-        match self {
-            Self::Rectangle { bounds, stroke, .. } | Self::Ellipse { bounds, stroke, .. } => {
-                rect(bounds) && stroke.width.is_finite()
-            }
-            Self::Line { from, to, stroke } | Self::Arrow { from, to, stroke } => {
-                point(from) && point(to) && stroke.width.is_finite()
-            }
-            Self::Text { origin, font, .. } => point(origin) && font.size.is_finite(),
-            Self::Step { center, radius, .. } => point(center) && radius.is_finite(),
-            Self::Pen { points, stroke } | Self::Highlighter { points, stroke } => {
-                points.iter().all(point) && stroke.width.is_finite()
-            }
-            Self::Blur { bounds, radius } => rect(bounds) && radius.is_finite(),
-            Self::Pixelate { bounds, .. } => rect(bounds),
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -206,19 +106,16 @@ impl AnnotationObject {
         }
     }
 
-    fn to_value(&self) -> Result<Value, serde_json::Error> {
+    fn to_value(&self) -> Value {
         match &self.content {
-            ObjectContent::Unknown(fields) => Ok(Value::Object(fields.clone())),
+            ObjectContent::Unknown(fields) => Value::Object(fields.clone()),
             ObjectContent::Known { shape, extra } => {
-                let mut fields = match serde_json::to_value(shape)? {
-                    Value::Object(fields) => fields,
-                    _ => Map::new(),
-                };
+                let mut fields = shape.to_map();
                 for (name, value) in extra {
                     fields.entry(name.clone()).or_insert_with(|| value.clone());
                 }
                 fields.insert("id".to_owned(), Value::from(self.id));
-                Ok(Value::Object(fields))
+                Value::Object(fields)
             }
         }
     }
@@ -236,18 +133,15 @@ impl AnnotationObject {
             .get("kind")
             .and_then(Value::as_str)
             .ok_or("an annotation has no kind")?;
-        if !KNOWN_KINDS.contains(&kind) {
+        let Some(definition) = definition(kind) else {
             return Ok(Self {
                 id,
                 content: ObjectContent::Unknown(fields),
             });
-        }
-        let shape: Shape = serde_json::from_value(Value::Object(fields.clone()))
-            .map_err(|error| format!("annotation {id}: {error}"))?;
-        let used = match serde_json::to_value(&shape) {
-            Ok(Value::Object(used)) => used,
-            _ => Map::new(),
         };
+        let shape = Shape::from_map(definition, &fields)
+            .map_err(|error| format!("annotation {id}: {error}"))?;
+        let used = shape.to_map();
         let extra = fields
             .into_iter()
             .filter(|(name, _)| name != "id" && !used.contains_key(name))
@@ -367,12 +261,8 @@ impl AnnotationDocument {
         let objects = self
             .objects
             .iter()
-            .map(|object| {
-                object
-                    .to_value()
-                    .map_err(|error| DocumentError::Corrupt(error.to_string()))
-            })
-            .collect::<Result<_, _>>()?;
+            .map(AnnotationObject::to_value)
+            .collect();
         fields.insert("objects".to_owned(), Value::Array(objects));
         Ok(Value::Object(fields).to_string())
     }
@@ -380,9 +270,7 @@ impl AnnotationDocument {
 
 impl Serialize for AnnotationObject {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_value()
-            .map_err(serde::ser::Error::custom)?
-            .serialize(serializer)
+        self.to_value().serialize(serializer)
     }
 }
 
