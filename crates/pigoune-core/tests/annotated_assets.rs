@@ -2,6 +2,7 @@ use std::fs;
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 
+use pigoune_core::annotations::{AnnotationDocument, AnnotationObject, DocumentError, Rect, Shape};
 use pigoune_core::{
     AnnotatedError, AnnotatedImage, AssetColor, AssetCommand, AssetId, AssetView, DominantColor,
     ImportOutcome, Library, Rgb,
@@ -9,7 +10,27 @@ use pigoune_core::{
 use rusqlite::Connection;
 use tempfile::TempDir;
 
-const DOCUMENT: &str = r#"{"version":1,"objects":[]}"#;
+fn plain_document() -> AnnotationDocument {
+    AnnotationDocument::default()
+}
+
+fn document_with_a_blur() -> AnnotationDocument {
+    AnnotationDocument::new(
+        None,
+        vec![AnnotationObject::new(
+            1,
+            Shape::Blur {
+                bounds: Rect {
+                    x: 1.0,
+                    y: 2.0,
+                    width: 30.0,
+                    height: 40.0,
+                },
+                radius: 8.0,
+            },
+        )],
+    )
+}
 
 fn sample(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -49,8 +70,7 @@ impl Fixture {
             .import_annotated(AnnotatedImage {
                 rendered: &rendered,
                 original: &original,
-                document: DOCUMENT,
-                has_masks: false,
+                document: &plain_document(),
             })
             .expect("annotated image is imported")
     }
@@ -132,7 +152,10 @@ fn an_annotated_image_keeps_its_rendering_its_original_and_its_document() {
         .annotations(id)
         .expect("query")
         .expect("some");
-    assert_eq!(annotations.document, DOCUMENT);
+    assert_eq!(
+        annotations.document,
+        plain_document().to_json().expect("json")
+    );
     assert!(!annotations.has_masks);
     assert_eq!(fixture.files_on_disk().len(), 2);
 }
@@ -163,8 +186,7 @@ fn a_rendering_already_in_the_library_is_refused_and_names_the_existing_resource
     let result = fixture.library.import_annotated(AnnotatedImage {
         rendered: &rendered,
         original: &original,
-        document: DOCUMENT,
-        has_masks: false,
+        document: &plain_document(),
     });
 
     assert!(matches!(result, Err(AnnotatedError::AlreadyPresent(existing)) if existing == first));
@@ -185,8 +207,7 @@ fn a_rendering_equal_to_an_ordinary_import_is_refused_too() {
     let result = fixture.library.import_annotated(AnnotatedImage {
         rendered: &rendered,
         original: &original,
-        document: DOCUMENT,
-        has_masks: false,
+        document: &plain_document(),
     });
 
     assert!(matches!(result, Err(AnnotatedError::AlreadyPresent(_))));
@@ -213,8 +234,7 @@ fn anything_but_a_png_is_refused_without_a_trace() {
         let result = fixture.library.import_annotated(AnnotatedImage {
             rendered,
             original,
-            document: DOCUMENT,
-            has_masks: false,
+            document: &plain_document(),
         });
         assert!(result.is_err(), "{rendered:?} / {original:?}: {result:?}");
     }
@@ -232,8 +252,7 @@ fn a_rendering_cannot_take_the_name_reserved_for_the_original() {
     let result = fixture.library.import_annotated(AnnotatedImage {
         rendered: &rendered,
         original: &original,
-        document: DOCUMENT,
-        has_masks: false,
+        document: &plain_document(),
     });
 
     assert!(matches!(result, Err(AnnotatedError::ReservedName(_))));
@@ -260,7 +279,7 @@ fn updating_replaces_the_rendering_and_the_document_but_never_the_original() {
 
     fixture
         .library
-        .update_annotated(id, &new_rendering, r#"{"version":1,"objects":[1]}"#, true)
+        .update_annotated(id, &new_rendering, &document_with_a_blur())
         .expect("updated");
 
     assert_eq!(
@@ -278,7 +297,10 @@ fn updating_replaces_the_rendering_and_the_document_but_never_the_original() {
         [id]
     );
     let annotations = fixture.library.annotations(id).expect("q").expect("some");
-    assert_eq!(annotations.document, r#"{"version":1,"objects":[1]}"#);
+    assert_eq!(
+        annotations.document,
+        document_with_a_blur().to_json().expect("json")
+    );
     assert!(annotations.has_masks);
     assert_eq!(
         fs::read(fixture.library.original_path(id).expect("q").expect("some")).expect("original"),
@@ -296,11 +318,15 @@ fn updating_with_the_same_rendering_only_changes_the_document() {
 
     fixture
         .library
-        .update_annotated(id, &same, r#"{"version":1,"objects":[2]}"#, false)
+        .update_annotated(id, &same, &document_with_a_blur())
         .expect("updated");
 
     let annotations = fixture.library.annotations(id).expect("q").expect("some");
-    assert_eq!(annotations.document, r#"{"version":1,"objects":[2]}"#);
+    assert_eq!(
+        annotations.document,
+        document_with_a_blur().to_json().expect("json")
+    );
+    assert!(annotations.has_masks);
     assert_eq!(fixture.problems(), 0);
 }
 
@@ -314,7 +340,7 @@ fn updating_into_another_resources_rendering_is_refused_and_changes_nothing() {
 
     let result = fixture
         .library
-        .update_annotated(second, &collision, "{}", true);
+        .update_annotated(second, &collision, &document_with_a_blur());
 
     assert!(matches!(result, Err(AnnotatedError::AlreadyPresent(other)) if other == first));
     assert_eq!(
@@ -326,7 +352,10 @@ fn updating_into_another_resources_rendering_is_refused_and_changes_nothing() {
         .annotations(second)
         .expect("q")
         .expect("some");
-    assert_eq!(annotations.document, DOCUMENT);
+    assert_eq!(
+        annotations.document,
+        plain_document().to_json().expect("json")
+    );
     assert_eq!(fixture.files_on_disk().len(), 4);
     assert_eq!(fixture.problems(), 0);
 }
@@ -344,7 +373,7 @@ fn only_an_annotated_resource_can_be_updated() {
     let rendering = fixture.png("r.png", 4);
 
     assert!(matches!(
-        fixture.library.update_annotated(plain, &rendering, "{}", false),
+        fixture.library.update_annotated(plain, &rendering, &plain_document()),
         Err(AnnotatedError::NotAnnotated(id)) if id == plain
     ));
     let elsewhere = tempfile::tempdir().expect("temporary directory");
@@ -356,7 +385,7 @@ fn only_an_annotated_resource_can_be_updated() {
         panic!("new");
     };
     assert!(matches!(
-        fixture.library.update_annotated(unknown, &rendering, "{}", false),
+        fixture.library.update_annotated(unknown, &rendering, &plain_document()),
         Err(AnnotatedError::AssetNotFound(id)) if id == unknown
     ));
 }
@@ -443,8 +472,127 @@ fn a_library_reopened_still_has_its_annotations() {
     let library = Library::open(&root).expect("opens");
 
     assert_eq!(
-        library.annotations(id).expect("q").expect("some").document,
-        DOCUMENT
+        library.annotation_document(id).expect("q").expect("some"),
+        plain_document()
     );
     drop(fixture.workspace);
+}
+
+#[test]
+fn an_unknown_tool_survives_a_trip_through_the_library() {
+    let mut fixture = Fixture::new();
+    let rendered = fixture.png("cap.png", 1);
+    let original = fixture.png("o.png", 2);
+    let document = AnnotationDocument::from_json(
+        r#"{"version":1,"objects":[{"id":1,"kind":"lasso","points":[[1,2]]}],"frame":{"margin":3}}"#,
+    )
+    .expect("read");
+
+    let id = fixture
+        .library
+        .import_annotated(AnnotatedImage {
+            rendered: &rendered,
+            original: &original,
+            document: &document,
+        })
+        .expect("imported");
+
+    assert_eq!(
+        fixture
+            .library
+            .annotation_document(id)
+            .expect("q")
+            .expect("some"),
+        document
+    );
+}
+
+#[test]
+fn a_document_written_by_a_newer_version_is_reported_but_the_image_stays_usable() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("cap.png", 1, 2);
+    fixture
+        .database()
+        .execute(
+            "UPDATE asset_annotations SET document = '{\"version\":9,\"objects\":[]}'",
+            [],
+        )
+        .expect("document replaced");
+
+    let result = fixture.library.annotation_document(id);
+
+    assert!(matches!(
+        result,
+        Err(AnnotatedError::Document(DocumentError::TooNew {
+            found: 9,
+            ..
+        }))
+    ));
+    assert!(fixture.library.annotations(id).expect("q").is_some());
+    assert!(fixture.stored_file(id).is_file());
+}
+
+#[test]
+fn a_document_with_a_blur_is_flagged_and_a_plain_one_is_not() {
+    let mut fixture = Fixture::new();
+    let plain = fixture.import("a.png", 1, 2);
+    let rendered = fixture.png("b.png", 3);
+    let original = fixture.png("o.png", 4);
+    let blurred = fixture
+        .library
+        .import_annotated(AnnotatedImage {
+            rendered: &rendered,
+            original: &original,
+            document: &document_with_a_blur(),
+        })
+        .expect("imported");
+
+    assert!(
+        !fixture
+            .library
+            .annotations(plain)
+            .expect("q")
+            .expect("some")
+            .has_masks
+    );
+    assert!(
+        fixture
+            .library
+            .annotations(blurred)
+            .expect("q")
+            .expect("some")
+            .has_masks
+    );
+}
+
+#[test]
+fn a_document_that_cannot_be_written_is_refused_without_a_trace() {
+    let mut fixture = Fixture::new();
+    let rendered = fixture.png("cap.png", 1);
+    let original = fixture.png("o.png", 2);
+    let broken = AnnotationDocument::new(
+        None,
+        vec![AnnotationObject::new(
+            1,
+            Shape::Blur {
+                bounds: Rect {
+                    x: f32::NAN,
+                    y: 0.0,
+                    width: 1.0,
+                    height: 1.0,
+                },
+                radius: 1.0,
+            },
+        )],
+    );
+
+    let result = fixture.library.import_annotated(AnnotatedImage {
+        rendered: &rendered,
+        original: &original,
+        document: &broken,
+    });
+
+    assert!(matches!(result, Err(AnnotatedError::Document(_))));
+    assert_eq!(fixture.asset_count(), 0);
+    assert!(fixture.files_on_disk().is_empty());
 }
