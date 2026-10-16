@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:43+0200\n"
+"POT-Creation-Date: 2026-10-16 13:53+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1395,7 +1395,7 @@ msgid "New Library"
 msgstr "Nieuwe bibliotheek"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
-#: crates/pigoune-app/src/editor.rs:341 crates/pigoune-app/src/editor.rs:1098
+#: crates/pigoune-app/src/editor.rs:345 crates/pigoune-app/src/editor.rs:1178
 #: crates/pigoune-app/src/window.rs:3086 crates/pigoune-app/src/window.rs:5098
 #: crates/pigoune-app/src/window.rs:5276 crates/pigoune-app/src/window.rs:5349
 #: crates/pigoune-app/src/window.rs:6155
@@ -1450,37 +1450,53 @@ msgstr "_Kiezen…"
 msgid "translator-credits"
 msgstr "Gor3pig"
 
-#: crates/pigoune-app/src/editor.rs:336
+#: crates/pigoune-app/src/editor.rs:340
 msgid "Discard the Changes?"
 msgstr "Wijzigingen negeren?"
 
-#: crates/pigoune-app/src/editor.rs:338
+#: crates/pigoune-app/src/editor.rs:342
 msgid "The annotations and changes made to this capture will be lost."
 msgstr "De aantekeningen en wijzigingen aan deze opname gaan verloren."
 
-#: crates/pigoune-app/src/editor.rs:342 crates/pigoune-app/src/window.rs:5798
+#: crates/pigoune-app/src/editor.rs:346 crates/pigoune-app/src/window.rs:5798
 msgid "_Discard"
 msgstr "_Negeren"
 
-#: crates/pigoune-app/src/editor.rs:969
+#: crates/pigoune-app/src/editor.rs:458
+msgid "Bring to Front"
+msgstr "Naar voren halen"
+
+#: crates/pigoune-app/src/editor.rs:463
+msgid "Bring Forward"
+msgstr "Een laag naar voren"
+
+#: crates/pigoune-app/src/editor.rs:468
+msgid "Send Backward"
+msgstr "Een laag naar achteren"
+
+#: crates/pigoune-app/src/editor.rs:473
+msgid "Send to Back"
+msgstr "Naar achteren sturen"
+
+#: crates/pigoune-app/src/editor.rs:1046
 #, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
-#: crates/pigoune-app/src/editor.rs:1072 crates/pigoune-app/ui/editor.blp:124
+#: crates/pigoune-app/src/editor.rs:1149 crates/pigoune-app/ui/editor.blp:124
 msgid "No annotations"
 msgstr "Geen annotaties"
 
-#: crates/pigoune-app/src/editor.rs:1074
+#: crates/pigoune-app/src/editor.rs:1151
 #, rust-format
 msgid "Annotations: {count}"
 msgstr "Annotaties: {count}"
 
-#: crates/pigoune-app/src/editor.rs:1093
+#: crates/pigoune-app/src/editor.rs:1173
 msgid "Lock the Masks?"
 msgstr "Maskeringen vergrendelen?"
 
-#: crates/pigoune-app/src/editor.rs:1095
+#: crates/pigoune-app/src/editor.rs:1175
 msgid ""
 "The blur and the pixelation will be applied to the original image for good. "
 "The hidden content can no longer be recovered, and this cannot be undone."
@@ -1489,23 +1505,23 @@ msgstr ""
 "afbeelding. De verborgen inhoud kan niet meer worden teruggehaald en dit kan "
 "niet ongedaan worden gemaakt."
 
-#: crates/pigoune-app/src/editor.rs:1099
+#: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"
 msgstr "_Vergrendelen"
 
-#: crates/pigoune-app/src/editor.rs:1167
+#: crates/pigoune-app/src/editor.rs:1247
 msgid "Copy to Clipboard"
 msgstr "Naar klembord kopiëren"
 
-#: crates/pigoune-app/src/editor.rs:1168
+#: crates/pigoune-app/src/editor.rs:1248
 msgid "Export as PNG…"
 msgstr "Exporteren als PNG…"
 
-#: crates/pigoune-app/src/editor.rs:1188
+#: crates/pigoune-app/src/editor.rs:1268
 msgid "The image could not be created or saved."
 msgstr "De afbeelding kon niet worden gemaakt of opgeslagen."
 
-#: crates/pigoune-app/src/editor.rs:1190 crates/pigoune-app/src/editor.rs:1282
+#: crates/pigoune-app/src/editor.rs:1270 crates/pigoune-app/src/editor.rs:1362
 #: crates/pigoune-app/src/window.rs:1947 crates/pigoune-app/src/window.rs:2968
 #: crates/pigoune-app/src/window.rs:3344 crates/pigoune-app/src/window.rs:3391
 #: crates/pigoune-app/src/window.rs:3460 crates/pigoune-app/src/window.rs:3497
@@ -1526,45 +1542,45 @@ msgstr "De afbeelding kon niet worden gemaakt of opgeslagen."
 msgid "_Close"
 msgstr "_Sluiten"
 
-#: crates/pigoune-app/src/editor.rs:1196
+#: crates/pigoune-app/src/editor.rs:1276
 msgid "Could Not Copy the Image"
 msgstr "Afbeelding kon niet worden gekopieerd"
 
-#: crates/pigoune-app/src/editor.rs:1200
+#: crates/pigoune-app/src/editor.rs:1280
 msgid "Image copied to the clipboard"
 msgstr "Afbeelding naar klembord gekopieerd"
 
-#: crates/pigoune-app/src/editor.rs:1205 crates/pigoune-app/src/window.rs:5696
+#: crates/pigoune-app/src/editor.rs:1285 crates/pigoune-app/src/window.rs:5696
 msgid "Could Not Save the Capture"
 msgstr "Opname kon niet worden opgeslagen"
 
-#: crates/pigoune-app/src/editor.rs:1231
+#: crates/pigoune-app/src/editor.rs:1311
 msgid "Export Image As"
 msgstr "Afbeelding exporteren als"
 
-#: crates/pigoune-app/src/editor.rs:1232 crates/pigoune-app/src/window.rs:3600
+#: crates/pigoune-app/src/editor.rs:1312 crates/pigoune-app/src/window.rs:3600
 #: crates/pigoune-app/src/window.rs:3677 crates/pigoune-app/src/window.rs:3760
 msgid "_Export"
 msgstr "_Exporteren"
 
-#: crates/pigoune-app/src/editor.rs:1233
+#: crates/pigoune-app/src/editor.rs:1313
 #: crates/pigoune-app/src/pasted_content.rs:37
 msgid "Capture"
 msgstr "Opname"
 
-#: crates/pigoune-app/src/editor.rs:1241 crates/pigoune-app/src/editor.rs:1254
+#: crates/pigoune-app/src/editor.rs:1321 crates/pigoune-app/src/editor.rs:1334
 msgid "Could Not Export the Image"
 msgstr "Afbeelding kon niet worden geëxporteerd"
 
-#: crates/pigoune-app/src/editor.rs:1252
+#: crates/pigoune-app/src/editor.rs:1332
 msgid "Image exported"
 msgstr "Afbeelding geëxporteerd"
 
-#: crates/pigoune-app/src/editor.rs:1279
+#: crates/pigoune-app/src/editor.rs:1359
 msgid "Could Not Lock the Masks"
 msgstr "Maskeringen konden niet worden vergrendeld"
 
-#: crates/pigoune-app/src/editor.rs:1280
+#: crates/pigoune-app/src/editor.rs:1360
 msgid "The original image was left unchanged."
 msgstr "De originele afbeelding is niet gewijzigd."
 
@@ -1775,7 +1791,7 @@ msgstr "Middelgrote punt"
 msgid "Large Head"
 msgstr "Grote punt"
 
-#: crates/pigoune-app/src/editor_options.rs:201
+#: crates/pigoune-app/src/editor_options.rs:202
 msgid "Pick a Color from the Image"
 msgstr "Een kleur uit de afbeelding kiezen"
 
@@ -6576,19 +6592,7 @@ msgstr "Herstellen"
 msgid "Layers"
 msgstr "Lagen"
 
-#: crates/pigoune-app/ui/editor.blp:252
-msgid "Nothing to show yet"
-msgstr "Nog niets om te tonen"
-
-#: crates/pigoune-app/ui/editor.blp:256
-msgid "Frame"
-msgstr "Omlijsting"
-
-#: crates/pigoune-app/ui/editor.blp:259
-msgid "Border, Shadow and Background"
-msgstr "Rand, schaduw en achtergrond"
-
-#: crates/pigoune-app/ui/editor.blp:288
+#: crates/pigoune-app/ui/editor.blp:283
 msgid "Tools and Settings"
 msgstr "Gereedschap en instellingen"
 
@@ -8194,6 +8198,15 @@ msgstr "{shortcut} is gereserveerd door Pigoune."
 #: crates/pigoune-app/src/shortcuts_page.rs:228
 msgid "This key combination is not supported."
 msgstr "Deze toetscombinatie wordt niet ondersteund."
+
+#~ msgid "Nothing to show yet"
+#~ msgstr "Nog niets om te tonen"
+
+#~ msgid "Frame"
+#~ msgstr "Omlijsting"
+
+#~ msgid "Border, Shadow and Background"
+#~ msgstr "Rand, schaduw en achtergrond"
 
 #~ msgid "Rectangular Spotlight"
 #~ msgstr "Rechthoekig spotlicht"

@@ -8,7 +8,7 @@ use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::AssetId;
 use pigoune_core::annotations::{
     AnnotationDocument, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
-    Interaction, Options, Point, Shape, Snapping, Tool, ToolDefinition, Value,
+    Interaction, LayerMove, Options, Point, Shape, Snapping, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_export;
@@ -48,8 +48,8 @@ pub struct TextEdit {
 
 mod imp {
     use super::{
-        AssetId, Cell, ClosedCallback, NoticeCallback, OptionRow, Point, RefCell, SaveCallback,
-        Shape, TextEdit,
+        AssetId, Cell, ClosedCallback, LayerMove, NoticeCallback, OptionRow, Point, RefCell,
+        SaveCallback, Shape, TextEdit,
     };
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -152,6 +152,9 @@ mod imp {
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
         pub mask_banner: TemplateChild<adw::Banner>,
+        #[template_child]
+        pub layer_buttons: TemplateChild<gtk::Box>,
+        pub layer_move_buttons: RefCell<Vec<(LayerMove, gtk::Button)>>,
         pub locked_masks: RefCell<Vec<(u32, Shape)>>,
         pub text_edit: Cell<Option<TextEdit>>,
         pub text_provider: gtk::CssProvider,
@@ -384,6 +387,7 @@ impl PigouneEditor {
         ));
         self.listen_to_keys();
         self.install_outputs();
+        self.fill_layer_buttons();
         imp.text_view.buffer().connect_changed(glib::clone!(
             #[weak(rename_to = editor)]
             self,
@@ -443,6 +447,63 @@ impl PigouneEditor {
             buttons.push((tool, button));
         }
         imp.tool_buttons.replace(buttons);
+    }
+
+    fn fill_layer_buttons(&self) {
+        let imp = self.imp();
+        let layers = [
+            (
+                LayerMove::Front,
+                "go-top-symbolic",
+                gettext("Bring to Front"),
+            ),
+            (
+                LayerMove::Forward,
+                "go-up-symbolic",
+                gettext("Bring Forward"),
+            ),
+            (
+                LayerMove::Backward,
+                "go-down-symbolic",
+                gettext("Send Backward"),
+            ),
+            (
+                LayerMove::Back,
+                "go-bottom-symbolic",
+                gettext("Send to Back"),
+            ),
+        ];
+        let mut buttons = Vec::new();
+        for (movement, icon, label) in layers {
+            let button = gtk::Button::from_icon_name(icon);
+            button.set_tooltip_text(Some(&label));
+            button.update_property(&[gtk::accessible::Property::Label(&label)]);
+            button.set_sensitive(false);
+            button.connect_clicked(glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move |_| {
+                    editor.move_layer(movement);
+                }
+            ));
+            imp.layer_buttons.append(&button);
+            buttons.push((movement, button));
+        }
+        imp.layer_move_buttons.replace(buttons);
+    }
+
+    fn move_layer(&self, movement: LayerMove) -> bool {
+        self.commit_text();
+        let moved = self
+            .imp()
+            .drawing
+            .borrow_mut()
+            .session
+            .move_selected(movement);
+        if moved {
+            self.after_edit();
+        }
+        moved
     }
 
     fn place_panel(&self) {
@@ -1089,6 +1150,9 @@ impl PigouneEditor {
         } else {
             gettext("Annotations: {count}").replace("{count}", &count.to_string())
         });
+        for (movement, button) in imp.layer_move_buttons.borrow().iter() {
+            button.set_sensitive(drawing.session.can_move_selected(*movement));
+        }
         let unlocked = drawing
             .session
             .document()
@@ -1333,6 +1397,14 @@ impl PigouneEditor {
             gdk::Key::z | gdk::Key::Z if control && shift => self.redo(),
             gdk::Key::z | gdk::Key::Z if control => self.undo(),
             gdk::Key::y | gdk::Key::Y if control => self.redo(),
+            gdk::Key::bracketright | gdk::Key::braceright if control && shift => {
+                self.move_layer(LayerMove::Front)
+            }
+            gdk::Key::bracketleft | gdk::Key::braceleft if control && shift => {
+                self.move_layer(LayerMove::Back)
+            }
+            gdk::Key::bracketright if control => self.move_layer(LayerMove::Forward),
+            gdk::Key::bracketleft if control => self.move_layer(LayerMove::Backward),
             gdk::Key::Delete | gdk::Key::BackSpace => self.delete_selection(),
             gdk::Key::Return | gdk::Key::KP_Enter if self.is_cropping() => {
                 self.finish_cropping(true);

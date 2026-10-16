@@ -249,15 +249,10 @@ template $PigouneEditor: Adw.Bin {
 
             Adw.PreferencesGroup {
               title: _("Layers");
-              description: _("Nothing to show yet");
-            }
 
-            Adw.PreferencesGroup {
-              title: _("Frame");
-
-              Adw.SwitchRow {
-                title: _("Border, Shadow and Background");
-                sensitive: false;
+              Box layer_buttons {
+                spacing: 6;
+                homogeneous: true;
               }
             }
           };
