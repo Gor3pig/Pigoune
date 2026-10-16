@@ -20,6 +20,7 @@ use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
 use crate::image_conversion;
 use crate::mask_lock;
+use crate::tool_flow;
 use crate::zoom_view::PointerEvent;
 
 type ClosedCallback = Box<dyn Fn()>;
@@ -804,9 +805,10 @@ impl PigouneEditor {
     }
 
     fn finish_creation(&self) {
-        let tool = self.imp().active_tool.get();
-        if tool.creates() && self.imp().persistent_tool.get() != Some(tool) {
-            self.choose_tool(EditorTool::Select);
+        let imp = self.imp();
+        let next = tool_flow::tool_after_creation(imp.active_tool.get(), imp.persistent_tool.get());
+        if next != imp.active_tool.get() {
+            self.choose_tool(next);
         }
     }
 
@@ -825,8 +827,10 @@ impl PigouneEditor {
         if imp.active_tool.get() != tool {
             self.choose_tool(tool);
         }
-        let persistent = imp.persistent_tool.get() != Some(tool);
-        imp.persistent_tool.set(persistent.then_some(tool));
+        imp.persistent_tool.set(tool_flow::persistence_after_toggle(
+            imp.persistent_tool.get(),
+            tool,
+        ));
         self.show_persistence();
     }
 
@@ -1643,7 +1647,7 @@ impl PigouneEditor {
         if handled {
             self.after_edit();
         }
-        if imp.persistent_tool.get().is_some() {
+        if tool_flow::leaves_persistence_on_escape(imp.persistent_tool.get()) {
             imp.persistent_tool.set(None);
             self.choose_tool(EditorTool::Select);
             self.show_persistence();
@@ -1805,8 +1809,10 @@ impl PigouneEditor {
                 drawing.session.select(None);
             }
         }
-        if imp.persistent_tool.get() != Some(imp.active_tool.get()) {
-            imp.persistent_tool.set(None);
+        let kept =
+            tool_flow::persistence_after_switch(imp.persistent_tool.get(), imp.active_tool.get());
+        if kept != imp.persistent_tool.get() {
+            imp.persistent_tool.set(kept);
             self.show_persistence();
         }
         if cropping && !was_cropping {

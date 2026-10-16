@@ -115,6 +115,7 @@ mod tag_tree;
 mod thumbnails;
 mod tiled_render;
 mod toasts;
+mod tool_flow;
 mod undo_message;
 mod update_banner;
 mod update_news;
