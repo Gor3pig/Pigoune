@@ -15,7 +15,6 @@ const BOUNDS_DASH: [f32; 2] = [3.0, 3.0];
 const BOUNDS_OPACITY: f32 = 0.35;
 const PIXEL_GRID_WIDTH: f32 = 1.0;
 const PIXEL_GRID_OPACITY: f32 = 0.15;
-const SPRING_BACK_MILLISECONDS: u32 = 300;
 
 type ZoomChangedCallback = Box<dyn Fn(f64)>;
 type OverlayCallback = Rc<dyn Fn(&gtk::Snapshot, &graphene::Rect, &graphene::Rect, f64)>;
@@ -65,7 +64,6 @@ mod imp {
         pub ctrl_held: Cell<bool>,
         pub drag_origin: Cell<Point>,
         pub cursor_override: RefCell<Option<String>>,
-        pub spring: RefCell<Option<adw::TimedAnimation>>,
     }
 
     impl Default for PigouneZoomView {
@@ -100,7 +98,6 @@ mod imp {
                 ctrl_held: Cell::default(),
                 drag_origin: Cell::new(Point { x: 0.0, y: 0.0 }),
                 cursor_override: RefCell::default(),
-                spring: RefCell::default(),
             }
         }
     }
@@ -289,7 +286,6 @@ impl PigouneZoomView {
 
     pub fn pan(&self, direction_x: f64, direction_y: f64) {
         let imp = self.imp();
-        self.stop_spring();
         let center = zoom_math::pan_center(
             imp.center.get(),
             self.view_size(),
@@ -321,39 +317,7 @@ impl PigouneZoomView {
         self.apply_zoom(new_zoom, center);
     }
 
-    fn stop_spring(&self) {
-        let spring = self.imp().spring.take();
-        if let Some(spring) = spring {
-            spring.pause();
-        }
-    }
-
-    fn spring_back(&self) {
-        let imp = self.imp();
-        let from = imp.center.get();
-        let to = zoom_math::clamp_center(from, self.view_size(), imp.image.get(), imp.zoom.get());
-        if from == to {
-            return;
-        }
-        let target = adw::CallbackAnimationTarget::new(glib::clone!(
-            #[weak(rename_to = view)]
-            self,
-            move |progress| {
-                view.imp().center.set(Point {
-                    x: from.x + (to.x - from.x) * progress,
-                    y: from.y + (to.y - from.y) * progress,
-                });
-                view.queue_draw();
-            }
-        ));
-        let spring = adw::TimedAnimation::new(self, 0.0, 1.0, SPRING_BACK_MILLISECONDS, target);
-        spring.set_easing(adw::Easing::EaseOutCubic);
-        imp.spring.replace(Some(spring.clone()));
-        spring.play();
-    }
-
     fn apply_zoom(&self, zoom: f64, center: Point) {
-        self.stop_spring();
         let imp = self.imp();
         let changed = (imp.zoom.get() - zoom).abs() > f64::EPSILON;
         imp.zoom.set(zoom);
@@ -407,11 +371,16 @@ impl PigouneZoomView {
             return;
         }
         let cursor = match (imp.texture.borrow().is_some(), imp.dragging.get()) {
-            (false, _) => None,
-            (true, false) => Some(MOVABLE_CURSOR),
-            (true, true) => Some(MOVING_CURSOR),
+            (true, false) if self.can_pan() => Some(MOVABLE_CURSOR),
+            (true, true) if self.can_pan() => Some(MOVING_CURSOR),
+            _ => None,
         };
         self.set_cursor_from_name(cursor);
+    }
+
+    fn can_pan(&self) -> bool {
+        let imp = self.imp();
+        zoom_math::can_pan(self.view_size(), imp.image.get(), imp.zoom.get())
     }
 
     fn settle_after_resize(&self) {
@@ -497,7 +466,6 @@ impl PigouneZoomView {
             #[weak(rename_to = view)]
             self,
             move |gesture, x, y| {
-                view.stop_spring();
                 let imp = view.imp();
                 imp.shift_held.set(shift_pressed(gesture));
                 imp.alt_held.set(alt_pressed(gesture));
@@ -529,7 +497,6 @@ impl PigouneZoomView {
                 }
                 imp.dragging.set(false);
                 view.update_cursor();
-                view.spring_back();
             }
         ));
         drag.connect_drag_update(glib::clone!(
@@ -555,7 +522,7 @@ impl PigouneZoomView {
                     x: start.x - offset_x / zoom,
                     y: start.y - offset_y / zoom,
                 };
-                imp.center.set(zoom_math::stretch_center(
+                imp.center.set(zoom_math::clamp_center(
                     pulled,
                     view.view_size(),
                     imp.image.get(),
@@ -575,7 +542,6 @@ impl PigouneZoomView {
                 }
                 imp.dragging.set(false);
                 view.update_cursor();
-                view.spring_back();
             }
         ));
         self.add_controller(drag);
