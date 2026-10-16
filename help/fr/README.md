@@ -10,6 +10,7 @@ bibliothèque bien organisée. Ce guide présente tout ce qu'il sait faire.
 - [Retrouver un élément](#retrouver-un-élément)
 - [Regarder vos éléments](#regarder-vos-éléments)
 - [Réutiliser vos éléments](#réutiliser-vos-éléments)
+- [Capturer et annoter](#capturer-et-annoter)
 - [Corbeille et annulation](#corbeille-et-annulation)
 - [Votre bibliothèque](#votre-bibliothèque)
 - [Préférences](#préférences)
@@ -379,6 +380,77 @@ ses critères.
   puis GNOME vous demande de confirmer. Cochez **Ajouter aussi à la bibliothèque la version
   modifiée** pour garder cette image comme nouvel élément.
 
+## Capturer et annoter
+
+Pigoune sait faire une capture d'écran, ou prendre une image que vous collez, et vous laisser
+l'annoter avant qu'elle rejoigne votre bibliothèque. L'éditeur s'ouvre dans la fenêtre d'une
+bibliothèque ouverte : il y a donc toujours un endroit où garder le résultat.
+
+### Commencer une capture
+
+- **Faire une capture d'écran** : choisissez **Faire une capture d'écran** dans le menu
+  d'importation, appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>S</kbd>, ou utilisez l'action
+  **Faire une capture d'écran** de l'icône de Pigoune (clic droit dessus dans votre lanceur).
+  Pigoune cache sa fenêtre et votre bureau vous demande de choisir la zone, une fenêtre ou tout
+  l'écran.
+- **Coller une image** : copiez une image n'importe où, puis choisissez **Coller et annoter** dans
+  le menu d'importation ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>V</kbd>.
+- **Depuis un raccourci de votre bureau** : associez la commande `pigoune --capture` (ou
+  `flatpak run io.github.gor3pig.Pigoune --capture`) à une touche dans les réglages de votre
+  bureau. Si Pigoune n'est pas lancé, il démarre, rouvre votre dernière bibliothèque et fait la
+  capture.
+
+Les images peuvent faire jusqu'à 8000 pixels de côté.
+
+### Annoter
+
+Les outils sont dans le volet de droite (dans une fenêtre étroite, dans le volet qui monte du
+bas). Chaque outil a une lettre qui le sélectionne, indiquée dans son infobulle.
+
+| Outil | Lettre | Ce qu'il fait |
+|---|---|---|
+| Sélection | <kbd>V</kbd> | Sélectionner, déplacer et redimensionner une annotation (<kbd>Suppr</kbd> la supprime) |
+| Rogner | <kbd>C</kbd> | Ne garder qu'une partie de l'image, avec des proportions libres ou fixes |
+| Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Contours, éventuellement remplis ou à coins arrondis |
+| Ligne, Flèche | <kbd>L</kbd>, <kbd>A</kbd> | Droites ou courbes, avec plusieurs pointes, continues, en tirets ou en points, régulières ou effilées |
+| Texte | <kbd>T</kbd> | Cliquez, tapez, puis cliquez ailleurs ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> ; police, taille, gras, italique, fond, bulle et contour |
+| Étapes | <kbd>N</kbd> | Pastilles numérotées (ou lettrées) qui se renumérotent seules |
+| Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés |
+| Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher ce qui est privé ; ils s'appliquent à tout ce qui est dessiné dessous |
+| Projecteur | <kbd>S</kbd> | Assombrit tout sauf un rectangle ou un ovale |
+
+Chaque outil retient ses derniers réglages (couleur, avec une pipette pour en prélever une dans
+l'image, opacité, épaisseur, ombre et plus). Maintenez <kbd>Maj</kbd> en dessinant pour des lignes
+droites à des multiples de 45 degrés et de parfaits carrés ou cercles, et maintenez <kbd>Alt</kbd>
+en déplaçant pour couper les guides qui alignent une annotation sur l'image et sur les autres
+annotations. Les quatre boutons de **Calques** (ou <kbd>Ctrl</kbd>+<kbd>]</kbd> et
+<kbd>Ctrl</kbd>+<kbd>[</kbd>, avec <kbd>Maj</kbd> pour les extrêmes) changent l'ordre des
+annotations. Annuler et rétablir fonctionnent comme partout, avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> et
+<kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd>.
+
+### Cacher ce qui est privé
+
+Un flou ou une pixelisation cache ce qui est dessous, annotations comprises. Tant que vos
+annotations restent modifiables, la capture intacte est conservée dans la bibliothèque et montre
+encore ce que vous avez caché : un bandeau vous le dit. **Verrouiller les masquages** applique
+chaque flou et chaque pixelisation à cette capture d'origine aussi, définitivement : après
+confirmation, personne ne peut plus retrouver ce qu'ils recouvrent.
+
+### Garder le résultat
+
+- **Enregistrer** ajoute l'image annotée à votre bibliothèque sous un nom fait de la date, avec le
+  tag `capture`, et l'affiche sélectionnée. Une image déjà présente dans la bibliothèque est
+  refusée, et le message nomme l'élément existant.
+- Le menu à côté d'Enregistrer copie l'image annotée dans le presse-papiers ou l'exporte en PNG.
+- Si Pigoune se ferme pendant que vous modifiez, la capture est gardée en brouillon et Pigoune
+  propose de la reprendre la prochaine fois qu'une bibliothèque s'ouvre.
+
+Sélectionnez un élément annoté et choisissez **Annoter…** (dans le panneau de détails ou le menu
+contextuel) pour rouvrir ses annotations : l'enregistrement met à jour le même élément. **Voir
+l'original** ouvre la capture intacte dans une autre application. La grille, l'aperçu, les
+doublons et les exports utilisent tous l'image annotée ; l'original reste à côté, va à la corbeille
+et en revient avec elle, et compte dans l'espace utilisé par votre bibliothèque.
+
 ## Corbeille et annulation
 
 Appuyez sur <kbd>Suppr</kbd>, ou choisissez **Mettre à la corbeille** dans le menu du clic
@@ -590,6 +662,8 @@ modifiés dans les **Préférences**, sur la page **Raccourcis**.
 | Tout sélectionner / tout désélectionner | <kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Échap</kbd> |
 | Copier | <kbd>Ctrl</kbd>+<kbd>C</kbd> |
 | Coller des fichiers ou une image pour les importer | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
+| Faire une capture d'écran à annoter | <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>S</kbd> |
+| Coller une image à annoter | <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>V</kbd> |
 | Renommer l'élément sélectionné | <kbd>F2</kbd> |
 | Ajouter aux favoris ou en retirer | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Ajouter un tag | <kbd>Ctrl</kbd>+<kbd>T</kbd> |

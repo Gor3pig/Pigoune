@@ -212,13 +212,6 @@ impl PigouneEditor {
         self.imp().on_notice.replace(Some(Box::new(callback)));
     }
 
-    pub fn open(&self, image: &Path) -> Result<(), glib::Error> {
-        capture_draft::Draft::standard().clear();
-        self.open_with(image, None, None)?;
-        self.keep_original_in_draft();
-        Ok(())
-    }
-
     pub fn resume(&self, image: &Path, document: AnnotationDocument) -> Result<(), glib::Error> {
         self.open_with(image, Some(EditSession::restored(document)), None)
     }

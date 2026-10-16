@@ -18,6 +18,7 @@
       <li>Find anything instantly with search and filters</li>
       <li>Reuse assets with drag and drop or the clipboard</li>
       <li>Convert assets to PNG, JPEG, WebP, AVIF or ICO, at any size</li>
+      <li>Take screenshots or paste images and annotate them in the app</li>
       <li>Portable libraries, fully local, original files never touched</li>
     </ul>
   </description>
@@ -100,6 +101,19 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.0.0" date="2026-10-16">
+      <description>
+        <p>Capture your screen and annotate it, right inside Pigoune.</p>
+        <ul>
+          <li>Take a screenshot with Take a Screenshot (Ctrl+Shift+S, the import menu, the launcher icon, or the pigoune --capture command that your desktop can bind to a shortcut), or paste an image with Paste and Annotate (Ctrl+Shift+V). The image opens in an editor inside the window of your library.</li>
+          <li>Annotate with rectangles, ellipses, lines, curved or tapered arrows, a pen, a highlighter, numbered or lettered steps, texts with a bubble or an outline, a spotlight, and a blur or a pixelation to hide what is private. Hold Shift for straight lines and perfect squares, pick colors from the image with the eyedropper, choose each tool with a letter, and let the guides align what you move.</li>
+          <li>Annotations stay editable: the untouched capture is kept next to the annotated image, which is the one shown and exported. Annotate reopens it and View Original shows the capture as it was.</li>
+          <li>Lock the masks to apply every blur and pixelation to the original capture too, for good.</li>
+          <li>Copy or export the annotated image as a PNG, or save it in the library, where it receives the capture tag. A capture being edited is kept as a draft if Pigoune closes.</li>
+          <li>A library opened with this version can no longer be opened with Pigoune 2.12 or older.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.12.0" date="2026-10-15">
       <description>
         <p>When look-alikes are not duplicates, you can now tell Pigoune so.</p>
