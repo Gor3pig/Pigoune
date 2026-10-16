@@ -128,6 +128,7 @@ mod imp {
         pub text_provider: gtk::CssProvider,
         pub text_view_origin: Cell<[u32; 3]>,
         pub click_to_edit: Cell<Option<(u32, Point)>>,
+        pub pixel_cache: crate::annotation_render::PixelCache,
     }
 
     #[glib::object_subclass]
@@ -177,6 +178,7 @@ impl PigouneEditor {
         let height = u32::try_from(texture.height()).unwrap_or(1);
         let imp = self.imp();
         self.cancel_text();
+        imp.pixel_cache.borrow_mut().clear();
         let mut drawing = imp::Drawing::default();
         let context = self.pango_context();
         drawing
@@ -370,15 +372,39 @@ impl PigouneEditor {
         snapshot.translate(&graphene::Point::new(whole.x(), whole.y()));
         snapshot.scale(scale, scale);
         let context = self.pango_context();
+        let texture = imp.zoom_view.texture();
+        let renderer = self.native().and_then(|native| native.renderer());
+        let backdrop = texture
+            .as_ref()
+            .zip(renderer.as_ref())
+            .map(|(texture, renderer)| annotation_render::Backdrop {
+                texture,
+                renderer,
+                cache: &imp.pixel_cache,
+            });
         annotation_render::append_document(
             snapshot,
             drawing.session.document(),
             &context,
+            backdrop.as_ref(),
             editing.and_then(|edit| edit.id),
         );
         if let Some(pending) = drawing.interaction.pending() {
             let ordinal = drawing.session.document().next_ordinal(&pending.kind);
-            annotation_render::append_shape(snapshot, pending, ordinal, &context);
+            annotation_render::append_shape(
+                snapshot,
+                pending,
+                ordinal,
+                &context,
+                backdrop
+                    .as_ref()
+                    .map(|backdrop| annotation_render::Scene {
+                        backdrop,
+                        document: drawing.session.document(),
+                        upto: drawing.session.document().objects.len(),
+                    })
+                    .as_ref(),
+            );
         }
         snapshot.pop();
         snapshot.restore();
