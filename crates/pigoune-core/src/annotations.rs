@@ -222,6 +222,19 @@ impl AnnotationDocument {
             .any(|object| object.shape().is_some_and(Shape::hides_content))
     }
 
+    #[must_use]
+    pub fn masks(&self) -> Vec<(u32, Shape)> {
+        self.objects
+            .iter()
+            .filter_map(|object| {
+                object
+                    .shape()
+                    .filter(|shape| shape.hides_content())
+                    .map(|shape| (object.id, shape.clone()))
+            })
+            .collect()
+    }
+
     pub fn from_json(text: &str) -> Result<Self, DocumentError> {
         if text.len() > MAX_DOCUMENT_BYTES {
             return Err(DocumentError::TooLarge);

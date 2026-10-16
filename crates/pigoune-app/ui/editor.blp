@@ -56,6 +56,13 @@ template $PigouneEditor: Adw.Bin {
           }
         }
 
+        [top]
+        Adw.Banner mask_banner {
+          title: _("The original image still shows what the blur and pixelation hide");
+          button-label: _("Lock Masks");
+          button-clicked => $on_lock_masks_clicked() swapped;
+        }
+
         content: Overlay canvas_overlay {
           child: $PigouneZoomView zoom_view {};
 
