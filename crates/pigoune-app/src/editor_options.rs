@@ -40,6 +40,8 @@ pub fn option_label(id: &str) -> Option<String> {
         "opacity" => gettext("Opacity"),
         "width" => gettext("Thickness"),
         "dash" => gettext("Line Style"),
+        "curve" => gettext("Curve"),
+        "shaft" => gettext("Shaft"),
         "spot" => gettext("Spotlight Shape"),
         "dimming" => gettext("Dimming"),
         "head" => gettext("Arrowhead"),
@@ -63,6 +65,8 @@ pub fn option_label(id: &str) -> Option<String> {
 
 pub fn choice_label(id: &str, choice: &str) -> Option<String> {
     Some(match (id, choice) {
+        ("shaft", "even") => gettext("Even Shaft"),
+        ("shaft", "tapered") => gettext("Tapered Shaft"),
         ("spot", "rectangle") => gettext("Rectangular"),
         ("spot", "ellipse") => gettext("Oval"),
         ("dash", "solid") => gettext("Solid Line"),
