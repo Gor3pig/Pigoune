@@ -1,3 +1,5 @@
+use std::ops::ControlFlow;
+
 use adw::prelude::*;
 use gettextrs::gettext;
 use gtk::{gio, glib};
@@ -12,6 +14,13 @@ use crate::shortcuts;
 use crate::whats_new;
 use crate::window::PigouneWindow;
 
+const CAPTURE_OPTION: &str = "capture";
+const CAPTURE_ACTION: &str = "capture";
+
+thread_local! {
+    static CAPTURE_REQUESTED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
 pub fn build() -> adw::Application {
     let application = adw::Application::builder()
         .application_id(APP_ID)
@@ -19,10 +28,51 @@ pub fn build() -> adw::Application {
         .flags(gio::ApplicationFlags::ALLOW_REPLACEMENT)
         .build();
 
+    application.add_main_option(
+        CAPTURE_OPTION,
+        glib::Char::from(0),
+        glib::OptionFlags::NONE,
+        glib::OptionArg::None,
+        "Take a screenshot to annotate",
+        None,
+    );
+    application.connect_handle_local_options(forward_capture_request);
     application.connect_startup(|_| icon_theme::keep_gnome_icons());
     application.connect_startup(install_actions);
-    application.connect_activate(present_main_window);
+    application.connect_activate(|application| {
+        if CAPTURE_REQUESTED.take() {
+            request_capture(application);
+        } else {
+            present_main_window(application, true);
+        }
+    });
     application
+}
+
+fn forward_capture_request(
+    application: &adw::Application,
+    options: &glib::VariantDict,
+) -> ControlFlow<glib::ExitCode> {
+    if !options.contains(CAPTURE_OPTION) {
+        return ControlFlow::Continue(());
+    }
+    if application.register(gio::Cancellable::NONE).is_err() {
+        return ControlFlow::Continue(());
+    }
+    if application.is_remote() {
+        application.activate_action(CAPTURE_ACTION, None);
+        return ControlFlow::Break(glib::ExitCode::SUCCESS);
+    }
+    CAPTURE_REQUESTED.set(true);
+    ControlFlow::Continue(())
+}
+
+fn request_capture(application: &adw::Application) {
+    present_main_window(application, false);
+    let Some(window) = application.active_window().and_downcast::<PigouneWindow>() else {
+        return;
+    };
+    glib::spawn_future_local(async move { window.capture_screenshot().await });
 }
 
 fn install_actions(application: &adw::Application) {
@@ -35,12 +85,15 @@ fn install_actions(application: &adw::Application) {
     let help = gio::ActionEntry::builder("help")
         .activate(|application: &adw::Application, _, _| open_help(application))
         .build();
-    application.add_action_entries([quit, about, help]);
+    let capture = gio::ActionEntry::builder(CAPTURE_ACTION)
+        .activate(|application: &adw::Application, _, _| request_capture(application))
+        .build();
+    application.add_action_entries([quit, about, help, capture]);
 
     shortcuts::apply(application, &shortcuts::stored(&settings::load()));
 }
 
-fn present_main_window(application: &adw::Application) {
+fn present_main_window(application: &adw::Application, reopen_library: bool) {
     if let Some(window) = application.active_window() {
         window.present();
         return;
@@ -59,7 +112,9 @@ fn present_main_window(application: &adw::Application) {
     let window = PigouneWindow::new(application, settings.clone());
     window.present();
     whats_new::show_after_update(&window, &settings);
-    window.reopen_last_library();
+    if reopen_library {
+        window.reopen_last_library();
+    }
 }
 
 fn localized_help_url() -> String {

@@ -8,3 +8,8 @@ Terminal=false
 StartupNotify=true
 Categories=Graphics;2DGraphics;
 Keywords=icons;logos;svg;assets;library;graphics;
+Actions=Capture;
+
+[Desktop Action Capture]
+Name=Take a Screenshot
+Exec=pigoune --capture
