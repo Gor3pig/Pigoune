@@ -1,6 +1,7 @@
 mod analysis_pace;
 mod animation;
 mod animation_player;
+mod annotation_export;
 mod annotation_render;
 mod application;
 mod asset_colors;
@@ -107,6 +108,7 @@ mod tag_input;
 mod tag_summary;
 mod tag_tree;
 mod thumbnails;
+mod tiled_render;
 mod toasts;
 mod undo_message;
 mod update_banner;

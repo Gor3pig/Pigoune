@@ -5426,6 +5426,11 @@ impl PigouneWindow {
             self,
             move || window.leave_editor()
         ));
+        self.imp().editor.connect_notice(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |text| window.show_toast(text)
+        ));
     }
 
     fn open_editor(&self, image: &Path) -> Result<(), glib::Error> {
