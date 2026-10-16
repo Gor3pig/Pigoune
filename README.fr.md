@@ -98,6 +98,18 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 
 </td>
 </tr>
+<tr>
+<td colspan="2" valign="top">
+
+### Capturer et annoter
+Faites une capture d'écran ou collez une image, puis annotez-la dans un éditeur intégré à votre
+bibliothèque : formes, flèches courbes, textes, étapes numérotées, projecteur, et flou ou
+pixelisation pour cacher ce qui est privé. La capture d'origine est toujours conservée intacte à
+côté de l'image annotée, que vous pouvez copier, exporter en PNG ou enregistrer dans votre
+bibliothèque, et rouvrir plus tard pour changer ses annotations.
+
+</td>
+</tr>
 </table>
 
 ## Principes

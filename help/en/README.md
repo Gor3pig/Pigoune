@@ -10,6 +10,7 @@ guide walks you through everything it can do.
 - [Finding assets](#finding-assets)
 - [Looking at assets](#looking-at-assets)
 - [Reusing assets](#reusing-assets)
+- [Capturing and annotating](#capturing-and-annotating)
 - [Trash and undo](#trash-and-undo)
 - [Your library](#your-library)
 - [Preferences](#preferences)
@@ -333,6 +334,73 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
   exactly what you framed; a small window shows the preparation, then GNOME asks you to confirm.
   Tick **Also Add the Edited Version to the Library** to keep that image as a new asset.
 
+## Capturing and annotating
+
+Pigoune can take a screenshot, or take any image you paste, and let you annotate it before it
+joins your library. The editor opens inside the window of an open library, so there is always a
+place to keep the result.
+
+### Start a capture
+
+- **Take a screenshot**: choose **Take a Screenshot** in the import menu, press
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>, or use the **Take a Screenshot** action of the
+  Pigoune icon (right-click it in your launcher). Pigoune hides its window and your desktop
+  asks you to choose the area, a window or the whole screen.
+- **Paste an image**: copy an image anywhere, then choose **Paste and Annotate** in the import
+  menu or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>.
+- **From a shortcut of your desktop**: bind the command `pigoune --capture` (or
+  `flatpak run io.github.gor3pig.Pigoune --capture`) to a key in the settings of your desktop. If
+  Pigoune is not running, it starts, reopens your last library and takes the screenshot.
+
+Images can be up to 8000 pixels on a side.
+
+### Annotate
+
+The tools are in the panel on the right (in a narrow window, in the panel that rises from the
+bottom). Each tool has a letter that selects it, shown in its tooltip.
+
+| Tool | Letter | What it does |
+|---|---|---|
+| Select | <kbd>V</kbd> | Select, move and resize an annotation (<kbd>Delete</kbd> removes it) |
+| Crop | <kbd>C</kbd> | Keep only a part of the image, with free or fixed proportions |
+| Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Outlines, optionally filled or with rounded corners |
+| Line, Arrow | <kbd>L</kbd>, <kbd>A</kbd> | Straight or curved, with several heads, solid, dashed or dotted, even or tapered |
+| Text | <kbd>T</kbd> | Click, type, then click elsewhere or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>; font, size, bold, italic, background, bubble and outline |
+| Steps | <kbd>N</kbd> | Numbered (or lettered) badges that renumber themselves |
+| Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Freehand strokes, smoothed |
+| Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide what is private; they apply to everything drawn under them |
+| Spotlight | <kbd>S</kbd> | Dims everything but a rectangle or an oval |
+
+Every tool remembers its last settings (color with an eyedropper to take one from the image,
+opacity, thickness, shadow and more). Hold <kbd>Shift</kbd> while drawing for straight lines at
+multiples of 45 degrees and perfect squares or circles, and hold <kbd>Alt</kbd> while moving to
+switch off the guides that align an annotation with the image and with the other annotations.
+The four buttons of **Layers** (or <kbd>Ctrl</kbd>+<kbd>]</kbd> and <kbd>Ctrl</kbd>+<kbd>[</kbd>,
+with <kbd>Shift</kbd> for the extremes) change the order of the annotations. Undo and redo work
+as everywhere, with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.
+
+### Hide what is private
+
+A blur or a pixelation hides what is under it, annotations included. While your annotations stay
+editable, the untouched capture is kept in the library and still shows what you hid, so a banner
+tells you so. **Lock Masks** applies every blur and pixelation to that original capture too, for
+good: after confirming, nobody can recover what they cover.
+
+### Keep the result
+
+- **Save** adds the annotated image to your library under a name made of the date, with the
+  `capture` tag, and shows it selected. An image that is already in the library is refused, and
+  the message names the existing asset.
+- The menu next to Save copies the annotated image to the clipboard or exports it as a PNG.
+- If Pigoune closes while you edit, the capture is kept as a draft and Pigoune offers to resume it
+  the next time a library opens.
+
+Select an annotated asset and choose **Annotate…** (in the details panel or the context menu) to
+reopen its annotations: saving updates the same asset. **View Original** opens the untouched
+capture in another application. The grid, the preview, the duplicates and the exports all use the
+annotated image; the original stays next to it, moves to the trash and comes back with it, and
+counts in the storage of your library.
+
 ## Trash and undo
 
 Press <kbd>Delete</kbd>, or choose **Move to Trash** in the right-click menu, to send assets
@@ -516,6 +584,8 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune. Most of the
 | Select all / deselect all | <kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Esc</kbd> |
 | Copy | <kbd>Ctrl</kbd>+<kbd>C</kbd> |
 | Paste files or an image to import | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
+| Take a screenshot to annotate | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
+| Paste an image to annotate | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> |
 | Rename the selected asset | <kbd>F2</kbd> |
 | Add to or remove from favorites | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Add a tag | <kbd>Ctrl</kbd>+<kbd>T</kbd> |

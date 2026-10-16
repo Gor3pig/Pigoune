@@ -2029,7 +2029,6 @@ impl PigouneWindow {
         imp.history_buttons.set_visible(true);
         self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
-        self.open_editor_for_testing();
         self.offer_draft();
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
@@ -5767,12 +5766,6 @@ impl PigouneWindow {
         alert.present(Some(self));
     }
 
-    fn open_editor(&self, image: &Path) -> Result<(), glib::Error> {
-        self.imp().editor.open(image)?;
-        self.show_editor();
-        Ok(())
-    }
-
     fn show_editor(&self) {
         let imp = self.imp();
         self.set_library_actions_enabled(false);
@@ -5838,19 +5831,6 @@ impl PigouneWindow {
 
     fn is_editing(&self) -> bool {
         self.imp().window_stack.visible_child_name().as_deref() == Some(EDITOR_PAGE)
-    }
-
-    fn open_editor_for_testing(&self) {
-        static ALREADY_OPENED: AtomicBool = AtomicBool::new(false);
-        let Some(image) = std::env::var_os("PIGOUNE_EDIT") else {
-            return;
-        };
-        if ALREADY_OPENED.swap(true, Ordering::Relaxed) {
-            return;
-        }
-        if let Err(error) = self.open_editor(Path::new(&image)) {
-            eprintln!("{error}");
-        }
     }
 
     fn lend_details_to_preview(&self, lent: bool) {
