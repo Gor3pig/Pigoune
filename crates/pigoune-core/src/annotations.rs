@@ -4,6 +4,7 @@ mod interaction;
 mod options;
 mod session;
 mod shape;
+mod snapping;
 mod tools;
 
 use serde::de::Error as _;
@@ -24,6 +25,7 @@ pub use options::{
 pub use serde_json::Value;
 pub use session::EditSession;
 pub use shape::{Geometry, Shape};
+pub use snapping::{Guide, Snap, Snapping, guide_extent, snap_move};
 pub use tools::{
     ARROW, BADGE_SIZE, BADGE_STYLE, BLUR, BOLD, CELL, COLOR, CONTENT, CORNER_RADIUS, CURVE, DASH,
     DASH_CHOICES, DIMMING, ELLIPSE, FILL, FILL_OPACITY, FONT_FAMILY, FONT_FAMILY_CHOICES,

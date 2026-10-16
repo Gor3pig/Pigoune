@@ -6,8 +6,9 @@ use std::hash::{Hash, Hasher};
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, CropEditor, Geometry, Point, Rect, Shape, arrow_curve_control,
-    arrow_head, curve_polyline, dash_pattern, handles, head_size_factor, shape_bounds, step_label,
+    AnnotationDocument, Color, CropEditor, Geometry, Guide, Point, Rect, Shape,
+    arrow_curve_control, arrow_head, curve_polyline, dash_pattern, guide_extent, handles,
+    head_size_factor, shape_bounds, step_label,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -17,6 +18,7 @@ const SHADOW_REFERENCE_WIDTH: f32 = 1200.0;
 const SHADOW_LARGEST_SCALE: f32 = 4.0;
 const OUTLINE_REACH: f32 = 0.06;
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
+const GUIDE_COLOR: (f32, f32, f32) = (0.93, 0.22, 0.55);
 const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
 pub const HANDLE_SIZE: f32 = 10.0;
@@ -744,6 +746,31 @@ fn draw_pixelate(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     snapshot.push_clip(&graphene_rect(region));
     snapshot.append_scaled_texture(&tile, gsk::ScalingFilter::Nearest, &covered);
     snapshot.pop();
+}
+
+pub fn append_guides(
+    snapshot: &gtk::Snapshot,
+    guides: &[Guide],
+    whole: &graphene::Rect,
+    zoom: f32,
+    image: (u32, u32),
+) {
+    if guides.is_empty() {
+        return;
+    }
+    let size = (
+        f32::from(u16::try_from(image.0).unwrap_or(u16::MAX)),
+        f32::from(u16::try_from(image.1).unwrap_or(u16::MAX)),
+    );
+    let (red, green, blue) = GUIDE_COLOR;
+    let color = gdk::RGBA::new(red, green, blue, 0.9);
+    let builder = gsk::PathBuilder::new();
+    for guide in guides {
+        let (from, to) = guide_extent(*guide, size);
+        builder.move_to(whole.x() + from.x * zoom, whole.y() + from.y * zoom);
+        builder.line_to(whole.x() + to.x * zoom, whole.y() + to.y * zoom);
+    }
+    snapshot.append_stroke(&builder.to_path(), &gsk::Stroke::new(1.0), &color);
 }
 
 pub fn append_selection(

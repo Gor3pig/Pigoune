@@ -59,6 +59,7 @@ mod imp {
         pub on_pointer: RefCell<Option<PointerCallback>>,
         pub claimed: Cell<bool>,
         pub shift_held: Cell<bool>,
+        pub alt_held: Cell<bool>,
         pub drag_origin: Cell<Point>,
         pub cursor_override: RefCell<Option<String>>,
         pub spring: RefCell<Option<adw::TimedAnimation>>,
@@ -92,6 +93,7 @@ mod imp {
                 on_pointer: RefCell::default(),
                 claimed: Cell::default(),
                 shift_held: Cell::default(),
+                alt_held: Cell::default(),
                 drag_origin: Cell::new(Point { x: 0.0, y: 0.0 }),
                 cursor_override: RefCell::default(),
                 spring: RefCell::default(),
@@ -154,6 +156,10 @@ impl PigouneZoomView {
 
     pub fn shift_held(&self) -> bool {
         self.imp().shift_held.get()
+    }
+
+    pub fn alt_held(&self) -> bool {
+        self.imp().alt_held.get()
     }
 
     pub fn set_cursor_override(&self, name: Option<&str>) {
@@ -485,6 +491,7 @@ impl PigouneZoomView {
                 view.stop_spring();
                 let imp = view.imp();
                 imp.shift_held.set(shift_pressed(gesture));
+                imp.alt_held.set(alt_pressed(gesture));
                 imp.drag_origin.set(Point { x, y });
                 let claimed = view.send_pointer(PointerEvent::Press(view.view_to_image(x, y)));
                 imp.claimed.set(claimed);
@@ -502,6 +509,7 @@ impl PigouneZoomView {
             move |gesture, offset_x, offset_y| {
                 let imp = view.imp();
                 imp.shift_held.set(shift_pressed(gesture));
+                imp.alt_held.set(alt_pressed(gesture));
                 if imp.claimed.replace(false) {
                     let origin = imp.drag_origin.get();
                     let point = view.view_to_image(origin.x + offset_x, origin.y + offset_y);
@@ -519,6 +527,7 @@ impl PigouneZoomView {
             move |gesture, offset_x, offset_y| {
                 let imp = view.imp();
                 imp.shift_held.set(shift_pressed(gesture));
+                imp.alt_held.set(alt_pressed(gesture));
                 if imp.claimed.get() {
                     let origin = imp.drag_origin.get();
                     let point = view.view_to_image(origin.x + offset_x, origin.y + offset_y);
@@ -624,6 +633,12 @@ fn shift_pressed(gesture: &gtk::GestureDrag) -> bool {
     gesture
         .current_event_state()
         .contains(gdk::ModifierType::SHIFT_MASK)
+}
+
+fn alt_pressed(gesture: &gtk::GestureDrag) -> bool {
+    gesture
+        .current_event_state()
+        .contains(gdk::ModifierType::ALT_MASK)
 }
 
 fn draw_bounds(snapshot: &gtk::Snapshot, bounds: &graphene::Rect, color: &gdk::RGBA) {
