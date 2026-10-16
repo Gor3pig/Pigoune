@@ -128,14 +128,16 @@ fn a_step_is_hit_inside_its_disc_and_a_bigger_badge_is_easier_to_hit() {
 }
 
 #[test]
-fn a_step_has_a_square_frame_around_its_disc_and_no_handles() {
+fn a_step_has_a_square_frame_around_its_disc_and_one_size_handle() {
     let shape = step_at(100.0, 50.0).with_option("size", number_to_value(20.0));
 
     let bounds = shape_bounds(&shape).expect("the disc has bounds");
 
     assert!(same(bounds.x, 80.0) && same(bounds.y, 30.0));
     assert!(same(bounds.width, 40.0) && same(bounds.height, 40.0));
-    assert!(handles(&shape).is_empty());
+    let found = handles(&shape);
+    assert_eq!(found.len(), 1);
+    assert!(same(found[0].1.x, 120.0) && same(found[0].1.y, 70.0));
 }
 
 #[test]

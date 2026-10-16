@@ -9,6 +9,7 @@ use super::{Options, Point, Rect, Shape};
 pub enum Tool {
     Select,
     Draw(&'static ToolDefinition),
+    Place,
     Unsupported,
 }
 
