@@ -52,6 +52,52 @@ pub fn dash_pattern(choice: &str, width: f32) -> Option<[f32; 2]> {
     }
 }
 
+const CURVE_STEPS: u8 = 24;
+const FLAT_CURVE: f32 = 0.5;
+
+#[must_use]
+pub fn curve_control(from: Point, to: Point, bend: f32) -> Option<Point> {
+    if bend.abs() < FLAT_CURVE {
+        return None;
+    }
+    let (dx, dy) = (to.x - from.x, to.y - from.y);
+    let length = dx.hypot(dy);
+    if length <= 0.0 {
+        return None;
+    }
+    let offset = bend / 100.0 * length / 2.0;
+    Some(Point {
+        x: f32::midpoint(from.x, to.x) - dy / length * offset,
+        y: f32::midpoint(from.y, to.y) + dx / length * offset,
+    })
+}
+
+#[must_use]
+pub fn arrow_curve_control(shape: &Shape) -> Option<Point> {
+    match shape.geometry {
+        Geometry::TwoPoints { from, to } if shape.kind == "arrow" => {
+            curve_control(from, to, shape.number("curve"))
+        }
+        _ => None,
+    }
+}
+
+#[must_use]
+pub fn curve_point(from: Point, control: Point, to: Point, t: f32) -> Point {
+    let (a, b, c) = ((1.0 - t) * (1.0 - t), 2.0 * (1.0 - t) * t, t * t);
+    Point {
+        x: a * from.x + b * control.x + c * to.x,
+        y: a * from.y + b * control.y + c * to.y,
+    }
+}
+
+#[must_use]
+pub fn curve_polyline(from: Point, control: Point, to: Point) -> Vec<Point> {
+    (0..=CURVE_STEPS)
+        .map(|step| curve_point(from, control, to, f32::from(step) / f32::from(CURVE_STEPS)))
+        .collect()
+}
+
 #[must_use]
 pub fn arrow_head(from: Point, to: Point, width: f32, size_factor: f32) -> ArrowHead {
     let (dx, dy) = (to.x - from.x, to.y - from.y);
@@ -205,6 +251,18 @@ pub fn simplified(points: &[Point], tolerance: f32) -> Vec<Point> {
         .collect()
 }
 
+fn points_bounds(points: &[Point]) -> Option<Rect> {
+    let first = *points.first()?;
+    let (mut low, mut high) = (first, first);
+    for point in points {
+        low.x = low.x.min(point.x);
+        low.y = low.y.min(point.y);
+        high.x = high.x.max(point.x);
+        high.y = high.y.max(point.y);
+    }
+    Some(rect_between(low, high))
+}
+
 #[must_use]
 pub fn rect_between(a: Point, b: Point) -> Rect {
     Rect {
@@ -232,7 +290,10 @@ fn normalized(rect: Rect) -> Rect {
 pub fn shape_bounds(shape: &Shape) -> Option<Rect> {
     match &shape.geometry {
         Geometry::Box(rect) => Some(normalized(*rect)),
-        Geometry::TwoPoints { from, to } => Some(rect_between(*from, *to)),
+        Geometry::TwoPoints { from, to } => match arrow_curve_control(shape) {
+            Some(control) => points_bounds(&curve_polyline(*from, control, *to)),
+            None => Some(rect_between(*from, *to)),
+        },
         Geometry::Polyline(points) => {
             let first = *points.first()?;
             let (mut low, mut high) = (first, first);
@@ -406,9 +467,12 @@ pub fn hit_with_extent(
             let distance = (scaled - 1.0).abs() * radius_x.min(radius_y);
             distance <= reach || (shape.toggle("fill") && scaled <= 1.0)
         }
-        (Geometry::TwoPoints { from, to }, Outline::Segment) => {
-            distance_to_segment(point, *from, *to) <= reach
-        }
+        (Geometry::TwoPoints { from, to }, Outline::Segment) => match arrow_curve_control(shape) {
+            Some(control) => curve_polyline(*from, control, *to)
+                .windows(2)
+                .any(|pair| distance_to_segment(point, pair[0], pair[1]) <= reach),
+            None => distance_to_segment(point, *from, *to) <= reach,
+        },
         (Geometry::Box(bounds), Outline::Region) => {
             contains(expanded(normalized(*bounds), tolerance), point)
         }

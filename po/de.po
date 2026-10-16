@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:33+0200\n"
+"POT-Creation-Date: 2026-10-16 13:35+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -1586,150 +1586,166 @@ msgid "Line Style"
 msgstr "Linienstil"
 
 #: crates/pigoune-app/src/editor_options.rs:43
+msgid "Curve"
+msgstr "Krümmung"
+
+#: crates/pigoune-app/src/editor_options.rs:44
+msgid "Shaft"
+msgstr "Schaft"
+
+#: crates/pigoune-app/src/editor_options.rs:45
 msgid "Spotlight Shape"
 msgstr "Form des Scheinwerfers"
 
-#: crates/pigoune-app/src/editor_options.rs:44
+#: crates/pigoune-app/src/editor_options.rs:46
 msgid "Dimming"
 msgstr "Abdunkelung"
 
-#: crates/pigoune-app/src/editor_options.rs:45
+#: crates/pigoune-app/src/editor_options.rs:47
 msgid "Arrowhead"
 msgstr "Pfeilspitze"
 
-#: crates/pigoune-app/src/editor_options.rs:46
+#: crates/pigoune-app/src/editor_options.rs:48
 msgid "Arrowhead Size"
 msgstr "Pfeilspitzengröße"
 
-#: crates/pigoune-app/src/editor_options.rs:47
+#: crates/pigoune-app/src/editor_options.rs:49
 msgid "Corner Radius"
 msgstr "Eckenradius"
 
-#: crates/pigoune-app/src/editor_options.rs:48
+#: crates/pigoune-app/src/editor_options.rs:50
 msgid "Fill Shape"
 msgstr "Form füllen"
 
-#: crates/pigoune-app/src/editor_options.rs:49
+#: crates/pigoune-app/src/editor_options.rs:51
 msgid "Fill Opacity"
 msgstr "Deckkraft der Füllung"
 
-#: crates/pigoune-app/src/editor_options.rs:50
+#: crates/pigoune-app/src/editor_options.rs:52
 msgid "Smooth Line"
 msgstr "Linie glätten"
 
-#: crates/pigoune-app/src/editor_options.rs:51
+#: crates/pigoune-app/src/editor_options.rs:53
 msgid "Badge Size"
 msgstr "Größe der Marke"
 
-#: crates/pigoune-app/src/editor_options.rs:52
+#: crates/pigoune-app/src/editor_options.rs:54
 msgid "Badge Style"
 msgstr "Stil der Marke"
 
-#: crates/pigoune-app/src/editor_options.rs:53
+#: crates/pigoune-app/src/editor_options.rs:55
 msgid "Font Size"
 msgstr "Schriftgröße"
 
-#: crates/pigoune-app/src/editor_options.rs:54
+#: crates/pigoune-app/src/editor_options.rs:56
 msgid "Bold Text"
 msgstr "Fetter Text"
 
-#: crates/pigoune-app/src/editor_options.rs:55
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Italic Text"
 msgstr "Kursiver Text"
 
-#: crates/pigoune-app/src/editor_options.rs:56
+#: crates/pigoune-app/src/editor_options.rs:58
 msgid "Font"
 msgstr "Schrift"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Text Background"
 msgstr "Texthintergrund"
 
-#: crates/pigoune-app/src/editor_options.rs:58
+#: crates/pigoune-app/src/editor_options.rs:60
 msgid "Blur Radius"
 msgstr "Weichzeichnerradius"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:61
 msgid "Cell Size"
 msgstr "Zellengröße"
 
-#: crates/pigoune-app/src/editor_options.rs:66
+#: crates/pigoune-app/src/editor_options.rs:68
+msgid "Even Shaft"
+msgstr "Gleichmäßiger Schaft"
+
+#: crates/pigoune-app/src/editor_options.rs:69
+msgid "Tapered Shaft"
+msgstr "Spitz zulaufender Schaft"
+
+#: crates/pigoune-app/src/editor_options.rs:70
 msgid "Rectangular"
 msgstr "Rechteckig"
 
-#: crates/pigoune-app/src/editor_options.rs:67
+#: crates/pigoune-app/src/editor_options.rs:71
 msgid "Oval"
 msgstr "Oval"
 
-#: crates/pigoune-app/src/editor_options.rs:68
+#: crates/pigoune-app/src/editor_options.rs:72
 msgid "Solid Line"
 msgstr "Durchgezogen"
 
-#: crates/pigoune-app/src/editor_options.rs:69
+#: crates/pigoune-app/src/editor_options.rs:73
 msgid "Dashed Line"
 msgstr "Gestrichelt"
 
-#: crates/pigoune-app/src/editor_options.rs:70
+#: crates/pigoune-app/src/editor_options.rs:74
 msgid "Dotted Line"
 msgstr "Gepunktet"
 
-#: crates/pigoune-app/src/editor_options.rs:71
+#: crates/pigoune-app/src/editor_options.rs:75
 msgid "Filled Triangle"
 msgstr "Gefülltes Dreieck"
 
-#: crates/pigoune-app/src/editor_options.rs:72
+#: crates/pigoune-app/src/editor_options.rs:76
 msgid "Open Head"
 msgstr "Offene Spitze"
 
-#: crates/pigoune-app/src/editor_options.rs:73
+#: crates/pigoune-app/src/editor_options.rs:77
 msgid "Both Ends"
 msgstr "An beiden Enden"
 
-#: crates/pigoune-app/src/editor_options.rs:74
+#: crates/pigoune-app/src/editor_options.rs:78
 msgid "No Head"
 msgstr "Keine Spitze"
 
-#: crates/pigoune-app/src/editor_options.rs:75
+#: crates/pigoune-app/src/editor_options.rs:79
 msgid "Sans-serif Font"
 msgstr "Serifenlose Schrift"
 
-#: crates/pigoune-app/src/editor_options.rs:76
+#: crates/pigoune-app/src/editor_options.rs:80
 msgid "Serif Font"
 msgstr "Serifenschrift"
 
-#: crates/pigoune-app/src/editor_options.rs:77
+#: crates/pigoune-app/src/editor_options.rs:81
 msgid "Monospace Font"
 msgstr "Festbreitenschrift"
 
-#: crates/pigoune-app/src/editor_options.rs:78
+#: crates/pigoune-app/src/editor_options.rs:82
 msgid "No Background"
 msgstr "Kein Hintergrund"
 
-#: crates/pigoune-app/src/editor_options.rs:79
+#: crates/pigoune-app/src/editor_options.rs:83
 msgid "Light Background"
 msgstr "Heller Hintergrund"
 
-#: crates/pigoune-app/src/editor_options.rs:80
+#: crates/pigoune-app/src/editor_options.rs:84
 msgid "Dark Background"
 msgstr "Dunkler Hintergrund"
 
-#: crates/pigoune-app/src/editor_options.rs:81
+#: crates/pigoune-app/src/editor_options.rs:85
 msgid "Filled Badge"
 msgstr "Gefüllte Marke"
 
-#: crates/pigoune-app/src/editor_options.rs:82
+#: crates/pigoune-app/src/editor_options.rs:86
 msgid "Outlined Badge"
 msgstr "Umrandete Marke"
 
-#: crates/pigoune-app/src/editor_options.rs:83
+#: crates/pigoune-app/src/editor_options.rs:87
 msgid "Small Head"
 msgstr "Kleine Spitze"
 
-#: crates/pigoune-app/src/editor_options.rs:84
+#: crates/pigoune-app/src/editor_options.rs:88
 msgid "Medium Head"
 msgstr "Mittlere Spitze"
 
-#: crates/pigoune-app/src/editor_options.rs:85
+#: crates/pigoune-app/src/editor_options.rs:89
 msgid "Large Head"
 msgstr "Große Spitze"
 

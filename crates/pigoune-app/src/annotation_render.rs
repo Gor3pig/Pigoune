@@ -6,8 +6,8 @@ use std::hash::{Hash, Hasher};
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, CropEditor, Geometry, Point, Rect, Shape, arrow_head, dash_pattern,
-    handles, head_size_factor, shape_bounds,
+    AnnotationDocument, Color, CropEditor, Geometry, Point, Rect, Shape, arrow_curve_control,
+    arrow_head, curve_polyline, dash_pattern, handles, head_size_factor, shape_bounds,
 };
 
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
@@ -209,6 +209,59 @@ fn head_path(tip: Point, left: Point, right: Point, closed: bool) -> gsk::Path {
     builder.to_path()
 }
 
+const TAPER_TAIL: f32 = 0.12;
+const TAPER_HEAD_SHARE: f32 = 1.6;
+
+fn shaft_path(from: Point, control: Option<Point>, to: Point) -> gsk::Path {
+    let builder = gsk::PathBuilder::new();
+    builder.move_to(from.x, from.y);
+    match control {
+        Some(control) => builder.quad_to(control.x, control.y, to.x, to.y),
+        None => builder.line_to(to.x, to.y),
+    }
+    builder.to_path()
+}
+
+fn tapered_shaft(from: Point, control: Option<Point>, to: Point, width: f32) -> gsk::Path {
+    let middle = control.unwrap_or(Point {
+        x: f32::midpoint(from.x, to.x),
+        y: f32::midpoint(from.y, to.y),
+    });
+    let centers = curve_polyline(from, middle, to);
+    let last = centers.len().saturating_sub(1);
+    let mut left = Vec::with_capacity(centers.len());
+    let mut right = Vec::with_capacity(centers.len());
+    for (index, center) in centers.iter().enumerate() {
+        let ahead = centers[(index + 1).min(last)];
+        let behind = centers[index.saturating_sub(1)];
+        let (dx, dy) = (ahead.x - behind.x, ahead.y - behind.y);
+        let length = dx.hypot(dy).max(f32::EPSILON);
+        #[expect(
+            clippy::cast_precision_loss,
+            reason = "the curve has a couple of dozen points"
+        )]
+        let progress = index as f32 / last.max(1) as f32;
+        let half = width * TAPER_HEAD_SHARE / 2.0 * (TAPER_TAIL + (1.0 - TAPER_TAIL) * progress);
+        left.push(Point {
+            x: center.x - dy / length * half,
+            y: center.y + dx / length * half,
+        });
+        right.push(Point {
+            x: center.x + dy / length * half,
+            y: center.y - dx / length * half,
+        });
+    }
+    let builder = gsk::PathBuilder::new();
+    if let Some(first) = left.first() {
+        builder.move_to(first.x, first.y);
+    }
+    for point in left.iter().skip(1).chain(right.iter().rev()) {
+        builder.line_to(point.x, point.y);
+    }
+    builder.close();
+    builder.to_path()
+}
+
 fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     let Some((from, to)) = ends_of(shape) else {
         return;
@@ -217,19 +270,28 @@ fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     let factor = head_size_factor(shape.choice("head_size"));
     let color = rgba(shape.stroke_color());
     let head_style = shape.choice("head");
+    let control = arrow_curve_control(shape);
     let solid = gsk::Stroke::new(width.max(0.5));
     solid.set_line_join(gsk::LineJoin::Round);
     solid.set_line_cap(gsk::LineCap::Round);
-    let end = arrow_head(from, to, width, factor);
-    let start = arrow_head(to, from, width, factor);
+    let end = arrow_head(control.unwrap_or(from), to, width, factor);
+    let start = arrow_head(control.unwrap_or(to), from, width, factor);
     let double = head_style == "double";
     let shaft_from = if double { start.base } else { from };
     let shaft_to = if head_style == "none" { to } else { end.base };
-    snapshot.append_stroke(
-        &segment_path(shaft_from, shaft_to),
-        &stroke_of(shape, true),
-        &color,
-    );
+    if shape.choice("shaft") == "tapered" && !double {
+        snapshot.append_fill(
+            &tapered_shaft(shaft_from, control, shaft_to, width),
+            gsk::FillRule::Winding,
+            &color,
+        );
+    } else {
+        snapshot.append_stroke(
+            &shaft_path(shaft_from, control, shaft_to),
+            &stroke_of(shape, true),
+            &color,
+        );
+    }
     let mut heads = Vec::new();
     match head_style {
         "none" => {}

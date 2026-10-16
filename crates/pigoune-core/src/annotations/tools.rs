@@ -152,12 +152,32 @@ pub const LINE: ToolDefinition = ToolDefinition {
     options: &[COLOR, OPACITY, WIDTH, DASH],
 };
 
+pub const CURVE: OptionSpec = OptionSpec {
+    id: "curve",
+    kind: OptionKind::Number {
+        min: -100.0,
+        max: 100.0,
+        step: 1.0,
+    },
+    default: DefaultValue::Number(0.0),
+    shown_if: None,
+};
+
+pub const SHAFT_CHOICES: [&str; 2] = ["even", "tapered"];
+
+pub const SHAFT: OptionSpec = OptionSpec {
+    id: "shaft",
+    kind: OptionKind::Choice(&SHAFT_CHOICES),
+    default: DefaultValue::Choice("even"),
+    shown_if: None,
+};
+
 pub const ARROW: ToolDefinition = ToolDefinition {
     kind: "arrow",
     geometry: GeometryKind::TwoPoints,
     outline: Outline::Segment,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, DASH, HEAD, HEAD_SIZE],
+    options: &[COLOR, OPACITY, WIDTH, DASH, HEAD, HEAD_SIZE, CURVE, SHAFT],
 };
 
 pub const RADIUS: OptionSpec = OptionSpec {
