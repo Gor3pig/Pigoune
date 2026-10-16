@@ -431,6 +431,12 @@ pub fn estimated_text_extent(shape: &Shape) -> (f32, f32) {
     (width.max(size * 0.5), height.max(size * 1.25))
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HitMode {
+    Outline,
+    Body,
+}
+
 #[must_use]
 pub fn hit(shape: &Shape, point: Point, tolerance: f32) -> bool {
     hit_with_extent(shape, point, tolerance, None)
@@ -443,6 +449,18 @@ pub fn hit_with_extent(
     tolerance: f32,
     extent: Option<(f32, f32)>,
 ) -> bool {
+    hit_in_mode(shape, point, tolerance, extent, HitMode::Outline)
+}
+
+#[must_use]
+pub fn hit_in_mode(
+    shape: &Shape,
+    point: Point,
+    tolerance: f32,
+    extent: Option<(f32, f32)>,
+    mode: HitMode,
+) -> bool {
+    let solid = mode == HitMode::Body || shape.toggle("fill");
     let Some(definition) = shape.definition() else {
         return false;
     };
@@ -453,7 +471,7 @@ pub fn hit_with_extent(
             if !contains(expanded(rect, reach), point) {
                 return false;
             }
-            shape.toggle("fill") || !contains(expanded(rect, -reach), point)
+            solid || !contains(expanded(rect, -reach), point)
         }
         (Geometry::Box(bounds), Outline::Ellipse) => {
             let rect = normalized(*bounds);
@@ -465,7 +483,7 @@ pub fn hit_with_extent(
                 (point.x - (rect.x + radius_x), point.y - (rect.y + radius_y));
             let scaled = (offset_x / radius_x).hypot(offset_y / radius_y);
             let distance = (scaled - 1.0).abs() * radius_x.min(radius_y);
-            distance <= reach || (shape.toggle("fill") && scaled <= 1.0)
+            distance <= reach || (solid && scaled <= 1.0)
         }
         (Geometry::TwoPoints { from, to }, Outline::Segment) => match arrow_curve_control(shape) {
             Some(control) => curve_polyline(*from, control, *to)

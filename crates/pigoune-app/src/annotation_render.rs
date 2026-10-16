@@ -753,20 +753,16 @@ pub fn append_guides(
     guides: &[Guide],
     whole: &graphene::Rect,
     zoom: f32,
-    image: (u32, u32),
+    area: Rect,
 ) {
     if guides.is_empty() {
         return;
     }
-    let size = (
-        f32::from(u16::try_from(image.0).unwrap_or(u16::MAX)),
-        f32::from(u16::try_from(image.1).unwrap_or(u16::MAX)),
-    );
     let (red, green, blue) = GUIDE_COLOR;
     let color = gdk::RGBA::new(red, green, blue, 0.9);
     let builder = gsk::PathBuilder::new();
     for guide in guides {
-        let (from, to) = guide_extent(*guide, size);
+        let (from, to) = guide_extent(*guide, area);
         builder.move_to(whole.x() + from.x * zoom, whole.y() + from.y * zoom);
         builder.line_to(whole.x() + to.x * zoom, whole.y() + to.y * zoom);
     }

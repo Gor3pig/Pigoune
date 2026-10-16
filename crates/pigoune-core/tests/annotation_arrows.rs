@@ -24,11 +24,11 @@ fn arrow(options: Options) -> Shape {
 }
 
 #[test]
-fn an_arrow_is_straight_and_even_by_default() {
+fn an_arrow_is_straight_and_tapered_by_default() {
     let plain = arrow(Options::new());
 
     assert!(near(plain.number("curve"), 0.0));
-    assert_eq!(plain.choice("shaft"), "even");
+    assert_eq!(plain.choice("shaft"), "tapered");
     assert_eq!(arrow_curve_control(&plain), None);
 }
 

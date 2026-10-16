@@ -19,7 +19,7 @@ fn near(left: f32, right: f32) -> bool {
 fn space(tolerance: f32) -> Snapping {
     Snapping {
         tolerance,
-        image: (1000.0, 600.0),
+        area: rect(0.0, 0.0, 1000.0, 600.0),
     }
 }
 
@@ -171,4 +171,61 @@ fn the_guides_disappear_when_the_drag_ends() {
     interaction.release(&mut session, Point { x: 313.0, y: 100.0 });
 
     assert!(interaction.guides().is_empty());
+}
+
+#[test]
+fn a_cropped_image_snaps_to_the_edges_and_center_of_the_crop() {
+    let cropped = Snapping {
+        tolerance: 5.0,
+        area: rect(200.0, 100.0, 400.0, 300.0),
+    };
+
+    let edge = snap_move(rect(203.0, 150.0, 50.0, 50.0), &[], cropped);
+    let center = snap_move(rect(375.0, 220.0, 50.0, 50.0), &[], cropped);
+
+    assert!(near(edge.shift.0, -3.0));
+    assert_eq!(
+        edge.guides[0],
+        Guide {
+            vertical: true,
+            at: 200.0
+        }
+    );
+    assert!(near(center.shift.0, 0.0));
+    assert_eq!(
+        center.guides[0],
+        Guide {
+            vertical: true,
+            at: 400.0
+        }
+    );
+}
+
+#[test]
+fn objects_outside_the_crop_are_not_snapping_targets() {
+    let cropped = Snapping {
+        tolerance: 5.0,
+        area: rect(200.0, 100.0, 400.0, 300.0),
+    };
+    let hidden = rect(20.0, 120.0, 100.0, 100.0);
+
+    let snap = snap_move(rect(122.0, 240.0, 40.0, 40.0), &[hidden], cropped);
+
+    assert_eq!(snap.shift, (0.0, 0.0));
+    assert!(snap.guides.is_empty());
+}
+
+#[test]
+fn guides_stay_inside_the_crop() {
+    let area = rect(200.0, 100.0, 400.0, 300.0);
+
+    let (from, to) = pigoune_core::annotations::guide_extent(
+        Guide {
+            vertical: true,
+            at: 300.0,
+        },
+        area,
+    );
+
+    assert_eq!((from.x, from.y, to.x, to.y), (300.0, 100.0, 300.0, 400.0));
 }
