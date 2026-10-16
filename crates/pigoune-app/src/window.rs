@@ -62,6 +62,7 @@ use crate::preferences_dialog;
 use crate::preview_flight::Flight;
 use crate::recent_libraries;
 use crate::screen_size::{self, ScreenChoice};
+use crate::screenshot::{self, ScreenshotOutcome};
 use crate::settings;
 use crate::shortcuts;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
@@ -148,6 +149,8 @@ const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
 const PASTE_ACTION: &str = "win.paste";
 const PASTE_AND_ANNOTATE_ACTION: &str = "win.paste-and-annotate";
+const CAPTURE_ACTION: &str = "win.capture";
+const CAPTURE_SETTLE: std::time::Duration = std::time::Duration::from_millis(350);
 const LARGEST_CAPTURE_SIDE: i32 = 8000;
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
@@ -158,7 +161,8 @@ const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PA
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
 const MOST_SIMILAR_SHOWN: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 30] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 31] = [
+    CAPTURE_ACTION,
     PASTE_AND_ANNOTATE_ACTION,
     EDIT_ANNOTATIONS_ACTION,
     VIEW_ORIGINAL_ACTION,
@@ -250,7 +254,7 @@ mod imp {
     use crate::update_news::UpdateNews;
 
     use super::{
-        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
+        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CAPTURE_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
         CLOSE_LIBRARY_ACTION, CLOSE_WINDOW_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
         CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
         DELETE_TAG_ACTION, EDIT_ANNOTATIONS_ACTION, EDIT_SMART_COLLECTION_ACTION,
@@ -456,6 +460,9 @@ mod imp {
         });
         class.install_action_async(PASTE_ACTION, None, |window, _, _| async move {
             window.paste().await;
+        });
+        class.install_action_async(CAPTURE_ACTION, None, |window, _, _| async move {
+            window.capture_screenshot().await;
         });
         class.install_action_async(PASTE_AND_ANNOTATE_ACTION, None, |window, _, _| async move {
             window.paste_and_annotate().await;
@@ -3430,6 +3437,65 @@ impl PigouneWindow {
             Pasted::Image(texture) => self.import_pasted_image(&texture).await,
             Pasted::Nothing => self.show_toast(&gettext("Nothing to paste")),
         }
+    }
+
+    pub async fn capture_screenshot(&self) {
+        let imp = self.imp();
+        if self.is_editing() {
+            return;
+        }
+        if imp.library.borrow().is_none() {
+            let last = self.settings().string(settings::LAST_LIBRARY_PATH);
+            if !last.is_empty() {
+                self.reopen_library_at(PathBuf::from(last.as_str())).await;
+            }
+        }
+        if imp.library.borrow().is_none() {
+            let alert = adw::AlertDialog::new(
+                Some(&gettext("Open a Library First")),
+                Some(&gettext(
+                    "A screenshot to annotate needs a library to be kept in. Open or create a library, then try again.",
+                )),
+            );
+            alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+            alert.present(Some(self));
+            return;
+        }
+        imp.asset_preview.close();
+        let hold = GtkWindowExt::application(self).map(|application| application.hold());
+        self.set_visible(false);
+        glib::timeout_future(CAPTURE_SETTLE).await;
+        let outcome = screenshot::take().await;
+        self.set_visible(true);
+        self.present();
+        drop(hold);
+        self.annotate_screenshot(outcome);
+    }
+
+    fn annotate_screenshot(&self, outcome: ScreenshotOutcome) {
+        match outcome {
+            ScreenshotOutcome::Cancelled => {}
+            ScreenshotOutcome::Taken(path) => {
+                let texture = gdk::Texture::from_filename(&path);
+                let _ = fs::remove_file(&path);
+                match texture {
+                    Ok(texture) => self.annotate_texture(&texture),
+                    Err(_) => self.show_screenshot_failure(),
+                }
+            }
+            ScreenshotOutcome::Failed => self.show_screenshot_failure(),
+        }
+    }
+
+    fn show_screenshot_failure(&self) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Could Not Take the Screenshot")),
+            Some(&gettext(
+                "The screenshot service did not give an image. Check that your desktop can take screenshots, then try again.",
+            )),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
     }
 
     async fn paste_and_annotate(&self) {
