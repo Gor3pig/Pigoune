@@ -63,6 +63,9 @@ mod imp {
         pub preview_frame: TemplateChild<adw::Clamp>,
         #[template_child]
         pub action_buttons: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub annotation_buttons: TemplateChild<gtk::Box>,
+        pub annotated: Cell<bool>,
         pub beside_preview: Cell<bool>,
         #[template_child]
         pub name_label: TemplateChild<gtk::EditableLabel>,
@@ -511,6 +514,15 @@ impl PigouneAssetDetails {
         imp.beside_preview.set(beside);
         imp.preview_frame.set_visible(!beside);
         imp.action_buttons.set_visible(!beside);
+        imp.annotation_buttons
+            .set_visible(imp.annotated.get() && !beside);
+    }
+
+    pub fn show_annotations(&self, annotated: bool) {
+        let imp = self.imp();
+        imp.annotated.set(annotated);
+        imp.annotation_buttons
+            .set_visible(annotated && !imp.beside_preview.get());
     }
 
     pub fn show(&self, selected: Option<&PigouneAssetObject>, thumbnails: &Rc<ThumbnailCache>) {

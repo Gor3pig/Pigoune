@@ -93,6 +93,33 @@ impl Library {
         Ok(())
     }
 
+    pub fn replace_original(&mut self, id: AssetId, original: &Path) -> Result<(), AnnotatedError> {
+        self.annotations(id)?
+            .ok_or(AnnotatedError::NotAnnotated(id))?;
+        ensure_png(original)?;
+        let destination = self.root.join(layout::original_stored_path(id));
+        let temporary = destination.with_file_name(layout::unfinished_original_name(id));
+        let _ = fs::remove_file(&temporary);
+        let copied = match content::copy_with_digest(original, &temporary) {
+            Ok(copied) => copied,
+            Err(error) => {
+                let _ = fs::remove_file(&temporary);
+                return Err(error.into());
+            }
+        };
+        let transaction = self.connection.transaction()?;
+        transaction.execute(
+            "UPDATE asset_annotations SET original_byte_size = ?2 WHERE asset_id = ?1",
+            params![id, copied.byte_size],
+        )?;
+        if let Err(error) = fs::rename(&temporary, &destination) {
+            let _ = fs::remove_file(&temporary);
+            return Err(error.into());
+        }
+        transaction.commit()?;
+        Ok(())
+    }
+
     pub fn annotations(&self, id: AssetId) -> Result<Option<Annotations>, super::LibraryError> {
         Ok(self
             .connection

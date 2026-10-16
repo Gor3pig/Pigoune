@@ -584,3 +584,71 @@ fn a_document_that_cannot_be_written_is_refused_without_a_trace() {
     assert_eq!(fixture.asset_count(), 0);
     assert!(fixture.files_on_disk().is_empty());
 }
+
+#[test]
+fn replacing_the_original_swaps_the_file_and_keeps_the_library_healthy() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("cap.png", 1, 2);
+    let rendering_before = fs::read(fixture.stored_file(id)).expect("rendering");
+    let longer = fixture.png("longer.png", 123_456);
+
+    fixture
+        .library
+        .replace_original(id, &longer)
+        .expect("original replaced");
+
+    let original = fixture.library.original_path(id).expect("q").expect("some");
+    assert_eq!(
+        fs::read(&original).expect("original"),
+        fs::read(&longer).expect("source")
+    );
+    assert_eq!(
+        fs::read(fixture.stored_file(id)).expect("rendering"),
+        rendering_before
+    );
+    let rendering = fs::metadata(fixture.stored_file(id)).expect("meta").len();
+    let storage = fixture.library.storage_use().expect("storage");
+    assert_eq!(
+        storage.resources,
+        rendering + fs::metadata(&original).expect("meta").len()
+    );
+    assert_eq!(fixture.files_on_disk().len(), 2);
+    assert_eq!(fixture.problems(), 0);
+}
+
+#[test]
+fn a_refused_original_changes_nothing() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("cap.png", 1, 2);
+    let original = fixture.library.original_path(id).expect("q").expect("some");
+    let before = fs::read(&original).expect("original");
+    let not_a_png = fixture.sources.path().join("note.png");
+    fs::write(&not_a_png, b"not an image").expect("written");
+
+    assert!(matches!(
+        fixture.library.replace_original(id, &not_a_png),
+        Err(AnnotatedError::NotPng(_) | AnnotatedError::Unreadable(_))
+    ));
+
+    assert_eq!(fs::read(&original).expect("original"), before);
+    assert_eq!(fixture.files_on_disk().len(), 2);
+    assert_eq!(fixture.problems(), 0);
+}
+
+#[test]
+fn only_an_annotated_resource_has_an_original_to_replace() {
+    let mut fixture = Fixture::new();
+    let ImportOutcome::Imported(plain) = fixture
+        .library
+        .import_file(&sample("red-dot.png"), None)
+        .expect("imported")
+    else {
+        panic!("new");
+    };
+    let other = fixture.png("other.png", 6);
+
+    assert!(matches!(
+        fixture.library.replace_original(plain, &other),
+        Err(AnnotatedError::NotAnnotated(id)) if id == plain
+    ));
+}

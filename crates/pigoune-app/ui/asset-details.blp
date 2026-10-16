@@ -277,6 +277,58 @@ template $PigouneAssetDetails: Adw.Bin {
             }
           }
 
+          Box annotation_buttons {
+            spacing: 8;
+            homogeneous: true;
+            visible: false;
+
+            Button {
+              action-name: "win.edit-annotations";
+              tooltip-text: _("Edit Annotations…");
+
+              child: Box {
+                orientation: vertical;
+                spacing: 4;
+
+                Image {
+                  icon-name: "document-edit-symbolic";
+                }
+
+                Label {
+                  label: _("Annotate…");
+                  ellipsize: end;
+
+                  styles [
+                    "caption",
+                  ]
+                }
+              };
+            }
+
+            Button {
+              action-name: "win.view-original";
+              tooltip-text: _("View Original");
+
+              child: Box {
+                orientation: vertical;
+                spacing: 4;
+
+                Image {
+                  icon-name: "image-x-generic-symbolic";
+                }
+
+                Label {
+                  label: _("View Original");
+                  ellipsize: end;
+
+                  styles [
+                    "caption",
+                  ]
+                }
+              };
+            }
+          }
+
           ListBox {
             selection-mode: none;
 
