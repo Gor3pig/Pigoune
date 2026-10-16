@@ -675,7 +675,7 @@ impl PigouneEditor {
                 imp.picking_pressed.set(false);
                 true
             }
-            PointerEvent::Drag(_) | PointerEvent::DoublePress(_) => true,
+            PointerEvent::Drag(_) | PointerEvent::DoublePress(_) | PointerEvent::Cancel => true,
             PointerEvent::Hover(_) => {
                 imp.zoom_view.set_cursor_override(Some("crosshair"));
                 false
@@ -752,6 +752,10 @@ impl PigouneEditor {
                     drawing
                         .interaction
                         .release(&mut drawing.session, image_point(point));
+                    true
+                }
+                PointerEvent::Cancel => {
+                    drawing.interaction.cancel(&mut drawing.session);
                     true
                 }
                 PointerEvent::DoublePress(point) => {
@@ -994,6 +998,10 @@ impl PigouneEditor {
             match event {
                 PointerEvent::Press(point) => crop.press(image_point(point), reach),
                 PointerEvent::DoublePress(_) => true,
+                PointerEvent::Cancel => {
+                    crop.cancel_gesture();
+                    true
+                }
                 PointerEvent::Drag(point) => {
                     crop.drag(image_point(point));
                     true
@@ -1815,6 +1823,7 @@ fn cursor_name(kind: CursorKind) -> Option<&'static str> {
             Handle::Left | Handle::Right => "ew-resize",
             Handle::Start | Handle::End => "crosshair",
             Handle::Curve => "grab",
+            Handle::Move => "move",
         }),
     }
 }

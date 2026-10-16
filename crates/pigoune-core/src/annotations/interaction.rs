@@ -138,12 +138,17 @@ impl Interaction {
         point: Point,
         reach: f32,
     ) -> bool {
-        if let Some((id, handle)) = handle_at(session, point, reach)
-            && session.begin_change(id)
-            && let Some(original) = session.shape_of(id).cloned()
-        {
-            self.state = State::Resizing { handle, original };
-            return true;
+        if let Some((id, handle)) = handle_at(session, point, reach) {
+            if handle == Handle::Move {
+                self.begin_move(session, id, point);
+                return self.is_active();
+            }
+            if session.begin_change(id)
+                && let Some(original) = session.shape_of(id).cloned()
+            {
+                self.state = State::Resizing { handle, original };
+                return true;
+            }
         }
         let Some(id) = session.selected() else {
             return false;
@@ -308,8 +313,8 @@ fn handle_at(session: &EditSession, point: Point, reach: f32) -> Option<(u32, Ha
     let shape = session.shape_of(id)?;
     geometry::handles(shape)
         .into_iter()
-        .find(|(_, handle_point)| {
-            (handle_point.x - point.x).hypot(handle_point.y - point.y) <= reach
-        })
+        .map(|(handle, at)| (handle, (at.x - point.x).hypot(at.y - point.y)))
+        .filter(|(_, distance)| *distance <= reach)
+        .min_by(|left, right| left.1.total_cmp(&right.1))
         .map(|(handle, _)| (id, handle))
 }

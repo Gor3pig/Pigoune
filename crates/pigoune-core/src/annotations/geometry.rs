@@ -26,6 +26,7 @@ pub enum Handle {
     Start,
     End,
     Curve,
+    Move,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -347,7 +348,23 @@ pub fn translated(shape: &Shape, dx: f32, dy: f32) -> Shape {
 #[must_use]
 pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
     match &shape.geometry {
-        Geometry::Box(rect) => box_handles(normalized(*rect)),
+        Geometry::Box(rect) => {
+            let rect = normalized(*rect);
+            let mut found = box_handles(rect);
+            if shape
+                .definition()
+                .is_some_and(|sheet| sheet.outline == Outline::Region)
+            {
+                found.push((
+                    Handle::Move,
+                    Point {
+                        x: rect.x + rect.width / 2.0,
+                        y: rect.y + rect.height / 2.0,
+                    },
+                ));
+            }
+            found
+        }
         Geometry::TwoPoints { from, to } => {
             let mut found = vec![(Handle::Start, *from), (Handle::End, *to)];
             if shape.kind == "arrow" {
@@ -409,7 +426,7 @@ fn resized_rect(rect: Rect, handle: Handle, to: Point) -> Option<Rect> {
         Handle::Bottom => bottom = to.y,
         Handle::BottomLeft => (left, bottom) = (to.x, to.y),
         Handle::Left => left = to.x,
-        Handle::Start | Handle::End | Handle::Curve => return None,
+        Handle::Start | Handle::End | Handle::Curve | Handle::Move => return None,
     }
     Some(rect_between(
         Point { x: left, y: top },
@@ -474,7 +491,10 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
         }
         Geometry::Anchor(at) => {
             if scalable_bounds(shape).is_some()
-                && !matches!(handle, Handle::Start | Handle::End | Handle::Curve)
+                && !matches!(
+                    handle,
+                    Handle::Start | Handle::End | Handle::Curve | Handle::Move
+                )
             {
                 resized_badge(shape, *at, to)
             } else {
