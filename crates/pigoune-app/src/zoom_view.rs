@@ -28,6 +28,7 @@ pub enum PointerEvent {
     Release(Point),
     Hover(Point),
     DoublePress(Point),
+    Cancel,
 }
 
 mod imp {
@@ -552,6 +553,20 @@ impl PigouneZoomView {
                     zoom,
                 ));
                 view.queue_draw();
+            }
+        ));
+        drag.connect_cancel(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, _| {
+                let imp = view.imp();
+                if imp.claimed.replace(false) {
+                    view.send_pointer(PointerEvent::Cancel);
+                    return;
+                }
+                imp.dragging.set(false);
+                view.update_cursor();
+                view.spring_back();
             }
         ));
         self.add_controller(drag);

@@ -280,7 +280,7 @@ impl CropEditor {
             Handle::Bottom => bottom = to.y,
             Handle::BottomLeft => (left, bottom) = (to.x, to.y),
             Handle::Left => left = to.x,
-            Handle::Start | Handle::End | Handle::Curve => return frame,
+            Handle::Start | Handle::End | Handle::Curve | Handle::Move => return frame,
         }
         if moves_left(handle) {
             left = left.min(right - smallest_width);
