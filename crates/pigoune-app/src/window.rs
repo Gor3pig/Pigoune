@@ -147,6 +147,8 @@ const LIBRARY_MINIMUM_HEIGHT: i32 = 294;
 const SEARCH_ACTION: &str = "win.search";
 const COPY_SELECTED_ACTION: &str = "win.copy-selected";
 const PASTE_ACTION: &str = "win.paste";
+const PASTE_AND_ANNOTATE_ACTION: &str = "win.paste-and-annotate";
+const LARGEST_CAPTURE_SIDE: i32 = 8000;
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
@@ -156,7 +158,8 @@ const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PA
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
 const MOST_SIMILAR_SHOWN: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 29] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 30] = [
+    PASTE_AND_ANNOTATE_ACTION,
     EDIT_ANNOTATIONS_ACTION,
     VIEW_ORIGINAL_ACTION,
     SET_WALLPAPER_ACTION,
@@ -256,13 +259,13 @@ mod imp {
         LIBRARY_INFO_ACTION, MERGE_TAG_ACTION, MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION,
         MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION,
         NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
-        OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION, PREFERENCES_ACTION,
-        REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION, REMOVE_FROM_COLLECTION_ACTION,
-        RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
-        SEARCH_ACTION, SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION,
-        SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer,
-        UNDO_ACTION, VIEW_ORIGINAL_ACTION, collection_parameter, smart_collection_parameter,
-        tag_parameter,
+        OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION, PASTE_AND_ANNOTATE_ACTION,
+        PREFERENCES_ACTION, REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION,
+        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
+        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
+        SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
+        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer, UNDO_ACTION,
+        VIEW_ORIGINAL_ACTION, collection_parameter, smart_collection_parameter, tag_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -453,6 +456,9 @@ mod imp {
         });
         class.install_action_async(PASTE_ACTION, None, |window, _, _| async move {
             window.paste().await;
+        });
+        class.install_action_async(PASTE_AND_ANNOTATE_ACTION, None, |window, _, _| async move {
+            window.paste_and_annotate().await;
         });
         class.install_action(SELECT_ALL_ACTION, None, |window, _, _| {
             window.select_all();
@@ -3424,6 +3430,39 @@ impl PigouneWindow {
             Pasted::Image(texture) => self.import_pasted_image(&texture).await,
             Pasted::Nothing => self.show_toast(&gettext("Nothing to paste")),
         }
+    }
+
+    async fn paste_and_annotate(&self) {
+        if self.paste_typed_text() {
+            return;
+        }
+        let texture = match pasted_content::read(&self.clipboard()).await {
+            Pasted::Image(texture) => Some(texture),
+            Pasted::Files(paths) => match paths.as_slice() {
+                [only] => gdk::Texture::from_filename(only).ok(),
+                _ => None,
+            },
+            Pasted::Nothing => None,
+        };
+        match texture {
+            Some(texture) => self.annotate_texture(&texture),
+            None => self.show_toast(&gettext("No image to annotate in the clipboard")),
+        }
+    }
+
+    fn annotate_texture(&self, texture: &gdk::Texture) {
+        if texture.width() > LARGEST_CAPTURE_SIDE || texture.height() > LARGEST_CAPTURE_SIDE {
+            let body = gettext("Images can be annotated up to {side} pixels on a side.")
+                .replace("{side}", &LARGEST_CAPTURE_SIDE.to_string());
+            let alert =
+                adw::AlertDialog::new(Some(&gettext("Image Too Large to Annotate")), Some(&body));
+            alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+            alert.present(Some(self));
+            return;
+        }
+        self.imp().asset_preview.close();
+        self.imp().editor.open_texture(texture);
+        self.show_editor();
     }
 
     async fn import_pasted_image(&self, texture: &gdk::Texture) {

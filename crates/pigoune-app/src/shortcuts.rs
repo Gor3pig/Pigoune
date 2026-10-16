@@ -14,7 +14,7 @@ pub struct Customizable {
     pub locked: bool,
 }
 
-pub const CUSTOMIZABLE: [Customizable; 29] = [
+pub const CUSTOMIZABLE: [Customizable; 30] = [
     Customizable {
         action: "win.create-library",
         defaults: &["<Control>n"],
@@ -49,6 +49,11 @@ pub const CUSTOMIZABLE: [Customizable; 29] = [
         action: "win.paste",
         defaults: &["<Control>v"],
         locked: true,
+    },
+    Customizable {
+        action: "win.paste-and-annotate",
+        defaults: &["<Control><Shift>v"],
+        locked: false,
     },
     Customizable {
         action: "win.toggle-favorite",
@@ -274,6 +279,7 @@ pub fn label(action: &str) -> String {
         "win.select-all" => gettext("Select All Assets"),
         "win.copy-selected" => gettext("Copy to the Clipboard"),
         "win.paste" => gettext("Paste Files or an Image to Import"),
+        "win.paste-and-annotate" => gettext("Paste an Image to Annotate"),
         "win.toggle-favorite" => gettext("Add to or Remove from Favorites"),
         "win.add-tag" => gettext("Add a Tag"),
         "win.add-to-collection" => gettext("Add to a Collection"),
