@@ -1,6 +1,7 @@
 mod crop;
 mod geometry;
 mod interaction;
+mod layers;
 mod options;
 mod session;
 mod shape;
@@ -20,6 +21,7 @@ pub use geometry::{
     shape_from_points, simplified, text_ink_margin, text_visual_bounds, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
+pub use layers::{LayerEntry, layer_entries};
 pub use options::{
     DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,
 };
