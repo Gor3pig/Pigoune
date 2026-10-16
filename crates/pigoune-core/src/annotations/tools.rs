@@ -17,6 +17,7 @@ pub enum Outline {
     Region,
     Stroke,
     Disc,
+    TextBox,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -280,7 +281,73 @@ pub const STEP: ToolDefinition = ToolDefinition {
     options: &[COLOR, OPACITY, BADGE_SIZE, BADGE_STYLE],
 };
 
-pub const DEFINITIONS: [&ToolDefinition; 9] = [
+pub const FONT_FAMILY_CHOICES: [&str; 3] = ["sans", "serif", "mono"];
+pub const TEXT_BACKGROUND_CHOICES: [&str; 3] = ["none", "light", "dark"];
+
+pub const CONTENT: OptionSpec = OptionSpec {
+    id: "content",
+    kind: OptionKind::Text,
+    default: DefaultValue::Text(""),
+    shown_if: None,
+};
+
+pub const FONT_SIZE: OptionSpec = OptionSpec {
+    id: "font_size",
+    kind: OptionKind::Number {
+        min: 8.0,
+        max: 200.0,
+        step: 1.0,
+    },
+    default: DefaultValue::Number(32.0),
+    shown_if: None,
+};
+
+pub const BOLD: OptionSpec = OptionSpec {
+    id: "bold",
+    kind: OptionKind::Toggle,
+    default: DefaultValue::Toggle(false),
+    shown_if: None,
+};
+
+pub const ITALIC: OptionSpec = OptionSpec {
+    id: "italic",
+    kind: OptionKind::Toggle,
+    default: DefaultValue::Toggle(false),
+    shown_if: None,
+};
+
+pub const FONT_FAMILY: OptionSpec = OptionSpec {
+    id: "family",
+    kind: OptionKind::Choice(&FONT_FAMILY_CHOICES),
+    default: DefaultValue::Choice("sans"),
+    shown_if: None,
+};
+
+pub const TEXT_BACKGROUND: OptionSpec = OptionSpec {
+    id: "background",
+    kind: OptionKind::Choice(&TEXT_BACKGROUND_CHOICES),
+    default: DefaultValue::Choice("none"),
+    shown_if: None,
+};
+
+pub const TEXT: ToolDefinition = ToolDefinition {
+    kind: "text",
+    geometry: GeometryKind::Anchor,
+    outline: Outline::TextBox,
+    hides_content: false,
+    options: &[
+        CONTENT,
+        COLOR,
+        OPACITY,
+        FONT_SIZE,
+        BOLD,
+        ITALIC,
+        FONT_FAMILY,
+        TEXT_BACKGROUND,
+    ],
+};
+
+pub const DEFINITIONS: [&ToolDefinition; 10] = [
     &RECTANGLE,
     &ELLIPSE,
     &LINE,
@@ -288,6 +355,7 @@ pub const DEFINITIONS: [&ToolDefinition; 9] = [
     &PEN,
     &HIGHLIGHTER,
     &STEP,
+    &TEXT,
     &BLUR,
     &PIXELATE,
 ];

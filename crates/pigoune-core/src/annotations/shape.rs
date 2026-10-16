@@ -70,6 +70,13 @@ impl Shape {
     }
 
     #[must_use]
+    pub fn text(&self, id: &str) -> &str {
+        self.definition()
+            .and_then(|definition| definition.spec(id))
+            .map_or("", |spec| self.options.text(spec))
+    }
+
+    #[must_use]
     pub fn toggle(&self, id: &str) -> bool {
         self.definition()
             .and_then(|definition| definition.spec(id))

@@ -142,7 +142,7 @@ fn an_unknown_tool_is_kept_untouched() {
 #[test]
 fn a_tool_that_used_to_exist_but_is_not_registered_is_kept_like_an_unknown_one() {
     let stored = json!({"version": 1, "objects": [
-        {"id": 1, "kind": "text", "at": {"x": 1.0, "y": 2.0}, "options": {"content": "Hi"}}
+        {"id": 1, "kind": "stamp", "at": {"x": 1.0, "y": 2.0}, "options": {"label": "Hi"}}
     ]});
 
     let document = AnnotationDocument::from_json(&stored.to_string()).expect("read");
