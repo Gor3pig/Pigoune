@@ -71,6 +71,14 @@ impl EditSession {
         }
     }
 
+    #[must_use]
+    pub fn restored(document: AnnotationDocument) -> Self {
+        Self {
+            saved_at: None,
+            ..Self::new(document)
+        }
+    }
+
     pub fn set_text_measurer(&mut self, measurer: impl Fn(&Shape) -> (f32, f32) + 'static) {
         self.measurer = Some(Measurer(Rc::new(measurer)));
     }
