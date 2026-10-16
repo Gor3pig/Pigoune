@@ -120,6 +120,13 @@ pub const CORNER_RADIUS: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const SHADOW: OptionSpec = OptionSpec {
+    id: "shadow",
+    kind: OptionKind::Toggle,
+    default: DefaultValue::Toggle(false),
+    shown_if: None,
+};
+
 pub const RECTANGLE: ToolDefinition = ToolDefinition {
     kind: "rectangle",
     geometry: GeometryKind::Box,
@@ -133,6 +140,7 @@ pub const RECTANGLE: ToolDefinition = ToolDefinition {
         CORNER_RADIUS,
         FILL,
         FILL_OPACITY,
+        SHADOW,
     ],
 };
 
@@ -141,7 +149,7 @@ pub const ELLIPSE: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::Box,
     outline: Outline::Ellipse,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, DASH, FILL, FILL_OPACITY],
+    options: &[COLOR, OPACITY, WIDTH, DASH, FILL, FILL_OPACITY, SHADOW],
 };
 
 pub const LINE: ToolDefinition = ToolDefinition {
@@ -149,7 +157,7 @@ pub const LINE: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::TwoPoints,
     outline: Outline::Segment,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, DASH],
+    options: &[COLOR, OPACITY, WIDTH, DASH, SHADOW],
 };
 
 pub const CURVE: OptionSpec = OptionSpec {
@@ -177,7 +185,9 @@ pub const ARROW: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::TwoPoints,
     outline: Outline::Segment,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, DASH, HEAD, HEAD_SIZE, CURVE, SHAFT],
+    options: &[
+        COLOR, OPACITY, WIDTH, DASH, HEAD, HEAD_SIZE, CURVE, SHAFT, SHADOW,
+    ],
 };
 
 pub const RADIUS: OptionSpec = OptionSpec {
@@ -286,7 +296,7 @@ pub const PEN: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::Polyline,
     outline: Outline::Stroke,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, SMOOTH],
+    options: &[COLOR, OPACITY, WIDTH, SMOOTH, SHADOW],
 };
 
 pub const HIGHLIGHTER: ToolDefinition = ToolDefinition {
@@ -317,16 +327,25 @@ pub const BADGE_STYLE: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const SEQUENCE_CHOICES: [&str; 2] = ["numbers", "letters"];
+
+pub const SEQUENCE: OptionSpec = OptionSpec {
+    id: "sequence",
+    kind: OptionKind::Choice(&SEQUENCE_CHOICES),
+    default: DefaultValue::Choice("numbers"),
+    shown_if: None,
+};
+
 pub const STEP: ToolDefinition = ToolDefinition {
     kind: "step",
     geometry: GeometryKind::Anchor,
     outline: Outline::Disc,
     hides_content: false,
-    options: &[COLOR, OPACITY, BADGE_SIZE, BADGE_STYLE],
+    options: &[COLOR, OPACITY, BADGE_SIZE, BADGE_STYLE, SEQUENCE, SHADOW],
 };
 
 pub const FONT_FAMILY_CHOICES: [&str; 3] = ["sans", "serif", "mono"];
-pub const TEXT_BACKGROUND_CHOICES: [&str; 3] = ["none", "light", "dark"];
+pub const TEXT_BACKGROUND_CHOICES: [&str; 4] = ["none", "light", "dark", "bubble"];
 
 pub const CONTENT: OptionSpec = OptionSpec {
     id: "content",
@@ -374,6 +393,13 @@ pub const TEXT_BACKGROUND: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const TEXT_OUTLINE: OptionSpec = OptionSpec {
+    id: "outline",
+    kind: OptionKind::Toggle,
+    default: DefaultValue::Toggle(false),
+    shown_if: None,
+};
+
 pub const TEXT: ToolDefinition = ToolDefinition {
     kind: "text",
     geometry: GeometryKind::Anchor,
@@ -388,6 +414,8 @@ pub const TEXT: ToolDefinition = ToolDefinition {
         ITALIC,
         FONT_FAMILY,
         TEXT_BACKGROUND,
+        TEXT_OUTLINE,
+        SHADOW,
     ],
 };
 

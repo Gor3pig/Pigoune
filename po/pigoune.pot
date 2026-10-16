@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:35+0200\n"
+"POT-Creation-Date: 2026-10-16 13:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1585,162 +1585,186 @@ msgid "Curve"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:44
-msgid "Shaft"
+msgid "Badge Content"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:45
-msgid "Spotlight Shape"
+msgid "Text Outline"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:46
-msgid "Dimming"
+msgid "Shadow"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:47
-msgid "Arrowhead"
+msgid "Shaft"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:48
-msgid "Arrowhead Size"
+msgid "Spotlight Shape"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:49
-msgid "Corner Radius"
+msgid "Dimming"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:50
-msgid "Fill Shape"
+msgid "Arrowhead"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:51
-msgid "Fill Opacity"
+msgid "Arrowhead Size"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:52
-msgid "Smooth Line"
+msgid "Corner Radius"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:53
-msgid "Badge Size"
+msgid "Fill Shape"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:54
-msgid "Badge Style"
+msgid "Fill Opacity"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:55
-msgid "Font Size"
+msgid "Smooth Line"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:56
-msgid "Bold Text"
+msgid "Badge Size"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:57
-msgid "Italic Text"
+msgid "Badge Style"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:58
-msgid "Font"
+msgid "Font Size"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:59
-msgid "Text Background"
+msgid "Bold Text"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:60
-msgid "Blur Radius"
+msgid "Italic Text"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:61
+msgid "Font"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:62
+msgid "Text Background"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:63
+msgid "Blur Radius"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Cell Size"
 msgstr ""
 
-#: crates/pigoune-app/src/editor_options.rs:68
-msgid "Even Shaft"
-msgstr ""
-
-#: crates/pigoune-app/src/editor_options.rs:69
-msgid "Tapered Shaft"
-msgstr ""
-
-#: crates/pigoune-app/src/editor_options.rs:70
-msgid "Rectangular"
-msgstr ""
-
 #: crates/pigoune-app/src/editor_options.rs:71
-msgid "Oval"
+msgid "Numbers"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:72
-msgid "Solid Line"
+msgid "Letters"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:73
-msgid "Dashed Line"
+msgid "Bubble Background"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:74
-msgid "Dotted Line"
+msgid "Even Shaft"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:75
-msgid "Filled Triangle"
+msgid "Tapered Shaft"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:76
-msgid "Open Head"
+msgid "Rectangular"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:77
-msgid "Both Ends"
+msgid "Oval"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:78
-msgid "No Head"
+msgid "Solid Line"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:79
-msgid "Sans-serif Font"
+msgid "Dashed Line"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:80
-msgid "Serif Font"
+msgid "Dotted Line"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:81
-msgid "Monospace Font"
+msgid "Filled Triangle"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:82
-msgid "No Background"
+msgid "Open Head"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:83
-msgid "Light Background"
+msgid "Both Ends"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:84
-msgid "Dark Background"
+msgid "No Head"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:85
-msgid "Filled Badge"
+msgid "Sans-serif Font"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:86
-msgid "Outlined Badge"
+msgid "Serif Font"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:87
-msgid "Small Head"
+msgid "Monospace Font"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:88
-msgid "Medium Head"
+msgid "No Background"
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:89
+msgid "Light Background"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:90
+msgid "Dark Background"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:91
+msgid "Filled Badge"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:92
+msgid "Outlined Badge"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:93
+msgid "Small Head"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:94
+msgid "Medium Head"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs:95
 msgid "Large Head"
 msgstr ""
 

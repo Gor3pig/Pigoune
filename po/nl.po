@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:35+0200\n"
+"POT-Creation-Date: 2026-10-16 13:39+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1592,162 +1592,186 @@ msgid "Curve"
 msgstr "Kromming"
 
 #: crates/pigoune-app/src/editor_options.rs:44
+msgid "Badge Content"
+msgstr "Inhoud van het label"
+
+#: crates/pigoune-app/src/editor_options.rs:45
+msgid "Text Outline"
+msgstr "Tekstcontour"
+
+#: crates/pigoune-app/src/editor_options.rs:46
+msgid "Shadow"
+msgstr "Schaduw"
+
+#: crates/pigoune-app/src/editor_options.rs:47
 msgid "Shaft"
 msgstr "Schacht"
 
-#: crates/pigoune-app/src/editor_options.rs:45
+#: crates/pigoune-app/src/editor_options.rs:48
 msgid "Spotlight Shape"
 msgstr "Vorm van het spotlicht"
 
-#: crates/pigoune-app/src/editor_options.rs:46
+#: crates/pigoune-app/src/editor_options.rs:49
 msgid "Dimming"
 msgstr "Verduistering"
 
-#: crates/pigoune-app/src/editor_options.rs:47
+#: crates/pigoune-app/src/editor_options.rs:50
 msgid "Arrowhead"
 msgstr "Pijlpunt"
 
-#: crates/pigoune-app/src/editor_options.rs:48
+#: crates/pigoune-app/src/editor_options.rs:51
 msgid "Arrowhead Size"
 msgstr "Grootte van de pijlpunt"
 
-#: crates/pigoune-app/src/editor_options.rs:49
+#: crates/pigoune-app/src/editor_options.rs:52
 msgid "Corner Radius"
 msgstr "Hoekstraal"
 
-#: crates/pigoune-app/src/editor_options.rs:50
+#: crates/pigoune-app/src/editor_options.rs:53
 msgid "Fill Shape"
 msgstr "Vorm vullen"
 
-#: crates/pigoune-app/src/editor_options.rs:51
+#: crates/pigoune-app/src/editor_options.rs:54
 msgid "Fill Opacity"
 msgstr "Dekking van de vulling"
 
-#: crates/pigoune-app/src/editor_options.rs:52
+#: crates/pigoune-app/src/editor_options.rs:55
 msgid "Smooth Line"
 msgstr "Gladde lijn"
 
-#: crates/pigoune-app/src/editor_options.rs:53
+#: crates/pigoune-app/src/editor_options.rs:56
 msgid "Badge Size"
 msgstr "Grootte van het label"
 
-#: crates/pigoune-app/src/editor_options.rs:54
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Badge Style"
 msgstr "Stijl van het label"
 
-#: crates/pigoune-app/src/editor_options.rs:55
+#: crates/pigoune-app/src/editor_options.rs:58
 msgid "Font Size"
 msgstr "Tekstgrootte"
 
-#: crates/pigoune-app/src/editor_options.rs:56
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Bold Text"
 msgstr "Vette tekst"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:60
 msgid "Italic Text"
 msgstr "Cursieve tekst"
 
-#: crates/pigoune-app/src/editor_options.rs:58
+#: crates/pigoune-app/src/editor_options.rs:61
 msgid "Font"
 msgstr "Lettertype"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:62
 msgid "Text Background"
 msgstr "Tekstachtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:60
+#: crates/pigoune-app/src/editor_options.rs:63
 msgid "Blur Radius"
 msgstr "Vervagingsstraal"
 
-#: crates/pigoune-app/src/editor_options.rs:61
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Cell Size"
 msgstr "Celgrootte"
 
-#: crates/pigoune-app/src/editor_options.rs:68
+#: crates/pigoune-app/src/editor_options.rs:71
+msgid "Numbers"
+msgstr "Cijfers"
+
+#: crates/pigoune-app/src/editor_options.rs:72
+msgid "Letters"
+msgstr "Letters"
+
+#: crates/pigoune-app/src/editor_options.rs:73
+msgid "Bubble Background"
+msgstr "Tekstballonachtergrond"
+
+#: crates/pigoune-app/src/editor_options.rs:74
 msgid "Even Shaft"
 msgstr "Gelijkmatige schacht"
 
-#: crates/pigoune-app/src/editor_options.rs:69
+#: crates/pigoune-app/src/editor_options.rs:75
 msgid "Tapered Shaft"
 msgstr "Taps toelopende schacht"
 
-#: crates/pigoune-app/src/editor_options.rs:70
+#: crates/pigoune-app/src/editor_options.rs:76
 msgid "Rectangular"
 msgstr "Rechthoekig"
 
-#: crates/pigoune-app/src/editor_options.rs:71
+#: crates/pigoune-app/src/editor_options.rs:77
 msgid "Oval"
 msgstr "Ovaal"
 
-#: crates/pigoune-app/src/editor_options.rs:72
+#: crates/pigoune-app/src/editor_options.rs:78
 msgid "Solid Line"
 msgstr "Doorgetrokken"
 
-#: crates/pigoune-app/src/editor_options.rs:73
+#: crates/pigoune-app/src/editor_options.rs:79
 msgid "Dashed Line"
 msgstr "Gestreept"
 
-#: crates/pigoune-app/src/editor_options.rs:74
+#: crates/pigoune-app/src/editor_options.rs:80
 msgid "Dotted Line"
 msgstr "Gestippeld"
 
-#: crates/pigoune-app/src/editor_options.rs:75
+#: crates/pigoune-app/src/editor_options.rs:81
 msgid "Filled Triangle"
 msgstr "Gevulde driehoek"
 
-#: crates/pigoune-app/src/editor_options.rs:76
+#: crates/pigoune-app/src/editor_options.rs:82
 msgid "Open Head"
 msgstr "Open punt"
 
-#: crates/pigoune-app/src/editor_options.rs:77
+#: crates/pigoune-app/src/editor_options.rs:83
 msgid "Both Ends"
 msgstr "Aan beide uiteinden"
 
-#: crates/pigoune-app/src/editor_options.rs:78
+#: crates/pigoune-app/src/editor_options.rs:84
 msgid "No Head"
 msgstr "Geen punt"
 
-#: crates/pigoune-app/src/editor_options.rs:79
+#: crates/pigoune-app/src/editor_options.rs:85
 msgid "Sans-serif Font"
 msgstr "Schreefloos lettertype"
 
-#: crates/pigoune-app/src/editor_options.rs:80
+#: crates/pigoune-app/src/editor_options.rs:86
 msgid "Serif Font"
 msgstr "Lettertype met schreven"
 
-#: crates/pigoune-app/src/editor_options.rs:81
+#: crates/pigoune-app/src/editor_options.rs:87
 msgid "Monospace Font"
 msgstr "Lettertype met vaste breedte"
 
-#: crates/pigoune-app/src/editor_options.rs:82
+#: crates/pigoune-app/src/editor_options.rs:88
 msgid "No Background"
 msgstr "Geen achtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:83
+#: crates/pigoune-app/src/editor_options.rs:89
 msgid "Light Background"
 msgstr "Lichte achtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:84
+#: crates/pigoune-app/src/editor_options.rs:90
 msgid "Dark Background"
 msgstr "Donkere achtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:85
+#: crates/pigoune-app/src/editor_options.rs:91
 msgid "Filled Badge"
 msgstr "Gevuld label"
 
-#: crates/pigoune-app/src/editor_options.rs:86
+#: crates/pigoune-app/src/editor_options.rs:92
 msgid "Outlined Badge"
 msgstr "Omlijnd label"
 
-#: crates/pigoune-app/src/editor_options.rs:87
+#: crates/pigoune-app/src/editor_options.rs:93
 msgid "Small Head"
 msgstr "Kleine punt"
 
-#: crates/pigoune-app/src/editor_options.rs:88
+#: crates/pigoune-app/src/editor_options.rs:94
 msgid "Medium Head"
 msgstr "Middelgrote punt"
 
-#: crates/pigoune-app/src/editor_options.rs:89
+#: crates/pigoune-app/src/editor_options.rs:95
 msgid "Large Head"
 msgstr "Grote punt"
 
