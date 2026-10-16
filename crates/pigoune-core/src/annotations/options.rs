@@ -8,6 +8,7 @@ pub enum DefaultValue {
     Number(f32),
     Choice(&'static str),
     Toggle(bool),
+    Text(&'static str),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -17,6 +18,7 @@ pub enum OptionKind {
     Number { min: f32, max: f32, step: f32 },
     Choice(&'static [&'static str]),
     Toggle,
+    Text,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -35,6 +37,7 @@ impl OptionSpec {
             DefaultValue::Number(number) => number_to_value(number),
             DefaultValue::Choice(choice) => Value::from(choice),
             DefaultValue::Toggle(toggle) => Value::from(toggle),
+            DefaultValue::Text(text) => Value::from(text),
         }
     }
 
@@ -50,6 +53,7 @@ impl OptionSpec {
                 .as_str()
                 .is_some_and(|choice| choices.contains(&choice)),
             OptionKind::Toggle => value.is_boolean(),
+            OptionKind::Text => value.is_string(),
         }
     }
 }
@@ -139,6 +143,17 @@ impl Options {
         self.get(spec.id)
             .and_then(Value::as_str)
             .filter(|choice| choices.contains(choice))
+            .unwrap_or(fallback)
+    }
+
+    #[must_use]
+    pub fn text<'a>(&'a self, spec: &'a OptionSpec) -> &'a str {
+        let fallback = match spec.default {
+            DefaultValue::Text(text) => text,
+            _ => "",
+        };
+        self.get(spec.id)
+            .and_then(Value::as_str)
             .unwrap_or(fallback)
     }
 

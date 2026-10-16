@@ -12,9 +12,9 @@ use serde_json::Map;
 
 pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
-    ArrowHead, Handle, arrow_head, dash_pattern, handles, head_size_factor, hit, next_stroke_point,
-    rect_between, resized, shape_bounds, shape_from_drag, shape_from_points, simplified,
-    translated,
+    ArrowHead, Handle, arrow_head, dash_pattern, estimated_text_extent, handles, head_size_factor,
+    hit, hit_with_extent, next_stroke_point, rect_between, resized, shape_bounds, shape_from_drag,
+    shape_from_points, simplified, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use options::{
@@ -24,10 +24,12 @@ pub use serde_json::Value;
 pub use session::EditSession;
 pub use shape::{Geometry, Shape};
 pub use tools::{
-    ARROW, BADGE_SIZE, BADGE_STYLE, BLUR, CELL, COLOR, CORNER_RADIUS, DASH, DASH_CHOICES, ELLIPSE,
-    FILL, FILL_OPACITY, GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES,
-    HIGHLIGHT_COLOR, HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, LINE, OPACITY, Outline, PEN,
-    PIXELATE, RADIUS, RECTANGLE, SMOOTH, STEP, ToolDefinition, WIDTH, definition, definitions,
+    ARROW, BADGE_SIZE, BADGE_STYLE, BLUR, BOLD, CELL, COLOR, CONTENT, CORNER_RADIUS, DASH,
+    DASH_CHOICES, ELLIPSE, FILL, FILL_OPACITY, FONT_FAMILY, FONT_FAMILY_CHOICES, FONT_SIZE,
+    GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, HIGHLIGHT_COLOR,
+    HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, ITALIC, LINE, OPACITY, Outline, PEN, PIXELATE,
+    RADIUS, RECTANGLE, SMOOTH, STEP, TEXT, TEXT_BACKGROUND, TEXT_BACKGROUND_CHOICES,
+    ToolDefinition, WIDTH, definition, definitions,
 };
 
 pub const DOCUMENT_VERSION: u32 = 1;

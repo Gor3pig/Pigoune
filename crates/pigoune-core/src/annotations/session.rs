@@ -1,3 +1,6 @@
+use std::fmt;
+use std::rc::Rc;
+
 use serde_json::Value;
 
 use super::geometry;
@@ -32,6 +35,17 @@ struct Gesture {
     before: Shape,
 }
 
+type TextMeasure = dyn Fn(&Shape) -> (f32, f32);
+
+#[derive(Clone)]
+struct Measurer(Rc<TextMeasure>);
+
+impl fmt::Debug for Measurer {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Measurer")
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct EditSession {
     document: AnnotationDocument,
@@ -40,6 +54,7 @@ pub struct EditSession {
     redo: Vec<Edit>,
     gesture: Option<Gesture>,
     saved_at: Option<usize>,
+    measurer: Option<Measurer>,
 }
 
 impl EditSession {
@@ -52,7 +67,12 @@ impl EditSession {
             redo: Vec::new(),
             gesture: None,
             saved_at: Some(0),
+            measurer: None,
         }
+    }
+
+    pub fn set_text_measurer(&mut self, measurer: impl Fn(&Shape) -> (f32, f32) + 'static) {
+        self.measurer = Some(Measurer(Rc::new(measurer)));
     }
 
     #[must_use]
@@ -114,9 +134,14 @@ impl EditSession {
             .iter()
             .rev()
             .find(|object| {
-                object
-                    .shape()
-                    .is_some_and(|shape| geometry::hit(shape, point, tolerance))
+                object.shape().is_some_and(|shape| {
+                    let extent = self
+                        .measurer
+                        .as_ref()
+                        .filter(|_| shape.kind == "text")
+                        .map(|measurer| (measurer.0)(shape));
+                    geometry::hit_with_extent(shape, point, tolerance, extent)
+                })
             })
             .map(|object| object.id)
     }

@@ -333,7 +333,31 @@ fn distance_to_segment(point: Point, from: Point, to: Point) -> f32 {
 }
 
 #[must_use]
+pub fn estimated_text_extent(shape: &Shape) -> (f32, f32) {
+    let size = shape.number("font_size");
+    let lines: Vec<&str> = shape.text("content").split('\n').collect();
+    let longest = lines
+        .iter()
+        .map(|line| line.chars().count())
+        .max()
+        .unwrap_or(0);
+    let width = f32::from(u16::try_from(longest).unwrap_or(u16::MAX)) * size * 0.55;
+    let height = f32::from(u16::try_from(lines.len()).unwrap_or(u16::MAX)) * size * 1.25;
+    (width.max(size * 0.5), height.max(size * 1.25))
+}
+
+#[must_use]
 pub fn hit(shape: &Shape, point: Point, tolerance: f32) -> bool {
+    hit_with_extent(shape, point, tolerance, None)
+}
+
+#[must_use]
+pub fn hit_with_extent(
+    shape: &Shape,
+    point: Point,
+    tolerance: f32,
+    extent: Option<(f32, f32)>,
+) -> bool {
     let Some(definition) = shape.definition() else {
         return false;
     };
@@ -363,6 +387,21 @@ pub fn hit(shape: &Shape, point: Point, tolerance: f32) -> bool {
         }
         (Geometry::Box(bounds), Outline::Region) => {
             contains(expanded(normalized(*bounds), tolerance), point)
+        }
+        (Geometry::Anchor(at), Outline::TextBox) => {
+            let (width, height) = extent.unwrap_or_else(|| estimated_text_extent(shape));
+            contains(
+                expanded(
+                    Rect {
+                        x: at.x,
+                        y: at.y,
+                        width,
+                        height,
+                    },
+                    tolerance,
+                ),
+                point,
+            )
         }
         (Geometry::Anchor(at), Outline::Disc) => {
             (at.x - point.x).hypot(at.y - point.y) <= shape.number("size") + tolerance
