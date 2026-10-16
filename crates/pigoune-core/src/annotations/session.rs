@@ -262,6 +262,37 @@ impl EditSession {
         true
     }
 
+    pub fn nudge_selected(&mut self, dx: f32, dy: f32) -> bool {
+        if self.gesture.is_some() {
+            return false;
+        }
+        let Some(selected) = self.selected else {
+            return false;
+        };
+        let Some(before) = self.shape_of(selected).cloned() else {
+            return false;
+        };
+        let after = geometry::translated(&before, dx, dy);
+        if after == before {
+            return false;
+        }
+        self.set_shape(selected, after.clone());
+        self.record(Edit::Changed {
+            id: selected,
+            before,
+            after,
+        });
+        true
+    }
+
+    pub fn duplicate_selected(&mut self, offset: f32) -> Option<u32> {
+        if self.gesture.is_some() {
+            return None;
+        }
+        let copy = geometry::translated(self.selected_shape()?, offset, offset);
+        Some(self.add(copy))
+    }
+
     pub fn remove_selected(&mut self) -> bool {
         let Some(id) = self.selected else {
             return false;
