@@ -901,3 +901,11 @@ textview.annotation-editor {
   outline: 1px dashed @accent_bg_color;
   outline-offset: 2px;
 }
+
+.layers-list row.layer-drop-above {
+  box-shadow: inset 0 2px 0 0 @accent_bg_color;
+}
+
+.layers-list row.layer-drop-below {
+  box-shadow: inset 0 -2px 0 0 @accent_bg_color;
+}
