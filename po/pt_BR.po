@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:35+0200\n"
+"POT-Creation-Date: 2026-10-16 13:39+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Portuguese (Brazil)\n"
@@ -1589,162 +1589,186 @@ msgid "Curve"
 msgstr "Curvatura"
 
 #: crates/pigoune-app/src/editor_options.rs:44
+msgid "Badge Content"
+msgstr "Conteúdo do selo"
+
+#: crates/pigoune-app/src/editor_options.rs:45
+msgid "Text Outline"
+msgstr "Contorno do texto"
+
+#: crates/pigoune-app/src/editor_options.rs:46
+msgid "Shadow"
+msgstr "Sombra"
+
+#: crates/pigoune-app/src/editor_options.rs:47
 msgid "Shaft"
 msgstr "Haste"
 
-#: crates/pigoune-app/src/editor_options.rs:45
+#: crates/pigoune-app/src/editor_options.rs:48
 msgid "Spotlight Shape"
 msgstr "Forma do holofote"
 
-#: crates/pigoune-app/src/editor_options.rs:46
+#: crates/pigoune-app/src/editor_options.rs:49
 msgid "Dimming"
 msgstr "Escurecimento"
 
-#: crates/pigoune-app/src/editor_options.rs:47
+#: crates/pigoune-app/src/editor_options.rs:50
 msgid "Arrowhead"
 msgstr "Ponta da seta"
 
-#: crates/pigoune-app/src/editor_options.rs:48
+#: crates/pigoune-app/src/editor_options.rs:51
 msgid "Arrowhead Size"
 msgstr "Tamanho da ponta"
 
-#: crates/pigoune-app/src/editor_options.rs:49
+#: crates/pigoune-app/src/editor_options.rs:52
 msgid "Corner Radius"
 msgstr "Raio dos cantos"
 
-#: crates/pigoune-app/src/editor_options.rs:50
+#: crates/pigoune-app/src/editor_options.rs:53
 msgid "Fill Shape"
 msgstr "Preencher a forma"
 
-#: crates/pigoune-app/src/editor_options.rs:51
+#: crates/pigoune-app/src/editor_options.rs:54
 msgid "Fill Opacity"
 msgstr "Opacidade do preenchimento"
 
-#: crates/pigoune-app/src/editor_options.rs:52
+#: crates/pigoune-app/src/editor_options.rs:55
 msgid "Smooth Line"
 msgstr "Traço suavizado"
 
-#: crates/pigoune-app/src/editor_options.rs:53
+#: crates/pigoune-app/src/editor_options.rs:56
 msgid "Badge Size"
 msgstr "Tamanho do selo"
 
-#: crates/pigoune-app/src/editor_options.rs:54
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Badge Style"
 msgstr "Estilo do selo"
 
-#: crates/pigoune-app/src/editor_options.rs:55
+#: crates/pigoune-app/src/editor_options.rs:58
 msgid "Font Size"
 msgstr "Tamanho do texto"
 
-#: crates/pigoune-app/src/editor_options.rs:56
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Bold Text"
 msgstr "Texto em negrito"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:60
 msgid "Italic Text"
 msgstr "Texto em itálico"
 
-#: crates/pigoune-app/src/editor_options.rs:58
+#: crates/pigoune-app/src/editor_options.rs:61
 msgid "Font"
 msgstr "Fonte"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:62
 msgid "Text Background"
 msgstr "Fundo do texto"
 
-#: crates/pigoune-app/src/editor_options.rs:60
+#: crates/pigoune-app/src/editor_options.rs:63
 msgid "Blur Radius"
 msgstr "Raio do desfoque"
 
-#: crates/pigoune-app/src/editor_options.rs:61
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Cell Size"
 msgstr "Tamanho da célula"
 
-#: crates/pigoune-app/src/editor_options.rs:68
+#: crates/pigoune-app/src/editor_options.rs:71
+msgid "Numbers"
+msgstr "Números"
+
+#: crates/pigoune-app/src/editor_options.rs:72
+msgid "Letters"
+msgstr "Letras"
+
+#: crates/pigoune-app/src/editor_options.rs:73
+msgid "Bubble Background"
+msgstr "Fundo de balão"
+
+#: crates/pigoune-app/src/editor_options.rs:74
 msgid "Even Shaft"
 msgstr "Haste uniforme"
 
-#: crates/pigoune-app/src/editor_options.rs:69
+#: crates/pigoune-app/src/editor_options.rs:75
 msgid "Tapered Shaft"
 msgstr "Haste afilada"
 
-#: crates/pigoune-app/src/editor_options.rs:70
+#: crates/pigoune-app/src/editor_options.rs:76
 msgid "Rectangular"
 msgstr "Retangular"
 
-#: crates/pigoune-app/src/editor_options.rs:71
+#: crates/pigoune-app/src/editor_options.rs:77
 msgid "Oval"
 msgstr "Oval"
 
-#: crates/pigoune-app/src/editor_options.rs:72
+#: crates/pigoune-app/src/editor_options.rs:78
 msgid "Solid Line"
 msgstr "Contínua"
 
-#: crates/pigoune-app/src/editor_options.rs:73
+#: crates/pigoune-app/src/editor_options.rs:79
 msgid "Dashed Line"
 msgstr "Tracejada"
 
-#: crates/pigoune-app/src/editor_options.rs:74
+#: crates/pigoune-app/src/editor_options.rs:80
 msgid "Dotted Line"
 msgstr "Pontilhada"
 
-#: crates/pigoune-app/src/editor_options.rs:75
+#: crates/pigoune-app/src/editor_options.rs:81
 msgid "Filled Triangle"
 msgstr "Triângulo cheio"
 
-#: crates/pigoune-app/src/editor_options.rs:76
+#: crates/pigoune-app/src/editor_options.rs:82
 msgid "Open Head"
 msgstr "Ponta aberta"
 
-#: crates/pigoune-app/src/editor_options.rs:77
+#: crates/pigoune-app/src/editor_options.rs:83
 msgid "Both Ends"
 msgstr "Nas duas pontas"
 
-#: crates/pigoune-app/src/editor_options.rs:78
+#: crates/pigoune-app/src/editor_options.rs:84
 msgid "No Head"
 msgstr "Sem ponta"
 
-#: crates/pigoune-app/src/editor_options.rs:79
+#: crates/pigoune-app/src/editor_options.rs:85
 msgid "Sans-serif Font"
 msgstr "Fonte sem serifa"
 
-#: crates/pigoune-app/src/editor_options.rs:80
+#: crates/pigoune-app/src/editor_options.rs:86
 msgid "Serif Font"
 msgstr "Fonte com serifa"
 
-#: crates/pigoune-app/src/editor_options.rs:81
+#: crates/pigoune-app/src/editor_options.rs:87
 msgid "Monospace Font"
 msgstr "Fonte monoespaçada"
 
-#: crates/pigoune-app/src/editor_options.rs:82
+#: crates/pigoune-app/src/editor_options.rs:88
 msgid "No Background"
 msgstr "Sem fundo"
 
-#: crates/pigoune-app/src/editor_options.rs:83
+#: crates/pigoune-app/src/editor_options.rs:89
 msgid "Light Background"
 msgstr "Fundo claro"
 
-#: crates/pigoune-app/src/editor_options.rs:84
+#: crates/pigoune-app/src/editor_options.rs:90
 msgid "Dark Background"
 msgstr "Fundo escuro"
 
-#: crates/pigoune-app/src/editor_options.rs:85
+#: crates/pigoune-app/src/editor_options.rs:91
 msgid "Filled Badge"
 msgstr "Selo preenchido"
 
-#: crates/pigoune-app/src/editor_options.rs:86
+#: crates/pigoune-app/src/editor_options.rs:92
 msgid "Outlined Badge"
 msgstr "Selo com contorno"
 
-#: crates/pigoune-app/src/editor_options.rs:87
+#: crates/pigoune-app/src/editor_options.rs:93
 msgid "Small Head"
 msgstr "Ponta pequena"
 
-#: crates/pigoune-app/src/editor_options.rs:88
+#: crates/pigoune-app/src/editor_options.rs:94
 msgid "Medium Head"
 msgstr "Ponta média"
 
-#: crates/pigoune-app/src/editor_options.rs:89
+#: crates/pigoune-app/src/editor_options.rs:95
 msgid "Large Head"
 msgstr "Ponta grande"
 

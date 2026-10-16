@@ -41,6 +41,9 @@ pub fn option_label(id: &str) -> Option<String> {
         "width" => gettext("Thickness"),
         "dash" => gettext("Line Style"),
         "curve" => gettext("Curve"),
+        "sequence" => gettext("Badge Content"),
+        "outline" => gettext("Text Outline"),
+        "shadow" => gettext("Shadow"),
         "shaft" => gettext("Shaft"),
         "spot" => gettext("Spotlight Shape"),
         "dimming" => gettext("Dimming"),
@@ -65,6 +68,9 @@ pub fn option_label(id: &str) -> Option<String> {
 
 pub fn choice_label(id: &str, choice: &str) -> Option<String> {
     Some(match (id, choice) {
+        ("sequence", "numbers") => gettext("Numbers"),
+        ("sequence", "letters") => gettext("Letters"),
+        ("background", "bubble") => gettext("Bubble Background"),
         ("shaft", "even") => gettext("Even Shaft"),
         ("shaft", "tapered") => gettext("Tapered Shaft"),
         ("spot", "rectangle") => gettext("Rectangular"),

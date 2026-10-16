@@ -29,9 +29,9 @@ pub use tools::{
     DASH_CHOICES, DIMMING, ELLIPSE, FILL, FILL_OPACITY, FONT_FAMILY, FONT_FAMILY_CHOICES,
     FONT_SIZE, GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, HIGHLIGHT_COLOR,
     HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, ITALIC, LINE, OPACITY, Outline, PEN, PIXELATE,
-    RADIUS, RECTANGLE, SHAFT, SHAFT_CHOICES, SMOOTH, SPOT_SHAPE, SPOT_SHAPE_CHOICES, SPOTLIGHT,
-    STEP, TEXT, TEXT_BACKGROUND, TEXT_BACKGROUND_CHOICES, ToolDefinition, WIDTH, definition,
-    definitions,
+    RADIUS, RECTANGLE, SEQUENCE, SEQUENCE_CHOICES, SHADOW, SHAFT, SHAFT_CHOICES, SMOOTH,
+    SPOT_SHAPE, SPOT_SHAPE_CHOICES, SPOTLIGHT, STEP, TEXT, TEXT_BACKGROUND,
+    TEXT_BACKGROUND_CHOICES, TEXT_OUTLINE, ToolDefinition, WIDTH, definition, definitions,
 };
 
 pub const DOCUMENT_VERSION: u32 = 1;
@@ -166,6 +166,22 @@ pub struct AnnotationDocument {
     pub crop: Option<Crop>,
     pub objects: Vec<AnnotationObject>,
     extra: Map<String, Value>,
+}
+
+#[must_use]
+pub fn step_label(rank: u32, sequence: &str) -> String {
+    if sequence != "letters" {
+        return rank.to_string();
+    }
+    let mut remaining = rank.max(1);
+    let mut letters = Vec::new();
+    while remaining > 0 {
+        remaining -= 1;
+        let offset = u8::try_from(remaining % 26).unwrap_or(0);
+        letters.push(char::from(b'A' + offset));
+        remaining /= 26;
+    }
+    letters.iter().rev().collect()
 }
 
 impl AnnotationDocument {

@@ -7,9 +7,15 @@ use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Point, Rect, Shape, arrow_curve_control,
-    arrow_head, curve_polyline, dash_pattern, handles, head_size_factor, shape_bounds,
+    arrow_head, curve_polyline, dash_pattern, handles, head_size_factor, shape_bounds, step_label,
 };
 
+const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
+const SHADOW_BLUR: f32 = 6.0;
+const SHADOW_OPACITY: f32 = 0.45;
+const SHADOW_REFERENCE_WIDTH: f32 = 1200.0;
+const SHADOW_LARGEST_SCALE: f32 = 4.0;
+const OUTLINE_REACH: f32 = 0.06;
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
 const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
@@ -156,16 +162,32 @@ pub fn append_shape(
     scene: Option<&Scene>,
 ) {
     if let Some((_, renderer)) = RENDERERS.iter().find(|(kind, _)| *kind == shape.kind) {
-        renderer(
-            snapshot,
-            shape,
-            &Draw {
-                pango: context,
-                ordinal,
-                scene,
-            },
-        );
+        let draw = Draw {
+            pango: context,
+            ordinal,
+            scene,
+        };
+        if shape.toggle("shadow") {
+            snapshot.push_shadow(&[drop_shadow(scene)]);
+            renderer(snapshot, shape, &draw);
+            snapshot.pop();
+        } else {
+            renderer(snapshot, shape, &draw);
+        }
     }
+}
+
+fn drop_shadow(scene: Option<&Scene>) -> gsk::Shadow {
+    let scale = scene.map_or(1.0, |scene| {
+        (pixels(scene.backdrop.texture.width()) / SHADOW_REFERENCE_WIDTH)
+            .clamp(1.0, SHADOW_LARGEST_SCALE)
+    });
+    gsk::Shadow::new(
+        gdk::RGBA::new(0.0, 0.0, 0.0, SHADOW_OPACITY),
+        SHADOW_OFFSET.0 * scale,
+        SHADOW_OFFSET.1 * scale,
+        SHADOW_BLUR * scale,
+    )
 }
 
 fn draw_closed(snapshot: &gtk::Snapshot, shape: &Shape, path: &gsk::Path) {
@@ -405,7 +427,7 @@ fn draw_step(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
         snapshot.append_fill(&path, gsk::FillRule::Winding, &rgba(color));
         text_color_over(color)
     };
-    let digits = draw.ordinal.to_string();
+    let digits = step_label(draw.ordinal, shape.choice("sequence"));
     let scale = match digits.len() {
         1 => 1.15,
         2 => 0.95,
@@ -480,9 +502,12 @@ fn draw_text(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     let (width, height) = layout.pixel_size();
     snapshot.save();
     snapshot.translate(&graphene::Point::new(at.x, at.y));
+    let ink = shape.stroke_color();
+    let bubble = shape.choice("background") == "bubble";
     let backdrop = match shape.choice("background") {
         "light" => Some(gdk::RGBA::new(1.0, 1.0, 1.0, 0.88)),
         "dark" => Some(gdk::RGBA::new(0.0, 0.0, 0.0, 0.72)),
+        "bubble" => Some(rgba(ink)),
         _ => None,
     };
     if let Some(backdrop) = backdrop {
@@ -498,15 +523,68 @@ fn draw_text(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
         );
         snapshot.append_fill(&path, gsk::FillRule::Winding, &backdrop);
     }
-    snapshot.append_layout(&layout, &rgba(shape.stroke_color()));
+    let letters = if bubble {
+        Color {
+            a: ink.a,
+            ..text_color_over(ink)
+        }
+    } else {
+        ink
+    };
+    if shape.toggle("outline") {
+        draw_text_outline(snapshot, &layout, shape, text_color_over(letters));
+    }
+    snapshot.append_layout(&layout, &rgba(letters));
     snapshot.restore();
 }
 
+fn draw_text_outline(
+    snapshot: &gtk::Snapshot,
+    layout: &pango::Layout,
+    shape: &Shape,
+    color: Color,
+) {
+    let reach = (shape.number("font_size") * OUTLINE_REACH).max(1.0);
+    let steps = [
+        (-1.0, -1.0),
+        (0.0, -1.0),
+        (1.0, -1.0),
+        (-1.0, 0.0),
+        (1.0, 0.0),
+        (-1.0, 1.0),
+        (0.0, 1.0),
+        (1.0, 1.0),
+    ];
+    for (dx, dy) in steps {
+        snapshot.save();
+        snapshot.translate(&graphene::Point::new(dx * reach, dy * reach));
+        snapshot.append_layout(layout, &rgba(color));
+        snapshot.restore();
+    }
+}
+
 pub fn text_view_css(shape: &Shape, zoom: f32) -> String {
-    let color = shape.stroke_color();
+    let ink = shape.stroke_color();
+    let bubble = shape.choice("background") == "bubble";
+    let color = if bubble {
+        Color {
+            a: ink.a,
+            ..text_color_over(ink)
+        }
+    } else {
+        ink
+    };
+    let bubble_background = format!(
+        "rgba({}, {}, {}, {})",
+        ink.r,
+        ink.g,
+        ink.b,
+        f32::from(ink.a) / 255.0
+    );
     let background = match shape.choice("background") {
         "light" => "rgba(255, 255, 255, 0.88)",
         "dark" => "rgba(0, 0, 0, 0.72)",
+        "bubble" => bubble_background.as_str(),
         _ => "transparent",
     };
     format!(
