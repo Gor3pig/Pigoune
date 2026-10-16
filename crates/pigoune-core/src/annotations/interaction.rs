@@ -1,4 +1,5 @@
 use super::geometry::{self, Handle, HitMode};
+use super::options::number_to_value;
 use super::session::EditSession;
 use super::snapping::{self, Guide, Snapping};
 use super::tools::{GeometryKind, ToolDefinition};
@@ -227,6 +228,12 @@ impl Interaction {
         }
         self.pending = None;
         self.guides.clear();
+    }
+
+    pub fn straighten(&mut self, session: &mut EditSession, point: Point, reach: f32) -> bool {
+        self.cancel(session);
+        matches!(handle_at(session, point, reach), Some((_, Handle::Curve)))
+            && session.set_option_on_selected("curve", number_to_value(0.0))
     }
 
     pub fn cancel(&mut self, session: &mut EditSession) {

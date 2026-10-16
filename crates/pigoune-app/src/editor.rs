@@ -672,7 +672,7 @@ impl PigouneEditor {
                 imp.picking_pressed.set(false);
                 true
             }
-            PointerEvent::Drag(_) => true,
+            PointerEvent::Drag(_) | PointerEvent::DoublePress(_) => true,
             PointerEvent::Hover(_) => {
                 imp.zoom_view.set_cursor_override(Some("crosshair"));
                 false
@@ -696,18 +696,7 @@ impl PigouneEditor {
         if matches!(event, PointerEvent::Press(_)) {
             self.commit_text();
         }
-        {
-            let mut drawing = imp.drawing.borrow_mut();
-            drawing
-                .interaction
-                .set_constrained(imp.zoom_view.shift_held());
-            let area = visible_area(imp.image_size.get(), drawing.session.crop());
-            let snapping = (!imp.zoom_view.alt_held()).then(|| Snapping {
-                tolerance: point_to_f32(SNAP_PIXELS / imp.zoom_view.zoom().max(0.01)),
-                area,
-            });
-            drawing.interaction.set_snapping(snapping);
-        }
+        self.sync_pointer_modifiers();
         let claimed = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -754,6 +743,15 @@ impl PigouneEditor {
                         .release(&mut drawing.session, image_point(point));
                     true
                 }
+                PointerEvent::DoublePress(point) => {
+                    let straightened = drawing.interaction.straighten(
+                        &mut drawing.session,
+                        image_point(point),
+                        reach,
+                    );
+                    imp.click_to_edit.set(None);
+                    straightened
+                }
                 PointerEvent::Hover(point) => {
                     let kind =
                         Interaction::cursor(&drawing.session, tool, image_point(point), reach);
@@ -773,6 +771,20 @@ impl PigouneEditor {
             self.edit_text(id);
         }
         claimed
+    }
+
+    fn sync_pointer_modifiers(&self) {
+        let imp = self.imp();
+        let mut drawing = imp.drawing.borrow_mut();
+        drawing
+            .interaction
+            .set_constrained(imp.zoom_view.shift_held());
+        let area = visible_area(imp.image_size.get(), drawing.session.crop());
+        let snapping = (!imp.zoom_view.alt_held()).then(|| Snapping {
+            tolerance: point_to_f32(SNAP_PIXELS / imp.zoom_view.zoom().max(0.01)),
+            area,
+        });
+        drawing.interaction.set_snapping(snapping);
     }
 
     fn handle_text_pointer(&self, event: PointerEvent) -> bool {
@@ -977,6 +989,7 @@ impl PigouneEditor {
             };
             match event {
                 PointerEvent::Press(point) => crop.press(image_point(point), reach),
+                PointerEvent::DoublePress(_) => true,
                 PointerEvent::Drag(point) => {
                     crop.drag(image_point(point));
                     true
@@ -1751,6 +1764,7 @@ fn cursor_name(kind: CursorKind) -> Option<&'static str> {
             Handle::Top | Handle::Bottom => "ns-resize",
             Handle::Left | Handle::Right => "ew-resize",
             Handle::Start | Handle::End => "crosshair",
+            Handle::Curve => "grab",
         }),
     }
 }

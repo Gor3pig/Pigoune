@@ -1,3 +1,4 @@
+use super::options::number_to_value;
 use super::shape::{Geometry, Shape};
 use super::tools::{GeometryKind, Outline, ToolDefinition};
 use super::{Options, Point, Rect};
@@ -24,6 +25,7 @@ pub enum Handle {
     Left,
     Start,
     End,
+    Curve,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -363,7 +365,11 @@ pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
             ]
         }
         Geometry::TwoPoints { from, to } => {
-            vec![(Handle::Start, *from), (Handle::End, *to)]
+            let mut found = vec![(Handle::Start, *from), (Handle::End, *to)];
+            if shape.kind == "arrow" {
+                found.push((Handle::Curve, arrow_middle(shape, *from, *to)));
+            }
+            found
         }
         Geometry::Polyline(_) | Geometry::Anchor(_) => Vec::new(),
     }
@@ -385,7 +391,7 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
                 Handle::Bottom => bottom = to.y,
                 Handle::BottomLeft => (left, bottom) = (to.x, to.y),
                 Handle::Left => left = to.x,
-                Handle::Start | Handle::End => return shape.clone(),
+                Handle::Start | Handle::End | Handle::Curve => return shape.clone(),
             }
             let bounds = rect_between(
                 Point { x: left, y: top },
@@ -397,11 +403,42 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
             shape.with_geometry(Geometry::Box(bounds))
         }
         Geometry::TwoPoints { from, to: end } => match handle {
+            Handle::Curve if shape.kind == "arrow" => {
+                shape.with_option("curve", number_to_value(bend_through(*from, *end, to)))
+            }
             Handle::Start => shape.with_geometry(Geometry::TwoPoints { from: to, to: *end }),
             Handle::End => shape.with_geometry(Geometry::TwoPoints { from: *from, to }),
             _ => shape.clone(),
         },
         Geometry::Polyline(_) | Geometry::Anchor(_) => shape.clone(),
+    }
+}
+
+fn arrow_middle(shape: &Shape, from: Point, to: Point) -> Point {
+    match arrow_curve_control(shape) {
+        Some(control) => curve_point(from, control, to, 0.5),
+        None => Point {
+            x: f32::midpoint(from.x, to.x),
+            y: f32::midpoint(from.y, to.y),
+        },
+    }
+}
+
+const STRAIGHT_SNAP: f32 = 4.0;
+
+fn bend_through(from: Point, to: Point, through: Point) -> f32 {
+    let (dx, dy) = (to.x - from.x, to.y - from.y);
+    let length = dx.hypot(dy);
+    if length <= 0.0 {
+        return 0.0;
+    }
+    let (middle_x, middle_y) = (f32::midpoint(from.x, to.x), f32::midpoint(from.y, to.y));
+    let side = ((through.x - middle_x) * -dy + (through.y - middle_y) * dx) / length;
+    let bend = (side * 400.0 / length).clamp(-100.0, 100.0);
+    if bend.abs() < STRAIGHT_SNAP {
+        0.0
+    } else {
+        bend
     }
 }
 
