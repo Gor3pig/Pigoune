@@ -561,16 +561,16 @@ fn changing_an_option_of_the_selection_is_one_undoable_change() {
 }
 
 #[test]
-fn a_slider_gesture_on_an_option_is_one_undoable_change() {
+fn a_slider_interaction_on_an_option_is_one_undoable_change() {
     let mut session = session();
     let id = session.add(arrow(point(0.0, 0.0), point(50.0, 0.0)));
     let original = session.shape_of(id).cloned().expect("shape");
 
-    assert!(session.begin_change(id));
+    session.begin_option_series();
     for width in [8, 12, 20, 30] {
-        session.preview_option("width", number_to_value(float(width)));
+        assert!(session.set_option_on_selected("width", number_to_value(float(width))));
     }
-    assert!(session.end_change());
+    session.end_option_series();
 
     assert!(same(
         session.shape_of(id).expect("shape").number("width"),

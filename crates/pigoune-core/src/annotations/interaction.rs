@@ -111,6 +111,7 @@ impl Interaction {
         reach: f32,
     ) -> bool {
         self.cancel(session);
+        session.settle_open_gesture();
         if self.acts_as_select(tool) {
             return self.press_select(session, point, reach);
         }

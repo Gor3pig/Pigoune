@@ -12,6 +12,8 @@ const LONGEST_HEAD_SHARE: f32 = 0.9;
 const DASH_LENGTH_PER_WIDTH: f32 = 3.0;
 const DASH_GAP_PER_WIDTH: f32 = 2.0;
 const DOT_LENGTH: f32 = 0.01;
+pub const TEXT_BACKDROP_SHARE: f32 = 0.25;
+pub const TEXT_OUTLINE_SHARE: f32 = 0.06;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Handle {
@@ -528,6 +530,36 @@ fn distance_to_segment(point: Point, from: Point, to: Point) -> f32 {
 }
 
 #[must_use]
+pub fn text_ink_margin(shape: &Shape) -> f32 {
+    let size = shape.number("font_size");
+    let backdrop = if shape.choice("background") == "none" {
+        0.0
+    } else {
+        size * TEXT_BACKDROP_SHARE
+    };
+    let outline = if shape.toggle("outline") {
+        (size * TEXT_OUTLINE_SHARE).max(1.0)
+    } else {
+        0.0
+    };
+    backdrop.max(outline)
+}
+
+#[must_use]
+pub fn text_visual_bounds(shape: &Shape, extent: (f32, f32)) -> Option<Rect> {
+    let Geometry::Anchor(at) = shape.geometry else {
+        return None;
+    };
+    let margin = text_ink_margin(shape);
+    Some(Rect {
+        x: at.x - margin,
+        y: at.y - margin,
+        width: extent.0 + 2.0 * margin,
+        height: extent.1 + 2.0 * margin,
+    })
+}
+
+#[must_use]
 pub fn estimated_text_extent(shape: &Shape) -> (f32, f32) {
     let size = shape.number("font_size");
     let lines: Vec<&str> = shape.text("content").split('\n').collect();
@@ -595,30 +627,23 @@ pub fn hit_in_mode(
             let distance = (scaled - 1.0).abs() * radius_x.min(radius_y);
             distance <= reach || (solid && scaled <= 1.0)
         }
-        (Geometry::TwoPoints { from, to }, Outline::Segment) => match arrow_curve_control(shape) {
-            Some(control) => curve_polyline(*from, control, *to)
-                .windows(2)
-                .any(|pair| distance_to_segment(point, pair[0], pair[1]) <= reach),
-            None => distance_to_segment(point, *from, *to) <= reach,
-        },
+        (Geometry::TwoPoints { from, to }, Outline::Segment) => {
+            let on_shaft = match arrow_curve_control(shape) {
+                Some(control) => curve_polyline(*from, control, *to)
+                    .windows(2)
+                    .any(|pair| distance_to_segment(point, pair[0], pair[1]) <= reach),
+                None => distance_to_segment(point, *from, *to) <= reach,
+            };
+            on_shaft || on_arrow_head(shape, *from, *to, point, tolerance)
+        }
         (Geometry::Box(bounds), Outline::Region) => {
             let rect = normalized(*bounds);
             contains(expanded(rect, tolerance), point)
         }
-        (Geometry::Anchor(at), Outline::TextBox) => {
-            let (width, height) = extent.unwrap_or_else(|| estimated_text_extent(shape));
-            contains(
-                expanded(
-                    Rect {
-                        x: at.x,
-                        y: at.y,
-                        width,
-                        height,
-                    },
-                    tolerance,
-                ),
-                point,
-            )
+        (Geometry::Anchor(_), Outline::TextBox) => {
+            let extent = extent.unwrap_or_else(|| estimated_text_extent(shape));
+            text_visual_bounds(shape, extent)
+                .is_some_and(|bounds| contains(expanded(bounds, tolerance), point))
         }
         (Geometry::Anchor(at), Outline::Disc) => {
             (at.x - point.x).hypot(at.y - point.y) <= shape.number("size") + tolerance
@@ -632,6 +657,34 @@ pub fn hit_in_mode(
         },
         _ => false,
     }
+}
+
+fn on_arrow_head(shape: &Shape, from: Point, to: Point, point: Point, tolerance: f32) -> bool {
+    if shape.kind != "arrow" || shape.choice("head") == "none" {
+        return false;
+    }
+    let head = arrow_head(
+        from,
+        to,
+        shape.number("width"),
+        head_size_factor(shape.choice("head_size")),
+    );
+    distance_to_triangle(point, head.tip, head.left, head.right) <= tolerance
+}
+
+fn distance_to_triangle(point: Point, a: Point, b: Point, c: Point) -> f32 {
+    let side = |from: Point, to: Point| {
+        (to.x - from.x) * (point.y - from.y) - (to.y - from.y) * (point.x - from.x)
+    };
+    let (first, second, third) = (side(a, b), side(b, c), side(c, a));
+    let inside = (first >= 0.0 && second >= 0.0 && third >= 0.0)
+        || (first <= 0.0 && second <= 0.0 && third <= 0.0);
+    if inside {
+        return 0.0;
+    }
+    distance_to_segment(point, a, b)
+        .min(distance_to_segment(point, b, c))
+        .min(distance_to_segment(point, c, a))
 }
 
 fn expanded(rect: Rect, amount: f32) -> Rect {

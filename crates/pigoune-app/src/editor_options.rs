@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use gettextrs::gettext;
+use gtk::{gdk, glib};
 use pigoune_core::annotations::{
     Color, DefaultValue, OptionKind, OptionSpec, Options, ToolDefinition, Value, color_to_value,
     number_to_value, value_to_color,
@@ -12,8 +13,8 @@ use crate::editor_palette;
 #[derive(Debug, Clone)]
 pub enum OptionEvent {
     Changed(&'static str, Value),
-    SliderPressed,
-    SliderReleased,
+    SeriesBegin,
+    SeriesEnd,
     PickColor(&'static str),
 }
 
@@ -253,13 +254,24 @@ fn slider_row(
         let value = narrow(scale.value()) / factor;
         sender(OptionEvent::Changed(spec.id, number_to_value(value)));
     });
-    let click = gtk::GestureClick::new();
-    click.set_propagation_phase(gtk::PropagationPhase::Capture);
-    let pressed = notify.clone();
-    click.connect_pressed(move |_, _, _, _| pressed(OptionEvent::SliderPressed));
-    let released = notify.clone();
-    click.connect_released(move |_, _, _, _| released(OptionEvent::SliderReleased));
-    scale.add_controller(click);
+    let bracket = gtk::EventControllerLegacy::new();
+    bracket.set_propagation_phase(gtk::PropagationPhase::Capture);
+    let bracketed = notify.clone();
+    bracket.connect_event(move |_, event| {
+        match event.event_type() {
+            gdk::EventType::ButtonPress | gdk::EventType::KeyPress => {
+                bracketed(OptionEvent::SeriesBegin);
+            }
+            gdk::EventType::ButtonRelease | gdk::EventType::KeyRelease => {
+                bracketed(OptionEvent::SeriesEnd);
+            }
+            _ => {}
+        }
+        glib::Propagation::Proceed
+    });
+    scale.add_controller(bracket);
+    let unmapped = notify.clone();
+    scale.connect_unmap(move |_| unmapped(OptionEvent::SeriesEnd));
     row.add_suffix(&scale);
     let setter = move |value: &Value| {
         if let Some(number) = value.as_f64() {
