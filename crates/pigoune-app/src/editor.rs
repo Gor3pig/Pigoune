@@ -1190,7 +1190,7 @@ impl PigouneEditor {
         let dialog = adw::AlertDialog::new(
             Some(&gettext("Lock the Masks?")),
             Some(&gettext(
-                "The blur and the pixelation will be applied to the original image for good. The hidden content can no longer be recovered, and this cannot be undone.",
+                "The blur and the pixelation will be applied to the original image for good, and this cannot be undone. A pixelation with large cells removes the details, but a light blur may still be partly recoverable.",
             )),
         );
         dialog.add_response("cancel", &gettext("_Cancel"));

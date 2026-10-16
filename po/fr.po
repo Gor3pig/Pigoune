@@ -1887,12 +1887,14 @@ msgstr "Verrouiller les masquages ?"
 
 #: crates/pigoune-app/src/editor.rs:1175
 msgid ""
-"The blur and the pixelation will be applied to the original image for good. "
-"The hidden content can no longer be recovered, and this cannot be undone."
+"The blur and the pixelation will be applied to the original image for good, "
+"and this cannot be undone. A pixelation with large cells removes the "
+"details, but a light blur may still be partly recoverable."
 msgstr ""
 "Le flou et la pixelisation seront appliqués définitivement à l’image "
-"d’origine. Le contenu masqué ne pourra plus être retrouvé, et cette action "
-"est irréversible."
+"d’origine, et cette action est irréversible. Une pixelisation à grandes "
+"cellules supprime les détails, mais un flou léger peut rester en partie "
+"récupérable."
 
 #: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"

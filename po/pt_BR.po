@@ -1547,12 +1547,14 @@ msgstr "Travar os mascaramentos?"
 
 #: crates/pigoune-app/src/editor.rs:1175
 msgid ""
-"The blur and the pixelation will be applied to the original image for good. "
-"The hidden content can no longer be recovered, and this cannot be undone."
+"The blur and the pixelation will be applied to the original image for good, "
+"and this cannot be undone. A pixelation with large cells removes the "
+"details, but a light blur may still be partly recoverable."
 msgstr ""
 "O desfoque e a pixelização serão aplicados definitivamente à imagem "
-"original. O conteúdo oculto não poderá mais ser recuperado e isto não pode "
-"ser desfeito."
+"original, e isso não pode ser desfeito. Uma pixelização com células "
+"grandes remove os detalhes, mas um desfoque leve ainda pode ser "
+"parcialmente recuperável."
 
 #: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"
