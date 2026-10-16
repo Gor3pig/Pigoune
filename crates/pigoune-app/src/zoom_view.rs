@@ -114,6 +114,7 @@ mod imp {
             self.parent_constructed();
             let view = self.obj();
             view.set_overflow(gtk::Overflow::Hidden);
+            view.set_focusable(true);
             view.set_hexpand(true);
             view.set_vexpand(true);
             view.listen_to_gestures();

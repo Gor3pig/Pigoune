@@ -253,3 +253,42 @@ fn the_placing_tool_grabs_shapes_but_lets_a_click_in_the_empty_through() {
 
     assert_eq!(session.selected(), Some(id));
 }
+
+#[test]
+fn a_nudge_moves_the_selection_by_a_fixed_step_in_one_undo_step() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let id = session.add(hollow_rectangle(100.0, 100.0, 50.0, 50.0));
+
+    assert!(session.nudge_selected(-10.0, 1.0));
+
+    assert_eq!(origin_of(&session, id), (90.0, 101.0));
+    assert!(session.undo());
+    assert_eq!(origin_of(&session, id), (100.0, 100.0));
+}
+
+#[test]
+fn nothing_selected_means_nothing_to_nudge_or_duplicate() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    session.add(hollow_rectangle(100.0, 100.0, 50.0, 50.0));
+    session.select(None);
+
+    assert!(!session.nudge_selected(1.0, 0.0));
+    assert_eq!(session.duplicate_selected(12.0), None);
+    assert_eq!(session.count(), 1);
+}
+
+#[test]
+fn a_duplicate_is_an_offset_selected_copy_and_leaves_the_original_alone() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let original = session.add(hollow_rectangle(100.0, 100.0, 50.0, 50.0));
+
+    let copy = session.duplicate_selected(12.0).expect("a copy");
+
+    assert_ne!(copy, original);
+    assert_eq!(session.count(), 2);
+    assert_eq!(session.selected(), Some(copy));
+    assert_eq!(origin_of(&session, original), (100.0, 100.0));
+    assert_eq!(origin_of(&session, copy), (112.0, 112.0));
+    assert!(session.undo());
+    assert_eq!(session.count(), 1);
+}

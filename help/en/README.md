@@ -379,6 +379,12 @@ The four buttons of **Layers** (or <kbd>Ctrl</kbd>+<kbd>]</kbd> and <kbd>Ctrl</k
 with <kbd>Shift</kbd> for the extremes) change the order of the annotations. Undo and redo work
 as everywhere, with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.
 
+A new annotation stays selected: you can move it, resize it by its handles and change its settings
+right away, without leaving the tool you are using. With any tool, press on the outline of another
+annotation to grab it, or in an empty place to draw. A selected arrow has a round handle in the
+middle: drag it to bend the arrow, double-click it to straighten the arrow. The arrow keys nudge
+the selection by one pixel (ten with <kbd>Shift</kbd>) and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicates it.
+
 ### Hide what is private
 
 A blur or a pixelation hides what is under it, annotations included. While your annotations stay

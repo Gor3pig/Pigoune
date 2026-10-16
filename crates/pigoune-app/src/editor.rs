@@ -36,6 +36,9 @@ pub struct EditedCapture {
 const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
 const SNAP_PIXELS: f64 = 6.0;
+const NUDGE_SMALL: f32 = 1.0;
+const NUDGE_LARGE: f32 = 10.0;
+const DUPLICATE_OFFSET: f32 = 12.0;
 const TEXT_VIEW_OFFSET: (f32, f32) = (4.0, 2.0);
 const TEXT_PROVIDER_PRIORITY: u32 = 800;
 const DRAFT_DELAY: std::time::Duration = std::time::Duration::from_millis(1500);
@@ -702,6 +705,9 @@ impl PigouneEditor {
             self.commit_text();
         }
         self.sync_pointer_modifiers();
+        if matches!(event, PointerEvent::Press(_)) && imp.text_edit.get().is_none() {
+            imp.zoom_view.grab_focus();
+        }
         let claimed = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -1409,6 +1415,12 @@ impl PigouneEditor {
             }
             gdk::Key::bracketright if control => self.move_layer(LayerMove::Forward),
             gdk::Key::bracketleft if control => self.move_layer(LayerMove::Backward),
+            gdk::Key::d | gdk::Key::D if control && shift => self.duplicate_selection(),
+            gdk::Key::Left | gdk::Key::Right | gdk::Key::Up | gdk::Key::Down
+                if !self.is_cropping() && !self.panel_has_focus() =>
+            {
+                self.nudge_selection(key, shift)
+            }
             gdk::Key::Delete | gdk::Key::BackSpace => self.delete_selection(),
             gdk::Key::Return | gdk::Key::KP_Enter if self.is_cropping() => {
                 self.finish_cropping(true);
@@ -1484,6 +1496,46 @@ impl PigouneEditor {
             self.show_session_crop();
         }
         self.after_edit();
+    }
+
+    fn panel_has_focus(&self) -> bool {
+        self.root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| focus.is_ancestor(&*self.imp().panel))
+    }
+
+    fn nudge_selection(&self, key: gdk::Key, large: bool) -> bool {
+        let step = if large { NUDGE_LARGE } else { NUDGE_SMALL };
+        let (dx, dy) = match key {
+            gdk::Key::Left => (-step, 0.0),
+            gdk::Key::Right => (step, 0.0),
+            gdk::Key::Up => (0.0, -step),
+            _ => (0.0, step),
+        };
+        let done = self
+            .imp()
+            .drawing
+            .borrow_mut()
+            .session
+            .nudge_selected(dx, dy);
+        if done {
+            self.after_edit();
+        }
+        done
+    }
+
+    fn duplicate_selection(&self) -> bool {
+        let done = self
+            .imp()
+            .drawing
+            .borrow_mut()
+            .session
+            .duplicate_selected(DUPLICATE_OFFSET)
+            .is_some();
+        if done {
+            self.after_edit();
+        }
+        done
     }
 
     fn delete_selection(&self) -> bool {

@@ -428,6 +428,13 @@ annotations. Les quatre boutons de **Calques** (ou <kbd>Ctrl</kbd>+<kbd>]</kbd> 
 annotations. Annuler et rétablir fonctionnent comme partout, avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> et
 <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd>.
 
+Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la redimensionner par ses
+poignées et changer ses réglages tout de suite, sans quitter l'outil en cours. Avec n'importe quel
+outil, appuyez sur le contour d'une autre annotation pour la saisir, ou dans un endroit vide pour
+dessiner. Une flèche sélectionnée a une poignée ronde au milieu : tirez-la pour courber la flèche,
+double-cliquez dessus pour la redresser. Les flèches du clavier déplacent la sélection d'un pixel
+(dix avec <kbd>Maj</kbd>) et <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>D</kbd> la duplique.
+
 ### Cacher ce qui est privé
 
 Un flou ou une pixelisation cache ce qui est dessous, annotations comprises. Tant que vos
