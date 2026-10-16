@@ -6,13 +6,14 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::annotations::{
-    AnnotationDocument, CropEditor, CropRatio, CursorKind, Geometry, Handle, Interaction, Options,
-    Point, Shape, Tool, ToolDefinition, Value,
+    AnnotationDocument, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
+    Interaction, Options, Point, Shape, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_export;
 use crate::annotation_render;
 use crate::asset_preview::zoom_text;
+use crate::capture_draft;
 use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
 use crate::image_conversion;
@@ -33,6 +34,7 @@ const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
 const TEXT_VIEW_OFFSET: (f32, f32) = (4.0, 2.0);
 const TEXT_PROVIDER_PRIORITY: u32 = 800;
+const DRAFT_DELAY: std::time::Duration = std::time::Duration::from_millis(1500);
 
 #[derive(Clone, Copy)]
 pub struct TextEdit {
@@ -138,6 +140,7 @@ mod imp {
         pub on_closed: RefCell<Option<ClosedCallback>>,
         pub on_notice: RefCell<Option<NoticeCallback>>,
         pub on_save: RefCell<Option<SaveCallback>>,
+        pub draft_pending: Cell<bool>,
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
@@ -200,6 +203,61 @@ impl PigouneEditor {
     }
 
     pub fn open(&self, image: &Path) -> Result<(), glib::Error> {
+        capture_draft::Draft::standard().clear();
+        self.open_with(image, None)?;
+        self.keep_original_in_draft();
+        Ok(())
+    }
+
+    pub fn resume(&self, image: &Path, document: AnnotationDocument) -> Result<(), glib::Error> {
+        self.open_with(image, Some(document))
+    }
+
+    pub fn flush_draft(&self) {
+        let imp = self.imp();
+        if imp.zoom_view.texture().is_none() {
+            return;
+        }
+        let drawing = imp.drawing.borrow();
+        if drawing.session.is_modified() {
+            let _ = capture_draft::Draft::standard().store_document(drawing.session.document());
+        }
+    }
+
+    fn keep_original_in_draft(&self) {
+        let Some(texture) = self.imp().zoom_view.texture() else {
+            return;
+        };
+        glib::spawn_future_local(async move {
+            if let Ok(png) = image_conversion::png_bytes(&texture).await {
+                let _ = capture_draft::Draft::standard().store_original(&png);
+            }
+        });
+    }
+
+    fn schedule_draft(&self) {
+        let imp = self.imp();
+        if imp.draft_pending.replace(true) {
+            return;
+        }
+        glib::timeout_add_local_once(
+            DRAFT_DELAY,
+            glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move || {
+                    editor.imp().draft_pending.set(false);
+                    editor.flush_draft();
+                }
+            ),
+        );
+    }
+
+    fn open_with(
+        &self,
+        image: &Path,
+        document: Option<AnnotationDocument>,
+    ) -> Result<(), glib::Error> {
         let texture = gdk::Texture::from_filename(image)?;
         let width = u32::try_from(texture.width()).unwrap_or(1);
         let height = u32::try_from(texture.height()).unwrap_or(1);
@@ -208,6 +266,9 @@ impl PigouneEditor {
         imp.pixel_cache.borrow_mut().clear();
         imp.locked_masks.take();
         let mut drawing = imp::Drawing::default();
+        if let Some(document) = document {
+            drawing.session = EditSession::restored(document);
+        }
         let context = self.pango_context();
         drawing
             .session
@@ -216,6 +277,7 @@ impl PigouneEditor {
         imp.image_size.set((width, height));
         imp.zoom_view
             .show_image(Some(&texture), width, height, false);
+        self.show_session_crop();
         self.update_panel();
         self.refresh();
         Ok(())
@@ -931,6 +993,9 @@ impl PigouneEditor {
         drop(drawing);
         imp.mask_banner.set_revealed(unlocked);
         imp.zoom_view.queue_draw();
+        if imp.drawing.borrow().session.is_modified() {
+            self.schedule_draft();
+        }
     }
 
     #[template_callback]
@@ -1129,6 +1194,7 @@ impl PigouneEditor {
             return;
         };
         imp.zoom_view.replace_texture(&baked);
+        self.keep_original_in_draft();
         imp.pixel_cache.borrow_mut().clear();
         imp.locked_masks
             .replace(imp.drawing.borrow().session.document().masks());

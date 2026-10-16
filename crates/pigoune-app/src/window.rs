@@ -26,6 +26,7 @@ use crate::asset_colors;
 use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::capture_draft;
 use crate::clipboard_content;
 use crate::collection_choice;
 use crate::collection_chooser;
@@ -635,6 +636,9 @@ mod imp {
 
     impl WindowImpl for PigouneWindow {
         fn close_request(&self) -> glib::Propagation {
+            if self.obj().is_editing() {
+                self.editor.flush_draft();
+            }
             self.obj().save_window_state();
             self.parent_close_request()
         }
@@ -2002,6 +2006,7 @@ impl PigouneWindow {
         self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
         self.open_editor_for_testing();
+        self.offer_draft();
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -5512,12 +5517,59 @@ impl PigouneWindow {
     }
 
     fn open_editor(&self, image: &Path) -> Result<(), glib::Error> {
+        self.imp().editor.open(image)?;
+        self.show_editor();
+        Ok(())
+    }
+
+    fn show_editor(&self) {
         let imp = self.imp();
-        imp.editor.open(image)?;
         self.set_library_actions_enabled(false);
         imp.window_stack.set_visible_child_name(EDITOR_PAGE);
         self.refresh_import_availability();
-        Ok(())
+    }
+
+    fn offer_draft(&self) {
+        if self.is_editing() {
+            return;
+        }
+        let draft = capture_draft::Draft::standard();
+        let Some((original, document)) = draft.load() else {
+            draft.clear();
+            return;
+        };
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Resume the Unsaved Capture?")),
+            Some(&gettext(
+                "A capture was being edited when Pigoune was closed. You can resume where you left off.",
+            )),
+        );
+        alert.add_response("discard", &gettext("_Discard"));
+        alert.add_response("resume", &gettext("_Resume"));
+        alert.set_response_appearance("resume", adw::ResponseAppearance::Suggested);
+        alert.set_default_response(Some("resume"));
+        alert.set_close_response("discard");
+        alert.connect_response(
+            None,
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, response| {
+                    if response == "resume"
+                        && window
+                            .imp()
+                            .editor
+                            .resume(&original, document.clone())
+                            .is_ok()
+                    {
+                        window.show_editor();
+                    } else {
+                        capture_draft::Draft::standard().clear();
+                    }
+                }
+            ),
+        );
+        alert.present(Some(self));
     }
 
     fn leave_editor(&self) {
@@ -5526,6 +5578,7 @@ impl PigouneWindow {
             return;
         }
         imp.editor.close();
+        capture_draft::Draft::standard().clear();
         imp.window_stack.set_visible_child_name(MAIN_PAGE);
         self.set_library_actions_enabled(imp.library.borrow().is_some());
         self.refresh_import_availability();
