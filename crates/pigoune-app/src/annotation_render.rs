@@ -7,8 +7,9 @@ use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Point, Rect, Shape,
-    arrow_curve_control, arrow_head, curve_point, curve_polyline, dash_pattern, guide_extent,
-    handles, head_size_factor, shape_bounds, step_label,
+    TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
+    curve_polyline, dash_pattern, guide_extent, handles, head_size_factor, shape_bounds,
+    step_label, text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -16,7 +17,6 @@ const SHADOW_BLUR: f32 = 6.0;
 const SHADOW_OPACITY: f32 = 0.45;
 const SHADOW_REFERENCE_WIDTH: f32 = 1200.0;
 const SHADOW_LARGEST_SCALE: f32 = 4.0;
-const OUTLINE_REACH: f32 = 0.06;
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
 const GUIDE_COLOR: (f32, f32, f32) = (0.93, 0.22, 0.55);
 const SELECTION_PADDING: f32 = 6.0;
@@ -576,7 +576,7 @@ fn draw_text(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
         _ => None,
     };
     if let Some(backdrop) = backdrop {
-        let padding = shape.number("font_size") * 0.25;
+        let padding = shape.number("font_size") * TEXT_BACKDROP_SHARE;
         let path = rounded_rectangle_path(
             Rect {
                 x: -padding,
@@ -609,7 +609,7 @@ fn draw_text_outline(
     shape: &Shape,
     color: Color,
 ) {
-    let reach = (shape.number("font_size") * OUTLINE_REACH).max(1.0);
+    let reach = (shape.number("font_size") * TEXT_OUTLINE_SHARE).max(1.0);
     let steps = [
         (-1.0, -1.0),
         (0.0, -1.0),
@@ -674,18 +674,10 @@ pub fn text_view_css(shape: &Shape, zoom: f32) -> String {
 }
 
 fn text_bounds(shape: &Shape, context: &pango::Context) -> Option<Rect> {
-    let Geometry::Anchor(at) = shape.geometry else {
+    if shape.kind != "text" {
         return None;
-    };
-    (shape.kind == "text").then(|| {
-        let (width, height) = measure_text(context, shape);
-        Rect {
-            x: at.x,
-            y: at.y,
-            width,
-            height,
-        }
-    })
+    }
+    text_visual_bounds(shape, measure_text(context, shape))
 }
 
 fn whole_texture(texture: &gdk::Texture) -> graphene::Rect {

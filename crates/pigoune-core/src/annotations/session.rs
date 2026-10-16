@@ -82,6 +82,8 @@ pub struct EditSession {
     saved_at: Option<usize>,
     measurer: Option<Measurer>,
     nudging: Option<u32>,
+    option_series_open: bool,
+    option_series: Option<(u32, String)>,
 }
 
 impl EditSession {
@@ -96,6 +98,8 @@ impl EditSession {
             saved_at: Some(0),
             measurer: None,
             nudging: None,
+            option_series_open: false,
+            option_series: None,
         }
     }
 
@@ -162,6 +166,7 @@ impl EditSession {
     pub fn select(&mut self, id: Option<u32>) {
         if id != self.selected {
             self.nudging = None;
+            self.option_series = None;
         }
         self.selected = id.filter(|id| self.shape_of(*id).is_some());
     }
@@ -249,19 +254,14 @@ impl EditSession {
         if let Some(bounds) = geometry::shape_bounds(shape) {
             return Some(bounds);
         }
-        let Geometry::Anchor(at) = shape.geometry else {
+        let Geometry::Anchor(_) = shape.geometry else {
             return None;
         };
-        let (width, height) = self
+        let extent = self
             .measurer
             .as_ref()
             .map_or_else(|| geometry::estimated_text_extent(shape), |m| (m.0)(shape));
-        Some(Rect {
-            x: at.x,
-            y: at.y,
-            width,
-            height,
-        })
+        geometry::text_visual_bounds(shape, extent)
     }
 
     #[must_use]
@@ -445,6 +445,7 @@ impl EditSession {
         let Some(before) = self.shape_of(id).cloned() else {
             return false;
         };
+        self.option_series = None;
         self.gesture = Some(Gesture { id, before });
         true
     }
@@ -481,6 +482,21 @@ impl EditSession {
         }
     }
 
+    pub fn begin_option_series(&mut self) {
+        self.option_series_open = true;
+        self.option_series = None;
+    }
+
+    pub fn end_option_series(&mut self) {
+        self.option_series_open = false;
+        self.option_series = None;
+    }
+
+    pub fn settle_open_gesture(&mut self) -> bool {
+        self.option_series = None;
+        self.end_change()
+    }
+
     pub fn set_option_on_selected(&mut self, id: &str, value: Value) -> bool {
         let Some(selected) = self.selected.filter(|id| self.can_edit(*id)) else {
             return false;
@@ -493,24 +509,51 @@ impl EditSession {
             return false;
         }
         self.set_shape(selected, after.clone());
-        self.record(Edit::Changed {
-            id: selected,
-            before,
-            after,
-        });
+        if self.continues_option_series(selected, id) {
+            self.merge_into_last_change(after);
+        } else {
+            self.record(Edit::Changed {
+                id: selected,
+                before,
+                after,
+            });
+            if self.option_series_open {
+                self.option_series = Some((selected, id.to_owned()));
+            }
+        }
         true
     }
 
-    pub fn preview_option(&mut self, id: &str, value: Value) {
-        let Some(gesture) = &self.gesture else {
+    fn continues_option_series(&self, selected: u32, option: &str) -> bool {
+        self.option_series_open
+            && self
+                .option_series
+                .as_ref()
+                .is_some_and(|(object, key)| *object == selected && key == option)
+            && matches!(self.undo.last(), Some(Edit::Changed { id, .. }) if *id == selected)
+    }
+
+    fn merge_into_last_change(&mut self, after: Shape) {
+        let Some(Edit::Changed {
+            before,
+            after: latest,
+            ..
+        }) = self.undo.last_mut()
+        else {
             return;
         };
-        let target = gesture.id;
-        let Some(current) = self.shape_of(target) else {
-            return;
-        };
-        let changed = current.with_option(id, value);
-        self.set_shape(target, changed);
+        let back_to_start = *before == after;
+        *latest = after;
+        if back_to_start {
+            self.undo.pop();
+            self.option_series = None;
+            if self.saved_at.is_some_and(|saved| saved > self.undo.len()) {
+                self.saved_at = Some(self.undo.len());
+            }
+        } else if self.saved_at == Some(self.undo.len()) {
+            self.saved_at = None;
+        }
+        self.redo.clear();
     }
 
     pub fn undo(&mut self) -> bool {
@@ -518,6 +561,7 @@ impl EditSession {
             return false;
         }
         self.nudging = None;
+        self.option_series = None;
         let Some(edit) = self.undo.pop() else {
             return false;
         };
@@ -531,6 +575,7 @@ impl EditSession {
             return false;
         }
         self.nudging = None;
+        self.option_series = None;
         let Some(edit) = self.redo.pop() else {
             return false;
         };
@@ -541,6 +586,7 @@ impl EditSession {
 
     fn record(&mut self, edit: Edit) {
         self.nudging = None;
+        self.option_series = None;
         if self.saved_at.is_some_and(|saved| saved > self.undo.len()) {
             self.saved_at = None;
         }

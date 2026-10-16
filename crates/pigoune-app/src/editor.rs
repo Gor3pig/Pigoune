@@ -139,7 +139,7 @@ mod imp {
         pub option_rows: RefCell<Vec<OptionRow>>,
         pub panel_kind: Cell<Option<&'static str>>,
         pub updating_controls: Cell<bool>,
-        pub slider_gesture: Cell<bool>,
+        pub option_interaction: Cell<bool>,
         #[property(get, set)]
         pub compact: Cell<bool>,
         pub active_tool: Cell<EditorTool>,
@@ -1737,19 +1737,13 @@ impl PigouneEditor {
             return;
         }
         match event {
-            OptionEvent::SliderPressed => {
-                let mut drawing = imp.drawing.borrow_mut();
-                if let Some(id) = drawing.session.selected()
-                    && drawing.session.begin_change(id)
-                {
-                    imp.slider_gesture.set(true);
-                }
+            OptionEvent::SeriesBegin => {
+                imp.option_interaction.set(true);
+                imp.drawing.borrow_mut().session.begin_option_series();
             }
-            OptionEvent::SliderReleased => {
-                if imp.slider_gesture.replace(false) {
-                    imp.drawing.borrow_mut().session.end_change();
-                    self.after_edit();
-                }
+            OptionEvent::SeriesEnd => {
+                imp.option_interaction.set(false);
+                imp.drawing.borrow_mut().session.end_option_series();
             }
             OptionEvent::Changed(id, value) => self.apply_option(id, &value),
             OptionEvent::PickColor(id) => self.start_picking(id),
@@ -1772,11 +1766,7 @@ impl PigouneEditor {
                 .selected_shape()
                 .map(|shape| shape.kind.clone());
             if selected_kind.as_deref() == Some(kind) {
-                if imp.slider_gesture.get() {
-                    drawing.session.preview_option(id, value.clone());
-                } else {
-                    drawing.session.set_option_on_selected(id, value.clone());
-                }
+                drawing.session.set_option_on_selected(id, value.clone());
             } else {
                 drawing
                     .tool_options
@@ -1790,7 +1780,7 @@ impl PigouneEditor {
         self.refresh();
         if imp.text_edit.get().is_some() {
             self.sync_text_view();
-            if !imp.slider_gesture.get() {
+            if !imp.option_interaction.get() {
                 imp.text_view.grab_focus();
             }
         }
@@ -1799,6 +1789,7 @@ impl PigouneEditor {
     fn tool_changed(&self) {
         let imp = self.imp();
         self.commit_text();
+        imp.drawing.borrow_mut().session.end_option_series();
         let cropping = imp.active_tool.get() == EditorTool::Crop;
         let was_cropping = imp.drawing.borrow().crop_editor.is_some();
         {
