@@ -429,9 +429,10 @@ annotations. Annuler et rétablir fonctionnent comme partout, avec <kbd>Ctrl</kb
 <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd>.
 
 Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la redimensionner par ses
-poignées et changer ses réglages tout de suite, sans quitter l'outil en cours. Avec n'importe quel
-outil, appuyez sur le contour d'une autre annotation pour la saisir, ou dans un endroit vide pour
-dessiner. Une flèche sélectionnée a une poignée ronde au milieu : tirez-la pour courber la flèche,
+poignées et changer ses réglages tout de suite, sans quitter l'outil en cours. Avec un outil de dessin,
+appuyez sur le contour d'une annotation pour la saisir, ou n'importe où ailleurs, même à l'intérieur
+d'une autre annotation, pour dessiner (l'outil **Sélection** saisit aussi une annotation par son
+intérieur). Une flèche sélectionnée a une poignée ronde au milieu : tirez-la pour courber la flèche,
 double-cliquez dessus pour la redresser. Les flèches du clavier déplacent la sélection d'un pixel
 (dix avec <kbd>Maj</kbd>) et <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>D</kbd> la duplique.
 

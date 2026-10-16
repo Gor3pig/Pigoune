@@ -4,7 +4,9 @@ use std::rc::Rc;
 use serde_json::Value;
 
 use super::geometry::{self, HitMode};
-use super::{AnnotationDocument, AnnotationObject, Crop, ObjectContent, Point, Shape};
+use super::{
+    AnnotationDocument, AnnotationObject, Crop, Geometry, ObjectContent, Point, Rect, Shape,
+};
 
 const HISTORY_LIMIT: usize = 500;
 
@@ -67,6 +69,7 @@ pub struct EditSession {
     gesture: Option<Gesture>,
     saved_at: Option<usize>,
     measurer: Option<Measurer>,
+    nudging: Option<u32>,
 }
 
 impl EditSession {
@@ -80,6 +83,7 @@ impl EditSession {
             gesture: None,
             saved_at: Some(0),
             measurer: None,
+            nudging: None,
         }
     }
 
@@ -144,6 +148,9 @@ impl EditSession {
     }
 
     pub fn select(&mut self, id: Option<u32>) {
+        if id != self.selected {
+            self.nudging = None;
+        }
         self.selected = id.filter(|id| self.shape_of(*id).is_some());
     }
 
@@ -154,10 +161,11 @@ impl EditSession {
 
     #[must_use]
     pub fn pick(&self, point: Point, tolerance: f32, mode: HitMode) -> Option<u32> {
-        let found = self.topmost_hit(point, tolerance, HitMode::Outline);
         match mode {
-            HitMode::Outline => found,
-            HitMode::Body => found.or_else(|| self.topmost_hit(point, tolerance, HitMode::Body)),
+            HitMode::Edge | HitMode::Outline => self.topmost_hit(point, tolerance, mode),
+            HitMode::Body => self
+                .topmost_hit(point, tolerance, HitMode::Outline)
+                .or_else(|| self.topmost_hit(point, tolerance, HitMode::Body)),
         }
     }
 
@@ -181,10 +189,10 @@ impl EditSession {
     }
 
     fn is_visible(&self, object: &AnnotationObject) -> bool {
-        let (Some(crop), Some(bounds)) = (
-            self.document.crop,
-            object.shape().and_then(geometry::shape_bounds),
-        ) else {
+        let (Some(crop), Some(shape)) = (self.document.crop, object.shape()) else {
+            return true;
+        };
+        let Some(bounds) = self.bounds_of(shape) else {
             return true;
         };
         let pixels = |value: u32| f32::from(u16::try_from(value).unwrap_or(u16::MAX));
@@ -193,6 +201,25 @@ impl EditSession {
             && bounds.x + bounds.width >= left
             && bounds.y <= top + pixels(crop.height)
             && bounds.y + bounds.height >= top
+    }
+
+    fn bounds_of(&self, shape: &Shape) -> Option<Rect> {
+        if let Some(bounds) = geometry::shape_bounds(shape) {
+            return Some(bounds);
+        }
+        let Geometry::Anchor(at) = shape.geometry else {
+            return None;
+        };
+        let (width, height) = self
+            .measurer
+            .as_ref()
+            .map_or_else(|| geometry::estimated_text_extent(shape), |m| (m.0)(shape));
+        Some(Rect {
+            x: at.x,
+            y: at.y,
+            width,
+            height,
+        })
     }
 
     #[must_use]
@@ -277,11 +304,25 @@ impl EditSession {
             return false;
         }
         self.set_shape(selected, after.clone());
-        self.record(Edit::Changed {
-            id: selected,
-            before,
-            after,
-        });
+        if self.nudging == Some(selected)
+            && let Some(Edit::Changed {
+                id, after: latest, ..
+            }) = self.undo.last_mut()
+            && *id == selected
+        {
+            *latest = after;
+            if self.saved_at == Some(self.undo.len()) {
+                self.saved_at = None;
+            }
+            self.redo.clear();
+        } else {
+            self.record(Edit::Changed {
+                id: selected,
+                before,
+                after,
+            });
+        }
+        self.nudging = Some(selected);
         true
     }
 
@@ -385,6 +426,7 @@ impl EditSession {
         if self.gesture.is_some() {
             return false;
         }
+        self.nudging = None;
         let Some(edit) = self.undo.pop() else {
             return false;
         };
@@ -397,6 +439,7 @@ impl EditSession {
         if self.gesture.is_some() {
             return false;
         }
+        self.nudging = None;
         let Some(edit) = self.redo.pop() else {
             return false;
         };
@@ -406,6 +449,7 @@ impl EditSession {
     }
 
     fn record(&mut self, edit: Edit) {
+        self.nudging = None;
         if self.saved_at.is_some_and(|saved| saved > self.undo.len()) {
             self.saved_at = None;
         }
