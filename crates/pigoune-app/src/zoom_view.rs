@@ -27,6 +27,7 @@ pub enum PointerEvent {
     Drag(Point),
     Release(Point),
     Hover(Point),
+    DoublePress(Point),
 }
 
 mod imp {
@@ -553,6 +554,17 @@ impl PigouneZoomView {
             }
         ));
         self.add_controller(drag);
+        let click = gtk::GestureClick::new();
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = view)]
+            self,
+            move |_, presses, x, y| {
+                if presses == 2 {
+                    view.send_pointer(PointerEvent::DoublePress(view.view_to_image(x, y)));
+                }
+            }
+        ));
+        self.add_controller(click);
     }
 
     fn listen_to_gestures(&self) {

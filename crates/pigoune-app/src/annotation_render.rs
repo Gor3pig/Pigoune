@@ -6,7 +6,7 @@ use std::hash::{Hash, Hasher};
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, CropEditor, Geometry, Guide, Point, Rect, Shape,
+    AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Point, Rect, Shape,
     arrow_curve_control, arrow_head, curve_polyline, dash_pattern, guide_extent, handles,
     head_size_factor, shape_bounds, step_label,
 };
@@ -799,8 +799,20 @@ pub fn append_selection(
         dashed.set_dash(&SELECTION_DASH);
         snapshot.append_stroke(&builder.to_path(), &dashed, &accent);
     }
-    for (_, point) in handles(shape) {
+    for (handle, point) in handles(shape) {
         let center = to_view(point);
+        if handle == Handle::Curve {
+            let builder = gsk::PathBuilder::new();
+            builder.add_circle(&graphene::Point::new(center.x, center.y), HANDLE_SIZE / 2.0);
+            let path = builder.to_path();
+            snapshot.append_fill(
+                &path,
+                gsk::FillRule::Winding,
+                &gdk::RGBA::new(1.0, 1.0, 1.0, 1.0),
+            );
+            snapshot.append_stroke(&path, &gsk::Stroke::new(1.5), &accent);
+            continue;
+        }
         let square = graphene::Rect::new(
             center.x - HANDLE_SIZE / 2.0,
             center.y - HANDLE_SIZE / 2.0,
