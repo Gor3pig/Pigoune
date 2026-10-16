@@ -440,6 +440,7 @@ impl PigouneEditor {
             ));
             if tool.creates() {
                 let double_click = gtk::GestureClick::new();
+                double_click.set_propagation_phase(gtk::PropagationPhase::Capture);
                 double_click.connect_pressed(glib::clone!(
                     #[weak(rename_to = editor)]
                     self,
