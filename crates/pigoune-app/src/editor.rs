@@ -4,20 +4,23 @@ use std::path::Path;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
-use gtk::{gdk, glib, graphene, pango};
+use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::annotations::{
     CropEditor, CropRatio, CursorKind, Geometry, Handle, Interaction, Options, Point, Shape, Tool,
     ToolDefinition, Value,
 };
 
+use crate::annotation_export;
 use crate::annotation_render;
 use crate::asset_preview::zoom_text;
 use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
+use crate::image_conversion;
 use crate::mask_lock;
 use crate::zoom_view::PointerEvent;
 
 type ClosedCallback = Box<dyn Fn()>;
+type NoticeCallback = Box<dyn Fn(&str)>;
 
 const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
@@ -31,7 +34,7 @@ pub struct TextEdit {
 }
 
 mod imp {
-    use super::{Cell, ClosedCallback, OptionRow, Point, RefCell, Shape, TextEdit};
+    use super::{Cell, ClosedCallback, NoticeCallback, OptionRow, Point, RefCell, Shape, TextEdit};
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
@@ -123,6 +126,7 @@ mod imp {
         pub output_in_left_header: Cell<bool>,
         pub tool_buttons: RefCell<Vec<(EditorTool, gtk::ToggleButton)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
+        pub on_notice: RefCell<Option<NoticeCallback>>,
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
@@ -174,6 +178,10 @@ glib::wrapper! {
 impl PigouneEditor {
     pub fn connect_closed(&self, callback: impl Fn() + 'static) {
         self.imp().on_closed.replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_notice(&self, callback: impl Fn(&str) + 'static) {
+        self.imp().on_notice.replace(Some(Box::new(callback)));
     }
 
     pub fn open(&self, image: &Path) -> Result<(), glib::Error> {
@@ -235,6 +243,7 @@ impl PigouneEditor {
             move |_| editor.change_crop_ratio()
         ));
         self.listen_to_keys();
+        self.install_outputs();
         imp.text_view.buffer().connect_changed(glib::clone!(
             #[weak(rename_to = editor)]
             self,
@@ -904,6 +913,112 @@ impl PigouneEditor {
             ),
         );
         dialog.present(Some(self));
+    }
+
+    fn notice(&self, text: &str) {
+        if let Some(on_notice) = self.imp().on_notice.borrow().as_ref() {
+            on_notice(text);
+        }
+    }
+
+    fn with_backdrop<R>(&self, work: impl FnOnce(&annotation_render::Backdrop) -> R) -> Option<R> {
+        let imp = self.imp();
+        let texture = imp.zoom_view.texture()?;
+        let renderer = self.native()?.renderer()?;
+        let backdrop = annotation_render::Backdrop {
+            texture: &texture,
+            renderer: &renderer,
+            cache: &imp.pixel_cache,
+        };
+        Some(work(&backdrop))
+    }
+
+    fn final_texture(&self) -> Option<gdk::Texture> {
+        self.commit_text();
+        let drawing = self.imp().drawing.borrow();
+        let context = self.pango_context();
+        self.with_backdrop(|backdrop| {
+            annotation_export::final_texture(backdrop, drawing.session.document(), &context)
+        })
+        .flatten()
+    }
+
+    fn install_outputs(&self) {
+        let imp = self.imp();
+        let group = gio::SimpleActionGroup::new();
+        let copy = gio::SimpleAction::new("copy", None);
+        copy.connect_activate(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_, _| editor.copy_image()
+        ));
+        group.add_action(&copy);
+        let export = gio::SimpleAction::new("export", None);
+        export.connect_activate(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_, _| {
+                glib::spawn_future_local(glib::clone!(
+                    #[weak]
+                    editor,
+                    async move { editor.export_image().await }
+                ));
+            }
+        ));
+        group.add_action(&export);
+        self.insert_action_group("editor", Some(&group));
+        let menu = gio::Menu::new();
+        menu.append(Some(&gettext("Copy to Clipboard")), Some("editor.copy"));
+        menu.append(Some(&gettext("Export as PNG…")), Some("editor.export"));
+        imp.output_button.set_menu_model(Some(&menu));
+        imp.output_button.set_sensitive(true);
+    }
+
+    fn show_output_failure(&self, heading: &str) {
+        let dialog = adw::AlertDialog::new(
+            Some(heading),
+            Some(&gettext("The image could not be created or saved.")),
+        );
+        dialog.add_response("close", &gettext("_Close"));
+        dialog.present(Some(self));
+    }
+
+    fn copy_image(&self) {
+        let Some(texture) = self.final_texture() else {
+            self.show_output_failure(&gettext("Could Not Copy the Image"));
+            return;
+        };
+        self.clipboard().set_texture(&texture);
+        self.notice(&gettext("Image copied to the clipboard"));
+    }
+
+    async fn export_image(&self) {
+        let dialog = gtk::FileDialog::builder()
+            .title(gettext("Export Image As"))
+            .accept_label(gettext("_Export"))
+            .initial_name(format!("{}.png", gettext("Capture")))
+            .modal(true)
+            .build();
+        let window = self.root().and_downcast::<gtk::Window>();
+        let Ok(file) = dialog.save_future(window.as_ref()).await else {
+            return;
+        };
+        let Some(texture) = self.final_texture() else {
+            self.show_output_failure(&gettext("Could Not Export the Image"));
+            return;
+        };
+        let written = match image_conversion::png_bytes(&texture).await {
+            Ok(bytes) => file
+                .replace_contents_future(bytes, None, false, gio::FileCreateFlags::NONE)
+                .await
+                .is_ok(),
+            Err(_) => false,
+        };
+        if written {
+            self.notice(&gettext("Image exported"));
+        } else {
+            self.show_output_failure(&gettext("Could Not Export the Image"));
+        }
     }
 
     fn lock_masks(&self) {

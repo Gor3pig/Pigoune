@@ -447,6 +447,14 @@ async fn encode(
     Ok(encoded.data_full())
 }
 
+pub async fn png_bytes(texture: &gdk::Texture) -> Result<Vec<u8>, ConversionError> {
+    let width = u32::try_from(texture.width()).map_err(|_| ConversionError::Unreadable)?;
+    let height = u32::try_from(texture.height()).map_err(|_| ConversionError::Unreadable)?;
+    let image =
+        RgbaImage::new(width, height, straight_rgba(texture)).ok_or(ConversionError::Unreadable)?;
+    encode_png(image, ConversionSettings::default()).await
+}
+
 async fn encode_png(
     image: RgbaImage,
     settings: ConversionSettings,
