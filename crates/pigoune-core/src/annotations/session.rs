@@ -82,14 +82,12 @@ pub struct EditSession {
     saved_at: Option<usize>,
     measurer: Option<Measurer>,
     nudging: Option<u32>,
-    next_id: u32,
 }
 
 impl EditSession {
     #[must_use]
     pub fn new(document: AnnotationDocument) -> Self {
         Self {
-            next_id: document.next_object_id(),
             document,
             selected: None,
             undo: Vec::new(),
@@ -279,8 +277,7 @@ impl EditSession {
     }
 
     pub fn add(&mut self, shape: Shape) -> u32 {
-        let id = self.next_id.max(self.document.next_object_id());
-        self.next_id = id.saturating_add(1);
+        let id = self.document.reserve_id();
         let object = AnnotationObject::new(id, shape);
         let index = self.document.objects.len();
         self.document.objects.push(object.clone());
