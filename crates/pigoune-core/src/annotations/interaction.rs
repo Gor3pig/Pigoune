@@ -1,4 +1,4 @@
-use super::geometry::{self, Handle, HitMode};
+use super::geometry::{self, Handle};
 use super::options::number_to_value;
 use super::session::EditSession;
 use super::snapping::{self, Guide, Snapping};
@@ -46,6 +46,7 @@ pub struct Interaction {
     state: State,
     pending: Option<Shape>,
     constrained: bool,
+    temporary_select: bool,
     snapping: Option<Snapping>,
     guides: Vec<Guide>,
 }
@@ -56,6 +57,7 @@ impl Default for Interaction {
             state: State::Idle,
             pending: None,
             constrained: false,
+            temporary_select: false,
             snapping: None,
             guides: Vec::new(),
         }
@@ -70,6 +72,15 @@ impl Interaction {
 
     pub fn set_constrained(&mut self, constrained: bool) {
         self.constrained = constrained;
+    }
+
+    pub fn set_temporary_select(&mut self, temporary: bool) {
+        self.temporary_select = temporary;
+    }
+
+    #[must_use]
+    pub fn acts_as_select(&self, tool: Tool) -> bool {
+        tool == Tool::Select || (self.temporary_select && tool != Tool::Unsupported)
     }
 
     pub fn set_snapping(&mut self, snapping: Option<Snapping>) {
@@ -100,22 +111,9 @@ impl Interaction {
         reach: f32,
     ) -> bool {
         self.cancel(session);
-        if tool == Tool::Unsupported {
-            return false;
+        if self.acts_as_select(tool) {
+            return self.press_select(session, point, reach);
         }
-        if self.grab_selected(session, tool, point, reach) {
-            return true;
-        }
-        let mode = match tool {
-            Tool::Select => HitMode::Body,
-            _ => HitMode::Edge,
-        };
-        if let Some(id) = session.pick(point, reach, mode) {
-            session.select(Some(id));
-            self.begin_move(session, id, point);
-            return true;
-        }
-        session.select(None);
         match tool {
             Tool::Draw(definition) => {
                 self.state = State::Drawing {
@@ -131,33 +129,22 @@ impl Interaction {
         }
     }
 
-    fn grab_selected(
-        &mut self,
-        session: &mut EditSession,
-        tool: Tool,
-        point: Point,
-        reach: f32,
-    ) -> bool {
+    fn press_select(&mut self, session: &mut EditSession, point: Point, reach: f32) -> bool {
         if let Some((id, handle)) = handle_at(session, point, reach) {
-            if handle == Handle::Move {
-                self.begin_move(session, id, point);
-                return self.is_active();
-            }
             if session.begin_change(id)
                 && let Some(original) = session.shape_of(id).cloned()
             {
                 self.state = State::Resizing { handle, original };
-                return true;
             }
+            return true;
         }
-        let Some(id) = session.selected() else {
-            return false;
-        };
-        if tool != Tool::Select || session.pick(point, reach, HitMode::Body) != Some(id) {
-            return false;
+        if let Some(id) = session.pick(point, reach) {
+            session.select(Some(id));
+            self.begin_move(session, id, point);
+            return true;
         }
-        self.begin_move(session, id, point);
-        true
+        session.select(None);
+        false
     }
 
     fn begin_move(&mut self, session: &mut EditSession, id: u32, point: Point) {
@@ -215,8 +202,9 @@ impl Interaction {
         }
     }
 
-    pub fn release(&mut self, session: &mut EditSession, point: Point) {
+    pub fn release(&mut self, session: &mut EditSession, point: Point) -> Option<u32> {
         self.drag(session, point);
+        let mut created = None;
         match std::mem::replace(&mut self.state, State::Idle) {
             State::Idle => {}
             State::Drawing {
@@ -231,7 +219,7 @@ impl Interaction {
                     self.pending.take()
                 };
                 if let Some(shape) = finished {
-                    session.add(shape);
+                    created = Some(session.add(shape));
                 }
             }
             State::Moving { .. } | State::Resizing { .. } => {
@@ -240,11 +228,19 @@ impl Interaction {
         }
         self.pending = None;
         self.guides.clear();
+        created
     }
 
-    pub fn straighten(&mut self, session: &mut EditSession, point: Point, reach: f32) -> bool {
+    pub fn straighten(
+        &mut self,
+        session: &mut EditSession,
+        tool: Tool,
+        point: Point,
+        reach: f32,
+    ) -> bool {
         self.cancel(session);
-        matches!(handle_at(session, point, reach), Some((_, Handle::Curve)))
+        self.acts_as_select(tool)
+            && matches!(handle_at(session, point, reach), Some((_, Handle::Curve)))
             && session.set_option_on_selected("curve", number_to_value(0.0))
     }
 
@@ -258,29 +254,25 @@ impl Interaction {
     }
 
     #[must_use]
-    pub fn cursor(session: &EditSession, tool: Tool, point: Point, reach: f32) -> CursorKind {
+    pub fn cursor(
+        &self,
+        session: &EditSession,
+        tool: Tool,
+        point: Point,
+        reach: f32,
+    ) -> CursorKind {
         if tool == Tool::Unsupported {
             return CursorKind::Default;
         }
-        if let Some((_, handle)) = handle_at(session, point, reach) {
-            return CursorKind::Resize(handle);
+        if !self.acts_as_select(tool) {
+            return CursorKind::Crosshair;
         }
-        let (mode, selected_body) = if tool == Tool::Select {
-            (
-                HitMode::Body,
-                session
-                    .selected()
-                    .is_some_and(|id| session.pick(point, reach, HitMode::Body) == Some(id)),
-            )
-        } else {
-            (HitMode::Edge, false)
-        };
-        if selected_body || session.pick(point, reach, mode).is_some() {
+        if let Some((_, handle)) = handle_at(session, point, reach) {
+            CursorKind::Resize(handle)
+        } else if session.pick(point, reach).is_some() {
             CursorKind::Move
-        } else if tool == Tool::Select {
-            CursorKind::Default
         } else {
-            CursorKind::Crosshair
+            CursorKind::Default
         }
     }
 }
@@ -310,6 +302,9 @@ fn snapped(
 
 fn handle_at(session: &EditSession, point: Point, reach: f32) -> Option<(u32, Handle)> {
     let id = session.selected()?;
+    if session.refusal(id).is_some() {
+        return None;
+    }
     let shape = session.shape_of(id)?;
     geometry::handles(shape)
         .into_iter()

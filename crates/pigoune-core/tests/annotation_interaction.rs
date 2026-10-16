@@ -141,10 +141,10 @@ fn the_new_shape_takes_the_options_given_with_the_press() {
 }
 
 #[test]
-fn a_drawing_tool_grabs_the_outline_of_an_existing_shape() {
+fn a_drawing_tool_never_grabs_an_existing_shape_not_even_by_its_outline() {
     let (mut interaction, mut session) = fresh();
     let existing = session.add(rectangle(0.0, 0.0, 100.0, 100.0));
-    session.select(None);
+    let before = bounds(&session, existing);
 
     drag(
         &mut interaction,
@@ -154,9 +154,9 @@ fn a_drawing_tool_grabs_the_outline_of_an_existing_shape() {
         point(20.0, 70.0),
     );
 
-    assert_eq!(session.count(), 1);
-    assert_eq!(session.selected(), Some(existing));
-    assert!(same(bounds(&session, existing).x, 20.0));
+    assert_eq!(session.count(), 2);
+    assert_eq!(bounds(&session, existing), before);
+    assert_ne!(session.selected(), Some(existing));
 }
 
 #[test]
@@ -344,7 +344,8 @@ fn the_cursor_tells_what_a_click_would_do() {
     let id = session.add(rectangle(100.0, 100.0, 100.0, 60.0));
     session.select(Some(id));
 
-    let cursor = |tool, x, y| Interaction::cursor(&session, tool, point(x, y), REACH);
+    let interaction = Interaction::new();
+    let cursor = |tool, x, y| interaction.cursor(&session, tool, point(x, y), REACH);
 
     assert_eq!(
         cursor(Tool::Select, 200.0, 160.0),
@@ -363,13 +364,13 @@ fn the_cursor_tells_what_a_click_would_do() {
     assert_eq!(cursor(Tool::Unsupported, 100.0, 110.0), CursorKind::Default);
     session.select(None);
     assert_eq!(
-        Interaction::cursor(&session, Tool::Select, point(200.0, 160.0), REACH),
+        interaction.cursor(&session, Tool::Select, point(200.0, 160.0), REACH),
         CursorKind::Move
     );
 }
 
 #[test]
-fn starting_to_draw_drops_the_previous_selection() {
+fn starting_to_draw_keeps_the_selection_until_the_new_shape_exists() {
     let (mut interaction, mut session) = fresh();
     let existing = session.add(rectangle(0.0, 0.0, 100.0, 100.0));
     assert_eq!(session.selected(), Some(existing));
@@ -381,6 +382,21 @@ fn starting_to_draw_drops_the_previous_selection() {
         point(300.0, 300.0),
         REACH,
     );
+    assert_eq!(session.selected(), Some(existing));
 
-    assert_eq!(session.selected(), None);
+    interaction.cancel(&mut session);
+    assert_eq!(session.selected(), Some(existing));
+    assert_eq!(session.count(), 1);
+
+    interaction.press(
+        &mut session,
+        Tool::Draw(&LINE),
+        &drawing_options(),
+        point(300.0, 300.0),
+        REACH,
+    );
+    interaction.drag(&mut session, point(350.0, 330.0));
+    let created = interaction.release(&mut session, point(400.0, 360.0));
+    assert_eq!(created, session.selected());
+    assert_ne!(created, Some(existing));
 }

@@ -23,7 +23,7 @@ pub use options::{
     DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,
 };
 pub use serde_json::Value;
-pub use session::{EditSession, LayerMove};
+pub use session::{EditSession, LayerMove, Refusal};
 pub use shape::{Geometry, Shape};
 pub use snapping::{Guide, Snap, Snapping, guide_extent, snap_move};
 pub use tools::{
@@ -90,10 +90,52 @@ pub enum ObjectContent {
     Unknown(Map<String, Value>),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ObjectState {
+    pub name: Option<String>,
+    pub hidden: bool,
+    pub locked: bool,
+    pub sealed: bool,
+}
+
+impl ObjectState {
+    fn write_into(&self, fields: &mut Map<String, Value>) {
+        if let Some(name) = &self.name {
+            fields.insert("name".to_owned(), Value::from(name.clone()));
+        }
+        for (key, set) in [
+            ("hidden", self.hidden),
+            ("locked", self.locked),
+            ("sealed", self.sealed),
+        ] {
+            if set {
+                fields.insert(key.to_owned(), Value::Bool(true));
+            }
+        }
+    }
+
+    fn take_from(fields: &mut Map<String, Value>) -> Self {
+        let flag = |fields: &mut Map<String, Value>, key: &str| {
+            fields.remove(key).and_then(|value| value.as_bool()) == Some(true)
+        };
+        let name = fields
+            .remove("name")
+            .and_then(|value| value.as_str().map(str::to_owned))
+            .filter(|name| !name.is_empty());
+        Self {
+            name,
+            hidden: flag(fields, "hidden"),
+            locked: flag(fields, "locked"),
+            sealed: flag(fields, "sealed"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct AnnotationObject {
     pub id: u32,
     pub content: ObjectContent,
+    pub state: ObjectState,
 }
 
 impl AnnotationObject {
@@ -105,7 +147,23 @@ impl AnnotationObject {
                 shape,
                 extra: Map::new(),
             },
+            state: ObjectState::default(),
         }
+    }
+
+    #[must_use]
+    pub fn is_rendered(&self) -> bool {
+        !self.state.hidden && !self.state.sealed
+    }
+
+    #[must_use]
+    pub fn is_pickable(&self) -> bool {
+        self.is_rendered() && !self.state.locked
+    }
+
+    #[must_use]
+    pub fn is_editable(&self) -> bool {
+        !self.state.locked && !self.state.sealed
     }
 
     #[must_use]
@@ -124,6 +182,7 @@ impl AnnotationObject {
                 for (name, value) in extra {
                     fields.entry(name.clone()).or_insert_with(|| value.clone());
                 }
+                self.state.write_into(&mut fields);
                 fields.insert("id".to_owned(), Value::from(self.id));
                 Value::Object(fields)
             }
@@ -131,7 +190,7 @@ impl AnnotationObject {
     }
 
     fn from_value(value: Value) -> Result<Self, String> {
-        let Value::Object(fields) = value else {
+        let Value::Object(mut fields) = value else {
             return Err("an annotation is not an object".to_owned());
         };
         let id = fields
@@ -147,8 +206,10 @@ impl AnnotationObject {
             return Ok(Self {
                 id,
                 content: ObjectContent::Unknown(fields),
+                state: ObjectState::default(),
             });
         };
+        let state = ObjectState::take_from(&mut fields);
         let shape = Shape::from_map(definition, &fields)
             .map_err(|error| format!("annotation {id}: {error}"))?;
         let used = shape.to_map();
@@ -159,6 +220,7 @@ impl AnnotationObject {
         Ok(Self {
             id,
             content: ObjectContent::Known { shape, extra },
+            state,
         })
     }
 }

@@ -7985,3 +7985,13 @@ msgstr ""
 #: crates/pigoune-app/src/shortcuts_page.rs:228
 msgid "This key combination is not supported."
 msgstr ""
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: Defaults"
+msgstr ""
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool} (stays active)"
+msgstr ""

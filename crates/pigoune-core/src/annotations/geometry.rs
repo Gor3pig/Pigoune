@@ -26,7 +26,6 @@ pub enum Handle {
     Start,
     End,
     Curve,
-    Move,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -350,20 +349,7 @@ pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
     match &shape.geometry {
         Geometry::Box(rect) => {
             let rect = normalized(*rect);
-            let mut found = box_handles(rect);
-            if shape
-                .definition()
-                .is_some_and(|sheet| sheet.outline == Outline::Region)
-            {
-                found.push((
-                    Handle::Move,
-                    Point {
-                        x: rect.x + rect.width / 2.0,
-                        y: rect.y + rect.height / 2.0,
-                    },
-                ));
-            }
-            found
+            box_handles(rect)
         }
         Geometry::TwoPoints { from, to } => {
             let mut found = vec![(Handle::Start, *from), (Handle::End, *to)];
@@ -426,7 +412,7 @@ fn resized_rect(rect: Rect, handle: Handle, to: Point) -> Option<Rect> {
         Handle::Bottom => bottom = to.y,
         Handle::BottomLeft => (left, bottom) = (to.x, to.y),
         Handle::Left => left = to.x,
-        Handle::Start | Handle::End | Handle::Curve | Handle::Move => return None,
+        Handle::Start | Handle::End | Handle::Curve => return None,
     }
     Some(rect_between(
         Point { x: left, y: top },
@@ -491,10 +477,7 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
         }
         Geometry::Anchor(at) => {
             if scalable_bounds(shape).is_some()
-                && !matches!(
-                    handle,
-                    Handle::Start | Handle::End | Handle::Curve | Handle::Move
-                )
+                && !matches!(handle, Handle::Start | Handle::End | Handle::Curve)
             {
                 resized_badge(shape, *at, to)
             } else {
@@ -562,7 +545,6 @@ pub fn estimated_text_extent(shape: &Shape) -> (f32, f32) {
 pub enum HitMode {
     Outline,
     Body,
-    Edge,
 }
 
 #[must_use]
@@ -622,7 +604,6 @@ pub fn hit_in_mode(
         (Geometry::Box(bounds), Outline::Region) => {
             let rect = normalized(*bounds);
             contains(expanded(rect, tolerance), point)
-                && (mode != HitMode::Edge || !contains(expanded(rect, -tolerance), point))
         }
         (Geometry::Anchor(at), Outline::TextBox) => {
             let (width, height) = extent.unwrap_or_else(|| estimated_text_extent(shape));

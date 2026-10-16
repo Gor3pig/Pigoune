@@ -8824,3 +8824,13 @@ msgstr "Cette combinaison de touches n’est pas prise en charge."
 #~ msgstr ""
 #~ "L’interface emploie maintenant les mêmes mots dans toutes les langues, et "
 #~ "Gérer la bibliothèque a une nouvelle mise en page."
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: Defaults"
+msgstr "{tool} : valeurs par défaut"
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool} (stays active)"
+msgstr "{tool} (reste actif)"

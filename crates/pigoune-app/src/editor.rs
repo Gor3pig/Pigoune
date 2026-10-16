@@ -8,7 +8,7 @@ use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::AssetId;
 use pigoune_core::annotations::{
     AnnotationDocument, Crop, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
-    Interaction, LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value,
+    LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_export;
@@ -142,6 +142,7 @@ mod imp {
         #[property(get, set)]
         pub compact: Cell<bool>,
         pub active_tool: Cell<EditorTool>,
+        pub persistent_tool: Cell<Option<EditorTool>>,
         pub output_in_left_header: Cell<bool>,
         pub tool_buttons: RefCell<Vec<(EditorTool, gtk::ToggleButton)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
@@ -437,6 +438,19 @@ impl PigouneEditor {
                     }
                 }
             ));
+            if tool.creates() {
+                let double_click = gtk::GestureClick::new();
+                double_click.connect_pressed(glib::clone!(
+                    #[weak(rename_to = editor)]
+                    self,
+                    move |_, presses, _, _| {
+                        if presses == 2 {
+                            editor.toggle_persistent(tool);
+                        }
+                    }
+                ));
+                button.add_controller(double_click);
+            }
             let column = i32::try_from(index % TOOLS_PER_ROW).unwrap_or(0);
             let row = i32::try_from(index / TOOLS_PER_ROW).unwrap_or(0);
             imp.tools_grid.attach(&button, column, row, 1, 1);
@@ -636,7 +650,15 @@ impl PigouneEditor {
             && editing.is_none()
             && let Some(shape) = drawing.session.selected_shape()
         {
-            annotation_render::append_selection(snapshot, shape, whole, scale, &context);
+            let with_handles = drawing.interaction.acts_as_select(self.current_tool());
+            annotation_render::append_selection(
+                snapshot,
+                shape,
+                whole,
+                scale,
+                &context,
+                with_handles,
+            );
         }
     }
 
@@ -708,31 +730,14 @@ impl PigouneEditor {
         if matches!(event, PointerEvent::Press(_)) && imp.text_edit.get().is_none() {
             imp.zoom_view.grab_focus();
         }
+        let mut created = false;
         let claimed = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
             match event {
                 PointerEvent::Press(point) => {
-                    let options = match tool {
-                        Tool::Draw(definition) => remembered_options(drawing, definition),
-                        _ => Options::new(),
-                    };
-                    let before = drawing.session.selected();
-                    let claimed = drawing.interaction.press(
-                        &mut drawing.session,
-                        tool,
-                        &options,
-                        image_point(point),
-                        reach,
-                    );
-                    let after = drawing.session.selected();
-                    let clicked_text = after.filter(|id| {
-                        (Some(*id) == before || tool == Tool::Place)
-                            && drawing
-                                .session
-                                .shape_of(*id)
-                                .is_some_and(|shape| shape.kind == "text")
-                    });
+                    let (claimed, clicked_text) =
+                        press_objects(drawing, tool, image_point(point), reach);
                     imp.click_to_edit
                         .set(clicked_text.map(|id| (id, image_point(point))));
                     claimed
@@ -749,9 +754,10 @@ impl PigouneEditor {
                     true
                 }
                 PointerEvent::Release(point) => {
-                    drawing
+                    created = drawing
                         .interaction
-                        .release(&mut drawing.session, image_point(point));
+                        .release(&mut drawing.session, image_point(point))
+                        .is_some();
                     true
                 }
                 PointerEvent::Cancel => {
@@ -761,6 +767,7 @@ impl PigouneEditor {
                 PointerEvent::DoublePress(point) => {
                     let straightened = drawing.interaction.straighten(
                         &mut drawing.session,
+                        tool,
                         image_point(point),
                         reach,
                     );
@@ -768,8 +775,12 @@ impl PigouneEditor {
                     straightened
                 }
                 PointerEvent::Hover(point) => {
-                    let kind =
-                        Interaction::cursor(&drawing.session, tool, image_point(point), reach);
+                    let kind = drawing.interaction.cursor(
+                        &drawing.session,
+                        tool,
+                        image_point(point),
+                        reach,
+                    );
                     drop(guard);
                     let name = if tool == Tool::Place && kind == CursorKind::Crosshair {
                         Some("text")
@@ -790,7 +801,50 @@ impl PigouneEditor {
         {
             self.edit_text(id);
         }
+        if created {
+            self.finish_creation();
+        }
         claimed
+    }
+
+    fn finish_creation(&self) {
+        let tool = self.imp().active_tool.get();
+        if tool.creates() && self.imp().persistent_tool.get() != Some(tool) {
+            self.choose_tool(EditorTool::Select);
+        }
+    }
+
+    fn choose_tool(&self, tool: EditorTool) {
+        let buttons = self.imp().tool_buttons.borrow().clone();
+        if let Some((_, button)) = buttons.iter().find(|(candidate, _)| *candidate == tool) {
+            button.set_active(true);
+        }
+    }
+
+    fn toggle_persistent(&self, tool: EditorTool) {
+        let imp = self.imp();
+        if !tool.creates() {
+            return;
+        }
+        if imp.active_tool.get() != tool {
+            self.choose_tool(tool);
+        }
+        let persistent = imp.persistent_tool.get() != Some(tool);
+        imp.persistent_tool.set(persistent.then_some(tool));
+        self.show_persistence();
+    }
+
+    fn show_persistence(&self) {
+        let imp = self.imp();
+        let persistent = imp.persistent_tool.get();
+        for (tool, button) in imp.tool_buttons.borrow().iter() {
+            if persistent == Some(*tool) {
+                button.add_css_class("suggested-action");
+            } else {
+                button.remove_css_class("suggested-action");
+            }
+        }
+        self.show_active_tool();
     }
 
     fn sync_pointer_modifiers(&self) {
@@ -799,6 +853,9 @@ impl PigouneEditor {
         drawing
             .interaction
             .set_constrained(imp.zoom_view.shift_held());
+        drawing
+            .interaction
+            .set_temporary_select(imp.zoom_view.ctrl_held());
         let area = visible_area(imp.image_size.get(), drawing.session.crop());
         let snapping = (!imp.zoom_view.alt_held()).then(|| Snapping {
             tolerance: point_to_f32(SNAP_PIXELS / imp.zoom_view.zoom().max(0.01)),
@@ -811,7 +868,7 @@ impl PigouneEditor {
         let imp = self.imp();
         match event {
             PointerEvent::Press(point) => {
-                if !self.handle_object_pointer(event) {
+                if !self.handle_object_pointer(event) && !imp.zoom_view.ctrl_held() {
                     imp.drawing.borrow_mut().session.select(None);
                     self.begin_text_edit(None, image_point(point));
                 }
@@ -878,6 +935,7 @@ impl PigouneEditor {
         };
         let text = self.typed_text();
         imp.text_view.set_visible(false);
+        let mut created = false;
         {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -904,12 +962,16 @@ impl PigouneEditor {
                             .with_option("content", Value::from(text));
                         let id = drawing.session.add(shape);
                         drawing.session.select(Some(id));
+                        created = true;
                     }
                 }
                 None => {}
             }
         }
         self.after_edit();
+        if created {
+            self.finish_creation();
+        }
     }
 
     fn cancel_text(&self) {
@@ -1410,6 +1472,9 @@ impl PigouneEditor {
         if self.imp().text_edit.get().is_some() {
             return self.handle_text_key(key, control);
         }
+        if self.focus_is_editable() {
+            return glib::Propagation::Proceed;
+        }
         let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
         let handled = match key {
             gdk::Key::z | gdk::Key::Z if control && shift => self.redo(),
@@ -1460,11 +1525,11 @@ impl PigouneEditor {
         let Some(tool) = key.to_unicode().and_then(EditorTool::for_shortcut) else {
             return false;
         };
-        let buttons = self.imp().tool_buttons.borrow();
-        let Some((_, button)) = buttons.iter().find(|(candidate, _)| *candidate == tool) else {
-            return false;
-        };
-        button.set_active(true);
+        if self.imp().active_tool.get() == tool && tool.creates() {
+            self.toggle_persistent(tool);
+            return true;
+        }
+        self.choose_tool(tool);
         true
     }
 
@@ -1504,6 +1569,12 @@ impl PigouneEditor {
             self.show_session_crop();
         }
         self.after_edit();
+    }
+
+    fn focus_is_editable(&self) -> bool {
+        self.root()
+            .and_then(|root| root.focus())
+            .is_some_and(|focus| focus.is::<gtk::Editable>() || focus.is::<gtk::TextView>())
     }
 
     fn panel_has_focus(&self) -> bool {
@@ -1572,6 +1643,12 @@ impl PigouneEditor {
         if handled {
             self.after_edit();
         }
+        if imp.persistent_tool.get().is_some() {
+            imp.persistent_tool.set(None);
+            self.choose_tool(EditorTool::Select);
+            self.show_persistence();
+            return true;
+        }
         handled
     }
 
@@ -1637,7 +1714,12 @@ impl PigouneEditor {
             return;
         };
         if let Some(tool) = kind.and_then(EditorTool::from_kind) {
-            imp.style_group.set_title(&tool.label());
+            let for_selection = imp.drawing.borrow().session.selected().is_some();
+            imp.style_group.set_title(&if for_selection {
+                tool.label()
+            } else {
+                gettext("{tool}: Defaults").replace("{tool}", &tool.label())
+            });
         }
         let options = self.target_options(definition);
         imp.updating_controls.set(true);
@@ -1681,11 +1763,6 @@ impl PigouneEditor {
         {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
-            drawing
-                .tool_options
-                .entry(definition.kind)
-                .or_insert_with(|| Options::defaults(definition.options))
-                .set(id, value.clone());
             let selected_kind = drawing
                 .session
                 .selected_shape()
@@ -1696,6 +1773,12 @@ impl PigouneEditor {
                 } else {
                     drawing.session.set_option_on_selected(id, value.clone());
                 }
+            } else {
+                drawing
+                    .tool_options
+                    .entry(definition.kind)
+                    .or_insert_with(|| Options::defaults(definition.options))
+                    .set(id, value.clone());
             }
         }
         let options = self.target_options(definition);
@@ -1722,6 +1805,10 @@ impl PigouneEditor {
                 drawing.session.select(None);
             }
         }
+        if imp.persistent_tool.get() != Some(imp.active_tool.get()) {
+            imp.persistent_tool.set(None);
+            self.show_persistence();
+        }
         if cropping && !was_cropping {
             self.start_cropping();
         } else if !cropping && was_cropping {
@@ -1737,7 +1824,12 @@ impl PigouneEditor {
         let imp = self.imp();
         let tool = imp.active_tool.get();
         imp.bar_icon.set_icon_name(Some(tool.icon_name()));
-        imp.bar_label.set_label(&tool.label());
+        imp.bar_label
+            .set_label(&if imp.persistent_tool.get() == Some(tool) {
+                gettext("{tool} (stays active)").replace("{tool}", &tool.label())
+            } else {
+                tool.label()
+            });
     }
 
     fn follow_zoom(&self) {
@@ -1802,6 +1894,31 @@ fn rounded_margin(value: f32) -> i32 {
     margin
 }
 
+fn press_objects(
+    drawing: &mut imp::Drawing,
+    tool: Tool,
+    point: Point,
+    reach: f32,
+) -> (bool, Option<u32>) {
+    let options = match tool {
+        Tool::Draw(definition) => remembered_options(drawing, definition),
+        _ => Options::new(),
+    };
+    let before = drawing.session.selected();
+    let claimed = drawing
+        .interaction
+        .press(&mut drawing.session, tool, &options, point, reach);
+    let clicked_text = drawing.session.selected().filter(|id| {
+        Some(*id) == before
+            && drawing.interaction.acts_as_select(tool)
+            && drawing
+                .session
+                .shape_of(*id)
+                .is_some_and(|shape| shape.kind == "text")
+    });
+    (claimed, clicked_text)
+}
+
 fn point_to_f32(value: f64) -> f32 {
     #[expect(
         clippy::cast_possible_truncation,
@@ -1823,7 +1940,6 @@ fn cursor_name(kind: CursorKind) -> Option<&'static str> {
             Handle::Left | Handle::Right => "ew-resize",
             Handle::Start | Handle::End => "crosshair",
             Handle::Curve => "grab",
-            Handle::Move => "move",
         }),
     }
 }

@@ -141,7 +141,7 @@ pub fn append_document(
     skipped: Option<u32>,
 ) {
     for (index, object) in document.objects.iter().enumerate() {
-        if Some(object.id) == skipped {
+        if Some(object.id) == skipped || !object.is_rendered() {
             continue;
         }
         if let Some(shape) = object.shape() {
@@ -832,32 +832,13 @@ pub fn append_guides(
     snapshot.append_stroke(&builder.to_path(), &gsk::Stroke::new(1.0), &color);
 }
 
-fn append_move_grip(snapshot: &gtk::Snapshot, center: Point, accent: &gdk::RGBA) {
-    let radius = HANDLE_SIZE;
-    let builder = gsk::PathBuilder::new();
-    builder.add_circle(&graphene::Point::new(center.x, center.y), radius);
-    let disc = builder.to_path();
-    snapshot.append_fill(
-        &disc,
-        gsk::FillRule::Winding,
-        &gdk::RGBA::new(1.0, 1.0, 1.0, 1.0),
-    );
-    snapshot.append_stroke(&disc, &gsk::Stroke::new(1.5), accent);
-    let arm = radius * 0.55;
-    let cross = gsk::PathBuilder::new();
-    cross.move_to(center.x - arm, center.y);
-    cross.line_to(center.x + arm, center.y);
-    cross.move_to(center.x, center.y - arm);
-    cross.line_to(center.x, center.y + arm);
-    snapshot.append_stroke(&cross.to_path(), &gsk::Stroke::new(1.5), accent);
-}
-
 pub fn append_selection(
     snapshot: &gtk::Snapshot,
     shape: &Shape,
     bounds: &graphene::Rect,
     zoom: f32,
     context: &pango::Context,
+    with_handles: bool,
 ) {
     let (red, green, blue) = SELECTION_COLOR;
     let accent = gdk::RGBA::new(red, green, blue, 1.0);
@@ -882,12 +863,11 @@ pub fn append_selection(
         dashed.set_dash(&SELECTION_DASH);
         snapshot.append_stroke(&builder.to_path(), &dashed, &accent);
     }
+    if !with_handles {
+        return;
+    }
     for (handle, point) in handles(shape) {
         let center = to_view(point);
-        if handle == Handle::Move {
-            append_move_grip(snapshot, center, &accent);
-            continue;
-        }
         if handle == Handle::Curve {
             let builder = gsk::PathBuilder::new();
             builder.add_circle(&graphene::Point::new(center.x, center.y), HANDLE_SIZE / 2.0);
