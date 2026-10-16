@@ -4,7 +4,7 @@ set -euo pipefail
 dnf install -y --setopt=install_weak_deps=False \
     git gcc pkgconf-pkg-config gtk4-devel libadwaita-devel libseccomp-devel \
     lcms2-devel fontconfig-devel blueprint-compiler gettext glib2-devel \
-    desktop-file-utils appstream glycin-loaders bubblewrap
+    desktop-file-utils appstream glycin-loaders bubblewrap dejavu-sans-fonts
 
 git config --system --add safe.directory '*'
 git clone --quiet /src /work

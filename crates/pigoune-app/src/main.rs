@@ -83,6 +83,8 @@ mod recent_libraries;
 mod relaunch;
 mod release_notes;
 mod removable_pill;
+#[cfg(test)]
+mod render_tests;
 mod ring_chart;
 mod row_thumbnail;
 mod screen_size;

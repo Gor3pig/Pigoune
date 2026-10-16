@@ -7,8 +7,8 @@ use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Point, Rect, Shape,
-    arrow_curve_control, arrow_head, curve_polyline, dash_pattern, guide_extent, handles,
-    head_size_factor, shape_bounds, step_label,
+    arrow_curve_control, arrow_head, curve_point, curve_polyline, dash_pattern, guide_extent,
+    handles, head_size_factor, shape_bounds, step_label,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -286,6 +286,59 @@ fn tapered_shaft(from: Point, control: Option<Point>, to: Point, width: f32) -> 
     builder.to_path()
 }
 
+const CURVE_SEARCH_STEPS: u8 = 64;
+
+fn closest_curve_parameter(
+    from: Point,
+    control: Point,
+    to: Point,
+    target: Point,
+    low: f32,
+    high: f32,
+) -> f32 {
+    let mut best = (f32::MAX, low);
+    for step in 0..=CURVE_SEARCH_STEPS {
+        let t = low + (high - low) * f32::from(step) / f32::from(CURVE_SEARCH_STEPS);
+        let at = curve_point(from, control, to, t);
+        let distance = (at.x - target.x).hypot(at.y - target.y);
+        if distance < best.0 {
+            best = (distance, t);
+        }
+    }
+    best.1
+}
+
+fn trimmed_curve(
+    from: Point,
+    control: Point,
+    to: Point,
+    start: (bool, Point),
+    end: (bool, Point),
+) -> (Point, Option<Point>, Point) {
+    let first = if start.0 {
+        closest_curve_parameter(from, control, to, start.1, 0.0, 0.5)
+    } else {
+        0.0
+    };
+    let last = if end.0 {
+        closest_curve_parameter(from, control, to, end.1, 0.5, 1.0)
+    } else {
+        1.0
+    };
+    let weight_from = (1.0 - first) * (1.0 - last);
+    let weight_control = (1.0 - first) * last + first * (1.0 - last);
+    let weight_to = first * last;
+    let trimmed_control = Point {
+        x: weight_from * from.x + weight_control * control.x + weight_to * to.x,
+        y: weight_from * from.y + weight_control * control.y + weight_to * to.y,
+    };
+    (
+        curve_point(from, control, to, first),
+        Some(trimmed_control),
+        curve_point(from, control, to, last),
+    )
+}
+
 fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     let Some((from, to)) = ends_of(shape) else {
         return;
@@ -303,6 +356,16 @@ fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     let double = head_style == "double";
     let shaft_from = if double { start.base } else { from };
     let shaft_to = if head_style == "none" { to } else { end.base };
+    let (shaft_from, control, shaft_to) = match control {
+        Some(control) => trimmed_curve(
+            from,
+            control,
+            to,
+            (double, shaft_from),
+            (head_style != "none", shaft_to),
+        ),
+        None => (shaft_from, None, shaft_to),
+    };
     if shape.choice("shaft") == "tapered" && !double {
         snapshot.append_fill(
             &tapered_shaft(shaft_from, control, shaft_to, width),
