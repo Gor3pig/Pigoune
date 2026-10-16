@@ -109,9 +109,26 @@ translations_are_complete() {
     return $incomplete
 }
 
+tests_with_a_virtual_display() {
+    if ! command -v gtk4-broadwayd >/dev/null; then
+        printf 'gtk4-broadwayd is missing: the rendering tests are skipped\n'
+        cargo test --workspace --quiet
+        return
+    fi
+    local display=":$((200 + RANDOM % 700))"
+    gtk4-broadwayd "$display" >/dev/null 2>&1 &
+    local server=$!
+    sleep 1
+    GDK_BACKEND=broadway BROADWAY_DISPLAY="$display" PIGOUNE_REQUIRE_RENDER_TESTS=1 \
+        cargo test --workspace --quiet
+    local status=$?
+    kill "$server" 2>/dev/null
+    return $status
+}
+
 step "Formatting (rustfmt)" cargo fmt --all --check
 step "Strict lints (clippy)" cargo clippy --workspace --all-targets --quiet -- -D warnings
-step "Tests" cargo test --workspace --quiet
+step "Tests" tests_with_a_virtual_display
 step "No comments in the code" no_comments_in_sources
 step "Plain hyphens only" no_long_dashes
 step "Desktop entry" validate_desktop_file
