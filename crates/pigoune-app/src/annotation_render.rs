@@ -340,12 +340,23 @@ fn trimmed_curve(
 }
 
 fn draw_arrow(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
+    let ink = shape.stroke_color();
+    let translucent = ink.a < u8::MAX;
+    if translucent {
+        snapshot.push_opacity(f64::from(ink.a) / 255.0);
+    }
+    draw_arrow_parts(snapshot, shape, rgba(Color { a: u8::MAX, ..ink }));
+    if translucent {
+        snapshot.pop();
+    }
+}
+
+fn draw_arrow_parts(snapshot: &gtk::Snapshot, shape: &Shape, color: gdk::RGBA) {
     let Some((from, to)) = ends_of(shape) else {
         return;
     };
     let width = shape.number("width");
     let factor = head_size_factor(shape.choice("head_size"));
-    let color = rgba(shape.stroke_color());
     let head_style = shape.choice("head");
     let control = arrow_curve_control(shape);
     let solid = gsk::Stroke::new(width.max(0.5));

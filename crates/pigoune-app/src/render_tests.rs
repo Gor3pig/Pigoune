@@ -295,6 +295,104 @@ fn arrows_follow_their_curve(rig: &Rig) {
     assert_eq!(curved.at(100, 100), source(100, 100), "the chord is empty");
 }
 
+fn uniform_rig(rig: &Rig, level: u8) -> Rig {
+    let mut bytes = Vec::new();
+    for _ in 0..WIDTH * HEIGHT {
+        bytes.extend_from_slice(&[level, level, level, 255]);
+    }
+    Rig {
+        renderer: rig.renderer.clone(),
+        context: rig.context.clone(),
+        texture: gdk::MemoryTexture::new(
+            WIDTH,
+            HEIGHT,
+            gdk::MemoryFormat::R8g8b8a8,
+            &glib::Bytes::from_owned(bytes),
+            usize::try_from(WIDTH * 4).expect("stride"),
+        )
+        .upcast(),
+        cache: RefCell::new(HashMap::new()),
+    }
+}
+
+fn coverage(picture: &Picture, x: i32, y: i32, background: u8) -> Option<f32> {
+    let pixel = picture.at(x, y);
+    let (channel, spread) = (0..3)
+        .map(|channel| (channel, i32::from(RED[channel]) - i32::from(background)))
+        .max_by_key(|(_, spread)| spread.abs())
+        .expect("a channel");
+    (spread.abs() >= 60).then(|| {
+        let seen = f32::from(i16::from(pixel[channel]) - i16::from(background));
+        seen / f32::from(i16::try_from(spread).expect("small"))
+    })
+}
+
+fn translucent_arrows_are_one_homogeneous_shape(rig: &Rig) {
+    for background in [245_u8, 30] {
+        let plain = uniform_rig(rig, background);
+        for (shaft, head, width, curve) in [
+            ("tapered", "triangle", 4.0, 0.0),
+            ("tapered", "triangle", 14.0, 0.0),
+            ("tapered", "triangle", 10.0, -40.0),
+            ("tapered", "open", 8.0, 0.0),
+            ("tapered", "none", 8.0, 0.0),
+            ("tapered", "double", 8.0, 0.0),
+            ("even", "triangle", 4.0, 0.0),
+            ("even", "triangle", 14.0, -40.0),
+            ("even", "open", 8.0, 0.0),
+            ("even", "double", 8.0, 25.0),
+            ("even", "none", 8.0, 0.0),
+        ] {
+            for opacity in [1.0_f32, 0.8, 0.5, 0.2] {
+                let arrow = segment(
+                    "arrow",
+                    (20.0, 60.0),
+                    (180.0, 60.0),
+                    &[
+                        ("shaft", Value::from(shaft)),
+                        ("head", Value::from(head)),
+                        ("width", number_to_value(width)),
+                        ("curve", number_to_value(curve)),
+                        ("opacity", number_to_value(opacity)),
+                    ],
+                );
+                let drawn = document(vec![arrow]);
+                let what = format!(
+                    "{shaft} {head} width {width} curve {curve} opacity {opacity} on {background}"
+                );
+                let result = plain.export(&drawn);
+                let mut strongest = 0.0_f32;
+                for y in 0..HEIGHT {
+                    for x in 0..WIDTH {
+                        if let Some(value) = coverage(&result, x, y, background) {
+                            strongest = strongest.max(value);
+                        }
+                    }
+                }
+                assert!(
+                    strongest <= opacity + 0.04,
+                    "{what}: a pixel is {strongest:.2} opaque, the whole arrow must be at most {opacity}"
+                );
+                if curve == 0.0 {
+                    let last = if head == "open" { 130 } else { 170 };
+                    for x in 88..last {
+                        let value = coverage(&result, x, 60, background).expect("on the axis");
+                        assert!(
+                            (value - opacity).abs() <= 0.07,
+                            "{what}: the axis at x={x} is {value:.2} opaque instead of {opacity}"
+                        );
+                    }
+                }
+                assert_eq!(
+                    plain.preview(&drawn).data,
+                    result.data,
+                    "{what}: preview and export differ"
+                );
+            }
+        }
+    }
+}
+
 fn text_steps_and_strokes_are_drawn(rig: &Rig) {
     let text = rig.export(&document(vec![shape(
         "text",
@@ -695,6 +793,7 @@ fn rendering_suite() {
     untouched_image_is_reproduced_exactly(&rig);
     outlines_and_lines_are_drawn_where_they_belong(&rig);
     arrows_follow_their_curve(&rig);
+    translucent_arrows_are_one_homogeneous_shape(&rig);
     text_steps_and_strokes_are_drawn(&rig);
     translucent_effects_blend_with_the_image(&rig);
     the_spotlight_dims_everything_around_it(&rig);
