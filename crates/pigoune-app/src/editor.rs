@@ -51,8 +51,8 @@ pub struct TextEdit {
 
 mod imp {
     use super::{
-        AssetId, Cell, ClosedCallback, LayerMove, NoticeCallback, OptionRow, Point, RefCell,
-        SaveCallback, Shape, TextEdit,
+        AssetId, Cell, ClosedCallback, LayerMove, NoticeCallback, OptionRow, RefCell, SaveCallback,
+        Shape, TextEdit,
     };
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -142,6 +142,7 @@ mod imp {
         #[property(get, set)]
         pub compact: Cell<bool>,
         pub active_tool: Cell<EditorTool>,
+        pub pending_text_edit: Cell<Option<u32>>,
         pub persistent_tool: Cell<Option<EditorTool>>,
         pub output_in_left_header: Cell<bool>,
         pub tool_buttons: RefCell<Vec<(EditorTool, gtk::ToggleButton)>>,
@@ -163,7 +164,6 @@ mod imp {
         pub text_edit: Cell<Option<TextEdit>>,
         pub text_provider: gtk::CssProvider,
         pub text_view_origin: Cell<[u32; 3]>,
-        pub click_to_edit: Cell<Option<(u32, Point)>>,
         pub pixel_cache: crate::annotation_render::PixelCache,
     }
 
@@ -737,18 +737,9 @@ impl PigouneEditor {
             let drawing = &mut *guard;
             match event {
                 PointerEvent::Press(point) => {
-                    let (claimed, clicked_text) =
-                        press_objects(drawing, tool, image_point(point), reach);
-                    imp.click_to_edit
-                        .set(clicked_text.map(|id| (id, image_point(point))));
-                    claimed
+                    press_objects(drawing, tool, image_point(point), reach)
                 }
                 PointerEvent::Drag(point) => {
-                    if let Some((_, start)) = imp.click_to_edit.get()
-                        && distance(start, image_point(point)) > reach * 0.3
-                    {
-                        imp.click_to_edit.set(None);
-                    }
                     drawing
                         .interaction
                         .drag(&mut drawing.session, image_point(point));
@@ -762,6 +753,7 @@ impl PigouneEditor {
                     true
                 }
                 PointerEvent::Cancel => {
+                    imp.pending_text_edit.set(None);
                     drawing.interaction.cancel(&mut drawing.session);
                     true
                 }
@@ -772,7 +764,10 @@ impl PigouneEditor {
                         image_point(point),
                         reach,
                     );
-                    imp.click_to_edit.set(None);
+                    if !straightened && drawing.interaction.acts_as_select(tool) {
+                        imp.pending_text_edit
+                            .set(drawing.session.text_at(image_point(point), reach));
+                    }
                     straightened
                 }
                 PointerEvent::Hover(point) => {
@@ -798,7 +793,7 @@ impl PigouneEditor {
             _ => self.after_edit(),
         }
         if matches!(event, PointerEvent::Release(_))
-            && let Some((id, _)) = imp.click_to_edit.take()
+            && let Some(id) = imp.pending_text_edit.take()
         {
             self.edit_text(id);
         }
@@ -886,6 +881,10 @@ impl PigouneEditor {
     }
 
     fn edit_text(&self, id: u32) {
+        if self.imp().drawing.borrow().session.refusal(id).is_some() {
+            self.notice(&gettext("This text is locked"));
+            return;
+        }
         let anchor = {
             let drawing = self.imp().drawing.borrow();
             drawing
@@ -1504,7 +1503,7 @@ impl PigouneEditor {
                 self.finish_cropping(false);
                 true
             }
-            gdk::Key::Return | gdk::Key::KP_Enter => self.edit_selected_text(),
+            gdk::Key::Return | gdk::Key::KP_Enter | gdk::Key::F2 => self.edit_selected_text(),
             gdk::Key::Escape => self.escape(),
             _ => self.choose_tool_by_letter(key, modifiers),
         };
@@ -1882,10 +1881,6 @@ fn pixels_to_f32(value: u32) -> f32 {
     f32::from(u16::try_from(value).unwrap_or(u16::MAX))
 }
 
-fn distance(from: Point, to: Point) -> f32 {
-    (to.x - from.x).hypot(to.y - from.y)
-}
-
 fn rounded_margin(value: f32) -> i32 {
     #[expect(
         clippy::cast_possible_truncation,
@@ -1895,29 +1890,14 @@ fn rounded_margin(value: f32) -> i32 {
     margin
 }
 
-fn press_objects(
-    drawing: &mut imp::Drawing,
-    tool: Tool,
-    point: Point,
-    reach: f32,
-) -> (bool, Option<u32>) {
+fn press_objects(drawing: &mut imp::Drawing, tool: Tool, point: Point, reach: f32) -> bool {
     let options = match tool {
         Tool::Draw(definition) => remembered_options(drawing, definition),
         _ => Options::new(),
     };
-    let before = drawing.session.selected();
-    let claimed = drawing
+    drawing
         .interaction
-        .press(&mut drawing.session, tool, &options, point, reach);
-    let clicked_text = drawing.session.selected().filter(|id| {
-        Some(*id) == before
-            && drawing.interaction.acts_as_select(tool)
-            && drawing
-                .session
-                .shape_of(*id)
-                .is_some_and(|shape| shape.kind == "text")
-    });
-    (claimed, clicked_text)
+        .press(&mut drawing.session, tool, &options, point, reach)
 }
 
 fn point_to_f32(value: f64) -> f32 {

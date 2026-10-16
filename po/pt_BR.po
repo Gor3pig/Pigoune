@@ -8455,3 +8455,7 @@ msgstr "{tool}: valores padrão"
 #, rust-format
 msgid "{tool} (stays active)"
 msgstr "{tool} (permanece ativa)"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "This text is locked"
+msgstr "Este texto está bloqueado"

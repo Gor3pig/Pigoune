@@ -206,6 +206,12 @@ impl EditSession {
     }
 
     #[must_use]
+    pub fn text_at(&self, point: Point, tolerance: f32) -> Option<u32> {
+        self.pick(point, tolerance)
+            .filter(|id| self.shape_of(*id).is_some_and(|shape| shape.kind == "text"))
+    }
+
+    #[must_use]
     pub fn refusal(&self, id: u32) -> Option<Refusal> {
         let state = &self.document.objects.iter().find(|o| o.id == id)?.state;
         if state.sealed {

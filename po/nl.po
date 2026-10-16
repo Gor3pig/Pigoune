@@ -8499,3 +8499,7 @@ msgstr "{tool}: standaardwaarden"
 #, rust-format
 msgid "{tool} (stays active)"
 msgstr "{tool} (blijft actief)"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "This text is locked"
+msgstr "Deze tekst is vergrendeld"
