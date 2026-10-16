@@ -33,6 +33,20 @@ pub async fn read(clipboard: &gdk::Clipboard) -> Pasted {
     Pasted::Nothing
 }
 
+pub fn capture_name() -> String {
+    stamped_name(&gettext("Capture"))
+}
+
+fn stamped_name(label: &str) -> String {
+    let stamp = glib::DateTime::now_local()
+        .ok()
+        .and_then(|now| now.format(NAME_TIME_FORMAT).ok());
+    match stamp {
+        Some(stamp) => format!("{label} {stamp}"),
+        None => label.to_owned(),
+    }
+}
+
 pub fn image_name() -> String {
     let stamp = glib::DateTime::now_local()
         .ok()

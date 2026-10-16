@@ -6,8 +6,8 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::annotations::{
-    CropEditor, CropRatio, CursorKind, Geometry, Handle, Interaction, Options, Point, Shape, Tool,
-    ToolDefinition, Value,
+    AnnotationDocument, CropEditor, CropRatio, CursorKind, Geometry, Handle, Interaction, Options,
+    Point, Shape, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_export;
@@ -21,6 +21,13 @@ use crate::zoom_view::PointerEvent;
 
 type ClosedCallback = Box<dyn Fn()>;
 type NoticeCallback = Box<dyn Fn(&str)>;
+type SaveCallback = Box<dyn Fn(&EditedCapture)>;
+
+pub struct EditedCapture {
+    pub rendered: Vec<u8>,
+    pub original: Vec<u8>,
+    pub document: AnnotationDocument,
+}
 
 const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
@@ -34,7 +41,10 @@ pub struct TextEdit {
 }
 
 mod imp {
-    use super::{Cell, ClosedCallback, NoticeCallback, OptionRow, Point, RefCell, Shape, TextEdit};
+    use super::{
+        Cell, ClosedCallback, NoticeCallback, OptionRow, Point, RefCell, SaveCallback, Shape,
+        TextEdit,
+    };
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
@@ -127,6 +137,7 @@ mod imp {
         pub tool_buttons: RefCell<Vec<(EditorTool, gtk::ToggleButton)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
         pub on_notice: RefCell<Option<NoticeCallback>>,
+        pub on_save: RefCell<Option<SaveCallback>>,
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
@@ -180,6 +191,10 @@ impl PigouneEditor {
         self.imp().on_closed.replace(Some(Box::new(callback)));
     }
 
+    pub fn connect_save(&self, callback: impl Fn(&EditedCapture) + 'static) {
+        self.imp().on_save.replace(Some(Box::new(callback)));
+    }
+
     pub fn connect_notice(&self, callback: impl Fn(&str) + 'static) {
         self.imp().on_notice.replace(Some(Box::new(callback)));
     }
@@ -216,6 +231,33 @@ impl PigouneEditor {
     #[template_callback]
     fn on_back_clicked(&self) {
         self.commit_text();
+        if !self.imp().drawing.borrow().session.is_modified() {
+            self.leave();
+            return;
+        }
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Discard the Changes?")),
+            Some(&gettext(
+                "The annotations and changes made to this capture will be lost.",
+            )),
+        );
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("discard", &gettext("_Discard"));
+        dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+        dialog.set_default_response(Some("cancel"));
+        dialog.set_close_response("cancel");
+        dialog.connect_response(
+            Some("discard"),
+            glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move |_, _| editor.leave()
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn leave(&self) {
         if let Some(on_closed) = self.imp().on_closed.borrow().as_ref() {
             on_closed();
         }
@@ -972,6 +1014,18 @@ impl PigouneEditor {
         menu.append(Some(&gettext("Export as PNG…")), Some("editor.export"));
         imp.output_button.set_menu_model(Some(&menu));
         imp.output_button.set_sensitive(true);
+        imp.save_button.set_sensitive(true);
+        imp.save_button.connect_clicked(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| {
+                glib::spawn_future_local(glib::clone!(
+                    #[weak]
+                    editor,
+                    async move { editor.request_save().await }
+                ));
+            }
+        ));
     }
 
     fn show_output_failure(&self, heading: &str) {
@@ -990,6 +1044,31 @@ impl PigouneEditor {
         };
         self.clipboard().set_texture(&texture);
         self.notice(&gettext("Image copied to the clipboard"));
+    }
+
+    async fn request_save(&self) {
+        let imp = self.imp();
+        let failure = gettext("Could Not Save the Capture");
+        let (Some(rendered), Some(original)) = (self.final_texture(), imp.zoom_view.texture())
+        else {
+            self.show_output_failure(&failure);
+            return;
+        };
+        let document = imp.drawing.borrow().session.document().clone();
+        let (Ok(rendered), Ok(original)) = (
+            image_conversion::png_bytes(&rendered).await,
+            image_conversion::png_bytes(&original).await,
+        ) else {
+            self.show_output_failure(&failure);
+            return;
+        };
+        if let Some(on_save) = imp.on_save.borrow().as_ref() {
+            on_save(&EditedCapture {
+                rendered,
+                original,
+                document,
+            });
+        }
     }
 
     async fn export_image(&self) {

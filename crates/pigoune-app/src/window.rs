@@ -1,3 +1,4 @@
+use std::fs;
 use std::future::Future;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
@@ -10,11 +11,11 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
-    AdoptError, AssetCommand, AssetError, AssetFilter, AssetFormat, AssetId, AssetView,
-    ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
-    CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind, HealthPlan,
-    IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError, LibraryExportReport,
-    RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
+    AdoptError, AnnotatedError, AnnotatedImage, AssetCommand, AssetError, AssetFilter, AssetFormat,
+    AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId, CollectionLook,
+    CollectionPath, CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind,
+    HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError,
+    LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
     SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
     TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors, library_display_name,
     visual_analysis,
@@ -44,6 +45,7 @@ use crate::duplicates_page::{
     Attachments, DuplicateActions, DuplicateMember, IgnoringActions, PlannedSearch, RemovalFailure,
     Removed,
 };
+use crate::editor::EditedCapture;
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
 use crate::flatpak_updates::FlatpakUpdates;
@@ -198,6 +200,7 @@ const IMAGE_MIME_TYPES: [&str; 13] = [
 ];
 
 const CLOSE_RESPONSE: &str = "close";
+const CAPTURE_TAG: &str = "capture";
 const DEFAULT_VECTOR_EXPORT_PIXELS: u32 = 512;
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
 const RETRY_RESPONSE: &str = "retry";
@@ -5426,11 +5429,86 @@ impl PigouneWindow {
             self,
             move || window.leave_editor()
         ));
+        self.imp().editor.connect_save(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            move |capture| window.save_capture(capture)
+        ));
         self.imp().editor.connect_notice(glib::clone!(
             #[weak(rename_to = window)]
             self,
             move |text| window.show_toast(text)
         ));
+    }
+
+    fn save_capture(&self, capture: &EditedCapture) {
+        let folder = std::env::temp_dir().join(format!("pigoune-capture-{}", std::process::id()));
+        let rendered = folder.join(format!("{}.png", pasted_content::capture_name()));
+        let original = folder.join("source.png");
+        let written = fs::remove_dir_all(&folder)
+            .or_else(|error| match error.kind() {
+                std::io::ErrorKind::NotFound => Ok(()),
+                _ => Err(error),
+            })
+            .and_then(|()| fs::create_dir_all(&folder))
+            .and_then(|()| fs::write(&rendered, &capture.rendered))
+            .and_then(|()| fs::write(&original, &capture.original));
+        let stored = match written {
+            Ok(()) => self.imp().library.borrow_mut().as_mut().map(|library| {
+                library.import_annotated(AnnotatedImage {
+                    rendered: &rendered,
+                    original: &original,
+                    document: &capture.document,
+                })
+            }),
+            Err(_) => Some(Err(AnnotatedError::Unreadable(rendered.clone()))),
+        };
+        let _ = fs::remove_dir_all(&folder);
+        match stored {
+            Some(Ok(id)) => self.capture_saved(id),
+            Some(Err(AnnotatedError::AlreadyPresent(existing))) => {
+                self.show_capture_already_present(existing);
+            }
+            Some(Err(_)) => {
+                let alert = adw::AlertDialog::new(
+                    Some(&gettext("Could Not Save the Capture")),
+                    Some(&gettext("The capture could not be saved to the library.")),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
+            None => {}
+        }
+    }
+
+    fn capture_saved(&self, id: AssetId) {
+        self.apply_tag_command(&TagCommand::Add {
+            assets: vec![id],
+            name: CAPTURE_TAG.to_owned(),
+        });
+        self.refresh_assets();
+        self.analyse_colors();
+        self.leave_editor();
+        let grid = &self.imp().asset_grid;
+        grid.select_asset(id);
+        grid.reveal_asset(id);
+        self.show_toast(&gettext("Capture saved to the library"));
+    }
+
+    fn show_capture_already_present(&self, existing: AssetId) {
+        let name = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.asset(existing).ok().flatten())
+            .map_or_else(String::new, |asset| asset.display_name);
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Image Already in the Library")),
+            Some(&gettext("This image is already stored as “{name}”.").replace("{name}", &name)),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
     }
 
     fn open_editor(&self, image: &Path) -> Result<(), glib::Error> {
