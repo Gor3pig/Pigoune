@@ -413,7 +413,11 @@ impl PigouneEditor {
             label.add_css_class("caption");
             content.append(&label);
             button.set_child(Some(&content));
-            button.set_tooltip_text(Some(&tool.label()));
+            button.set_tooltip_text(Some(&format!(
+                "{} ({})",
+                tool.label(),
+                tool.shortcut().to_ascii_uppercase()
+            )));
             match &first {
                 Some(first) => button.set_group(Some(first)),
                 None => first = Some(button.clone()),
@@ -581,6 +585,10 @@ impl PigouneEditor {
         if matches!(event, PointerEvent::Press(_)) {
             self.commit_text();
         }
+        imp.drawing
+            .borrow_mut()
+            .interaction
+            .set_constrained(imp.zoom_view.shift_held());
         let claimed = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -1271,13 +1279,32 @@ impl PigouneEditor {
             }
             gdk::Key::Return | gdk::Key::KP_Enter => self.edit_selected_text(),
             gdk::Key::Escape => self.escape(),
-            _ => false,
+            _ => self.choose_tool_by_letter(key, modifiers),
         };
         if handled {
             glib::Propagation::Stop
         } else {
             glib::Propagation::Proceed
         }
+    }
+
+    fn choose_tool_by_letter(&self, key: gdk::Key, modifiers: gdk::ModifierType) -> bool {
+        let other_modifiers = gdk::ModifierType::CONTROL_MASK
+            | gdk::ModifierType::ALT_MASK
+            | gdk::ModifierType::SUPER_MASK
+            | gdk::ModifierType::META_MASK;
+        if modifiers.intersects(other_modifiers) {
+            return false;
+        }
+        let Some(tool) = key.to_unicode().and_then(EditorTool::for_shortcut) else {
+            return false;
+        };
+        let buttons = self.imp().tool_buttons.borrow();
+        let Some((_, button)) = buttons.iter().find(|(candidate, _)| *candidate == tool) else {
+            return false;
+        };
+        button.set_active(true);
+        true
     }
 
     fn handle_text_key(&self, key: gdk::Key, control: bool) -> glib::Propagation {

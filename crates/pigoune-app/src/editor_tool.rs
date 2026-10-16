@@ -36,6 +36,28 @@ impl EditorTool {
         Self::Pixelate,
     ];
 
+    pub fn shortcut(self) -> char {
+        match self {
+            Self::Select => 'v',
+            Self::Crop => 'c',
+            Self::Rectangle => 'r',
+            Self::Ellipse => 'o',
+            Self::Line => 'l',
+            Self::Arrow => 'a',
+            Self::Text => 't',
+            Self::Steps => 'n',
+            Self::Pen => 'p',
+            Self::Highlighter => 'h',
+            Self::Blur => 'b',
+            Self::Pixelate => 'x',
+        }
+    }
+
+    pub fn for_shortcut(key: char) -> Option<Self> {
+        let key = key.to_ascii_lowercase();
+        Self::ALL.into_iter().find(|tool| tool.shortcut() == key)
+    }
+
     pub fn name(self) -> &'static str {
         match self {
             Self::Select => "select",
@@ -130,6 +152,21 @@ mod tests {
     use std::path::Path;
 
     use super::EditorTool;
+
+    #[test]
+    fn every_tool_has_its_own_letter_and_is_found_again_from_it() {
+        let letters: HashSet<char> = EditorTool::ALL.iter().map(|tool| tool.shortcut()).collect();
+        assert_eq!(letters.len(), EditorTool::ALL.len());
+        for tool in EditorTool::ALL {
+            assert!(tool.shortcut().is_ascii_lowercase());
+            assert_eq!(EditorTool::for_shortcut(tool.shortcut()), Some(tool));
+            assert_eq!(
+                EditorTool::for_shortcut(tool.shortcut().to_ascii_uppercase()),
+                Some(tool)
+            );
+        }
+        assert_eq!(EditorTool::for_shortcut('z'), None);
+    }
 
     #[test]
     fn every_tool_is_found_again_from_its_name() {

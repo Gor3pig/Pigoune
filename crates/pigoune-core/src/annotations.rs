@@ -12,9 +12,9 @@ use serde_json::Map;
 
 pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
-    ArrowHead, Handle, arrow_head, dash_pattern, estimated_text_extent, handles, head_size_factor,
-    hit, hit_with_extent, next_stroke_point, rect_between, resized, shape_bounds, shape_from_drag,
-    shape_from_points, simplified, translated,
+    ArrowHead, Handle, arrow_head, constrained_end, dash_pattern, estimated_text_extent, handles,
+    head_size_factor, hit, hit_with_extent, next_stroke_point, rect_between, resized, shape_bounds,
+    shape_from_drag, shape_from_points, simplified, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use options::{

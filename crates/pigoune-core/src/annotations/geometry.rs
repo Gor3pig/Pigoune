@@ -105,6 +105,30 @@ pub fn shape_from_drag(
 }
 
 #[must_use]
+pub fn constrained_end(from: Point, to: Point, kind: GeometryKind) -> Point {
+    let (dx, dy) = (to.x - from.x, to.y - from.y);
+    match kind {
+        GeometryKind::Box => {
+            let side = dx.abs().max(dy.abs());
+            Point {
+                x: from.x + side * dx.signum(),
+                y: from.y + side * dy.signum(),
+            }
+        }
+        GeometryKind::TwoPoints => {
+            let step = std::f32::consts::FRAC_PI_4;
+            let angle = (dy.atan2(dx) / step).round() * step;
+            let length = dx.hypot(dy);
+            Point {
+                x: from.x + length * angle.cos(),
+                y: from.y + length * angle.sin(),
+            }
+        }
+        GeometryKind::Polyline | GeometryKind::Anchor => to,
+    }
+}
+
+#[must_use]
 pub fn shape_from_anchor(
     definition: &ToolDefinition,
     at: Point,
