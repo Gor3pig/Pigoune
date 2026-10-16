@@ -8,7 +8,7 @@ use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::AssetId;
 use pigoune_core::annotations::{
     AnnotationDocument, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
-    Interaction, Options, Point, Shape, Tool, ToolDefinition, Value,
+    Interaction, Options, Point, Shape, Snapping, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_export;
@@ -35,6 +35,7 @@ pub struct EditedCapture {
 
 const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
+const SNAP_PIXELS: f64 = 6.0;
 const TEXT_VIEW_OFFSET: (f32, f32) = (4.0, 2.0);
 const TEXT_PROVIDER_PRIORITY: u32 = 800;
 const DRAFT_DELAY: std::time::Duration = std::time::Duration::from_millis(1500);
@@ -565,6 +566,13 @@ impl PigouneEditor {
         }
         snapshot.pop();
         snapshot.restore();
+        annotation_render::append_guides(
+            snapshot,
+            drawing.interaction.guides(),
+            whole,
+            scale,
+            imp.image_size.get(),
+        );
         if let Some(crop) = &drawing.crop_editor {
             annotation_render::append_crop(snapshot, crop, whole, scale);
         } else if drawing.interaction.pending().is_none()
@@ -634,10 +642,18 @@ impl PigouneEditor {
         if matches!(event, PointerEvent::Press(_)) {
             self.commit_text();
         }
-        imp.drawing
-            .borrow_mut()
-            .interaction
-            .set_constrained(imp.zoom_view.shift_held());
+        {
+            let mut drawing = imp.drawing.borrow_mut();
+            drawing
+                .interaction
+                .set_constrained(imp.zoom_view.shift_held());
+            let (width, height) = imp.image_size.get();
+            let snapping = (!imp.zoom_view.alt_held()).then(|| Snapping {
+                tolerance: point_to_f32(SNAP_PIXELS / imp.zoom_view.zoom().max(0.01)),
+                image: (pixels_to_f32(width), pixels_to_f32(height)),
+            });
+            drawing.interaction.set_snapping(snapping);
+        }
         let claimed = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -1619,6 +1635,10 @@ fn image_point(point: crate::zoom_math::Point) -> Point {
         x: point_to_f32(point.x),
         y: point_to_f32(point.y),
     }
+}
+
+fn pixels_to_f32(value: u32) -> f32 {
+    f32::from(u16::try_from(value).unwrap_or(u16::MAX))
 }
 
 fn distance(from: Point, to: Point) -> f32 {

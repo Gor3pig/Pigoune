@@ -1,7 +1,8 @@
 use super::geometry::{self, Handle};
 use super::session::EditSession;
+use super::snapping::{self, Guide, Snapping};
 use super::tools::{GeometryKind, ToolDefinition};
-use super::{Options, Point, Shape};
+use super::{Options, Point, Rect, Shape};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Tool {
@@ -28,6 +29,7 @@ enum State {
         points: Vec<Point>,
     },
     Moving {
+        id: u32,
         origin: Point,
         original: Shape,
     },
@@ -42,6 +44,8 @@ pub struct Interaction {
     state: State,
     pending: Option<Shape>,
     constrained: bool,
+    snapping: Option<Snapping>,
+    guides: Vec<Guide>,
 }
 
 impl Default for Interaction {
@@ -50,6 +54,8 @@ impl Default for Interaction {
             state: State::Idle,
             pending: None,
             constrained: false,
+            snapping: None,
+            guides: Vec::new(),
         }
     }
 }
@@ -62,6 +68,15 @@ impl Interaction {
 
     pub fn set_constrained(&mut self, constrained: bool) {
         self.constrained = constrained;
+    }
+
+    pub fn set_snapping(&mut self, snapping: Option<Snapping>) {
+        self.snapping = snapping;
+    }
+
+    #[must_use]
+    pub fn guides(&self) -> &[Guide] {
+        &self.guides
     }
 
     #[must_use]
@@ -117,6 +132,7 @@ impl Interaction {
             && let Some(original) = session.shape_of(id).cloned()
         {
             self.state = State::Moving {
+                id,
                 origin: point,
                 original,
             };
@@ -126,6 +142,7 @@ impl Interaction {
 
     pub fn drag(&mut self, session: &mut EditSession, point: Point) {
         let constrained = self.constrained;
+        let snapping = self.snapping;
         match &mut self.state {
             State::Idle => {}
             State::Drawing {
@@ -150,12 +167,15 @@ impl Interaction {
                     self.pending = geometry::shape_from_drag(definition, *from, end, options);
                 }
             }
-            State::Moving { origin, original } => {
-                session.preview(geometry::translated(
-                    original,
-                    point.x - origin.x,
-                    point.y - origin.y,
-                ));
+            State::Moving {
+                id,
+                origin,
+                original,
+            } => {
+                let moved = geometry::translated(original, point.x - origin.x, point.y - origin.y);
+                let (moved, guides) = snapped(session, *id, moved, snapping);
+                self.guides = guides;
+                session.preview(moved);
             }
             State::Resizing { handle, original } => {
                 session.preview(geometry::resized(original, *handle, point));
@@ -187,6 +207,7 @@ impl Interaction {
             }
         }
         self.pending = None;
+        self.guides.clear();
     }
 
     pub fn cancel(&mut self, session: &mut EditSession) {
@@ -195,6 +216,7 @@ impl Interaction {
         }
         self.state = State::Idle;
         self.pending = None;
+        self.guides.clear();
     }
 
     #[must_use]
@@ -213,6 +235,29 @@ impl Interaction {
             }
         }
     }
+}
+
+fn snapped(
+    session: &EditSession,
+    moving: u32,
+    shape: Shape,
+    snapping: Option<Snapping>,
+) -> (Shape, Vec<Guide>) {
+    let (Some(snapping), Some(bounds)) = (snapping, geometry::shape_bounds(&shape)) else {
+        return (shape, Vec::new());
+    };
+    let others: Vec<Rect> = session
+        .document()
+        .objects
+        .iter()
+        .filter(|object| object.id != moving)
+        .filter_map(|object| object.shape().and_then(geometry::shape_bounds))
+        .collect();
+    let snap = snapping::snap_move(bounds, &others, snapping);
+    (
+        geometry::translated(&shape, snap.shift.0, snap.shift.1),
+        snap.guides,
+    )
 }
 
 fn handle_at(session: &EditSession, point: Point, reach: f32) -> Option<(u32, Handle)> {
