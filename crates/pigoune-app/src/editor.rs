@@ -268,6 +268,12 @@ impl PigouneEditor {
         );
     }
 
+    pub fn open_texture(&self, texture: &gdk::Texture) {
+        capture_draft::Draft::standard().clear();
+        self.show_texture(texture, None, None);
+        self.keep_original_in_draft();
+    }
+
     fn open_with(
         &self,
         image: &Path,
@@ -275,6 +281,16 @@ impl PigouneEditor {
         replaced: Option<AssetId>,
     ) -> Result<(), glib::Error> {
         let texture = gdk::Texture::from_filename(image)?;
+        self.show_texture(&texture, session, replaced);
+        Ok(())
+    }
+
+    fn show_texture(
+        &self,
+        texture: &gdk::Texture,
+        session: Option<EditSession>,
+        replaced: Option<AssetId>,
+    ) {
         let width = u32::try_from(texture.width()).unwrap_or(1);
         let height = u32::try_from(texture.height()).unwrap_or(1);
         let imp = self.imp();
@@ -293,11 +309,10 @@ impl PigouneEditor {
         imp.drawing.replace(drawing);
         imp.image_size.set((width, height));
         imp.zoom_view
-            .show_image(Some(&texture), width, height, false);
+            .show_image(Some(texture), width, height, false);
         self.show_session_crop();
         self.update_panel();
         self.refresh();
-        Ok(())
     }
 
     pub fn close(&self) {
