@@ -14,6 +14,11 @@ pub enum OptionEvent {
     Changed(&'static str, Value),
     SliderPressed,
     SliderReleased,
+    PickColor(&'static str),
+}
+
+pub fn color_value(color: Color) -> Value {
+    color_to_value(color)
 }
 
 pub type Notify = Rc<dyn Fn(OptionEvent)>;
@@ -156,7 +161,7 @@ fn color_row(spec: &'static OptionSpec, notify: &Notify) -> BuiltRow {
     let row = gtk::ListBoxRow::new();
     row.set_activatable(false);
     row.set_selectable(false);
-    let swatches = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    let swatches = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     swatches.set_margin_top(12);
     swatches.set_margin_bottom(12);
     swatches.set_margin_start(12);
@@ -185,6 +190,21 @@ fn color_row(spec: &'static OptionSpec, notify: &Notify) -> BuiltRow {
         swatches.append(&button);
         buttons.push(button);
     }
+    let unlisted = gtk::ToggleButton::new();
+    if let Some(first) = &first {
+        unlisted.set_group(Some(first));
+    }
+    let picker = gtk::Button::from_icon_name("eyedropper-symbolic");
+    picker.add_css_class("flat");
+    picker.add_css_class("circular");
+    picker.add_css_class("annotation-picker");
+    picker.set_valign(gtk::Align::Center);
+    let tooltip = gettext("Pick a Color from the Image");
+    picker.set_tooltip_text(Some(&tooltip));
+    picker.update_property(&[gtk::accessible::Property::Label(&tooltip)]);
+    let asking = notify.clone();
+    picker.connect_clicked(move |_| asking(OptionEvent::PickColor(spec.id)));
+    swatches.append(&picker);
     row.set_child(Some(&swatches));
     let setter = move |value: &Value| {
         if let Some(color) = value_to_color(value)
@@ -192,6 +212,8 @@ fn color_row(spec: &'static OptionSpec, notify: &Notify) -> BuiltRow {
             && let Some(button) = buttons.get(index)
         {
             button.set_active(true);
+        } else {
+            unlisted.set_active(true);
         }
     };
     (row.upcast(), Box::new(setter))

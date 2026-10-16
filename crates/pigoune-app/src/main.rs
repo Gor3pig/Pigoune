@@ -25,6 +25,7 @@ mod collection_name_dialog;
 mod collection_places;
 mod collection_sort;
 mod color_chips;
+mod color_sampler;
 mod config;
 mod conversion_memory;
 mod conversion_report;
