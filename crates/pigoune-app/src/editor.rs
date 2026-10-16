@@ -5,6 +5,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene, pango};
+use pigoune_core::AssetId;
 use pigoune_core::annotations::{
     AnnotationDocument, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
     Interaction, Options, Point, Shape, Tool, ToolDefinition, Value,
@@ -25,6 +26,7 @@ type NoticeCallback = Box<dyn Fn(&str)>;
 type SaveCallback = Box<dyn Fn(&EditedCapture)>;
 
 pub struct EditedCapture {
+    pub replaces: Option<AssetId>,
     pub rendered: Vec<u8>,
     pub original: Vec<u8>,
     pub document: AnnotationDocument,
@@ -44,8 +46,8 @@ pub struct TextEdit {
 
 mod imp {
     use super::{
-        Cell, ClosedCallback, NoticeCallback, OptionRow, Point, RefCell, SaveCallback, Shape,
-        TextEdit,
+        AssetId, Cell, ClosedCallback, NoticeCallback, OptionRow, Point, RefCell, SaveCallback,
+        Shape, TextEdit,
     };
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -141,6 +143,7 @@ mod imp {
         pub on_notice: RefCell<Option<NoticeCallback>>,
         pub on_save: RefCell<Option<SaveCallback>>,
         pub draft_pending: Cell<bool>,
+        pub replaced_asset: Cell<Option<AssetId>>,
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
@@ -204,18 +207,27 @@ impl PigouneEditor {
 
     pub fn open(&self, image: &Path) -> Result<(), glib::Error> {
         capture_draft::Draft::standard().clear();
-        self.open_with(image, None)?;
+        self.open_with(image, None, None)?;
         self.keep_original_in_draft();
         Ok(())
     }
 
     pub fn resume(&self, image: &Path, document: AnnotationDocument) -> Result<(), glib::Error> {
-        self.open_with(image, Some(document))
+        self.open_with(image, Some(EditSession::restored(document)), None)
+    }
+
+    pub fn open_existing(
+        &self,
+        asset: AssetId,
+        original: &Path,
+        document: AnnotationDocument,
+    ) -> Result<(), glib::Error> {
+        self.open_with(original, Some(EditSession::new(document)), Some(asset))
     }
 
     pub fn flush_draft(&self) {
         let imp = self.imp();
-        if imp.zoom_view.texture().is_none() {
+        if imp.zoom_view.texture().is_none() || imp.replaced_asset.get().is_some() {
             return;
         }
         let drawing = imp.drawing.borrow();
@@ -225,6 +237,9 @@ impl PigouneEditor {
     }
 
     fn keep_original_in_draft(&self) {
+        if self.imp().replaced_asset.get().is_some() {
+            return;
+        }
         let Some(texture) = self.imp().zoom_view.texture() else {
             return;
         };
@@ -256,7 +271,8 @@ impl PigouneEditor {
     fn open_with(
         &self,
         image: &Path,
-        document: Option<AnnotationDocument>,
+        session: Option<EditSession>,
+        replaced: Option<AssetId>,
     ) -> Result<(), glib::Error> {
         let texture = gdk::Texture::from_filename(image)?;
         let width = u32::try_from(texture.width()).unwrap_or(1);
@@ -266,9 +282,10 @@ impl PigouneEditor {
         imp.pixel_cache.borrow_mut().clear();
         imp.locked_masks.take();
         let mut drawing = imp::Drawing::default();
-        if let Some(document) = document {
-            drawing.session = EditSession::restored(document);
+        if let Some(session) = session {
+            drawing.session = session;
         }
+        imp.replaced_asset.set(replaced);
         let context = self.pango_context();
         drawing
             .session
@@ -1129,6 +1146,7 @@ impl PigouneEditor {
         };
         if let Some(on_save) = imp.on_save.borrow().as_ref() {
             on_save(&EditedCapture {
+                replaces: imp.replaced_asset.get(),
                 rendered,
                 original,
                 document,

@@ -150,11 +150,15 @@ const PASTE_ACTION: &str = "win.paste";
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
+const EDIT_ANNOTATIONS_ACTION: &str = "win.edit-annotations";
+const VIEW_ORIGINAL_ACTION: &str = "win.view-original";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
 const MOST_SIMILAR_SHOWN: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 27] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 29] = [
+    EDIT_ANNOTATIONS_ACTION,
+    VIEW_ORIGINAL_ACTION,
     SET_WALLPAPER_ACTION,
     FIND_SIMILAR_ACTION,
     SEARCH_ACTION,
@@ -246,18 +250,19 @@ mod imp {
         ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
         CLOSE_LIBRARY_ACTION, CLOSE_WINDOW_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
         CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
-        DELETE_TAG_ACTION, EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION,
-        ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION,
-        FIND_SIMILAR_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION,
-        MERGE_TAG_ACTION, MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION,
-        NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION,
-        NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
+        DELETE_TAG_ACTION, EDIT_ANNOTATIONS_ACTION, EDIT_SMART_COLLECTION_ACTION,
+        EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION,
+        EXPORT_SELECTED_AS_ACTION, FIND_SIMILAR_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
+        LIBRARY_INFO_ACTION, MERGE_TAG_ACTION, MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION,
+        MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION,
+        NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
         OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION, PREFERENCES_ACTION,
         REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION, REMOVE_FROM_COLLECTION_ACTION,
         RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION,
         SEARCH_ACTION, SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION,
         SHRINK_THUMBNAILS_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer,
-        UNDO_ACTION, collection_parameter, smart_collection_parameter, tag_parameter,
+        UNDO_ACTION, VIEW_ORIGINAL_ACTION, collection_parameter, smart_collection_parameter,
+        tag_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -460,6 +465,12 @@ mod imp {
         });
         class.install_action_async(OPEN_WITH_ACTION, None, |window, _, _| async move {
             window.open_selected_with().await;
+        });
+        class.install_action(EDIT_ANNOTATIONS_ACTION, None, |window, _, _| {
+            window.edit_selected_annotations();
+        });
+        class.install_action_async(VIEW_ORIGINAL_ACTION, None, |window, _, _| async move {
+            window.view_selected_original().await;
         });
         class.install_action_async(SHOW_IN_FILES_ACTION, None, |window, _, _| async move {
             window.show_selected_in_files().await;
@@ -2748,6 +2759,7 @@ impl PigouneWindow {
                 &gettext("Show in Files"),
                 SHOW_IN_FILES_ACTION,
             ));
+            self.append_annotation_items(&viewing);
             if !in_trash {
                 viewing.append_item(&menu_item(
                     &gettext("Find Similar…"),
@@ -2878,8 +2890,96 @@ impl PigouneWindow {
             }
             several => imp.asset_details.show_group(several, &thumbnails),
         }
+        imp.asset_details
+            .show_annotations(self.annotated_selection().is_some());
         self.refresh_selected_tags();
         self.refresh_selected_collections();
+    }
+
+    fn append_annotation_items(&self, menu: &gio::Menu) {
+        if self.annotated_selection().is_none() {
+            return;
+        }
+        menu.append_item(&shortcuts::menu_item(
+            &gettext("Edit Annotations…"),
+            EDIT_ANNOTATIONS_ACTION,
+        ));
+        menu.append_item(&shortcuts::menu_item(
+            &gettext("View Original"),
+            VIEW_ORIGINAL_ACTION,
+        ));
+    }
+
+    fn annotated_selection(&self) -> Option<AssetId> {
+        if self.is_showing_trash() {
+            return None;
+        }
+        let [id] = self.selected_ids()[..] else {
+            return None;
+        };
+        let library = self.imp().library.borrow();
+        library.as_ref()?.annotations(id).ok().flatten()?;
+        Some(id)
+    }
+
+    fn edit_selected_annotations(&self) {
+        let Some(id) = self.annotated_selection() else {
+            return;
+        };
+        let loaded = self.imp().library.borrow().as_ref().map(|library| {
+            Ok::<_, AnnotatedError>((library.original_path(id)?, library.annotation_document(id)?))
+        });
+        let Some(Ok((Some(original), Some(document)))) = loaded else {
+            self.show_annotation_failure();
+            return;
+        };
+        if self
+            .imp()
+            .editor
+            .open_existing(id, &original, document)
+            .is_ok()
+        {
+            self.show_editor();
+        } else {
+            self.show_annotation_failure();
+        }
+    }
+
+    fn show_annotation_failure(&self) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Could Not Open the Annotations")),
+            Some(&gettext(
+                "The original image or its annotations could not be read. They may come from a newer version of Pigoune.",
+            )),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
+    async fn view_selected_original(&self) {
+        let Some(id) = self.annotated_selection() else {
+            return;
+        };
+        let original = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.original_path(id).ok().flatten());
+        let copy = original.and_then(|original| {
+            let copy = std::env::temp_dir().join(format!("pigoune-original-{id}.png"));
+            fs::copy(original, &copy).ok().map(|_| copy)
+        });
+        let Some(copy) = copy else {
+            self.show_annotation_failure();
+            return;
+        };
+        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(copy)));
+        if let Err(error) = launcher.launch_future(Some(self)).await
+            && !is_dismissed(&error)
+        {
+            self.show_open_with_error(error.message());
+        }
     }
 
     fn is_showing_trash(&self) -> bool {
@@ -5446,7 +5546,60 @@ impl PigouneWindow {
         ));
     }
 
+    fn save_edited_annotations(&self, id: AssetId, capture: &EditedCapture) {
+        let folder = std::env::temp_dir().join(format!("pigoune-capture-{}", std::process::id()));
+        let rendered = folder.join("rendered.png");
+        let original = folder.join("source.png");
+        let written = fs::remove_dir_all(&folder)
+            .or_else(|error| match error.kind() {
+                std::io::ErrorKind::NotFound => Ok(()),
+                _ => Err(error),
+            })
+            .and_then(|()| fs::create_dir_all(&folder))
+            .and_then(|()| fs::write(&rendered, &capture.rendered))
+            .and_then(|()| fs::write(&original, &capture.original));
+        let stored = match written {
+            Ok(()) => self.imp().library.borrow_mut().as_mut().map(|library| {
+                library
+                    .update_annotated(id, &rendered, &capture.document)
+                    .and_then(|()| library.replace_original(id, &original))
+            }),
+            Err(_) => Some(Err(AnnotatedError::Unreadable(rendered.clone()))),
+        };
+        let _ = fs::remove_dir_all(&folder);
+        match stored {
+            Some(Ok(())) => {
+                self.imp().asset_grid.forget_thumbnails();
+                self.refresh_assets();
+                self.analyse_colors();
+                self.leave_editor();
+                let grid = &self.imp().asset_grid;
+                grid.select_asset(id);
+                grid.reveal_asset(id);
+                self.show_toast(&gettext("Annotations saved"));
+            }
+            Some(Err(AnnotatedError::AlreadyPresent(existing))) => {
+                self.show_capture_already_present(existing);
+            }
+            Some(Err(_)) => self.show_capture_not_saved(),
+            None => {}
+        }
+    }
+
+    fn show_capture_not_saved(&self) {
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Could Not Save the Capture")),
+            Some(&gettext("The capture could not be saved to the library.")),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
     fn save_capture(&self, capture: &EditedCapture) {
+        if let Some(id) = capture.replaces {
+            self.save_edited_annotations(id, capture);
+            return;
+        }
         let folder = std::env::temp_dir().join(format!("pigoune-capture-{}", std::process::id()));
         let rendered = folder.join(format!("{}.png", pasted_content::capture_name()));
         let original = folder.join("source.png");
@@ -5474,14 +5627,7 @@ impl PigouneWindow {
             Some(Err(AnnotatedError::AlreadyPresent(existing))) => {
                 self.show_capture_already_present(existing);
             }
-            Some(Err(_)) => {
-                let alert = adw::AlertDialog::new(
-                    Some(&gettext("Could Not Save the Capture")),
-                    Some(&gettext("The capture could not be saved to the library.")),
-                );
-                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
-                alert.present(Some(self));
-            }
+            Some(Err(_)) => self.show_capture_not_saved(),
             None => {}
         }
     }
