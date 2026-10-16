@@ -1,3 +1,8 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
@@ -10,9 +15,26 @@ const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
 pub const HANDLE_SIZE: f32 = 10.0;
 
+pub type PixelCache = RefCell<HashMap<([u32; 5], u64), gdk::Texture>>;
+
+const PIXEL_CACHE_LIMIT: usize = 24;
+
+pub struct Backdrop<'a> {
+    pub texture: &'a gdk::Texture,
+    pub renderer: &'a gsk::Renderer,
+    pub cache: &'a PixelCache,
+}
+
+pub struct Scene<'a> {
+    pub backdrop: &'a Backdrop<'a>,
+    pub document: &'a AnnotationDocument,
+    pub upto: usize,
+}
+
 pub struct Draw<'a> {
     pub pango: &'a pango::Context,
     pub ordinal: u32,
+    pub scene: Option<&'a Scene<'a>>,
 }
 
 type Renderer = fn(&gtk::Snapshot, &Shape, &Draw);
@@ -26,8 +48,8 @@ const RENDERERS: [(&str, Renderer); 10] = [
     ("highlighter", draw_highlighter),
     ("step", draw_step),
     ("text", draw_text),
-    ("blur", draw_nothing_yet),
-    ("pixelate", draw_nothing_yet),
+    ("blur", draw_blur),
+    ("pixelate", draw_pixelate),
 ];
 
 #[cfg(test)]
@@ -106,15 +128,21 @@ pub fn append_document(
     snapshot: &gtk::Snapshot,
     document: &AnnotationDocument,
     context: &pango::Context,
+    backdrop: Option<&Backdrop>,
     skipped: Option<u32>,
 ) {
-    for object in &document.objects {
+    for (index, object) in document.objects.iter().enumerate() {
         if Some(object.id) == skipped {
             continue;
         }
         if let Some(shape) = object.shape() {
             let ordinal = document.ordinal(object.id).unwrap_or(1);
-            append_shape(snapshot, shape, ordinal, context);
+            let scene = backdrop.map(|backdrop| Scene {
+                backdrop,
+                document,
+                upto: index,
+            });
+            append_shape(snapshot, shape, ordinal, context, scene.as_ref());
         }
     }
 }
@@ -124,6 +152,7 @@ pub fn append_shape(
     shape: &Shape,
     ordinal: u32,
     context: &pango::Context,
+    scene: Option<&Scene>,
 ) {
     if let Some((_, renderer)) = RENDERERS.iter().find(|(kind, _)| *kind == shape.kind) {
         renderer(
@@ -132,6 +161,7 @@ pub fn append_shape(
             &Draw {
                 pango: context,
                 ordinal,
+                scene,
             },
         );
     }
@@ -452,7 +482,110 @@ fn text_bounds(shape: &Shape, context: &pango::Context) -> Option<Rect> {
     })
 }
 
-fn draw_nothing_yet(_snapshot: &gtk::Snapshot, _shape: &Shape, _draw: &Draw) {}
+fn whole_texture(texture: &gdk::Texture) -> graphene::Rect {
+    graphene::Rect::new(0.0, 0.0, pixels(texture.width()), pixels(texture.height()))
+}
+
+fn draw_below(
+    snapshot: &gtk::Snapshot,
+    scene: &Scene,
+    filter: gsk::ScalingFilter,
+    context: &pango::Context,
+) {
+    let texture = scene.backdrop.texture;
+    snapshot.append_scaled_texture(texture, filter, &whole_texture(texture));
+    for (index, object) in scene.document.objects[..scene.upto].iter().enumerate() {
+        if let Some(shape) = object.shape() {
+            let ordinal = scene.document.ordinal(object.id).unwrap_or(1);
+            let earlier = Scene {
+                backdrop: scene.backdrop,
+                document: scene.document,
+                upto: index,
+            };
+            append_shape(snapshot, shape, ordinal, context, Some(&earlier));
+        }
+    }
+}
+
+fn draw_blur(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
+    let (Some(scene), Some(region)) = (draw.scene, shape_bounds(shape)) else {
+        return;
+    };
+    snapshot.push_clip(&graphene_rect(region));
+    snapshot.push_blur(f64::from(shape.number("radius")));
+    draw_below(snapshot, scene, gsk::ScalingFilter::Linear, draw.pango);
+    snapshot.pop();
+    snapshot.pop();
+}
+
+fn pixel_tile(
+    scene: &Scene,
+    region: Rect,
+    cell: f32,
+    context: &pango::Context,
+) -> Option<gdk::Texture> {
+    let columns = (region.width / cell).ceil().max(1.0);
+    let rows = (region.height / cell).ceil().max(1.0);
+    let tile = gtk::Snapshot::new();
+    tile.scale(1.0 / cell, 1.0 / cell);
+    tile.translate(&graphene::Point::new(-region.x, -region.y));
+    draw_below(&tile, scene, gsk::ScalingFilter::Trilinear, context);
+    let node = tile.to_node()?;
+    Some(
+        scene
+            .backdrop
+            .renderer
+            .render_texture(&node, Some(&graphene::Rect::new(0.0, 0.0, columns, rows))),
+    )
+}
+
+fn scene_signature(scene: &Scene) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    format!("{:?}", &scene.document.objects[..scene.upto]).hash(&mut hasher);
+    hasher.finish()
+}
+
+fn cached_pixel_tile(
+    scene: &Scene,
+    region: Rect,
+    cell: f32,
+    context: &pango::Context,
+) -> Option<gdk::Texture> {
+    let key = (
+        [region.x, region.y, region.width, region.height, cell].map(f32::to_bits),
+        scene_signature(scene),
+    );
+    let known = scene.backdrop.cache.borrow().get(&key).cloned();
+    if known.is_some() {
+        return known;
+    }
+    let tile = pixel_tile(scene, region, cell, context)?;
+    let mut cache = scene.backdrop.cache.borrow_mut();
+    if cache.len() >= PIXEL_CACHE_LIMIT {
+        cache.clear();
+    }
+    cache.insert(key, tile.clone());
+    Some(tile)
+}
+
+fn draw_pixelate(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
+    let (Some(scene), Some(region)) = (draw.scene, shape_bounds(shape)) else {
+        return;
+    };
+    let cell = shape.number("cell").max(1.0);
+    let Some(tile) = cached_pixel_tile(scene, region, cell, draw.pango) else {
+        return;
+    };
+    let covered = graphene::Rect::new(
+        region.x,
+        region.y,
+        pixels(tile.width()) * cell,
+        pixels(tile.height()) * cell,
+    );
+    snapshot.push_clip(&graphene_rect(region));
+    snapshot.append_scaled_texture(&tile, gsk::ScalingFilter::Nearest, &covered);
+    snapshot.pop();
+}
 
 pub fn append_selection(
     snapshot: &gtk::Snapshot,
