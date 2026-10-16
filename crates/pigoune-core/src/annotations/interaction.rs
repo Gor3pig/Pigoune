@@ -41,6 +41,7 @@ enum State {
 pub struct Interaction {
     state: State,
     pending: Option<Shape>,
+    constrained: bool,
 }
 
 impl Default for Interaction {
@@ -48,6 +49,7 @@ impl Default for Interaction {
         Self {
             state: State::Idle,
             pending: None,
+            constrained: false,
         }
     }
 }
@@ -56,6 +58,10 @@ impl Interaction {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn set_constrained(&mut self, constrained: bool) {
+        self.constrained = constrained;
     }
 
     #[must_use]
@@ -119,6 +125,7 @@ impl Interaction {
     }
 
     pub fn drag(&mut self, session: &mut EditSession, point: Point) {
+        let constrained = self.constrained;
         match &mut self.state {
             State::Idle => {}
             State::Drawing {
@@ -135,7 +142,12 @@ impl Interaction {
                     }
                     self.pending = geometry::shape_from_points(definition, points, options, false);
                 } else {
-                    self.pending = geometry::shape_from_drag(definition, *from, point, options);
+                    let end = if constrained {
+                        geometry::constrained_end(*from, point, definition.geometry)
+                    } else {
+                        point
+                    };
+                    self.pending = geometry::shape_from_drag(definition, *from, end, options);
                 }
             }
             State::Moving { origin, original } => {
