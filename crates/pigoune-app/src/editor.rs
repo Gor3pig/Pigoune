@@ -15,6 +15,7 @@ use crate::annotation_export;
 use crate::annotation_render;
 use crate::asset_preview::zoom_text;
 use crate::capture_draft;
+use crate::color_sampler;
 use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
 use crate::image_conversion;
@@ -144,6 +145,8 @@ mod imp {
         pub on_save: RefCell<Option<SaveCallback>>,
         pub draft_pending: Cell<bool>,
         pub replaced_asset: Cell<Option<AssetId>>,
+        pub picking_color: Cell<Option<&'static str>>,
+        pub picking_pressed: Cell<bool>,
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
@@ -572,8 +575,54 @@ impl PigouneEditor {
         }
     }
 
+    fn start_picking(&self, id: &'static str) {
+        self.commit_text();
+        let imp = self.imp();
+        imp.picking_color.set(Some(id));
+        imp.zoom_view.set_cursor_override(Some("crosshair"));
+    }
+
+    fn handle_picking_pointer(&self, event: PointerEvent) -> bool {
+        let imp = self.imp();
+        match event {
+            PointerEvent::Press(point) => {
+                imp.picking_pressed.set(true);
+                if let Some(id) = imp.picking_color.take() {
+                    imp.zoom_view.set_cursor_override(None);
+                    let sampled = self
+                        .with_backdrop(|backdrop| {
+                            color_sampler::pixel_color(
+                                backdrop.renderer,
+                                backdrop.texture,
+                                point_to_f32(point.x),
+                                point_to_f32(point.y),
+                            )
+                        })
+                        .flatten();
+                    if let Some(color) = sampled {
+                        self.apply_option(id, &editor_options::color_value(color));
+                        self.update_panel();
+                    }
+                }
+                true
+            }
+            PointerEvent::Release(_) => {
+                imp.picking_pressed.set(false);
+                true
+            }
+            PointerEvent::Drag(_) => true,
+            PointerEvent::Hover(_) => {
+                imp.zoom_view.set_cursor_override(Some("crosshair"));
+                false
+            }
+        }
+    }
+
     fn handle_pointer(&self, event: PointerEvent) -> bool {
         let imp = self.imp();
+        if imp.picking_color.get().is_some() || imp.picking_pressed.get() {
+            return self.handle_picking_pointer(event);
+        }
         if imp.active_tool.get() == EditorTool::Crop {
             return self.handle_crop_pointer(event);
         }
@@ -1355,6 +1404,10 @@ impl PigouneEditor {
 
     fn escape(&self) -> bool {
         let imp = self.imp();
+        if imp.picking_color.take().is_some() {
+            imp.zoom_view.set_cursor_override(None);
+            return true;
+        }
         let handled = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -1461,6 +1514,7 @@ impl PigouneEditor {
                 }
             }
             OptionEvent::Changed(id, value) => self.apply_option(id, &value),
+            OptionEvent::PickColor(id) => self.start_picking(id),
         }
     }
 

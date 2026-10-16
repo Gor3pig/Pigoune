@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:39+0200\n"
+"POT-Creation-Date: 2026-10-16 13:43+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1395,7 +1395,7 @@ msgid "New Library"
 msgstr "Nieuwe bibliotheek"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
-#: crates/pigoune-app/src/editor.rs:338 crates/pigoune-app/src/editor.rs:1049
+#: crates/pigoune-app/src/editor.rs:341 crates/pigoune-app/src/editor.rs:1098
 #: crates/pigoune-app/src/window.rs:3086 crates/pigoune-app/src/window.rs:5098
 #: crates/pigoune-app/src/window.rs:5276 crates/pigoune-app/src/window.rs:5349
 #: crates/pigoune-app/src/window.rs:6155
@@ -1450,37 +1450,37 @@ msgstr "_Kiezen…"
 msgid "translator-credits"
 msgstr "Gor3pig"
 
-#: crates/pigoune-app/src/editor.rs:333
+#: crates/pigoune-app/src/editor.rs:336
 msgid "Discard the Changes?"
 msgstr "Wijzigingen negeren?"
 
-#: crates/pigoune-app/src/editor.rs:335
+#: crates/pigoune-app/src/editor.rs:338
 msgid "The annotations and changes made to this capture will be lost."
 msgstr "De aantekeningen en wijzigingen aan deze opname gaan verloren."
 
-#: crates/pigoune-app/src/editor.rs:339 crates/pigoune-app/src/window.rs:5798
+#: crates/pigoune-app/src/editor.rs:342 crates/pigoune-app/src/window.rs:5798
 msgid "_Discard"
 msgstr "_Negeren"
 
-#: crates/pigoune-app/src/editor.rs:920
+#: crates/pigoune-app/src/editor.rs:969
 #, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
-#: crates/pigoune-app/src/editor.rs:1023 crates/pigoune-app/ui/editor.blp:124
+#: crates/pigoune-app/src/editor.rs:1072 crates/pigoune-app/ui/editor.blp:124
 msgid "No annotations"
 msgstr "Geen annotaties"
 
-#: crates/pigoune-app/src/editor.rs:1025
+#: crates/pigoune-app/src/editor.rs:1074
 #, rust-format
 msgid "Annotations: {count}"
 msgstr "Annotaties: {count}"
 
-#: crates/pigoune-app/src/editor.rs:1044
+#: crates/pigoune-app/src/editor.rs:1093
 msgid "Lock the Masks?"
 msgstr "Maskeringen vergrendelen?"
 
-#: crates/pigoune-app/src/editor.rs:1046
+#: crates/pigoune-app/src/editor.rs:1095
 msgid ""
 "The blur and the pixelation will be applied to the original image for good. "
 "The hidden content can no longer be recovered, and this cannot be undone."
@@ -1489,23 +1489,23 @@ msgstr ""
 "afbeelding. De verborgen inhoud kan niet meer worden teruggehaald en dit kan "
 "niet ongedaan worden gemaakt."
 
-#: crates/pigoune-app/src/editor.rs:1050
+#: crates/pigoune-app/src/editor.rs:1099
 msgid "_Lock"
 msgstr "_Vergrendelen"
 
-#: crates/pigoune-app/src/editor.rs:1118
+#: crates/pigoune-app/src/editor.rs:1167
 msgid "Copy to Clipboard"
 msgstr "Naar klembord kopiëren"
 
-#: crates/pigoune-app/src/editor.rs:1119
+#: crates/pigoune-app/src/editor.rs:1168
 msgid "Export as PNG…"
 msgstr "Exporteren als PNG…"
 
-#: crates/pigoune-app/src/editor.rs:1139
+#: crates/pigoune-app/src/editor.rs:1188
 msgid "The image could not be created or saved."
 msgstr "De afbeelding kon niet worden gemaakt of opgeslagen."
 
-#: crates/pigoune-app/src/editor.rs:1141 crates/pigoune-app/src/editor.rs:1233
+#: crates/pigoune-app/src/editor.rs:1190 crates/pigoune-app/src/editor.rs:1282
 #: crates/pigoune-app/src/window.rs:1947 crates/pigoune-app/src/window.rs:2968
 #: crates/pigoune-app/src/window.rs:3344 crates/pigoune-app/src/window.rs:3391
 #: crates/pigoune-app/src/window.rs:3460 crates/pigoune-app/src/window.rs:3497
@@ -1526,254 +1526,258 @@ msgstr "De afbeelding kon niet worden gemaakt of opgeslagen."
 msgid "_Close"
 msgstr "_Sluiten"
 
-#: crates/pigoune-app/src/editor.rs:1147
+#: crates/pigoune-app/src/editor.rs:1196
 msgid "Could Not Copy the Image"
 msgstr "Afbeelding kon niet worden gekopieerd"
 
-#: crates/pigoune-app/src/editor.rs:1151
+#: crates/pigoune-app/src/editor.rs:1200
 msgid "Image copied to the clipboard"
 msgstr "Afbeelding naar klembord gekopieerd"
 
-#: crates/pigoune-app/src/editor.rs:1156 crates/pigoune-app/src/window.rs:5696
+#: crates/pigoune-app/src/editor.rs:1205 crates/pigoune-app/src/window.rs:5696
 msgid "Could Not Save the Capture"
 msgstr "Opname kon niet worden opgeslagen"
 
-#: crates/pigoune-app/src/editor.rs:1182
+#: crates/pigoune-app/src/editor.rs:1231
 msgid "Export Image As"
 msgstr "Afbeelding exporteren als"
 
-#: crates/pigoune-app/src/editor.rs:1183 crates/pigoune-app/src/window.rs:3600
+#: crates/pigoune-app/src/editor.rs:1232 crates/pigoune-app/src/window.rs:3600
 #: crates/pigoune-app/src/window.rs:3677 crates/pigoune-app/src/window.rs:3760
 msgid "_Export"
 msgstr "_Exporteren"
 
-#: crates/pigoune-app/src/editor.rs:1184
+#: crates/pigoune-app/src/editor.rs:1233
 #: crates/pigoune-app/src/pasted_content.rs:37
 msgid "Capture"
 msgstr "Opname"
 
-#: crates/pigoune-app/src/editor.rs:1192 crates/pigoune-app/src/editor.rs:1205
+#: crates/pigoune-app/src/editor.rs:1241 crates/pigoune-app/src/editor.rs:1254
 msgid "Could Not Export the Image"
 msgstr "Afbeelding kon niet worden geëxporteerd"
 
-#: crates/pigoune-app/src/editor.rs:1203
+#: crates/pigoune-app/src/editor.rs:1252
 msgid "Image exported"
 msgstr "Afbeelding geëxporteerd"
 
-#: crates/pigoune-app/src/editor.rs:1230
+#: crates/pigoune-app/src/editor.rs:1279
 msgid "Could Not Lock the Masks"
 msgstr "Maskeringen konden niet worden vergrendeld"
 
-#: crates/pigoune-app/src/editor.rs:1231
+#: crates/pigoune-app/src/editor.rs:1280
 msgid "The original image was left unchanged."
 msgstr "De originele afbeelding is niet gewijzigd."
 
-#: crates/pigoune-app/src/editor_options.rs:39
+#: crates/pigoune-app/src/editor_options.rs:44
 #: crates/pigoune-app/src/filter_choices.rs:269
 #: crates/pigoune-app/ui/collection-look-dialog.blp:90
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:267
 msgid "Color"
 msgstr "Kleur"
 
-#: crates/pigoune-app/src/editor_options.rs:40
+#: crates/pigoune-app/src/editor_options.rs:45
 msgid "Opacity"
 msgstr "Dekking"
 
-#: crates/pigoune-app/src/editor_options.rs:41
+#: crates/pigoune-app/src/editor_options.rs:46
 msgid "Thickness"
 msgstr "Dikte"
 
-#: crates/pigoune-app/src/editor_options.rs:42
+#: crates/pigoune-app/src/editor_options.rs:47
 msgid "Line Style"
 msgstr "Lijnstijl"
 
-#: crates/pigoune-app/src/editor_options.rs:43
+#: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
 msgstr "Kromming"
 
-#: crates/pigoune-app/src/editor_options.rs:44
+#: crates/pigoune-app/src/editor_options.rs:49
 msgid "Badge Content"
 msgstr "Inhoud van het label"
 
-#: crates/pigoune-app/src/editor_options.rs:45
+#: crates/pigoune-app/src/editor_options.rs:50
 msgid "Text Outline"
 msgstr "Tekstcontour"
 
-#: crates/pigoune-app/src/editor_options.rs:46
+#: crates/pigoune-app/src/editor_options.rs:51
 msgid "Shadow"
 msgstr "Schaduw"
 
-#: crates/pigoune-app/src/editor_options.rs:47
+#: crates/pigoune-app/src/editor_options.rs:52
 msgid "Shaft"
 msgstr "Schacht"
 
-#: crates/pigoune-app/src/editor_options.rs:48
+#: crates/pigoune-app/src/editor_options.rs:53
 msgid "Spotlight Shape"
 msgstr "Vorm van het spotlicht"
 
-#: crates/pigoune-app/src/editor_options.rs:49
+#: crates/pigoune-app/src/editor_options.rs:54
 msgid "Dimming"
 msgstr "Verduistering"
 
-#: crates/pigoune-app/src/editor_options.rs:50
+#: crates/pigoune-app/src/editor_options.rs:55
 msgid "Arrowhead"
 msgstr "Pijlpunt"
 
-#: crates/pigoune-app/src/editor_options.rs:51
+#: crates/pigoune-app/src/editor_options.rs:56
 msgid "Arrowhead Size"
 msgstr "Grootte van de pijlpunt"
 
-#: crates/pigoune-app/src/editor_options.rs:52
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Corner Radius"
 msgstr "Hoekstraal"
 
-#: crates/pigoune-app/src/editor_options.rs:53
+#: crates/pigoune-app/src/editor_options.rs:58
 msgid "Fill Shape"
 msgstr "Vorm vullen"
 
-#: crates/pigoune-app/src/editor_options.rs:54
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Fill Opacity"
 msgstr "Dekking van de vulling"
 
-#: crates/pigoune-app/src/editor_options.rs:55
+#: crates/pigoune-app/src/editor_options.rs:60
 msgid "Smooth Line"
 msgstr "Gladde lijn"
 
-#: crates/pigoune-app/src/editor_options.rs:56
+#: crates/pigoune-app/src/editor_options.rs:61
 msgid "Badge Size"
 msgstr "Grootte van het label"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:62
 msgid "Badge Style"
 msgstr "Stijl van het label"
 
-#: crates/pigoune-app/src/editor_options.rs:58
+#: crates/pigoune-app/src/editor_options.rs:63
 msgid "Font Size"
 msgstr "Tekstgrootte"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Bold Text"
 msgstr "Vette tekst"
 
-#: crates/pigoune-app/src/editor_options.rs:60
+#: crates/pigoune-app/src/editor_options.rs:65
 msgid "Italic Text"
 msgstr "Cursieve tekst"
 
-#: crates/pigoune-app/src/editor_options.rs:61
+#: crates/pigoune-app/src/editor_options.rs:66
 msgid "Font"
 msgstr "Lettertype"
 
-#: crates/pigoune-app/src/editor_options.rs:62
+#: crates/pigoune-app/src/editor_options.rs:67
 msgid "Text Background"
 msgstr "Tekstachtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:63
+#: crates/pigoune-app/src/editor_options.rs:68
 msgid "Blur Radius"
 msgstr "Vervagingsstraal"
 
-#: crates/pigoune-app/src/editor_options.rs:64
+#: crates/pigoune-app/src/editor_options.rs:69
 msgid "Cell Size"
 msgstr "Celgrootte"
 
-#: crates/pigoune-app/src/editor_options.rs:71
+#: crates/pigoune-app/src/editor_options.rs:76
 msgid "Numbers"
 msgstr "Cijfers"
 
-#: crates/pigoune-app/src/editor_options.rs:72
+#: crates/pigoune-app/src/editor_options.rs:77
 msgid "Letters"
 msgstr "Letters"
 
-#: crates/pigoune-app/src/editor_options.rs:73
+#: crates/pigoune-app/src/editor_options.rs:78
 msgid "Bubble Background"
 msgstr "Tekstballonachtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:74
+#: crates/pigoune-app/src/editor_options.rs:79
 msgid "Even Shaft"
 msgstr "Gelijkmatige schacht"
 
-#: crates/pigoune-app/src/editor_options.rs:75
+#: crates/pigoune-app/src/editor_options.rs:80
 msgid "Tapered Shaft"
 msgstr "Taps toelopende schacht"
 
-#: crates/pigoune-app/src/editor_options.rs:76
+#: crates/pigoune-app/src/editor_options.rs:81
 msgid "Rectangular"
 msgstr "Rechthoekig"
 
-#: crates/pigoune-app/src/editor_options.rs:77
+#: crates/pigoune-app/src/editor_options.rs:82
 msgid "Oval"
 msgstr "Ovaal"
 
-#: crates/pigoune-app/src/editor_options.rs:78
+#: crates/pigoune-app/src/editor_options.rs:83
 msgid "Solid Line"
 msgstr "Doorgetrokken"
 
-#: crates/pigoune-app/src/editor_options.rs:79
+#: crates/pigoune-app/src/editor_options.rs:84
 msgid "Dashed Line"
 msgstr "Gestreept"
 
-#: crates/pigoune-app/src/editor_options.rs:80
+#: crates/pigoune-app/src/editor_options.rs:85
 msgid "Dotted Line"
 msgstr "Gestippeld"
 
-#: crates/pigoune-app/src/editor_options.rs:81
+#: crates/pigoune-app/src/editor_options.rs:86
 msgid "Filled Triangle"
 msgstr "Gevulde driehoek"
 
-#: crates/pigoune-app/src/editor_options.rs:82
+#: crates/pigoune-app/src/editor_options.rs:87
 msgid "Open Head"
 msgstr "Open punt"
 
-#: crates/pigoune-app/src/editor_options.rs:83
+#: crates/pigoune-app/src/editor_options.rs:88
 msgid "Both Ends"
 msgstr "Aan beide uiteinden"
 
-#: crates/pigoune-app/src/editor_options.rs:84
+#: crates/pigoune-app/src/editor_options.rs:89
 msgid "No Head"
 msgstr "Geen punt"
 
-#: crates/pigoune-app/src/editor_options.rs:85
+#: crates/pigoune-app/src/editor_options.rs:90
 msgid "Sans-serif Font"
 msgstr "Schreefloos lettertype"
 
-#: crates/pigoune-app/src/editor_options.rs:86
+#: crates/pigoune-app/src/editor_options.rs:91
 msgid "Serif Font"
 msgstr "Lettertype met schreven"
 
-#: crates/pigoune-app/src/editor_options.rs:87
+#: crates/pigoune-app/src/editor_options.rs:92
 msgid "Monospace Font"
 msgstr "Lettertype met vaste breedte"
 
-#: crates/pigoune-app/src/editor_options.rs:88
+#: crates/pigoune-app/src/editor_options.rs:93
 msgid "No Background"
 msgstr "Geen achtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:89
+#: crates/pigoune-app/src/editor_options.rs:94
 msgid "Light Background"
 msgstr "Lichte achtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:90
+#: crates/pigoune-app/src/editor_options.rs:95
 msgid "Dark Background"
 msgstr "Donkere achtergrond"
 
-#: crates/pigoune-app/src/editor_options.rs:91
+#: crates/pigoune-app/src/editor_options.rs:96
 msgid "Filled Badge"
 msgstr "Gevuld label"
 
-#: crates/pigoune-app/src/editor_options.rs:92
+#: crates/pigoune-app/src/editor_options.rs:97
 msgid "Outlined Badge"
 msgstr "Omlijnd label"
 
-#: crates/pigoune-app/src/editor_options.rs:93
+#: crates/pigoune-app/src/editor_options.rs:98
 msgid "Small Head"
 msgstr "Kleine punt"
 
-#: crates/pigoune-app/src/editor_options.rs:94
+#: crates/pigoune-app/src/editor_options.rs:99
 msgid "Medium Head"
 msgstr "Middelgrote punt"
 
-#: crates/pigoune-app/src/editor_options.rs:95
+#: crates/pigoune-app/src/editor_options.rs:100
 msgid "Large Head"
 msgstr "Grote punt"
+
+#: crates/pigoune-app/src/editor_options.rs:201
+msgid "Pick a Color from the Image"
+msgstr "Een kleur uit de afbeelding kiezen"
 
 #: crates/pigoune-app/src/editor_palette.rs:23
 msgid "Red"
