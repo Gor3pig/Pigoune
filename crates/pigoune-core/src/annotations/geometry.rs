@@ -542,6 +542,7 @@ pub fn estimated_text_extent(shape: &Shape) -> (f32, f32) {
 pub enum HitMode {
     Outline,
     Body,
+    Edge,
 }
 
 #[must_use]
@@ -567,7 +568,7 @@ pub fn hit_in_mode(
     extent: Option<(f32, f32)>,
     mode: HitMode,
 ) -> bool {
-    let solid = mode == HitMode::Body || shape.toggle("fill");
+    let solid = mode == HitMode::Body || (mode == HitMode::Outline && shape.toggle("fill"));
     let Some(definition) = shape.definition() else {
         return false;
     };
@@ -599,7 +600,9 @@ pub fn hit_in_mode(
             None => distance_to_segment(point, *from, *to) <= reach,
         },
         (Geometry::Box(bounds), Outline::Region) => {
-            contains(expanded(normalized(*bounds), tolerance), point)
+            let rect = normalized(*bounds);
+            contains(expanded(rect, tolerance), point)
+                && (mode != HitMode::Edge || !contains(expanded(rect, -tolerance), point))
         }
         (Geometry::Anchor(at), Outline::TextBox) => {
             let (width, height) = extent.unwrap_or_else(|| estimated_text_extent(shape));

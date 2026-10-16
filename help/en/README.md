@@ -380,8 +380,9 @@ with <kbd>Shift</kbd> for the extremes) change the order of the annotations. Und
 as everywhere, with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.
 
 A new annotation stays selected: you can move it, resize it by its handles and change its settings
-right away, without leaving the tool you are using. With any tool, press on the outline of another
-annotation to grab it, or in an empty place to draw. A selected arrow has a round handle in the
+right away, without leaving the tool you are using. With a drawing tool, press on the outline of an
+annotation to grab it, or anywhere else, even inside another annotation, to draw (the **Select** tool
+grabs an annotation by its inside too). A selected arrow has a round handle in the
 middle: drag it to bend the arrow, double-click it to straighten the arrow. The arrow keys nudge
 the selection by one pixel (ten with <kbd>Shift</kbd>) and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicates it.
 

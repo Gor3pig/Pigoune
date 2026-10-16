@@ -103,12 +103,12 @@ impl Interaction {
         if tool == Tool::Unsupported {
             return false;
         }
-        if self.grab_selected(session, point, reach) {
+        if self.grab_selected(session, tool, point, reach) {
             return true;
         }
         let mode = match tool {
             Tool::Select => HitMode::Body,
-            _ => HitMode::Outline,
+            _ => HitMode::Edge,
         };
         if let Some(id) = session.pick(point, reach, mode) {
             session.select(Some(id));
@@ -131,7 +131,13 @@ impl Interaction {
         }
     }
 
-    fn grab_selected(&mut self, session: &mut EditSession, point: Point, reach: f32) -> bool {
+    fn grab_selected(
+        &mut self,
+        session: &mut EditSession,
+        tool: Tool,
+        point: Point,
+        reach: f32,
+    ) -> bool {
         if let Some((id, handle)) = handle_at(session, point, reach)
             && session.begin_change(id)
             && let Some(original) = session.shape_of(id).cloned()
@@ -142,7 +148,7 @@ impl Interaction {
         let Some(id) = session.selected() else {
             return false;
         };
-        if session.pick(point, reach, HitMode::Body) != Some(id) {
+        if tool != Tool::Select || session.pick(point, reach, HitMode::Body) != Some(id) {
             return false;
         }
         self.begin_move(session, id, point);
@@ -254,13 +260,15 @@ impl Interaction {
         if let Some((_, handle)) = handle_at(session, point, reach) {
             return CursorKind::Resize(handle);
         }
-        let selected_body = session
-            .selected()
-            .is_some_and(|id| session.pick(point, reach, HitMode::Body) == Some(id));
-        let mode = if tool == Tool::Select {
-            HitMode::Body
+        let (mode, selected_body) = if tool == Tool::Select {
+            (
+                HitMode::Body,
+                session
+                    .selected()
+                    .is_some_and(|id| session.pick(point, reach, HitMode::Body) == Some(id)),
+            )
         } else {
-            HitMode::Outline
+            (HitMode::Edge, false)
         };
         if selected_body || session.pick(point, reach, mode).is_some() {
             CursorKind::Move
