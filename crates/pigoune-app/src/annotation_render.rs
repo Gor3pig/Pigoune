@@ -39,7 +39,7 @@ pub struct Draw<'a> {
 
 type Renderer = fn(&gtk::Snapshot, &Shape, &Draw);
 
-const RENDERERS: [(&str, Renderer); 10] = [
+const RENDERERS: [(&str, Renderer); 11] = [
     ("rectangle", draw_rectangle),
     ("ellipse", draw_ellipse),
     ("line", draw_line),
@@ -50,6 +50,7 @@ const RENDERERS: [(&str, Renderer); 10] = [
     ("text", draw_text),
     ("blur", draw_blur),
     ("pixelate", draw_pixelate),
+    ("spotlight", draw_spotlight),
 ];
 
 #[cfg(test)]
@@ -505,6 +506,24 @@ fn draw_below(
             append_shape(snapshot, shape, ordinal, context, Some(&earlier));
         }
     }
+}
+
+fn draw_spotlight(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
+    let (Some(scene), Some(region)) = (draw.scene, shape_bounds(shape)) else {
+        return;
+    };
+    let veil = gsk::PathBuilder::new();
+    veil.add_rect(&whole_texture(scene.backdrop.texture));
+    if shape.choice("spot") == "ellipse" {
+        veil.add_path(&ellipse_path(region));
+    } else {
+        veil.add_rect(&graphene_rect(region));
+    }
+    snapshot.append_fill(
+        &veil.to_path(),
+        gsk::FillRule::EvenOdd,
+        &gdk::RGBA::new(0.0, 0.0, 0.0, shape.number("dimming")),
+    );
 }
 
 fn draw_blur(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {

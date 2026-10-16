@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 13:21+0200\n"
+"POT-Creation-Date: 2026-10-16 13:33+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Spanish\n"
@@ -1393,7 +1393,7 @@ msgid "New Library"
 msgstr "Nueva biblioteca"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
-#: crates/pigoune-app/src/editor.rs:338 crates/pigoune-app/src/editor.rs:1041
+#: crates/pigoune-app/src/editor.rs:338 crates/pigoune-app/src/editor.rs:1049
 #: crates/pigoune-app/src/window.rs:3086 crates/pigoune-app/src/window.rs:5098
 #: crates/pigoune-app/src/window.rs:5276 crates/pigoune-app/src/window.rs:5349
 #: crates/pigoune-app/src/window.rs:6155
@@ -1460,25 +1460,25 @@ msgstr "Las anotaciones y los cambios hechos en esta captura se perderán."
 msgid "_Discard"
 msgstr "_Descartar"
 
-#: crates/pigoune-app/src/editor.rs:912
+#: crates/pigoune-app/src/editor.rs:920
 #, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
-#: crates/pigoune-app/src/editor.rs:1015 crates/pigoune-app/ui/editor.blp:124
+#: crates/pigoune-app/src/editor.rs:1023 crates/pigoune-app/ui/editor.blp:124
 msgid "No annotations"
 msgstr "Sin anotaciones"
 
-#: crates/pigoune-app/src/editor.rs:1017
+#: crates/pigoune-app/src/editor.rs:1025
 #, rust-format
 msgid "Annotations: {count}"
 msgstr "Anotaciones: {count}"
 
-#: crates/pigoune-app/src/editor.rs:1036
+#: crates/pigoune-app/src/editor.rs:1044
 msgid "Lock the Masks?"
 msgstr "¿Bloquear los difuminados?"
 
-#: crates/pigoune-app/src/editor.rs:1038
+#: crates/pigoune-app/src/editor.rs:1046
 msgid ""
 "The blur and the pixelation will be applied to the original image for good. "
 "The hidden content can no longer be recovered, and this cannot be undone."
@@ -1487,23 +1487,23 @@ msgstr ""
 "original. El contenido oculto ya no podrá recuperarse y esta acción no se "
 "puede deshacer."
 
-#: crates/pigoune-app/src/editor.rs:1042
+#: crates/pigoune-app/src/editor.rs:1050
 msgid "_Lock"
 msgstr "_Bloquear"
 
-#: crates/pigoune-app/src/editor.rs:1110
+#: crates/pigoune-app/src/editor.rs:1118
 msgid "Copy to Clipboard"
 msgstr "Copiar al portapapeles"
 
-#: crates/pigoune-app/src/editor.rs:1111
+#: crates/pigoune-app/src/editor.rs:1119
 msgid "Export as PNG…"
 msgstr "Exportar como PNG…"
 
-#: crates/pigoune-app/src/editor.rs:1131
+#: crates/pigoune-app/src/editor.rs:1139
 msgid "The image could not be created or saved."
 msgstr "No se pudo crear o guardar la imagen."
 
-#: crates/pigoune-app/src/editor.rs:1133 crates/pigoune-app/src/editor.rs:1225
+#: crates/pigoune-app/src/editor.rs:1141 crates/pigoune-app/src/editor.rs:1233
 #: crates/pigoune-app/src/window.rs:1947 crates/pigoune-app/src/window.rs:2968
 #: crates/pigoune-app/src/window.rs:3344 crates/pigoune-app/src/window.rs:3391
 #: crates/pigoune-app/src/window.rs:3460 crates/pigoune-app/src/window.rs:3497
@@ -1524,45 +1524,45 @@ msgstr "No se pudo crear o guardar la imagen."
 msgid "_Close"
 msgstr "_Cerrar"
 
-#: crates/pigoune-app/src/editor.rs:1139
+#: crates/pigoune-app/src/editor.rs:1147
 msgid "Could Not Copy the Image"
 msgstr "No se pudo copiar la imagen"
 
-#: crates/pigoune-app/src/editor.rs:1143
+#: crates/pigoune-app/src/editor.rs:1151
 msgid "Image copied to the clipboard"
 msgstr "Imagen copiada al portapapeles"
 
-#: crates/pigoune-app/src/editor.rs:1148 crates/pigoune-app/src/window.rs:5696
+#: crates/pigoune-app/src/editor.rs:1156 crates/pigoune-app/src/window.rs:5696
 msgid "Could Not Save the Capture"
 msgstr "No se pudo guardar la captura"
 
-#: crates/pigoune-app/src/editor.rs:1174
+#: crates/pigoune-app/src/editor.rs:1182
 msgid "Export Image As"
 msgstr "Exportar imagen como"
 
-#: crates/pigoune-app/src/editor.rs:1175 crates/pigoune-app/src/window.rs:3600
+#: crates/pigoune-app/src/editor.rs:1183 crates/pigoune-app/src/window.rs:3600
 #: crates/pigoune-app/src/window.rs:3677 crates/pigoune-app/src/window.rs:3760
 msgid "_Export"
 msgstr "_Exportar"
 
-#: crates/pigoune-app/src/editor.rs:1176
+#: crates/pigoune-app/src/editor.rs:1184
 #: crates/pigoune-app/src/pasted_content.rs:37
 msgid "Capture"
 msgstr "Captura"
 
-#: crates/pigoune-app/src/editor.rs:1184 crates/pigoune-app/src/editor.rs:1197
+#: crates/pigoune-app/src/editor.rs:1192 crates/pigoune-app/src/editor.rs:1205
 msgid "Could Not Export the Image"
 msgstr "No se pudo exportar la imagen"
 
-#: crates/pigoune-app/src/editor.rs:1195
+#: crates/pigoune-app/src/editor.rs:1203
 msgid "Image exported"
 msgstr "Imagen exportada"
 
-#: crates/pigoune-app/src/editor.rs:1222
+#: crates/pigoune-app/src/editor.rs:1230
 msgid "Could Not Lock the Masks"
 msgstr "No se pudieron bloquear los difuminados"
 
-#: crates/pigoune-app/src/editor.rs:1223
+#: crates/pigoune-app/src/editor.rs:1231
 msgid "The original image was left unchanged."
 msgstr "La imagen original no se ha modificado."
 
@@ -1586,134 +1586,150 @@ msgid "Line Style"
 msgstr "Estilo de línea"
 
 #: crates/pigoune-app/src/editor_options.rs:43
+msgid "Spotlight Shape"
+msgstr "Forma del foco"
+
+#: crates/pigoune-app/src/editor_options.rs:44
+msgid "Dimming"
+msgstr "Oscurecimiento"
+
+#: crates/pigoune-app/src/editor_options.rs:45
 msgid "Arrowhead"
 msgstr "Punta de flecha"
 
-#: crates/pigoune-app/src/editor_options.rs:44
+#: crates/pigoune-app/src/editor_options.rs:46
 msgid "Arrowhead Size"
 msgstr "Tamaño de la punta"
 
-#: crates/pigoune-app/src/editor_options.rs:45
+#: crates/pigoune-app/src/editor_options.rs:47
 msgid "Corner Radius"
 msgstr "Radio de las esquinas"
 
-#: crates/pigoune-app/src/editor_options.rs:46
+#: crates/pigoune-app/src/editor_options.rs:48
 msgid "Fill Shape"
 msgstr "Rellenar la forma"
 
-#: crates/pigoune-app/src/editor_options.rs:47
+#: crates/pigoune-app/src/editor_options.rs:49
 msgid "Fill Opacity"
 msgstr "Opacidad del relleno"
 
-#: crates/pigoune-app/src/editor_options.rs:48
+#: crates/pigoune-app/src/editor_options.rs:50
 msgid "Smooth Line"
 msgstr "Trazo suavizado"
 
-#: crates/pigoune-app/src/editor_options.rs:49
+#: crates/pigoune-app/src/editor_options.rs:51
 msgid "Badge Size"
 msgstr "Tamaño de la insignia"
 
-#: crates/pigoune-app/src/editor_options.rs:50
+#: crates/pigoune-app/src/editor_options.rs:52
 msgid "Badge Style"
 msgstr "Estilo de la insignia"
 
-#: crates/pigoune-app/src/editor_options.rs:51
+#: crates/pigoune-app/src/editor_options.rs:53
 msgid "Font Size"
 msgstr "Tamaño del texto"
 
-#: crates/pigoune-app/src/editor_options.rs:52
+#: crates/pigoune-app/src/editor_options.rs:54
 msgid "Bold Text"
 msgstr "Texto en negrita"
 
-#: crates/pigoune-app/src/editor_options.rs:53
+#: crates/pigoune-app/src/editor_options.rs:55
 msgid "Italic Text"
 msgstr "Texto en cursiva"
 
-#: crates/pigoune-app/src/editor_options.rs:54
+#: crates/pigoune-app/src/editor_options.rs:56
 msgid "Font"
 msgstr "Fuente"
 
-#: crates/pigoune-app/src/editor_options.rs:55
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Text Background"
 msgstr "Fondo del texto"
 
-#: crates/pigoune-app/src/editor_options.rs:56
+#: crates/pigoune-app/src/editor_options.rs:58
 msgid "Blur Radius"
 msgstr "Radio del desenfoque"
 
-#: crates/pigoune-app/src/editor_options.rs:57
+#: crates/pigoune-app/src/editor_options.rs:59
 msgid "Cell Size"
 msgstr "Tamaño de celda"
 
-#: crates/pigoune-app/src/editor_options.rs:64
+#: crates/pigoune-app/src/editor_options.rs:66
+msgid "Rectangular"
+msgstr "Rectangular"
+
+#: crates/pigoune-app/src/editor_options.rs:67
+msgid "Oval"
+msgstr "Ovalado"
+
+#: crates/pigoune-app/src/editor_options.rs:68
 msgid "Solid Line"
 msgstr "Continua"
 
-#: crates/pigoune-app/src/editor_options.rs:65
+#: crates/pigoune-app/src/editor_options.rs:69
 msgid "Dashed Line"
 msgstr "Discontinua"
 
-#: crates/pigoune-app/src/editor_options.rs:66
+#: crates/pigoune-app/src/editor_options.rs:70
 msgid "Dotted Line"
 msgstr "Punteada"
 
-#: crates/pigoune-app/src/editor_options.rs:67
+#: crates/pigoune-app/src/editor_options.rs:71
 msgid "Filled Triangle"
 msgstr "Triángulo relleno"
 
-#: crates/pigoune-app/src/editor_options.rs:68
+#: crates/pigoune-app/src/editor_options.rs:72
 msgid "Open Head"
 msgstr "Punta abierta"
 
-#: crates/pigoune-app/src/editor_options.rs:69
+#: crates/pigoune-app/src/editor_options.rs:73
 msgid "Both Ends"
 msgstr "En ambos extremos"
 
-#: crates/pigoune-app/src/editor_options.rs:70
+#: crates/pigoune-app/src/editor_options.rs:74
 msgid "No Head"
 msgstr "Sin punta"
 
-#: crates/pigoune-app/src/editor_options.rs:71
+#: crates/pigoune-app/src/editor_options.rs:75
 msgid "Sans-serif Font"
 msgstr "Fuente sin serifa"
 
-#: crates/pigoune-app/src/editor_options.rs:72
+#: crates/pigoune-app/src/editor_options.rs:76
 msgid "Serif Font"
 msgstr "Fuente con serifa"
 
-#: crates/pigoune-app/src/editor_options.rs:73
+#: crates/pigoune-app/src/editor_options.rs:77
 msgid "Monospace Font"
 msgstr "Fuente monoespaciada"
 
-#: crates/pigoune-app/src/editor_options.rs:74
+#: crates/pigoune-app/src/editor_options.rs:78
 msgid "No Background"
 msgstr "Sin fondo"
 
-#: crates/pigoune-app/src/editor_options.rs:75
+#: crates/pigoune-app/src/editor_options.rs:79
 msgid "Light Background"
 msgstr "Fondo claro"
 
-#: crates/pigoune-app/src/editor_options.rs:76
+#: crates/pigoune-app/src/editor_options.rs:80
 msgid "Dark Background"
 msgstr "Fondo oscuro"
 
-#: crates/pigoune-app/src/editor_options.rs:77
+#: crates/pigoune-app/src/editor_options.rs:81
 msgid "Filled Badge"
 msgstr "Insignia rellena"
 
-#: crates/pigoune-app/src/editor_options.rs:78
+#: crates/pigoune-app/src/editor_options.rs:82
 msgid "Outlined Badge"
 msgstr "Insignia con borde"
 
-#: crates/pigoune-app/src/editor_options.rs:79
+#: crates/pigoune-app/src/editor_options.rs:83
 msgid "Small Head"
 msgstr "Punta pequeña"
 
-#: crates/pigoune-app/src/editor_options.rs:80
+#: crates/pigoune-app/src/editor_options.rs:84
 msgid "Medium Head"
 msgstr "Punta mediana"
 
-#: crates/pigoune-app/src/editor_options.rs:81
+#: crates/pigoune-app/src/editor_options.rs:85
 msgid "Large Head"
 msgstr "Punta grande"
 
@@ -1751,55 +1767,59 @@ msgstr "Negro"
 msgid "White"
 msgstr "Blanco"
 
-#: crates/pigoune-app/src/editor_tool.rs:75
+#: crates/pigoune-app/src/editor_tool.rs:103
 msgid "Select"
 msgstr "Selección"
 
-#: crates/pigoune-app/src/editor_tool.rs:76
+#: crates/pigoune-app/src/editor_tool.rs:104
 #: crates/pigoune-app/ui/editor.blp:186
 msgid "Crop"
 msgstr "Recortar"
 
-#: crates/pigoune-app/src/editor_tool.rs:77
+#: crates/pigoune-app/src/editor_tool.rs:105
 msgid "Rectangle"
 msgstr "Rectángulo"
 
-#: crates/pigoune-app/src/editor_tool.rs:78
+#: crates/pigoune-app/src/editor_tool.rs:106
 msgid "Ellipse"
 msgstr "Elipse"
 
-#: crates/pigoune-app/src/editor_tool.rs:79
+#: crates/pigoune-app/src/editor_tool.rs:107
 msgid "Line"
 msgstr "Línea"
 
-#: crates/pigoune-app/src/editor_tool.rs:80
+#: crates/pigoune-app/src/editor_tool.rs:108
 msgid "Arrow"
 msgstr "Flecha"
 
-#: crates/pigoune-app/src/editor_tool.rs:81
+#: crates/pigoune-app/src/editor_tool.rs:109
 msgid "Text"
 msgstr "Texto"
 
-#: crates/pigoune-app/src/editor_tool.rs:82
+#: crates/pigoune-app/src/editor_tool.rs:110
 msgid "Steps"
 msgstr "Pasos"
 
-#: crates/pigoune-app/src/editor_tool.rs:83
+#: crates/pigoune-app/src/editor_tool.rs:111
 msgid "Pen"
 msgstr "Lápiz"
 
-#: crates/pigoune-app/src/editor_tool.rs:84
+#: crates/pigoune-app/src/editor_tool.rs:112
 msgid "Highlighter"
 msgstr "Resaltador"
 
-#: crates/pigoune-app/src/editor_tool.rs:85
+#: crates/pigoune-app/src/editor_tool.rs:113
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:277
 msgid "Blur"
 msgstr "Desenfoque"
 
-#: crates/pigoune-app/src/editor_tool.rs:86
+#: crates/pigoune-app/src/editor_tool.rs:114
 msgid "Pixelate"
 msgstr "Pixelar"
+
+#: crates/pigoune-app/src/editor_tool.rs:115
+msgid "Spotlight"
+msgstr "Foco"
 
 #: crates/pigoune-app/src/error_messages.rs:10
 #, rust-format
@@ -2421,7 +2441,9 @@ msgstr "Abrir primero una biblioteca"
 msgid ""
 "A screenshot to annotate needs a library to be kept in. Open or create a "
 "library, then try again."
-msgstr "Una captura de pantalla para anotar necesita una biblioteca donde guardarse. Abra o cree una biblioteca e inténtelo de nuevo."
+msgstr ""
+"Una captura de pantalla para anotar necesita una biblioteca donde guardarse. "
+"Abra o cree una biblioteca e inténtelo de nuevo."
 
 #: crates/pigoune-app/src/window.rs:3492
 msgid "Could Not Take the Screenshot"
@@ -2431,7 +2453,9 @@ msgstr "No se pudo hacer la captura de pantalla"
 msgid ""
 "The screenshot service did not give an image. Check that your desktop can "
 "take screenshots, then try again."
-msgstr "El servicio de capturas no entregó ninguna imagen. Compruebe que su escritorio puede hacer capturas de pantalla e inténtelo de nuevo."
+msgstr ""
+"El servicio de capturas no entregó ninguna imagen. Compruebe que su "
+"escritorio puede hacer capturas de pantalla e inténtelo de nuevo."
 
 #: crates/pigoune-app/src/window.rs:3515
 msgid "No image to annotate in the clipboard"
@@ -8103,6 +8127,12 @@ msgstr "{shortcut} está reservado por Pigoune."
 #: crates/pigoune-app/src/shortcuts_page.rs:228
 msgid "This key combination is not supported."
 msgstr "Esta combinación de teclas no es compatible."
+
+#~ msgid "Rectangular Spotlight"
+#~ msgstr "Foco rectangular"
+
+#~ msgid "Oval Spotlight"
+#~ msgstr "Foco ovalado"
 
 #~ msgid "Numbered Steps"
 #~ msgstr "Pasos numerados"
