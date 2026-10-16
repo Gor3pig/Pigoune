@@ -27,12 +27,24 @@ enum Edit {
         before: Option<Crop>,
         after: Option<Crop>,
     },
+    Reordered {
+        from: usize,
+        to: usize,
+    },
 }
 
 #[derive(Debug, Clone)]
 struct Gesture {
     id: u32,
     before: Shape,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LayerMove {
+    Front,
+    Forward,
+    Backward,
+    Back,
 }
 
 type TextMeasure = dyn Fn(&Shape) -> (f32, f32);
@@ -182,6 +194,45 @@ impl EditSession {
         id
     }
 
+    fn selected_position(&self) -> Option<usize> {
+        let id = self.selected?;
+        self.document
+            .objects
+            .iter()
+            .position(|object| object.id == id)
+    }
+
+    fn target_position(&self, movement: LayerMove) -> Option<usize> {
+        let position = self.selected_position()?;
+        let last = self.document.objects.len().checked_sub(1)?;
+        let target = match movement {
+            LayerMove::Front => last,
+            LayerMove::Forward => (position + 1).min(last),
+            LayerMove::Backward => position.saturating_sub(1),
+            LayerMove::Back => 0,
+        };
+        (target != position).then_some(target)
+    }
+
+    #[must_use]
+    pub fn can_move_selected(&self, movement: LayerMove) -> bool {
+        self.gesture.is_none() && self.target_position(movement).is_some()
+    }
+
+    pub fn move_selected(&mut self, movement: LayerMove) -> bool {
+        if self.gesture.is_some() {
+            return false;
+        }
+        let (Some(from), Some(to)) = (self.selected_position(), self.target_position(movement))
+        else {
+            return false;
+        };
+        let object = self.document.objects.remove(from);
+        self.document.objects.insert(to, object);
+        self.record(Edit::Reordered { from, to });
+        true
+    }
+
     pub fn remove_selected(&mut self) -> bool {
         let Some(id) = self.selected else {
             return false;
@@ -325,6 +376,21 @@ impl EditSession {
                 self.document.objects.retain(|other| other.id != object.id);
                 if self.selected == Some(object.id) {
                     self.selected = None;
+                }
+            }
+            (Edit::Reordered { from, to }, backwards) => {
+                let (source, target) = if backwards {
+                    (*to, *from)
+                } else {
+                    (*from, *to)
+                };
+                if source < self.document.objects.len() {
+                    let object = self.document.objects.remove(source);
+                    let id = object.id;
+                    self.document
+                        .objects
+                        .insert(target.min(self.document.objects.len()), object);
+                    self.selected = Some(id);
                 }
             }
             (Edit::Cropped { before, after }, _) => {

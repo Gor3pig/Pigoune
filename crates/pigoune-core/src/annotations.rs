@@ -23,7 +23,7 @@ pub use options::{
     DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,
 };
 pub use serde_json::Value;
-pub use session::EditSession;
+pub use session::{EditSession, LayerMove};
 pub use shape::{Geometry, Shape};
 pub use snapping::{Guide, Snap, Snapping, guide_extent, snap_move};
 pub use tools::{
