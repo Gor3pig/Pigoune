@@ -1550,12 +1550,14 @@ msgstr "Bloccare le sfocature?"
 
 #: crates/pigoune-app/src/editor.rs:1175
 msgid ""
-"The blur and the pixelation will be applied to the original image for good. "
-"The hidden content can no longer be recovered, and this cannot be undone."
+"The blur and the pixelation will be applied to the original image for good, "
+"and this cannot be undone. A pixelation with large cells removes the "
+"details, but a light blur may still be partly recoverable."
 msgstr ""
 "La sfocatura e la pixelatura verranno applicate in modo definitivo "
-"all’immagine originale. Il contenuto nascosto non potrà più essere "
-"recuperato e l’azione non può essere annullata."
+"all’immagine originale e l’azione non può essere annullata. Una pixelatura "
+"con celle grandi elimina i dettagli, ma una sfocatura leggera può restare "
+"in parte recuperabile."
 
 #: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"

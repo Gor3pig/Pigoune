@@ -1548,12 +1548,14 @@ msgstr "¿Bloquear los difuminados?"
 
 #: crates/pigoune-app/src/editor.rs:1175
 msgid ""
-"The blur and the pixelation will be applied to the original image for good. "
-"The hidden content can no longer be recovered, and this cannot be undone."
+"The blur and the pixelation will be applied to the original image for good, "
+"and this cannot be undone. A pixelation with large cells removes the "
+"details, but a light blur may still be partly recoverable."
 msgstr ""
 "El desenfoque y la pixelación se aplicarán de forma definitiva a la imagen "
-"original. El contenido oculto ya no podrá recuperarse y esta acción no se "
-"puede deshacer."
+"original y esta acción no se puede deshacer. Una pixelación con celdas "
+"grandes elimina los detalles, pero un desenfoque ligero puede seguir "
+"siendo recuperable en parte."
 
 #: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"

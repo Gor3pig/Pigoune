@@ -1550,12 +1550,14 @@ msgstr "Maskeringen vergrendelen?"
 
 #: crates/pigoune-app/src/editor.rs:1175
 msgid ""
-"The blur and the pixelation will be applied to the original image for good. "
-"The hidden content can no longer be recovered, and this cannot be undone."
+"The blur and the pixelation will be applied to the original image for good, "
+"and this cannot be undone. A pixelation with large cells removes the "
+"details, but a light blur may still be partly recoverable."
 msgstr ""
 "De vervaging en de pixelatie worden definitief toegepast op de originele "
-"afbeelding. De verborgen inhoud kan niet meer worden teruggehaald en dit kan "
-"niet ongedaan worden gemaakt."
+"afbeelding en dit kan niet ongedaan worden gemaakt. Een pixelatie met "
+"grote cellen verwijdert de details, maar een lichte vervaging kan deels "
+"herstelbaar blijven."
 
 #: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"

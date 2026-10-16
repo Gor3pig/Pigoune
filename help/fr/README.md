@@ -433,7 +433,8 @@ poignées et changer ses réglages tout de suite, sans quitter l'outil en cours.
 appuyez sur le contour d'une annotation pour la saisir, ou n'importe où ailleurs, même à l'intérieur
 d'une autre annotation, pour dessiner (l'outil **Sélection** saisit aussi une annotation par son
 intérieur). Une flèche sélectionnée a une poignée ronde au milieu : tirez-la pour courber la flèche,
-double-cliquez dessus pour la redresser. Les flèches du clavier déplacent la sélection d'un pixel
+double-cliquez dessus pour la redresser. Un flou, une pixelisation ou un projecteur sélectionné a une
+poignée ronde au centre : tirez-la pour déplacer la zone avec n'importe quel outil. Les flèches du clavier déplacent la sélection d'un pixel
 (dix avec <kbd>Maj</kbd>) et <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>D</kbd> la duplique.
 
 ### Cacher ce qui est privé
@@ -441,8 +442,10 @@ double-cliquez dessus pour la redresser. Les flèches du clavier déplacent la s
 Un flou ou une pixelisation cache ce qui est dessous, annotations comprises. Tant que vos
 annotations restent modifiables, la capture intacte est conservée dans la bibliothèque et montre
 encore ce que vous avez caché : un bandeau vous le dit. **Verrouiller les masquages** applique
-chaque flou et chaque pixelisation à cette capture d'origine aussi, définitivement : après
-confirmation, personne ne peut plus retrouver ce qu'ils recouvrent.
+chaque flou et chaque pixelisation à cette capture d'origine aussi, définitivement, et l'image
+exportée ne contient jamais l'original. Une pixelisation à grandes cellules supprime les détails
+qu'elle recouvre ; un flou léger n'est pas une anonymisation et peut rester en partie
+récupérable : préférez une pixelisation ou un flou fort pour tout ce qui est sensible.
 
 ### Garder le résultat
 

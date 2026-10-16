@@ -383,7 +383,8 @@ A new annotation stays selected: you can move it, resize it by its handles and c
 right away, without leaving the tool you are using. With a drawing tool, press on the outline of an
 annotation to grab it, or anywhere else, even inside another annotation, to draw (the **Select** tool
 grabs an annotation by its inside too). A selected arrow has a round handle in the
-middle: drag it to bend the arrow, double-click it to straighten the arrow. The arrow keys nudge
+middle: drag it to bend the arrow, double-click it to straighten the arrow. A selected blur, pixelation
+or spotlight has a round handle in its center: drag it to move the area with any tool. The arrow keys nudge
 the selection by one pixel (ten with <kbd>Shift</kbd>) and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicates it.
 
 ### Hide what is private
@@ -391,7 +392,9 @@ the selection by one pixel (ten with <kbd>Shift</kbd>) and <kbd>Ctrl</kbd>+<kbd>
 A blur or a pixelation hides what is under it, annotations included. While your annotations stay
 editable, the untouched capture is kept in the library and still shows what you hid, so a banner
 tells you so. **Lock Masks** applies every blur and pixelation to that original capture too, for
-good: after confirming, nobody can recover what they cover.
+good, and the exported image never contains the original. A pixelation with large cells removes
+the details they cover; a light blur is not an anonymization and may be partly recoverable, so
+prefer a pixelation or a strong blur for anything sensitive.
 
 ### Keep the result
 

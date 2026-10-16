@@ -55,6 +55,7 @@ You need:
 - `blueprint-compiler` (user interface files)
 - gettext (`msgfmt`, `xgettext`, `msgmerge`) and GLib tools (`glib-compile-schemas`)
 - For `check.sh`: `desktop-file-validate` (desktop-file-utils) and `appstreamcli` (AppStream)
+- For the rendering tests of `check.sh`: `gtk4-broadwayd` (shipped with GTK 4), a font such as DejaVu Sans and the glycin loaders with bubblewrap
 - Optionally Meson 1.5 or later, which is what the Flatpak build uses
 
 On Fedora, for example:

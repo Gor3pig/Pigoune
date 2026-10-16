@@ -1547,11 +1547,14 @@ msgstr "Zablokować maskowanie?"
 
 #: crates/pigoune-app/src/editor.rs:1175
 msgid ""
-"The blur and the pixelation will be applied to the original image for good. "
-"The hidden content can no longer be recovered, and this cannot be undone."
+"The blur and the pixelation will be applied to the original image for good, "
+"and this cannot be undone. A pixelation with large cells removes the "
+"details, but a light blur may still be partly recoverable."
 msgstr ""
-"Rozmycie i pikselizacja zostaną na stałe zastosowane do oryginalnego obrazu. "
-"Ukrytej treści nie będzie można odzyskać, a tej operacji nie można cofnąć."
+"Rozmycie i pikselizacja zostaną na stałe zastosowane do oryginalnego "
+"obrazu, a tej operacji nie można cofnąć. Pikselizacja z dużymi komórkami "
+"usuwa szczegóły, ale lekkie rozmycie może być częściowo możliwe do "
+"odzyskania."
 
 #: crates/pigoune-app/src/editor.rs:1179
 msgid "_Lock"
