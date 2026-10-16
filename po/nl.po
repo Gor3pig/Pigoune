@@ -8489,3 +8489,13 @@ msgstr "Deze toetscombinatie wordt niet ondersteund."
 #~ msgstr ""
 #~ "De interface gebruikt nu in alle talen dezelfde woorden en ‘Bibliotheek "
 #~ "beheren’ heeft een nieuwe indeling."
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: Defaults"
+msgstr "{tool}: standaardwaarden"
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool} (stays active)"
+msgstr "{tool} (blijft actief)"

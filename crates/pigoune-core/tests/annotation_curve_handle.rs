@@ -76,13 +76,13 @@ fn pulling_to_the_other_side_reverses_the_curve() {
 }
 
 #[test]
-fn the_handle_works_while_a_drawing_tool_is_active() {
+fn the_handle_does_not_exist_while_a_drawing_tool_is_active() {
     let (mut session, id) = session_with_arrow();
 
     pull_curve(&mut session, id, point(100.0, 30.0), Tool::Draw(&ARROW));
 
-    assert_eq!(session.count(), 1);
-    assert!(near(curve_of(&session, id), 60.0));
+    assert_eq!(session.count(), 2);
+    assert!(near(curve_of(&session, id), 0.0));
 }
 
 #[test]
@@ -120,7 +120,8 @@ fn a_double_press_on_the_handle_straightens_the_arrow() {
     pull_curve(&mut session, id, point(100.0, 30.0), Tool::Select);
     let mut interaction = Interaction::new();
 
-    let straightened = interaction.straighten(&mut session, point(100.0, 30.0), REACH);
+    let straightened =
+        interaction.straighten(&mut session, Tool::Select, point(100.0, 30.0), REACH);
 
     assert!(straightened);
     assert!(near(curve_of(&session, id), 0.0));
@@ -134,7 +135,7 @@ fn a_double_press_elsewhere_changes_nothing() {
     pull_curve(&mut session, id, point(100.0, 30.0), Tool::Select);
     let mut interaction = Interaction::new();
 
-    assert!(!interaction.straighten(&mut session, point(10.0, 200.0), REACH));
+    assert!(!interaction.straighten(&mut session, Tool::Select, point(10.0, 200.0), REACH));
     assert!(near(curve_of(&session, id), 60.0));
 }
 

@@ -5,7 +5,8 @@ use serde_json::Value;
 
 use super::geometry::{self, HitMode};
 use super::{
-    AnnotationDocument, AnnotationObject, Crop, Geometry, ObjectContent, Point, Rect, Shape,
+    AnnotationDocument, AnnotationObject, Crop, Geometry, ObjectContent, ObjectState, Point, Rect,
+    Shape,
 };
 
 const HISTORY_LIMIT: usize = 500;
@@ -33,6 +34,11 @@ enum Edit {
         from: usize,
         to: usize,
     },
+    Flagged {
+        id: u32,
+        before: ObjectState,
+        after: ObjectState,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -47,6 +53,12 @@ pub enum LayerMove {
     Forward,
     Backward,
     Back,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Refusal {
+    Locked,
+    Sealed,
 }
 
 type TextMeasure = dyn Fn(&Shape) -> (f32, f32);
@@ -70,12 +82,14 @@ pub struct EditSession {
     saved_at: Option<usize>,
     measurer: Option<Measurer>,
     nudging: Option<u32>,
+    next_id: u32,
 }
 
 impl EditSession {
     #[must_use]
     pub fn new(document: AnnotationDocument) -> Self {
         Self {
+            next_id: document.next_object_id(),
             document,
             selected: None,
             undo: Vec::new(),
@@ -156,36 +170,60 @@ impl EditSession {
 
     #[must_use]
     pub fn hit_test(&self, point: Point, tolerance: f32) -> Option<u32> {
-        self.pick(point, tolerance, HitMode::Outline)
+        self.pick(point, tolerance)
     }
 
     #[must_use]
-    pub fn pick(&self, point: Point, tolerance: f32, mode: HitMode) -> Option<u32> {
-        match mode {
-            HitMode::Edge | HitMode::Outline => self.topmost_hit(point, tolerance, mode),
-            HitMode::Body => self
-                .topmost_hit(point, tolerance, HitMode::Outline)
-                .or_else(|| self.topmost_hit(point, tolerance, HitMode::Body)),
-        }
+    pub fn pick(&self, point: Point, tolerance: f32) -> Option<u32> {
+        self.objects_at(point, tolerance).into_iter().next()
     }
 
-    fn topmost_hit(&self, point: Point, tolerance: f32, mode: HitMode) -> Option<u32> {
+    #[must_use]
+    pub fn objects_at(&self, point: Point, tolerance: f32) -> Vec<u32> {
         self.document
             .objects
             .iter()
             .rev()
-            .filter(|object| self.is_visible(object))
-            .find(|object| {
-                object.shape().is_some_and(|shape| {
-                    let extent = self
-                        .measurer
-                        .as_ref()
-                        .filter(|_| shape.kind == "text")
-                        .map(|measurer| (measurer.0)(shape));
-                    geometry::hit_in_mode(shape, point, tolerance, extent, mode)
-                })
-            })
+            .filter(|object| object.is_pickable() && self.is_visible(object))
+            .filter(|object| self.is_hit(object, point, tolerance))
             .map(|object| object.id)
+            .collect()
+    }
+
+    fn is_hit(&self, object: &AnnotationObject, point: Point, tolerance: f32) -> bool {
+        let Some(shape) = object.shape() else {
+            return false;
+        };
+        let mode = if self.selected == Some(object.id) {
+            HitMode::Body
+        } else {
+            HitMode::Outline
+        };
+        let extent = self
+            .measurer
+            .as_ref()
+            .filter(|_| shape.kind == "text")
+            .map(|measurer| (measurer.0)(shape));
+        geometry::hit_in_mode(shape, point, tolerance, extent, mode)
+    }
+
+    #[must_use]
+    pub fn refusal(&self, id: u32) -> Option<Refusal> {
+        let state = &self.document.objects.iter().find(|o| o.id == id)?.state;
+        if state.sealed {
+            Some(Refusal::Sealed)
+        } else if state.locked {
+            Some(Refusal::Locked)
+        } else {
+            None
+        }
+    }
+
+    fn can_edit(&self, id: u32) -> bool {
+        self.document
+            .objects
+            .iter()
+            .any(|object| object.id == id && object.is_editable())
     }
 
     fn is_visible(&self, object: &AnnotationObject) -> bool {
@@ -241,7 +279,8 @@ impl EditSession {
     }
 
     pub fn add(&mut self, shape: Shape) -> u32 {
-        let id = self.document.next_object_id();
+        let id = self.next_id.max(self.document.next_object_id());
+        self.next_id = id.saturating_add(1);
         let object = AnnotationObject::new(id, shape);
         let index = self.document.objects.len();
         self.document.objects.push(object.clone());
@@ -272,11 +311,13 @@ impl EditSession {
 
     #[must_use]
     pub fn can_move_selected(&self, movement: LayerMove) -> bool {
-        self.gesture.is_none() && self.target_position(movement).is_some()
+        self.gesture.is_none()
+            && self.selected.is_some_and(|id| self.can_edit(id))
+            && self.target_position(movement).is_some()
     }
 
     pub fn move_selected(&mut self, movement: LayerMove) -> bool {
-        if self.gesture.is_some() {
+        if !self.can_move_selected(movement) {
             return false;
         }
         let (Some(from), Some(to)) = (self.selected_position(), self.target_position(movement))
@@ -293,7 +334,7 @@ impl EditSession {
         if self.gesture.is_some() {
             return false;
         }
-        let Some(selected) = self.selected else {
+        let Some(selected) = self.selected.filter(|id| self.can_edit(*id)) else {
             return false;
         };
         let Some(before) = self.shape_of(selected).cloned() else {
@@ -330,25 +371,72 @@ impl EditSession {
         if self.gesture.is_some() {
             return None;
         }
+        if self
+            .selected
+            .is_some_and(|id| self.refusal(id) == Some(Refusal::Sealed))
+        {
+            return None;
+        }
         let copy = geometry::translated(self.selected_shape()?, offset, offset);
         Some(self.add(copy))
     }
 
     pub fn remove_selected(&mut self) -> bool {
-        let Some(id) = self.selected else {
+        match self.selected {
+            Some(id) if self.can_edit(id) => self.remove_object(id),
+            _ => false,
+        }
+    }
+
+    pub fn remove_object(&mut self, id: u32) -> bool {
+        if self.gesture.is_some() || self.refusal(id) == Some(Refusal::Sealed) {
             return false;
-        };
+        }
         let Some(index) = self.document.objects.iter().position(|o| o.id == id) else {
             return false;
         };
         let object = self.document.objects.remove(index);
-        self.selected = None;
+        if self.selected == Some(id) {
+            self.selected = None;
+        }
         self.record(Edit::Removed { index, object });
         true
     }
 
+    pub fn set_hidden(&mut self, id: u32, hidden: bool) -> bool {
+        self.change_state(id, |state| state.hidden = hidden)
+    }
+
+    pub fn set_locked(&mut self, id: u32, locked: bool) -> bool {
+        self.change_state(id, |state| state.locked = locked)
+    }
+
+    pub fn rename(&mut self, id: u32, name: Option<String>) -> bool {
+        let name = name
+            .map(|name| name.trim().to_owned())
+            .filter(|n| !n.is_empty());
+        self.change_state(id, |state| state.name = name)
+    }
+
+    fn change_state(&mut self, id: u32, change: impl FnOnce(&mut ObjectState)) -> bool {
+        if self.gesture.is_some() || self.refusal(id) == Some(Refusal::Sealed) {
+            return false;
+        }
+        let Some(object) = self.document.objects.iter_mut().find(|o| o.id == id) else {
+            return false;
+        };
+        let before = object.state.clone();
+        change(&mut object.state);
+        let after = object.state.clone();
+        if before == after {
+            return false;
+        }
+        self.record(Edit::Flagged { id, before, after });
+        true
+    }
+
     pub fn begin_change(&mut self, id: u32) -> bool {
-        if self.gesture.is_some() {
+        if self.gesture.is_some() || !self.can_edit(id) {
             return false;
         }
         let Some(before) = self.shape_of(id).cloned() else {
@@ -391,7 +479,7 @@ impl EditSession {
     }
 
     pub fn set_option_on_selected(&mut self, id: &str, value: Value) -> bool {
-        let Some(selected) = self.selected else {
+        let Some(selected) = self.selected.filter(|id| self.can_edit(*id)) else {
             return false;
         };
         let Some(before) = self.shape_of(selected).cloned() else {
@@ -499,6 +587,12 @@ impl EditSession {
             }
             (Edit::Cropped { before, after }, _) => {
                 self.document.crop = if backwards { *before } else { *after };
+            }
+            (Edit::Flagged { id, before, after }, backwards) => {
+                if let Some(object) = self.document.objects.iter_mut().find(|o| o.id == *id) {
+                    object.state = if backwards { before } else { after }.clone();
+                }
+                self.selected = Some(*id);
             }
             (Edit::Changed { id, before, after }, _) => {
                 let shape = if backwards { before } else { after };

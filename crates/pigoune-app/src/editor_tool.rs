@@ -39,6 +39,10 @@ impl EditorTool {
         Self::Spotlight,
     ];
 
+    pub fn creates(self) -> bool {
+        !matches!(self, Self::Select | Self::Crop)
+    }
+
     pub fn shortcut(self) -> char {
         match self {
             Self::Select => 'v',

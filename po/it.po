@@ -8479,3 +8479,13 @@ msgstr "Questa combinazione di tasti non è supportata."
 #~ msgstr ""
 #~ "L’interfaccia usa ora le stesse parole in tutte le lingue e «Gestisci la "
 #~ "libreria» ha una nuova disposizione."
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: Defaults"
+msgstr "{tool}: valori predefiniti"
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool} (stays active)"
+msgstr "{tool} (resta attivo)"

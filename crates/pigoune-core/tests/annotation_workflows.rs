@@ -44,11 +44,11 @@ fn origin_of(session: &EditSession, id: u32) -> (f32, f32) {
 }
 
 #[test]
-fn a_hollow_rectangle_can_be_moved_by_grabbing_its_inside() {
+fn a_selected_hollow_rectangle_can_be_moved_by_grabbing_its_inside() {
     let mut interaction = Interaction::new();
     let mut session = EditSession::new(AnnotationDocument::default());
     let id = session.add(hollow_rectangle(100.0, 100.0, 200.0, 120.0));
-    session.select(None);
+    session.select(Some(id));
 
     drag(
         &mut interaction,
@@ -62,7 +62,7 @@ fn a_hollow_rectangle_can_be_moved_by_grabbing_its_inside() {
 }
 
 #[test]
-fn a_new_shape_stays_manipulable_with_the_drawing_tool() {
+fn a_new_shape_stays_manipulable_with_the_selection_tool() {
     let mut interaction = Interaction::new();
     let mut session = EditSession::new(AnnotationDocument::default());
     let tool = Tool::Draw(&RECTANGLE);
@@ -78,7 +78,7 @@ fn a_new_shape_stays_manipulable_with_the_drawing_tool() {
     drag(
         &mut interaction,
         &mut session,
-        tool,
+        Tool::Select,
         point(100.0, 100.0),
         point(150.0, 130.0),
     );
@@ -89,7 +89,7 @@ fn a_new_shape_stays_manipulable_with_the_drawing_tool() {
 }
 
 #[test]
-fn a_new_shape_can_be_resized_by_its_handle_with_the_drawing_tool() {
+fn a_new_shape_can_be_resized_by_its_handle_with_the_selection_tool() {
     let mut interaction = Interaction::new();
     let mut session = EditSession::new(AnnotationDocument::default());
     let tool = Tool::Draw(&RECTANGLE);
@@ -105,7 +105,7 @@ fn a_new_shape_can_be_resized_by_its_handle_with_the_drawing_tool() {
     drag(
         &mut interaction,
         &mut session,
-        tool,
+        Tool::Select,
         point(300.0, 220.0),
         point(400.0, 300.0),
     );
@@ -228,30 +228,21 @@ fn a_badge_is_resized_by_a_handle_within_its_limits() {
 }
 
 #[test]
-fn the_placing_tool_grabs_shapes_but_lets_a_click_in_the_empty_through() {
+fn the_placing_tool_never_grabs_a_shape_and_leaves_the_selection_alone() {
     let mut interaction = Interaction::new();
     let mut session = EditSession::new(AnnotationDocument::default());
     let id = session.add(hollow_rectangle(100.0, 100.0, 200.0, 120.0));
-    session.select(None);
     let options = Options::new();
 
-    assert!(!interaction.press(
-        &mut session,
-        Tool::Place,
-        &options,
+    for at in [
         point(200.0, 160.0),
-        REACH
-    ));
-    assert!(interaction.press(
-        &mut session,
-        Tool::Place,
-        &options,
         point(100.0, 160.0),
-        REACH
-    ));
-    interaction.release(&mut session, point(100.0, 160.0));
-
-    assert_eq!(session.selected(), Some(id));
+        point(900.0, 900.0),
+    ] {
+        assert!(!interaction.press(&mut session, Tool::Place, &options, at, REACH));
+        assert_eq!(session.selected(), Some(id));
+    }
+    assert_eq!(origin_of(&session, id), (100.0, 100.0));
 }
 
 #[test]

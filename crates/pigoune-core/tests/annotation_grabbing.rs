@@ -1,6 +1,6 @@
 use pigoune_core::annotations::{
-    AnnotationDocument, Crop, CursorKind, EditSession, Geometry, HitMode, Interaction, Options,
-    Point, Rect, Shape, Tool, definition, number_to_value, shape_bounds,
+    AnnotationDocument, Crop, CursorKind, EditSession, Geometry, Interaction, Options, Point, Rect,
+    Shape, Tool, definition, number_to_value, shape_bounds,
 };
 use serde_json::json;
 
@@ -51,106 +51,138 @@ fn origin(session: &EditSession, id: u32) -> (f32, f32) {
     (bounds.x, bounds.y)
 }
 
-#[test]
-fn a_rectangle_can_be_drawn_inside_the_one_that_was_just_drawn() {
-    let mut session = EditSession::new(AnnotationDocument::default());
-    let big = session.add(boxed("rectangle", 100.0, 100.0, 400.0, 300.0));
+fn hollow(x: f32, y: f32, width: f32, height: f32) -> Shape {
+    boxed("rectangle", x, y, width, height)
+}
 
-    drag(
-        &mut session,
-        drawing("rectangle"),
-        point(200.0, 200.0),
-        point(300.0, 300.0),
-    );
+fn filled(x: f32, y: f32, width: f32, height: f32) -> Shape {
+    hollow(x, y, width, height).with_option("fill", json!(true))
+}
 
-    assert_eq!(session.count(), 2);
-    assert_eq!(origin(&session, big), (100.0, 100.0));
+fn move_by(session: &mut EditSession, from: Point, dx: f32, dy: f32) {
+    drag(session, Tool::Select, from, point(from.x + dx, from.y + dy));
 }
 
 #[test]
-fn a_blur_can_be_drawn_over_a_selected_blur() {
-    let mut session = EditSession::new(AnnotationDocument::default());
-    let first = session.add(boxed("blur", 100.0, 100.0, 300.0, 200.0));
+fn a_drawing_tool_always_creates_even_inside_or_on_the_edge_of_the_selected_shape() {
+    for start in [
+        point(300.0, 250.0),
+        point(100.0, 170.0),
+        point(100.0, 100.0),
+    ] {
+        let mut session = EditSession::new(AnnotationDocument::default());
+        let existing = session.add(hollow(100.0, 100.0, 400.0, 300.0));
+        let before = origin(&session, existing);
 
-    drag(
-        &mut session,
-        drawing("blur"),
-        point(200.0, 150.0),
-        point(450.0, 350.0),
-    );
+        drag(
+            &mut session,
+            drawing("rectangle"),
+            start,
+            point(start.x + 40.0, start.y + 30.0),
+        );
 
-    assert_eq!(session.count(), 2);
-    assert_eq!(origin(&session, first), (100.0, 100.0));
+        assert_eq!(session.count(), 2, "{start:?}");
+        assert_eq!(origin(&session, existing), before, "{start:?}");
+        assert_ne!(session.selected(), Some(existing));
+    }
 }
 
 #[test]
-fn a_filled_shape_and_a_spotlight_are_drawn_over_too() {
+fn a_blur_or_a_filled_shape_can_be_drawn_over_a_selected_one_of_the_same_kind() {
+    for kind in ["blur", "pixelate", "spotlight"] {
+        let mut session = EditSession::new(AnnotationDocument::default());
+        let outer = session.add(boxed(kind, 100.0, 100.0, 400.0, 300.0));
+        let before = origin(&session, outer);
+
+        drag(
+            &mut session,
+            drawing(kind),
+            point(150.0, 150.0),
+            point(250.0, 220.0),
+        );
+
+        assert_eq!(session.count(), 2, "{kind}");
+        assert_eq!(origin(&session, outer), before, "{kind}");
+    }
+}
+
+#[test]
+fn a_hollow_shape_is_grabbed_by_its_outline_only_while_it_is_not_selected() {
     let mut session = EditSession::new(AnnotationDocument::default());
-    let filled = session
-        .add(boxed("rectangle", 100.0, 100.0, 400.0, 300.0).with_option("fill", json!(true)));
-    session.add(boxed("spotlight", 600.0, 100.0, 300.0, 300.0));
+    let id = session.add(hollow(100.0, 100.0, 400.0, 300.0));
     session.select(None);
 
-    drag(
-        &mut session,
-        drawing("ellipse"),
-        point(200.0, 200.0),
-        point(300.0, 300.0),
-    );
-    drag(
-        &mut session,
-        drawing("ellipse"),
-        point(700.0, 200.0),
-        point(800.0, 300.0),
-    );
+    assert_eq!(session.pick(point(300.0, 250.0), REACH), None);
+    assert_eq!(session.pick(point(100.0, 250.0), REACH), Some(id));
+    assert_eq!(session.pick(point(104.0, 250.0), REACH), Some(id));
+    assert_eq!(session.pick(point(300.0, 400.0), REACH), Some(id));
 
-    assert_eq!(session.count(), 4);
-    assert_eq!(origin(&session, filled), (100.0, 100.0));
+    move_by(&mut session, point(300.0, 250.0), 30.0, 0.0);
+    assert_eq!(origin(&session, id), (100.0, 100.0));
+    assert_eq!(session.selected(), None);
 }
 
 #[test]
-fn a_region_is_grabbed_by_its_border_under_a_drawing_tool() {
+fn a_selected_hollow_shape_is_grabbed_by_its_inside_and_moves() {
     let mut session = EditSession::new(AnnotationDocument::default());
-    let region = session.add(boxed("pixelate", 100.0, 100.0, 300.0, 200.0));
+    let id = session.add(hollow(100.0, 100.0, 400.0, 300.0));
     session.select(None);
 
-    drag(
-        &mut session,
-        drawing("rectangle"),
-        point(100.0, 200.0),
-        point(130.0, 230.0),
-    );
+    session.select(Some(id));
+    assert_eq!(session.pick(point(300.0, 250.0), REACH), Some(id));
+    move_by(&mut session, point(300.0, 250.0), 25.0, 15.0);
 
+    assert_eq!(origin(&session, id), (125.0, 115.0));
     assert_eq!(session.count(), 1);
-    assert_eq!(origin(&session, region), (130.0, 130.0));
 }
 
 #[test]
-fn the_selection_tool_still_grabs_the_inside_of_everything() {
+fn an_ellipse_follows_the_same_rule_as_a_rectangle() {
     let mut session = EditSession::new(AnnotationDocument::default());
-    let region = session.add(boxed("blur", 100.0, 100.0, 300.0, 200.0));
-    let hollow = session.add(boxed("rectangle", 500.0, 100.0, 300.0, 200.0));
+    let id = session.add(boxed("ellipse", 100.0, 100.0, 400.0, 300.0));
     session.select(None);
 
-    drag(
-        &mut session,
-        Tool::Select,
-        point(250.0, 200.0),
-        point(260.0, 210.0),
-    );
-    drag(
-        &mut session,
-        Tool::Select,
-        point(650.0, 200.0),
-        point(660.0, 210.0),
-    );
+    assert_eq!(session.pick(point(300.0, 250.0), REACH), None);
+    assert_eq!(session.pick(point(100.0, 250.0), REACH), Some(id));
 
-    assert_eq!(origin(&session, region), (110.0, 110.0));
-    assert_eq!(origin(&session, hollow), (510.0, 110.0));
+    session.select(Some(id));
+    move_by(&mut session, point(300.0, 250.0), 10.0, 10.0);
+    assert_eq!(origin(&session, id), (110.0, 110.0));
 }
 
 #[test]
-fn a_text_and_a_badge_are_grabbed_by_their_box_under_a_drawing_tool() {
+fn what_is_visible_on_top_is_grabbed_first_even_over_a_selected_hollow_shape() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let lower = session.add(hollow(100.0, 100.0, 400.0, 300.0));
+    let upper = session.add(filled(200.0, 150.0, 100.0, 100.0));
+    session.select(Some(lower));
+
+    assert_eq!(session.pick(point(250.0, 200.0), REACH), Some(upper));
+    assert_eq!(session.pick(point(400.0, 300.0), REACH), Some(lower));
+
+    let outer = session.add(hollow(90.0, 90.0, 420.0, 320.0));
+    session.select(Some(lower));
+    assert_eq!(session.pick(point(95.0, 250.0), REACH), Some(outer));
+}
+
+#[test]
+fn a_thin_line_under_a_filled_shape_never_wins_over_it() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let line = session.add(
+        boxed("line", 0.0, 0.0, 0.0, 0.0).with_geometry(Geometry::TwoPoints {
+            from: point(100.0, 200.0),
+            to: point(500.0, 200.0),
+        }),
+    );
+    let panel = session.add(filled(200.0, 150.0, 100.0, 100.0));
+    session.select(None);
+
+    assert_eq!(session.pick(point(250.0, 200.0), REACH), Some(panel));
+    assert_eq!(session.pick(point(150.0, 200.0), REACH), Some(line));
+}
+
+#[test]
+fn a_text_and_a_badge_are_grabbed_by_their_box() {
     let mut session = EditSession::new(AnnotationDocument::default());
     let text_sheet = definition("text").expect("text");
     let text = session.add(
@@ -169,49 +201,129 @@ fn a_text_and_a_badge_are_grabbed_by_their_box_under_a_drawing_tool() {
     ));
     session.select(None);
 
-    drag(
-        &mut session,
-        drawing("rectangle"),
-        point(110.0, 110.0),
-        point(130.0, 120.0),
-    );
+    assert_eq!(session.pick(point(110.0, 110.0), REACH), Some(text));
+    assert_eq!(session.pick(point(402.0, 102.0), REACH), Some(step));
+    move_by(&mut session, point(110.0, 110.0), 20.0, 0.0);
     session.select(None);
-    drag(
-        &mut session,
-        drawing("rectangle"),
-        point(402.0, 102.0),
-        point(412.0, 112.0),
-    );
+    move_by(&mut session, point(402.0, 102.0), 8.0, 8.0);
 
-    assert_eq!(session.count(), 2);
     let Geometry::Anchor(step_at) = session.shape_of(step).expect("step").geometry else {
         panic!("anchored")
     };
-    assert!(near(step_at.x, 410.0) && near(step_at.y, 110.0));
+    assert!(near(step_at.x, 408.0) && near(step_at.y, 108.0));
     let Geometry::Anchor(moved_text) = session.shape_of(text).expect("text").geometry else {
         panic!("anchored")
     };
-    assert!(near(moved_text.x, 120.0) && near(moved_text.y, 110.0));
+    assert!(near(moved_text.x, 120.0) && near(moved_text.y, 100.0));
+    assert_eq!(session.count(), 2);
 }
 
 #[test]
-fn the_cursor_follows_the_same_rule() {
+fn the_cursor_tells_what_a_press_would_do_for_every_tool() {
     let mut session = EditSession::new(AnnotationDocument::default());
-    session.add(boxed("rectangle", 100.0, 100.0, 400.0, 300.0));
-    let tool = drawing("rectangle");
+    let id = session.add(hollow(100.0, 100.0, 400.0, 300.0));
+    let interaction = Interaction::new();
+    let cursor =
+        |session: &EditSession, tool, x, y| interaction.cursor(session, tool, point(x, y), REACH);
+
+    session.select(None);
+    assert_eq!(
+        cursor(&session, Tool::Select, 300.0, 250.0),
+        CursorKind::Default
+    );
+    assert_eq!(
+        cursor(&session, Tool::Select, 100.0, 170.0),
+        CursorKind::Move
+    );
+    session.select(Some(id));
+    assert_eq!(
+        cursor(&session, Tool::Select, 300.0, 250.0),
+        CursorKind::Move
+    );
+    for (x, y) in [(300.0, 250.0), (100.0, 170.0), (100.0, 100.0)] {
+        assert_eq!(
+            cursor(&session, drawing("rectangle"), x, y),
+            CursorKind::Crosshair,
+            "({x}, {y})"
+        );
+    }
+}
+
+#[test]
+fn control_turns_a_drawing_tool_into_the_selection_tool_while_it_is_held() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let id = session.add(hollow(100.0, 100.0, 400.0, 300.0));
+    let mut interaction = Interaction::new();
+    interaction.set_temporary_select(true);
 
     assert_eq!(
-        Interaction::cursor(&session, tool, point(300.0, 250.0), REACH),
-        CursorKind::Crosshair
+        interaction.cursor(&session, drawing("rectangle"), point(500.0, 400.0), REACH),
+        CursorKind::Resize(pigoune_core::annotations::Handle::BottomRight)
     );
-    assert_eq!(
-        Interaction::cursor(&session, tool, point(100.0, 170.0), REACH),
-        CursorKind::Move
+    interaction.press(
+        &mut session,
+        drawing("rectangle"),
+        &Options::new(),
+        point(500.0, 400.0),
+        REACH,
     );
-    assert_eq!(
-        Interaction::cursor(&session, Tool::Select, point(300.0, 250.0), REACH),
-        CursorKind::Move
+    interaction.drag(&mut session, point(520.0, 420.0));
+    interaction.release(&mut session, point(540.0, 440.0));
+
+    assert_eq!(session.count(), 1);
+    assert_eq!(session.selected(), Some(id));
+    interaction.set_temporary_select(false);
+    interaction.press(
+        &mut session,
+        drawing("rectangle"),
+        &Options::new(),
+        point(540.0, 440.0),
+        REACH,
     );
+    interaction.cancel(&mut session);
+    assert_eq!(session.count(), 1);
+}
+
+#[test]
+fn no_handle_is_reachable_under_a_drawing_tool() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let id = session.add(hollow(100.0, 100.0, 400.0, 300.0));
+    let before = origin(&session, id);
+
+    drag(
+        &mut session,
+        drawing("rectangle"),
+        point(500.0, 400.0),
+        point(560.0, 450.0),
+    );
+
+    assert_eq!(session.count(), 2);
+    assert_eq!(origin(&session, id), before);
+    let bounds = shape_bounds(session.shape_of(id).expect("shape")).expect("bounds");
+    assert!(near(bounds.width, 400.0) && near(bounds.height, 300.0));
+}
+
+#[test]
+fn a_locked_or_hidden_object_is_neither_grabbed_nor_changed() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let locked = session.add(filled(100.0, 100.0, 100.0, 100.0));
+    let hidden = session.add(filled(300.0, 100.0, 100.0, 100.0));
+    assert!(session.set_locked(locked, true));
+    assert!(session.set_hidden(hidden, true));
+    session.select(None);
+
+    assert_eq!(session.pick(point(150.0, 150.0), REACH), None);
+    assert_eq!(session.pick(point(350.0, 150.0), REACH), None);
+    session.select(Some(locked));
+    assert!(!session.nudge_selected(5.0, 0.0));
+    assert!(!session.remove_selected());
+    assert!(!session.set_option_on_selected("width", number_to_value(9.0)));
+    assert!(!session.begin_change(locked));
+    assert_eq!(origin(&session, locked), (100.0, 100.0));
+    assert_eq!(session.count(), 2);
+
+    assert!(session.set_locked(locked, false));
+    assert_eq!(session.pick(point(150.0, 150.0), REACH), Some(locked));
 }
 
 #[test]
@@ -226,11 +338,7 @@ fn a_text_outside_the_crop_cannot_be_picked() {
         )
         .with_option("content", json!("Hello")),
     );
-    assert!(
-        session
-            .pick(point(25.0, 25.0), REACH, HitMode::Edge)
-            .is_some()
-    );
+    assert!(session.pick(point(25.0, 25.0), REACH).is_some());
 
     session.set_crop(Some(Crop {
         x: 400,
@@ -239,7 +347,7 @@ fn a_text_outside_the_crop_cannot_be_picked() {
         height: 200,
     }));
 
-    assert_eq!(session.pick(point(25.0, 25.0), REACH, HitMode::Edge), None);
+    assert_eq!(session.pick(point(25.0, 25.0), REACH), None);
 }
 
 #[test]

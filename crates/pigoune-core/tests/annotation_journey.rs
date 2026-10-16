@@ -1,7 +1,6 @@
 use pigoune_core::annotations::{
-    ARROW, AnnotationDocument, Crop, EditSession, Geometry, Handle, HitMode, Interaction,
-    LayerMove, Options, Point, RECTANGLE, Rect, Shape, Tool, handles, number_to_value,
-    shape_bounds,
+    ARROW, AnnotationDocument, Crop, EditSession, Geometry, Handle, Interaction, LayerMove,
+    Options, Point, RECTANGLE, Rect, Shape, Tool, handles, number_to_value, shape_bounds,
 };
 use serde_json::json;
 
@@ -90,7 +89,7 @@ fn journey() -> Journey {
     drag(
         &mut interaction,
         &mut session,
-        Tool::Draw(&ARROW),
+        Tool::Select,
         &arrow_options,
         middle,
         point(middle.x + 20.0, middle.y + 60.0),
@@ -167,8 +166,8 @@ fn a_saved_and_reopened_document_keeps_everything_editable() {
         &mut session,
         Tool::Select,
         &Options::new(),
-        point(250.0, 180.0),
-        point(300.0, 230.0),
+        point(150.0, 200.0),
+        point(200.0, 250.0),
     );
     assert_eq!(session.selected(), Some(journey.rectangle));
     let moved =
@@ -195,25 +194,16 @@ fn the_front_shape_wins_the_picking_and_the_order_survives_a_reload() {
         session.select(None);
     }
     let ids: Vec<u32> = session.document().objects.iter().map(|o| o.id).collect();
-    assert_eq!(
-        session.pick(point(200.0, 200.0), REACH, HitMode::Body),
-        Some(ids[1])
-    );
+    assert_eq!(session.pick(point(200.0, 200.0), REACH), Some(ids[1]));
 
     session.select(Some(ids[0]));
     assert!(session.move_selected(LayerMove::Front));
-    assert_eq!(
-        session.pick(point(200.0, 200.0), REACH, HitMode::Body),
-        Some(ids[0])
-    );
+    assert_eq!(session.pick(point(200.0, 200.0), REACH), Some(ids[0]));
 
     let reloaded = EditSession::restored(
         AnnotationDocument::from_json(&snapshot(&session)).expect("readable"),
     );
-    assert_eq!(
-        reloaded.pick(point(200.0, 200.0), REACH, HitMode::Body),
-        Some(ids[0])
-    );
+    assert_eq!(reloaded.pick(point(200.0, 200.0), REACH), Some(ids[0]));
 }
 
 #[test]
@@ -233,19 +223,12 @@ fn cropping_keeps_coordinates_and_hides_what_is_outside_the_frame() {
         shape_bounds(journey.session.shape_of(journey.arrow).expect("arrow")).expect("bounds");
     assert!(arrow_origin.x > 380.0);
     assert_eq!(
-        journey.session.pick(
-            point(arrow_origin.x + 5.0, arrow_origin.y + 5.0),
-            30.0,
-            HitMode::Outline
-        ),
-        None
-    );
-    assert!(
         journey
             .session
-            .pick(point(150.0, 140.0), REACH, HitMode::Body)
-            .is_some()
+            .pick(point(arrow_origin.x + 5.0, arrow_origin.y + 5.0), 30.0),
+        None
     );
+    assert!(journey.session.pick(point(150.0, 140.0), REACH).is_some());
     assert_eq!(after.objects.len(), 2);
 
     assert!(journey.session.undo());

@@ -8524,3 +8524,13 @@ msgstr "Diese Tastenkombination wird nicht unterstützt."
 #~ msgstr ""
 #~ "Die Oberfläche verwendet jetzt in allen Sprachen dieselben Begriffe, und "
 #~ "„Bibliothek verwalten“ hat ein neues Layout."
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: Defaults"
+msgstr "{tool}: Standardwerte"
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool} (stays active)"
+msgstr "{tool} (bleibt aktiv)"

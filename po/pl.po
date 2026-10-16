@@ -8572,3 +8572,13 @@ msgstr "Ta kombinacja klawiszy nie jest obsługiwana."
 #~ msgstr ""
 #~ "Interfejs używa teraz tych samych słów we wszystkich językach, a "
 #~ "„Zarządzaj biblioteką” ma nowy układ."
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: Defaults"
+msgstr "{tool}: wartości domyślne"
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool} (stays active)"
+msgstr "{tool} (pozostaje aktywne)"
