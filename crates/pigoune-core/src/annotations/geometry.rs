@@ -347,23 +347,7 @@ pub fn translated(shape: &Shape, dx: f32, dy: f32) -> Shape {
 #[must_use]
 pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
     match &shape.geometry {
-        Geometry::Box(rect) => {
-            let rect = normalized(*rect);
-            let (left, top) = (rect.x, rect.y);
-            let (right, bottom) = (rect.x + rect.width, rect.y + rect.height);
-            let (middle_x, middle_y) = (left + rect.width / 2.0, top + rect.height / 2.0);
-            let at = |handle, x, y| (handle, Point { x, y });
-            vec![
-                at(Handle::TopLeft, left, top),
-                at(Handle::Top, middle_x, top),
-                at(Handle::TopRight, right, top),
-                at(Handle::Right, right, middle_y),
-                at(Handle::BottomRight, right, bottom),
-                at(Handle::Bottom, middle_x, bottom),
-                at(Handle::BottomLeft, left, bottom),
-                at(Handle::Left, left, middle_y),
-            ]
-        }
+        Geometry::Box(rect) => box_handles(normalized(*rect)),
         Geometry::TwoPoints { from, to } => {
             let mut found = vec![(Handle::Start, *from), (Handle::End, *to)];
             if shape.kind == "arrow" {
@@ -371,37 +355,106 @@ pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
             }
             found
         }
-        Geometry::Polyline(_) | Geometry::Anchor(_) => Vec::new(),
+        Geometry::Polyline(_) => scalable_bounds(shape).map_or_else(Vec::new, box_handles),
+        Geometry::Anchor(_) => scalable_bounds(shape)
+            .map(|bounds| {
+                (
+                    Handle::BottomRight,
+                    Point {
+                        x: bounds.x + bounds.width,
+                        y: bounds.y + bounds.height,
+                    },
+                )
+            })
+            .into_iter()
+            .collect(),
     }
+}
+
+fn scalable_bounds(shape: &Shape) -> Option<Rect> {
+    match &shape.geometry {
+        Geometry::Polyline(_) => shape_bounds(shape),
+        Geometry::Anchor(_) if shape.definition()?.outline == Outline::Disc => shape_bounds(shape),
+        _ => None,
+    }
+}
+
+fn box_handles(rect: Rect) -> Vec<(Handle, Point)> {
+    let (left, top) = (rect.x, rect.y);
+    let (right, bottom) = (rect.x + rect.width, rect.y + rect.height);
+    let (middle_x, middle_y) = (left + rect.width / 2.0, top + rect.height / 2.0);
+    let at = |handle, x, y| (handle, Point { x, y });
+    vec![
+        at(Handle::TopLeft, left, top),
+        at(Handle::Top, middle_x, top),
+        at(Handle::TopRight, right, top),
+        at(Handle::Right, right, middle_y),
+        at(Handle::BottomRight, right, bottom),
+        at(Handle::Bottom, middle_x, bottom),
+        at(Handle::BottomLeft, left, bottom),
+        at(Handle::Left, left, middle_y),
+    ]
+}
+
+fn resized_rect(rect: Rect, handle: Handle, to: Point) -> Option<Rect> {
+    let rect = normalized(rect);
+    let (mut left, mut top) = (rect.x, rect.y);
+    let (mut right, mut bottom) = (rect.x + rect.width, rect.y + rect.height);
+    match handle {
+        Handle::TopLeft => (left, top) = (to.x, to.y),
+        Handle::Top => top = to.y,
+        Handle::TopRight => (right, top) = (to.x, to.y),
+        Handle::Right => right = to.x,
+        Handle::BottomRight => (right, bottom) = (to.x, to.y),
+        Handle::Bottom => bottom = to.y,
+        Handle::BottomLeft => (left, bottom) = (to.x, to.y),
+        Handle::Left => left = to.x,
+        Handle::Start | Handle::End | Handle::Curve => return None,
+    }
+    Some(rect_between(
+        Point { x: left, y: top },
+        Point {
+            x: right,
+            y: bottom,
+        },
+    ))
+}
+
+fn scaled_points(points: &[Point], from: Rect, to: Rect) -> Vec<Point> {
+    let scale = |value: f32, origin: f32, size: f32, target_origin: f32, target_size: f32| {
+        if size > 0.0 {
+            target_origin + (value - origin) * target_size / size
+        } else {
+            value + target_origin - origin
+        }
+    };
+    points
+        .iter()
+        .map(|point| Point {
+            x: scale(point.x, from.x, from.width, to.x, to.width),
+            y: scale(point.y, from.y, from.height, to.y, to.height),
+        })
+        .collect()
+}
+
+const SMALLEST_BADGE: f32 = 8.0;
+const LARGEST_BADGE: f32 = 60.0;
+
+fn resized_badge(shape: &Shape, at: Point, to: Point) -> Shape {
+    let size = (to.x - at.x)
+        .abs()
+        .max((to.y - at.y).abs())
+        .clamp(SMALLEST_BADGE, LARGEST_BADGE);
+    shape.with_option("size", number_to_value(size))
 }
 
 #[must_use]
 pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
     match &shape.geometry {
-        Geometry::Box(rect) => {
-            let rect = normalized(*rect);
-            let (mut left, mut top) = (rect.x, rect.y);
-            let (mut right, mut bottom) = (rect.x + rect.width, rect.y + rect.height);
-            match handle {
-                Handle::TopLeft => (left, top) = (to.x, to.y),
-                Handle::Top => top = to.y,
-                Handle::TopRight => (right, top) = (to.x, to.y),
-                Handle::Right => right = to.x,
-                Handle::BottomRight => (right, bottom) = (to.x, to.y),
-                Handle::Bottom => bottom = to.y,
-                Handle::BottomLeft => (left, bottom) = (to.x, to.y),
-                Handle::Left => left = to.x,
-                Handle::Start | Handle::End | Handle::Curve => return shape.clone(),
-            }
-            let bounds = rect_between(
-                Point { x: left, y: top },
-                Point {
-                    x: right,
-                    y: bottom,
-                },
-            );
-            shape.with_geometry(Geometry::Box(bounds))
-        }
+        Geometry::Box(rect) => resized_rect(*rect, handle, to).map_or_else(
+            || shape.clone(),
+            |bounds| shape.with_geometry(Geometry::Box(bounds)),
+        ),
         Geometry::TwoPoints { from, to: end } => match handle {
             Handle::Curve if shape.kind == "arrow" => {
                 shape.with_option("curve", number_to_value(bend_through(*from, *end, to)))
@@ -410,7 +463,24 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
             Handle::End => shape.with_geometry(Geometry::TwoPoints { from: *from, to }),
             _ => shape.clone(),
         },
-        Geometry::Polyline(_) | Geometry::Anchor(_) => shape.clone(),
+        Geometry::Polyline(points) => {
+            let (Some(old), Some(new)) = (
+                scalable_bounds(shape),
+                scalable_bounds(shape).and_then(|bounds| resized_rect(bounds, handle, to)),
+            ) else {
+                return shape.clone();
+            };
+            shape.with_geometry(Geometry::Polyline(scaled_points(points, old, new)))
+        }
+        Geometry::Anchor(at) => {
+            if scalable_bounds(shape).is_some()
+                && !matches!(handle, Handle::Start | Handle::End | Handle::Curve)
+            {
+                resized_badge(shape, *at, to)
+            } else {
+                shape.clone()
+            }
+        }
     }
 }
 

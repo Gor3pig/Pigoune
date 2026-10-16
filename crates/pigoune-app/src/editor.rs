@@ -537,7 +537,7 @@ impl PigouneEditor {
         let tool = self.imp().active_tool.get();
         match (tool, tool.definition()) {
             (EditorTool::Select, _) => Tool::Select,
-            (EditorTool::Text, _) => Tool::Unsupported,
+            (EditorTool::Text, _) => Tool::Place,
             (_, Some(definition)) => Tool::Draw(definition),
             _ => Tool::Unsupported,
         }
@@ -691,6 +691,11 @@ impl PigouneEditor {
         if imp.active_tool.get() == EditorTool::Text {
             return self.handle_text_pointer(event);
         }
+        self.handle_object_pointer(event)
+    }
+
+    fn handle_object_pointer(&self, event: PointerEvent) -> bool {
+        let imp = self.imp();
         let tool = self.current_tool();
         let reach = self.reach();
         if matches!(event, PointerEvent::Press(_)) {
@@ -716,7 +721,7 @@ impl PigouneEditor {
                     );
                     let after = drawing.session.selected();
                     let clicked_text = after.filter(|id| {
-                        Some(*id) == before
+                        (Some(*id) == before || tool == Tool::Place)
                             && drawing
                                 .session
                                 .shape_of(*id)
@@ -756,7 +761,12 @@ impl PigouneEditor {
                     let kind =
                         Interaction::cursor(&drawing.session, tool, image_point(point), reach);
                     drop(guard);
-                    imp.zoom_view.set_cursor_override(cursor_name(kind));
+                    let name = if tool == Tool::Place && kind == CursorKind::Crosshair {
+                        Some("text")
+                    } else {
+                        cursor_name(kind)
+                    };
+                    imp.zoom_view.set_cursor_override(name);
                     return false;
                 }
             }
@@ -791,31 +801,19 @@ impl PigouneEditor {
         let imp = self.imp();
         match event {
             PointerEvent::Press(point) => {
-                self.commit_text();
-                let point = image_point(point);
-                let reach = self.reach();
-                let hit = {
-                    let drawing = imp.drawing.borrow();
-                    drawing.session.hit_test(point, reach).filter(|id| {
-                        drawing
-                            .session
-                            .shape_of(*id)
-                            .is_some_and(|shape| shape.kind == "text")
-                    })
-                };
-                if let Some(id) = hit {
-                    self.edit_text(id);
-                } else {
+                if !self.handle_object_pointer(event) {
                     imp.drawing.borrow_mut().session.select(None);
-                    self.begin_text_edit(None, point);
+                    self.begin_text_edit(None, image_point(point));
                 }
                 true
             }
-            PointerEvent::Hover(_) => {
-                imp.zoom_view.set_cursor_override(Some("text"));
-                false
+            PointerEvent::Hover(_) => self.handle_object_pointer(event),
+            _ => {
+                if imp.drawing.borrow().interaction.is_active() {
+                    return self.handle_object_pointer(event);
+                }
+                true
             }
-            _ => true,
         }
     }
 
