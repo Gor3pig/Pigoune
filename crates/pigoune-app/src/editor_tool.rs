@@ -1,6 +1,7 @@
 use gettextrs::gettext;
 use pigoune_core::annotations::{
-    ARROW, BLUR, ELLIPSE, HIGHLIGHTER, LINE, PEN, PIXELATE, RECTANGLE, STEP, TEXT, ToolDefinition,
+    ARROW, BLUR, ELLIPSE, HIGHLIGHTER, LINE, PEN, PIXELATE, RECTANGLE, SPOTLIGHT, STEP, TEXT,
+    ToolDefinition,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -18,10 +19,11 @@ pub enum EditorTool {
     Highlighter,
     Blur,
     Pixelate,
+    Spotlight,
 }
 
 impl EditorTool {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 13] = [
         Self::Select,
         Self::Crop,
         Self::Rectangle,
@@ -34,6 +36,7 @@ impl EditorTool {
         Self::Highlighter,
         Self::Blur,
         Self::Pixelate,
+        Self::Spotlight,
     ];
 
     pub fn shortcut(self) -> char {
@@ -50,6 +53,7 @@ impl EditorTool {
             Self::Highlighter => 'h',
             Self::Blur => 'b',
             Self::Pixelate => 'x',
+            Self::Spotlight => 's',
         }
     }
 
@@ -72,6 +76,7 @@ impl EditorTool {
             Self::Highlighter => "highlighter",
             Self::Blur => "blur",
             Self::Pixelate => "pixelate",
+            Self::Spotlight => "spotlight",
         }
     }
 
@@ -89,6 +94,7 @@ impl EditorTool {
             Self::Highlighter => "highlighter-symbolic",
             Self::Blur => "drop-symbolic",
             Self::Pixelate => "grid-four-symbolic",
+            Self::Spotlight => "flashlight-symbolic",
         }
     }
 
@@ -106,6 +112,7 @@ impl EditorTool {
             Self::Highlighter => gettext("Highlighter"),
             Self::Blur => gettext("Blur"),
             Self::Pixelate => gettext("Pixelate"),
+            Self::Spotlight => gettext("Spotlight"),
         }
     }
 
@@ -121,6 +128,7 @@ impl EditorTool {
             Self::Text => Some(&TEXT),
             Self::Blur => Some(&BLUR),
             Self::Pixelate => Some(&PIXELATE),
+            Self::Spotlight => Some(&SPOTLIGHT),
             _ => None,
         }
     }
@@ -137,6 +145,7 @@ impl EditorTool {
             "text" => Some(Self::Text),
             "blur" => Some(Self::Blur),
             "pixelate" => Some(Self::Pixelate),
+            "spotlight" => Some(Self::Spotlight),
             _ => None,
         }
     }

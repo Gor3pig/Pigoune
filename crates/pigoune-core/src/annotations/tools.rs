@@ -198,6 +198,30 @@ pub const PIXELATE: ToolDefinition = ToolDefinition {
     options: &[CELL],
 };
 
+pub const SPOT_SHAPE_CHOICES: [&str; 2] = ["rectangle", "ellipse"];
+
+pub const SPOT_SHAPE: OptionSpec = OptionSpec {
+    id: "spot",
+    kind: OptionKind::Choice(&SPOT_SHAPE_CHOICES),
+    default: DefaultValue::Choice("rectangle"),
+    shown_if: None,
+};
+
+pub const DIMMING: OptionSpec = OptionSpec {
+    id: "dimming",
+    kind: OptionKind::Opacity,
+    default: DefaultValue::Number(0.6),
+    shown_if: None,
+};
+
+pub const SPOTLIGHT: ToolDefinition = ToolDefinition {
+    kind: "spotlight",
+    geometry: GeometryKind::Box,
+    outline: Outline::Region,
+    hides_content: false,
+    options: &[SPOT_SHAPE, DIMMING],
+};
+
 pub const SMOOTH: OptionSpec = OptionSpec {
     id: "smooth",
     kind: OptionKind::Toggle,
@@ -347,7 +371,7 @@ pub const TEXT: ToolDefinition = ToolDefinition {
     ],
 };
 
-pub const DEFINITIONS: [&ToolDefinition; 10] = [
+pub const DEFINITIONS: [&ToolDefinition; 11] = [
     &RECTANGLE,
     &ELLIPSE,
     &LINE,
@@ -358,6 +382,7 @@ pub const DEFINITIONS: [&ToolDefinition; 10] = [
     &TEXT,
     &BLUR,
     &PIXELATE,
+    &SPOTLIGHT,
 ];
 
 #[must_use]
