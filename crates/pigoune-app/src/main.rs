@@ -69,6 +69,7 @@ mod languages;
 mod library_info_dialog;
 mod list_diff;
 mod load_slots;
+mod mask_lock;
 mod new_library_dialog;
 mod pasted_content;
 mod preferences_dialog;

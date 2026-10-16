@@ -14,6 +14,7 @@ use crate::annotation_render;
 use crate::asset_preview::zoom_text;
 use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
+use crate::mask_lock;
 use crate::zoom_view::PointerEvent;
 
 type ClosedCallback = Box<dyn Fn()>;
@@ -30,7 +31,7 @@ pub struct TextEdit {
 }
 
 mod imp {
-    use super::{Cell, ClosedCallback, OptionRow, Point, RefCell, TextEdit};
+    use super::{Cell, ClosedCallback, OptionRow, Point, RefCell, Shape, TextEdit};
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
@@ -124,6 +125,9 @@ mod imp {
         pub on_closed: RefCell<Option<ClosedCallback>>,
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
+        #[template_child]
+        pub mask_banner: TemplateChild<adw::Banner>,
+        pub locked_masks: RefCell<Vec<(u32, Shape)>>,
         pub text_edit: Cell<Option<TextEdit>>,
         pub text_provider: gtk::CssProvider,
         pub text_view_origin: Cell<[u32; 3]>,
@@ -179,6 +183,7 @@ impl PigouneEditor {
         let imp = self.imp();
         self.cancel_text();
         imp.pixel_cache.borrow_mut().clear();
+        imp.locked_masks.take();
         let mut drawing = imp::Drawing::default();
         let context = self.pango_context();
         drawing
@@ -866,8 +871,74 @@ impl PigouneEditor {
         } else {
             gettext("Annotations: {count}").replace("{count}", &count.to_string())
         });
+        let unlocked = drawing
+            .session
+            .document()
+            .masks()
+            .iter()
+            .any(|mask| !imp.locked_masks.borrow().contains(mask));
         drop(drawing);
+        imp.mask_banner.set_revealed(unlocked);
         imp.zoom_view.queue_draw();
+    }
+
+    #[template_callback]
+    fn on_lock_masks_clicked(&self) {
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Lock the Masks?")),
+            Some(&gettext(
+                "The blur and the pixelation will be applied to the original image for good. The hidden content can no longer be recovered, and this cannot be undone.",
+            )),
+        );
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("lock", &gettext("_Lock"));
+        dialog.set_response_appearance("lock", adw::ResponseAppearance::Destructive);
+        dialog.set_default_response(Some("cancel"));
+        dialog.set_close_response("cancel");
+        dialog.connect_response(
+            Some("lock"),
+            glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move |_, _| editor.lock_masks()
+            ),
+        );
+        dialog.present(Some(self));
+    }
+
+    fn lock_masks(&self) {
+        let imp = self.imp();
+        self.commit_text();
+        let baked = {
+            let drawing = imp.drawing.borrow();
+            let texture = imp.zoom_view.texture();
+            let renderer = self.native().and_then(|native| native.renderer());
+            texture
+                .as_ref()
+                .zip(renderer.as_ref())
+                .and_then(|(texture, renderer)| {
+                    let backdrop = annotation_render::Backdrop {
+                        texture,
+                        renderer,
+                        cache: &imp.pixel_cache,
+                    };
+                    mask_lock::bake(&backdrop, drawing.session.document(), &self.pango_context())
+                })
+        };
+        let Some(baked) = baked else {
+            let dialog = adw::AlertDialog::new(
+                Some(&gettext("Could Not Lock the Masks")),
+                Some(&gettext("The original image was left unchanged.")),
+            );
+            dialog.add_response("close", &gettext("_Close"));
+            dialog.present(Some(self));
+            return;
+        };
+        imp.zoom_view.replace_texture(&baked);
+        imp.pixel_cache.borrow_mut().clear();
+        imp.locked_masks
+            .replace(imp.drawing.borrow().session.document().masks());
+        self.refresh();
     }
 
     fn listen_to_keys(&self) {

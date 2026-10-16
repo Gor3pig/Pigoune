@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 00:26+0200\n"
+"POT-Creation-Date: 2026-10-16 11:43+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Spanish\n"
@@ -1381,9 +1381,9 @@ msgid "New Library"
 msgstr "Nueva biblioteca"
 
 #: crates/pigoune-app/ui/new-library-dialog.blp:17
-#: crates/pigoune-app/src/window.rs:2965 crates/pigoune-app/src/window.rs:4885
-#: crates/pigoune-app/src/window.rs:5063 crates/pigoune-app/src/window.rs:5136
-#: crates/pigoune-app/src/window.rs:5768
+#: crates/pigoune-app/src/editor.rs:893 crates/pigoune-app/src/window.rs:2965
+#: crates/pigoune-app/src/window.rs:4885 crates/pigoune-app/src/window.rs:5063
+#: crates/pigoune-app/src/window.rs:5136 crates/pigoune-app/src/window.rs:5768
 #: crates/pigoune-app/ui/import-progress-dialog.blp:41
 #: crates/pigoune-app/ui/collection-name-dialog.blp:17
 #: crates/pigoune-app/ui/collection-look-dialog.blp:16
@@ -1435,19 +1435,59 @@ msgstr "_Elegir…"
 msgid "translator-credits"
 msgstr "Gor3pig"
 
-#: crates/pigoune-app/src/editor.rs:724
+#: crates/pigoune-app/src/editor.rs:767
 #, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
-#: crates/pigoune-app/src/editor.rs:827 crates/pigoune-app/ui/editor.blp:117
+#: crates/pigoune-app/src/editor.rs:870 crates/pigoune-app/ui/editor.blp:124
 msgid "No annotations"
 msgstr "Sin anotaciones"
 
-#: crates/pigoune-app/src/editor.rs:829
+#: crates/pigoune-app/src/editor.rs:872
 #, rust-format
 msgid "Annotations: {count}"
 msgstr "Anotaciones: {count}"
+
+#: crates/pigoune-app/src/editor.rs:888
+msgid "Lock the Masks?"
+msgstr "¿Bloquear los difuminados?"
+
+#: crates/pigoune-app/src/editor.rs:890
+msgid ""
+"The blur and the pixelation will be applied to the original image for good. "
+"The hidden content can no longer be recovered, and this cannot be undone."
+msgstr "El desenfoque y la pixelación se aplicarán de forma definitiva a la imagen original. El contenido oculto ya no podrá recuperarse y esta acción no se puede deshacer."
+
+#: crates/pigoune-app/src/editor.rs:894
+msgid "_Lock"
+msgstr "_Bloquear"
+
+#: crates/pigoune-app/src/editor.rs:930
+msgid "Could Not Lock the Masks"
+msgstr "No se pudieron bloquear los difuminados"
+
+#: crates/pigoune-app/src/editor.rs:931
+msgid "The original image was left unchanged."
+msgstr "La imagen original no se ha modificado."
+
+#: crates/pigoune-app/src/editor.rs:933 crates/pigoune-app/src/window.rs:1916
+#: crates/pigoune-app/src/window.rs:3223 crates/pigoune-app/src/window.rs:3270
+#: crates/pigoune-app/src/window.rs:3429 crates/pigoune-app/src/window.rs:3438
+#: crates/pigoune-app/src/window.rs:3816 crates/pigoune-app/src/window.rs:3944
+#: crates/pigoune-app/src/window.rs:4342 crates/pigoune-app/src/window.rs:4639
+#: crates/pigoune-app/src/window.rs:4707 crates/pigoune-app/src/window.rs:4781
+#: crates/pigoune-app/src/window.rs:5096 crates/pigoune-app/src/window.rs:5821
+#: crates/pigoune-app/src/window.rs:5872 crates/pigoune-app/src/window.rs:6269
+#: crates/pigoune-app/src/window.rs:6634
+#: crates/pigoune-app/src/import_report.rs:50
+#: crates/pigoune-app/src/import_report.rs:62
+#: crates/pigoune-app/src/import_report.rs:73
+#: crates/pigoune-app/src/duplicates_page.rs:1061
+#: crates/pigoune-app/src/duplicates_page.rs:1120
+#: crates/pigoune-app/src/health_page.rs:692
+msgid "_Close"
+msgstr "_Cerrar"
 
 #: crates/pigoune-app/src/editor_options.rs:39
 #: crates/pigoune-app/src/filter_choices.rs:269
@@ -1639,7 +1679,7 @@ msgid "Select"
 msgstr "Selección"
 
 #: crates/pigoune-app/src/editor_tool.rs:76
-#: crates/pigoune-app/ui/editor.blp:179
+#: crates/pigoune-app/ui/editor.blp:186
 msgid "Crop"
 msgstr "Recortar"
 
@@ -2042,23 +2082,6 @@ msgstr "Sin clasificar"
 #: crates/pigoune-app/src/window.rs:1913
 msgid "Unable to Read the Library"
 msgstr "No se puede leer la biblioteca"
-
-#: crates/pigoune-app/src/window.rs:1916 crates/pigoune-app/src/window.rs:3223
-#: crates/pigoune-app/src/window.rs:3270 crates/pigoune-app/src/window.rs:3429
-#: crates/pigoune-app/src/window.rs:3438 crates/pigoune-app/src/window.rs:3816
-#: crates/pigoune-app/src/window.rs:3944 crates/pigoune-app/src/window.rs:4342
-#: crates/pigoune-app/src/window.rs:4639 crates/pigoune-app/src/window.rs:4707
-#: crates/pigoune-app/src/window.rs:4781 crates/pigoune-app/src/window.rs:5096
-#: crates/pigoune-app/src/window.rs:5821 crates/pigoune-app/src/window.rs:5872
-#: crates/pigoune-app/src/window.rs:6269 crates/pigoune-app/src/window.rs:6634
-#: crates/pigoune-app/src/import_report.rs:50
-#: crates/pigoune-app/src/import_report.rs:62
-#: crates/pigoune-app/src/import_report.rs:73
-#: crates/pigoune-app/src/duplicates_page.rs:1061
-#: crates/pigoune-app/src/duplicates_page.rs:1120
-#: crates/pigoune-app/src/health_page.rs:692
-msgid "_Close"
-msgstr "_Cerrar"
 
 #: crates/pigoune-app/src/window.rs:1946
 msgid "Open a Pigoune Library"
@@ -3317,7 +3340,7 @@ msgid "Portrait"
 msgstr "Vertical"
 
 #: crates/pigoune-app/src/asset_facts.rs:16
-#: crates/pigoune-app/ui/editor.blp:189
+#: crates/pigoune-app/ui/editor.blp:196
 msgid "Square"
 msgstr "Cuadrada"
 
@@ -3364,7 +3387,7 @@ msgstr "%-d de %B de %Y a las %H:%M"
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:190
-#: crates/pigoune-app/ui/editor.blp:98
+#: crates/pigoune-app/ui/editor.blp:105
 msgid "Fit to Window"
 msgstr "Ajustar a la ventana"
 
@@ -3410,14 +3433,14 @@ msgstr "Zoom"
 
 #: crates/pigoune-app/ui/asset-preview.blp:112
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:185
-#: crates/pigoune-app/ui/editor.blp:90
+#: crates/pigoune-app/ui/editor.blp:97
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:95
 msgid "Zoom Out"
 msgstr "Alejar"
 
 #: crates/pigoune-app/ui/asset-preview.blp:123
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:180
-#: crates/pigoune-app/ui/editor.blp:107
+#: crates/pigoune-app/ui/editor.blp:114
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:121
 msgid "Zoom In"
 msgstr "Acercar"
@@ -6231,63 +6254,71 @@ msgid_plural "{name} and {count} others"
 msgstr[0] "{name} y {count} más"
 msgstr[1] "{name} y {count} más"
 
-#: crates/pigoune-app/ui/editor.blp:138
+#: crates/pigoune-app/ui/editor.blp:61
+msgid "The original image still shows what the blur and pixelation hide"
+msgstr "La imagen original aún muestra lo que ocultan el desenfoque y la pixelación"
+
+#: crates/pigoune-app/ui/editor.blp:62
+msgid "Lock Masks"
+msgstr "Bloquear difuminados"
+
+#: crates/pigoune-app/ui/editor.blp:145
 msgid "Save"
 msgstr "Guardar"
 
-#: crates/pigoune-app/ui/editor.blp:149
+#: crates/pigoune-app/ui/editor.blp:156
 msgid "Copy or Export"
 msgstr "Copiar o exportar"
 
-#: crates/pigoune-app/ui/editor.blp:167
+#: crates/pigoune-app/ui/editor.blp:174
 msgid "Tools"
 msgstr "Herramientas"
 
-#: crates/pigoune-app/ui/editor.blp:183
+#: crates/pigoune-app/ui/editor.blp:190
 msgid "Aspect Ratio"
 msgstr "Proporción"
 
-#: crates/pigoune-app/ui/editor.blp:187
+#: crates/pigoune-app/ui/editor.blp:194
 msgid "Free"
 msgstr "Libre"
 
-#: crates/pigoune-app/ui/editor.blp:188
+#: crates/pigoune-app/ui/editor.blp:195
 msgid "Same as Image"
 msgstr "Igual que la imagen"
 
-#: crates/pigoune-app/ui/editor.blp:197
+#: crates/pigoune-app/ui/editor.blp:204
 msgid "Crop Size"
 msgstr "Tamaño del recorte"
 
-#: crates/pigoune-app/ui/editor.blp:217
+#: crates/pigoune-app/ui/editor.blp:224
 msgid "Apply"
 msgstr "Aplicar"
 
-#: crates/pigoune-app/ui/editor.blp:230
+#: crates/pigoune-app/ui/editor.blp:237
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: crates/pigoune-app/ui/editor.blp:235
+#: crates/pigoune-app/ui/editor.blp:242
 msgid "Reset"
 msgstr "Restablecer"
 
-#: crates/pigoune-app/ui/editor.blp:244
+#: crates/pigoune-app/ui/editor.blp:251
 msgid "Layers"
 msgstr "Capas"
 
-#: crates/pigoune-app/ui/editor.blp:245
+#: crates/pigoune-app/ui/editor.blp:252
 msgid "Nothing to show yet"
 msgstr "Nada que mostrar todavía"
 
-#: crates/pigoune-app/ui/editor.blp:249
+#: crates/pigoune-app/ui/editor.blp:256
 msgid "Frame"
 msgstr "Marco"
 
-#: crates/pigoune-app/ui/editor.blp:252
+#: crates/pigoune-app/ui/editor.blp:259
 msgid "Border, Shadow and Background"
 msgstr "Borde, sombra y fondo"
 
-#: crates/pigoune-app/ui/editor.blp:281
+#: crates/pigoune-app/ui/editor.blp:288
 msgid "Tools and Settings"
 msgstr "Herramientas y ajustes"
 
