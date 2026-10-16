@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 00:14+0200\n"
+"POT-Creation-Date: 2026-10-16 00:26+0200\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -1437,16 +1437,16 @@ msgstr "_Kiezen…"
 msgid "translator-credits"
 msgstr "Gor3pig"
 
-#: crates/pigoune-app/src/editor.rs:468
+#: crates/pigoune-app/src/editor.rs:724
 #, rust-format
 msgid "{width} × {height} px"
 msgstr "{width} × {height} px"
 
-#: crates/pigoune-app/src/editor.rs:571 crates/pigoune-app/ui/editor.blp:99
+#: crates/pigoune-app/src/editor.rs:827 crates/pigoune-app/ui/editor.blp:117
 msgid "No annotations"
 msgstr "Geen annotaties"
 
-#: crates/pigoune-app/src/editor.rs:573
+#: crates/pigoune-app/src/editor.rs:829
 #, rust-format
 msgid "Annotations: {count}"
 msgstr "Annotaties: {count}"
@@ -1503,58 +1503,102 @@ msgid "Badge Style"
 msgstr "Stijl van het label"
 
 #: crates/pigoune-app/src/editor_options.rs:51
+msgid "Font Size"
+msgstr "Tekstgrootte"
+
+#: crates/pigoune-app/src/editor_options.rs:52
+msgid "Bold Text"
+msgstr "Vette tekst"
+
+#: crates/pigoune-app/src/editor_options.rs:53
+msgid "Italic Text"
+msgstr "Cursieve tekst"
+
+#: crates/pigoune-app/src/editor_options.rs:54
+msgid "Font"
+msgstr "Lettertype"
+
+#: crates/pigoune-app/src/editor_options.rs:55
+msgid "Text Background"
+msgstr "Tekstachtergrond"
+
+#: crates/pigoune-app/src/editor_options.rs:56
 msgid "Blur Radius"
 msgstr "Vervagingsstraal"
 
-#: crates/pigoune-app/src/editor_options.rs:52
+#: crates/pigoune-app/src/editor_options.rs:57
 msgid "Cell Size"
 msgstr "Celgrootte"
 
-#: crates/pigoune-app/src/editor_options.rs:59
+#: crates/pigoune-app/src/editor_options.rs:64
 msgid "Solid Line"
 msgstr "Doorgetrokken"
 
-#: crates/pigoune-app/src/editor_options.rs:60
+#: crates/pigoune-app/src/editor_options.rs:65
 msgid "Dashed Line"
 msgstr "Gestreept"
 
-#: crates/pigoune-app/src/editor_options.rs:61
+#: crates/pigoune-app/src/editor_options.rs:66
 msgid "Dotted Line"
 msgstr "Gestippeld"
 
-#: crates/pigoune-app/src/editor_options.rs:62
+#: crates/pigoune-app/src/editor_options.rs:67
 msgid "Filled Triangle"
 msgstr "Gevulde driehoek"
 
-#: crates/pigoune-app/src/editor_options.rs:63
+#: crates/pigoune-app/src/editor_options.rs:68
 msgid "Open Head"
 msgstr "Open punt"
 
-#: crates/pigoune-app/src/editor_options.rs:64
+#: crates/pigoune-app/src/editor_options.rs:69
 msgid "Both Ends"
 msgstr "Aan beide uiteinden"
 
-#: crates/pigoune-app/src/editor_options.rs:65
+#: crates/pigoune-app/src/editor_options.rs:70
 msgid "No Head"
 msgstr "Geen punt"
 
-#: crates/pigoune-app/src/editor_options.rs:66
+#: crates/pigoune-app/src/editor_options.rs:71
+msgid "Sans-serif Font"
+msgstr "Schreefloos lettertype"
+
+#: crates/pigoune-app/src/editor_options.rs:72
+msgid "Serif Font"
+msgstr "Lettertype met schreven"
+
+#: crates/pigoune-app/src/editor_options.rs:73
+msgid "Monospace Font"
+msgstr "Lettertype met vaste breedte"
+
+#: crates/pigoune-app/src/editor_options.rs:74
+msgid "No Background"
+msgstr "Geen achtergrond"
+
+#: crates/pigoune-app/src/editor_options.rs:75
+msgid "Light Background"
+msgstr "Lichte achtergrond"
+
+#: crates/pigoune-app/src/editor_options.rs:76
+msgid "Dark Background"
+msgstr "Donkere achtergrond"
+
+#: crates/pigoune-app/src/editor_options.rs:77
 msgid "Filled Badge"
 msgstr "Gevuld label"
 
-#: crates/pigoune-app/src/editor_options.rs:67
+#: crates/pigoune-app/src/editor_options.rs:78
 msgid "Outlined Badge"
 msgstr "Omlijnd label"
 
-#: crates/pigoune-app/src/editor_options.rs:68
+#: crates/pigoune-app/src/editor_options.rs:79
 msgid "Small Head"
 msgstr "Kleine punt"
 
-#: crates/pigoune-app/src/editor_options.rs:69
+#: crates/pigoune-app/src/editor_options.rs:80
 msgid "Medium Head"
 msgstr "Middelgrote punt"
 
-#: crates/pigoune-app/src/editor_options.rs:70
+#: crates/pigoune-app/src/editor_options.rs:81
 msgid "Large Head"
 msgstr "Grote punt"
 
@@ -1597,7 +1641,7 @@ msgid "Select"
 msgstr "Selectie"
 
 #: crates/pigoune-app/src/editor_tool.rs:76
-#: crates/pigoune-app/ui/editor.blp:161
+#: crates/pigoune-app/ui/editor.blp:179
 msgid "Crop"
 msgstr "Bijsnijden"
 
@@ -3278,7 +3322,7 @@ msgid "Portrait"
 msgstr "Staand"
 
 #: crates/pigoune-app/src/asset_facts.rs:16
-#: crates/pigoune-app/ui/editor.blp:171
+#: crates/pigoune-app/ui/editor.blp:189
 msgid "Square"
 msgstr "Vierkant"
 
@@ -3325,7 +3369,7 @@ msgstr "%-d %B %Y om %H:%M"
 
 #: crates/pigoune-app/ui/asset-preview.blp:13
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:190
-#: crates/pigoune-app/ui/editor.blp:80
+#: crates/pigoune-app/ui/editor.blp:98
 msgid "Fit to Window"
 msgstr "Aan venster aanpassen"
 
@@ -3371,14 +3415,14 @@ msgstr "Zoomen"
 
 #: crates/pigoune-app/ui/asset-preview.blp:112
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:185
-#: crates/pigoune-app/ui/editor.blp:72
+#: crates/pigoune-app/ui/editor.blp:90
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:95
 msgid "Zoom Out"
 msgstr "Uitzoomen"
 
 #: crates/pigoune-app/ui/asset-preview.blp:123
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:180
-#: crates/pigoune-app/ui/editor.blp:89
+#: crates/pigoune-app/ui/editor.blp:107
 #: crates/pigoune-app/ui/wallpaper-dialog.blp:121
 msgid "Zoom In"
 msgstr "Inzoomen"
@@ -6209,63 +6253,63 @@ msgid_plural "{name} and {count} others"
 msgstr[0] "{name} en {count} ander"
 msgstr[1] "{name} en {count} andere"
 
-#: crates/pigoune-app/ui/editor.blp:120
+#: crates/pigoune-app/ui/editor.blp:138
 msgid "Save"
 msgstr "Opslaan"
 
-#: crates/pigoune-app/ui/editor.blp:131
+#: crates/pigoune-app/ui/editor.blp:149
 msgid "Copy or Export"
 msgstr "Kopiëren of exporteren"
 
-#: crates/pigoune-app/ui/editor.blp:149
+#: crates/pigoune-app/ui/editor.blp:167
 msgid "Tools"
 msgstr "Gereedschap"
 
-#: crates/pigoune-app/ui/editor.blp:165
+#: crates/pigoune-app/ui/editor.blp:183
 msgid "Aspect Ratio"
 msgstr "Beeldverhouding"
 
-#: crates/pigoune-app/ui/editor.blp:169
+#: crates/pigoune-app/ui/editor.blp:187
 msgid "Free"
 msgstr "Vrij"
 
-#: crates/pigoune-app/ui/editor.blp:170
+#: crates/pigoune-app/ui/editor.blp:188
 msgid "Same as Image"
 msgstr "Zoals de afbeelding"
 
-#: crates/pigoune-app/ui/editor.blp:179
+#: crates/pigoune-app/ui/editor.blp:197
 msgid "Crop Size"
 msgstr "Uitsnedegrootte"
 
-#: crates/pigoune-app/ui/editor.blp:199
+#: crates/pigoune-app/ui/editor.blp:217
 msgid "Apply"
 msgstr "Toepassen"
 
-#: crates/pigoune-app/ui/editor.blp:212
+#: crates/pigoune-app/ui/editor.blp:230
 msgid "Cancel"
 msgstr "Annuleren"
 
-#: crates/pigoune-app/ui/editor.blp:217
+#: crates/pigoune-app/ui/editor.blp:235
 msgid "Reset"
 msgstr "Herstellen"
 
-#: crates/pigoune-app/ui/editor.blp:226
+#: crates/pigoune-app/ui/editor.blp:244
 msgid "Layers"
 msgstr "Lagen"
 
-#: crates/pigoune-app/ui/editor.blp:227
+#: crates/pigoune-app/ui/editor.blp:245
 msgid "Nothing to show yet"
 msgstr "Nog niets om te tonen"
 
-#: crates/pigoune-app/ui/editor.blp:231
+#: crates/pigoune-app/ui/editor.blp:249
 msgid "Frame"
 msgstr "Omlijsting"
 
-#: crates/pigoune-app/ui/editor.blp:234
+#: crates/pigoune-app/ui/editor.blp:252
 msgid "Border, Shadow and Background"
 msgstr "Rand, schaduw en achtergrond"
 
-#: crates/pigoune-app/ui/editor.blp:263
+#: crates/pigoune-app/ui/editor.blp:281
 msgid "Tools and Settings"
 msgstr "Gereedschap en instellingen"
 

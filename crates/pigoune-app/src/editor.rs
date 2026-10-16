@@ -6,7 +6,7 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, glib, graphene, pango};
 use pigoune_core::annotations::{
-    CropEditor, CropRatio, CursorKind, Handle, Interaction, Options, Point, Shape, Tool,
+    CropEditor, CropRatio, CursorKind, Geometry, Handle, Interaction, Options, Point, Shape, Tool,
     ToolDefinition, Value,
 };
 
@@ -20,9 +20,17 @@ type ClosedCallback = Box<dyn Fn()>;
 
 const TOOLS_PER_ROW: usize = 3;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
+const TEXT_VIEW_OFFSET: (f32, f32) = (4.0, 2.0);
+const TEXT_PROVIDER_PRIORITY: u32 = 800;
+
+#[derive(Clone, Copy)]
+pub struct TextEdit {
+    pub id: Option<u32>,
+    pub anchor: Point,
+}
 
 mod imp {
-    use super::{Cell, ClosedCallback, OptionRow, RefCell};
+    use super::{Cell, ClosedCallback, OptionRow, Point, RefCell, TextEdit};
     use adw::subclass::prelude::*;
     use gtk::glib;
     use gtk::prelude::*;
@@ -114,6 +122,12 @@ mod imp {
         pub output_in_left_header: Cell<bool>,
         pub tool_buttons: RefCell<Vec<(EditorTool, gtk::ToggleButton)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
+        #[template_child]
+        pub text_view: TemplateChild<gtk::TextView>,
+        pub text_edit: Cell<Option<TextEdit>>,
+        pub text_provider: gtk::CssProvider,
+        pub text_view_origin: Cell<[u32; 3]>,
+        pub click_to_edit: Cell<Option<(u32, Point)>>,
     }
 
     #[glib::object_subclass]
@@ -162,7 +176,13 @@ impl PigouneEditor {
         let width = u32::try_from(texture.width()).unwrap_or(1);
         let height = u32::try_from(texture.height()).unwrap_or(1);
         let imp = self.imp();
-        imp.drawing.replace(imp::Drawing::default());
+        self.cancel_text();
+        let mut drawing = imp::Drawing::default();
+        let context = self.pango_context();
+        drawing
+            .session
+            .set_text_measurer(move |shape| annotation_render::measure_text(&context, shape));
+        imp.drawing.replace(drawing);
         imp.image_size.set((width, height));
         imp.zoom_view
             .show_image(Some(&texture), width, height, false);
@@ -173,12 +193,14 @@ impl PigouneEditor {
 
     pub fn close(&self) {
         let imp = self.imp();
+        self.cancel_text();
         imp.drawing.borrow_mut().crop_editor = None;
         imp.zoom_view.show_image(None, 1, 1, false);
     }
 
     #[template_callback]
     fn on_back_clicked(&self) {
+        self.commit_text();
         if let Some(on_closed) = self.imp().on_closed.borrow().as_ref() {
             on_closed();
         }
@@ -186,11 +208,13 @@ impl PigouneEditor {
 
     #[template_callback]
     fn on_undo_clicked(&self) {
+        self.commit_text();
         self.undo();
     }
 
     #[template_callback]
     fn on_redo_clicked(&self) {
+        self.commit_text();
         self.redo();
     }
 
@@ -204,6 +228,18 @@ impl PigouneEditor {
             move |_| editor.change_crop_ratio()
         ));
         self.listen_to_keys();
+        imp.text_view.buffer().connect_changed(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| editor.sync_text_view()
+        ));
+        if let Some(display) = gdk::Display::default() {
+            gtk::style_context_add_provider_for_display(
+                &display,
+                &imp.text_provider,
+                TEXT_PROVIDER_PRIORITY,
+            );
+        }
         self.show_active_tool();
         self.update_panel();
         self.follow_zoom();
@@ -287,6 +323,7 @@ impl PigouneEditor {
         let tool = self.imp().active_tool.get();
         match (tool, tool.definition()) {
             (EditorTool::Select, _) => Tool::Select,
+            (EditorTool::Text, _) => Tool::Unsupported,
             (_, Some(definition)) => Tool::Draw(definition),
             _ => Tool::Unsupported,
         }
@@ -321,14 +358,24 @@ impl PigouneEditor {
         whole: &graphene::Rect,
         zoom: f64,
     ) {
-        let drawing = self.imp().drawing.borrow();
+        let imp = self.imp();
+        let drawing = imp.drawing.borrow();
         let scale = point_to_f32(zoom);
+        let editing = imp.text_edit.get();
+        if editing.is_some() {
+            self.follow_text_origin([whole.x(), whole.y(), scale]);
+        }
         snapshot.save();
         snapshot.push_clip(visible);
         snapshot.translate(&graphene::Point::new(whole.x(), whole.y()));
         snapshot.scale(scale, scale);
         let context = self.pango_context();
-        annotation_render::append_document(snapshot, drawing.session.document(), &context);
+        annotation_render::append_document(
+            snapshot,
+            drawing.session.document(),
+            &context,
+            editing.and_then(|edit| edit.id),
+        );
         if let Some(pending) = drawing.interaction.pending() {
             let ordinal = drawing.session.document().next_ordinal(&pending.kind);
             annotation_render::append_shape(snapshot, pending, ordinal, &context);
@@ -338,9 +385,10 @@ impl PigouneEditor {
         if let Some(crop) = &drawing.crop_editor {
             annotation_render::append_crop(snapshot, crop, whole, scale);
         } else if drawing.interaction.pending().is_none()
+            && editing.is_none()
             && let Some(shape) = drawing.session.selected_shape()
         {
-            annotation_render::append_selection(snapshot, shape, whole, scale);
+            annotation_render::append_selection(snapshot, shape, whole, scale, &context);
         }
     }
 
@@ -349,8 +397,14 @@ impl PigouneEditor {
         if imp.active_tool.get() == EditorTool::Crop {
             return self.handle_crop_pointer(event);
         }
+        if imp.active_tool.get() == EditorTool::Text {
+            return self.handle_text_pointer(event);
+        }
         let tool = self.current_tool();
         let reach = self.reach();
+        if matches!(event, PointerEvent::Press(_)) {
+            self.commit_text();
+        }
         let claimed = {
             let mut guard = imp.drawing.borrow_mut();
             let drawing = &mut *guard;
@@ -360,15 +414,32 @@ impl PigouneEditor {
                         Tool::Draw(definition) => remembered_options(drawing, definition),
                         _ => Options::new(),
                     };
-                    drawing.interaction.press(
+                    let before = drawing.session.selected();
+                    let claimed = drawing.interaction.press(
                         &mut drawing.session,
                         tool,
                         &options,
                         image_point(point),
                         reach,
-                    )
+                    );
+                    let after = drawing.session.selected();
+                    let clicked_text = after.filter(|id| {
+                        Some(*id) == before
+                            && drawing
+                                .session
+                                .shape_of(*id)
+                                .is_some_and(|shape| shape.kind == "text")
+                    });
+                    imp.click_to_edit
+                        .set(clicked_text.map(|id| (id, image_point(point))));
+                    claimed
                 }
                 PointerEvent::Drag(point) => {
+                    if let Some((_, start)) = imp.click_to_edit.get()
+                        && distance(start, image_point(point)) > reach * 0.3
+                    {
+                        imp.click_to_edit.set(None);
+                    }
                     drawing
                         .interaction
                         .drag(&mut drawing.session, image_point(point));
@@ -393,7 +464,204 @@ impl PigouneEditor {
             PointerEvent::Drag(_) => imp.zoom_view.queue_draw(),
             _ => self.after_edit(),
         }
+        if matches!(event, PointerEvent::Release(_))
+            && let Some((id, _)) = imp.click_to_edit.take()
+        {
+            self.edit_text(id);
+        }
         claimed
+    }
+
+    fn handle_text_pointer(&self, event: PointerEvent) -> bool {
+        let imp = self.imp();
+        match event {
+            PointerEvent::Press(point) => {
+                self.commit_text();
+                let point = image_point(point);
+                let reach = self.reach();
+                let hit = {
+                    let drawing = imp.drawing.borrow();
+                    drawing.session.hit_test(point, reach).filter(|id| {
+                        drawing
+                            .session
+                            .shape_of(*id)
+                            .is_some_and(|shape| shape.kind == "text")
+                    })
+                };
+                if let Some(id) = hit {
+                    self.edit_text(id);
+                } else {
+                    imp.drawing.borrow_mut().session.select(None);
+                    self.begin_text_edit(None, point);
+                }
+                true
+            }
+            PointerEvent::Hover(_) => {
+                imp.zoom_view.set_cursor_override(Some("text"));
+                false
+            }
+            _ => true,
+        }
+    }
+
+    fn edit_text(&self, id: u32) {
+        let anchor = {
+            let drawing = self.imp().drawing.borrow();
+            drawing
+                .session
+                .shape_of(id)
+                .and_then(|shape| match shape.geometry {
+                    Geometry::Anchor(at) => Some(at),
+                    _ => None,
+                })
+        };
+        if let Some(anchor) = anchor {
+            self.begin_text_edit(Some(id), anchor);
+        }
+    }
+
+    fn begin_text_edit(&self, id: Option<u32>, anchor: Point) {
+        let imp = self.imp();
+        self.commit_text();
+        let content = {
+            let mut drawing = imp.drawing.borrow_mut();
+            drawing.session.select(id);
+            id.and_then(|id| drawing.session.shape_of(id))
+                .map(|shape| shape.text("content").to_owned())
+                .unwrap_or_default()
+        };
+        let buffer = imp.text_view.buffer();
+        buffer.set_text(&content);
+        imp.text_edit.set(Some(TextEdit { id, anchor }));
+        imp.text_view_origin.set([0; 3]);
+        imp.text_view.set_visible(true);
+        self.sync_text_view();
+        imp.text_view.grab_focus();
+        buffer.select_range(&buffer.start_iter(), &buffer.end_iter());
+        self.after_edit();
+    }
+
+    fn typed_text(&self) -> String {
+        let buffer = self.imp().text_view.buffer();
+        buffer
+            .text(&buffer.start_iter(), &buffer.end_iter(), false)
+            .to_string()
+    }
+
+    fn commit_text(&self) {
+        let imp = self.imp();
+        let Some(edit) = imp.text_edit.take() else {
+            return;
+        };
+        let text = self.typed_text();
+        imp.text_view.set_visible(false);
+        {
+            let mut guard = imp.drawing.borrow_mut();
+            let drawing = &mut *guard;
+            let empty = text.trim().is_empty();
+            match edit.id {
+                Some(id) => {
+                    drawing.session.select(Some(id));
+                    if empty {
+                        drawing.session.remove_selected();
+                    } else if drawing
+                        .session
+                        .shape_of(id)
+                        .is_some_and(|shape| shape.text("content") != text)
+                    {
+                        drawing
+                            .session
+                            .set_option_on_selected("content", Value::from(text));
+                    }
+                }
+                None if !empty => {
+                    if let Some(definition) = pigoune_core::annotations::definition("text") {
+                        let options = remembered_options(drawing, definition);
+                        let shape = Shape::new("text", Geometry::Anchor(edit.anchor), options)
+                            .with_option("content", Value::from(text));
+                        let id = drawing.session.add(shape);
+                        drawing.session.select(Some(id));
+                    }
+                }
+                None => {}
+            }
+        }
+        self.after_edit();
+    }
+
+    fn cancel_text(&self) {
+        let imp = self.imp();
+        if imp.text_edit.take().is_some() {
+            imp.text_view.set_visible(false);
+            self.after_edit();
+        }
+    }
+
+    fn edited_shape(&self) -> Option<Shape> {
+        let imp = self.imp();
+        let edit = imp.text_edit.get()?;
+        let mut guard = imp.drawing.borrow_mut();
+        let drawing = &mut *guard;
+        if let Some(id) = edit.id {
+            return drawing.session.shape_of(id).cloned();
+        }
+        let definition = pigoune_core::annotations::definition("text")?;
+        Some(Shape::new(
+            "text",
+            Geometry::Anchor(edit.anchor),
+            remembered_options(drawing, definition),
+        ))
+    }
+
+    fn follow_text_origin(&self, origin: [f32; 3]) {
+        let imp = self.imp();
+        let bits = origin.map(f32::to_bits);
+        if imp.text_view_origin.get() == bits {
+            return;
+        }
+        imp.text_view_origin.set(bits);
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move || editor.sync_text_view()
+        ));
+    }
+
+    fn sync_text_view(&self) {
+        let imp = self.imp();
+        let (Some(edit), Some(shape)) = (imp.text_edit.get(), self.edited_shape()) else {
+            return;
+        };
+        let [left, top, zoom] = imp.text_view_origin.get().map(f32::from_bits);
+        let x = left + edit.anchor.x * zoom - TEXT_VIEW_OFFSET.0;
+        let y = top + edit.anchor.y * zoom - TEXT_VIEW_OFFSET.1;
+        imp.text_view.set_margin_start(rounded_margin(x));
+        imp.text_view.set_margin_top(rounded_margin(y));
+        imp.text_provider
+            .load_from_string(&annotation_render::text_view_css(&shape, zoom));
+        let typed = shape.with_option("content", Value::from(self.typed_text()));
+        let (width, height) = annotation_render::measure_text(&self.pango_context(), &typed);
+        imp.text_view.set_width_request(rounded_margin(
+            width * zoom + 2.0 * TEXT_VIEW_OFFSET.0 + 4.0,
+        ));
+        imp.text_view
+            .set_height_request(rounded_margin(height * zoom + 2.0 * TEXT_VIEW_OFFSET.1));
+    }
+
+    fn edit_selected_text(&self) -> bool {
+        let id = {
+            let drawing = self.imp().drawing.borrow();
+            drawing.session.selected().filter(|id| {
+                drawing
+                    .session
+                    .shape_of(*id)
+                    .is_some_and(|s| s.kind == "text")
+            })
+        };
+        id.is_some_and(|id| {
+            self.edit_text(id);
+            true
+        })
     }
 
     fn handle_crop_pointer(&self, event: PointerEvent) -> bool {
@@ -594,6 +862,9 @@ impl PigouneEditor {
             return glib::Propagation::Proceed;
         }
         let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
+        if self.imp().text_edit.get().is_some() {
+            return self.handle_text_key(key, control);
+        }
         let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
         let handled = match key {
             gdk::Key::z | gdk::Key::Z if control && shift => self.redo(),
@@ -608,6 +879,7 @@ impl PigouneEditor {
                 self.finish_cropping(false);
                 true
             }
+            gdk::Key::Return | gdk::Key::KP_Enter => self.edit_selected_text(),
             gdk::Key::Escape => self.escape(),
             _ => false,
         };
@@ -616,6 +888,15 @@ impl PigouneEditor {
         } else {
             glib::Propagation::Proceed
         }
+    }
+
+    fn handle_text_key(&self, key: gdk::Key, control: bool) -> glib::Propagation {
+        match key {
+            gdk::Key::Escape => self.cancel_text(),
+            gdk::Key::Return | gdk::Key::KP_Enter if control => self.commit_text(),
+            _ => return glib::Propagation::Proceed,
+        }
+        glib::Propagation::Stop
     }
 
     fn is_cropping(&self) -> bool {
@@ -688,6 +969,9 @@ impl PigouneEditor {
         let drawing = self.imp().drawing.borrow();
         if let Some(shape) = drawing.session.selected_shape() {
             return shape.definition().map(|definition| definition.kind);
+        }
+        if self.imp().active_tool.get() == EditorTool::Text {
+            return Some("text");
         }
         match self.current_tool() {
             Tool::Draw(definition) => Some(definition.kind),
@@ -794,10 +1078,17 @@ impl PigouneEditor {
         let options = self.target_options(definition);
         editor_options::update_visibility(&imp.option_rows.borrow(), &options);
         self.refresh();
+        if imp.text_edit.get().is_some() {
+            self.sync_text_view();
+            if !imp.slider_gesture.get() {
+                imp.text_view.grab_focus();
+            }
+        }
     }
 
     fn tool_changed(&self) {
         let imp = self.imp();
+        self.commit_text();
         let cropping = imp.active_tool.get() == EditorTool::Crop;
         let was_cropping = imp.drawing.borrow().crop_editor.is_some();
         {
@@ -857,6 +1148,19 @@ fn image_point(point: crate::zoom_math::Point) -> Point {
         x: point_to_f32(point.x),
         y: point_to_f32(point.y),
     }
+}
+
+fn distance(from: Point, to: Point) -> f32 {
+    (to.x - from.x).hypot(to.y - from.y)
+}
+
+fn rounded_margin(value: f32) -> i32 {
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "view coordinates fit easily in i32"
+    )]
+    let margin = value.round().max(0.0) as i32;
+    margin
 }
 
 fn point_to_f32(value: f64) -> f32 {

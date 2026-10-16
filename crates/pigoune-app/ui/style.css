@@ -881,3 +881,13 @@ button.annotation-swatch.swatch-6 {
 button.annotation-swatch.swatch-7 {
   background-color: #ffffff;
 }
+
+textview.annotation-editor,
+textview.annotation-editor text {
+  background: transparent;
+}
+
+textview.annotation-editor {
+  outline: 1px dashed @accent_bg_color;
+  outline-offset: 2px;
+}
