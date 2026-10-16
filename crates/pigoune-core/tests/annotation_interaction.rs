@@ -141,17 +141,37 @@ fn the_new_shape_takes_the_options_given_with_the_press() {
 }
 
 #[test]
-fn a_drawing_tool_never_grabs_an_existing_shape() {
+fn a_drawing_tool_grabs_the_outline_of_an_existing_shape() {
     let (mut interaction, mut session) = fresh();
     let existing = session.add(rectangle(0.0, 0.0, 100.0, 100.0));
-    let before = bounds(&session, existing);
+    session.select(None);
 
     drag(
         &mut interaction,
         &mut session,
         Tool::Draw(&RECTANGLE),
         point(0.0, 50.0),
-        point(200.0, 90.0),
+        point(20.0, 70.0),
+    );
+
+    assert_eq!(session.count(), 1);
+    assert_eq!(session.selected(), Some(existing));
+    assert!(same(bounds(&session, existing).x, 20.0));
+}
+
+#[test]
+fn a_drawing_tool_draws_over_the_inside_of_an_unselected_shape() {
+    let (mut interaction, mut session) = fresh();
+    let existing = session.add(rectangle(0.0, 0.0, 100.0, 100.0));
+    session.select(None);
+    let before = bounds(&session, existing);
+
+    drag(
+        &mut interaction,
+        &mut session,
+        Tool::Draw(&RECTANGLE),
+        point(30.0, 30.0),
+        point(70.0, 70.0),
     );
 
     assert_eq!(session.count(), 2);

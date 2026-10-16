@@ -1,4 +1,4 @@
-use super::geometry::{self, Handle};
+use super::geometry::{self, Handle, HitMode};
 use super::session::EditSession;
 use super::snapping::{self, Guide, Snapping};
 use super::tools::{GeometryKind, ToolDefinition};
@@ -98,10 +98,24 @@ impl Interaction {
         reach: f32,
     ) -> bool {
         self.cancel(session);
+        if tool == Tool::Unsupported {
+            return false;
+        }
+        if self.grab_selected(session, point, reach) {
+            return true;
+        }
+        let mode = match tool {
+            Tool::Select => HitMode::Body,
+            _ => HitMode::Outline,
+        };
+        if let Some(id) = session.pick(point, reach, mode) {
+            session.select(Some(id));
+            self.begin_move(session, id, point);
+            return true;
+        }
+        session.select(None);
         match tool {
-            Tool::Unsupported => false,
             Tool::Draw(definition) => {
-                session.select(None);
                 self.state = State::Drawing {
                     definition,
                     from: point,
@@ -111,11 +125,11 @@ impl Interaction {
                 self.pending = geometry::shape_from_anchor(definition, point, options);
                 true
             }
-            Tool::Select => self.press_select(session, point, reach),
+            _ => false,
         }
     }
 
-    fn press_select(&mut self, session: &mut EditSession, point: Point, reach: f32) -> bool {
+    fn grab_selected(&mut self, session: &mut EditSession, point: Point, reach: f32) -> bool {
         if let Some((id, handle)) = handle_at(session, point, reach)
             && session.begin_change(id)
             && let Some(original) = session.shape_of(id).cloned()
@@ -123,11 +137,17 @@ impl Interaction {
             self.state = State::Resizing { handle, original };
             return true;
         }
-        let Some(id) = session.hit_test(point, reach) else {
-            session.select(None);
+        let Some(id) = session.selected() else {
             return false;
         };
-        session.select(Some(id));
+        if session.pick(point, reach, HitMode::Body) != Some(id) {
+            return false;
+        }
+        self.begin_move(session, id, point);
+        true
+    }
+
+    fn begin_move(&mut self, session: &mut EditSession, id: u32, point: Point) {
         if session.begin_change(id)
             && let Some(original) = session.shape_of(id).cloned()
         {
@@ -137,7 +157,6 @@ impl Interaction {
                 original,
             };
         }
-        true
     }
 
     pub fn drag(&mut self, session: &mut EditSession, point: Point) {
@@ -221,18 +240,26 @@ impl Interaction {
 
     #[must_use]
     pub fn cursor(session: &EditSession, tool: Tool, point: Point, reach: f32) -> CursorKind {
-        match tool {
-            Tool::Unsupported => CursorKind::Default,
-            Tool::Draw(_) => CursorKind::Crosshair,
-            Tool::Select => {
-                if let Some((_, handle)) = handle_at(session, point, reach) {
-                    CursorKind::Resize(handle)
-                } else if session.hit_test(point, reach).is_some() {
-                    CursorKind::Move
-                } else {
-                    CursorKind::Default
-                }
-            }
+        if tool == Tool::Unsupported {
+            return CursorKind::Default;
+        }
+        if let Some((_, handle)) = handle_at(session, point, reach) {
+            return CursorKind::Resize(handle);
+        }
+        let selected_body = session
+            .selected()
+            .is_some_and(|id| session.pick(point, reach, HitMode::Body) == Some(id));
+        let mode = if tool == Tool::Select {
+            HitMode::Body
+        } else {
+            HitMode::Outline
+        };
+        if selected_body || session.pick(point, reach, mode).is_some() {
+            CursorKind::Move
+        } else if tool == Tool::Select {
+            CursorKind::Default
+        } else {
+            CursorKind::Crosshair
         }
     }
 }

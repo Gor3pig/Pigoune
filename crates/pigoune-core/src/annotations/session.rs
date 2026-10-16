@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use serde_json::Value;
 
-use super::geometry;
+use super::geometry::{self, HitMode};
 use super::{AnnotationDocument, AnnotationObject, Crop, ObjectContent, Point, Shape};
 
 const HISTORY_LIMIT: usize = 500;
@@ -149,10 +149,24 @@ impl EditSession {
 
     #[must_use]
     pub fn hit_test(&self, point: Point, tolerance: f32) -> Option<u32> {
+        self.pick(point, tolerance, HitMode::Outline)
+    }
+
+    #[must_use]
+    pub fn pick(&self, point: Point, tolerance: f32, mode: HitMode) -> Option<u32> {
+        let found = self.topmost_hit(point, tolerance, HitMode::Outline);
+        match mode {
+            HitMode::Outline => found,
+            HitMode::Body => found.or_else(|| self.topmost_hit(point, tolerance, HitMode::Body)),
+        }
+    }
+
+    fn topmost_hit(&self, point: Point, tolerance: f32, mode: HitMode) -> Option<u32> {
         self.document
             .objects
             .iter()
             .rev()
+            .filter(|object| self.is_visible(object))
             .find(|object| {
                 object.shape().is_some_and(|shape| {
                     let extent = self
@@ -160,10 +174,25 @@ impl EditSession {
                         .as_ref()
                         .filter(|_| shape.kind == "text")
                         .map(|measurer| (measurer.0)(shape));
-                    geometry::hit_with_extent(shape, point, tolerance, extent)
+                    geometry::hit_in_mode(shape, point, tolerance, extent, mode)
                 })
             })
             .map(|object| object.id)
+    }
+
+    fn is_visible(&self, object: &AnnotationObject) -> bool {
+        let (Some(crop), Some(bounds)) = (
+            self.document.crop,
+            object.shape().and_then(geometry::shape_bounds),
+        ) else {
+            return true;
+        };
+        let pixels = |value: u32| f32::from(u16::try_from(value).unwrap_or(u16::MAX));
+        let (left, top) = (pixels(crop.x), pixels(crop.y));
+        bounds.x <= left + pixels(crop.width)
+            && bounds.x + bounds.width >= left
+            && bounds.y <= top + pixels(crop.height)
+            && bounds.y + bounds.height >= top
     }
 
     #[must_use]

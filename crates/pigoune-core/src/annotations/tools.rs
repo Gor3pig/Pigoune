@@ -176,7 +176,7 @@ pub const SHAFT_CHOICES: [&str; 2] = ["even", "tapered"];
 pub const SHAFT: OptionSpec = OptionSpec {
     id: "shaft",
     kind: OptionKind::Choice(&SHAFT_CHOICES),
-    default: DefaultValue::Choice("even"),
+    default: DefaultValue::Choice("tapered"),
     shown_if: None,
 };
 

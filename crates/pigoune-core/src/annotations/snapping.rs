@@ -9,7 +9,7 @@ pub struct Guide {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Snapping {
     pub tolerance: f32,
-    pub image: (f32, f32),
+    pub area: Rect,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -37,10 +37,10 @@ fn closest(moving: [f32; 3], targets: &[f32], tolerance: f32) -> Option<(f32, f3
 
 #[must_use]
 pub fn snap_move(moving: Rect, others: &[Rect], snapping: Snapping) -> Snap {
-    let (width, height) = snapping.image;
-    let mut horizontal_targets = vec![0.0, width / 2.0, width];
-    let mut vertical_targets = vec![0.0, height / 2.0, height];
-    for other in others {
+    let area = snapping.area;
+    let mut horizontal_targets = lines_of(area.x, area.width).to_vec();
+    let mut vertical_targets = lines_of(area.y, area.height).to_vec();
+    for other in others.iter().filter(|other| overlaps(area, other)) {
         horizontal_targets.extend(lines_of(other.x, other.width));
         vertical_targets.extend(lines_of(other.y, other.height));
     }
@@ -74,28 +74,35 @@ pub fn snap_move(moving: Rect, others: &[Rect], snapping: Snapping) -> Snap {
 }
 
 #[must_use]
-pub fn guide_extent(guide: Guide, image: (f32, f32)) -> (Point, Point) {
+pub fn guide_extent(guide: Guide, area: Rect) -> (Point, Point) {
     if guide.vertical {
         (
             Point {
                 x: guide.at,
-                y: 0.0,
+                y: area.y,
             },
             Point {
                 x: guide.at,
-                y: image.1,
+                y: area.y + area.height,
             },
         )
     } else {
         (
             Point {
-                x: 0.0,
+                x: area.x,
                 y: guide.at,
             },
             Point {
-                x: image.0,
+                x: area.x + area.width,
                 y: guide.at,
             },
         )
     }
+}
+
+fn overlaps(area: Rect, other: &Rect) -> bool {
+    other.x <= area.x + area.width
+        && other.x + other.width >= area.x
+        && other.y <= area.y + area.height
+        && other.y + other.height >= area.y
 }

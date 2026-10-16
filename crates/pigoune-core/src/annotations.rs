@@ -13,10 +13,10 @@ use serde_json::Map;
 
 pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
-    ArrowHead, Handle, arrow_curve_control, arrow_head, constrained_end, curve_control,
+    ArrowHead, Handle, HitMode, arrow_curve_control, arrow_head, constrained_end, curve_control,
     curve_point, curve_polyline, dash_pattern, estimated_text_extent, handles, head_size_factor,
-    hit, hit_with_extent, next_stroke_point, rect_between, resized, shape_bounds, shape_from_drag,
-    shape_from_points, simplified, translated,
+    hit, hit_in_mode, hit_with_extent, next_stroke_point, rect_between, resized, shape_bounds,
+    shape_from_drag, shape_from_points, simplified, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use options::{

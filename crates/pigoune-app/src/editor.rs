@@ -7,8 +7,8 @@ use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::AssetId;
 use pigoune_core::annotations::{
-    AnnotationDocument, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
-    Interaction, LayerMove, Options, Point, Shape, Snapping, Tool, ToolDefinition, Value,
+    AnnotationDocument, Crop, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
+    Interaction, LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value,
 };
 
 use crate::annotation_export;
@@ -625,7 +625,7 @@ impl PigouneEditor {
             drawing.interaction.guides(),
             whole,
             scale,
-            imp.image_size.get(),
+            visible_area(imp.image_size.get(), drawing.session.crop()),
         );
         if let Some(crop) = &drawing.crop_editor {
             annotation_render::append_crop(snapshot, crop, whole, scale);
@@ -701,10 +701,10 @@ impl PigouneEditor {
             drawing
                 .interaction
                 .set_constrained(imp.zoom_view.shift_held());
-            let (width, height) = imp.image_size.get();
+            let area = visible_area(imp.image_size.get(), drawing.session.crop());
             let snapping = (!imp.zoom_view.alt_held()).then(|| Snapping {
                 tolerance: point_to_f32(SNAP_PIXELS / imp.zoom_view.zoom().max(0.01)),
-                image: (pixels_to_f32(width), pixels_to_f32(height)),
+                area,
             });
             drawing.interaction.set_snapping(snapping);
         }
@@ -1699,6 +1699,18 @@ fn image_point(point: crate::zoom_math::Point) -> Point {
     Point {
         x: point_to_f32(point.x),
         y: point_to_f32(point.y),
+    }
+}
+
+fn visible_area(image: (u32, u32), crop: Option<Crop>) -> Rect {
+    let (x, y, width, height) = crop.map_or((0, 0, image.0, image.1), |crop| {
+        (crop.x, crop.y, crop.width, crop.height)
+    });
+    Rect {
+        x: pixels_to_f32(x),
+        y: pixels_to_f32(y),
+        width: pixels_to_f32(width),
+        height: pixels_to_f32(height),
     }
 }
 
