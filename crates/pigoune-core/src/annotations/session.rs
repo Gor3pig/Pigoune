@@ -292,16 +292,15 @@ impl EditSession {
         id
     }
 
-    fn selected_position(&self) -> Option<usize> {
-        let id = self.selected?;
+    fn position_of(&self, id: u32) -> Option<usize> {
         self.document
             .objects
             .iter()
             .position(|object| object.id == id)
     }
 
-    fn target_position(&self, movement: LayerMove) -> Option<usize> {
-        let position = self.selected_position()?;
+    fn target_position(&self, id: u32, movement: LayerMove) -> Option<usize> {
+        let position = self.position_of(id)?;
         let last = self.document.objects.len().checked_sub(1)?;
         let target = match movement {
             LayerMove::Front => last,
@@ -313,24 +312,58 @@ impl EditSession {
     }
 
     #[must_use]
-    pub fn can_move_selected(&self, movement: LayerMove) -> bool {
-        self.gesture.is_none()
-            && self.selected.is_some_and(|id| self.can_edit(id))
-            && self.target_position(movement).is_some()
+    pub fn can_move_object(&self, id: u32, movement: LayerMove) -> bool {
+        self.gesture.is_none() && self.can_edit(id) && self.target_position(id, movement).is_some()
     }
 
-    pub fn move_selected(&mut self, movement: LayerMove) -> bool {
-        if !self.can_move_selected(movement) {
+    #[must_use]
+    pub fn can_move_selected(&self, movement: LayerMove) -> bool {
+        self.selected
+            .is_some_and(|id| self.can_move_object(id, movement))
+    }
+
+    pub fn move_object(&mut self, id: u32, movement: LayerMove) -> bool {
+        if !self.can_move_object(id, movement) {
             return false;
         }
-        let (Some(from), Some(to)) = (self.selected_position(), self.target_position(movement))
+        let (Some(from), Some(to)) = (self.position_of(id), self.target_position(id, movement))
         else {
             return false;
         };
+        self.relocate(from, to);
+        true
+    }
+
+    pub fn move_selected(&mut self, movement: LayerMove) -> bool {
+        self.selected
+            .is_some_and(|id| self.move_object(id, movement))
+    }
+
+    pub fn reorder_next_to(&mut self, id: u32, target: u32, above: bool) -> bool {
+        if self.gesture.is_some() || id == target || !self.can_edit(id) {
+            return false;
+        }
+        let (Some(from), Some(target_position)) = (self.position_of(id), self.position_of(target))
+        else {
+            return false;
+        };
+        let slot = if above {
+            target_position + 1
+        } else {
+            target_position
+        };
+        let to = if from < slot { slot - 1 } else { slot };
+        if to == from {
+            return false;
+        }
+        self.relocate(from, to);
+        true
+    }
+
+    fn relocate(&mut self, from: usize, to: usize) {
         let object = self.document.objects.remove(from);
         self.document.objects.insert(to, object);
         self.record(Edit::Reordered { from, to });
-        true
     }
 
     pub fn nudge_selected(&mut self, dx: f32, dy: f32) -> bool {
@@ -370,18 +403,24 @@ impl EditSession {
         true
     }
 
+    pub fn duplicate_object(&mut self, id: u32, offset: f32) -> Option<u32> {
+        if self.gesture.is_some() || self.refusal(id) == Some(Refusal::Sealed) {
+            return None;
+        }
+        let position = self.position_of(id)?;
+        let copy = geometry::translated(self.shape_of(id)?, offset, offset);
+        let new_id = self.document.reserve_id();
+        let object = AnnotationObject::new(new_id, copy);
+        let index = position + 1;
+        self.document.objects.insert(index, object.clone());
+        self.record(Edit::Added { index, object });
+        self.selected = Some(new_id);
+        Some(new_id)
+    }
+
     pub fn duplicate_selected(&mut self, offset: f32) -> Option<u32> {
-        if self.gesture.is_some() {
-            return None;
-        }
-        if self
-            .selected
-            .is_some_and(|id| self.refusal(id) == Some(Refusal::Sealed))
-        {
-            return None;
-        }
-        let copy = geometry::translated(self.selected_shape()?, offset, offset);
-        Some(self.add(copy))
+        let id = self.selected?;
+        self.duplicate_object(id, offset)
     }
 
     pub fn remove_selected(&mut self) -> bool {
