@@ -17,7 +17,7 @@ pub struct Draw<'a> {
 
 type Renderer = fn(&gtk::Snapshot, &Shape, &Draw);
 
-const RENDERERS: [(&str, Renderer); 9] = [
+const RENDERERS: [(&str, Renderer); 10] = [
     ("rectangle", draw_rectangle),
     ("ellipse", draw_ellipse),
     ("line", draw_line),
@@ -25,6 +25,7 @@ const RENDERERS: [(&str, Renderer); 9] = [
     ("pen", draw_pen),
     ("highlighter", draw_highlighter),
     ("step", draw_step),
+    ("text", draw_text),
     ("blur", draw_nothing_yet),
     ("pixelate", draw_nothing_yet),
 ];
@@ -105,8 +106,12 @@ pub fn append_document(
     snapshot: &gtk::Snapshot,
     document: &AnnotationDocument,
     context: &pango::Context,
+    skipped: Option<u32>,
 ) {
     for object in &document.objects {
+        if Some(object.id) == skipped {
+            continue;
+        }
         if let Some(shape) = object.shape() {
             let ordinal = document.ordinal(object.id).unwrap_or(1);
             append_shape(snapshot, shape, ordinal, context);
@@ -334,6 +339,119 @@ fn draw_step(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     snapshot.restore();
 }
 
+fn text_family(shape: &Shape) -> &'static str {
+    match shape.choice("family") {
+        "serif" => "Serif",
+        "mono" => "Monospace",
+        _ => "Sans",
+    }
+}
+
+fn text_layout(context: &pango::Context, shape: &Shape) -> pango::Layout {
+    let layout = pango::Layout::new(context);
+    layout.set_text(shape.text("content"));
+    let mut font = pango::FontDescription::new();
+    font.set_family(text_family(shape));
+    font.set_weight(if shape.toggle("bold") {
+        pango::Weight::Bold
+    } else {
+        pango::Weight::Normal
+    });
+    font.set_style(if shape.toggle("italic") {
+        pango::Style::Italic
+    } else {
+        pango::Style::Normal
+    });
+    font.set_absolute_size(f64::from(shape.number("font_size")) * f64::from(pango::SCALE));
+    layout.set_font_description(Some(&font));
+    layout
+}
+
+fn pixels(value: i32) -> f32 {
+    f32::from(i16::try_from(value).unwrap_or(i16::MAX))
+}
+
+pub fn measure_text(context: &pango::Context, shape: &Shape) -> (f32, f32) {
+    let (width, height) = text_layout(context, shape).pixel_size();
+    (pixels(width), pixels(height))
+}
+
+fn draw_text(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
+    let Geometry::Anchor(at) = shape.geometry else {
+        return;
+    };
+    if shape.text("content").is_empty() {
+        return;
+    }
+    let layout = text_layout(draw.pango, shape);
+    let (width, height) = layout.pixel_size();
+    snapshot.save();
+    snapshot.translate(&graphene::Point::new(at.x, at.y));
+    let backdrop = match shape.choice("background") {
+        "light" => Some(gdk::RGBA::new(1.0, 1.0, 1.0, 0.88)),
+        "dark" => Some(gdk::RGBA::new(0.0, 0.0, 0.0, 0.72)),
+        _ => None,
+    };
+    if let Some(backdrop) = backdrop {
+        let padding = shape.number("font_size") * 0.25;
+        let path = rounded_rectangle_path(
+            Rect {
+                x: -padding,
+                y: -padding,
+                width: pixels(width) + 2.0 * padding,
+                height: pixels(height) + 2.0 * padding,
+            },
+            padding,
+        );
+        snapshot.append_fill(&path, gsk::FillRule::Winding, &backdrop);
+    }
+    snapshot.append_layout(&layout, &rgba(shape.stroke_color()));
+    snapshot.restore();
+}
+
+pub fn text_view_css(shape: &Shape, zoom: f32) -> String {
+    let color = shape.stroke_color();
+    let background = match shape.choice("background") {
+        "light" => "rgba(255, 255, 255, 0.88)",
+        "dark" => "rgba(0, 0, 0, 0.72)",
+        _ => "transparent",
+    };
+    format!(
+        ".annotation-editor, .annotation-editor text {{ font-family: {family}; font-size: {size}px; font-weight: {weight}; font-style: {style}; color: rgba({r}, {g}, {b}, {a}); }} textview.annotation-editor text {{ background: {background}; }}",
+        family = text_family(shape),
+        size = shape.number("font_size") * zoom,
+        weight = if shape.toggle("bold") {
+            "bold"
+        } else {
+            "normal"
+        },
+        style = if shape.toggle("italic") {
+            "italic"
+        } else {
+            "normal"
+        },
+        r = color.r,
+        g = color.g,
+        b = color.b,
+        a = f32::from(color.a) / 255.0,
+    )
+}
+
+fn text_bounds(shape: &Shape, context: &pango::Context) -> Option<Rect> {
+    let Geometry::Anchor(at) = shape.geometry else {
+        return None;
+    };
+    (shape.kind == "text").then(|| {
+        let (width, height) = measure_text(context, shape);
+        Rect {
+            x: at.x,
+            y: at.y,
+            width,
+            height,
+        }
+    })
+}
+
 fn draw_nothing_yet(_snapshot: &gtk::Snapshot, _shape: &Shape, _draw: &Draw) {}
 
 pub fn append_selection(
@@ -341,6 +459,7 @@ pub fn append_selection(
     shape: &Shape,
     bounds: &graphene::Rect,
     zoom: f32,
+    context: &pango::Context,
 ) {
     let (red, green, blue) = SELECTION_COLOR;
     let accent = gdk::RGBA::new(red, green, blue, 1.0);
@@ -348,7 +467,7 @@ pub fn append_selection(
         x: bounds.x() + point.x * zoom,
         y: bounds.y() + point.y * zoom,
     };
-    if let Some(rect) = shape_bounds(shape) {
+    if let Some(rect) = shape_bounds(shape).or_else(|| text_bounds(shape, context)) {
         let corner = to_view(Point {
             x: rect.x,
             y: rect.y,

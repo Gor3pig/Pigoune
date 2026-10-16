@@ -1,6 +1,6 @@
 use gettextrs::gettext;
 use pigoune_core::annotations::{
-    ARROW, ELLIPSE, HIGHLIGHTER, LINE, PEN, RECTANGLE, STEP, ToolDefinition,
+    ARROW, ELLIPSE, HIGHLIGHTER, LINE, PEN, RECTANGLE, STEP, TEXT, ToolDefinition,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -96,6 +96,7 @@ impl EditorTool {
             Self::Pen => Some(&PEN),
             Self::Highlighter => Some(&HIGHLIGHTER),
             Self::Steps => Some(&STEP),
+            Self::Text => Some(&TEXT),
             _ => None,
         }
     }
@@ -109,6 +110,7 @@ impl EditorTool {
             "pen" => Some(Self::Pen),
             "highlighter" => Some(Self::Highlighter),
             "step" => Some(Self::Steps),
+            "text" => Some(Self::Text),
             "blur" => Some(Self::Blur),
             "pixelate" => Some(Self::Pixelate),
             _ => None,

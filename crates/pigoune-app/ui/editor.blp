@@ -56,7 +56,25 @@ template $PigouneEditor: Adw.Bin {
           }
         }
 
-        content: $PigouneZoomView zoom_view {};
+        content: Overlay canvas_overlay {
+          child: $PigouneZoomView zoom_view {};
+
+          [overlay]
+          TextView text_view {
+            visible: false;
+            halign: start;
+            valign: start;
+            accepts-tab: false;
+            top-margin: 2;
+            bottom-margin: 2;
+            left-margin: 4;
+            right-margin: 4;
+
+            styles [
+              "annotation-editor",
+            ]
+          }
+        };
 
         [bottom]
         Box status_bar {

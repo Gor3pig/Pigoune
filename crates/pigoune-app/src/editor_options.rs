@@ -48,6 +48,11 @@ pub fn option_label(id: &str) -> Option<String> {
         "smooth" => gettext("Smooth Line"),
         "size" => gettext("Badge Size"),
         "style" => gettext("Badge Style"),
+        "font_size" => gettext("Font Size"),
+        "bold" => gettext("Bold Text"),
+        "italic" => gettext("Italic Text"),
+        "family" => gettext("Font"),
+        "background" => gettext("Text Background"),
         "radius" => gettext("Blur Radius"),
         "cell" => gettext("Cell Size"),
         _ => return None,
@@ -63,6 +68,12 @@ pub fn choice_label(id: &str, choice: &str) -> Option<String> {
         ("head", "open") => gettext("Open Head"),
         ("head", "double") => gettext("Both Ends"),
         ("head", "none") => gettext("No Head"),
+        ("family", "sans") => gettext("Sans-serif Font"),
+        ("family", "serif") => gettext("Serif Font"),
+        ("family", "mono") => gettext("Monospace Font"),
+        ("background", "none") => gettext("No Background"),
+        ("background", "light") => gettext("Light Background"),
+        ("background", "dark") => gettext("Dark Background"),
         ("style", "filled") => gettext("Filled Badge"),
         ("style", "outlined") => gettext("Outlined Badge"),
         ("head_size", "small") => gettext("Small Head"),
@@ -76,6 +87,7 @@ pub fn build_rows(definition: &ToolDefinition, notify: &Notify) -> Vec<OptionRow
     definition
         .options
         .iter()
+        .filter(|spec| spec.kind != OptionKind::Text)
         .map(|spec| build_row(spec, notify))
         .collect()
 }
@@ -111,6 +123,7 @@ fn build_row(spec: &'static OptionSpec, notify: &Notify) -> OptionRow {
         OptionKind::Number { min, max, .. } => slider_row(spec, min, max, 1.0, notify),
         OptionKind::Choice(choices) => choice_row(spec, choices, notify),
         OptionKind::Toggle => toggle_row(spec, notify),
+        OptionKind::Text => unreachable!("a text option has no row"),
     };
     OptionRow {
         id: spec.id,
@@ -281,6 +294,9 @@ mod tests {
     fn every_option_of_every_tool_has_a_label() {
         for definition in definitions() {
             for spec in definition.options {
+                if spec.kind == OptionKind::Text {
+                    continue;
+                }
                 assert!(
                     option_label(spec.id).is_some(),
                     "{} / {} has no label",
