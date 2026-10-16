@@ -158,104 +158,207 @@ template $PigouneEditor: Adw.Bin {
           }
         }
 
-        content: ScrolledWindow panel {
-          hscrollbar-policy: external;
-          min-content-height: 360;
+        content: Box panel {
+          orientation: vertical;
+          spacing: 12;
+          margin-top: 12;
+          margin-bottom: 12;
+          margin-start: 12;
+          margin-end: 12;
 
-          child: Box {
-            orientation: vertical;
-            spacing: 24;
-            margin-top: 12;
-            margin-bottom: 12;
-            margin-start: 12;
-            margin-end: 12;
+          Adw.PreferencesGroup tools_group {
+            title: _("Tools");
 
-            Adw.PreferencesGroup tools_group {
-              title: _("Tools");
-
-              Grid tools_grid {
-                column-spacing: 6;
-                row-spacing: 6;
-                column-homogeneous: true;
-              }
+            Grid tools_grid {
+              column-spacing: 6;
+              row-spacing: 6;
+              column-homogeneous: true;
             }
+          }
 
-            Adw.PreferencesGroup style_group {}
+          Box sections_host {
+            orientation: vertical;
+            vexpand: true;
 
-            Adw.PreferencesGroup crop_group {
-              title: _("Crop");
-              visible: false;
+            Paned sections_paned {
+              orientation: vertical;
+              vexpand: true;
+              wide-handle: true;
+              resize-start-child: true;
+              resize-end-child: true;
+              shrink-start-child: false;
+              shrink-end-child: false;
+              visible: bind template.compact inverted;
 
-              Adw.ComboRow crop_ratio_row {
-                title: _("Aspect Ratio");
+              [start]
+              Box properties_section {
+                orientation: vertical;
+                spacing: 6;
 
-                model: StringList {
-                  strings [
-                    _("Free"),
-                    _("Same as Image"),
-                    _("Square"),
-                    "4:3",
-                    "16:9",
+                ToggleButton properties_toggle {
+                  active: true;
+                  tooltip-text: _("Show or Hide the Properties");
+
+                  styles [
+                    "flat",
                   ]
-                };
-              }
 
-              Adw.ActionRow crop_size_row {
-                title: _("Crop Size");
+                  child: Box {
+                    spacing: 6;
 
-                styles [
-                  "property",
-                ]
-              }
+                    Image properties_arrow {
+                      icon-name: "pan-down-symbolic";
+                    }
 
-              ListBoxRow {
-                activatable: false;
-                selectable: false;
+                    Label {
+                      label: _("Properties");
+                      halign: start;
+                      hexpand: true;
 
-                child: Box {
-                  orientation: vertical;
-                  spacing: 6;
-                  margin-top: 12;
-                  margin-bottom: 12;
-                  margin-start: 12;
-                  margin-end: 12;
+                      styles [
+                        "heading",
+                      ]
+                    }
+                  };
+                }
 
-                  Button {
-                    label: _("Apply");
-                    clicked => $on_crop_apply_clicked() swapped;
+                ScrolledWindow properties_scroller {
+                  hscrollbar-policy: never;
+                  vexpand: true;
+                  min-content-height: 60;
+
+                  child: Box properties_box {
+                    orientation: vertical;
+                    spacing: 24;
+
+                    Adw.PreferencesGroup style_group {}
+
+                Adw.PreferencesGroup crop_group {
+                  title: _("Crop");
+                  visible: false;
+
+                  Adw.ComboRow crop_ratio_row {
+                    title: _("Aspect Ratio");
+
+                    model: StringList {
+                      strings [
+                        _("Free"),
+                        _("Same as Image"),
+                        _("Square"),
+                        "4:3",
+                        "16:9",
+                      ]
+                    };
+                  }
+
+                  Adw.ActionRow crop_size_row {
+                    title: _("Crop Size");
 
                     styles [
-                      "suggested-action",
+                      "property",
                     ]
                   }
 
-                  Box {
-                    spacing: 6;
-                    homogeneous: true;
+                  ListBoxRow {
+                    activatable: false;
+                    selectable: false;
 
-                    Button {
-                      label: _("Cancel");
-                      clicked => $on_crop_cancel_clicked() swapped;
-                    }
+                    child: Box {
+                      orientation: vertical;
+                      spacing: 6;
+                      margin-top: 12;
+                      margin-bottom: 12;
+                      margin-start: 12;
+                      margin-end: 12;
 
-                    Button {
-                      label: _("Reset");
-                      clicked => $on_crop_reset_clicked() swapped;
-                    }
+                      Button {
+                        label: _("Apply");
+                        clicked => $on_crop_apply_clicked() swapped;
+
+                        styles [
+                          "suggested-action",
+                        ]
+                      }
+
+                      Box {
+                        spacing: 6;
+                        homogeneous: true;
+
+                        Button {
+                          label: _("Cancel");
+                          clicked => $on_crop_cancel_clicked() swapped;
+                        }
+
+                        Button {
+                          label: _("Reset");
+                          clicked => $on_crop_reset_clicked() swapped;
+                        }
+                      }
+                    };
                   }
-                };
+                }
+                  };
+                }
+              }
+
+              [end]
+              Box layers_section {
+                orientation: vertical;
+                spacing: 6;
+                margin-top: 6;
+
+                Box {
+                  spacing: 6;
+
+                  Label layers_heading {
+                    label: _("Layers");
+                    halign: start;
+                    hexpand: true;
+
+                    styles [
+                      "heading",
+                    ]
+                  }
+
+                  Box layer_buttons {
+                    spacing: 2;
+                  }
+                }
+
+                ScrolledWindow layers_scroller {
+                  hscrollbar-policy: never;
+                  vexpand: true;
+                  min-content-height: 90;
+
+                  child: ListBox layers_list {
+                    selection-mode: single;
+
+                    styles [
+                      "boxed-list",
+                      "layers-list",
+                    ]
+                  };
+                }
               }
             }
 
-            Adw.PreferencesGroup {
-              title: _("Layers");
+            Box compact_sections {
+              orientation: vertical;
+              spacing: 6;
+              vexpand: true;
+              visible: bind template.compact;
 
-              Box layer_buttons {
-                spacing: 6;
+              Adw.InlineViewSwitcher sections_switcher {
+                stack: sections_stack;
+                display-mode: labels;
                 homogeneous: true;
               }
+
+              Adw.ViewStack sections_stack {
+                vexpand: true;
+              }
             }
-          };
+          }
         };
       };
     };

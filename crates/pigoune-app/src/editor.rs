@@ -1,5 +1,6 @@
 use std::cell::{Cell, RefCell};
 use std::path::Path;
+use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::subclass::prelude::*;
@@ -8,7 +9,7 @@ use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::AssetId;
 use pigoune_core::annotations::{
     AnnotationDocument, Crop, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
-    LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value,
+    LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value, layer_entries,
 };
 
 use crate::annotation_export;
@@ -19,6 +20,8 @@ use crate::color_sampler;
 use crate::editor_options::{self, Notify, OptionEvent, OptionRow};
 use crate::editor_tool::EditorTool;
 use crate::image_conversion;
+use crate::layers_model;
+use crate::layers_panel::{self, LayerAction, LayerRow, LayersPanel, LayersView};
 use crate::mask_lock;
 use crate::tool_flow;
 use crate::zoom_view::PointerEvent;
@@ -26,6 +29,7 @@ use crate::zoom_view::PointerEvent;
 type ClosedCallback = Box<dyn Fn()>;
 type NoticeCallback = Box<dyn Fn(&str)>;
 type SaveCallback = Box<dyn Fn(&EditedCapture)>;
+type LayerMaker = fn(u32) -> LayerAction;
 
 pub struct EditedCapture {
     pub replaces: Option<AssetId>,
@@ -35,6 +39,8 @@ pub struct EditedCapture {
 }
 
 const TOOLS_PER_ROW: usize = 3;
+const COMPACT_TOOLS_PER_ROW: usize = 7;
+const COMPACT_SECTION_HEIGHT: i32 = 200;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
 const SNAP_PIXELS: f64 = 6.0;
 const NUDGE_SMALL: f32 = 1.0;
@@ -52,8 +58,8 @@ pub struct TextEdit {
 
 mod imp {
     use super::{
-        AssetId, Cell, ClosedCallback, LayerMove, NoticeCallback, OptionRow, RefCell, SaveCallback,
-        Shape, TextEdit,
+        AssetId, Cell, ClosedCallback, LayerMove, LayersPanel, NoticeCallback, OptionRow, Rc,
+        RefCell, SaveCallback, Shape, TextEdit,
     };
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -105,7 +111,32 @@ mod imp {
         #[template_child]
         pub sheet_bin: TemplateChild<adw::Bin>,
         #[template_child]
-        pub panel: TemplateChild<gtk::ScrolledWindow>,
+        pub panel: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub layers_list: TemplateChild<gtk::ListBox>,
+        #[template_child]
+        pub layers_scroller: TemplateChild<gtk::ScrolledWindow>,
+        #[template_child]
+        pub layers_section: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub layers_heading: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub properties_toggle: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub properties_arrow: TemplateChild<gtk::Image>,
+        #[template_child]
+        pub properties_section: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub properties_scroller: TemplateChild<gtk::ScrolledWindow>,
+        #[template_child]
+        pub sections_paned: TemplateChild<gtk::Paned>,
+        #[template_child]
+        pub sections_stack: TemplateChild<adw::ViewStack>,
+        pub layers: RefCell<Option<Rc<LayersPanel>>>,
+        pub canvas_menu: RefCell<Option<gtk::PopoverMenu>>,
+        pub properties_position: Cell<i32>,
+        pub sections_placed: Cell<bool>,
+        pub layer_edit_buttons: RefCell<Vec<gtk::Button>>,
         #[template_child]
         pub bottom_sheet: TemplateChild<adw::BottomSheet>,
         #[template_child]
@@ -386,6 +417,8 @@ impl PigouneEditor {
         self.listen_to_keys();
         self.install_outputs();
         self.fill_layer_buttons();
+        self.setup_layers();
+        self.setup_sections();
         imp.text_view.buffer().connect_changed(glib::clone!(
             #[weak(rename_to = editor)]
             self,
@@ -488,6 +521,7 @@ impl PigouneEditor {
         let mut buttons = Vec::new();
         for (movement, icon, label) in layers {
             let button = gtk::Button::from_icon_name(icon);
+            button.add_css_class("flat");
             button.set_tooltip_text(Some(&label));
             button.update_property(&[gtk::accessible::Property::Label(&label)]);
             button.set_sensitive(false);
@@ -502,6 +536,326 @@ impl PigouneEditor {
             buttons.push((movement, button));
         }
         imp.layer_move_buttons.replace(buttons);
+        let mut edit_buttons = Vec::new();
+        for (icon, label, duplicate) in [
+            ("edit-copy-symbolic", gettext("Duplicate"), true),
+            ("user-trash-symbolic", gettext("Delete"), false),
+        ] {
+            let button = gtk::Button::from_icon_name(icon);
+            button.add_css_class("flat");
+            button.set_tooltip_text(Some(&label));
+            button.update_property(&[gtk::accessible::Property::Label(&label)]);
+            button.set_sensitive(false);
+            button.connect_clicked(glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move |_| {
+                    let selected = editor.imp().drawing.borrow().session.selected();
+                    if let Some(id) = selected {
+                        editor.layer_action(if duplicate {
+                            LayerAction::Duplicate(id)
+                        } else {
+                            LayerAction::Delete(id)
+                        });
+                    }
+                }
+            ));
+            imp.layer_buttons.append(&button);
+            edit_buttons.push(button);
+        }
+        imp.layer_edit_buttons.replace(edit_buttons);
+    }
+
+    fn setup_layers(&self) {
+        let imp = self.imp();
+        let editor = self.downgrade();
+        let dispatch: layers_panel::Dispatch = Rc::new(move |action| {
+            if let Some(editor) = editor.upgrade() {
+                editor.layer_action(action);
+            }
+        });
+        imp.layers.replace(Some(LayersPanel::new(
+            imp.layers_list.get(),
+            imp.layers_scroller.get(),
+            dispatch,
+        )));
+        self.install_layer_actions();
+        let menu = gtk::GestureClick::new();
+        menu.set_button(gdk::BUTTON_SECONDARY);
+        menu.connect_pressed(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_, _, x, y| editor.show_canvas_menu(x, y)
+        ));
+        imp.zoom_view.add_controller(menu);
+    }
+
+    fn install_layer_actions(&self) {
+        let group = gio::SimpleActionGroup::new();
+        let table: [(&str, LayerMaker); 8] = [
+            ("select", LayerAction::Select),
+            ("rename", |id| LayerAction::Rename(id, None)),
+            ("duplicate", LayerAction::Duplicate),
+            ("delete", LayerAction::Delete),
+            ("front", |id| LayerAction::Move(id, LayerMove::Front)),
+            ("forward", |id| LayerAction::Move(id, LayerMove::Forward)),
+            ("backward", |id| LayerAction::Move(id, LayerMove::Backward)),
+            ("back", |id| LayerAction::Move(id, LayerMove::Back)),
+        ];
+        for (name, make) in table {
+            let action = gio::SimpleAction::new(name, Some(&u32::static_variant_type()));
+            action.connect_activate(glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move |_, parameter| {
+                    let Some(id) = parameter.and_then(glib::Variant::get::<u32>) else {
+                        return;
+                    };
+                    if name == "rename" {
+                        editor.start_renaming(id);
+                    } else {
+                        editor.layer_action(make(id));
+                    }
+                }
+            ));
+            group.add_action(&action);
+        }
+        self.insert_action_group("layer", Some(&group));
+    }
+
+    fn start_renaming(&self, id: u32) {
+        if let Some(layers) = self.imp().layers.borrow().clone() {
+            layers.start_renaming(id);
+        }
+    }
+
+    fn layer_action(&self, action: LayerAction) {
+        self.commit_text();
+        let imp = self.imp();
+        match action {
+            LayerAction::Select(id) => {
+                if imp.active_tool.get() != EditorTool::Select {
+                    self.choose_tool(EditorTool::Select);
+                }
+                imp.drawing.borrow_mut().session.select(Some(id));
+            }
+            LayerAction::Rename(id, name) => {
+                imp.drawing.borrow_mut().session.rename(id, name);
+            }
+            LayerAction::Duplicate(id) => {
+                imp.drawing
+                    .borrow_mut()
+                    .session
+                    .duplicate_object(id, DUPLICATE_OFFSET);
+            }
+            LayerAction::Delete(id) => {
+                imp.drawing.borrow_mut().session.remove_object(id);
+            }
+            LayerAction::Move(id, movement) => {
+                imp.drawing.borrow_mut().session.move_object(id, movement);
+            }
+            LayerAction::Drop { id, target, above } => {
+                imp.drawing
+                    .borrow_mut()
+                    .session
+                    .reorder_next_to(id, target, above);
+            }
+            LayerAction::OpenCrop => self.choose_tool(EditorTool::Crop),
+        }
+        self.after_edit();
+    }
+
+    fn layers_view(&self) -> LayersView {
+        let imp = self.imp();
+        let drawing = imp.drawing.borrow();
+        let rows = layer_entries(drawing.session.document())
+            .iter()
+            .map(|entry| {
+                let tool = EditorTool::from_kind(&entry.kind);
+                let kind_label = tool.map_or_else(|| entry.kind.clone(), EditorTool::object_label);
+                LayerRow {
+                    id: entry.id,
+                    icon: tool.map_or("image-missing-symbolic", EditorTool::icon_name),
+                    label: layers_model::row_label(entry, &kind_label, |tool, text| {
+                        gettext("{tool}: {text}")
+                            .replace("{tool}", tool)
+                            .replace("{text}", text)
+                    }),
+                }
+            })
+            .collect();
+        let (width, height) = imp.image_size.get();
+        let crop = drawing.session.crop().map_or_else(
+            || gettext("Not cropped"),
+            |crop| format!("{} × {}", crop.width, crop.height),
+        );
+        LayersView {
+            rows,
+            selected: drawing.session.selected(),
+            image: format!("{width} × {height}"),
+            crop,
+        }
+    }
+
+    fn sync_layers(&self) {
+        let layers = self.imp().layers.borrow().clone();
+        if let Some(layers) = layers {
+            layers.show(self.layers_view());
+        }
+    }
+
+    fn show_canvas_menu(&self, x: f64, y: f64) {
+        let imp = self.imp();
+        if imp.text_edit.get().is_some() || self.is_cropping() {
+            return;
+        }
+        let point = image_point(imp.zoom_view.view_to_image(x, y));
+        let found = imp.drawing.borrow().session.objects_at(point, self.reach());
+        let Some(top) = found.first().copied() else {
+            return;
+        };
+        let view = self.layers_view();
+        let menu = gio::Menu::new();
+        let choices = gio::Menu::new();
+        for id in &found {
+            let Some(row) = view.rows.iter().find(|row| row.id == *id) else {
+                continue;
+            };
+            let item = gio::MenuItem::new(Some(&row.label), None);
+            item.set_action_and_target_value(Some("layer.select"), Some(&id.to_variant()));
+            choices.append_item(&item);
+        }
+        if found.len() > 1 {
+            menu.append_section(Some(&gettext("Select")), &choices);
+        }
+        menu.append_section(None, &layers_panel::menu_for(top));
+        let previous = imp.canvas_menu.take();
+        if let Some(previous) = previous {
+            previous.unparent();
+        }
+        let popover = gtk::PopoverMenu::from_model(Some(&menu));
+        popover.set_parent(&*imp.zoom_view);
+        popover.set_has_arrow(false);
+        popover.set_halign(gtk::Align::Start);
+        popover.set_pointing_to(Some(&gdk::Rectangle::new(
+            rounded_margin(point_to_f32(x)),
+            rounded_margin(point_to_f32(y)),
+            1,
+            1,
+        )));
+        popover.popup();
+        imp.canvas_menu.replace(Some(popover));
+    }
+
+    fn setup_sections(&self) {
+        let imp = self.imp();
+        imp.properties_toggle.connect_toggled(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |toggle| editor.show_properties(toggle.is_active())
+        ));
+        imp.sections_paned.connect_map(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| editor.place_divider()
+        ));
+    }
+
+    fn place_divider(&self) {
+        let imp = self.imp();
+        if imp.sections_placed.get() {
+            return;
+        }
+        let paned = imp.sections_paned.get();
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move || {
+                let imp = editor.imp();
+                let height = paned.height();
+                if height > 0 && !imp.sections_placed.replace(true) {
+                    let position = height * 11 / 20;
+                    imp.properties_position.set(position);
+                    if imp.properties_toggle.is_active() {
+                        paned.set_position(position);
+                    }
+                }
+            }
+        ));
+    }
+
+    fn show_properties(&self, shown: bool) {
+        let imp = self.imp();
+        imp.properties_scroller.set_visible(shown);
+        imp.properties_arrow.set_icon_name(Some(if shown {
+            "pan-down-symbolic"
+        } else {
+            "pan-end-symbolic"
+        }));
+        if shown {
+            imp.sections_paned
+                .set_position(imp.properties_position.get());
+        } else {
+            imp.properties_position.set(imp.sections_paned.position());
+            let (header, _, _, _) = imp
+                .properties_section
+                .measure(gtk::Orientation::Vertical, -1);
+            imp.sections_paned.set_position(header);
+        }
+    }
+
+    fn place_sections(&self, compact: bool) {
+        let imp = self.imp();
+        let scroller = imp.properties_scroller.get();
+        let layers = imp.layers_section.get();
+        let in_stack = scroller.parent().is_some_and(|parent| {
+            parent.is::<adw::ViewStack>()
+                || parent.parent().is_some_and(|p| p.is::<adw::ViewStack>())
+        });
+        imp.layers_heading.set_visible(!compact);
+        imp.layer_buttons.set_halign(if compact {
+            gtk::Align::End
+        } else {
+            gtk::Align::Fill
+        });
+        if compact == in_stack {
+            return;
+        }
+        if compact {
+            imp.properties_section.remove(&scroller);
+            imp.sections_paned.set_end_child(gtk::Widget::NONE);
+            scroller.set_visible(true);
+            scroller.set_min_content_height(COMPACT_SECTION_HEIGHT);
+            imp.layers_scroller
+                .set_min_content_height(COMPACT_SECTION_HEIGHT);
+            imp.sections_stack
+                .add_titled(&scroller, Some("properties"), &gettext("Properties"));
+            imp.sections_stack
+                .add_titled(&layers, Some("layers"), &gettext("Layers"));
+        } else {
+            imp.sections_stack.remove(&scroller);
+            imp.sections_stack.remove(&layers);
+            imp.properties_section.append(&scroller);
+            imp.sections_paned.set_end_child(Some(&layers));
+            scroller.set_min_content_height(60);
+            imp.layers_scroller.set_min_content_height(90);
+            scroller.set_visible(imp.properties_toggle.is_active());
+        }
+    }
+
+    fn arrange_tools(&self, compact: bool) {
+        let imp = self.imp();
+        let columns = if compact {
+            COMPACT_TOOLS_PER_ROW
+        } else {
+            TOOLS_PER_ROW
+        };
+        for (index, (_, button)) in imp.tool_buttons.borrow().iter().enumerate() {
+            imp.tools_grid.remove(button);
+            let column = i32::try_from(index % columns).unwrap_or(0);
+            let row = i32::try_from(index / columns).unwrap_or(0);
+            imp.tools_grid.attach(button, column, row, 1, 1);
+        }
     }
 
     fn move_layer(&self, movement: LayerMove) -> bool {
@@ -522,6 +876,8 @@ impl PigouneEditor {
         let imp = self.imp();
         let panel = imp.panel.get();
         let compact = self.compact();
+        self.place_sections(compact);
+        self.arrange_tools(compact);
         if compact {
             imp.panel_view.set_content(gtk::Widget::NONE);
             imp.sheet_bin.set_child(Some(&panel));
@@ -1243,9 +1599,15 @@ impl PigouneEditor {
             .masks()
             .iter()
             .any(|mask| !imp.locked_masks.borrow().contains(mask));
+        let has_selection = drawing.session.selected().is_some();
         drop(drawing);
+        for button in imp.layer_edit_buttons.borrow().iter() {
+            button.set_sensitive(has_selection);
+        }
         imp.mask_banner.set_revealed(unlocked);
         imp.zoom_view.queue_draw();
+        self.sync_layers();
+        self.keep_keyboard_focus();
         if imp.drawing.borrow().session.is_modified() {
             self.schedule_draft();
         }
@@ -1507,6 +1869,7 @@ impl PigouneEditor {
                 self.finish_cropping(false);
                 true
             }
+            gdk::Key::F2 if self.layers_have_focus() => self.rename_selected_layer(),
             gdk::Key::Return | gdk::Key::KP_Enter | gdk::Key::F2 => self.edit_selected_text(),
             gdk::Key::Escape => self.escape(),
             _ => self.choose_tool_by_letter(key, modifiers),
@@ -1575,10 +1938,42 @@ impl PigouneEditor {
         self.after_edit();
     }
 
+    fn keep_keyboard_focus(&self) {
+        if !self.is_mapped() {
+            return;
+        }
+        let lost = self
+            .root()
+            .is_some_and(|root| root.focus().is_none_or(|widget| !widget.is_sensitive()));
+        if lost {
+            self.imp().zoom_view.grab_focus();
+        }
+    }
+
+    fn layers_have_focus(&self) -> bool {
+        self.imp()
+            .layers
+            .borrow()
+            .as_ref()
+            .is_some_and(|layers| layers.focus_inside())
+    }
+
+    fn rename_selected_layer(&self) -> bool {
+        let selected = self.imp().drawing.borrow().session.selected();
+        selected.is_some_and(|id| {
+            self.start_renaming(id);
+            true
+        })
+    }
+
     fn focus_is_editable(&self) -> bool {
-        self.root()
-            .and_then(|root| root.focus())
-            .is_some_and(|focus| focus.is::<gtk::Editable>() || focus.is::<gtk::TextView>())
+        let Some(focus) = self.root().and_then(|root| root.focus()) else {
+            return false;
+        };
+        if let Some(label) = focus.downcast_ref::<gtk::EditableLabel>() {
+            return label.is_editing();
+        }
+        focus.is::<gtk::Editable>() || focus.is::<gtk::TextView>()
     }
 
     fn panel_has_focus(&self) -> bool {

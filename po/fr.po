@@ -8838,3 +8838,36 @@ msgstr "{tool} (reste actif)"
 #: crates/pigoune-app/src/editor.rs
 msgid "This text is locked"
 msgstr "Ce texte est verrouillé"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Properties"
+msgstr "Propriétés"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Show or Hide the Properties"
+msgstr "Afficher ou masquer les propriétés"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Not cropped"
+msgstr "Aucun rognage"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Step"
+msgstr "Étape"
+
+#: crates/pigoune-app/src/editor.rs
+#, rust-format
+msgid "{tool}: {text}"
+msgstr "{tool} : {text}"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Duplicate"
+msgstr "Dupliquer"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Delete"
+msgstr "Supprimer"
+
+#: crates/pigoune-app/src/editor.rs
+msgid "Drag to Reorder"
+msgstr "Glisser pour réorganiser"

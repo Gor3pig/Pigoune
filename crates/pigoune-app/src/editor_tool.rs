@@ -120,6 +120,13 @@ impl EditorTool {
         }
     }
 
+    pub fn object_label(self) -> String {
+        match self {
+            Self::Steps => gettext("Step"),
+            other => other.label(),
+        }
+    }
+
     pub fn definition(self) -> Option<&'static ToolDefinition> {
         match self {
             Self::Rectangle => Some(&RECTANGLE),

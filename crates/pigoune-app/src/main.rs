@@ -69,6 +69,8 @@ mod image_conversion;
 mod import_progress_dialog;
 mod import_report;
 mod languages;
+mod layers_model;
+mod layers_panel;
 mod library_info_dialog;
 mod list_diff;
 mod load_slots;
