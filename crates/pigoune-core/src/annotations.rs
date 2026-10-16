@@ -229,6 +229,7 @@ impl AnnotationObject {
 pub struct AnnotationDocument {
     pub crop: Option<Crop>,
     pub objects: Vec<AnnotationObject>,
+    next_id: u32,
     extra: Map<String, Value>,
 }
 
@@ -254,8 +255,20 @@ impl AnnotationDocument {
         Self {
             crop,
             objects,
+            next_id: 0,
             extra: Map::new(),
         }
+    }
+
+    #[must_use]
+    pub fn same_content_as(&self, other: &Self) -> bool {
+        self.crop == other.crop && self.objects == other.objects && self.extra == other.extra
+    }
+
+    pub fn reserve_id(&mut self) -> u32 {
+        let id = self.next_object_id();
+        self.next_id = id.saturating_add(1);
+        id
     }
 
     #[must_use]
@@ -265,6 +278,7 @@ impl AnnotationDocument {
             .map(|object| object.id)
             .max()
             .map_or(1, |highest| highest.saturating_add(1))
+            .max(self.next_id)
     }
 
     #[must_use]
@@ -339,6 +353,10 @@ impl AnnotationDocument {
                 supported: DOCUMENT_VERSION,
             });
         }
+        let stored_next_id = fields
+            .remove("next_id")
+            .and_then(|value| value.as_u64())
+            .and_then(|value| u32::try_from(value).ok());
         let crop = match fields.remove("crop") {
             None | Some(Value::Null) => None,
             Some(crop) => Some(
@@ -363,9 +381,12 @@ impl AnnotationDocument {
                 repeated.id
             )));
         }
+        let highest = objects.iter().map(|object| object.id).max().unwrap_or(0);
+        let next_id = stored_next_id.filter(|next| *next > highest).unwrap_or(0);
         Ok(Self {
             crop,
             objects,
+            next_id,
             extra: fields,
         })
     }
@@ -395,6 +416,15 @@ impl AnnotationDocument {
             .map(AnnotationObject::to_value)
             .collect();
         fields.insert("objects".to_owned(), Value::Array(objects));
+        let highest = self
+            .objects
+            .iter()
+            .map(|object| object.id)
+            .max()
+            .unwrap_or(0);
+        if self.next_id > highest.saturating_add(1) {
+            fields.insert("next_id".to_owned(), Value::from(self.next_id));
+        }
         Ok(Value::Object(fields).to_string())
     }
 }

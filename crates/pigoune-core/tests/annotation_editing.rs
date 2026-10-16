@@ -640,6 +640,13 @@ fn an_unknown_tool_survives_the_edits_of_the_session() {
     assert_eq!(written["objects"].as_array().expect("array").len(), 2);
 }
 
+fn content_json(session: &EditSession) -> String {
+    let mut value: serde_json::Value =
+        serde_json::from_str(&session.document().to_json().expect("json")).expect("parsed");
+    value.as_object_mut().expect("object").remove("next_id");
+    value.to_string()
+}
+
 #[test]
 fn undoing_everything_then_redoing_everything_gives_the_same_states() {
     let mut seed: u32 = 7;
@@ -648,7 +655,7 @@ fn undoing_everything_then_redoing_everything_gives_the_same_states() {
         (seed >> 8) % limit
     };
     let mut edits = session();
-    let mut states = vec![edits.document().to_json().expect("json")];
+    let mut states = vec![content_json(&edits)];
     let ids = |edits: &EditSession| -> Vec<u32> {
         edits.document().objects.iter().map(|o| o.id).collect()
     };
@@ -715,19 +722,19 @@ fn undoing_everything_then_redoing_everything_gives_the_same_states() {
             }
         };
         if changed {
-            states.push(edits.document().to_json().expect("json"));
+            states.push(content_json(&edits));
         }
     }
     assert!(states.len() > 150);
 
     for expected in states.iter().rev().skip(1) {
         assert!(edits.undo());
-        assert_eq!(&edits.document().to_json().expect("json"), expected);
+        assert_eq!(&content_json(&edits), expected);
     }
     assert!(!edits.undo() || states.len() > 501);
     for expected in states.iter().skip(1) {
         assert!(edits.redo());
-        assert_eq!(&edits.document().to_json().expect("json"), expected);
+        assert_eq!(&content_json(&edits), expected);
     }
     assert!(!edits.redo());
 }
