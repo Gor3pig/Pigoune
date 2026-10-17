@@ -976,6 +976,11 @@ impl PigouneEditor {
         if imp.sidebar_toggle.is_active() == hidden {
             imp.sidebar_toggle.set_active(!hidden);
         }
+        imp.sidebar_toggle.set_tooltip_text(Some(&if hidden {
+            gettext("Show the Sidebar (F9)")
+        } else {
+            gettext("Hide the Sidebar (F9)")
+        }));
     }
 
     fn toggle_sidebar(&self) -> bool {

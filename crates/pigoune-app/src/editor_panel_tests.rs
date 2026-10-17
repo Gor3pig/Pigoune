@@ -176,3 +176,64 @@ pub fn hiding_an_effect_shows_nothing_and_leaves_the_canvas_alone() {
     }
     assert_eq!(notices.get(), 0, "hiding an effect shows no notification");
 }
+
+fn settle(duration_ms: u64) {
+    let start = std::time::Instant::now();
+    let context = glib::MainContext::default();
+    while start.elapsed() < std::time::Duration::from_millis(duration_ms) {
+        context.iteration(false);
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+}
+
+pub fn the_sidebar_button_stays_where_it_is() {
+    let _ = adw::init();
+    let _ = gtk::gio::resources_register_include!("pigoune.gresource");
+    let window = gtk::Window::new();
+    window.set_default_size(1200, 800);
+    let editor: PigouneEditor = glib::Object::new();
+    window.set_child(Some(&editor));
+    let asset = AssetId::parse("00000000-0000-7000-8000-000000000003").expect("id");
+    editor.open_item(asset, &texture(), document());
+    window.present();
+    settle(600);
+    let imp = editor.imp();
+    let position = || {
+        let bounds = imp
+            .sidebar_toggle
+            .compute_bounds(&window)
+            .expect("the button is laid out");
+        assert!(bounds.width() > 0.0, "the button has a size");
+        (bounds.x().to_bits(), bounds.y().to_bits())
+    };
+    let shown = position();
+    assert!(
+        f32::from_bits(shown.0) < 400.0,
+        "the button sits with the navigation controls, not at the edge of a changing area"
+    );
+    assert_eq!(
+        imp.sidebar_toggle.tooltip_text().as_deref(),
+        Some("Hide the Sidebar (F9)")
+    );
+    for _ in 0..3 {
+        editor.set_sidebar_hidden(true);
+        settle(600);
+        assert_eq!(
+            position(),
+            shown,
+            "the button does not move when the sidebar is hidden"
+        );
+        assert_eq!(
+            imp.sidebar_toggle.tooltip_text().as_deref(),
+            Some("Show the Sidebar (F9)")
+        );
+        editor.set_sidebar_hidden(false);
+        settle(600);
+        assert_eq!(
+            position(),
+            shown,
+            "the button does not move when the sidebar is back"
+        );
+    }
+    window.close();
+}

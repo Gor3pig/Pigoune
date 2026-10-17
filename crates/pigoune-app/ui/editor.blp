@@ -37,18 +37,6 @@ template $PigouneEditor: Adw.Bin {
             clicked => $on_back_clicked() swapped;
           }
 
-          [end]
-          ToggleButton sidebar_toggle {
-            icon-name: "sidebar-show-right-symbolic";
-            tooltip-text: _("Show or Hide the Sidebar (F9)");
-            active: true;
-            visible: bind template.compact inverted;
-
-            accessibility {
-              label: _("Sidebar");
-            }
-          }
-
           [start]
           Button undo_button {
             icon-name: "edit-undo-symbolic";
@@ -63,6 +51,18 @@ template $PigouneEditor: Adw.Bin {
             tooltip-text: _("Redo");
             sensitive: false;
             clicked => $on_redo_clicked() swapped;
+          }
+
+          [start]
+          ToggleButton sidebar_toggle {
+            icon-name: "sidebar-show-right-symbolic";
+            tooltip-text: _("Hide the Sidebar (F9)");
+            active: true;
+            visible: bind template.compact inverted;
+
+            accessibility {
+              label: _("Sidebar");
+            }
           }
         }
 
