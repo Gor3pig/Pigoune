@@ -15,7 +15,7 @@
 
 [English](README.md) · **Français**
 
-[Site web](https://gor3pig.github.io/Pigoune/fr/) · [Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Guide](#guide-dutilisation) · [Contribuer](#contribuer)
+[Site web](https://gor3pig.github.io/Pigoune/fr/) · [Guide d'utilisation](help/fr/README.md) · [Fonctionnalités](#fonctionnalités) · [Principes](#principes) · [Installation](#installation) · [Contribuer](#contribuer)
 
 <img src="data/screenshots/01.png" alt="La fenêtre principale de Pigoune" width="860">
 
@@ -23,147 +23,83 @@
 
 ---
 
-> [!NOTE]
-> **Pigoune est disponible.** [Installez-le en un clic](#installation), et il se tient à jour
-> tout seul.
-
 ## Pigoune, c'est quoi ?
 
 Des icônes dans `Téléchargements`, des logos dans un vieux dossier de projet, un SVG perdu
 quelque part sur le bureau… **Pigoune rassemble tout ça dans une seule bibliothèque**, bien
-rangée et agréable à parcourir.
-
-Déposez-y vos éléments graphiques : Pigoune en garde une copie en lieu sûr (vos fichiers
-d'origine ne sont jamais touchés), vous aide à les organiser et vous les rend d'un simple
-glisser-déposer quand vous en avez besoin.
+rangée et agréable à parcourir. Vos fichiers d'origine ne sont jamais touchés.
 
 ## Fonctionnalités
 
 <table>
 <tr>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Déposer
-Glissez des fichiers ou des dossiers entiers : SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF,
-TIFF, BMP et ICO. Chaque image est vérifiée avant d'entrer, et les doublons sont reconnus
-automatiquement.
+**Déposer**<br>Fichiers et dossiers, tous les formats courants, doublons repérés.
 
 </td>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Organiser
-Collections imbriquées avec leur icône et leur couleur, collections dynamiques qui se
-remplissent toutes seules, tags imbriqués, favoris, ainsi qu'une note, une source, une licence et un auteur
-pour chaque élément.
+**Organiser**<br>Collections, collections dynamiques, tags imbriqués, favoris.
 
 </td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Retrouver
-Recherche instantanée et filtres par type, par orientation, par couleur ou par favori, même parmi des milliers
-d’éléments, avec des mots combinés par « et » ou « ou » d'un simple clic. Un clic sur une
-collection ou un tag vous montre où se trouve l’élément. Un clic droit sur un élément trouve ceux qui
-lui ressemblent, et la page Doublons regroupe le même logo en deux formats ou deux tailles, et vous laisse ignorer ceux qui ne sont pas des doublons.
-
-</td>
-<td width="50%" valign="top">
-
-### Réutiliser
-Glissez un élément vers n'importe quelle application, ouvrez-le avec une autre, copiez-le
-dans le presse-papiers ou exportez-le dans un dossier, tel quel ou converti en PNG, JPEG,
-WebP, AVIF ou ICO.
-
-### Fonds d'écran
-Cadrez n'importe quelle image sur une copie virtuelle de votre écran, sous les barres de votre
-bureau, comblez le vide avec une couleur, un dégradé, un flou ou une mosaïque, puis appliquez-la :
-votre bureau montre exactement ce que vous avez cadré. Les filtres par orientation et par taille
-d'écran trouvent les images adaptées.
+**Retrouver**<br>Recherche et filtres instantanés, même parmi des milliers.
 
 </td>
 </tr>
 <tr>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Admirer
-Grille de vignettes à taille réglable, animations (GIF, PNG, WebP) au survol, et aperçu détaillé
-avec zoom, panneau de détails et bande de vignettes d'une simple pression sur <kbd>Espace</kbd>.
+**Réutiliser**<br>Glisser, copier, exporter, ou en faire un fond d'écran.
 
 </td>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Se rassurer
-Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattrape toujours.
+**Annoter**<br>Flèches, texte et flou ; l'original n'est jamais touché.
 
 </td>
-</tr>
-<tr>
-<td colspan="2" valign="top">
+<td width="33%" valign="top">
 
-### Capturer et annoter
-Faites une capture d'écran, collez une image ou ouvrez n'importe quelle image fixe de votre
-bibliothèque, puis annotez-la dans un éditeur intégré à votre bibliothèque : formes (trait continu, en tirets ou pointillé, aspect esquissé en option), flèches
-courbes, textes, étapes numérotées, projecteur, et flou ou pixelisation pour cacher ce qui est
-privé. L'image elle-même n'est jamais modifiée : les annotations sont conservées avec elle et
-peuvent être rouvertes et modifiées plus tard ; dans l'aperçu détaillé, un bouton maintenu
-montre l'original tant que vous appuyez. Copier, glisser ou exporter une image annotée donne
-un PNG aplati, et l'export de toute la bibliothèque donne chaque original plus une copie aplatie de
-chaque image annotée.
+**Admirer**<br>Aperçu avec zoom, animations au survol, corbeille et annulation.
 
 </td>
 </tr>
 </table>
 
+<p align="center"><b><a href="help/fr/README.md">Lire le guide d'utilisation →</a></b><br>Tout ce que Pigoune sait faire, pas à pas.</p>
+
 ## Principes
 
-- **Vos originaux ne sont jamais modifiés** : Pigoune travaille sur ses propres copies.
-- **100 % local** : pas de compte, pas de cloud, pas de télémétrie.
-- **Une bibliothèque portable** : un simple dossier que vous placez où vous voulez, et que vous
-  pouvez emporter sur un autre ordinateur.
-- **Pensé pour GNOME** : une application native et soignée, en mode clair comme sombre,
-  utilisable au clavier et avec un lecteur d'écran, qui s'adapte aux petites fenêtres.
+**Originaux jamais modifiés** · **100 % local, sans compte** · **Bibliothèques portables** · **Pensé pour GNOME**
 
 ## Installation
 
 ### 1. Préparer Flatpak
 
-Pigoune est distribué au format Flatpak. Fedora, Linux Mint, Pop!_OS et beaucoup d'autres
-distributions l'intègrent déjà. Sur Ubuntu et quelques autres, installez-le d'abord en suivant le
-[guide officiel pour votre distribution](https://flathub.org/setup), puis redémarrez votre
-session.
+Fedora, Linux Mint, Pop!_OS et beaucoup d'autres distributions l'intègrent déjà. Sur Ubuntu et
+quelques autres, suivez d'abord le [guide officiel pour votre distribution](https://flathub.org/setup),
+puis redémarrez votre session.
 
 ### 2. Installer Pigoune
 
-Ouvrez [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) avec Logiciels, qui installe Pigoune depuis son propre
-dépôt, ou lancez cette commande :
+Ouvrez [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) avec Logiciels,
+ou lancez cette commande :
 
 ```sh
 flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 ```
-
-L'environnement GNOME dont Pigoune a besoin est téléchargé automatiquement depuis Flathub.
 
 ### 3. Rester à jour
 
-Pigoune se met à jour comme vos autres applications : Logiciels propose chaque nouvelle
-version, et `flatpak update` l'installe aussi. Si Pigoune reste ouvert, une bannière en haut de
-la fenêtre vous prévient aussi dans la demi-heure et propose d'installer la nouvelle version,
-puis de redémarrer.
-Chaque mise à jour est signée : seules les versions officielles sont acceptées.
+Pigoune se met à jour comme vos autres applications, et chaque mise à jour est signée. Le fichier
+`.flatpak` de chaque version est aussi joint à sa
+[version sur GitHub](https://github.com/Gor3pig/Pigoune/releases), et vous pouvez compiler Pigoune
+vous-même en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Si vous avez installé Pigoune 1.5 ou plus ancien à partir d'un fichier `.flatpak` téléchargé,
-il ne se met pas à jour tout seul. Passez une fois aux mises à jour automatiques avec ces deux
-commandes. Vos bibliothèques et vos réglages sont conservés.
-
-```sh
-flatpak uninstall --user io.github.gor3pig.Pigoune
-flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
-```
-
-Le fichier `.flatpak` de chaque version reste joint à sa
-[version sur GitHub](https://github.com/Gor3pig/Pigoune/releases). Vous pouvez aussi compiler
-Pigoune vous-même en suivant [CONTRIBUTING.md](CONTRIBUTING.md).
+Pigoune fonctionne sous toute distribution Linux qui accepte Flatpak, sur un PC 64 bits Intel ou
+AMD. Il n'existe pas de version pour Windows, macOS ni pour les appareils ARM.
 
 ## Guide d'utilisation
 
