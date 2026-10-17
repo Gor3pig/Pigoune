@@ -57,9 +57,7 @@ template $PigouneEditor: Adw.Bin {
         }
 
         [top]
-        Adw.Banner mask_banner {
-          title: _("A mask is hidden, so the image would show what it covers");
-        }
+        Adw.Banner mask_banner {}
 
         content: Overlay canvas_overlay {
           child: $PigouneZoomView zoom_view {};

@@ -133,6 +133,8 @@ mod wallpaper_stage;
 mod wallpaper_swatches;
 mod whats_new;
 mod window;
+#[cfg(test)]
+mod wording_tests;
 mod zoom_math;
 mod zoom_view;
 

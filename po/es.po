@@ -1618,10 +1618,6 @@ msgstr "Opacidad"
 msgid "Thickness"
 msgstr "Grosor"
 
-#: crates/pigoune-app/src/editor_options.rs:47
-msgid "Line Style"
-msgstr "Estilo de línea"
-
 #: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
 msgstr "Curvatura"
@@ -8469,29 +8465,8 @@ msgstr "Ocultar"
 msgid "Unlock"
 msgstr "Desbloquear"
 
-msgid "A mask is hidden, so the image would show what it covers"
-msgstr "Un enmascaramiento está oculto: la imagen mostraría lo que cubre"
-
-msgid "“{name}” is hidden: the image will show what it covers."
-msgstr "«{name}» está oculto: la imagen mostrará lo que cubre."
-
-msgid "{count} masks are hidden: the image will show what they cover."
-msgstr "{count} enmascaramientos están ocultos: la imagen mostrará lo que cubren."
-
-msgid "A Mask Is Hidden"
-msgstr "Un enmascaramiento está oculto"
-
-msgid "Continue _Anyway"
-msgstr "Continuar de t_odos modos"
-
-msgid "_Show the Masks"
-msgstr "_Mostrar los enmascaramientos"
-
 msgid "Lock"
 msgstr "Bloquear"
-
-msgid "The annotated image could not be rendered"
-msgstr "No se pudo generar la imagen anotada"
 
 msgid "Animated images cannot be annotated yet"
 msgstr "Las imágenes animadas aún no se pueden anotar"
@@ -8514,17 +8489,8 @@ msgstr "(anotada)"
 msgid "Export the Original Images Too?"
 msgstr "¿Exportar también las imágenes originales?"
 
-msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
-msgstr "La exportación contiene todas las imágenes originales, que pueden mostrar aún lo que ocultan las anotaciones, y una copia aplanada de cada imagen anotada."
-
 msgid "_Discard and Capture"
 msgstr "_Descartar y capturar"
-
-msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
-msgstr "Muestre los enmascaramientos ocultos de «{name}» antes de arrastrarla fuera de Pigoune"
-
-msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
-msgstr "Muestre los enmascaramientos ocultos de {count} imágenes antes de arrastrarlas fuera de Pigoune"
 
 msgid "The annotated image is still being prepared. Try dragging it again in a moment"
 msgstr "La imagen anotada aún se está preparando. Vuelva a intentar arrastrarla en un momento"
@@ -8534,9 +8500,6 @@ msgstr "no se pudo crear su versión anotada"
 
 msgid "Export Incomplete"
 msgstr "Exportación incompleta"
-
-msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
-msgstr "La exportación es parcial. Se exportaron {exported} archivos a «{folder}», pero no se pudieron crear {count}:\n\n{list}"
 
 msgid "Annotate the Selected Image"
 msgstr "Anotar la imagen seleccionada"
@@ -8555,3 +8518,75 @@ msgstr "Esbozado"
 
 msgid "Very Sketchy"
 msgstr "Muy esbozado"
+
+msgid "Some Information May Be Visible"
+msgstr "Es posible que algunos datos sean visibles"
+
+msgid "Some information may be visible."
+msgstr "Es posible que algunos datos sean visibles."
+
+msgid "A blur or pixelation effect is hidden."
+msgstr "Un efecto de desenfoque o pixelado está oculto."
+
+msgid "{count} blur or pixelation effects are hidden."
+msgstr "{count} efectos de desenfoque o pixelado están ocultos."
+
+msgid "A blur or pixelation effect is currently hidden."
+msgstr "Un efecto de desenfoque o pixelado está oculto en este momento."
+
+msgid "{count} blur or pixelation effects are currently hidden."
+msgstr "{count} efectos de desenfoque o pixelado están ocultos en este momento."
+
+msgid "{count} images contain hidden blur or pixelation effects."
+msgstr "{count} imágenes contienen efectos de desenfoque o pixelado ocultos."
+
+msgid "The copied image could reveal information you meant to hide."
+msgstr "La imagen copiada podría revelar información que usted quería ocultar."
+
+msgid "The copied images could reveal information you meant to hide."
+msgstr "Las imágenes copiadas podrían revelar información que usted quería ocultar."
+
+msgid "The exported image could reveal information you meant to hide."
+msgstr "La imagen exportada podría revelar información que usted quería ocultar."
+
+msgid "The exported images could reveal information you meant to hide."
+msgstr "Las imágenes exportadas podrían revelar información que usted quería ocultar."
+
+msgid "The opened image could reveal information you meant to hide."
+msgstr "La imagen abierta podría revelar información que usted quería ocultar."
+
+msgid "The opened images could reveal information you meant to hide."
+msgstr "Las imágenes abiertas podrían revelar información que usted quería ocultar."
+
+msgid "_Copy Anyway"
+msgstr "_Copiar de todos modos"
+
+msgid "_Export Anyway"
+msgstr "_Exportar de todos modos"
+
+msgid "_Open Anyway"
+msgstr "_Abrir de todos modos"
+
+msgid "_Show Hidden Effects"
+msgstr "_Mostrar los efectos ocultos"
+
+msgid "To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects."
+msgstr "Para arrastrar «{name}» fuera de Pigoune, muestre primero los efectos de desenfoque o pixelado ocultos."
+
+msgid "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects."
+msgstr "Para arrastrar {count} imágenes fuera de Pigoune, muestre primero sus efectos de desenfoque o pixelado ocultos."
+
+msgid "The annotated image could not be created"
+msgstr "No se pudo generar la imagen anotada"
+
+msgid "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr "La exportación está incompleta. Se exportaron {exported} archivos a «{folder}», pero no se pudieron crear {count}:\n\n{list}"
+
+msgid "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included."
+msgstr "La exportación contiene todas las imágenes originales, que pueden mostrar aún lo que ocultan las anotaciones, y una copia de cada imagen anotada con las anotaciones incluidas."
+
+msgid "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and give them a precise, sketchy or very sketchy hand-drawn look."
+msgstr ""
+
+msgid "“{name}” contains hidden blur or pixelation effects."
+msgstr "«{name}» contiene efectos de desenfoque o pixelado ocultos."

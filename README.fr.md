@@ -103,7 +103,7 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 
 ### Capturer et annoter
 Faites une capture d'écran, collez une image ou ouvrez n'importe quelle image fixe de votre
-bibliothèque, puis annotez-la dans un éditeur intégré à votre bibliothèque : formes, flèches
+bibliothèque, puis annotez-la dans un éditeur intégré à votre bibliothèque : formes (trait continu, en tirets ou pointillé, aspect esquissé en option), flèches
 courbes, textes, étapes numérotées, projecteur, et flou ou pixelisation pour cacher ce qui est
 privé. L'image elle-même n'est jamais modifiée : les annotations sont conservées avec elle et
 peuvent être rouvertes et modifiées plus tard. Copier, glisser ou exporter une image annotée donne

@@ -35,11 +35,11 @@ pub fn refusal_text(refusal: &Refusal) -> String {
     match refusal {
         Refusal::HiddenMasks(names) => match names.as_slice() {
             [name] => {
-                gettext("Show the hidden masks of “{name}” before dragging it out of Pigoune")
+                gettext("To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects.")
                     .replace("{name}", name)
             }
             _ => gettext(
-                "Show the hidden masks of {count} images before dragging them out of Pigoune",
+                "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects.",
             )
             .replace("{count}", &names.len().to_string()),
         },

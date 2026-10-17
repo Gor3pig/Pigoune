@@ -1618,10 +1618,6 @@ msgstr "Deckkraft"
 msgid "Thickness"
 msgstr "Stärke"
 
-#: crates/pigoune-app/src/editor_options.rs:47
-msgid "Line Style"
-msgstr "Linienstil"
-
 #: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
 msgstr "Krümmung"
@@ -8527,32 +8523,11 @@ msgstr "Ausblenden"
 msgid "Unlock"
 msgstr "Entsperren"
 
-msgid "A mask is hidden, so the image would show what it covers"
-msgstr "Eine Maskierung ist ausgeblendet: Das Bild würde zeigen, was sie verdeckt"
-
-msgid "“{name}” is hidden: the image will show what it covers."
-msgstr "„{name}“ ist ausgeblendet: Das Bild zeigt, was es verdeckt."
-
-msgid "{count} masks are hidden: the image will show what they cover."
-msgstr "{count} Maskierungen sind ausgeblendet: Das Bild zeigt, was sie verdecken."
-
-msgid "A Mask Is Hidden"
-msgstr "Eine Maskierung ist ausgeblendet"
-
-msgid "Continue _Anyway"
-msgstr "Trotzdem _fortfahren"
-
-msgid "_Show the Masks"
-msgstr "Maskierungen _einblenden"
-
 msgid "Lock"
 msgstr "Sperren"
 
-msgid "The annotated image could not be rendered"
-msgstr "Das kommentierte Bild konnte nicht erzeugt werden"
-
 msgid "Animated images cannot be annotated yet"
-msgstr "Animierte Bilder können noch nicht kommentiert werden"
+msgstr "Animierte Bilder können noch nicht mit Anmerkungen versehen werden"
 
 msgid "The image or its annotations could not be read. They may come from a newer version of Pigoune."
 msgstr "Das Bild oder seine Anmerkungen konnten nicht gelesen werden. Sie stammen möglicherweise aus einer neueren Version von Pigoune."
@@ -8561,43 +8536,31 @@ msgid "Take a Screenshot?"
 msgstr "Bildschirmfoto aufnehmen?"
 
 msgid "The image being annotated is not saved. Save it first, or let the screenshot replace it."
-msgstr "Das Bild, das gerade kommentiert wird, ist nicht gespeichert. Speichern Sie es zuerst oder lassen Sie es vom Bildschirmfoto ersetzen."
+msgstr "Das Bild, an dem Sie gerade Anmerkungen anbringen, ist nicht gespeichert. Speichern Sie es zuerst oder lassen Sie es vom Bildschirmfoto ersetzen."
 
 msgid "_Save and Capture"
 msgstr "_Speichern und aufnehmen"
 
 msgid "(annotated)"
-msgstr "(kommentiert)"
+msgstr "(mit Anmerkungen)"
 
 msgid "Export the Original Images Too?"
 msgstr "Auch die Originalbilder exportieren?"
 
-msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
-msgstr "Der Export enthält jedes Originalbild, das möglicherweise noch zeigt, was die Anmerkungen verdecken, und eine zusammengeführte Kopie jedes kommentierten Bilds."
-
 msgid "_Discard and Capture"
 msgstr "_Verwerfen und aufnehmen"
 
-msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
-msgstr "Blenden Sie die ausgeblendeten Maskierungen von „{name}“ ein, bevor Sie das Bild aus Pigoune ziehen"
-
-msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
-msgstr "Blenden Sie die ausgeblendeten Maskierungen von {count} Bildern ein, bevor Sie sie aus Pigoune ziehen"
-
 msgid "The annotated image is still being prepared. Try dragging it again in a moment"
-msgstr "Das kommentierte Bild wird noch vorbereitet. Versuchen Sie es in einem Moment erneut"
+msgstr "Das Bild mit Anmerkungen wird noch vorbereitet. Versuchen Sie es in einem Moment erneut"
 
 msgid "its annotated version could not be created"
-msgstr "die kommentierte Version konnte nicht erstellt werden"
+msgstr "die Version mit Anmerkungen konnte nicht erstellt werden"
 
 msgid "Export Incomplete"
 msgstr "Export unvollständig"
 
-msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
-msgstr "Der Export ist unvollständig. {exported} Dateien wurden nach „{folder}“ exportiert, aber {count} konnten nicht erstellt werden:\n\n{list}"
-
 msgid "Annotate the Selected Image"
-msgstr "Das ausgewählte Bild kommentieren"
+msgstr "Das ausgewählte Bild mit Anmerkungen versehen"
 
 msgid "Line Type"
 msgstr "Linientyp"
@@ -8613,3 +8576,75 @@ msgstr "Skizzenhaft"
 
 msgid "Very Sketchy"
 msgstr "Sehr skizzenhaft"
+
+msgid "Some Information May Be Visible"
+msgstr "Einige Informationen könnten sichtbar sein"
+
+msgid "Some information may be visible."
+msgstr "Einige Informationen könnten sichtbar sein."
+
+msgid "A blur or pixelation effect is hidden."
+msgstr "Ein Weichzeichner- oder Verpixelungseffekt ist ausgeblendet."
+
+msgid "{count} blur or pixelation effects are hidden."
+msgstr "{count} Weichzeichner- oder Verpixelungseffekte sind ausgeblendet."
+
+msgid "A blur or pixelation effect is currently hidden."
+msgstr "Ein Weichzeichner- oder Verpixelungseffekt ist derzeit ausgeblendet."
+
+msgid "{count} blur or pixelation effects are currently hidden."
+msgstr "{count} Weichzeichner- oder Verpixelungseffekte sind derzeit ausgeblendet."
+
+msgid "{count} images contain hidden blur or pixelation effects."
+msgstr "{count} Bilder enthalten ausgeblendete Weichzeichner- oder Verpixelungseffekte."
+
+msgid "The copied image could reveal information you meant to hide."
+msgstr "Das kopierte Bild könnte Informationen preisgeben, die Sie verbergen wollten."
+
+msgid "The copied images could reveal information you meant to hide."
+msgstr "Die kopierten Bilder könnten Informationen preisgeben, die Sie verbergen wollten."
+
+msgid "The exported image could reveal information you meant to hide."
+msgstr "Das exportierte Bild könnte Informationen preisgeben, die Sie verbergen wollten."
+
+msgid "The exported images could reveal information you meant to hide."
+msgstr "Die exportierten Bilder könnten Informationen preisgeben, die Sie verbergen wollten."
+
+msgid "The opened image could reveal information you meant to hide."
+msgstr "Das geöffnete Bild könnte Informationen preisgeben, die Sie verbergen wollten."
+
+msgid "The opened images could reveal information you meant to hide."
+msgstr "Die geöffneten Bilder könnten Informationen preisgeben, die Sie verbergen wollten."
+
+msgid "_Copy Anyway"
+msgstr "Trotzdem _kopieren"
+
+msgid "_Export Anyway"
+msgstr "Trotzdem _exportieren"
+
+msgid "_Open Anyway"
+msgstr "Trotzdem _öffnen"
+
+msgid "_Show Hidden Effects"
+msgstr "Ausgeblendete Effekte _anzeigen"
+
+msgid "To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects."
+msgstr "Um „{name}“ aus Pigoune herauszuziehen, blenden Sie zuerst die ausgeblendeten Weichzeichner- oder Verpixelungseffekte ein."
+
+msgid "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects."
+msgstr "Um {count} Bilder aus Pigoune herauszuziehen, blenden Sie zuerst deren ausgeblendete Weichzeichner- oder Verpixelungseffekte ein."
+
+msgid "The annotated image could not be created"
+msgstr "Das Bild mit Anmerkungen konnte nicht erstellt werden"
+
+msgid "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr "Der Export ist unvollständig. {exported} Dateien wurden nach „{folder}“ exportiert, aber {count} konnten nicht erstellt werden:\n\n{list}"
+
+msgid "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included."
+msgstr "Der Export enthält jedes Originalbild, das möglicherweise noch zeigt, was die Anmerkungen verdecken, und eine Kopie jedes Bilds mit eingearbeiteten Anmerkungen."
+
+msgid "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and give them a precise, sketchy or very sketchy hand-drawn look."
+msgstr ""
+
+msgid "“{name}” contains hidden blur or pixelation effects."
+msgstr "„{name}“ enthält ausgeblendete Weichzeichner- oder Verpixelungseffekte."
