@@ -8514,3 +8514,42 @@ msgstr "Eliminar"
 #: crates/pigoune-app/src/editor.rs
 msgid "Drag to Reorder"
 msgstr "Arrastrar para reordenar"
+
+msgid "Remove Marker"
+msgstr "Quitar la marca"
+
+msgid "Show"
+msgstr "Mostrar"
+
+msgid "Hide"
+msgstr "Ocultar"
+
+msgid "Unlock"
+msgstr "Desbloquear"
+
+msgid "Applied Masks"
+msgstr "Enmascaramientos aplicados"
+
+msgid "Masking applied"
+msgstr "Enmascaramiento aplicado"
+
+msgid "A mask is hidden, so the image would show what it covers"
+msgstr "Un enmascaramiento está oculto: la imagen mostraría lo que cubre"
+
+msgid "“{name}” is hidden: the image will show what it covers."
+msgstr "«{name}» está oculto: la imagen mostrará lo que cubre."
+
+msgid "{count} masks are hidden: the image will show what they cover."
+msgstr "{count} enmascaramientos están ocultos: la imagen mostrará lo que cubren."
+
+msgid "A Mask Is Hidden"
+msgstr "Un enmascaramiento está oculto"
+
+msgid "Continue _Anyway"
+msgstr "Continuar de t_odos modos"
+
+msgid "_Show the Masks"
+msgstr "_Mostrar los enmascaramientos"
+
+msgid "Lock"
+msgstr "Bloquear"

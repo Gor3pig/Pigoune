@@ -123,7 +123,8 @@ impl Rig {
 
     fn baked(&self, document: &AnnotationDocument) -> Picture {
         self.cache.borrow_mut().clear();
-        let texture = mask_lock::bake(&self.backdrop(), document, &self.context)
+        let ids: Vec<u32> = document.masks().iter().map(|(id, _)| *id).collect();
+        let texture = mask_lock::bake(&self.backdrop(), document, &ids, &self.context)
             .expect("the masks are baked");
         picture(&texture)
     }
@@ -727,6 +728,83 @@ fn locking_bakes_the_masks_into_the_original_only(rig: &Rig) {
     );
 }
 
+fn hidden_and_sealed_objects_are_not_drawn_and_locked_ones_are(rig: &Rig) {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let red = [
+        ("fill", Value::from(true)),
+        ("fill_opacity", number_to_value(1.0)),
+        ("color", paint(224, 27, 36)),
+    ];
+    let id = session.add(boxed("rectangle", 20.0, 20.0, 80.0, 60.0, &red));
+    let plain = rig.export(&AnnotationDocument::default());
+    let shown = rig.export(session.document());
+    assert!(near(shown.at(60, 50), RED, 2), "the object is drawn");
+
+    session.set_locked(id, true);
+    assert_eq!(
+        rig.export(session.document()).data,
+        shown.data,
+        "a locked object is drawn as usual"
+    );
+    session.set_hidden(id, true);
+    assert_eq!(
+        rig.export(session.document()).data,
+        plain.data,
+        "a hidden object is absent from the export"
+    );
+    assert_eq!(
+        rig.preview(session.document()).data,
+        rig.preview(&AnnotationDocument::default()).data,
+        "a hidden object is absent from the preview"
+    );
+    session.undo();
+    assert_eq!(rig.export(session.document()).data, shown.data);
+
+    let mut sealed = document(vec![boxed("blur", 20.0, 20.0, 60.0, 60.0, &[])]);
+    sealed.objects[0].state.sealed = true;
+    assert_eq!(
+        rig.export(&sealed).data,
+        plain.data,
+        "a sealed marker is never drawn again"
+    );
+}
+
+fn baking_chains_overlapping_masks_like_the_screen_does(rig: &Rig) {
+    let blur = |x: f32| {
+        boxed(
+            "blur",
+            x,
+            20.0,
+            60.0,
+            60.0,
+            &[("radius", number_to_value(6.0))],
+        )
+    };
+    let both = document(vec![blur(20.0), blur(50.0)]);
+    let baked = rig.baked(&both);
+    assert_eq!(
+        baked.data,
+        rig.export(&both).data,
+        "the second mask blurs what the first one already blurred"
+    );
+    let alone = rig.baked(&document(vec![blur(50.0)]));
+    assert_ne!(
+        baked.data, alone.data,
+        "the overlap is blurred twice, not once"
+    );
+
+    let mut with_hidden = document(vec![
+        blur(20.0),
+        boxed("pixelate", 100.0, 20.0, 50.0, 50.0, &[]),
+    ]);
+    with_hidden.objects[1].state.hidden = true;
+    assert_eq!(
+        rig.baked(&with_hidden).data,
+        rig.baked(&document(vec![blur(20.0)])).data,
+        "a hidden mask is not baked"
+    );
+}
+
 fn the_color_sampler_reads_the_pixel_it_is_given(rig: &Rig) {
     for (x, y) in [(10, 10), (199, 0), (57, 91)] {
         let color = color_sampler::pixel_color(
@@ -804,6 +882,8 @@ fn rendering_suite() {
     an_annotation_after_a_mask_stays_sharp(&rig);
     the_export_matches_the_preview(&rig);
     locking_bakes_the_masks_into_the_original_only(&rig);
+    hidden_and_sealed_objects_are_not_drawn_and_locked_ones_are(&rig);
+    baking_chains_overlapping_masks_like_the_screen_does(&rig);
     the_color_sampler_reads_the_pixel_it_is_given(&rig);
     the_png_export_carries_pixels_and_nothing_else(&rig);
 }

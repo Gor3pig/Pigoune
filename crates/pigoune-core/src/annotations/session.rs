@@ -4,6 +4,7 @@ use std::rc::Rc;
 use serde_json::Value;
 
 use super::geometry::{self, HitMode};
+use super::sealing::{self, OverlapChoice, SealPlan, SealRecord};
 use super::{
     AnnotationDocument, AnnotationObject, Crop, Geometry, ObjectContent, ObjectState, Point, Rect,
     Shape,
@@ -123,6 +124,16 @@ impl EditSession {
     #[must_use]
     pub fn selected(&self) -> Option<u32> {
         self.selected
+    }
+
+    #[must_use]
+    pub fn selected_state(&self) -> Option<&ObjectState> {
+        let id = self.selected?;
+        self.document
+            .objects
+            .iter()
+            .find(|object| object.id == id)
+            .map(|object| &object.state)
     }
 
     #[must_use]
@@ -299,14 +310,48 @@ impl EditSession {
             .position(|object| object.id == id)
     }
 
+    #[must_use]
+    pub fn seal_plan(&self) -> SealPlan {
+        sealing::plan(&self.document, |object| {
+            object.shape().and_then(|shape| self.bounds_of(shape))
+        })
+    }
+
+    #[must_use]
+    pub fn sealed_document(
+        &self,
+        plan: &SealPlan,
+        choice: OverlapChoice,
+        record: SealRecord,
+    ) -> AnnotationDocument {
+        sealing::apply(&self.document, plan, choice, record)
+    }
+
+    pub fn adopt_sealed(&mut self, document: AnnotationDocument) {
+        self.document = document;
+        self.undo.clear();
+        self.redo.clear();
+        self.selected = None;
+        self.gesture = None;
+        self.nudging = None;
+        self.option_series = None;
+        self.saved_at = Some(0);
+    }
+
+    #[must_use]
+    pub fn sealed_floor(&self) -> usize {
+        self.document.sealed_count()
+    }
+
     fn target_position(&self, id: u32, movement: LayerMove) -> Option<usize> {
         let position = self.position_of(id)?;
         let last = self.document.objects.len().checked_sub(1)?;
+        let floor = self.sealed_floor();
         let target = match movement {
             LayerMove::Front => last,
             LayerMove::Forward => (position + 1).min(last),
-            LayerMove::Backward => position.saturating_sub(1),
-            LayerMove::Back => 0,
+            LayerMove::Backward => position.saturating_sub(1).max(floor),
+            LayerMove::Back => floor,
         };
         (target != position).then_some(target)
     }
@@ -353,7 +398,7 @@ impl EditSession {
             target_position
         };
         let to = if from < slot { slot - 1 } else { slot };
-        if to == from {
+        if to == from || to < self.sealed_floor() {
             return false;
         }
         self.relocate(from, to);
@@ -435,6 +480,21 @@ impl EditSession {
             return false;
         }
         let Some(index) = self.document.objects.iter().position(|o| o.id == id) else {
+            return false;
+        };
+        let object = self.document.objects.remove(index);
+        if self.selected == Some(id) {
+            self.selected = None;
+        }
+        self.record(Edit::Removed { index, object });
+        true
+    }
+
+    pub fn remove_marker(&mut self, id: u32) -> bool {
+        if self.gesture.is_some() || !self.document.is_sealed_marker(id) {
+            return false;
+        }
+        let Some(index) = self.position_of(id) else {
             return false;
         };
         let object = self.document.objects.remove(index);

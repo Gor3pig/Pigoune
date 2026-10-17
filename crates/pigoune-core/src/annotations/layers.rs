@@ -9,6 +9,9 @@ pub struct LayerEntry {
     pub name: Option<String>,
     pub ordinal: u32,
     pub summary: String,
+    pub hidden: bool,
+    pub locked: bool,
+    pub sealed: bool,
 }
 
 #[must_use]
@@ -25,6 +28,9 @@ pub fn layer_entries(document: &AnnotationDocument) -> Vec<LayerEntry> {
                 name: object.state.name.clone(),
                 ordinal: document.ordinal(object.id).unwrap_or(1),
                 summary: summary_of(shape.kind.as_str(), shape.text("content")),
+                hidden: object.state.hidden,
+                locked: object.state.locked,
+                sealed: object.state.sealed,
             })
         })
         .collect()
