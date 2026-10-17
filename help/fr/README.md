@@ -5,6 +5,8 @@
 Pigoune range tous vos éléments graphiques (icônes, logos, illustrations) dans une seule
 bibliothèque bien organisée. Ce guide présente tout ce qu'il sait faire.
 
+**Sommaire**
+
 - [Premiers pas](#premiers-pas)
 - [Organiser](#organiser)
 - [Retrouver un élément](#retrouver-un-élément)
@@ -21,152 +23,211 @@ bibliothèque bien organisée. Ce guide présente tout ce qu'il sait faire.
 
 ## Premiers pas
 
+> [!NOTE]
+> Une **bibliothèque** est un dossier dans lequel Pigoune garde une copie de vos éléments. Créez-en une, puis importez-y vos fichiers.
+
 ### Créer une bibliothèque
 
-Une bibliothèque est un dossier dans lequel Pigoune garde une copie de vos éléments. Sur
-l'écran d'accueil, choisissez **Nouvelle bibliothèque…**, donnez-lui un nom et choisissez où
-l'enregistrer. Vous pouvez en créer autant que vous voulez, par exemple une par projet ou par
-client.
+Vous pouvez en créer autant que vous voulez, par exemple une par projet ou par client.
 
-Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque…**. Pigoune
-rouvre la dernière bibliothèque utilisée à chaque démarrage. Quand une bibliothèque est
-ouverte, le menu principal propose **Nouvelle bibliothèque…** et **Ouvrir une bibliothèque…**
-pour passer à une autre, et **Bibliothèques récentes** liste les dernières bibliothèques
-ouvertes, cinq par défaut. La page d'accueil les affiche aussi, pour en rouvrir une d'un
-clic. Sur la page d'accueil, retirez-en une de la liste avec sa croix, ou choisissez **Effacer
-la liste**, là ou dans le menu : seule la liste change, les bibliothèques elles-mêmes sont
-conservées.
+1. Sur l'écran d'accueil, choisissez **Nouvelle bibliothèque…**.
+2. Donnez-lui un nom.
+3. Choisissez où l'enregistrer.
 
-**Fermer la bibliothèque**, dans le menu principal, ramène à la page d'accueil. Au prochain
-lancement, Pigoune s'ouvre aussi sur la page d'accueil.
+Pour ouvrir une bibliothèque existante, choisissez **Ouvrir une bibliothèque…**.
+
+### Passer d'une bibliothèque à l'autre
+
+Pigoune rouvre la dernière bibliothèque utilisée à chaque démarrage.
+
+Quand une bibliothèque est ouverte, le menu principal permet de :
+
+- choisir **Nouvelle bibliothèque…** ou **Ouvrir une bibliothèque…** pour passer à une autre ;
+- choisir **Fermer la bibliothèque** pour revenir à la page d'accueil, que Pigoune affiche aussi au prochain lancement.
+
+#### Bibliothèques récentes
+
+**Bibliothèques récentes**, dans le menu principal, liste les dernières bibliothèques ouvertes, cinq par défaut. La page d'accueil les affiche aussi, pour en rouvrir une d'un clic.
+
+Pour nettoyer la liste, retirez une bibliothèque avec sa croix sur la page d'accueil, ou choisissez **Effacer la liste**, là ou dans le menu. Seule la liste change : les bibliothèques elles-mêmes sont conservées.
 
 ### Importer des éléments
 
-Cliquez sur le bouton **+** en haut de la barre latérale, ou appuyez sur
-<kbd>Ctrl</kbd>+<kbd>I</kbd>, puis choisissez **Importer des fichiers…** ou **Importer un
-dossier…**. Vous pouvez aussi simplement glisser des fichiers ou des dossiers depuis Fichiers
-jusque dans la fenêtre de Pigoune. Autre possibilité : copiez des fichiers dans Fichiers (ou copiez
-une image, comme une capture d'écran ou une image d'une page web), puis appuyez sur
-<kbd>Ctrl</kbd>+<kbd>V</kbd> dans Pigoune. Une image collée s'appelle **Image collée** suivie de la
-date et de l'heure ; vous pouvez la renommer ensuite.
-Vous pouvez aussi glisser une image d'une page web sur la fenêtre, ou sur une collection de la
-barre latérale : Pigoune garde ce que le
-navigateur lui remet (le fichier d'origine avec Chrome ou Brave, une copie PNG de l'image avec
-Firefox) et la nomme d'après le nom de fichier que le navigateur propose. Si le glissement ne
-contient aucune image, un message le dit.
+Il y a quatre façons de faire entrer des éléments.
 
-- Les formats pris en charge sont SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF,
-  BMP et ICO. Les photos HEIC s’affichent quand le système sait les décoder, ce que fait le
-  paquet Flatpak ; un fichier qui ne peut pas être affiché est refusé au lieu d’être importé.
-- Pigoune vérifie chaque image avant de l'importer : un fichier endommagé est signalé au lieu
-  d'être ajouté.
-- Les doublons sont reconnus : un fichier déjà présent n'est jamais copié deux fois. S'il est à la corbeille, l'importer le sort de la corbeille ;
-  si vous importez dans une collection, il n'appartient alors qu'à cette collection.
-- Quand vous importez un dossier, ses sous-dossiers deviennent des collections.
-- Vos fichiers d'origine ne sont jamais modifiés ni déplacés. Vous pouvez les supprimer une
-  fois importés.
+| Façon | Comment |
+|---|---|
+| **Bouton d'import** | Cliquez sur **+** en haut de la barre latérale, ou appuyez sur <kbd>Ctrl</kbd>+<kbd>I</kbd>, puis choisissez **Importer des fichiers…** ou **Importer un dossier…**. |
+| **Glisser-déposer** | Glissez des fichiers ou des dossiers depuis Fichiers sur la fenêtre, ou sur **Tout**, **Non classés** ou une collection de la barre latérale. |
+| **Copier-coller** | Copiez des fichiers dans Fichiers, ou une image (une capture d'écran, une image d'une page web), puis appuyez sur <kbd>Ctrl</kbd>+<kbd>V</kbd>. |
+| **Depuis une page web** | Glissez une image d'une page web sur la fenêtre, ou sur une collection de la barre latérale. |
 
-Les fichiers sont importés dans la vue que vous regardez : **Tout** et **Non classés** les
-gardent sans collection, et une collection sélectionnée les reçoit. Les favoris, les tags, les
-collections dynamiques et la corbeille ne font que montrer des éléments, l'import y est donc
-désactivé. Vous pouvez aussi déposer des fichiers directement sur **Tout**, **Non classés** ou
-une collection de la barre latérale.
+Une image collée s'appelle **Image collée** suivie de la date et de l'heure ; vous pouvez la renommer ensuite.
+
+<details>
+<summary>Ce que remet le navigateur</summary>
+
+Pigoune garde ce que le navigateur lui remet : le fichier d'origine avec Chrome ou Brave, une copie PNG de l'image avec Firefox. Il nomme l'élément d'après le nom de fichier que le navigateur propose. Si le glissement ne contient aucune image, un message le dit.
+
+</details>
+
+#### Ce que Pigoune accepte
+
+| Sujet | Règle |
+|---|---|
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP et ICO. Les photos HEIC s'affichent quand le système sait les décoder, ce que fait le paquet Flatpak. |
+| **Contrôles** | Chaque image est vérifiée avant d'être importée. Un fichier endommagé, ou qui ne peut pas être affiché, est signalé et refusé. |
+| **Doublons** | Un fichier déjà présent n'est jamais copié deux fois. S'il est à la corbeille, l'importer le sort de la corbeille. |
+| **Dossiers** | Quand vous importez un dossier, ses sous-dossiers deviennent des collections. |
+
+Si vous importez un doublon dans une collection, l'élément n'appartient alors qu'à cette collection.
+
+> [!TIP]
+> Vos fichiers d'origine ne sont jamais modifiés ni déplacés. Vous pouvez les supprimer une fois importés.
+
+#### Où vont les fichiers
+
+Les fichiers sont importés dans la vue que vous regardez.
+
+| Vue | Ce qui se passe |
+|---|---|
+| **Tout** et **Non classés** | Les fichiers sont gardés sans collection. |
+| Une collection sélectionnée | La collection les reçoit. |
+| Favoris, tags, collections dynamiques, corbeille | Ils ne font que montrer des éléments : l'import y est désactivé. |
 
 ## Organiser
+
+Les collections, les tags et les favoris gardent votre bibliothèque bien rangée. Utilisez ceux qui correspondent à votre façon de penser.
 
 ### Les collections
 
 Les collections fonctionnent comme des dossiers et peuvent contenir d'autres collections.
-Créez-en une avec le bouton **+** à côté de **Collections**, dans la barre latérale. Un clic
-droit sur une collection permet d'y créer une sous-collection, de la renommer
-(<kbd>F2</kbd>), de la personnaliser, de la déplacer dans une autre collection ou au premier
-niveau avec **Déplacer vers…**, ou de la supprimer. Le menu est présenté de la même façon pour les
-tags.
 
-- **Personnalisez** une collection pour lui donner sa propre icône et sa propre couleur dans la
-  barre latérale : clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis
-  **Enregistrer**. **Par défaut** remet le dossier gris.
-- **Déplacez** des éléments dans une collection en les glissant dessus depuis la grille, ou,
-  quand vous êtes dans une collection, avec **Déplacer vers une collection…** dans le menu du
-  clic droit.
-- **Ajoutez-les** à une collection sans les retirer de leur place en maintenant
-  <kbd>Ctrl</kbd> pendant le glisser, ou avec **Ajouter à une collection…** dans le menu du
-  clic droit. Un élément peut appartenir à plusieurs collections. Le curseur indique ce que
-  vous faites : une flèche simple pour un déplacement, un **+** pour un ajout. Il change dès
-  que vous appuyez sur <kbd>Ctrl</kbd> ou le relâchez, et une collection ne s'illumine pas
-  quand vous y glissez des éléments qui en viennent déjà.
-- **Retirez-les** de la collection affichée avec **Retirer de la collection** dans le menu du
-  clic droit. Ils restent dans la bibliothèque et dans leurs autres collections.
-- **Réorganisez** les collections en les glissant dans la barre latérale, ou triez-les par nom
-  ou par date de création avec le bouton **⋯** à côté de **Collections**.
-- **Repliez** une section de la barre latérale (Collections, Collections dynamiques ou Tags)
-  d'un clic sur son titre, ou avec <kbd>Entrée</kbd> quand le titre a le focus du clavier.
-  Pigoune retient les sections repliées.
-- **Non classés** regroupe les éléments qui n'appartiennent à aucune collection.
+#### Créer et gérer
 
-Quand vous supprimez une collection, ses sous-collections le sont aussi, et les éléments qui
-n'appartenaient qu'à elles partent dans la corbeille. Ceux qui appartiennent aussi à une
-autre collection y restent.
+Créez une collection avec le bouton **+** à côté de **Collections**, dans la barre latérale.
+
+Faites ensuite un clic droit dessus pour y créer une sous-collection, la renommer (<kbd>F2</kbd>), la personnaliser, la déplacer avec **Déplacer vers…** (dans une autre collection ou au premier niveau) ou la supprimer. Le menu est présenté de la même façon pour les tags.
+
+| Pour… | Faites ceci |
+|---|---|
+| **Personnaliser** | Clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis **Enregistrer**. **Par défaut** remet le dossier gris. |
+| **Réorganiser** | Glissez les collections dans la barre latérale, ou triez-les par nom ou par date de création avec le bouton **⋯** à côté de **Collections**. |
+| **Replier** | Cliquez sur le titre d'une section de la barre latérale, ou appuyez sur <kbd>Entrée</kbd> quand il a le focus du clavier. Pigoune retient les sections repliées. |
+
+**Non classés** regroupe les éléments qui n'appartiennent à aucune collection.
+
+#### Mettre des éléments dans des collections
+
+| Pour… | Faites ceci |
+|---|---|
+| **Déplacer** des éléments dans une collection | Glissez-les dessus depuis la grille, ou, dans une collection, utilisez **Déplacer vers une collection…** dans le menu du clic droit. |
+| **Ajouter** des éléments sans les retirer de leur place | Maintenez <kbd>Ctrl</kbd> pendant le glisser, ou utilisez **Ajouter à une collection…** dans le menu du clic droit. |
+| **Retirer** des éléments de la collection affichée | Utilisez **Retirer de la collection** dans le menu du clic droit. |
+
+Un élément peut appartenir à plusieurs collections. Le retirer de l'une le garde dans la bibliothèque et dans ses autres collections.
+
+Pendant le glisser, le curseur indique ce que vous faites : une flèche simple pour un déplacement, un **+** pour un ajout. Il change dès que vous appuyez sur <kbd>Ctrl</kbd> ou le relâchez.
+
+> [!WARNING]
+> Quand vous supprimez une collection, ses sous-collections le sont aussi, et les éléments qui n'appartenaient qu'à elles partent dans la corbeille. Ceux qui appartiennent aussi à une autre collection y restent.
 
 ### Les tags
 
-Un tag est un seul mot de 20 caractères au plus : il décrit un élément en un mot-clé. Pour
-réunir plusieurs mots, utilisez un tiret (*flat-design*). Une espace ou une virgule termine le
-tag en cours de saisie, ce qui permet d'en saisir plusieurs à la fois. Ajoutez des tags depuis le
-panneau de détails avec le bouton **+** à côté des tags, avec **Ajouter un tag…** dans le menu du clic
-droit, ou glissez des éléments sur un tag de la barre latérale. Gardez-les une seconde au-dessus d'un
-tag qui a des sous-tags : ils s'ouvrent, et vous pouvez déposer sur l'un d'eux ; la barre
-latérale revient ensuite à sa place. La barre latérale montre les
-tags en pastilles avec leur nombre d’éléments : cliquez sur l'une d'elles pour voir tous ses
-éléments, ou faites un clic droit pour la renommer ou la supprimer. Au-delà de douze tags,
-**+ N autres** affiche la suite. Renommer un tag avec le nom d'un autre les fusionne.
+Un tag est un mot-clé qui décrit un élément. Les tags peuvent être imbriqués, comme *Sujet › Animaux › chèvre*.
 
-Les tags peuvent être imbriqués : *Sujet › Animaux › chèvre*. Tapez un chemin avec une barre
-oblique, par exemple `animaux/chèvre`, pour créer ou réutiliser chaque niveau ; taper `animaux/`
-propose ses sous-tags, et chaque suggestion montre ses parents. Un nom simple suivi de <kbd>Entrée</kbd> réutilise le tag de
-ce nom où qu'il soit ; si plusieurs tags le portent, choisissez le bon dans la liste. Chaque niveau est un seul mot de
-20 caractères au plus. Dans la barre latérale, la section Tags montre toujours ce que montre la grille : un
-clic sur le nom d'une pastille affiche ce tag dans la grille, avec les éléments de ses sous-tags, et ouvre
-ses sous-tags dans la barre latérale. Le chemin au-dessus des pastilles permet de remonter, et **Tags**
-revient au premier niveau et affiche de nouveau toute la bibliothèque. Choisir autre chose dans la
-barre latérale (Tout, une collection…) ramène la section Tags au premier niveau. La pastille de
-recherche et les messages nomment un tag avec son chemin complet, par exemple *subject › animals*. Si
-certains des éléments que vous aviez sélectionnés ne sont pas dans la nouvelle vue, un court message dit
-combien. Le même nom peut exister dans deux branches différentes, mais
-pas deux fois au même niveau. Faites un clic droit sur un tag pour **Nouveau sous-tag…**,
-**Déplacer vers…**, **Fusionner dans…** et **Supprimer…**, ou glissez une pastille sur un autre tag,
-sur un niveau du chemin ou sur **Tags** pour la déplacer. Supprimer un tag qui a des sous-tags
-permet de les supprimer aussi ou de les remonter d'un niveau, et chaque changement s'annule. Si vous supprimez le tag affiché, Pigoune affiche
-son parent, et l'annulation vous ramène sur le tag.
-Chercher le nom d'un parent trouve aussi les éléments de ses sous-tags. Une bibliothèque avec des
-tags imbriqués ne peut être ouverte que par Pigoune 2.5 ou plus récent ; vos tags actuels
-deviennent des tags de premier niveau, sans rien perdre.
+#### Écrire et ajouter des tags
+
+Un tag est un seul mot de 20 caractères au plus. Pour réunir plusieurs mots, utilisez un tiret (*flat-design*).
+
+Une espace ou une virgule termine le tag en cours de saisie, ce qui permet d'en saisir plusieurs à la fois.
+
+| Pour ajouter des tags… | Faites ceci |
+|---|---|
+| **Depuis le panneau de détails** | Cliquez sur le bouton **+** à côté des tags. |
+| **Depuis le menu** | Choisissez **Ajouter un tag…** dans le menu du clic droit. |
+| **En glissant** | Glissez des éléments sur un tag de la barre latérale. |
+
+Gardez les éléments glissés une seconde au-dessus d'un tag qui a des sous-tags : ils s'ouvrent, et vous pouvez déposer les éléments sur l'un d'eux. La barre latérale revient ensuite à sa place.
+
+#### Parcourir les tags dans la barre latérale
+
+La barre latérale montre les tags en pastilles avec leur nombre d'éléments.
+
+- Cliquez sur une pastille pour voir tous ses éléments.
+- Faites un clic droit dessus pour la renommer ou la supprimer.
+- Au-delà de douze tags, **+ N autres** affiche la suite.
+
+Renommer un tag avec le nom d'un autre les fusionne.
+
+#### Les tags imbriqués
+
+Tapez un chemin avec une barre oblique, par exemple `animaux/chèvre`, pour créer ou réutiliser chaque niveau. Chaque niveau est un seul mot de 20 caractères au plus.
+
+| Sujet | Fonctionnement |
+|---|---|
+| **Suggestions** | Taper `animaux/` propose ses sous-tags, et chaque suggestion montre ses parents. |
+| **Nom simple** | Un nom simple suivi de <kbd>Entrée</kbd> réutilise le tag de ce nom où qu'il soit. Si plusieurs tags le portent, choisissez le bon dans la liste. |
+| **Même nom** | Le même nom peut exister dans deux branches différentes, mais pas deux fois au même niveau. |
+| **Recherche** | Chercher le nom d'un parent trouve aussi les éléments de ses sous-tags. |
+
+#### Se déplacer dans les tags imbriqués
+
+La section Tags de la barre latérale montre toujours ce que montre la grille.
+
+| Geste | Résultat |
+|---|---|
+| Cliquer sur le nom d'une pastille | La grille affiche ce tag avec les éléments de ses sous-tags, et ses sous-tags s'ouvrent dans la barre latérale. |
+| Cliquer sur le chemin au-dessus des pastilles | Vous remontez. **Tags** revient au premier niveau et affiche de nouveau toute la bibliothèque. |
+| Choisir autre chose dans la barre latérale | La section Tags revient au premier niveau. |
+
+La pastille de recherche et les messages nomment un tag avec son chemin complet, par exemple *subject › animals*. Si certains des éléments que vous aviez sélectionnés ne sont pas dans la nouvelle vue, un court message dit combien.
+
+#### Réorganiser les tags
+
+Faites un clic droit sur un tag pour **Nouveau sous-tag…**, **Déplacer vers…**, **Fusionner dans…** et **Supprimer…**. Vous pouvez aussi glisser une pastille sur un autre tag, sur un niveau du chemin ou sur **Tags** pour la déplacer.
+
+Chaque changement s'annule. Quand vous supprimez un tag qui a des sous-tags, vous choisissez de les supprimer aussi ou de les remonter d'un niveau.
+
+<details>
+<summary>Si vous supprimez le tag affiché</summary>
+
+Pigoune affiche son parent, et l'annulation vous ramène sur le tag.
+
+</details>
+
+> [!NOTE]
+> Une bibliothèque avec des tags imbriqués ne peut être ouverte que par Pigoune 2.5 ou plus récent. Vos tags actuels deviennent des tags de premier niveau, sans rien perdre.
 
 ### Les favoris
 
-Ajoutez un élément aux favoris avec l'étoile à côté de son nom, dans le panneau de
-détails, appuyez sur <kbd>Ctrl</kbd>+<kbd>D</kbd>, ou glissez des éléments sur **Favoris** dans
-la barre latérale. Les favoris ont leur propre entrée dans la barre latérale.
+Les favoris ont leur propre entrée dans la barre latérale. Pour y ajouter un élément :
+
+- cliquez sur l'étoile à côté de son nom, dans le panneau de détails ;
+- appuyez sur <kbd>Ctrl</kbd>+<kbd>D</kbd> ;
+- ou glissez des éléments sur **Favoris** dans la barre latérale.
 
 ### Noms, notes et crédits
 
-Cliquez sur le nom d'un élément dans le panneau de détails (ou appuyez sur <kbd>F2</kbd>)
-pour le renommer. Le groupe **Note et crédits** permet d'écrire une note et d'indiquer la
-source, la licence et l'auteur de chaque élément, ce qui est bien pratique au moment de le
-réutiliser. Le groupe **Fichier**, en dessous, indique quand l’élément a été ajouté et le
-nom du fichier d'origine. Chaque groupe se replie et se déplie d'un clic sur son titre, qui
-affiche aussi un court résumé, et Pigoune retient ceux qui sont ouverts. Sous le nom, **Ouvrir
-avec…**, **Copier** et **Exporter…** agissent directement sur l’élément.
+Dans le panneau de détails :
+
+| Quoi | Comment |
+|---|---|
+| **Renommer** | Cliquez sur le nom de l'élément, ou appuyez sur <kbd>F2</kbd>. |
+| **Note et crédits** | Écrivez une note et indiquez la source, la licence et l'auteur, ce qui est bien pratique au moment de réutiliser l'élément. |
+| **Fichier** | Indique quand l'élément a été ajouté et le nom du fichier d'origine. |
+| **Actions rapides** | Sous le nom, **Ouvrir avec…**, **Copier** et **Exporter…** agissent directement sur l'élément. |
+
+Chaque groupe se replie et se déplie d'un clic sur son titre, qui affiche aussi un court résumé. Pigoune retient ceux qui sont ouverts.
 
 ### Plusieurs éléments à la fois
 
-Sélectionnez plusieurs éléments avec <kbd>Ctrl</kbd>+clic, <kbd>Maj</kbd>+clic, en traçant
-un rectangle depuis un espace vide de la grille, ou avec <kbd>Ctrl</kbd>+<kbd>A</kbd>. Le
-panneau de détails affiche alors un résumé et permet de changer les favoris et les tags de
-tous, tandis que le glisser et le menu du clic droit agissent sur toute la sélection. Un tag
-porté par une partie seulement des éléments sélectionnés est entouré de pointillés, avec son
-nombre (par exemple 2/5) : cliquez son nom pour l'ouvrir, ou le petit + à côté pour l'ajouter à
-tous.
+Sélectionnez plusieurs éléments avec <kbd>Ctrl</kbd>+clic, <kbd>Maj</kbd>+clic, un rectangle tracé depuis un espace vide de la grille, ou <kbd>Ctrl</kbd>+<kbd>A</kbd>.
+
+Le panneau de détails affiche alors un résumé et permet de changer les favoris et les tags de tous. Le glisser et le menu du clic droit agissent sur toute la sélection.
+
+> [!TIP]
+> Un tag porté par une partie seulement des éléments sélectionnés est entouré de pointillés, avec son nombre (par exemple 2/5). Cliquez sur son nom pour l'ouvrir, ou sur le petit **+** à côté pour l'ajouter à tous.
 
 ## Retrouver un élément
 

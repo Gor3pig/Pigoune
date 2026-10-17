@@ -5,6 +5,8 @@
 Pigoune keeps all your graphic assets (icons, logos, illustrations) in one tidy library. This
 guide walks you through everything it can do.
 
+**Contents**
+
 - [Getting started](#getting-started)
 - [Organizing](#organizing)
 - [Finding assets](#finding-assets)
@@ -21,132 +23,211 @@ guide walks you through everything it can do.
 
 ## Getting started
 
+> [!NOTE]
+> A **library** is a folder where Pigoune keeps a copy of your assets. Create one, then import your files into it.
+
 ### Create a library
 
-A library is a folder where Pigoune keeps a copy of your assets. On the welcome screen, choose
-**New Library…**, give it a name and pick where to save it. You can create as many
-libraries as you like, for example one per project or per client.
+You can create as many libraries as you like, for example one per project or per client.
 
-To open an existing library, choose **Open Library…**. Pigoune reopens the last library you
-used every time it starts. While a library is open, the main menu offers **New Library…** and
-**Open Library…** to switch to another one, and **Recent Libraries** lists the last libraries
-you opened, five by default. The welcome page shows them too, so you can reopen one in a
-click. On the welcome page, remove one from the list with its cross, or choose **Clear the
-List** there or in the menu: only the list changes, the libraries themselves are kept.
+1. On the welcome screen, choose **New Library…**.
+2. Give the library a name.
+3. Pick where to save it.
 
-**Close Library** in the main menu brings you back to the welcome page. The next time Pigoune
-starts, it opens on the welcome page too.
+To open an existing library, choose **Open Library…**.
+
+### Switch between libraries
+
+Pigoune reopens the last library you used every time it starts.
+
+While a library is open, the main menu lets you:
+
+- choose **New Library…** or **Open Library…** to switch to another one;
+- choose **Close Library** to go back to the welcome page, which Pigoune also shows at the next start.
+
+#### Recent libraries
+
+**Recent Libraries** in the main menu lists the last libraries you opened, five by default. The welcome page shows them too, so you can reopen one in a click.
+
+To clean the list, remove a library with its cross on the welcome page, or choose **Clear the List** there or in the menu. Only the list changes: the libraries themselves are kept.
 
 ### Import assets
 
-Click the **+** button at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>I</kbd>, and
-choose **Import Files…** or **Import Folder…**. You can also simply drag files or folders
-from Files onto the Pigoune window. Another way: copy files in Files (or copy an image, such as a
-screenshot or an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Pigoune. A
-pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.
-You can also drag an image from a web page onto the window, or onto a collection of the
-sidebar: Pigoune keeps what the browser
-hands over (the original file with Chrome or Brave, a PNG copy of the picture with Firefox) and
-names it after the file name the browser suggests. If the drop holds no image, a message says so.
+There are four ways to bring assets in.
 
-- Supported formats are SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP
-  and ICO. HEIC photos are shown when the system can decode them, which the Flatpak package
-  does; a file that cannot be shown is refused instead of imported.
-- Pigoune checks every image before importing it, so damaged files are listed instead of
-  added.
-- Duplicates are recognized: a file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash; when you import into
-  a collection, it then belongs to that collection only.
-- When you import a folder, its subfolders become collections.
-- Your original files are never modified or moved. You can delete them once they are imported.
+| Way | How |
+|---|---|
+| **Import button** | Click **+** at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>I</kbd>, then choose **Import Files…** or **Import Folder…**. |
+| **Drag and drop** | Drag files or folders from Files onto the window, or onto **All**, **Unclassified** or a collection in the sidebar. |
+| **Copy and paste** | Copy files in Files, or an image (a screenshot, an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd>. |
+| **From a web page** | Drag an image from a web page onto the window, or onto a collection of the sidebar. |
 
-Files are imported into the view you are looking at: **All** and **Unclassified** keep them
-without a collection, and a selected collection receives them. Favorites, tags, smart
-collections and the Trash only show assets, so importing is turned off there. You can also drop
-files directly onto **All**, **Unclassified** or a collection in the sidebar.
+A pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.
+
+<details>
+<summary>What the browser hands over</summary>
+
+Pigoune keeps what the browser gives it: the original file with Chrome or Brave, a PNG copy of the picture with Firefox. It names the asset after the file name the browser suggests. If the drop holds no image, a message says so.
+
+</details>
+
+#### What Pigoune accepts
+
+| Topic | Rule |
+|---|---|
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP and ICO. HEIC photos are shown when the system can decode them, which the Flatpak package does. |
+| **Checks** | Every image is checked before it is imported. A damaged file, or one that cannot be shown, is listed and refused. |
+| **Duplicates** | A file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash. |
+| **Folders** | When you import a folder, its subfolders become collections. |
+
+When you import a duplicate into a collection, the asset then belongs to that collection only.
+
+> [!TIP]
+> Your original files are never modified or moved. You can delete them once they are imported.
+
+#### Where the files go
+
+Files are imported into the view you are looking at.
+
+| View | What happens |
+|---|---|
+| **All** and **Unclassified** | The files are kept without a collection. |
+| A selected collection | The collection receives them. |
+| Favorites, tags, smart collections, Trash | They only show assets, so importing is turned off. |
 
 ## Organizing
 
+Collections, tags and favorites keep your library tidy. Use the ones that match the way you think.
+
 ### Collections
 
-Collections work like folders, and can contain other collections. Create one with the **+**
-button next to **Collections** in the sidebar. Right-click a collection to create a
-sub-collection, rename it (<kbd>F2</kbd>), customize it, move it into another collection or
-to the top level with **Move to…**, or delete it. The menu is laid out the same way for tags.
+Collections work like folders, and can contain other collections.
 
-- **Customize** a collection to give it its own icon and color in the sidebar: right-click it,
-  choose **Customize…**, pick a color and an icon, then **Save**. **Default** brings back the
-  gray folder.
-- **Move** assets into a collection by dragging them onto it from the grid, or, when you are
-  inside a collection, with **Move to a Collection…** in the right-click menu.
-- **Add** them to a collection while keeping them where they are by holding <kbd>Ctrl</kbd>
-  while dragging, or with **Add to a Collection…** in the right-click menu. An asset can belong
-  to several collections. The pointer shows which one you are doing: a plain arrow for a move,
-  a **+** for an addition. It changes as soon as you press or release <kbd>Ctrl</kbd>, and a
-  collection does not light up when you drag assets onto the one they already come from.
-- **Remove** them from the collection you are looking at with **Remove from the Collection** in
-  the right-click menu. They stay in the library and in their other collections.
-- **Reorder** collections by dragging them in the sidebar, or sort them by name or creation
-  date with the **⋯** button next to **Collections**.
-- **Fold** a section of the sidebar (Collections, Smart Collections or Tags) with a click on
-  its title, or with <kbd>Enter</kbd> when the title has the keyboard focus. Pigoune remembers
-  which sections are folded.
-- **Unclassified** lists the assets that belong to no collection.
+#### Create and manage
 
-When you delete a collection, its sub-collections are deleted too, and the assets that only
-belonged to them go to the trash. Assets that also belong to another collection stay there.
+Create a collection with the **+** button next to **Collections** in the sidebar.
+
+Then right-click it to create a sub-collection, rename it (<kbd>F2</kbd>), customize it, move it with **Move to…** (into another collection or to the top level) or delete it. The menu is laid out the same way for tags.
+
+| To… | Do this |
+|---|---|
+| **Customize** | Right-click, choose **Customize…**, pick a color and an icon, then **Save**. **Default** brings back the gray folder. |
+| **Reorder** | Drag collections in the sidebar, or sort them by name or creation date with the **⋯** button next to **Collections**. |
+| **Fold** | Click the title of a sidebar section, or press <kbd>Enter</kbd> when it has the keyboard focus. Pigoune remembers which sections are folded. |
+
+**Unclassified** lists the assets that belong to no collection.
+
+#### Put assets in collections
+
+| To… | Do this |
+|---|---|
+| **Move** assets into a collection | Drag them onto it from the grid, or, inside a collection, use **Move to a Collection…** in the right-click menu. |
+| **Add** them and keep them where they are | Hold <kbd>Ctrl</kbd> while dragging, or use **Add to a Collection…** in the right-click menu. |
+| **Remove** them from the collection you are looking at | Use **Remove from the Collection** in the right-click menu. |
+
+An asset can belong to several collections. Removing it from one keeps it in the library and in its other collections.
+
+While you drag, the pointer shows what you are doing: a plain arrow for a move, a **+** for an addition. It changes as soon as you press or release <kbd>Ctrl</kbd>.
+
+> [!WARNING]
+> When you delete a collection, its sub-collections are deleted too, and the assets that only belonged to them go to the trash. Assets that also belong to another collection stay there.
 
 ### Tags
 
-A tag is a single word of up to 20 characters: it describes assets in one keyword. To join
-several words, use a hyphen (*flat-design*). A space or a comma ends the tag you are typing, so
-you can enter several at once. Add tags from the details panel with the
-**+** button next to the tags, with **Add a Tag…** in the right-click menu, or drag assets onto
-a tag in the sidebar. Keep them over a tag that has sub-tags for a second and its sub-tags
-open, so you can drop them on one; the sidebar goes back to where it was afterwards. The sidebar shows tags as pills with their number of assets: click one
-to see all its assets, or right-click it to rename or delete it. Beyond twelve tags, **+ N
-others** shows the rest. Renaming a tag to the name of another one merges them.
+A tag is a keyword that describes an asset. Tags can be nested, like *Subject › Animals › goat*.
 
-Tags can be nested: *Subject › Animals › goat*. Type a path with a slash, for example
-`animals/goat`, to create or reuse each level; typing `animals/` suggests its sub-tags, and every
-suggestion shows its parents. A plain name followed by <kbd>Enter</kbd> reuses the tag of that
-name wherever it is; if several tags share it, pick the right one in the list. Each level is a single word of up to 20 characters. In the sidebar,
-the Tags section always shows what the grid shows: clicking the name of a pill shows that tag in the
-grid, together with the assets of its sub-tags, and opens its sub-tags in the sidebar. The path above
-the pills climbs back up, and **Tags** returns to the first level and shows the whole library again.
-Choosing anything else in the sidebar (All, a collection…) brings the Tags section back to the first
-level. The search badge and the messages name a tag with its full path, for example
-*subject › animals*. If some of the assets you had selected are not in the new view, a short message
-says how many. The same name can exist in two different
-branches, but not twice at the same level. Right-click a tag for **New Sub-tag…**, **Move to…**,
-**Merge into…** and **Delete…**, or drag a pill onto another tag, onto a level of the path, or onto
-**Tags** to move it. Deleting a tag that has sub-tags lets you delete them too or move them up one
-level, and every change can be undone. If you delete the tag you are looking at, Pigoune shows
-its parent instead, and undoing brings you back to the tag. Searching a parent's name also finds the assets of its
-sub-tags. A library with nested tags can only be opened by Pigoune 2.5 or later; your existing tags
-become first-level tags and nothing is lost.
+#### Write and add tags
+
+A tag is a single word of up to 20 characters. To join several words, use a hyphen (*flat-design*).
+
+A space or a comma ends the tag you are typing, so you can enter several at once.
+
+| To add tags… | Do this |
+|---|---|
+| **From the details panel** | Click the **+** button next to the tags. |
+| **From the menu** | Choose **Add a Tag…** in the right-click menu. |
+| **By dragging** | Drag assets onto a tag in the sidebar. |
+
+Keep dragged assets over a tag that has sub-tags for a second: its sub-tags open, so you can drop the assets on one. The sidebar goes back to where it was afterwards.
+
+#### Browse tags in the sidebar
+
+The sidebar shows tags as pills with their number of assets.
+
+- Click a pill to see all its assets.
+- Right-click it to rename or delete it.
+- Beyond twelve tags, **+ N others** shows the rest.
+
+Renaming a tag to the name of another one merges them.
+
+#### Nested tags
+
+Type a path with a slash, for example `animals/goat`, to create or reuse each level. Each level is a single word of up to 20 characters.
+
+| What | How it works |
+|---|---|
+| **Suggestions** | Typing `animals/` suggests its sub-tags, and every suggestion shows its parents. |
+| **Plain name** | A plain name followed by <kbd>Enter</kbd> reuses the tag of that name wherever it is. If several tags share it, pick the right one in the list. |
+| **Same name** | The same name can exist in two different branches, but not twice at the same level. |
+| **Search** | Searching a parent's name also finds the assets of its sub-tags. |
+
+#### Move around nested tags
+
+The Tags section of the sidebar always shows what the grid shows.
+
+| Gesture | Result |
+|---|---|
+| Click the name of a pill | The grid shows that tag with the assets of its sub-tags, and its sub-tags open in the sidebar. |
+| Click the path above the pills | You climb back up. **Tags** returns to the first level and shows the whole library again. |
+| Choose anything else in the sidebar | The Tags section goes back to the first level. |
+
+The search badge and the messages name a tag with its full path, for example *subject › animals*. If some of the assets you had selected are not in the new view, a short message says how many.
+
+#### Reorganize tags
+
+Right-click a tag for **New Sub-tag…**, **Move to…**, **Merge into…** and **Delete…**. You can also drag a pill onto another tag, onto a level of the path, or onto **Tags** to move it.
+
+Every change can be undone. When you delete a tag that has sub-tags, you choose to delete them too or to move them up one level.
+
+<details>
+<summary>If you delete the tag you are looking at</summary>
+
+Pigoune shows its parent instead, and undoing brings you back to the tag.
+
+</details>
+
+> [!NOTE]
+> A library with nested tags can only be opened by Pigoune 2.5 or later. Your existing tags become first-level tags and nothing is lost.
 
 ### Favorites
 
-Add an asset to the favorites with the star next to its name in the details panel, or press
-<kbd>Ctrl</kbd>+<kbd>D</kbd>, or drag assets onto **Favorites** in the sidebar. Favorites have their own entry in the sidebar.
+Favorites have their own entry in the sidebar. To add an asset to them:
+
+- click the star next to its name in the details panel;
+- press <kbd>Ctrl</kbd>+<kbd>D</kbd>;
+- or drag assets onto **Favorites** in the sidebar.
 
 ### Names, notes and credits
 
-Click the name of an asset in the details panel (or press <kbd>F2</kbd>) to rename it. The
-**Note and Credits** group lets you write a note and record the source, the license and the
-author of each asset, which is handy when you reuse it later. The **File** group below shows
-when the asset was added and the name of the original file. Each group folds and unfolds with
-a click on its title, which also shows a short summary, and Pigoune remembers which ones are
-open. Under the name, **Open With…**, **Copy** and **Export…** act on the asset directly.
+In the details panel:
+
+| What | How |
+|---|---|
+| **Rename** | Click the name of the asset, or press <kbd>F2</kbd>. |
+| **Note and Credits** | Write a note and record the source, the license and the author, which is handy when you reuse the asset later. |
+| **File** | Shows when the asset was added and the name of the original file. |
+| **Quick actions** | Under the name, **Open With…**, **Copy** and **Export…** act on the asset directly. |
+
+Each group folds and unfolds with a click on its title, which also shows a short summary. Pigoune remembers which ones are open.
 
 ### Several assets at once
 
-Select several assets with <kbd>Ctrl</kbd>+click, <kbd>Shift</kbd>+click, by drawing a
-rectangle from an empty area of the grid, or with <kbd>Ctrl</kbd>+<kbd>A</kbd>. The details
-panel then shows a summary and lets you change favorites and tags for all of them, while
-dragging and the right-click menu work on the whole selection. A tag carried by only some of the selected assets is shown with a dashed outline and its
-count (such as 2/5): click its name to open it, or the small + next to it to add it to all of
-them.
+Select several assets with <kbd>Ctrl</kbd>+click, <kbd>Shift</kbd>+click, a rectangle drawn from an empty area of the grid, or <kbd>Ctrl</kbd>+<kbd>A</kbd>.
+
+The details panel then shows a summary and lets you change favorites and tags for all of them. Dragging and the right-click menu work on the whole selection.
+
+> [!TIP]
+> A tag carried by only some of the selected assets has a dashed outline and its count (such as 2/5). Click its name to open it, or the small **+** next to it to add it to all of them.
 
 ## Finding assets
 
