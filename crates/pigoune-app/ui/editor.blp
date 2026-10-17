@@ -205,8 +205,48 @@ template $PigouneEditor: Adw.Bin {
           margin-start: 12;
           margin-end: 12;
 
-          Adw.PreferencesGroup tools_group {
-            title: _("Tools");
+          Box tools_section {
+            orientation: vertical;
+            spacing: 6;
+
+            ToggleButton tools_toggle {
+              active: true;
+              tooltip-text: _("Show or Hide the Tools");
+
+              accessibility {
+                label: _("Tools");
+              }
+
+              styles [
+                "flat",
+              ]
+
+              child: Box {
+                spacing: 6;
+
+                Image tools_arrow {
+                  icon-name: "pan-down-symbolic";
+                }
+
+                Label {
+                  label: _("Tools");
+                  halign: start;
+                  hexpand: true;
+
+                  styles [
+                    "heading",
+                  ]
+                }
+
+                Label tools_hint {
+                  visible: false;
+
+                  styles [
+                    "dim-label",
+                  ]
+                }
+              };
+            }
 
             Grid tools_grid {
               column-spacing: 6;
@@ -237,6 +277,10 @@ template $PigouneEditor: Adw.Bin {
                 ToggleButton properties_toggle {
                   active: true;
                   tooltip-text: _("Show or Hide the Properties");
+
+                  accessibility {
+                    label: _("Properties");
+                  }
 
                   styles [
                     "flat",
@@ -349,14 +393,36 @@ template $PigouneEditor: Adw.Bin {
                 Box {
                   spacing: 6;
 
-                  Label layers_heading {
-                    label: _("Layers");
-                    halign: start;
+                  ToggleButton layers_toggle {
+                    active: true;
                     hexpand: true;
+                    tooltip-text: _("Show or Hide the Layers");
+
+                    accessibility {
+                      label: _("Layers");
+                    }
 
                     styles [
-                      "heading",
+                      "flat",
                     ]
+
+                    child: Box {
+                      spacing: 6;
+
+                      Image layers_arrow {
+                        icon-name: "pan-down-symbolic";
+                      }
+
+                      Label {
+                        label: _("Layers");
+                        halign: start;
+                        hexpand: true;
+
+                        styles [
+                          "heading",
+                        ]
+                      }
+                    };
                   }
 
                   Box layer_buttons {

@@ -924,4 +924,5 @@ fn rendering_suite() {
     hidden_objects_are_not_drawn_and_locked_ones_are(&rig);
     the_color_sampler_reads_the_pixel_it_is_given(&rig);
     the_png_export_carries_pixels_and_nothing_else(&rig);
+    crate::editor::panel_tests::the_panels_only_change_what_is_visible();
 }
