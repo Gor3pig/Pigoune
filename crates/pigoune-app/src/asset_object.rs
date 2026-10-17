@@ -212,8 +212,22 @@ impl PigouneAssetObject {
     }
 
     pub async fn thumbnail(&self, widget: &impl IsA<gtk::Widget>) -> Option<gdk::Texture> {
-        let source = async { self.display_file(widget).await };
-        thumbnails::thumbnail_from(source, self.thumbnail_file()).await
+        let Some(render) = self.annotation() else {
+            return thumbnails::thumbnail(self.source_file(), self.thumbnail_file()).await;
+        };
+        let drawn = async {
+            if render.file.is_file() {
+                return thumbnails::render(&render.file, thumbnails::THUMBNAIL_PIXELS).await;
+            }
+            annotated_files::reduced(
+                render,
+                self.source_file(),
+                widget,
+                thumbnails::side_of_thumbnails(),
+            )
+            .await
+        };
+        thumbnails::thumbnail_drawn(drawn, self.thumbnail_file()).await
     }
 }
 

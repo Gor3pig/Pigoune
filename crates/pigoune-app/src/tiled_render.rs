@@ -2,11 +2,12 @@ use gtk::prelude::*;
 use gtk::{gdk, glib, graphene, gsk};
 
 const TILE_SIDE: i32 = 2048;
+const YIELDING_TILE_SIDE: i32 = 1024;
 const FORMAT: gdk::MemoryFormat = gdk::MemoryFormat::R8g8b8a8Premultiplied;
 const BYTES_PER_PIXEL: usize = 4;
 
-fn tile_origins(length: i32) -> impl Iterator<Item = i32> {
-    (0..length).step_by(usize::try_from(TILE_SIDE).unwrap_or(1))
+fn tile_origins(length: i32, side: i32) -> impl Iterator<Item = i32> {
+    (0..length).step_by(usize::try_from(side).unwrap_or(1))
 }
 
 fn to_f32(value: i32) -> f32 {
@@ -50,21 +51,45 @@ pub fn render(
 ) -> Option<gdk::Texture> {
     let row_bytes = usize::try_from(width).ok()? * BYTES_PER_PIXEL;
     let mut pixels = vec![0_u8; row_bytes * usize::try_from(height).ok()?];
-    for top in tile_origins(height) {
-        for left in tile_origins(width) {
+    for top in tile_origins(height, TILE_SIDE) {
+        for left in tile_origins(width, TILE_SIDE) {
             let size = (TILE_SIDE.min(width - left), TILE_SIDE.min(height - top));
             let tile = render_tile(renderer, paint, (left, top), size)?;
             copy_tile(&tile, &mut pixels, row_bytes, (left, top));
         }
     }
-    Some(
-        gdk::MemoryTexture::new(
-            width,
-            height,
-            FORMAT,
-            &glib::Bytes::from_owned(pixels),
-            row_bytes,
-        )
-        .upcast(),
+    Some(assemble(width, height, pixels, row_bytes))
+}
+
+pub async fn render_yielding(
+    renderer: &gsk::Renderer,
+    width: i32,
+    height: i32,
+    paint: &dyn Fn(&gtk::Snapshot),
+) -> Option<gdk::Texture> {
+    let row_bytes = usize::try_from(width).ok()? * BYTES_PER_PIXEL;
+    let mut pixels = vec![0_u8; row_bytes * usize::try_from(height).ok()?];
+    for top in tile_origins(height, YIELDING_TILE_SIDE) {
+        for left in tile_origins(width, YIELDING_TILE_SIDE) {
+            let size = (
+                YIELDING_TILE_SIDE.min(width - left),
+                YIELDING_TILE_SIDE.min(height - top),
+            );
+            let tile = render_tile(renderer, paint, (left, top), size)?;
+            copy_tile(&tile, &mut pixels, row_bytes, (left, top));
+            glib::timeout_future(std::time::Duration::from_millis(1)).await;
+        }
+    }
+    Some(assemble(width, height, pixels, row_bytes))
+}
+
+fn assemble(width: i32, height: i32, pixels: Vec<u8>, row_bytes: usize) -> gdk::Texture {
+    gdk::MemoryTexture::new(
+        width,
+        height,
+        FORMAT,
+        &glib::Bytes::from_owned(pixels),
+        row_bytes,
     )
+    .upcast()
 }
