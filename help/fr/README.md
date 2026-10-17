@@ -382,9 +382,11 @@ ses critères.
 
 ## Capturer et annoter
 
-Pigoune sait faire une capture d'écran, ou prendre une image que vous collez, et vous laisser
-l'annoter avant qu'elle rejoigne votre bibliothèque. L'éditeur s'ouvre dans la fenêtre d'une
-bibliothèque ouverte : il y a donc toujours un endroit où garder le résultat.
+Pigoune sait faire une capture d'écran, prendre une image que vous collez, ou ouvrir une image
+déjà présente dans votre bibliothèque, et vous laisser l'annoter. L'éditeur s'ouvre dans la
+fenêtre d'une bibliothèque ouverte : il y a donc toujours un endroit où garder le résultat. Les
+annotations ne modifient jamais le fichier d'origine : elles sont conservées à côté et vous pouvez
+les modifier plus tard.
 
 ### Commencer une capture
 
@@ -400,6 +402,9 @@ bibliothèque ouverte : il y a donc toujours un endroit où garder le résultat.
   bureau. Si Pigoune n'est pas lancé, il démarre, rouvre votre dernière bibliothèque et fait la
   capture.
 
+- **Annoter une image de votre bibliothèque** : sélectionnez-la et choisissez **Annoter…** dans le
+  panneau de détails ou le menu contextuel, ou appuyez sur <kbd>Ctrl</kbd>+<kbd>E</kbd>.
+
 Les images peuvent faire jusqu'à 8000 pixels de côté.
 
 ### Annoter
@@ -411,20 +416,21 @@ bas). Chaque outil a une lettre qui le sélectionne, indiquée dans son infobull
 |---|---|---|
 | Sélection | <kbd>V</kbd> | Sélectionner, déplacer et redimensionner une annotation (<kbd>Suppr</kbd> la supprime) |
 | Rogner | <kbd>C</kbd> | Ne garder qu'une partie de l'image, avec des proportions libres ou fixes |
-| Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Contours, éventuellement remplis ou à coins arrondis |
-| Ligne, Flèche | <kbd>L</kbd>, <kbd>A</kbd> | Droites ou courbes, avec plusieurs pointes, continues, en tirets ou en points, régulières ou effilées |
+| Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Contours, éventuellement remplis ou à coins arrondis, continus, en tirets ou pointillés, précis ou esquissés |
+| Ligne, Flèche | <kbd>L</kbd>, <kbd>A</kbd> | Droites ou courbes, avec plusieurs pointes, continues, en tirets ou pointillées, précises ou esquissées, régulières ou effilées |
 | Texte | <kbd>T</kbd> | Cliquez, tapez, puis cliquez ailleurs ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> ; police, taille, gras, italique, fond, bulle et contour |
 | Étapes | <kbd>N</kbd> | Pastilles numérotées (ou lettrées) qui se renumérotent seules |
-| Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés |
+| Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés (le crayon peut aussi être en tirets ou pointillé) |
 | Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher ce qui est privé ; ils s'appliquent à tout ce qui est dessiné dessous |
 | Projecteur | <kbd>S</kbd> | Assombrit tout sauf un rectangle ou un ovale |
 
 Chaque outil retient ses derniers réglages (couleur, avec une pipette pour en prélever une dans
-l'image, opacité, épaisseur, ombre et plus). Maintenez <kbd>Maj</kbd> en dessinant pour des lignes
+l'image, opacité, épaisseur, ombre et plus). **Type de trait** choisit un trait continu, en tirets
+ou pointillé, et **Aspect du tracé** (Précis, Esquissé ou Très esquissé) donne aux rectangles,
+ellipses, lignes et flèches l'allure légèrement tremblée d'un dessin fait à la main ; une forme
+garde le même aspect à chaque ouverture, et une copie est exactement semblable à l'original. Maintenez <kbd>Maj</kbd> en dessinant pour des lignes
 droites à des multiples de 45 degrés et de parfaits carrés ou cercles, et maintenez <kbd>Alt</kbd>
 en déplaçant pour couper les guides qui alignent une annotation sur l'image et sur les autres
-annotations. Les quatre boutons de **Calques** (ou <kbd>Ctrl</kbd>+<kbd>]</kbd> et
-<kbd>Ctrl</kbd>+<kbd>[</kbd>, avec <kbd>Maj</kbd> pour les extrêmes) changent l'ordre des
 annotations. Annuler et rétablir fonctionnent comme partout, avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> et
 <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd>.
 
@@ -437,15 +443,48 @@ double-cliquez dessus pour la redresser. Un flou, une pixelisation ou un project
 poignée ronde au centre : tirez-la pour déplacer la zone avec n'importe quel outil. Les flèches du clavier déplacent la sélection d'un pixel
 (dix avec <kbd>Maj</kbd>) et <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>D</kbd> la duplique.
 
+### Calques
+
+Le panneau **Calques** liste les annotations de l'avant vers l'arrière. Les boutons au-dessus de
+la liste (ou <kbd>Ctrl</kbd>+<kbd>]</kbd> et <kbd>Ctrl</kbd>+<kbd>[</kbd>, avec <kbd>Maj</kbd>
+pour les extrêmes), ou le glissement d'une ligne, changent l'ordre. L'œil d'une ligne masque ou
+affiche son annotation et le cadenas la verrouille pour qu'on ne la déplace pas par erreur ; le
+menu du clic droit sur une ligne la renomme, la duplique ou la supprime. Masquer un calque ne le
+cache que dans l'éditeur et dans le résultat : rien n'est supprimé, et vous pouvez le réafficher à
+tout moment.
+
+### Votre espace de travail
+
+**Outils**, **Propriétés** et **Calques** se replient et se déplient d'un clic sur leur titre. Le
+bouton à côté de **Rétablir** dans l'en-tête, ou <kbd>F9</kbd>, masque tout le panneau pour laisser
+plus de place à l'image ; **Enregistrer** et les boutons de copie, d'export et de capture passent
+alors dans l'en-tête. Pigoune retient les sections repliées et l'état du panneau, et rien de cela ne
+change vos annotations, l'outil choisi ou le zoom.
+
+
 ### Cacher ce qui est privé
 
-Un flou ou une pixelisation cache ce qui est dessous, annotations comprises. Tant que vos
-annotations restent modifiables, la capture intacte est conservée dans la bibliothèque et montre
-encore ce que vous avez caché : un bandeau vous le dit. **Verrouiller les masquages** applique
-chaque flou et chaque pixelisation à cette capture d'origine aussi, définitivement, et l'image
-exportée ne contient jamais l'original. Une pixelisation à grandes cellules supprime les détails
-qu'elle recouvre ; un flou léger n'est pas une anonymisation et peut rester en partie
-récupérable : préférez une pixelisation ou un flou fort pour tout ce qui est sensible.
+Une annotation **Flou** ou **Pixelisation** cache ce qui est dessous, annotations comprises. Comme
+toute annotation, elle ne détruit rien : le fichier d'origine reste exactement tel qu'il a été
+importé, le flou ou la pixelisation reste modifiable et s'enregistre avec les autres annotations,
+et vous pouvez la déplacer, la redimensionner, la masquer ou la changer plus tard.
+
+L'image d'origine reste donc dans votre bibliothèque, avec ce que vous aviez caché. Pigoune en
+tient compte :
+
+- si un flou ou une pixelisation est masqué (avec l'œil de son calque), certaines informations
+  peuvent redevenir visibles dans le résultat : Pigoune vous avertit donc avant de **copier**,
+  d'**exporter** ou d'**ouvrir avec une autre application** une image qui en a un, et propose de
+  l'afficher d'abord quand vous êtes dans l'éditeur ;
+- glisser une telle image hors de Pigoune est refusé tant que vous n'avez pas réaffiché les
+  effets masqués, sans possibilité de continuer malgré tout ;
+- l'export de toute la bibliothèque donne chaque original **et** une copie de chaque image
+  annotée : les originaux peuvent donc contenir des choses qui ne sont plus visibles sur les
+  copies annotées. Pigoune vous demande si vous voulez aussi les originaux avant d'exporter.
+
+Une pixelisation à grandes cellules supprime les détails qu'elle recouvre ; un flou léger n'est pas
+une anonymisation et peut rester en partie récupérable : préférez une pixelisation ou un flou fort
+pour tout ce qui est sensible, et ne partagez pas le fichier d'origine.
 
 ### Garder le résultat
 
@@ -458,9 +497,18 @@ récupérable : préférez une pixelisation ou un flou fort pour tout ce qui est
 
 Sélectionnez un élément annoté et choisissez **Annoter…** (dans le panneau de détails ou le menu
 contextuel) pour rouvrir ses annotations : l'enregistrement met à jour le même élément. **Voir
-l'original** ouvre la capture intacte dans une autre application. La grille, l'aperçu, les
-doublons et les exports utilisent tous l'image annotée ; l'original reste à côté, va à la corbeille
-et en revient avec elle, et compte dans l'espace utilisé par votre bibliothèque.
+l'original** ouvre une copie de l'image intacte dans une autre application. La grille, l'aperçu et
+les doublons utilisent l'image annotée, et la copier ou l'exporter donne un PNG aplati ; l'original
+reste à côté, va à la corbeille et en revient avec elle, et compte dans l'espace utilisé par votre
+bibliothèque.
+
+### Comparer avec l'original
+
+Dans l'aperçu détaillé, une image annotée affiche un bouton en forme d'œil en bas à droite.
+**Maintenez**-le enfoncé pour voir l'image d'origine, puis relâchez : l'image annotée revient
+aussitôt. C'est une vue momentanée, pas une bascule, pour que rien ne reste affiché par erreur :
+l'image annotée revient aussi si vous changez d'image, fermez l'aperçu ou quittez la fenêtre. Rien
+n'est modifié ni enregistré, et le bouton est grisé si le fichier d'origine n'est pas disponible.
 
 ## Corbeille et annulation
 
@@ -502,6 +550,9 @@ Une bibliothèque est un simple dossier dont le nom se termine par `.pigoune`. I
 Comme tout se trouve dans ce dossier, une bibliothèque est **portable** : copiez-la sur un
 disque externe ou sur un autre ordinateur et ouvrez-la là-bas avec Pigoune. Pour la
 sauvegarder, copiez le dossier entier pendant que Pigoune est fermé.
+
+Une bibliothèque ouverte et mise à niveau avec Pigoune 3.0 ne peut plus être ouverte avec Pigoune
+2.12 ou plus ancien ; **Gérer la bibliothèque** indique quelles versions peuvent l'ouvrir.
 
 Une bibliothèque ne peut être ouverte que dans une seule fenêtre de Pigoune à la fois. Si vous
 la gardez dans un dossier synchronisé (Nextcloud, Syncthing…), fermez Pigoune sur un
@@ -675,6 +726,8 @@ modifiés dans les **Préférences**, sur la page **Raccourcis**.
 | Coller des fichiers ou une image pour les importer | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
 | Faire une capture d'écran à annoter | <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>S</kbd> |
 | Coller une image à annoter | <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>V</kbd> |
+| Annoter l'image sélectionnée | <kbd>Ctrl</kbd>+<kbd>E</kbd> |
+| Afficher ou masquer le panneau de l'éditeur d'annotation | <kbd>F9</kbd> |
 | Renommer l'élément sélectionné | <kbd>F2</kbd> |
 | Ajouter aux favoris ou en retirer | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Ajouter un tag | <kbd>Ctrl</kbd>+<kbd>T</kbd> |
