@@ -1807,6 +1807,7 @@ version = "2.12.0"
 dependencies = [
  "blake3",
  "imagesize",
+ "pigoune-core",
  "roxmltree",
  "rusqlite",
  "serde",

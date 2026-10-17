@@ -506,3 +506,67 @@ fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
         "hiding a layer changes the picture"
     );
 }
+
+#[test]
+fn thousands_of_annotated_resources_are_listed_with_their_renderings_quickly() {
+    let mut fixture = Fixture::new();
+    let template = fixture.import("template.png", 1);
+    let document = document_with_a_blur(1.0)
+        .to_json()
+        .expect("serializable")
+        .replace('}', &format!(",\"padding\":\"{}\"}}", "x".repeat(2_000)));
+    let connection = fixture.database();
+    let columns: Vec<String> = connection
+        .prepare("SELECT name FROM pragma_table_info('assets')")
+        .expect("prepared")
+        .query_map([], |row| row.get(0))
+        .expect("queried")
+        .collect::<Result<_, _>>()
+        .expect("columns");
+    let copies = 4_000;
+    let transaction = connection.unchecked_transaction().expect("transaction");
+    for number in 0..copies {
+        let id = format!("00000000-0000-7000-8000-{number:012}");
+        let select: Vec<String> = columns
+            .iter()
+            .map(|column| match column.as_str() {
+                "id" | "content_hash" => "?1".to_owned(),
+                "stored_path" => "?2".to_owned(),
+                other => other.to_owned(),
+            })
+            .collect();
+        transaction
+            .execute(
+                &format!(
+                    "INSERT INTO assets ({}) SELECT {} FROM assets WHERE id = ?3",
+                    columns.join(", "),
+                    select.join(", ")
+                ),
+                rusqlite::params![id, format!("files/00/{id}/copy.png"), template],
+            )
+            .expect("copied row");
+        transaction
+            .execute(
+                "INSERT INTO asset_annotations (asset_id, document, updated_at_unix_ms)
+                 VALUES (?1, ?2, 1)",
+                rusqlite::params![id, document],
+            )
+            .expect("annotations");
+    }
+    transaction.commit().expect("committed");
+    drop(connection);
+
+    let started = std::time::Instant::now();
+    let renders = fixture.library.annotation_renders().expect("listed");
+    let elapsed = started.elapsed();
+    eprintln!("RENDERS_TIMING {elapsed:?}");
+
+    assert_eq!(renders.len(), copies);
+    assert!(
+        elapsed < std::time::Duration::from_secs(3),
+        "{copies} documents took {elapsed:?}"
+    );
+    let keys: std::collections::HashSet<_> =
+        renders.values().map(|render| render.key.clone()).collect();
+    assert_eq!(keys.len(), copies, "every image has its own rendering");
+}
