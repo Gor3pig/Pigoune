@@ -58,9 +58,7 @@ template $PigouneEditor: Adw.Bin {
 
         [top]
         Adw.Banner mask_banner {
-          title: _("The original image still shows what the blur and pixelation hide");
-          button-label: _("Seal Masks");
-          button-clicked => $on_lock_masks_clicked() swapped;
+          title: _("A mask is hidden, so the image would show what it covers");
         }
 
         content: Overlay canvas_overlay {
@@ -155,6 +153,14 @@ template $PigouneEditor: Adw.Bin {
             icon-name: "view-more-symbolic";
             tooltip-text: _("Copy or Export");
             sensitive: false;
+          }
+
+          [end]
+          Button capture_button {
+            icon-name: "camera-photo-symbolic";
+            tooltip-text: _("Take a Screenshot to Annotate");
+            action-name: "win.capture";
+            focus-on-click: false;
           }
         }
 

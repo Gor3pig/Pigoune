@@ -6,7 +6,7 @@ use super::{Library, LibraryError, layout};
 
 #[must_use]
 pub fn thumbnail_cache_bytes_in(root: &Path) -> u64 {
-    folder_bytes(&layout::thumbnails_dir(root))
+    folder_bytes(&layout::thumbnails_dir(root)) + folder_bytes(&layout::annotated_dir(root))
 }
 
 impl Library {
@@ -16,10 +16,16 @@ impl Library {
     }
 
     pub fn clear_thumbnail_cache(&self) -> Result<(), LibraryError> {
-        match fs::remove_dir_all(layout::thumbnails_dir(&self.root)) {
-            Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error.into()),
-            _ => Ok(()),
+        for folder in [
+            layout::thumbnails_dir(&self.root),
+            layout::annotated_dir(&self.root),
+        ] {
+            match fs::remove_dir_all(folder) {
+                Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
+                _ => {}
+            }
         }
+        Ok(())
     }
 }
 

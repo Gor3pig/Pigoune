@@ -1,21 +1,22 @@
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{OptionalExtension, params};
 
-use super::content::{self, ContentDigest};
-use super::import::{self, PreparedFile};
-use super::import_batch::ImportBatch;
-use super::seal::SaveRequest;
-use super::staging::StagingDir;
-use super::{AnnotatedError, AssetId, Library, clock, layout};
+use super::trash::forget_thumbnails;
+use super::{
+    AnnotatedError, AssetId, ImportOutcome, Library, LibraryError, clock, details_store, layout,
+};
 use crate::annotations::AnnotationDocument;
-use crate::media::{self, AssetFormat};
 
-#[derive(Debug, Clone, Copy)]
-pub struct AnnotatedImage<'a> {
-    pub rendered: &'a Path,
-    pub original: &'a Path,
-    pub document: &'a AnnotationDocument,
+pub const RENDER_VERSION: u32 = 1;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AnnotationRender {
+    pub key: String,
+    pub document: String,
+    pub file: PathBuf,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,81 +24,14 @@ pub struct Annotations {
     pub document: String,
     pub has_masks: bool,
     pub updated_at_unix_ms: i64,
-    pub seal_generation: u32,
 }
 
 impl Library {
-    pub fn import_annotated(
-        &mut self,
-        image: AnnotatedImage<'_>,
-    ) -> Result<AssetId, AnnotatedError> {
-        let stored_document = image.document.to_json()?;
-        let prepared = prepared_png(image.rendered)?;
-        if layout::original_generation_of(prepared.original_file_name()).is_some() {
-            return Err(AnnotatedError::ReservedName(image.rendered.to_path_buf()));
-        }
-        ensure_png(image.original)?;
-        if let Some(record) = &image.document.seal
-            && (!record.is_well_formed() || content::digest(image.original)?.hash != record.base)
-        {
-            return Err(AnnotatedError::InvalidSeal(
-                "the sealed image is not the one the record names",
-            ));
-        }
-        if let Some(existing) = self.find_by_content_hash(&prepared.digest().hash)? {
-            return Err(AnnotatedError::AlreadyPresent(existing));
-        }
-        let mut batch = ImportBatch::begin(&self.connection)?;
-        match self.store_annotated(&prepared, image, &stored_document, &mut batch) {
-            Ok(id) => {
-                batch.commit(&self.connection)?;
-                Ok(id)
-            }
-            Err(error) => {
-                batch.abandon(&self.connection);
-                Err(error)
-            }
-        }
-    }
-
-    pub fn update_annotated(
-        &mut self,
-        id: AssetId,
-        rendered: &Path,
-        document: &AnnotationDocument,
-    ) -> Result<(), AnnotatedError> {
-        self.commit_save(
-            id,
-            &SaveRequest {
-                rendered,
-                document,
-                sealed_original: None,
-            },
-        )
-    }
-
-    pub fn seal_annotated(
-        &mut self,
-        id: AssetId,
-        rendered: &Path,
-        sealed_original: &Path,
-        document: &AnnotationDocument,
-    ) -> Result<(), AnnotatedError> {
-        self.commit_save(
-            id,
-            &SaveRequest {
-                rendered,
-                document,
-                sealed_original: Some(sealed_original),
-            },
-        )
-    }
-
-    pub fn annotations(&self, id: AssetId) -> Result<Option<Annotations>, super::LibraryError> {
+    pub fn annotations(&self, id: AssetId) -> Result<Option<Annotations>, LibraryError> {
         Ok(self
             .connection
             .query_row(
-                "SELECT document, has_masks, updated_at_unix_ms, seal_generation
+                "SELECT document, has_masks, updated_at_unix_ms
                  FROM asset_annotations WHERE asset_id = ?1",
                 [id],
                 |row| {
@@ -105,7 +39,6 @@ impl Library {
                         document: row.get(0)?,
                         has_masks: row.get(1)?,
                         updated_at_unix_ms: row.get(2)?,
-                        seal_generation: row.get(3)?,
                     })
                 },
             )
@@ -121,88 +54,110 @@ impl Library {
             .transpose()
     }
 
-    pub fn original_path(&self, id: AssetId) -> Result<Option<PathBuf>, super::LibraryError> {
-        Ok(self.annotations(id)?.map(|stored| {
-            self.root
-                .join(layout::original_generation_path(id, stored.seal_generation))
-        }))
+    pub fn annotated_ids(&self) -> Result<HashSet<AssetId>, LibraryError> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT asset_id FROM asset_annotations")?;
+        let ids = statement
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(ids)
     }
 
-    fn store_annotated(
+    pub fn save_annotations(
         &mut self,
-        prepared: &PreparedFile,
-        image: AnnotatedImage<'_>,
-        stored_document: &str,
-        batch: &mut ImportBatch,
+        id: AssetId,
+        document: &AnnotationDocument,
+    ) -> Result<(), AnnotatedError> {
+        let stored_document = document.to_json()?;
+        self.asset(id)?.ok_or(AnnotatedError::AssetNotFound(id))?;
+        let has_any = !document.objects.is_empty() || document.crop.is_some();
+        let transaction = self.connection.transaction()?;
+        if has_any {
+            transaction.execute(
+                "INSERT INTO asset_annotations (asset_id, document, has_masks, updated_at_unix_ms)
+                 VALUES (?1, ?2, ?3, ?4)
+                 ON CONFLICT (asset_id) DO UPDATE SET
+                    document = excluded.document,
+                    has_masks = excluded.has_masks,
+                    updated_at_unix_ms = excluded.updated_at_unix_ms",
+                params![
+                    id,
+                    stored_document,
+                    document.hides_content(),
+                    clock::now_unix_ms()
+                ],
+            )?;
+        } else {
+            transaction.execute("DELETE FROM asset_annotations WHERE asset_id = ?1", [id])?;
+        }
+        transaction.commit()?;
+        details_store::forget(&mut self.connection, &[id]);
+        forget_thumbnails(&self.root, id);
+        Ok(())
+    }
+
+    pub fn import_with_annotations(
+        &mut self,
+        source: &Path,
+        document: &AnnotationDocument,
     ) -> Result<AssetId, AnnotatedError> {
-        let id = AssetId::generate();
-        let staging = StagingDir::create(layout::unfinished_import_dir(&self.root, id))?;
-        let rendered_copy = staging.path().join(prepared.original_file_name());
-        if &content::copy_with_digest(image.rendered, &rendered_copy)? != prepared.digest() {
-            return Err(AnnotatedError::Unreadable(image.rendered.to_path_buf()));
+        document.to_json()?;
+        match self.import_file(source, None)? {
+            ImportOutcome::Imported(id) => {
+                self.save_annotations(id, document)?;
+                Ok(id)
+            }
+            ImportOutcome::AlreadyPresent(id)
+            | ImportOutcome::AddedToCollection(id)
+            | ImportOutcome::RestoredFromTrash(id) => Err(AnnotatedError::AlreadyPresent(id)),
         }
-        let generation = image
-            .document
-            .seal
-            .as_ref()
-            .map_or(0, |seal| seal.generation);
-        let original_copy = staging
-            .path()
-            .join(layout::original_generation_name(generation));
-        let original: ContentDigest = content::copy_with_digest(image.original, &original_copy)?;
-
-        let savepoint = self.connection.savepoint()?;
-        import::insert_asset(&savepoint, id, prepared)?;
-        insert_annotations(&savepoint, id, image, stored_document, original.byte_size)?;
-        savepoint.commit()?;
-        batch.stage(staging, layout::asset_dir(&self.root, id));
-        Ok(id)
     }
-}
 
-pub(super) fn prepared_png(path: &Path) -> Result<PreparedFile, AnnotatedError> {
-    let prepared = import::prepare(path)?;
-    if prepared.media().format != AssetFormat::Png {
-        return Err(AnnotatedError::NotPng(path.to_path_buf()));
+    pub fn annotation_render_key(&self, id: AssetId) -> Result<Option<String>, LibraryError> {
+        Ok(self.annotation_render(id)?.map(|render| render.key))
     }
-    Ok(prepared)
-}
 
-pub(super) fn ensure_png(path: &Path) -> Result<(), AnnotatedError> {
-    match media::inspect(path) {
-        Ok(info) if info.format == AssetFormat::Png => Ok(()),
-        Ok(_) | Err(media::InspectError::Unsupported) => {
-            Err(AnnotatedError::NotPng(path.to_path_buf()))
-        }
-        Err(media::InspectError::Unreadable) => Err(AnnotatedError::Unreadable(path.to_path_buf())),
-    }
-}
-
-fn insert_annotations(
-    connection: &Connection,
-    id: AssetId,
-    image: AnnotatedImage<'_>,
-    stored_document: &str,
-    original_byte_size: u64,
-) -> Result<(), AnnotatedError> {
-    connection.execute(
-        "INSERT INTO asset_annotations
-            (asset_id, document, has_masks, original_byte_size, updated_at_unix_ms,
-             seal_generation, seal_base_hash)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        params![
+    pub fn annotation_render(&self, id: AssetId) -> Result<Option<AnnotationRender>, LibraryError> {
+        let Some(asset) = self.asset(id)? else {
+            return Ok(None);
+        };
+        let Some(stored) = self.annotations(id)? else {
+            return Ok(None);
+        };
+        Ok(Some(self.render_of(
             id,
-            stored_document,
-            image.document.hides_content(),
-            original_byte_size,
-            clock::now_unix_ms(),
-            image
-                .document
-                .seal
-                .as_ref()
-                .map_or(0, |seal| seal.generation),
-            image.document.seal.as_ref().map(|seal| seal.base.as_str()),
-        ],
-    )?;
-    Ok(())
+            &asset.content_hash,
+            stored.document,
+        )))
+    }
+
+    pub fn annotation_renders(&self) -> Result<HashMap<AssetId, AnnotationRender>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT assets.id, assets.content_hash, asset_annotations.document
+             FROM asset_annotations JOIN assets ON assets.id = asset_annotations.asset_id",
+        )?;
+        let found: Vec<(AssetId, String, String)> = statement
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+            .collect::<Result<_, _>>()?;
+        Ok(found
+            .into_iter()
+            .map(|(id, hash, document)| (id, self.render_of(id, &hash, document)))
+            .collect())
+    }
+
+    fn render_of(&self, id: AssetId, content_hash: &str, document: String) -> AnnotationRender {
+        let mut hasher = blake3::Hasher::new();
+        hasher.update(content_hash.as_bytes());
+        hasher.update(&[0]);
+        hasher.update(document.as_bytes());
+        hasher.update(&[0]);
+        hasher.update(&RENDER_VERSION.to_le_bytes());
+        let key = hasher.finalize().to_hex()[..32].to_owned();
+        AnnotationRender {
+            file: layout::annotated_render_path(&self.root, id, &key),
+            key,
+            document,
+        }
+    }
 }

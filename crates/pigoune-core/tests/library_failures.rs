@@ -75,7 +75,7 @@ fn a_stored_file_that_disappeared_does_not_break_the_library() {
         reopened.visible_assets().expect("assets are listed").len(),
         1
     );
-    let copies = reopened.clipboard_copies(&[asset]);
+    let copies = reopened.clipboard_copies(&[asset], &pigoune_core::FlatFiles::new());
     assert!(copies.is_err() || copies.expect("copies").is_empty());
 }
 

@@ -11,22 +11,23 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
-    AdoptError, AnnotatedError, AnnotatedImage, AssetCommand, AssetError, AssetFilter, AssetFormat,
-    AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId, CollectionLook,
+    AdoptError, AnnotatedError, AnnotationRender, AssetCommand, AssetError, AssetFilter,
+    AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId, CollectionLook,
     CollectionPath, CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind,
-    HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError,
-    LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SealStatus, SimilarSearch,
+    FlatFiles, HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library,
+    LibraryError, LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch,
     SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
     TagError, TagId, TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors,
     library_display_name, visual_analysis,
 };
 
 use crate::analysis_pace;
+use crate::annotated_files;
 use crate::asset_colors;
+use crate::asset_details::AnnotationAccess;
 use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
-use crate::blocked_images;
 use crate::capture_draft;
 use crate::clipboard_content;
 use crate::collection_choice;
@@ -57,6 +58,7 @@ use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report;
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
+use crate::mask_alert::{self, MaskChoice};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::pasted_content::{self, Pasted};
 use crate::preferences_dialog;
@@ -156,16 +158,15 @@ const LARGEST_CAPTURE_SIDE: i32 = 8000;
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
-const EDIT_ANNOTATIONS_ACTION: &str = "win.edit-annotations";
+const ANNOTATE_ACTION: &str = "win.annotate";
 const VIEW_ORIGINAL_ACTION: &str = "win.view-original";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
 const MOST_SIMILAR_SHOWN: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 31] = [
-    CAPTURE_ACTION,
+const OPEN_LIBRARY_ACTIONS: [&str; 30] = [
     PASTE_AND_ANNOTATE_ACTION,
-    EDIT_ANNOTATIONS_ACTION,
+    ANNOTATE_ACTION,
     VIEW_ORIGINAL_ACTION,
     SET_WALLPAPER_ACTION,
     FIND_SIMILAR_ACTION,
@@ -213,7 +214,6 @@ const IMAGE_MIME_TYPES: [&str; 13] = [
 ];
 
 const CLOSE_RESPONSE: &str = "close";
-const FINISH_SEALING_RESPONSE: &str = "finish";
 const CAPTURE_TAG: &str = "capture";
 const DEFAULT_VECTOR_EXPORT_PIXELS: u32 = 512;
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
@@ -256,20 +256,20 @@ mod imp {
     use crate::update_news::UpdateNews;
 
     use super::{
-        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, CAPTURE_ACTION, CLEAR_RECENT_LIBRARIES_ACTION,
-        CLOSE_LIBRARY_ACTION, CLOSE_WINDOW_ACTION, COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION,
-        CUSTOMIZE_COLLECTION_ACTION, DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION,
-        DELETE_TAG_ACTION, EDIT_ANNOTATIONS_ACTION, EDIT_SMART_COLLECTION_ACTION,
-        EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION, EXPORT_SELECTED_ACTION,
-        EXPORT_SELECTED_AS_ACTION, FIND_SIMILAR_ACTION, IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION,
-        LIBRARY_INFO_ACTION, MERGE_TAG_ACTION, MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION,
-        MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION, NEW_SMART_COLLECTION_ACTION,
-        NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION, OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION,
-        OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION, PASTE_ACTION, PASTE_AND_ANNOTATE_ACTION,
-        PREFERENCES_ACTION, REDO_ACTION, REMOVE_FROM_ALL_COLLECTIONS_ACTION,
-        REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION, RENAME_COLLECTION_ACTION,
-        RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION, SELECT_ALL_ACTION,
-        SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
+        ADD_TAG_ACTION, ADD_TO_COLLECTION_ACTION, ANNOTATE_ACTION, CAPTURE_ACTION,
+        CLEAR_RECENT_LIBRARIES_ACTION, CLOSE_LIBRARY_ACTION, CLOSE_WINDOW_ACTION,
+        COPY_SELECTED_ACTION, CREATE_LIBRARY_ACTION, CUSTOMIZE_COLLECTION_ACTION,
+        DELETE_COLLECTION_ACTION, DELETE_SMART_COLLECTION_ACTION, DELETE_TAG_ACTION,
+        EDIT_SMART_COLLECTION_ACTION, EMPTY_TRASH_ACTION, ENLARGE_THUMBNAILS_ACTION,
+        EXPORT_SELECTED_ACTION, EXPORT_SELECTED_AS_ACTION, FIND_SIMILAR_ACTION,
+        IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, LIBRARY_INFO_ACTION, MERGE_TAG_ACTION,
+        MOVE_COLLECTION_ACTION, MOVE_TAG_ACTION, MOVE_TO_COLLECTION_ACTION, NEW_COLLECTION_ACTION,
+        NEW_SMART_COLLECTION_ACTION, NEW_SUB_TAG_ACTION, NEW_SUBCOLLECTION_ACTION,
+        OPEN_LIBRARY_ACTION, OPEN_PREVIEW_ACTION, OPEN_RECENT_LIBRARY_ACTION, OPEN_WITH_ACTION,
+        PASTE_ACTION, PASTE_AND_ANNOTATE_ACTION, PREFERENCES_ACTION, REDO_ACTION,
+        REMOVE_FROM_ALL_COLLECTIONS_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
+        RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
+        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
         TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer, UNDO_ACTION,
         VIEW_ORIGINAL_ACTION, collection_parameter, smart_collection_parameter, tag_parameter,
     };
@@ -457,8 +457,8 @@ mod imp {
         class.install_action(CLOSE_WINDOW_ACTION, None, |window, _, _| {
             window.close();
         });
-        class.install_action(COPY_SELECTED_ACTION, None, |window, _, _| {
-            window.copy_selected();
+        class.install_action_async(COPY_SELECTED_ACTION, None, |window, _, _| async move {
+            window.copy_selected().await;
         });
         class.install_action_async(PASTE_ACTION, None, |window, _, _| async move {
             window.paste().await;
@@ -481,8 +481,8 @@ mod imp {
         class.install_action_async(OPEN_WITH_ACTION, None, |window, _, _| async move {
             window.open_selected_with().await;
         });
-        class.install_action(EDIT_ANNOTATIONS_ACTION, None, |window, _, _| {
-            window.edit_selected_annotations();
+        class.install_action_async(ANNOTATE_ACTION, None, |window, _, _| async move {
+            window.annotate_selected().await;
         });
         class.install_action_async(VIEW_ORIGINAL_ACTION, None, |window, _, _| async move {
             window.view_selected_original().await;
@@ -490,8 +490,8 @@ mod imp {
         class.install_action_async(SHOW_IN_FILES_ACTION, None, |window, _, _| async move {
             window.show_selected_in_files().await;
         });
-        class.install_action(SET_WALLPAPER_ACTION, None, |window, _, _| {
-            window.prepare_selected_as_wallpaper();
+        class.install_action_async(SET_WALLPAPER_ACTION, None, |window, _, _| async move {
+            window.prepare_selected_as_wallpaper().await;
         });
         class.install_action(FIND_SIMILAR_ACTION, None, |window, _, _| {
             window.after_menu_closes(super::PigouneWindow::find_similar_to_selected);
@@ -936,18 +936,101 @@ impl PigouneWindow {
         ));
     }
 
+    fn ready_flat_files(&self, ids: &[AssetId]) -> (Vec<AssetId>, FlatFiles) {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return (Vec::new(), FlatFiles::new());
+        };
+        let mut flats = FlatFiles::new();
+        let mut exportable = Vec::new();
+        for id in ids {
+            match library.annotation_render(*id) {
+                Ok(Some(render)) if render.file.is_file() => {
+                    flats.insert(*id, render.file);
+                    exportable.push(*id);
+                }
+                Ok(Some(_)) | Err(_) => {}
+                Ok(None) => exportable.push(*id),
+            }
+        }
+        (exportable, flats)
+    }
+
+    async fn flat_files_for(&self, ids: &[AssetId]) -> FlatFiles {
+        let jobs: Vec<(AssetId, AnnotationRender, PathBuf)> = {
+            let library = self.imp().library.borrow();
+            let Some(library) = library.as_ref() else {
+                return FlatFiles::new();
+            };
+            ids.iter()
+                .filter_map(|id| {
+                    let render = library.annotation_render(*id).ok().flatten()?;
+                    let asset = library.asset(*id).ok().flatten()?;
+                    Some((*id, render, library.file_of(&asset)))
+                })
+                .collect()
+        };
+        let mut flats = FlatFiles::new();
+        for (id, render, source) in jobs {
+            if let Some(file) = annotated_files::ensure(&render, &source, self).await {
+                flats.insert(id, file);
+            }
+        }
+        flats
+    }
+
+    async fn output_source(
+        &self,
+        asset: &PigouneAssetObject,
+    ) -> Result<(PathBuf, bool, (u32, u32)), String> {
+        let Some(render) = asset.annotation() else {
+            return Ok((
+                asset.source_file().to_path_buf(),
+                asset.asset().format == AssetFormat::Svg,
+                natural_size(asset),
+            ));
+        };
+        let unavailable = || gettext("The annotated image could not be rendered");
+        let file = annotated_files::ensure(render, asset.source_file(), self)
+            .await
+            .ok_or_else(unavailable)?;
+        let natural = annotated_files::png_size(&file).ok_or_else(unavailable)?;
+        Ok((file, false, natural))
+    }
+
+    fn exposed_mask_names(&self, ids: &[AssetId]) -> Vec<String> {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return Vec::new();
+        };
+        ids.iter()
+            .filter_map(|id| {
+                let document = library.annotation_document(*id).ok().flatten()?;
+                let hidden = document.exposed_masks();
+                let asset = library.asset(*id).ok().flatten()?;
+                (!hidden.is_empty()).then_some(asset.display_name)
+            })
+            .collect()
+    }
+
+    async fn output_is_allowed(&self, ids: &[AssetId]) -> bool {
+        let names = self.exposed_mask_names(ids);
+        names.is_empty() || mask_alert::ask(self, &names, false).await == MaskChoice::Continue
+    }
+
     fn offer_export_copies(&self) {
         self.imp().asset_grid.connect_export_copies(glib::clone!(
             #[weak(rename_to = window)]
             self,
             #[upgrade_or_default]
             move |assets| {
+                let (exportable, flats) = window.ready_flat_files(assets);
                 window
                     .imp()
                     .library
                     .borrow()
                     .as_ref()
-                    .and_then(|library| library.export_copies(assets).ok())
+                    .and_then(|library| library.export_copies(&exportable, &flats).ok())
                     .unwrap_or_default()
             }
         ));
@@ -2025,14 +2108,12 @@ impl PigouneWindow {
             self.recent_libraries_limit(),
         ));
         imp.current_view.set(self.view_on_opening());
-        self.refresh_sealing_guard();
         self.refresh_assets();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         imp.history_buttons.set_visible(true);
         self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
-        self.show_sealing_attention();
         self.offer_draft();
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
@@ -2906,184 +2987,106 @@ impl PigouneWindow {
             }
             several => imp.asset_details.show_group(several, &thumbnails),
         }
-        imp.asset_details
-            .show_annotations(self.annotated_selection().is_some());
+        let access = match selected {
+            [single] => self.annotation_access(single),
+            _ => AnnotationAccess::None,
+        };
+        imp.asset_details.show_annotations(access);
         self.refresh_selected_tags();
         self.refresh_selected_collections();
     }
 
     fn append_annotation_items(&self, menu: &gio::Menu) {
-        if self.annotated_selection().is_none() {
+        let Some(asset) = self.annotation_target() else {
             return;
+        };
+        menu.append_item(&shortcuts::menu_item(
+            &gettext("Annotate…"),
+            ANNOTATE_ACTION,
+        ));
+        if self.is_annotated(asset.id()) {
+            menu.append_item(&shortcuts::menu_item(
+                &gettext("View Original"),
+                VIEW_ORIGINAL_ACTION,
+            ));
         }
-        menu.append_item(&shortcuts::menu_item(
-            &gettext("Edit Annotations…"),
-            EDIT_ANNOTATIONS_ACTION,
-        ));
-        menu.append_item(&shortcuts::menu_item(
-            &gettext("View Original"),
-            VIEW_ORIGINAL_ACTION,
-        ));
     }
 
-    fn annotated_selection(&self) -> Option<AssetId> {
+    fn is_annotated(&self, id: AssetId) -> bool {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .is_some_and(|library| library.annotations(id).ok().flatten().is_some())
+    }
+
+    fn annotation_target(&self) -> Option<PigouneAssetObject> {
         if self.is_showing_trash() {
             return None;
         }
-        let [id] = self.selected_ids()[..] else {
+        let [single] = &self.targeted_assets()[..] else {
             return None;
         };
-        let library = self.imp().library.borrow();
-        library.as_ref()?.annotations(id).ok().flatten()?;
-        Some(id)
+        Some(single.clone())
     }
 
-    fn edit_selected_annotations(&self) {
-        let Some(id) = self.annotated_selection() else {
-            return;
-        };
-        if !self.sealing_allows_output(id) {
-            return;
-        }
-        let loaded = self.imp().library.borrow().as_ref().map(|library| {
-            Ok::<_, AnnotatedError>((library.original_path(id)?, library.annotation_document(id)?))
-        });
-        let Some(Ok((Some(original), Some(document)))) = loaded else {
-            self.show_annotation_failure();
-            return;
-        };
-        if self
-            .imp()
-            .editor
-            .open_existing(id, &original, document)
-            .is_ok()
-        {
-            self.show_editor();
+    fn annotation_access(&self, asset: &PigouneAssetObject) -> AnnotationAccess {
+        if self.is_showing_trash() {
+            AnnotationAccess::None
+        } else if asset.asset().is_animated {
+            AnnotationAccess::Unavailable(gettext("Animated images cannot be annotated yet"))
         } else {
-            self.show_annotation_failure();
-        }
-    }
-
-    fn refresh_sealing_guard(&self) {
-        let paths = self
-            .imp()
-            .library
-            .borrow()
-            .as_ref()
-            .and_then(|library| library.blocked_paths().ok())
-            .unwrap_or_default();
-        if blocked_images::replace(paths) {
-            self.imp().asset_grid.forget_thumbnails();
-        }
-    }
-
-    fn sealing_allows_output(&self, id: AssetId) -> bool {
-        let verdict = self
-            .imp()
-            .library
-            .borrow()
-            .as_ref()
-            .map(|library| library.ensure_may_leave(id));
-        match verdict {
-            Some(Err(_)) => {
-                self.show_sealing_attention();
-                false
+            AnnotationAccess::Allowed {
+                annotated: self.is_annotated(asset.id()),
             }
-            _ => true,
         }
     }
 
-    fn sealing_attention_lines(&self) -> (Vec<String>, bool) {
-        let library = self.imp().library.borrow();
-        let Some(library) = library.as_ref() else {
-            return (Vec::new(), false);
+    async fn annotate_selected(&self) {
+        let Some(asset) = self.annotation_target() else {
+            return;
         };
-        let attention = library.seal_attention().unwrap_or_default();
-        let unfinished = attention
-            .iter()
-            .any(|(_, status)| *status == SealStatus::Finalizing);
-        let lines = attention
-            .iter()
-            .map(|(id, status)| {
-                let name = library
-                    .asset(*id)
-                    .ok()
-                    .flatten()
-                    .map_or_else(String::new, |asset| asset.display_name);
-                let reason = if *status == SealStatus::Finalizing {
-                    gettext("the sealing is not finished")
-                } else {
-                    gettext("the protection cannot be verified")
-                };
-                format!("{name}: {reason}")
-            })
-            .collect();
-        (lines, unfinished)
-    }
-
-    fn show_sealing_attention(&self) {
-        let (lines, unfinished) = self.sealing_attention_lines();
-        if lines.is_empty() {
+        if self.is_editing() {
             return;
         }
-        let alert = adw::AlertDialog::new(
-            Some(&gettext("Sealed Images Need Attention")),
-            Some(
-                &gettext(
-                    "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}",
-                )
-                .replace("{list}", &lines.join("\n")),
-            ),
-        );
-        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
-        if unfinished {
-            alert.add_response(FINISH_SEALING_RESPONSE, &gettext("_Finish the Cleanup"));
-            alert.set_response_appearance(
-                FINISH_SEALING_RESPONSE,
-                adw::ResponseAppearance::Suggested,
-            );
-        }
-        alert.connect_response(
-            Some(FINISH_SEALING_RESPONSE),
-            glib::clone!(
-                #[weak(rename_to = window)]
-                self,
-                move |_, _| window.finish_sealing()
-            ),
-        );
-        alert.present(Some(self));
-    }
-
-    fn finish_sealing(&self) {
-        let attention = {
-            let mut library = self.imp().library.borrow_mut();
-            let Some(library) = library.as_mut() else {
+        match self.annotation_access(&asset) {
+            AnnotationAccess::Unavailable(reason) => {
+                self.show_toast(&reason);
                 return;
-            };
-            let pending: Vec<AssetId> = library
-                .seal_attention()
-                .unwrap_or_default()
-                .into_iter()
-                .filter(|(_, status)| *status == SealStatus::Finalizing)
-                .map(|(id, _)| id)
-                .collect();
-            for id in pending {
-                let _ = library.finalize_save(id);
             }
-            true
-        };
-        if attention {
-            self.refresh_sealing_guard();
-            self.refresh_assets();
-            self.show_sealing_attention();
+            AnnotationAccess::None => return,
+            AnnotationAccess::Allowed { .. } => {}
         }
+        let id = asset.id();
+        let stored = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.annotation_document(id));
+        let Some(Ok(document)) = stored else {
+            self.show_annotation_failure();
+            return;
+        };
+        let document = document.unwrap_or_default();
+        let Some(image) = annotated_files::load_source(asset.source_file()).await else {
+            self.show_annotation_failure();
+            return;
+        };
+        if image.width() > LARGEST_CAPTURE_SIDE || image.height() > LARGEST_CAPTURE_SIDE {
+            self.show_image_too_large();
+            return;
+        }
+        self.imp().asset_preview.close();
+        self.imp().editor.open_item(id, &image, document);
+        self.show_editor();
     }
 
     fn show_annotation_failure(&self) {
         let alert = adw::AlertDialog::new(
             Some(&gettext("Could Not Open the Annotations")),
             Some(&gettext(
-                "The original image or its annotations could not be read. They may come from a newer version of Pigoune.",
+                "The image or its annotations could not be read. They may come from a newer version of Pigoune.",
             )),
         );
         alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
@@ -3091,26 +3094,19 @@ impl PigouneWindow {
     }
 
     async fn view_selected_original(&self) {
-        let Some(id) = self.annotated_selection() else {
+        let Some(asset) = self.annotation_target() else {
             return;
         };
-        if !self.sealing_allows_output(id) {
-            return;
-        }
-        let original = self
-            .imp()
-            .library
-            .borrow()
-            .as_ref()
-            .and_then(|library| library.original_path(id).ok().flatten());
-        let copy = original.and_then(|original| {
-            let copy = std::env::temp_dir().join(format!("pigoune-original-{id}.png"));
-            fs::copy(original, &copy).ok().map(|_| copy)
-        });
-        let Some(copy) = copy else {
+        let source = asset.source_file().to_path_buf();
+        let name = source
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let copy = std::env::temp_dir().join(format!("pigoune-original-{}-{name}", asset.id()));
+        if fs::copy(&source, &copy).is_err() {
             self.show_annotation_failure();
             return;
-        };
+        }
         let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(copy)));
         if let Err(error) = launcher.launch_future(Some(self)).await
             && !is_dismissed(&error)
@@ -3518,7 +3514,7 @@ impl PigouneWindow {
         }
     }
 
-    fn copy_selected(&self) {
+    async fn copy_selected(&self) {
         if self.copy_typed_text() {
             return;
         }
@@ -3526,8 +3522,12 @@ impl PigouneWindow {
         if selected.is_empty() {
             return;
         }
+        if !self.output_is_allowed(&selected).await {
+            return;
+        }
+        let flats = self.flat_files_for(&selected).await;
         let prepared = self.imp().library.borrow().as_ref().map(|library| {
-            let copies = library.clipboard_copies(&selected)?;
+            let copies = library.clipboard_copies(&selected, &flats)?;
             let first_name = library.asset(selected[0])?.map(|asset| asset.display_name);
             Ok::<_, LibraryError>((copies, first_name))
         });
@@ -3565,7 +3565,10 @@ impl PigouneWindow {
 
     pub async fn capture_screenshot(&self) {
         let imp = self.imp();
-        if self.is_editing() {
+        if self.is_editing()
+            && imp.editor.needs_saving()
+            && !self.settle_editing_before_capture().await
+        {
             return;
         }
         if imp.library.borrow().is_none() {
@@ -3585,7 +3588,6 @@ impl PigouneWindow {
             alert.present(Some(self));
             return;
         }
-        imp.asset_preview.close();
         let hold = GtkWindowExt::application(self).map(|application| application.hold());
         self.set_visible(false);
         glib::timeout_future(CAPTURE_SETTLE).await;
@@ -3594,6 +3596,27 @@ impl PigouneWindow {
         self.present();
         drop(hold);
         self.annotate_screenshot(outcome);
+    }
+
+    async fn settle_editing_before_capture(&self) -> bool {
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Take a Screenshot?")),
+            Some(&gettext(
+                "The image being annotated is not saved. Save it first, or let the screenshot replace it.",
+            )),
+        );
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("discard", &gettext("_Replace Without Saving"));
+        dialog.add_response("save", &gettext("_Save and Capture"));
+        dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+        dialog.set_response_appearance("save", adw::ResponseAppearance::Suggested);
+        dialog.set_default_response(Some("save"));
+        dialog.set_close_response("cancel");
+        match dialog.choose_future(Some(self)).await.as_str() {
+            "save" => self.imp().editor.request_save().await,
+            "discard" => true,
+            _ => false,
+        }
     }
 
     fn annotate_screenshot(&self, outcome: ScreenshotOutcome) {
@@ -3640,14 +3663,18 @@ impl PigouneWindow {
         }
     }
 
+    fn show_image_too_large(&self) {
+        let body = gettext("Images can be annotated up to {side} pixels on a side.")
+            .replace("{side}", &LARGEST_CAPTURE_SIDE.to_string());
+        let alert =
+            adw::AlertDialog::new(Some(&gettext("Image Too Large to Annotate")), Some(&body));
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
     fn annotate_texture(&self, texture: &gdk::Texture) {
         if texture.width() > LARGEST_CAPTURE_SIDE || texture.height() > LARGEST_CAPTURE_SIDE {
-            let body = gettext("Images can be annotated up to {side} pixels on a side.")
-                .replace("{side}", &LARGEST_CAPTURE_SIDE.to_string());
-            let alert =
-                adw::AlertDialog::new(Some(&gettext("Image Too Large to Annotate")), Some(&body));
-            alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
-            alert.present(Some(self));
+            self.show_image_too_large();
             return;
         }
         self.imp().asset_preview.close();
@@ -3730,12 +3757,16 @@ impl PigouneWindow {
         let Some(path) = folder.path() else {
             return;
         };
+        if !self.output_is_allowed(&selected).await {
+            return;
+        }
+        let flats = self.flat_files_for(&selected).await;
         let exported = self
             .imp()
             .library
             .borrow()
             .as_ref()
-            .map(|library| library.export_to(&selected, &path));
+            .map(|library| library.export_to(&selected, &path, &flats));
         match exported {
             Some(Ok(report)) => {
                 if !report.copies.is_empty() {
@@ -3780,7 +3811,7 @@ impl PigouneWindow {
         let prepared = self.imp().library.borrow().as_ref().map(|library| {
             (
                 library_display_name(library.root()),
-                library.library_export_plan(&gettext("Unclassified")),
+                library.library_export_plan(&gettext("Unclassified"), &gettext("(annotated)")),
             )
         });
         let (name, plan) = match prepared {
@@ -3807,17 +3838,54 @@ impl PigouneWindow {
         let Some(destination) = folder.path() else {
             return;
         };
+        if !self.confirm_library_export().await {
+            return;
+        }
         let progress = adw::Toast::new(&gettext("Exporting “{name}”…").replace("{name}", &name));
         progress.set_use_markup(false);
         progress.set_timeout(0);
         self.imp().toast_overlay.add_toast(progress.clone());
-        let outcome = gio::spawn_blocking(move || plan.run(&destination)).await;
+        let annotated: Vec<AssetId> = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.annotated_ids().ok())
+            .map(|ids| ids.into_iter().collect())
+            .unwrap_or_default();
+        let flats = self.flat_files_for(&annotated).await;
+        let outcome = gio::spawn_blocking(move || plan.run(&destination, &flats)).await;
         progress.dismiss();
         match outcome {
             Ok(Ok(report)) => self.finish_library_export(&report),
             Ok(Err(error)) => self.show_export_error(&error),
             Err(_) => {}
         }
+    }
+
+    async fn confirm_library_export(&self) -> bool {
+        let annotated = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.annotated_ids().ok())
+            .map_or(0, |ids| ids.len());
+        if annotated == 0 {
+            return true;
+        }
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Export the Original Images Too?")),
+            Some(&gettext(
+                "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image.",
+            )),
+        );
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("export", &gettext("_Export"));
+        dialog.set_response_appearance("export", adw::ResponseAppearance::Suggested);
+        dialog.set_default_response(Some("cancel"));
+        dialog.set_close_response("cancel");
+        dialog.choose_future(Some(self)).await == "export"
     }
 
     fn finish_library_export(&self, report: &LibraryExportReport) {
@@ -3879,6 +3947,10 @@ impl PigouneWindow {
         paused_frame: Option<(gdk::Texture, usize)>,
         settings: ConversionSettings,
     ) {
+        let ids: Vec<AssetId> = assets.iter().map(PigouneAssetObject::id).collect();
+        if !self.output_is_allowed(&ids).await {
+            return;
+        }
         let dialog = gtk::FileDialog::builder()
             .title(gettext("Convert and Export"))
             .accept_label(gettext("_Export"))
@@ -3931,10 +4003,11 @@ impl PigouneWindow {
         settings: ConversionSettings,
     ) -> Result<(), String> {
         let frame_number = paused_frame.as_ref().map(|(_, index)| index + 1);
+        let (file, is_vector, natural) = self.output_source(asset).await?;
         let source = image_conversion::Source {
-            file: asset.file(),
-            is_vector: asset.asset().format == AssetFormat::Svg,
-            natural: natural_size(asset),
+            file: &file,
+            is_vector,
+            natural,
             still: paused_frame.map(|(texture, _)| texture),
         };
         let converted = image_conversion::convert(&source, settings)
@@ -3965,7 +4038,7 @@ impl PigouneWindow {
         let [asset] = targeted.as_slice() else {
             return;
         };
-        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(asset.file())));
+        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(asset.source_file())));
         if let Err(error) = launcher.open_containing_folder_future(Some(self)).await
             && !is_dismissed(&error)
         {
@@ -3974,12 +4047,16 @@ impl PigouneWindow {
     }
 
     async fn open_asset(&self, asset: AssetId, choose_application: bool) {
+        if !self.output_is_allowed(&[asset]).await {
+            return;
+        }
+        let flats = self.flat_files_for(&[asset]).await;
         let prepared = self
             .imp()
             .library
             .borrow()
             .as_ref()
-            .map(|library| library.opening_copy(asset));
+            .map(|library| library.opening_copy(asset, &flats));
         let copy = match prepared {
             Some(Ok(Some(copy))) => copy,
             Some(Err(error)) => {
@@ -3997,7 +4074,7 @@ impl PigouneWindow {
         }
     }
 
-    fn prepare_selected_as_wallpaper(&self) {
+    async fn prepare_selected_as_wallpaper(&self) {
         let targeted = self.targeted_assets();
         let [asset] = targeted.as_slice() else {
             return;
@@ -4005,6 +4082,10 @@ impl PigouneWindow {
         if self.is_showing_trash() {
             return;
         }
+        let Ok((file, is_vector, natural)) = self.output_source(asset).await else {
+            self.show_toast(&gettext("The annotated image could not be rendered"));
+            return;
+        };
         let (mut screens, current) = screen_size::screens_of(self);
         if screens.is_empty() {
             let Some(size) = Dimensions::new(FALLBACK_SCREEN.0, FALLBACK_SCREEN.1) else {
@@ -4017,10 +4098,10 @@ impl PigouneWindow {
             });
         }
         let source = WallpaperSource {
-            file: asset.file().to_path_buf(),
-            natural: natural_size(asset),
+            file,
+            natural,
             name: asset.display_name(),
-            is_vector: asset.asset().format == AssetFormat::Svg,
+            is_vector,
             colors: asset
                 .asset()
                 .colors
@@ -4071,10 +4152,10 @@ impl PigouneWindow {
         screen: Dimensions,
         progress: &PigouneWallpaperProgressDialog,
     ) -> Result<PathBuf, String> {
-        let natural = natural_size(asset);
+        let (file, is_vector, natural) = self.output_source(asset).await?;
         let source = image_conversion::Source {
-            file: asset.file(),
-            is_vector: asset.asset().format == AssetFormat::Svg,
+            file: &file,
+            is_vector,
             natural,
             still: None,
         };
@@ -5766,14 +5847,9 @@ impl PigouneWindow {
         self.imp().editor.connect_save(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |capture| window.save_capture(capture)
-        ));
-        self.imp().editor.connect_seal(glib::clone!(
-            #[weak(rename_to = window)]
-            self,
             #[upgrade_or]
             false,
-            move |capture| window.persist_seal(capture)
+            move |capture| window.save_capture(capture)
         ));
         self.imp().editor.connect_notice(glib::clone!(
             #[weak(rename_to = window)]
@@ -5782,107 +5858,30 @@ impl PigouneWindow {
         ));
     }
 
-    fn store_edited_annotations(
-        &self,
-        id: AssetId,
-        capture: &EditedCapture,
-    ) -> Option<Result<(), AnnotatedError>> {
-        let stored_generation = self
+    fn save_item_annotations(&self, id: AssetId, capture: &EditedCapture) -> bool {
+        let stored = self
             .imp()
             .library
-            .borrow()
-            .as_ref()?
-            .annotations(id)
-            .ok()
-            .flatten()
-            .map_or(0, |annotations| annotations.seal_generation);
-        let sealing = capture
-            .document
-            .seal
-            .as_ref()
-            .is_some_and(|record| record.generation > stored_generation);
-        let folder = std::env::temp_dir().join(format!("pigoune-capture-{}", std::process::id()));
-        let rendered = folder.join("rendered.png");
-        let original = folder.join("source.png");
-        let written = fs::remove_dir_all(&folder)
-            .or_else(|error| match error.kind() {
-                std::io::ErrorKind::NotFound => Ok(()),
-                _ => Err(error),
-            })
-            .and_then(|()| fs::create_dir_all(&folder))
-            .and_then(|()| fs::write(&rendered, &capture.rendered))
-            .and_then(|()| {
-                if sealing {
-                    fs::write(&original, &capture.original)
-                } else {
-                    Ok(())
-                }
-            });
-        let stored = match written {
-            Ok(()) => self.imp().library.borrow_mut().as_mut().map(|library| {
-                if sealing {
-                    library.seal_annotated(id, &rendered, &original, &capture.document)
-                } else {
-                    library.update_annotated(id, &rendered, &capture.document)
-                }
-            }),
-            Err(_) => Some(Err(AnnotatedError::Unreadable(rendered.clone()))),
-        };
-        let _ = fs::remove_dir_all(&folder);
-        stored
-    }
-
-    fn save_edited_annotations(&self, id: AssetId, capture: &EditedCapture) {
-        let stored = self.store_edited_annotations(id, capture);
+            .borrow_mut()
+            .as_mut()
+            .map(|library| library.save_annotations(id, &capture.document));
         match stored {
             Some(Ok(())) => {
-                self.refresh_sealing_guard();
                 self.imp().asset_grid.forget_thumbnails();
                 self.refresh_assets();
-                self.analyse_colors();
                 self.leave_editor();
                 let grid = &self.imp().asset_grid;
                 grid.select_asset(id);
                 grid.reveal_asset(id);
                 self.show_toast(&gettext("Annotations saved"));
+                true
             }
-            Some(Err(AnnotatedError::AlreadyPresent(existing))) => {
-                self.show_capture_already_present(existing);
+            Some(Err(_)) => {
+                self.show_capture_not_saved();
+                false
             }
-            Some(Err(_)) => self.show_capture_not_saved(),
-            None => {}
-        }
-    }
-
-    fn persist_seal(&self, capture: &EditedCapture) -> bool {
-        let Some(id) = capture.replaces else {
-            return false;
-        };
-        let stored = self.store_edited_annotations(id, capture);
-        let wanted = capture
-            .document
-            .seal
-            .as_ref()
-            .map(|record| record.generation);
-        let sealed = match stored {
-            Some(Ok(())) => true,
-            Some(Err(_)) => self.sealing_reached(id, wanted),
             None => false,
-        };
-        self.refresh_sealing_guard();
-        sealed
-    }
-
-    fn sealing_reached(&self, id: AssetId, wanted: Option<u32>) -> bool {
-        let mut library = self.imp().library.borrow_mut();
-        let Some(library) = library.as_mut() else {
-            return false;
-        };
-        let _ = library.finalize_save(id);
-        matches!(
-            library.seal_status(id),
-            Ok(SealStatus::Verified { generation }) if Some(generation) == wanted
-        )
+        }
     }
 
     fn show_capture_not_saved(&self) {
@@ -5894,40 +5893,43 @@ impl PigouneWindow {
         alert.present(Some(self));
     }
 
-    fn save_capture(&self, capture: &EditedCapture) {
-        if let Some(id) = capture.replaces {
-            self.save_edited_annotations(id, capture);
-            return;
+    fn save_capture(&self, capture: &EditedCapture) -> bool {
+        if let Some(id) = capture.item {
+            return self.save_item_annotations(id, capture);
         }
         let folder = std::env::temp_dir().join(format!("pigoune-capture-{}", std::process::id()));
-        let rendered = folder.join(format!("{}.png", pasted_content::capture_name()));
-        let original = folder.join("source.png");
+        let image = folder.join(format!("{}.png", pasted_content::capture_name()));
         let written = fs::remove_dir_all(&folder)
             .or_else(|error| match error.kind() {
                 std::io::ErrorKind::NotFound => Ok(()),
                 _ => Err(error),
             })
             .and_then(|()| fs::create_dir_all(&folder))
-            .and_then(|()| fs::write(&rendered, &capture.rendered))
-            .and_then(|()| fs::write(&original, &capture.original));
+            .and_then(|()| fs::write(&image, &capture.source_png));
         let stored = match written {
-            Ok(()) => self.imp().library.borrow_mut().as_mut().map(|library| {
-                library.import_annotated(AnnotatedImage {
-                    rendered: &rendered,
-                    original: &original,
-                    document: &capture.document,
-                })
-            }),
-            Err(_) => Some(Err(AnnotatedError::Unreadable(rendered.clone()))),
+            Ok(()) => self
+                .imp()
+                .library
+                .borrow_mut()
+                .as_mut()
+                .map(|library| library.import_with_annotations(&image, &capture.document)),
+            Err(_) => Some(Err(AnnotatedError::Unreadable(image.clone()))),
         };
         let _ = fs::remove_dir_all(&folder);
         match stored {
-            Some(Ok(id)) => self.capture_saved(id),
+            Some(Ok(id)) => {
+                self.capture_saved(id);
+                true
+            }
             Some(Err(AnnotatedError::AlreadyPresent(existing))) => {
                 self.show_capture_already_present(existing);
+                false
             }
-            Some(Err(_)) => self.show_capture_not_saved(),
-            None => {}
+            Some(Err(_)) => {
+                self.show_capture_not_saved();
+                false
+            }
+            None => false,
         }
     }
 
@@ -7324,6 +7326,7 @@ fn asset_objects(
     view: AssetView,
     filter: &AssetFilter,
 ) -> Result<Vec<PigouneAssetObject>, LibraryError> {
+    let mut renders = library.annotation_renders()?;
     Ok(library
         .find_assets_in(view, filter)?
         .iter()
@@ -7331,6 +7334,7 @@ fn asset_objects(
             PigouneAssetObject::new(AssetEntry {
                 file: library.file_of(asset),
                 thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
+                annotation: renders.remove(&asset.id),
                 asset: asset.clone(),
             })
         })

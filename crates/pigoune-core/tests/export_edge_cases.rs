@@ -90,7 +90,7 @@ fn unusual_display_names_give_a_sane_copy_inside_the_library() {
 
         let copies = fixture
             .library
-            .clipboard_copies(&[asset])
+            .clipboard_copies(&[asset], &pigoune_core::FlatFiles::new())
             .unwrap_or_else(|error| panic!("{name:?}: {error}"));
 
         assert_eq!(copies.len(), 1, "{name:?}");
@@ -111,7 +111,7 @@ fn two_resources_with_the_same_name_never_share_a_copy() {
 
     let copies = fixture
         .library
-        .clipboard_copies(&[png, bmp, webp])
+        .clipboard_copies(&[png, bmp, webp], &pigoune_core::FlatFiles::new())
         .expect("copies are made");
 
     let names: Vec<String> = copies
@@ -134,14 +134,22 @@ fn exporting_never_overwrites_a_file_of_the_user() {
     let destination = tempfile::tempdir().expect("temporary directory");
     fixture
         .library
-        .export_to(&[asset], destination.path())
+        .export_to(
+            &[asset],
+            destination.path(),
+            &pigoune_core::FlatFiles::new(),
+        )
         .expect("first export");
     fs::write(destination.path().join("Logo.png"), b"changed by the user")
         .expect("file is changed");
 
     let second = fixture
         .library
-        .export_to(&[asset], destination.path())
+        .export_to(
+            &[asset],
+            destination.path(),
+            &pigoune_core::FlatFiles::new(),
+        )
         .expect("second export")
         .copies;
 
@@ -163,9 +171,11 @@ fn exporting_into_an_absent_folder_is_an_error() {
     let asset = fixture.import("red-dot.png");
     let destination = tempfile::tempdir().expect("temporary directory");
 
-    let result = fixture
-        .library
-        .export_to(&[asset], &destination.path().join("absent"));
+    let result = fixture.library.export_to(
+        &[asset],
+        &destination.path().join("absent"),
+        &pigoune_core::FlatFiles::new(),
+    );
 
     assert!(
         matches!(result, Err(LibraryError::NotFound(_))),
@@ -182,7 +192,11 @@ fn exporting_into_a_read_only_folder_is_an_error() {
         .expect("permissions change");
     let enforced = fs::write(destination.path().join("probe"), b"x").is_err();
 
-    let result = fixture.library.export_to(&[asset], destination.path());
+    let result = fixture.library.export_to(
+        &[asset],
+        destination.path(),
+        &pigoune_core::FlatFiles::new(),
+    );
 
     fs::set_permissions(destination.path(), fs::Permissions::from_mode(0o755))
         .expect("permissions change");
@@ -198,13 +212,23 @@ fn a_trashed_resource_can_still_be_copied_exported_and_opened() {
     fixture.trash(asset);
     let destination = tempfile::tempdir().expect("temporary directory");
 
-    let copies = fixture.library.clipboard_copies(&[asset]).expect("copy");
+    let copies = fixture
+        .library
+        .clipboard_copies(&[asset], &pigoune_core::FlatFiles::new())
+        .expect("copy");
     let exported = fixture
         .library
-        .export_to(&[asset], destination.path())
+        .export_to(
+            &[asset],
+            destination.path(),
+            &pigoune_core::FlatFiles::new(),
+        )
         .expect("export")
         .copies;
-    let opening = fixture.library.opening_copy(asset).expect("opening copy");
+    let opening = fixture
+        .library
+        .opening_copy(asset, &pigoune_core::FlatFiles::new())
+        .expect("opening copy");
 
     assert_eq!(copies.len(), 1);
     assert_eq!(exported.len(), 1);
@@ -225,7 +249,7 @@ fn changing_the_copy_given_to_another_application_leaves_the_library_alone() {
     let asset = fixture.import("dark-circle.svg");
     let opening = fixture
         .library
-        .opening_copy(asset)
+        .opening_copy(asset, &pigoune_core::FlatFiles::new())
         .expect("opening copy")
         .expect("the resource exists");
 
@@ -244,7 +268,10 @@ fn changing_the_copy_given_to_another_application_leaves_the_library_alone() {
 fn temporary_copies_are_forgotten_when_the_library_is_opened_again() {
     let mut fixture = Fixture::new();
     let asset = fixture.import("red-dot.png");
-    let copies = fixture.library.clipboard_copies(&[asset]).expect("copy");
+    let copies = fixture
+        .library
+        .clipboard_copies(&[asset], &pigoune_core::FlatFiles::new())
+        .expect("copy");
     assert!(copies[0].exists());
     let root = fixture.library.root().to_path_buf();
     drop(fixture.library);
@@ -285,7 +312,11 @@ fn a_missing_source_is_reported_and_the_others_are_still_exported() {
 
     let report = fixture
         .library
-        .export_to(&[lost, kept], destination.path())
+        .export_to(
+            &[lost, kept],
+            destination.path(),
+            &pigoune_core::FlatFiles::new(),
+        )
         .expect("export runs");
 
     assert_eq!(report.copies.len(), 1);
@@ -306,5 +337,10 @@ fn a_missing_source_is_an_error_when_preparing_drag_copies() {
     let stored = fixture.library.asset(lost).expect("query").expect("asset");
     fs::remove_file(fixture.library.root().join(&stored.stored_path)).expect("file is removed");
 
-    assert!(fixture.library.export_copies(&[lost]).is_err());
+    assert!(
+        fixture
+            .library
+            .export_copies(&[lost], &pigoune_core::FlatFiles::new())
+            .is_err()
+    );
 }

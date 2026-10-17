@@ -3,7 +3,6 @@ mod geometry;
 mod interaction;
 mod layers;
 mod options;
-mod sealing;
 mod session;
 mod shape;
 mod snapping;
@@ -26,7 +25,6 @@ pub use layers::{LayerEntry, layer_entries};
 pub use options::{
     DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,
 };
-pub use sealing::{OverlapChoice, SealPlan, SealRecord, hash_of_bytes};
 pub use serde_json::Value;
 pub use session::{EditSession, LayerMove, Refusal};
 pub use shape::{Geometry, Shape};
@@ -100,7 +98,6 @@ pub struct ObjectState {
     pub name: Option<String>,
     pub hidden: bool,
     pub locked: bool,
-    pub sealed: bool,
 }
 
 impl ObjectState {
@@ -108,11 +105,7 @@ impl ObjectState {
         if let Some(name) = &self.name {
             fields.insert("name".to_owned(), Value::from(name.clone()));
         }
-        for (key, set) in [
-            ("hidden", self.hidden),
-            ("locked", self.locked),
-            ("sealed", self.sealed),
-        ] {
+        for (key, set) in [("hidden", self.hidden), ("locked", self.locked)] {
             if set {
                 fields.insert(key.to_owned(), Value::Bool(true));
             }
@@ -131,7 +124,6 @@ impl ObjectState {
             name,
             hidden: flag(fields, "hidden"),
             locked: flag(fields, "locked"),
-            sealed: flag(fields, "sealed"),
         }
     }
 }
@@ -158,7 +150,7 @@ impl AnnotationObject {
 
     #[must_use]
     pub fn is_rendered(&self) -> bool {
-        !self.state.hidden && !self.state.sealed
+        !self.state.hidden
     }
 
     #[must_use]
@@ -168,7 +160,7 @@ impl AnnotationObject {
 
     #[must_use]
     pub fn is_editable(&self) -> bool {
-        !self.state.locked && !self.state.sealed
+        !self.state.locked
     }
 
     #[must_use]
@@ -234,7 +226,6 @@ impl AnnotationObject {
 pub struct AnnotationDocument {
     pub crop: Option<Crop>,
     pub objects: Vec<AnnotationObject>,
-    pub seal: Option<SealRecord>,
     next_id: u32,
     extra: Map<String, Value>,
 }
@@ -261,7 +252,6 @@ impl AnnotationDocument {
         Self {
             crop,
             objects,
-            seal: None,
             next_id: 0,
             extra: Map::new(),
         }
@@ -269,10 +259,7 @@ impl AnnotationDocument {
 
     #[must_use]
     pub fn same_content_as(&self, other: &Self) -> bool {
-        self.crop == other.crop
-            && self.objects == other.objects
-            && self.seal == other.seal
-            && self.extra == other.extra
+        self.crop == other.crop && self.objects == other.objects && self.extra == other.extra
     }
 
     pub fn reserve_id(&mut self) -> u32 {
@@ -322,25 +309,10 @@ impl AnnotationDocument {
     }
 
     #[must_use]
-    pub fn sealed_count(&self) -> usize {
-        self.objects
-            .iter()
-            .take_while(|object| object.state.sealed)
-            .count()
-    }
-
-    #[must_use]
-    pub fn is_sealed_marker(&self, id: u32) -> bool {
-        self.objects
-            .iter()
-            .any(|object| object.id == id && object.state.sealed)
-    }
-
-    #[must_use]
     pub fn hides_content(&self) -> bool {
         self.objects
             .iter()
-            .any(|object| !object.state.sealed && object.shape().is_some_and(Shape::hides_content))
+            .any(|object| object.shape().is_some_and(Shape::hides_content))
     }
 
     #[must_use]
@@ -348,25 +320,9 @@ impl AnnotationDocument {
         self.objects
             .iter()
             .filter(|object| {
-                object.state.hidden
-                    && !object.state.sealed
-                    && object.shape().is_some_and(Shape::hides_content)
+                object.state.hidden && object.shape().is_some_and(Shape::hides_content)
             })
             .map(|object| object.id)
-            .collect()
-    }
-
-    #[must_use]
-    pub fn masks(&self) -> Vec<(u32, Shape)> {
-        self.objects
-            .iter()
-            .filter(|object| !object.state.sealed)
-            .filter_map(|object| {
-                object
-                    .shape()
-                    .filter(|shape| shape.hides_content())
-                    .map(|shape| (object.id, shape.clone()))
-            })
             .collect()
     }
 
@@ -396,12 +352,6 @@ impl AnnotationDocument {
             .remove("next_id")
             .and_then(|value| value.as_u64())
             .and_then(|value| u32::try_from(value).ok());
-        let seal = match fields.remove("seal") {
-            None => None,
-            Some(value) => Some(SealRecord::from_value(&value).ok_or_else(|| {
-                DocumentError::Corrupt("the sealing record is not valid".to_owned())
-            })?),
-        };
         let crop = match fields.remove("crop") {
             None | Some(Value::Null) => None,
             Some(crop) => Some(
@@ -431,7 +381,6 @@ impl AnnotationDocument {
         Ok(Self {
             crop,
             objects,
-            seal,
             next_id,
             extra: fields,
         })
@@ -455,9 +404,6 @@ impl AnnotationDocument {
                 "crop".to_owned(),
                 serde_json::to_value(crop).unwrap_or(Value::Null),
             );
-        }
-        if let Some(seal) = &self.seal {
-            fields.insert("seal".to_owned(), seal.to_value());
         }
         let objects = self
             .objects

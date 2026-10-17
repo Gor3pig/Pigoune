@@ -3,8 +3,10 @@ use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};
 
+use super::AssetId;
 use super::export::{
-    base_name_of, create_free_file, export_base_name, free_name, original_extension,
+    FLAT_EXTENSION, FlatFiles, base_name_of, create_free_file, export_base_name, flat_unavailable,
+    free_name, original_extension,
 };
 use super::layout::library_display_name;
 use super::{Asset, AssetView, Collection, CollectionId, Library, LibraryError};
@@ -33,7 +35,12 @@ struct FilePlan {
     base_name: String,
     extension: Option<String>,
     source: PathBuf,
-    blocked: bool,
+    flat_of: Option<AssetId>,
+}
+
+struct PlanContext {
+    annotated: HashSet<AssetId>,
+    suffix: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -67,12 +74,17 @@ impl Library {
     pub fn library_export_plan(
         &self,
         unclassified_name: &str,
+        annotated_suffix: &str,
     ) -> Result<LibraryExportPlan, LibraryError> {
+        let context = PlanContext {
+            annotated: self.annotated_ids()?,
+            suffix: annotated_suffix.to_owned(),
+        };
         let collections = self.visible_collections()?;
         let mut folders = collections
             .iter()
             .filter(|collection| collection.parent.is_none())
-            .map(|collection| self.folder_plan(collection, &collections))
+            .map(|collection| self.folder_plan(collection, &collections, &context))
             .collect::<Result<Vec<_>, _>>()?;
         let unclassified = self.visible_assets_in(AssetView::Unclassified)?;
         if !unclassified.is_empty() {
@@ -81,7 +93,7 @@ impl Library {
                     .unwrap_or_else(|| UNCLASSIFIED_FALLBACK.to_owned()),
                 files: unclassified
                     .iter()
-                    .map(|asset| self.file_plan(asset))
+                    .flat_map(|asset| self.file_plans(asset, &context))
                     .collect(),
                 folders: Vec::new(),
             });
@@ -146,21 +158,26 @@ impl Library {
         &self,
         collection: &Collection,
         all: &[Collection],
+        context: &PlanContext,
     ) -> Result<FolderPlan, LibraryError> {
         let folders = all
             .iter()
             .filter(|child| child.parent == Some(collection.id))
-            .map(|child| self.folder_plan(child, all))
+            .map(|child| self.folder_plan(child, all, context))
             .collect::<Result<_, _>>()?;
         Ok(FolderPlan {
             name: export_base_name(&collection.name, None)
                 .unwrap_or_else(|| collection.id.to_string()),
-            files: self.files_directly_in(collection.id)?,
+            files: self.files_directly_in(collection.id, context)?,
             folders,
         })
     }
 
-    fn files_directly_in(&self, collection: CollectionId) -> Result<Vec<FilePlan>, LibraryError> {
+    fn files_directly_in(
+        &self,
+        collection: CollectionId,
+        context: &PlanContext,
+    ) -> Result<Vec<FilePlan>, LibraryError> {
         let mut statement = self.connection.prepare(
             "SELECT assets.id FROM asset_collections
              JOIN assets ON assets.id = asset_collections.asset_id
@@ -173,20 +190,31 @@ impl Library {
         let mut files = Vec::new();
         for id in ids {
             if let Some(asset) = self.asset(id)? {
-                files.push(self.file_plan(&asset));
+                files.extend(self.file_plans(&asset, context));
             }
         }
         Ok(files)
     }
 
-    fn file_plan(&self, asset: &Asset) -> FilePlan {
-        FilePlan {
+    fn file_plans(&self, asset: &Asset, context: &PlanContext) -> Vec<FilePlan> {
+        let original = FilePlan {
             display_name: asset.display_name.clone(),
             base_name: base_name_of(asset),
             extension: original_extension(asset),
             source: self.file_of(asset),
-            blocked: self.sealing_refusal(asset.id).is_some(),
+            flat_of: None,
+        };
+        if !context.annotated.contains(&asset.id) {
+            return vec![original];
         }
+        let flat = FilePlan {
+            display_name: asset.display_name.clone(),
+            base_name: format!("{} {}", base_name_of(asset), context.suffix),
+            extension: Some(FLAT_EXTENSION.to_owned()),
+            source: PathBuf::new(),
+            flat_of: Some(asset.id),
+        };
+        vec![original, flat]
     }
 }
 
@@ -196,7 +224,11 @@ impl LibraryExportPlan {
         self.total
     }
 
-    pub fn run(&self, destination: &Path) -> Result<LibraryExportReport, LibraryError> {
+    pub fn run(
+        &self,
+        destination: &Path,
+        flats: &FlatFiles,
+    ) -> Result<LibraryExportReport, LibraryError> {
         if !destination.is_dir() {
             return Err(LibraryError::NotFound(destination.to_path_buf()));
         }
@@ -205,7 +237,7 @@ impl LibraryExportPlan {
             folder: folder.clone(),
             ..LibraryExportReport::default()
         };
-        write_folder(&self.root_folder, &folder, &mut report)?;
+        write_folder(&self.root_folder, &folder, flats, &mut report)?;
         Ok(report)
     }
 }
@@ -224,11 +256,12 @@ impl FolderPlan {
 fn write_folder(
     plan: &FolderPlan,
     path: &Path,
+    flats: &FlatFiles,
     report: &mut LibraryExportReport,
 ) -> Result<(), LibraryError> {
     let mut taken = HashSet::new();
     for file in &plan.files {
-        match copy_file(file, path, &mut taken) {
+        match copy_file(file, path, flats, &mut taken) {
             Ok(()) => report.exported += 1,
             Err(error) => report.failures.push(ExportFailure {
                 name: file.display_name.clone(),
@@ -238,21 +271,24 @@ fn write_folder(
     }
     for sub_plan in &plan.folders {
         let sub_path = create_free_folder(path, &sub_plan.name, &mut taken)?;
-        write_folder(sub_plan, &sub_path, report)?;
+        write_folder(sub_plan, &sub_path, flats, report)?;
     }
     Ok(())
 }
 
-fn copy_file(file: &FilePlan, folder: &Path, taken: &mut HashSet<String>) -> io::Result<()> {
-    if file.blocked {
-        return Err(io::Error::new(
-            io::ErrorKind::PermissionDenied,
-            "the sealing of this image cannot be verified",
-        ));
-    }
+fn copy_file(
+    file: &FilePlan,
+    folder: &Path,
+    flats: &FlatFiles,
+    taken: &mut HashSet<String>,
+) -> io::Result<()> {
+    let source_path = match file.flat_of {
+        Some(id) => flats.get(&id).cloned().ok_or_else(flat_unavailable)?,
+        None => file.source.clone(),
+    };
     let (mut target, copy) =
         create_free_file(folder, &file.base_name, file.extension.as_deref(), taken)?;
-    let copied = File::open(&file.source).and_then(|mut source| io::copy(&mut source, &mut target));
+    let copied = File::open(&source_path).and_then(|mut source| io::copy(&mut source, &mut target));
     if copied.is_err() {
         let _ = fs::remove_file(&copy);
     }

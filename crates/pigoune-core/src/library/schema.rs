@@ -4,7 +4,7 @@ use rusqlite::{Connection, ErrorCode};
 
 use super::{LibraryError, animation_recheck, buckets, details_store};
 
-pub const CURRENT_FORMAT_VERSION: u32 = 14;
+pub const CURRENT_FORMAT_VERSION: u32 = 13;
 pub const FORMAT_MOVING_VISUAL_DETAILS: u32 = 12;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 const PAGE_CACHE_KIB: i64 = 65_536;
@@ -12,7 +12,6 @@ const PAGE_CACHE_KIB: i64 = 65_536;
 #[doc(hidden)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MigrationStop {
-    AfterTwoSealColumns,
     BeforeCommit,
     AfterCommit,
 }
@@ -28,12 +27,10 @@ enum Migration {
     RecheckAnimations,
     RecordBucketedPaths,
     MoveVisualDetails,
-    AddSealColumns,
 }
 
 const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = [
     "1.0", "1.4", "1.5", "1.6", "2.0", "2.0", "2.0", "2.2", "2.5", "2.10", "2.11", "2.12", "3.0",
-    "3.0",
 ];
 
 #[must_use]
@@ -56,7 +53,6 @@ const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::Statements(include_str!("migrations/v11.sql")),
     Migration::MoveVisualDetails,
     Migration::Statements(include_str!("migrations/v13.sql")),
-    Migration::AddSealColumns,
 ];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
@@ -131,7 +127,7 @@ pub fn migrate_halting_at(
     let transaction = connection.transaction()?;
     for (version, migration) in (1..=CURRENT_FORMAT_VERSION).zip(MIGRATIONS) {
         if version > found {
-            apply(&transaction, &migration, root, stop)?;
+            apply(&transaction, &migration, root)?;
         }
     }
     transaction.pragma_update(None, "user_version", CURRENT_FORMAT_VERSION)?;
@@ -141,37 +137,11 @@ pub fn migrate_halting_at(
     Ok(())
 }
 
-fn apply(
-    connection: &Connection,
-    migration: &Migration,
-    root: &Path,
-    stop: Option<MigrationStop>,
-) -> Result<(), LibraryError> {
+fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<(), LibraryError> {
     match migration {
         Migration::Statements(statements) => Ok(connection.execute_batch(statements)?),
         Migration::RecheckAnimations => animation_recheck::mark_animated_assets(connection, root),
         Migration::RecordBucketedPaths => buckets::record_bucketed_paths(connection),
-        Migration::AddSealColumns => {
-            let present: bool = connection.query_row(
-                "SELECT count(*) > 0 FROM pragma_table_info('asset_annotations')
-                 WHERE name = 'seal_generation'",
-                [],
-                |row| row.get(0),
-            )?;
-            if present {
-                return Ok(());
-            }
-            let statements = include_str!("migrations/v14.sql")
-                .split(';')
-                .filter(|statement| !statement.trim().is_empty());
-            for (index, statement) in statements.enumerate() {
-                connection.execute_batch(statement)?;
-                if index == 1 {
-                    halt_if(stop, MigrationStop::AfterTwoSealColumns);
-                }
-            }
-            Ok(())
-        }
         Migration::MoveVisualDetails => {
             connection.execute_batch(include_str!("migrations/v12.sql"))?;
             details_store::move_out_of_assets(connection, root)
@@ -216,7 +186,6 @@ mod tests {
         assert_eq!(oldest_compatible_version(11), Some("2.11"));
         assert_eq!(oldest_compatible_version(12), Some("2.12"));
         assert_eq!(oldest_compatible_version(13), Some("3.0"));
-        assert_eq!(oldest_compatible_version(14), Some("3.0"));
         assert!(oldest_compatible_version(CURRENT_FORMAT_VERSION).is_some());
         assert_eq!(oldest_compatible_version(0), None);
         assert_eq!(oldest_compatible_version(CURRENT_FORMAT_VERSION + 1), None);

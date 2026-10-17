@@ -189,15 +189,14 @@ impl PigouneAssetTile {
         imp.picture.set_opacity(0.0);
         imp.still.replace(None);
         let id = asset.id();
-        let file = asset.file().to_path_buf();
-        let thumbnail_file = asset.thumbnail_file().to_path_buf();
+        let asset = asset.clone();
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = tile)]
             self,
             #[strong]
             cache,
             async move {
-                if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
+                if let Some(texture) = asset.thumbnail(&tile).await {
                     cache.remember(id, texture.clone());
                     if tile.shows(id) {
                         tile.fade_in(&texture);
@@ -365,7 +364,7 @@ impl PigouneAssetTile {
             return;
         }
         let picture = imp.picture.get();
-        let playing = animation::play(asset.file().to_path_buf(), move |frame| {
+        let playing = animation::play(asset.source_file().to_path_buf(), move |frame| {
             picture.set_paintable(Some(frame));
             picture.set_opacity(1.0);
         });

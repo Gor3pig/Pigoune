@@ -1540,21 +1540,6 @@ msgstr ""
 msgid "Annotations: {count}"
 msgstr ""
 
-#: crates/pigoune-app/src/editor.rs:1173
-msgid "Lock the Masks?"
-msgstr ""
-
-#: crates/pigoune-app/src/editor.rs:1175
-msgid ""
-"The blur and the pixelation will be applied to the original image for good, "
-"and this cannot be undone. A pixelation with large cells removes the "
-"details, but a light blur may still be partly recoverable."
-msgstr ""
-
-#: crates/pigoune-app/src/editor.rs:1179
-msgid "_Lock"
-msgstr ""
-
 #: crates/pigoune-app/src/editor.rs:1247
 msgid "Copy to Clipboard"
 msgstr ""
@@ -1620,14 +1605,6 @@ msgstr ""
 
 #: crates/pigoune-app/src/editor.rs:1332
 msgid "Image exported"
-msgstr ""
-
-#: crates/pigoune-app/src/editor.rs:1359
-msgid "Could Not Lock the Masks"
-msgstr ""
-
-#: crates/pigoune-app/src/editor.rs:1360
-msgid "The original image was left unchanged."
 msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs:44
@@ -2390,11 +2367,6 @@ msgstr ""
 msgid "Remove from All Collections"
 msgstr ""
 
-#: crates/pigoune-app/src/window.rs:2917
-#: crates/pigoune-app/ui/asset-details.blp:287
-msgid "Edit Annotations…"
-msgstr ""
-
 #: crates/pigoune-app/src/window.rs:2921
 #: crates/pigoune-app/ui/asset-details.blp:310
 #: crates/pigoune-app/ui/asset-details.blp:321
@@ -2403,12 +2375,6 @@ msgstr ""
 
 #: crates/pigoune-app/src/window.rs:2963
 msgid "Could Not Open the Annotations"
-msgstr ""
-
-#: crates/pigoune-app/src/window.rs:2965
-msgid ""
-"The original image or its annotations could not be read. They may come from "
-"a newer version of Pigoune."
 msgstr ""
 
 #: crates/pigoune-app/src/window.rs:3006
@@ -6468,14 +6434,6 @@ msgid_plural "{name} and {count} others"
 msgstr[0] ""
 msgstr[1] ""
 
-#: crates/pigoune-app/ui/editor.blp:61
-msgid "The original image still shows what the blur and pixelation hide"
-msgstr ""
-
-#: crates/pigoune-app/ui/editor.blp:62
-msgid "Lock Masks"
-msgstr ""
-
 #: crates/pigoune-app/ui/editor.blp:145
 msgid "Save"
 msgstr ""
@@ -8034,10 +7992,6 @@ msgid "Drag to Reorder"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "Remove Marker"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
 msgid "Show"
 msgstr ""
 
@@ -8047,14 +8001,6 @@ msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
 msgid "Unlock"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Applied Masks"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Masking applied"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
@@ -8086,81 +8032,41 @@ msgid "Lock"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "Remove the Marker?"
+msgid "The annotated image could not be rendered"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "This removes the marker from the list. The pixels of the original image are not restored."
+msgid "Animated images cannot be annotated yet"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "_Remove"
+msgid "The image or its annotations could not be read. They may come from a newer version of Pigoune."
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "Seal Masks"
+msgid "Take a Screenshot?"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "Could Not Seal the Masks"
+msgid "The image being annotated is not saved. Save it first, or let the screenshot replace it."
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
+msgid "_Replace Without Saving"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
+msgid "_Save and Capture"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "The content of {names} stays saved in the document."
+msgid "(annotated)"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "Seal the Masks?"
+msgid "Export the Original Images Too?"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "_Seal"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Seal and _Hide Covered"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "There is no visible mask to seal"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "The image and its masks were left unchanged."
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Masks sealed"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "the sealing is not finished"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "the protection cannot be verified"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Sealed Images Need Attention"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "_Finish the Cleanup"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "The protection of this image cannot be verified, so it is not shown"
+msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
 msgstr ""

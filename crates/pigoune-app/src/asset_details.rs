@@ -39,6 +39,13 @@ const GROUP_PAGE: &str = "group";
 const TRASHED_PAGE: &str = "trashed";
 const PREVIEW_PIXELS: u32 = 512;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AnnotationAccess {
+    None,
+    Allowed { annotated: bool },
+    Unavailable(String),
+}
+
 mod imp {
     use std::cell::{Cell, RefCell};
 
@@ -65,7 +72,11 @@ mod imp {
         pub action_buttons: TemplateChild<gtk::Box>,
         #[template_child]
         pub annotation_buttons: TemplateChild<gtk::Box>,
-        pub annotated: Cell<bool>,
+        #[template_child]
+        pub annotate_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub original_button: TemplateChild<gtk::Button>,
+        pub annotatable: Cell<bool>,
         pub beside_preview: Cell<bool>,
         #[template_child]
         pub name_label: TemplateChild<gtk::EditableLabel>,
@@ -515,14 +526,23 @@ impl PigouneAssetDetails {
         imp.preview_frame.set_visible(!beside);
         imp.action_buttons.set_visible(!beside);
         imp.annotation_buttons
-            .set_visible(imp.annotated.get() && !beside);
+            .set_visible(imp.annotatable.get() && !beside);
     }
 
-    pub fn show_annotations(&self, annotated: bool) {
+    pub fn show_annotations(&self, access: AnnotationAccess) {
         let imp = self.imp();
-        imp.annotated.set(annotated);
+        let (visible, annotated, hint) = match access {
+            AnnotationAccess::None => (false, false, None),
+            AnnotationAccess::Allowed { annotated } => (true, annotated, None),
+            AnnotationAccess::Unavailable(reason) => (true, false, Some(reason)),
+        };
+        imp.annotatable.set(visible);
+        imp.annotate_button.set_sensitive(hint.is_none());
+        imp.annotate_button
+            .set_tooltip_text(Some(&hint.unwrap_or_else(|| gettext("Annotate…"))));
+        imp.original_button.set_visible(annotated);
         imp.annotation_buttons
-            .set_visible(annotated && !imp.beside_preview.get());
+            .set_visible(visible && !imp.beside_preview.get());
     }
 
     pub fn show(&self, selected: Option<&PigouneAssetObject>, thumbnails: &Rc<ThumbnailCache>) {
@@ -612,17 +632,22 @@ impl PigouneAssetDetails {
         let imp = self.imp();
         imp.preview
             .set_paintable(thumbnails.remembered(object.id()).as_ref());
-        let file = object.file().to_path_buf();
         if object.asset().is_animated {
             let preview = imp.preview.get();
-            let playing = animation::play(file, move |frame| preview.set_paintable(Some(frame)));
+            let playing = animation::play(object.source_file().to_path_buf(), move |frame| {
+                preview.set_paintable(Some(frame));
+            });
             imp.loading.replace(Some(playing));
             return;
         }
+        let object = object.clone();
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = details)]
             self,
             async move {
+                let Some(file) = object.display_file(&details).await else {
+                    return;
+                };
                 if let Some(texture) = thumbnails::render(&file, PREVIEW_PIXELS).await {
                     details.imp().preview.set_paintable(Some(&texture));
                 }

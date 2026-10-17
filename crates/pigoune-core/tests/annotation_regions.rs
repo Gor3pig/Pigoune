@@ -400,11 +400,10 @@ fn scenario_ten_switching_tools_never_makes_a_region_unreachable() {
 }
 
 #[test]
-fn scenario_eleven_a_locked_mask_is_still_an_editable_object_that_brings_the_banner_back() {
+fn scenario_eleven_a_region_can_be_moved_and_the_move_undone() {
     for kind in REGION_KINDS {
         let (mut session, id) = created(kind);
-        let locked = session.document().masks();
-        assert_eq!(locked.len(), 1);
+        let before = session.document().clone();
 
         drag(
             &mut session,
@@ -418,13 +417,9 @@ fn scenario_eleven_a_locked_mask_is_still_an_editable_object_that_brings_the_ban
             (140.0, 130.0, 200.0, 120.0),
             "{kind}"
         );
-        assert_ne!(
-            session.document().masks(),
-            locked,
-            "a moved mask is no longer locked: {kind}"
-        );
+        assert_ne!(session.document(), &before, "the move is recorded: {kind}");
         assert!(session.undo());
-        assert_eq!(session.document().masks(), locked, "{kind}");
+        assert_eq!(session.document(), &before, "{kind}");
     }
 }
 

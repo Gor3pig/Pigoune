@@ -84,12 +84,7 @@ impl Library {
     pub fn storage_use_without_thumbnails(&self) -> Result<StorageUse, LibraryError> {
         let bytes = |condition: &str| -> Result<u64, LibraryError> {
             let total: i64 = self.connection.query_row(
-                &format!(
-                    "SELECT coalesce(sum(byte_size + coalesce(
-                        (SELECT original_byte_size FROM asset_annotations
-                         WHERE asset_id = assets.id), 0)), 0)
-                     FROM assets WHERE {condition}"
-                ),
+                &format!("SELECT coalesce(sum(byte_size), 0) FROM assets WHERE {condition}"),
                 [],
                 |row| row.get(0),
             )?;

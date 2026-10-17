@@ -96,6 +96,22 @@ template $PigouneAssetPreview: Adw.Bin {
       }
 
       [end]
+      Button {
+        icon-name: "camera-photo-symbolic";
+        tooltip-text: _("Take a Screenshot to Annotate");
+        action-name: "win.capture";
+        focus-on-click: false;
+      }
+
+      [end]
+      Button annotate_button {
+        icon-name: "document-edit-symbolic";
+        tooltip-text: _("Annotate…");
+        action-name: "win.annotate";
+        focus-on-click: false;
+      }
+
+      [end]
       MenuButton zoom_button {
         tooltip-text: _("Zoom");
 

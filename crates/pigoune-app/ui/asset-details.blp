@@ -282,9 +282,9 @@ template $PigouneAssetDetails: Adw.Bin {
             homogeneous: true;
             visible: false;
 
-            Button {
-              action-name: "win.edit-annotations";
-              tooltip-text: _("Edit Annotations…");
+            Button annotate_button {
+              action-name: "win.annotate";
+              tooltip-text: _("Annotate…");
 
               child: Box {
                 orientation: vertical;
@@ -305,7 +305,7 @@ template $PigouneAssetDetails: Adw.Bin {
               };
             }
 
-            Button {
+            Button original_button {
               action-name: "win.view-original";
               tooltip-text: _("View Original");
 

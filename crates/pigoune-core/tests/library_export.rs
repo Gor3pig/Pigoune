@@ -1,8 +1,11 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use pigoune_core::annotations::{
+    AnnotationDocument, AnnotationObject, BLUR, Geometry, Options, Rect, Shape,
+};
 use pigoune_core::{
-    AssetCommand, AssetId, CollectionCommand, CollectionId, ImportOutcome, Library,
+    AssetCommand, AssetId, CollectionCommand, CollectionId, FlatFiles, ImportOutcome, Library,
 };
 
 fn sample(name: &str) -> PathBuf {
@@ -61,13 +64,13 @@ impl Setup {
 
     fn plan(&self) -> pigoune_core::LibraryExportPlan {
         self.library
-            .library_export_plan("Non classés")
+            .library_export_plan("Non classés", "(annoté)")
             .expect("plan")
     }
 
     fn export(&self) -> pigoune_core::LibraryExportReport {
         self.plan()
-            .run(self.destination.path())
+            .run(self.destination.path(), &FlatFiles::new())
             .expect("export succeeds")
     }
 }
@@ -296,7 +299,9 @@ fn a_missing_destination_is_refused() {
     let mut setup = Setup::new();
     import(&mut setup.library, "red-dot.png", None);
 
-    let result = setup.plan().run(&setup.destination.path().join("nowhere"));
+    let result = setup
+        .plan()
+        .run(&setup.destination.path().join("nowhere"), &FlatFiles::new());
 
     assert!(result.is_err());
 }
@@ -365,4 +370,131 @@ fn the_outline_of_an_empty_library_has_only_its_name() {
 
     assert!(outline.folders.is_empty());
     assert_eq!(outline.more, 0);
+}
+
+fn annotate(library: &mut Library, id: AssetId) {
+    let shape = Shape::new(
+        "blur",
+        Geometry::Box(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 4.0,
+            height: 4.0,
+        }),
+        Options::defaults(BLUR.options),
+    );
+    library
+        .save_annotations(
+            id,
+            &AnnotationDocument::new(None, vec![AnnotationObject::new(1, shape)]),
+        )
+        .expect("annotated");
+}
+
+fn flat_file(setup: &Setup, name: &str, content: &[u8]) -> PathBuf {
+    let path = setup.destination.path().join(format!("flat-{name}"));
+    fs::write(&path, content).expect("flat written");
+    path
+}
+
+#[test]
+fn an_annotated_image_is_exported_as_its_original_and_a_flattened_copy() {
+    let mut setup = Setup::new();
+    let photo = import(&mut setup.library, "blue-photo.jpg", None);
+    let plain = import(&mut setup.library, "red-dot.png", None);
+    annotate(&mut setup.library, photo);
+    let flat = flat_file(&setup, "photo", b"flattened png");
+    let mut flats = FlatFiles::new();
+    flats.insert(photo, flat);
+    let before = fs::read(
+        setup
+            .library
+            .file_of(&setup.library.asset(photo).expect("q").expect("asset")),
+    )
+    .expect("original");
+
+    let exported = setup
+        .plan()
+        .run(&setup.destination.path().join("out").tap_create(), &flats)
+        .expect("exported");
+
+    let names = names_in(&exported.folder.join("Non classés"));
+    assert!(names.contains(&"blue-photo.jpg".to_owned()), "{names:?}");
+    assert!(
+        names.contains(&"blue-photo (annoté).png".to_owned()),
+        "{names:?}"
+    );
+    assert!(names.contains(&"red-dot.png".to_owned()), "{names:?}");
+    assert_eq!(
+        names.len(),
+        3,
+        "an image without annotations is exported once"
+    );
+    assert_eq!(
+        fs::read(exported.folder.join("Non classés/blue-photo (annoté).png")).expect("flat"),
+        b"flattened png"
+    );
+    assert_eq!(
+        fs::read(exported.folder.join("Non classés/blue-photo.jpg")).expect("original"),
+        before
+    );
+    let _ = plain;
+    assert_eq!(exported.exported, 3);
+}
+
+trait TapCreate {
+    fn tap_create(self) -> Self;
+}
+
+impl TapCreate for PathBuf {
+    fn tap_create(self) -> Self {
+        fs::create_dir_all(&self).expect("folder");
+        self
+    }
+}
+
+#[test]
+fn a_missing_flattened_copy_is_reported_and_the_original_is_still_exported() {
+    let mut setup = Setup::new();
+    let photo = import(&mut setup.library, "blue-photo.jpg", None);
+    annotate(&mut setup.library, photo);
+
+    let report = setup
+        .plan()
+        .run(setup.destination.path(), &FlatFiles::new())
+        .expect("exported");
+
+    assert_eq!(report.failures.len(), 1);
+    assert_eq!(report.exported, 1);
+    assert_eq!(
+        names_in(&report.folder.join("Non classés")),
+        ["blue-photo.jpg"]
+    );
+}
+
+#[test]
+fn a_flattened_name_never_overwrites_an_existing_file() {
+    let mut setup = Setup::new();
+    let photo = import(&mut setup.library, "blue-photo.jpg", None);
+    annotate(&mut setup.library, photo);
+    let again = import(&mut setup.library, "red-dot.png", None);
+    setup
+        .library
+        .apply_asset_command(&AssetCommand::Rename {
+            asset: again,
+            name: "blue-photo (annoté)".to_owned(),
+        })
+        .expect("renamed");
+    let mut flats = FlatFiles::new();
+    flats.insert(photo, flat_file(&setup, "photo", b"flattened png"));
+
+    let report = setup
+        .plan()
+        .run(setup.destination.path(), &flats)
+        .expect("exported");
+
+    let names = names_in(&report.folder.join("Non classés"));
+    assert_eq!(names.len(), 3, "{names:?}");
+    assert!(names.contains(&"blue-photo.jpg".to_owned()));
+    assert!(names.contains(&"blue-photo (annoté).png".to_owned()));
 }

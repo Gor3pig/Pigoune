@@ -29,7 +29,6 @@ mod records;
 mod remove_record;
 mod replace;
 mod schema;
-mod seal;
 mod search;
 mod smart_collection;
 mod smart_collection_command;
@@ -51,7 +50,7 @@ use crate::media::Dimensions;
 use history::History;
 use staging::StagingDir;
 
-pub use annotated::{AnnotatedImage, Annotations};
+pub use annotated::{AnnotationRender, Annotations, RENDER_VERSION};
 pub use asset::Asset;
 pub use asset_command::{AssetCommand, AssetError, TextField};
 pub use batch_import::{
@@ -69,7 +68,7 @@ pub use error::{
     AdoptError, AnnotatedError, CollectionError, ImportError, LibraryError, RemoveRecordError,
     ReplaceError,
 };
-pub use export::{CopyFailure, CopyReport};
+pub use export::{CopyFailure, CopyReport, FlatFiles};
 pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, IgnoreId, SmartCollectionId, TagId};
@@ -86,7 +85,6 @@ pub use library_export::{
 pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
 pub use schema::{CURRENT_FORMAT_VERSION, MigrationStop, oldest_compatible_version};
-pub use seal::{FinalizeReport, SaveRequest, SealProblem, SealStatus, SealStep};
 pub use search::{
     AssetFilter, MAX_QUERY_WORDS, comparable, query_groups, query_text, query_word_count,
 };
@@ -106,7 +104,6 @@ pub struct Library {
     history: History,
     screen: Option<Dimensions>,
     query_cache: query_cache::SharedQueryCache,
-    failpoint: Option<seal::SealStep>,
     _exclusive_access: Option<File>,
 }
 
@@ -180,17 +177,14 @@ impl Library {
         remove_unfinished_imports(root);
         export::forget_exports(root);
 
-        let mut library = Self {
+        Ok(Self {
             root: root.to_path_buf(),
             connection,
             history: History::default(),
             screen: None,
             query_cache: query_cache::SharedQueryCache::default(),
-            failpoint: None,
             _exclusive_access: exclusive_access,
-        };
-        library.recover_interrupted_saves();
-        Ok(library)
+        })
     }
 
     pub fn set_screen(&mut self, screen: Option<Dimensions>) {

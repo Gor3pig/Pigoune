@@ -25,7 +25,6 @@ pub enum LayerAction {
     Move(u32, LayerMove),
     SetHidden(u32, bool),
     SetLocked(u32, bool),
-    RemoveMarker(u32),
     Drop { id: u32, target: u32, above: bool },
     OpenCrop,
 }
@@ -39,14 +38,12 @@ pub struct LayerRow {
     pub label: String,
     pub hidden: bool,
     pub locked: bool,
-    pub sealed: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RowState {
     pub hidden: bool,
     pub locked: bool,
-    pub sealed: bool,
 }
 
 impl LayerRow {
@@ -55,7 +52,6 @@ impl LayerRow {
         RowState {
             hidden: self.hidden,
             locked: self.locked,
-            sealed: self.sealed,
         }
     }
 }
@@ -94,12 +90,6 @@ pub fn menu_for(id: u32, state: RowState) -> gio::Menu {
         item
     };
     let menu = gio::Menu::new();
-    if state.sealed {
-        let only = gio::Menu::new();
-        only.append_item(&item(gettext("Remove Marker"), "layer.marker"));
-        menu.append_section(None, &only);
-        return menu;
-    }
     let first = gio::Menu::new();
     first.append_item(&item(gettext("Rename"), "layer.rename"));
     first.append_item(&item(gettext("Duplicate"), "layer.duplicate"));
@@ -216,14 +206,7 @@ impl LayersPanel {
             self.list.append(&row);
             self.ids.borrow_mut().push(None);
         }
-        let mut heading_shown = false;
         for layer in &view.rows {
-            if layer.sealed && !heading_shown {
-                heading_shown = true;
-                self.list
-                    .append(&Self::heading_row(&gettext("Applied Masks")));
-                self.ids.borrow_mut().push(None);
-            }
             let row = self.build_row(layer);
             self.list.append(&row);
             self.ids.borrow_mut().push(Some(layer.id));
@@ -246,21 +229,6 @@ impl LayersPanel {
         label.add_css_class("dim-label");
         label.set_margin_top(12);
         label.set_margin_bottom(12);
-        row.set_child(Some(&label));
-        row
-    }
-
-    fn heading_row(text: &str) -> gtk::ListBoxRow {
-        let row = gtk::ListBoxRow::new();
-        row.set_selectable(false);
-        row.set_activatable(false);
-        let label = gtk::Label::new(Some(text));
-        label.add_css_class("dim-label");
-        label.add_css_class("caption-heading");
-        label.set_halign(gtk::Align::Start);
-        label.set_margin_top(8);
-        label.set_margin_bottom(4);
-        label.set_margin_start(10);
         row.set_child(Some(&label));
         row
     }
@@ -352,7 +320,7 @@ impl LayersPanel {
         content.set_margin_end(6);
         let handle = gtk::Image::from_icon_name(HANDLE_ICON);
         handle.add_css_class("dim-label");
-        let movable = !layer.locked && !layer.sealed;
+        let movable = !layer.locked;
         if movable {
             handle.set_cursor_from_name(Some("grab"));
             handle.set_tooltip_text(Some(&gettext("Drag to Reorder")));
@@ -363,7 +331,6 @@ impl LayersPanel {
         let label = gtk::EditableLabel::new(&layer.label);
         label.set_hexpand(true);
         label.set_halign(gtk::Align::Fill);
-        label.set_sensitive(!layer.sealed);
         if layer.hidden {
             icon.set_opacity(0.4);
             label.set_opacity(0.4);
@@ -371,27 +338,20 @@ impl LayersPanel {
         content.append(&handle);
         content.append(&icon);
         content.append(&label);
-        if layer.sealed {
-            let applied = gtk::Image::from_icon_name(LOCKED_ICON);
-            applied.set_tooltip_text(Some(&gettext("Masking applied")));
-            applied.add_css_class("dim-label");
-            content.append(&applied);
-        } else {
-            content.append(&self.toggle_button(
-                layer.id,
-                layer.hidden,
-                (HIDDEN_ICON, SHOWN_ICON),
-                (gettext("Show"), gettext("Hide")),
-                LayerAction::SetHidden,
-            ));
-            content.append(&self.toggle_button(
-                layer.id,
-                layer.locked,
-                (LOCKED_ICON, FREE_ICON),
-                (gettext("Unlock"), gettext("Lock")),
-                LayerAction::SetLocked,
-            ));
-        }
+        content.append(&self.toggle_button(
+            layer.id,
+            layer.hidden,
+            (HIDDEN_ICON, SHOWN_ICON),
+            (gettext("Show"), gettext("Hide")),
+            LayerAction::SetHidden,
+        ));
+        content.append(&self.toggle_button(
+            layer.id,
+            layer.locked,
+            (LOCKED_ICON, FREE_ICON),
+            (gettext("Unlock"), gettext("Lock")),
+            LayerAction::SetLocked,
+        ));
         row.set_child(Some(&content));
         self.labels.borrow_mut().push((layer.id, label.clone()));
         self.watch_renaming(&label, layer);
@@ -399,9 +359,7 @@ impl LayersPanel {
         if movable {
             Self::attach_drag(&row, &handle, layer.id);
         }
-        if !layer.sealed {
-            self.attach_drop(&row, layer.id);
-        }
+        self.attach_drop(&row, layer.id);
         row
     }
 
@@ -582,8 +540,7 @@ fn autoscroll(scroller: &gtk::ScrolledWindow, row: &gtk::ListBoxRow, y: f64) {
 mod tests {
     use super::*;
 
-    pub const ACTIONS: [&str; 13] = [
-        "marker",
+    pub const ACTIONS: [&str; 12] = [
         "hide",
         "show",
         "lock",
@@ -609,7 +566,6 @@ mod tests {
                     label: (*label).to_owned(),
                     hidden: false,
                     locked: false,
-                    sealed: false,
                 })
                 .collect(),
             selected,
@@ -679,15 +635,6 @@ mod tests {
     }
 
     #[test]
-    fn a_sealed_marker_offers_only_to_remove_the_marker() {
-        let state = RowState {
-            sealed: true,
-            ..RowState::default()
-        };
-        assert_eq!(actions_of(state), vec!["marker"]);
-    }
-
-    #[test]
     fn the_menu_offers_the_opposite_of_the_current_visibility_and_lock() {
         let plain = actions_of(RowState::default());
         assert!(plain.contains(&"hide".to_owned()) && plain.contains(&"lock".to_owned()));
@@ -695,7 +642,6 @@ mod tests {
         let frozen = actions_of(RowState {
             hidden: true,
             locked: true,
-            sealed: false,
         });
         assert!(frozen.contains(&"show".to_owned()) && frozen.contains(&"unlock".to_owned()));
         assert!(!frozen.contains(&"hide".to_owned()) && !frozen.contains(&"lock".to_owned()));
@@ -714,8 +660,5 @@ mod tests {
         let mut locked = base.clone();
         locked.rows[0].locked = true;
         assert!(!base.same_structure(&locked));
-        let mut sealed = base.clone();
-        sealed.rows[0].sealed = true;
-        assert!(!base.same_structure(&sealed));
     }
 }

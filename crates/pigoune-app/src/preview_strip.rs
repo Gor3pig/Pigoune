@@ -6,7 +6,7 @@ use gettextrs::gettext;
 use gtk::{gdk, gio, glib};
 
 use crate::asset_object::PigouneAssetObject;
-use crate::thumbnails::{self, ThumbnailCache};
+use crate::thumbnails::ThumbnailCache;
 
 const STRIP_THUMBNAIL_PIXELS: i32 = 56;
 
@@ -205,7 +205,7 @@ impl PigounePreviewStrip {
         let item = item.clone();
         let loading_item = item.clone();
         let loading = glib::spawn_future_local(async move {
-            let texture = thumbnails::thumbnail(asset.file(), asset.thumbnail_file()).await;
+            let texture = asset.thumbnail(&picture).await;
             let Some(texture) = texture else {
                 return;
             };

@@ -57,11 +57,27 @@ fn forget_files(root: &Path, asset: AssetId) {
 }
 
 pub(super) fn forget_thumbnails(root: &Path, asset: AssetId) {
+    forget_annotated_renders(root, asset);
     let Ok(sizes) = fs::read_dir(layout::thumbnails_dir(root)) else {
         return;
     };
     for size in sizes.flatten() {
         let _ = fs::remove_file(size.path().join(layout::thumbnail_in_size_dir(asset)));
+    }
+}
+
+pub(super) fn forget_annotated_renders(root: &Path, asset: AssetId) {
+    let Ok(entries) = fs::read_dir(layout::annotated_dir(root)) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let named = entry
+            .file_name()
+            .to_str()
+            .is_some_and(|name| layout::is_annotated_render_of(asset, name));
+        if named && entry.file_type().is_ok_and(|kind| kind.is_file()) {
+            let _ = fs::remove_file(entry.path());
+        }
     }
 }
 

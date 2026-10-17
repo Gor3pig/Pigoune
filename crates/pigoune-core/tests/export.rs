@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use pigoune_core::{Asset, AssetCommand, AssetId, ImportOutcome, Library};
+use pigoune_core::{Asset, AssetCommand, AssetId, FlatFiles, ImportOutcome, Library};
 use tempfile::TempDir;
 
 struct Fixture {
@@ -45,7 +45,7 @@ impl Fixture {
 
     fn export(&self, assets: &[AssetId]) -> Vec<PathBuf> {
         self.library
-            .export_copies(assets)
+            .export_copies(assets, &FlatFiles::new())
             .expect("copies are prepared")
     }
 }
@@ -166,7 +166,7 @@ fn exporting_to_a_folder_never_overwrites_a_file() {
 
     let copies = fixture
         .library
-        .export_to(&[svg], &folder)
+        .export_to(&[svg], &folder, &FlatFiles::new())
         .expect("export succeeds")
         .copies;
 
@@ -194,11 +194,11 @@ fn several_exports_to_the_same_folder_add_up() {
 
     fixture
         .library
-        .export_to(&[svg], &folder)
+        .export_to(&[svg], &folder, &FlatFiles::new())
         .expect("first export");
     fixture
         .library
-        .export_to(&[svg], &folder)
+        .export_to(&[svg], &folder, &FlatFiles::new())
         .expect("second export");
 
     let mut names: Vec<String> = fs::read_dir(&folder)
@@ -221,7 +221,12 @@ fn exporting_to_a_missing_folder_is_refused() {
     let svg = fixture.import("dark-circle.svg");
     let missing = fixture.workspace.path().join("absent");
 
-    assert!(fixture.library.export_to(&[svg], &missing).is_err());
+    assert!(
+        fixture
+            .library
+            .export_to(&[svg], &missing, &FlatFiles::new())
+            .is_err()
+    );
     assert!(!missing.exists());
 }
 
@@ -232,7 +237,7 @@ fn clipboard_copies_survive_a_new_drag() {
     let png = fixture.import("red-dot.png");
     let copied = fixture
         .library
-        .clipboard_copies(&[svg])
+        .clipboard_copies(&[svg], &FlatFiles::new())
         .expect("clipboard copies are prepared")
         .remove(0);
 
@@ -250,7 +255,7 @@ fn an_opening_copy_takes_the_display_name() {
 
     let copy = fixture
         .library
-        .opening_copy(svg)
+        .opening_copy(svg, &FlatFiles::new())
         .expect("opening copy is prepared")
         .expect("asset exists");
 
@@ -268,18 +273,18 @@ fn opening_copies_stay_until_the_library_is_reopened() {
     let png = fixture.import("red-dot.png");
     let first = fixture
         .library
-        .opening_copy(svg)
+        .opening_copy(svg, &FlatFiles::new())
         .expect("first copy")
         .expect("asset exists");
     let second = fixture
         .library
-        .opening_copy(png)
+        .opening_copy(png, &FlatFiles::new())
         .expect("second copy")
         .expect("asset exists");
     fixture.export(&[png]);
     fixture
         .library
-        .clipboard_copies(&[svg])
+        .clipboard_copies(&[svg], &FlatFiles::new())
         .expect("clipboard copies are prepared");
 
     assert!(first.exists());
@@ -299,7 +304,7 @@ fn opening_the_same_asset_twice_replaces_its_copy() {
     let svg = fixture.import("dark-circle.svg");
     let first = fixture
         .library
-        .opening_copy(svg)
+        .opening_copy(svg, &FlatFiles::new())
         .expect("first copy")
         .expect("asset exists");
     fs::write(&first, b"edited elsewhere").expect("copy is changed");
@@ -307,7 +312,7 @@ fn opening_the_same_asset_twice_replaces_its_copy() {
 
     let second = fixture
         .library
-        .opening_copy(svg)
+        .opening_copy(svg, &FlatFiles::new())
         .expect("second copy")
         .expect("asset exists");
 
@@ -333,7 +338,10 @@ fn a_missing_asset_has_no_opening_copy() {
     fixture.library.empty_trash().expect("trash is emptied");
 
     assert_eq!(
-        fixture.library.opening_copy(svg).expect("lookup works"),
+        fixture
+            .library
+            .opening_copy(svg, &FlatFiles::new())
+            .expect("lookup works"),
         None
     );
 }
@@ -468,4 +476,69 @@ fn an_unsafe_extension_is_cleaned_or_replaced() {
     assert_eq!(file_name(&cleaned), "one.jpg");
     assert_eq!(file_name(&replaced), "two.png");
     assert!(replaced.starts_with(fixture.library.root()));
+}
+
+#[test]
+fn an_annotated_image_is_exported_only_as_its_flattened_copy_and_never_as_its_original() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("blue-photo.jpg");
+    let shape = pigoune_core::annotations::Shape::new(
+        "blur",
+        pigoune_core::annotations::Geometry::Box(pigoune_core::annotations::Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 2.0,
+            height: 2.0,
+        }),
+        pigoune_core::annotations::Options::new(),
+    );
+    fixture
+        .library
+        .save_annotations(
+            id,
+            &pigoune_core::annotations::AnnotationDocument::new(
+                None,
+                vec![pigoune_core::annotations::AnnotationObject::new(1, shape)],
+            ),
+        )
+        .expect("annotated");
+    let destination = tempfile::tempdir().expect("destination");
+
+    let refused = fixture
+        .library
+        .export_to(&[id], destination.path(), &FlatFiles::new())
+        .expect("a report");
+    assert!(refused.copies.is_empty());
+    assert_eq!(refused.failures.len(), 1);
+    assert_eq!(
+        std::fs::read_dir(destination.path()).expect("dir").count(),
+        0
+    );
+    assert!(
+        fixture
+            .library
+            .export_copies(&[id], &FlatFiles::new())
+            .is_err()
+    );
+    assert!(fixture.library.opening_copy(id, &FlatFiles::new()).is_err());
+
+    let flat = destination.path().join("rendered.png");
+    std::fs::write(&flat, b"flattened").expect("flat");
+    let mut flats = FlatFiles::new();
+    flats.insert(id, flat);
+    let exported = fixture
+        .library
+        .export_to(&[id], destination.path(), &flats)
+        .expect("exported");
+    assert_eq!(exported.copies.len(), 1);
+    let name = exported.copies[0]
+        .file_name()
+        .expect("name")
+        .to_string_lossy()
+        .into_owned();
+    assert!(name == "blue-photo.png", "{name}");
+    assert_eq!(
+        std::fs::read(&exported.copies[0]).expect("copy"),
+        b"flattened"
+    );
 }

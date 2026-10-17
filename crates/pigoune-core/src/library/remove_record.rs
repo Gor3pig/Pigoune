@@ -22,25 +22,8 @@ impl Library {
         self.history.clear();
         forget_thumbnails(&self.root, id);
         if inside && let Some(folder) = file.parent() {
-            remove_original_files(folder);
             let _ = fs::remove_dir(folder);
         }
         Ok(())
-    }
-}
-
-fn remove_original_files(folder: &std::path::Path) {
-    let Ok(entries) = fs::read_dir(folder) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let is_original = entry
-            .file_name()
-            .to_str()
-            .and_then(layout::original_generation_of)
-            .is_some();
-        if is_original && entry.file_type().is_ok_and(|kind| kind.is_file()) {
-            let _ = fs::remove_file(entry.path());
-        }
     }
 }

@@ -268,18 +268,10 @@ pub enum AnnotatedError {
     NotAnnotated(AssetId),
     #[error("this image is already stored as the resource {0}")]
     AlreadyPresent(AssetId),
-    #[error("{0} is not a PNG image")]
-    NotPng(PathBuf),
+    #[error("{0} is not in a supported format")]
+    Unsupported(PathBuf),
     #[error("{0} could not be read")]
     Unreadable(PathBuf),
-    #[error("the file name of {0} is reserved by Pigoune")]
-    ReservedName(PathBuf),
-    #[error("the sealing of the annotations cannot be trusted: {0:?}")]
-    SealBlocked(super::seal::SealStatus),
-    #[error("the saving was interrupted at {0:?}")]
-    Interrupted(super::seal::SealStep),
-    #[error("{0}")]
-    InvalidSeal(&'static str),
     #[error(transparent)]
     Document(#[from] crate::annotations::DocumentError),
     #[error(transparent)]
@@ -289,7 +281,7 @@ pub enum AnnotatedError {
 impl From<ImportError> for AnnotatedError {
     fn from(error: ImportError) -> Self {
         match error {
-            ImportError::UnsupportedFormat(path) => Self::NotPng(path),
+            ImportError::UnsupportedFormat(path) => Self::Unsupported(path),
             ImportError::Unreadable(path) => Self::Unreadable(path),
             ImportError::CollectionNotFound(_) => Self::Library(LibraryError::Io(
                 io::Error::other("no collection is involved"),

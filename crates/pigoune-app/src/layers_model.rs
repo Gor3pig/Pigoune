@@ -27,7 +27,6 @@ mod tests {
             summary: summary.to_owned(),
             hidden: false,
             locked: false,
-            sealed: false,
         }
     }
 
