@@ -9,6 +9,10 @@ use pigoune_core::annotations::LayerMove;
 const HANDLE_ICON: &str = "list-drag-handle-symbolic";
 const IMAGE_ICON: &str = "image-x-generic-symbolic";
 const CROP_ICON: &str = "crop-symbolic";
+const SHOWN_ICON: &str = "view-reveal-symbolic";
+const HIDDEN_ICON: &str = "view-conceal-symbolic";
+const FREE_ICON: &str = "changes-allow-symbolic";
+const LOCKED_ICON: &str = "changes-prevent-symbolic";
 const SCROLL_MARGIN: f64 = 28.0;
 const SCROLL_STEP: f64 = 14.0;
 
@@ -19,6 +23,9 @@ pub enum LayerAction {
     Duplicate(u32),
     Delete(u32),
     Move(u32, LayerMove),
+    SetHidden(u32, bool),
+    SetLocked(u32, bool),
+    RemoveMarker(u32),
     Drop { id: u32, target: u32, above: bool },
     OpenCrop,
 }
@@ -30,6 +37,27 @@ pub struct LayerRow {
     pub id: u32,
     pub icon: &'static str,
     pub label: String,
+    pub hidden: bool,
+    pub locked: bool,
+    pub sealed: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct RowState {
+    pub hidden: bool,
+    pub locked: bool,
+    pub sealed: bool,
+}
+
+impl LayerRow {
+    #[must_use]
+    pub fn state(&self) -> RowState {
+        RowState {
+            hidden: self.hidden,
+            locked: self.locked,
+            sealed: self.sealed,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -58,7 +86,7 @@ pub struct LayersPanel {
     editing: Cell<bool>,
 }
 
-pub fn menu_for(id: u32) -> gio::Menu {
+pub fn menu_for(id: u32, state: RowState) -> gio::Menu {
     let target = id.to_variant();
     let item = |label: String, action: &str| {
         let item = gio::MenuItem::new(Some(&label), None);
@@ -66,6 +94,12 @@ pub fn menu_for(id: u32) -> gio::Menu {
         item
     };
     let menu = gio::Menu::new();
+    if state.sealed {
+        let only = gio::Menu::new();
+        only.append_item(&item(gettext("Remove Marker"), "layer.marker"));
+        menu.append_section(None, &only);
+        return menu;
+    }
     let first = gio::Menu::new();
     first.append_item(&item(gettext("Rename"), "layer.rename"));
     first.append_item(&item(gettext("Duplicate"), "layer.duplicate"));
@@ -76,6 +110,18 @@ pub fn menu_for(id: u32) -> gio::Menu {
     order.append_item(&item(gettext("Send Backward"), "layer.backward"));
     order.append_item(&item(gettext("Send to Back"), "layer.back"));
     menu.append_section(None, &order);
+    let visibility = gio::Menu::new();
+    if state.hidden {
+        visibility.append_item(&item(gettext("Show"), "layer.show"));
+    } else {
+        visibility.append_item(&item(gettext("Hide"), "layer.hide"));
+    }
+    if state.locked {
+        visibility.append_item(&item(gettext("Unlock"), "layer.unlock"));
+    } else {
+        visibility.append_item(&item(gettext("Lock"), "layer.lock"));
+    }
+    menu.append_section(None, &visibility);
     let last = gio::Menu::new();
     last.append_item(&item(gettext("Delete"), "layer.delete"));
     menu.append_section(None, &last);
@@ -170,7 +216,14 @@ impl LayersPanel {
             self.list.append(&row);
             self.ids.borrow_mut().push(None);
         }
+        let mut heading_shown = false;
         for layer in &view.rows {
+            if layer.sealed && !heading_shown {
+                heading_shown = true;
+                self.list
+                    .append(&Self::heading_row(&gettext("Applied Masks")));
+                self.ids.borrow_mut().push(None);
+            }
             let row = self.build_row(layer);
             self.list.append(&row);
             self.ids.borrow_mut().push(Some(layer.id));
@@ -193,6 +246,21 @@ impl LayersPanel {
         label.add_css_class("dim-label");
         label.set_margin_top(12);
         label.set_margin_bottom(12);
+        row.set_child(Some(&label));
+        row
+    }
+
+    fn heading_row(text: &str) -> gtk::ListBoxRow {
+        let row = gtk::ListBoxRow::new();
+        row.set_selectable(false);
+        row.set_activatable(false);
+        let label = gtk::Label::new(Some(text));
+        label.add_css_class("dim-label");
+        label.add_css_class("caption-heading");
+        label.set_halign(gtk::Align::Start);
+        label.set_margin_top(8);
+        label.set_margin_bottom(4);
+        label.set_margin_start(10);
         row.set_child(Some(&label));
         row
     }
@@ -284,22 +352,76 @@ impl LayersPanel {
         content.set_margin_end(6);
         let handle = gtk::Image::from_icon_name(HANDLE_ICON);
         handle.add_css_class("dim-label");
-        handle.set_cursor_from_name(Some("grab"));
-        handle.set_tooltip_text(Some(&gettext("Drag to Reorder")));
+        let movable = !layer.locked && !layer.sealed;
+        if movable {
+            handle.set_cursor_from_name(Some("grab"));
+            handle.set_tooltip_text(Some(&gettext("Drag to Reorder")));
+        } else {
+            handle.set_opacity(0.25);
+        }
         let icon = gtk::Image::from_icon_name(layer.icon);
         let label = gtk::EditableLabel::new(&layer.label);
         label.set_hexpand(true);
         label.set_halign(gtk::Align::Fill);
+        label.set_sensitive(!layer.sealed);
+        if layer.hidden {
+            icon.set_opacity(0.4);
+            label.set_opacity(0.4);
+        }
         content.append(&handle);
         content.append(&icon);
         content.append(&label);
+        if layer.sealed {
+            let applied = gtk::Image::from_icon_name(LOCKED_ICON);
+            applied.set_tooltip_text(Some(&gettext("Masking applied")));
+            applied.add_css_class("dim-label");
+            content.append(&applied);
+        } else {
+            content.append(&self.toggle_button(
+                layer.id,
+                layer.hidden,
+                (HIDDEN_ICON, SHOWN_ICON),
+                (gettext("Show"), gettext("Hide")),
+                LayerAction::SetHidden,
+            ));
+            content.append(&self.toggle_button(
+                layer.id,
+                layer.locked,
+                (LOCKED_ICON, FREE_ICON),
+                (gettext("Unlock"), gettext("Lock")),
+                LayerAction::SetLocked,
+            ));
+        }
         row.set_child(Some(&content));
         self.labels.borrow_mut().push((layer.id, label.clone()));
         self.watch_renaming(&label, layer);
-        self.attach_menu(&row, layer.id);
-        Self::attach_drag(&row, &handle, layer.id);
-        self.attach_drop(&row, layer.id);
+        self.attach_menu(&row, layer.id, layer.state());
+        if movable {
+            Self::attach_drag(&row, &handle, layer.id);
+        }
+        if !layer.sealed {
+            self.attach_drop(&row, layer.id);
+        }
         row
+    }
+
+    fn toggle_button(
+        &self,
+        id: u32,
+        on: bool,
+        (on_icon, off_icon): (&str, &str),
+        (on_tip, off_tip): (String, String),
+        make: fn(u32, bool) -> LayerAction,
+    ) -> gtk::Button {
+        let button = gtk::Button::from_icon_name(if on { on_icon } else { off_icon });
+        button.add_css_class("flat");
+        button.add_css_class("circular");
+        button.set_valign(gtk::Align::Center);
+        button.set_focus_on_click(false);
+        button.set_tooltip_text(Some(if on { &on_tip } else { &off_tip }));
+        let dispatch = self.dispatch.clone();
+        button.connect_clicked(move |_| dispatch(make(id, !on)));
+        button
     }
 
     fn watch_renaming(self: &Rc<Self>, label: &gtk::EditableLabel, layer: &LayerRow) {
@@ -327,8 +449,8 @@ impl LayersPanel {
         });
     }
 
-    fn attach_menu(&self, row: &gtk::ListBoxRow, id: u32) {
-        let popover = gtk::PopoverMenu::from_model(Some(&menu_for(id)));
+    fn attach_menu(&self, row: &gtk::ListBoxRow, id: u32, state: RowState) {
+        let popover = gtk::PopoverMenu::from_model(Some(&menu_for(id, state)));
         popover.set_parent(row);
         popover.set_has_arrow(false);
         popover.set_halign(gtk::Align::Start);
@@ -457,7 +579,12 @@ fn autoscroll(scroller: &gtk::ScrolledWindow, row: &gtk::ListBoxRow, y: f64) {
 mod tests {
     use super::*;
 
-    pub const ACTIONS: [&str; 8] = [
+    pub const ACTIONS: [&str; 13] = [
+        "marker",
+        "hide",
+        "show",
+        "lock",
+        "unlock",
         "select",
         "rename",
         "duplicate",
@@ -477,6 +604,9 @@ mod tests {
                     id: u32::try_from(index).expect("small") + 1,
                     icon: "rectangle-symbolic",
                     label: (*label).to_owned(),
+                    hidden: false,
+                    locked: false,
+                    sealed: false,
                 })
                 .collect(),
             selected,
@@ -504,7 +634,7 @@ mod tests {
 
     #[test]
     fn every_action_of_the_menu_is_one_the_editor_registers() {
-        let menu = menu_for(7);
+        let menu = menu_for(7, RowState::default());
         let mut seen = Vec::new();
         for section in 0..menu.n_items() {
             let Some(link) = menu.item_link(section, "section") else {
@@ -524,6 +654,6 @@ mod tests {
                 seen.push(name.to_owned());
             }
         }
-        assert_eq!(seen.len(), 7);
+        assert_eq!(seen.len(), 9);
     }
 }

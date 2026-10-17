@@ -1,48 +1,54 @@
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
-use pigoune_core::annotations::AnnotationDocument;
+use pigoune_core::annotations::{AnnotationDocument, AnnotationObject};
 
-use crate::annotation_render::{self, Backdrop, Scene};
+use crate::annotation_render::{self, Backdrop};
 use crate::tiled_render;
-
-fn whole_texture(texture: &gdk::Texture) -> graphene::Rect {
-    graphene::Rect::new(0.0, 0.0, pixels(texture.width()), pixels(texture.height()))
-}
 
 fn pixels(value: i32) -> f32 {
     f32::from(i16::try_from(value).unwrap_or(i16::MAX))
 }
 
+fn masks_only(document: &AnnotationDocument, ids: &[u32]) -> AnnotationDocument {
+    let objects: Vec<AnnotationObject> = document
+        .objects
+        .iter()
+        .filter(|object| ids.contains(&object.id))
+        .cloned()
+        .collect();
+    AnnotationDocument::new(None, objects)
+}
+
 fn paint_masks(
     snapshot: &gtk::Snapshot,
     backdrop: &Backdrop,
-    document: &AnnotationDocument,
+    masks: &AnnotationDocument,
     context: &pango::Context,
 ) {
     snapshot.append_scaled_texture(
         backdrop.texture,
         gsk::ScalingFilter::Nearest,
-        &whole_texture(backdrop.texture),
+        &graphene::Rect::new(
+            0.0,
+            0.0,
+            pixels(backdrop.texture.width()),
+            pixels(backdrop.texture.height()),
+        ),
     );
-    let base_only = Scene {
-        backdrop,
-        document,
-        upto: 0,
-    };
-    for (_, mask) in document.masks() {
-        annotation_render::append_shape(snapshot, &mask, 1, context, Some(&base_only));
-    }
+    annotation_render::append_document(snapshot, masks, context, Some(backdrop), None);
 }
 
 pub fn bake(
     backdrop: &Backdrop,
     document: &AnnotationDocument,
+    ids: &[u32],
     context: &pango::Context,
 ) -> Option<gdk::Texture> {
+    let masks = masks_only(document, ids);
     tiled_render::render(
         backdrop.renderer,
         backdrop.texture.width(),
         backdrop.texture.height(),
-        &|snapshot| paint_masks(snapshot, backdrop, document, context),
+        &|snapshot| paint_masks(snapshot, backdrop, &masks, context),
     )
 }

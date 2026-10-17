@@ -25,6 +25,9 @@ mod tests {
             name: name.map(str::to_owned),
             ordinal,
             summary: summary.to_owned(),
+            hidden: false,
+            locked: false,
+            sealed: false,
         }
     }
 

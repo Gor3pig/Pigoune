@@ -2,6 +2,7 @@ pub mod annotations;
 pub mod library;
 mod media;
 mod raster;
+pub mod seal_chain;
 
 pub use library::{
     ALMOST_IDENTICAL_DISTANCE, AdoptError, AnnotatedError, AnnotatedImage, Annotations, Asset,

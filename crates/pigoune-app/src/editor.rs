@@ -11,6 +11,7 @@ use pigoune_core::annotations::{
     AnnotationDocument, Crop, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
     LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value, layer_entries,
 };
+use pigoune_core::seal_chain;
 
 use crate::annotation_export;
 use crate::annotation_render;
@@ -592,7 +593,7 @@ impl PigouneEditor {
 
     fn install_layer_actions(&self) {
         let group = gio::SimpleActionGroup::new();
-        let table: [(&str, LayerMaker); 8] = [
+        let table: [(&str, LayerMaker); 13] = [
             ("select", LayerAction::Select),
             ("rename", |id| LayerAction::Rename(id, None)),
             ("duplicate", LayerAction::Duplicate),
@@ -601,6 +602,11 @@ impl PigouneEditor {
             ("forward", |id| LayerAction::Move(id, LayerMove::Forward)),
             ("backward", |id| LayerAction::Move(id, LayerMove::Backward)),
             ("back", |id| LayerAction::Move(id, LayerMove::Back)),
+            ("hide", |id| LayerAction::SetHidden(id, true)),
+            ("show", |id| LayerAction::SetHidden(id, false)),
+            ("lock", |id| LayerAction::SetLocked(id, true)),
+            ("unlock", |id| LayerAction::SetLocked(id, false)),
+            ("marker", LayerAction::RemoveMarker),
         ];
         for (name, make) in table {
             let action = gio::SimpleAction::new(name, Some(&u32::static_variant_type()));
@@ -654,6 +660,15 @@ impl PigouneEditor {
             LayerAction::Move(id, movement) => {
                 imp.drawing.borrow_mut().session.move_object(id, movement);
             }
+            LayerAction::SetHidden(id, hidden) => {
+                imp.drawing.borrow_mut().session.set_hidden(id, hidden);
+            }
+            LayerAction::SetLocked(id, locked) => {
+                imp.drawing.borrow_mut().session.set_locked(id, locked);
+            }
+            LayerAction::RemoveMarker(id) => {
+                imp.drawing.borrow_mut().session.remove_marker(id);
+            }
             LayerAction::Drop { id, target, above } => {
                 imp.drawing
                     .borrow_mut()
@@ -681,6 +696,9 @@ impl PigouneEditor {
                             .replace("{tool}", tool)
                             .replace("{text}", text)
                     }),
+                    hidden: entry.hidden,
+                    locked: entry.locked,
+                    sealed: entry.sealed,
                 }
             })
             .collect();
@@ -728,7 +746,13 @@ impl PigouneEditor {
         if found.len() > 1 {
             menu.append_section(Some(&gettext("Select")), &choices);
         }
-        menu.append_section(None, &layers_panel::menu_for(top));
+        let top_state = view
+            .rows
+            .iter()
+            .find(|row| row.id == top)
+            .map(LayerRow::state)
+            .unwrap_or_default();
+        menu.append_section(None, &layers_panel::menu_for(top, top_state));
         let previous = imp.canvas_menu.take();
         if let Some(previous) = previous {
             previous.unparent();
@@ -1006,9 +1030,17 @@ impl PigouneEditor {
             annotation_render::append_crop(snapshot, crop, whole, scale);
         } else if drawing.interaction.pending().is_none()
             && editing.is_none()
+            && drawing
+                .session
+                .selected_state()
+                .is_some_and(|state| !state.hidden)
             && let Some(shape) = drawing.session.selected_shape()
         {
-            let with_handles = drawing.interaction.acts_as_select(self.current_tool());
+            let editable = drawing
+                .session
+                .selected_state()
+                .is_some_and(|state| !state.locked && !state.sealed);
+            let with_handles = editable && drawing.interaction.acts_as_select(self.current_tool());
             annotation_render::append_selection(
                 snapshot,
                 shape,
@@ -1604,7 +1636,23 @@ impl PigouneEditor {
         for button in imp.layer_edit_buttons.borrow().iter() {
             button.set_sensitive(has_selection);
         }
+        let exposed = !self
+            .imp()
+            .drawing
+            .borrow()
+            .session
+            .document()
+            .exposed_masks()
+            .is_empty();
+        imp.mask_banner.set_title(&if exposed {
+            gettext("A mask is hidden, so the image would show what it covers")
+        } else {
+            gettext("The original image still shows what the blur and pixelation hide")
+        });
         imp.mask_banner.set_revealed(unlocked);
+        let sealing = seal_chain::sealing_available();
+        imp.mask_banner
+            .set_button_label(sealing.then(|| gettext("Lock Masks")).as_deref());
         imp.zoom_view.queue_draw();
         self.sync_layers();
         self.keep_keyboard_focus();
@@ -1615,6 +1663,9 @@ impl PigouneEditor {
 
     #[template_callback]
     fn on_lock_masks_clicked(&self) {
+        if !seal_chain::sealing_available() {
+            return;
+        }
         let dialog = adw::AlertDialog::new(
             Some(&gettext("Lock the Masks?")),
             Some(&gettext(
@@ -1672,7 +1723,13 @@ impl PigouneEditor {
         copy.connect_activate(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |_, _| editor.copy_image()
+            move |_, _| {
+                glib::spawn_future_local(glib::clone!(
+                    #[weak]
+                    editor,
+                    async move { editor.copy_image().await }
+                ));
+            }
         ));
         group.add_action(&copy);
         let export = gio::SimpleAction::new("export", None);
@@ -1717,7 +1774,74 @@ impl PigouneEditor {
         dialog.present(Some(self));
     }
 
-    fn copy_image(&self) {
+    fn exposed_mask_names(&self) -> Vec<String> {
+        let exposed = self
+            .imp()
+            .drawing
+            .borrow()
+            .session
+            .document()
+            .exposed_masks();
+        self.layers_view()
+            .rows
+            .into_iter()
+            .filter(|row| exposed.contains(&row.id))
+            .map(|row| row.label)
+            .collect()
+    }
+
+    async fn output_is_allowed(&self) -> bool {
+        self.commit_text();
+        let names = self.exposed_mask_names();
+        if names.is_empty() {
+            return true;
+        }
+        let body = match names.as_slice() {
+            [name] => gettext("“{name}” is hidden: the image will show what it covers.")
+                .replace("{name}", name),
+            _ => gettext("{count} masks are hidden: the image will show what they cover.")
+                .replace("{count}", &names.len().to_string()),
+        };
+        let dialog = adw::AlertDialog::new(Some(&gettext("A Mask Is Hidden")), Some(&body));
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("anyway", &gettext("Continue _Anyway"));
+        dialog.add_response("show", &gettext("_Show the Masks"));
+        dialog.set_response_appearance("anyway", adw::ResponseAppearance::Destructive);
+        dialog.set_response_appearance("show", adw::ResponseAppearance::Suggested);
+        dialog.set_default_response(Some("show"));
+        dialog.set_close_response("cancel");
+        match dialog.choose_future(Some(self)).await.as_str() {
+            "anyway" => true,
+            "show" => {
+                self.show_exposed_masks();
+                false
+            }
+            _ => false,
+        }
+    }
+
+    fn show_exposed_masks(&self) {
+        let ids = self
+            .imp()
+            .drawing
+            .borrow()
+            .session
+            .document()
+            .exposed_masks();
+        for id in ids {
+            self.imp()
+                .drawing
+                .borrow_mut()
+                .session
+                .set_hidden(id, false);
+        }
+        self.after_edit();
+    }
+
+    async fn copy_image(&self) {
+        if !self.output_is_allowed().await {
+            return;
+        }
         let Some(texture) = self.final_texture() else {
             self.show_output_failure(&gettext("Could Not Copy the Image"));
             return;
@@ -1728,6 +1852,9 @@ impl PigouneEditor {
 
     async fn request_save(&self) {
         let imp = self.imp();
+        if !self.output_is_allowed().await {
+            return;
+        }
         let failure = gettext("Could Not Save the Capture");
         let (Some(rendered), Some(original)) = (self.final_texture(), imp.zoom_view.texture())
         else {
@@ -1753,6 +1880,9 @@ impl PigouneEditor {
     }
 
     async fn export_image(&self) {
+        if !self.output_is_allowed().await {
+            return;
+        }
         let dialog = gtk::FileDialog::builder()
             .title(gettext("Export Image As"))
             .accept_label(gettext("_Export"))
@@ -1782,6 +1912,9 @@ impl PigouneEditor {
     }
 
     fn lock_masks(&self) {
+        if !seal_chain::sealing_available() {
+            return;
+        }
         let imp = self.imp();
         self.commit_text();
         let baked = {
@@ -1797,7 +1930,12 @@ impl PigouneEditor {
                         renderer,
                         cache: &imp.pixel_cache,
                     };
-                    mask_lock::bake(&backdrop, drawing.session.document(), &self.pango_context())
+                    mask_lock::bake(
+                        &backdrop,
+                        drawing.session.document(),
+                        &drawing.session.seal_plan().masks,
+                        &self.pango_context(),
+                    )
                 })
         };
         let Some(baked) = baked else {
@@ -2106,6 +2244,13 @@ impl PigouneEditor {
         imp.crop_group.set_visible(cropping);
         imp.style_group
             .set_visible(definition.is_some() && !cropping);
+        let frozen = imp
+            .drawing
+            .borrow()
+            .session
+            .selected_state()
+            .is_some_and(|state| state.locked || state.sealed);
+        imp.style_group.set_sensitive(!frozen);
         if cropping {
             self.sync_crop_panel();
         }
