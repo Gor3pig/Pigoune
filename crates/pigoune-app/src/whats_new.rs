@@ -61,8 +61,49 @@ pub fn show_after_update(parent: &impl IsA<gtk::Widget>, settings: &gio::Setting
     }
 }
 
+fn points_of_version_3() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "document-edit-symbolic",
+            title: gettext("Annotate Without Touching the Original"),
+            text: gettext(
+                "Draw on screenshots and on any image of your library: the original file is never changed, and your annotations stay editable.",
+            ),
+        },
+        Point {
+            icon: "view-list-symbolic",
+            title: gettext("Layers You Control"),
+            text: gettext(
+                "Reorder, hide, lock, rename and duplicate annotations from the Layers panel, and hide a blur or pixelation without losing it.",
+            ),
+        },
+        Point {
+            icon: "color-select-symbolic",
+            title: gettext("More Ways to Draw"),
+            text: gettext(
+                "Dashed or dotted strokes, a precise, sketchy or very sketchy look, curved arrows, numbered steps, a spotlight, a blur and a pixelation.",
+            ),
+        },
+        Point {
+            icon: "sidebar-show-right-symbolic",
+            title: gettext("Your Workspace, Your Way"),
+            text: gettext(
+                "Fold Tools, Properties and Layers, or hide the whole panel with F9. Pigoune remembers your choice.",
+            ),
+        },
+        Point {
+            icon: "view-reveal-symbolic",
+            title: gettext("Compare With the Original"),
+            text: gettext(
+                "Hold the eye button in the preview to see the original image, and release it to see your annotations again.",
+            ),
+        },
+    ]
+}
+
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.0.0" => points_of_version_3(),
         "2.12.0" => vec![
             Point {
                 icon: "view-conceal-symbolic",
@@ -234,7 +275,16 @@ fn present(parent: &impl IsA<gtk::Widget>, points: &[Point]) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Decision, decide, short_version};
+    use super::{Decision, decide, points_of, short_version};
+
+    #[test]
+    fn the_news_of_the_current_major_version_are_between_three_and_five_complete_points() {
+        let points = points_of("3.0.0");
+        assert!((3..=5).contains(&points.len()), "{} points", points.len());
+        for point in &points {
+            assert!(!point.icon.is_empty() && !point.title.is_empty() && !point.text.is_empty());
+        }
+    }
 
     #[test]
     fn a_first_installation_only_remembers_the_version() {
