@@ -142,12 +142,6 @@ msgid ""
 "and View Original shows the capture as it was."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:111
-msgid ""
-"Lock the masks to apply every blur and pixelation to the original capture "
-"too, for good."
-msgstr ""
-
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:112
 msgid ""
 "Copy or export the annotated image as a PNG, or save it in the library, "
@@ -8557,3 +8551,18 @@ msgstr "L'esportazione è parziale. {exported} file sono stati esportati in «{f
 
 msgid "Annotate the Selected Image"
 msgstr "Annota l'immagine selezionata"
+
+msgid "Line Type"
+msgstr "Tipo di linea"
+
+msgid "Hand-Drawn Look"
+msgstr "Aspetto del tratto"
+
+msgid "Precise"
+msgstr "Preciso"
+
+msgid "Sketchy"
+msgstr "Abbozzato"
+
+msgid "Very Sketchy"
+msgstr "Molto abbozzato"

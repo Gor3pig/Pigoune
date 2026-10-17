@@ -1,6 +1,7 @@
 use serde_json::{Map, Value};
 
 use super::options::Options;
+use super::sketch::{Hand, Roughness, SEED_OPTION};
 use super::tools::{GeometryKind, ToolDefinition, definition};
 use super::{Color, Point, Rect};
 
@@ -81,6 +82,31 @@ impl Shape {
         self.definition()
             .and_then(|definition| definition.spec(id))
             .is_some_and(|spec| self.options.toggle(spec))
+    }
+
+    #[must_use]
+    pub fn roughness(&self) -> Roughness {
+        Roughness::from_choice(self.choice("roughness"))
+    }
+
+    #[must_use]
+    pub fn hand(&self) -> Hand {
+        let broken = matches!(self.choice("dash"), "dashed" | "dotted");
+        Hand::new(self.roughness(), self.seed(), broken)
+    }
+
+    #[must_use]
+    pub fn seed(&self) -> u32 {
+        self.options
+            .get(SEED_OPTION)
+            .and_then(Value::as_u64)
+            .and_then(|seed| u32::try_from(seed).ok())
+            .unwrap_or(0)
+    }
+
+    #[must_use]
+    pub fn with_seed(&self, seed: u32) -> Self {
+        self.with_option(SEED_OPTION, Value::from(seed))
     }
 
     #[must_use]

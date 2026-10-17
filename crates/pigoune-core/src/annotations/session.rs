@@ -6,7 +6,7 @@ use serde_json::Value;
 use super::geometry::{self, HitMode};
 use super::{
     AnnotationDocument, AnnotationObject, Crop, Geometry, ObjectContent, ObjectState, Point, Rect,
-    Shape,
+    SEED_OPTION, Shape, seed_for_object,
 };
 
 const HISTORY_LIMIT: usize = 500;
@@ -287,6 +287,14 @@ impl EditSession {
 
     pub fn add(&mut self, shape: Shape) -> u32 {
         let id = self.document.reserve_id();
+        let shape = if shape
+            .definition()
+            .is_some_and(|definition| definition.spec("roughness").is_some())
+        {
+            shape.with_seed(seed_for_object(id))
+        } else {
+            shape
+        };
         let object = AnnotationObject::new(id, shape);
         let index = self.document.objects.len();
         self.document.objects.push(object.clone());
@@ -546,9 +554,12 @@ impl EditSession {
         let Some(before) = self.shape_of(selected).cloned() else {
             return false;
         };
-        let after = before.with_option(id, value);
+        let mut after = before.with_option(id, value);
         if after == before {
             return false;
+        }
+        if id == "roughness" && after.options.get(SEED_OPTION).is_none() {
+            after = after.with_seed(seed_for_object(selected));
         }
         self.set_shape(selected, after.clone());
         if self.continues_option_series(selected, id) {
