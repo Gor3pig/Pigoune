@@ -9,6 +9,20 @@ pub const FORMAT_MOVING_VISUAL_DETAILS: u32 = 12;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 const PAGE_CACHE_KIB: i64 = 65_536;
 
+#[doc(hidden)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MigrationStop {
+    AfterTwoSealColumns,
+    BeforeCommit,
+    AfterCommit,
+}
+
+fn halt_if(stop: Option<MigrationStop>, here: MigrationStop) {
+    if stop == Some(here) {
+        std::process::abort();
+    }
+}
+
 enum Migration {
     Statements(&'static str),
     RecheckAnimations,
@@ -95,6 +109,14 @@ pub fn migrate_to_current_version(
     connection: &mut Connection,
     root: &Path,
 ) -> Result<(), LibraryError> {
+    migrate_halting_at(connection, root, None)
+}
+
+pub fn migrate_halting_at(
+    connection: &mut Connection,
+    root: &Path,
+    stop: Option<MigrationStop>,
+) -> Result<(), LibraryError> {
     let found = read_format_version(connection)?;
     if found > CURRENT_FORMAT_VERSION {
         return Err(LibraryError::NewerFormat {
@@ -109,15 +131,22 @@ pub fn migrate_to_current_version(
     let transaction = connection.transaction()?;
     for (version, migration) in (1..=CURRENT_FORMAT_VERSION).zip(MIGRATIONS) {
         if version > found {
-            apply(&transaction, &migration, root)?;
+            apply(&transaction, &migration, root, stop)?;
         }
     }
     transaction.pragma_update(None, "user_version", CURRENT_FORMAT_VERSION)?;
+    halt_if(stop, MigrationStop::BeforeCommit);
     transaction.commit()?;
+    halt_if(stop, MigrationStop::AfterCommit);
     Ok(())
 }
 
-fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<(), LibraryError> {
+fn apply(
+    connection: &Connection,
+    migration: &Migration,
+    root: &Path,
+    stop: Option<MigrationStop>,
+) -> Result<(), LibraryError> {
     match migration {
         Migration::Statements(statements) => Ok(connection.execute_batch(statements)?),
         Migration::RecheckAnimations => animation_recheck::mark_animated_assets(connection, root),
@@ -130,10 +159,18 @@ fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<
                 |row| row.get(0),
             )?;
             if present {
-                Ok(())
-            } else {
-                Ok(connection.execute_batch(include_str!("migrations/v14.sql"))?)
+                return Ok(());
             }
+            let statements = include_str!("migrations/v14.sql")
+                .split(';')
+                .filter(|statement| !statement.trim().is_empty());
+            for (index, statement) in statements.enumerate() {
+                connection.execute_batch(statement)?;
+                if index == 1 {
+                    halt_if(stop, MigrationStop::AfterTwoSealColumns);
+                }
+            }
+            Ok(())
         }
         Migration::MoveVisualDetails => {
             connection.execute_batch(include_str!("migrations/v12.sql"))?;
