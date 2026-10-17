@@ -15,7 +15,7 @@
 
 **English** · [Français](README.fr.md)
 
-[Website](https://gor3pig.github.io/Pigoune/) · [Features](#features) · [Principles](#principles) · [Installation](#installation) · [Guide](#user-guide) · [Contributing](#contributing)
+[Website](https://gor3pig.github.io/Pigoune/) · [User guide](help/en/README.md) · [Features](#features) · [Principles](#principles) · [Installation](#installation) · [Contributing](#contributing)
 
 <img src="data/screenshots/01.png" alt="The main window of Pigoune" width="860">
 
@@ -23,139 +23,82 @@
 
 ---
 
-> [!NOTE]
-> **Pigoune is available.** [Install it in one click](#installation), and it keeps itself up to
-> date.
-
 ## What is Pigoune?
 
 Icons in `Downloads`, logos in an old project folder, an SVG lost somewhere on the desktop…
 **Pigoune gathers all of them in a single library**, neatly organized and pleasant to browse.
-
-Drop your graphic assets in: Pigoune keeps a safe copy (your original files are never
-touched), helps you organize them and hands them back with a simple drag and drop whenever
-you need them.
+Your original files are never touched.
 
 ## Features
 
 <table>
 <tr>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Drop
-Drag files or whole folders: SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP and ICO. Every
-image is checked before it comes in, and duplicates are recognized automatically.
+**Drop**<br>Files and folders, any common format, duplicates spotted.
 
 </td>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Organize
-Nested collections with their own icon and color, smart collections that fill themselves, nested
-tags and favorites, plus a note, a source, a license and an author for each asset.
+**Organize**<br>Collections, smart collections, nested tags, favorites.
 
 </td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Find
-Instant search and filters by type, orientation, color or favorite, even among thousands of assets, with
-words combined by "and" or "or" in one click. Clicking a collection or a tag shows you where an asset
-lives. Right-click an asset to find the ones that look like it, and the Duplicates page groups the
-same logo in two formats or sizes, and lets you ignore look-alikes that are not duplicates.
-
-</td>
-<td width="50%" valign="top">
-
-### Reuse
-Drag an asset into any application, open it with another one, copy it to the clipboard or
-export it to a folder, as it is or converted to PNG, JPEG, WebP, AVIF or ICO.
-
-### Wallpapers
-Frame any image on a virtual copy of your screen, under the bars of your desktop, fill the gaps
-with a color, a gradient, a blur or a mosaic, and set it: your desktop shows exactly what you
-framed. Filters by orientation and by screen size find the images that fit.
+**Find**<br>Instant search and filters, even among thousands.
 
 </td>
 </tr>
 <tr>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Enjoy
-A thumbnail grid with adjustable size, animations (GIF, PNG, WebP) on hover, and a detailed
-preview with zoom, the details panel and a strip of thumbnails at the press of <kbd>Space</kbd>.
+**Reuse**<br>Drag, copy, export, or set as wallpaper.
 
 </td>
-<td width="50%" valign="top">
+<td width="33%" valign="top">
 
-### Relax
-The trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>: a mistake can always be fixed.
+**Annotate**<br>Arrows, text and blur; the original is never touched.
 
 </td>
-</tr>
-<tr>
-<td colspan="2" valign="top">
+<td width="33%" valign="top">
 
-### Capture and annotate
-Take a screenshot, paste an image or open any still image of your library, then annotate it in an
-editor inside your library: shapes with solid, dashed or dotted lines and an optional
-hand-drawn look, curved arrows, texts, numbered steps, a spotlight, and a blur
-or a pixelation to hide what is private. The image itself is never modified: the annotations are
-kept with it and can be reopened and changed later; in the detailed preview, holding a button
-shows the original for as long as you press it. Copying, dragging or exporting an annotated
-image gives a flattened PNG, and exporting the whole library gives every original plus a flattened
-copy of each annotated one.
+**Enjoy**<br>Zoomable preview, animations on hover, trash and undo.
 
 </td>
 </tr>
 </table>
 
+<p align="center"><b><a href="help/en/README.md">Read the user guide →</a></b><br>Everything Pigoune can do, step by step.</p>
+
 ## Principles
 
-- **Your originals are never modified**: Pigoune works on its own copies.
-- **Fully local**: no account, no cloud, no telemetry.
-- **Portable libraries**: a plain folder you can keep anywhere and take to another computer.
-- **Made for GNOME**: a native, polished app in light and dark mode, usable with the keyboard
-  and a screen reader, and adaptive to small windows.
+**Originals never modified** · **Fully local, no account** · **Portable libraries** · **Made for GNOME**
 
 ## Installation
 
 ### 1. Set up Flatpak
 
-Pigoune is distributed as a Flatpak. Fedora, Linux Mint, Pop!_OS and many other distributions
-ship Flatpak already. On Ubuntu and a few others, set it up first by following the
-[official guide for your distribution](https://flathub.org/setup), then restart your session.
+Fedora, Linux Mint, Pop!_OS and many other distributions ship Flatpak already. On Ubuntu and a
+few others, follow the [official guide for your distribution](https://flathub.org/setup) first,
+then restart your session.
 
 ### 2. Install Pigoune
 
-Open [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) with Software, which installs Pigoune from its own
-repository, or run this command:
+Open [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) with Software, or
+run this command:
 
 ```sh
 flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 ```
-
-The GNOME runtime that Pigoune needs is downloaded automatically from Flathub.
 
 ### 3. Stay up to date
 
-Pigoune updates itself like your other apps: Software offers each new version, and
-`flatpak update` installs it too. If Pigoune stays open, a banner at the top of the window
-also tells you within half an hour and offers to install the new version, then to restart. Every update is signed, so only
-official versions are accepted.
+Pigoune updates itself like your other apps, and every update is signed. The `.flatpak` file of
+each version is also attached to its [release](https://github.com/Gor3pig/Pigoune/releases), and
+you can build Pigoune yourself by following [CONTRIBUTING.md](CONTRIBUTING.md).
 
-If you installed Pigoune 1.5 or older from a downloaded `.flatpak` file, it does not update
-itself. Switch once to automatic updates with these two commands. Your libraries and settings
-are kept.
-
-```sh
-flatpak uninstall --user io.github.gor3pig.Pigoune
-flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
-```
-
-The `.flatpak` file of each version is still attached to its
-[release](https://github.com/Gor3pig/Pigoune/releases). You can also build Pigoune yourself by
-following [CONTRIBUTING.md](CONTRIBUTING.md).
+Pigoune runs on any Linux distribution that supports Flatpak, on a 64-bit Intel or AMD PC. There
+is no version for Windows, macOS or ARM devices.
 
 ## User guide
 
