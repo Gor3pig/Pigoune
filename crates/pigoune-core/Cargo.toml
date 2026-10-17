@@ -20,5 +20,9 @@ thiserror = "2.0.21"
 unicode-normalization = "0.1.25"
 uuid = { version = "1.26.1", features = ["v7"] }
 
+[features]
+migration-stops = []
+
 [dev-dependencies]
+pigoune-core = { path = ".", features = ["migration-stops"] }
 tempfile = "3.27.0"
