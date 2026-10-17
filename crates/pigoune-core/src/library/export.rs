@@ -104,6 +104,10 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
+            if let Some(refusal) = self.sealing_refusal(*id) {
+                failures.push(failure_of(&asset, refusal));
+                continue;
+            }
             let mut source = match File::open(self.file_of(&asset)) {
                 Ok(source) => source,
                 Err(error) => {
@@ -128,6 +132,18 @@ impl Library {
             }
         }
         Ok(CopyReport { copies, failures })
+    }
+}
+
+impl Library {
+    pub(super) fn sealing_refusal(&self, id: AssetId) -> Option<io::Error> {
+        match self.seal_status(id) {
+            Ok(status) if status.allows_output() => None,
+            _ => Some(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "the sealing of this image cannot be verified",
+            )),
+        }
     }
 }
 

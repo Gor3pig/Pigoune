@@ -1,4 +1,5 @@
 use std::cell::{Cell, RefCell};
+use std::fs;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -11,6 +12,7 @@ use pigoune_core::annotations::{
     AnnotationDocument, Crop, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
     LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value, layer_entries,
 };
+use pigoune_core::annotations::{OverlapChoice, SealPlan, SealRecord, hash_of_bytes};
 use pigoune_core::seal_chain;
 
 use crate::annotation_export;
@@ -30,6 +32,7 @@ use crate::zoom_view::PointerEvent;
 type ClosedCallback = Box<dyn Fn()>;
 type NoticeCallback = Box<dyn Fn(&str)>;
 type SaveCallback = Box<dyn Fn(&EditedCapture)>;
+type SealCallback = Box<dyn Fn(&EditedCapture) -> bool>;
 type LayerMaker = fn(u32) -> LayerAction;
 
 pub struct EditedCapture {
@@ -60,7 +63,7 @@ pub struct TextEdit {
 mod imp {
     use super::{
         AssetId, Cell, ClosedCallback, LayerMove, LayersPanel, NoticeCallback, OptionRow, Rc,
-        RefCell, SaveCallback, Shape, TextEdit,
+        RefCell, SaveCallback, SealCallback, TextEdit,
     };
     use adw::subclass::prelude::*;
     use gtk::glib;
@@ -182,6 +185,8 @@ mod imp {
         pub on_closed: RefCell<Option<ClosedCallback>>,
         pub on_notice: RefCell<Option<NoticeCallback>>,
         pub on_save: RefCell<Option<SaveCallback>>,
+        pub on_seal: RefCell<Option<SealCallback>>,
+        pub sealed_png: RefCell<Option<Vec<u8>>>,
         pub draft_pending: Cell<bool>,
         pub replaced_asset: Cell<Option<AssetId>>,
         pub picking_color: Cell<Option<&'static str>>,
@@ -193,7 +198,6 @@ mod imp {
         #[template_child]
         pub layer_buttons: TemplateChild<gtk::Box>,
         pub layer_move_buttons: RefCell<Vec<(LayerMove, gtk::Button)>>,
-        pub locked_masks: RefCell<Vec<(u32, Shape)>>,
         pub text_edit: Cell<Option<TextEdit>>,
         pub text_provider: gtk::CssProvider,
         pub text_view_origin: Cell<[u32; 3]>,
@@ -243,6 +247,10 @@ impl PigouneEditor {
 
     pub fn connect_save(&self, callback: impl Fn(&EditedCapture) + 'static) {
         self.imp().on_save.replace(Some(Box::new(callback)));
+    }
+
+    pub fn connect_seal(&self, callback: impl Fn(&EditedCapture) -> bool + 'static) {
+        self.imp().on_seal.replace(Some(Box::new(callback)));
     }
 
     pub fn connect_notice(&self, callback: impl Fn(&str) + 'static) {
@@ -317,8 +325,25 @@ impl PigouneEditor {
         session: Option<EditSession>,
         replaced: Option<AssetId>,
     ) -> Result<(), glib::Error> {
-        let texture = gdk::Texture::from_filename(image)?;
+        let sealed = session
+            .as_ref()
+            .and_then(|session| session.document().seal.clone());
+        let Some(record) = sealed else {
+            let texture = gdk::Texture::from_filename(image)?;
+            self.show_texture(&texture, session, replaced);
+            return Ok(());
+        };
+        let bytes = fs::read(image)
+            .map_err(|error| glib::Error::new(gio::IOErrorEnum::NotFound, &error.to_string()))?;
+        if hash_of_bytes(&bytes) != record.base {
+            return Err(glib::Error::new(
+                gio::IOErrorEnum::InvalidData,
+                "the sealed image is not the one the document names",
+            ));
+        }
+        let texture = gdk::Texture::from_bytes(&glib::Bytes::from_owned(bytes.clone()))?;
         self.show_texture(&texture, session, replaced);
+        self.imp().sealed_png.replace(Some(bytes));
         Ok(())
     }
 
@@ -333,7 +358,7 @@ impl PigouneEditor {
         let imp = self.imp();
         self.cancel_text();
         imp.pixel_cache.borrow_mut().clear();
-        imp.locked_masks.take();
+        imp.sealed_png.take();
         let mut drawing = imp::Drawing::default();
         if let Some(session) = session {
             drawing.session = session;
@@ -667,7 +692,8 @@ impl PigouneEditor {
                 imp.drawing.borrow_mut().session.set_locked(id, locked);
             }
             LayerAction::RemoveMarker(id) => {
-                imp.drawing.borrow_mut().session.remove_marker(id);
+                self.confirm_marker_removal(id);
+                return;
             }
             LayerAction::Drop { id, target, above } => {
                 imp.drawing
@@ -678,6 +704,32 @@ impl PigouneEditor {
             LayerAction::OpenCrop => self.choose_tool(EditorTool::Crop),
         }
         self.after_edit();
+    }
+
+    fn confirm_marker_removal(&self, id: u32) {
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Remove the Marker?")),
+            Some(&gettext(
+                "This removes the marker from the list. The pixels of the original image are not restored.",
+            )),
+        );
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("remove", &gettext("_Remove"));
+        dialog.set_response_appearance("remove", adw::ResponseAppearance::Destructive);
+        dialog.set_default_response(Some("cancel"));
+        dialog.set_close_response("cancel");
+        dialog.connect_response(
+            Some("remove"),
+            glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move |_, _| {
+                    editor.imp().drawing.borrow_mut().session.remove_marker(id);
+                    editor.after_edit();
+                }
+            ),
+        );
+        dialog.present(Some(self));
     }
 
     fn layers_view(&self) -> LayersView {
@@ -1625,12 +1677,7 @@ impl PigouneEditor {
         for (movement, button) in imp.layer_move_buttons.borrow().iter() {
             button.set_sensitive(drawing.session.can_move_selected(*movement));
         }
-        let unlocked = drawing
-            .session
-            .document()
-            .masks()
-            .iter()
-            .any(|mask| !imp.locked_masks.borrow().contains(mask));
+        let unlocked = drawing.session.document().hides_content();
         let has_selection = drawing.session.selected().is_some();
         drop(drawing);
         for button in imp.layer_edit_buttons.borrow().iter() {
@@ -1652,7 +1699,7 @@ impl PigouneEditor {
         imp.mask_banner.set_revealed(unlocked);
         let sealing = seal_chain::sealing_available();
         imp.mask_banner
-            .set_button_label(sealing.then(|| gettext("Lock Masks")).as_deref());
+            .set_button_label(sealing.then(|| gettext("Seal Masks")).as_deref());
         imp.zoom_view.queue_draw();
         self.sync_layers();
         self.keep_keyboard_focus();
@@ -1666,26 +1713,11 @@ impl PigouneEditor {
         if !seal_chain::sealing_available() {
             return;
         }
-        let dialog = adw::AlertDialog::new(
-            Some(&gettext("Lock the Masks?")),
-            Some(&gettext(
-                "The blur and the pixelation will be applied to the original image for good, and this cannot be undone. A pixelation with large cells removes the details, but a light blur may still be partly recoverable.",
-            )),
-        );
-        dialog.add_response("cancel", &gettext("_Cancel"));
-        dialog.add_response("lock", &gettext("_Lock"));
-        dialog.set_response_appearance("lock", adw::ResponseAppearance::Destructive);
-        dialog.set_default_response(Some("cancel"));
-        dialog.set_close_response("cancel");
-        dialog.connect_response(
-            Some("lock"),
-            glib::clone!(
-                #[weak(rename_to = editor)]
-                self,
-                move |_, _| editor.lock_masks()
-            ),
-        );
-        dialog.present(Some(self));
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            async move { editor.seal_masks().await }
+        ));
     }
 
     fn notice(&self, text: &str) {
@@ -1862,10 +1894,13 @@ impl PigouneEditor {
             return;
         };
         let document = imp.drawing.borrow().session.document().clone();
-        let (Ok(rendered), Ok(original)) = (
-            image_conversion::png_bytes(&rendered).await,
-            image_conversion::png_bytes(&original).await,
-        ) else {
+        let kept_original = imp.sealed_png.borrow().clone();
+        let original = match kept_original {
+            Some(bytes) => Ok(bytes),
+            None => image_conversion::png_bytes(&original).await,
+        };
+        let (Ok(rendered), Ok(original)) = (image_conversion::png_bytes(&rendered).await, original)
+        else {
             self.show_output_failure(&failure);
             return;
         };
@@ -1911,48 +1946,162 @@ impl PigouneEditor {
         }
     }
 
-    fn lock_masks(&self) {
+    fn labels_of(&self, ids: &[u32]) -> Vec<String> {
+        self.layers_view()
+            .rows
+            .into_iter()
+            .filter(|row| ids.contains(&row.id))
+            .map(|row| row.label)
+            .collect()
+    }
+
+    fn seal_failure(&self, text: &str) {
+        let dialog = adw::AlertDialog::new(Some(&gettext("Could Not Seal the Masks")), Some(text));
+        dialog.add_response("close", &gettext("_Close"));
+        dialog.present(Some(self));
+    }
+
+    async fn ask_to_seal(&self, plan: &SealPlan) -> Option<OverlapChoice> {
+        let mut body = gettext(
+            "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed.",
+        );
+        if !plan.overlapped.is_empty() {
+            body.push_str("\n\n");
+            body.push_str(
+                &gettext("Under a mask: {names}. After sealing, they are shown sharp over the sealed image.")
+                    .replace("{names}", &self.labels_of(&plan.overlapped).join(", ")),
+            );
+        }
+        if !plan.texts.is_empty() {
+            body.push_str("\n\n");
+            body.push_str(
+                &gettext("The content of {names} stays saved in the document.")
+                    .replace("{names}", &self.labels_of(&plan.texts).join(", ")),
+            );
+        }
+        let dialog = adw::AlertDialog::new(Some(&gettext("Seal the Masks?")), Some(&body));
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("seal", &gettext("_Seal"));
+        if !plan.overlapped.is_empty() {
+            dialog.add_response("hide", &gettext("Seal and _Hide Covered"));
+            dialog.set_response_appearance("hide", adw::ResponseAppearance::Destructive);
+        }
+        dialog.set_response_appearance("seal", adw::ResponseAppearance::Destructive);
+        dialog.set_default_response(Some("cancel"));
+        dialog.set_close_response("cancel");
+        match dialog.choose_future(Some(self)).await.as_str() {
+            "seal" => Some(OverlapChoice::KeepVisible),
+            "hide" => Some(OverlapChoice::HideOverlapped),
+            _ => None,
+        }
+    }
+
+    fn bake_plan(&self, plan: &SealPlan) -> Option<gdk::Texture> {
+        let drawing = self.imp().drawing.borrow();
+        let context = self.pango_context();
+        self.with_backdrop(|backdrop| {
+            mask_lock::bake(backdrop, drawing.session.document(), &plan.masks, &context)
+        })
+        .flatten()
+    }
+
+    fn render_over(
+        &self,
+        base: &gdk::Texture,
+        document: &AnnotationDocument,
+    ) -> Option<gdk::Texture> {
+        let renderer = self.native()?.renderer()?;
+        let imp = self.imp();
+        let backdrop = annotation_render::Backdrop {
+            texture: base,
+            renderer: &renderer,
+            cache: &imp.pixel_cache,
+        };
+        imp.pixel_cache.borrow_mut().clear();
+        annotation_export::final_texture(&backdrop, document, &self.pango_context())
+    }
+
+    fn persist_seal(&self, capture: &EditedCapture) -> bool {
+        if capture.replaces.is_some() {
+            return self
+                .imp()
+                .on_seal
+                .borrow()
+                .as_ref()
+                .is_some_and(|persist| persist(capture));
+        }
+        capture_draft::Draft::standard()
+            .store_sealed(&capture.original, &capture.document)
+            .is_ok()
+    }
+
+    async fn seal_masks(&self) {
         if !seal_chain::sealing_available() {
             return;
         }
         let imp = self.imp();
         self.commit_text();
-        let baked = {
-            let drawing = imp.drawing.borrow();
-            let texture = imp.zoom_view.texture();
-            let renderer = self.native().and_then(|native| native.renderer());
-            texture
-                .as_ref()
-                .zip(renderer.as_ref())
-                .and_then(|(texture, renderer)| {
-                    let backdrop = annotation_render::Backdrop {
-                        texture,
-                        renderer,
-                        cache: &imp.pixel_cache,
-                    };
-                    mask_lock::bake(
-                        &backdrop,
-                        drawing.session.document(),
-                        &drawing.session.seal_plan().masks,
-                        &self.pango_context(),
-                    )
-                })
-        };
-        let Some(baked) = baked else {
-            let dialog = adw::AlertDialog::new(
-                Some(&gettext("Could Not Lock the Masks")),
-                Some(&gettext("The original image was left unchanged.")),
-            );
-            dialog.add_response("close", &gettext("_Close"));
-            dialog.present(Some(self));
+        let plan = imp.drawing.borrow().session.seal_plan();
+        if plan.is_empty() {
+            self.notice(&gettext("There is no visible mask to seal"));
+            return;
+        }
+        let Some(choice) = self.ask_to_seal(&plan).await else {
             return;
         };
+        let unchanged = gettext("The image and its masks were left unchanged.");
+        let Some(baked) = self.bake_plan(&plan) else {
+            self.seal_failure(&unchanged);
+            return;
+        };
+        let Ok(sealed_png) = image_conversion::png_bytes(&baked).await else {
+            self.seal_failure(&unchanged);
+            return;
+        };
+        let (document, generation) = {
+            let drawing = imp.drawing.borrow();
+            let generation = drawing
+                .session
+                .document()
+                .seal
+                .as_ref()
+                .map_or(0, |record| record.generation);
+            (drawing.session.document().clone(), generation)
+        };
+        let record = SealRecord {
+            generation: generation + 1,
+            base: hash_of_bytes(&sealed_png),
+        };
+        let sealed = imp
+            .drawing
+            .borrow()
+            .session
+            .sealed_document(&plan, choice, record);
+        let Some(rendered) = self.render_over(&baked, &sealed) else {
+            self.seal_failure(&unchanged);
+            return;
+        };
+        let Ok(rendered) = image_conversion::png_bytes(&rendered).await else {
+            self.seal_failure(&unchanged);
+            return;
+        };
+        let _ = document;
+        let capture = EditedCapture {
+            replaces: imp.replaced_asset.get(),
+            rendered,
+            original: sealed_png.clone(),
+            document: sealed.clone(),
+        };
+        if !self.persist_seal(&capture) {
+            self.seal_failure(&unchanged);
+            return;
+        }
         imp.zoom_view.replace_texture(&baked);
-        self.keep_original_in_draft();
+        imp.sealed_png.replace(Some(sealed_png));
         imp.pixel_cache.borrow_mut().clear();
-        imp.locked_masks
-            .replace(imp.drawing.borrow().session.document().masks());
+        imp.drawing.borrow_mut().session.adopt_sealed(sealed);
         self.refresh();
+        self.notice(&gettext("Masks sealed"));
     }
 
     fn listen_to_keys(&self) {

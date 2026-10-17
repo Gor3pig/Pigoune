@@ -274,6 +274,12 @@ pub enum AnnotatedError {
     Unreadable(PathBuf),
     #[error("the file name of {0} is reserved by Pigoune")]
     ReservedName(PathBuf),
+    #[error("the sealing of the annotations cannot be trusted: {0:?}")]
+    SealBlocked(super::seal::SealStatus),
+    #[error("the saving was interrupted at {0:?}")]
+    Interrupted(super::seal::SealStep),
+    #[error("{0}")]
+    InvalidSeal(&'static str),
     #[error(transparent)]
     Document(#[from] crate::annotations::DocumentError),
     #[error(transparent)]

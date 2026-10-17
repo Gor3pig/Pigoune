@@ -8575,3 +8575,63 @@ msgstr "Maskeringen _tonen"
 
 msgid "Lock"
 msgstr "Vergrendelen"
+
+msgid "Remove the Marker?"
+msgstr "Markering verwijderen?"
+
+msgid "This removes the marker from the list. The pixels of the original image are not restored."
+msgstr "Hiermee verdwijnt de markering uit de lijst. De pixels van de oorspronkelijke afbeelding worden niet hersteld."
+
+msgid "_Remove"
+msgstr "_Verwijderen"
+
+msgid "Seal Masks"
+msgstr "Maskeringen toepassen"
+
+msgid "Could Not Seal the Masks"
+msgstr "Maskeringen konden niet worden toegepast"
+
+msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
+msgstr "De vervaging en de pixelatie worden definitief op de afbeelding toegepast en de geschiedenis om ongedaan te maken wordt gewist. Een vervaging of pixelatie garandeert geen anonimiteit: een lichte vervaging is soms deels te herstellen. Elders bewaarde kopieën van de afbeelding, zoals bestanden, het klembord of back-ups, worden niet gewijzigd."
+
+msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
+msgstr "Onder een maskering: {names}. Na het toepassen worden ze scherp boven de gemaskeerde afbeelding getoond."
+
+msgid "The content of {names} stays saved in the document."
+msgstr "De inhoud van {names} blijft in het document opgeslagen."
+
+msgid "Seal the Masks?"
+msgstr "Maskeringen toepassen?"
+
+msgid "_Seal"
+msgstr "_Toepassen"
+
+msgid "Seal and _Hide Covered"
+msgstr "Toepassen en bedekte items _verbergen"
+
+msgid "There is no visible mask to seal"
+msgstr "Geen zichtbare maskering om toe te passen"
+
+msgid "The image and its masks were left unchanged."
+msgstr "De afbeelding en haar maskeringen zijn ongewijzigd gelaten."
+
+msgid "Masks sealed"
+msgstr "Maskeringen toegepast"
+
+msgid "the sealing is not finished"
+msgstr "het toepassen is niet afgerond"
+
+msgid "the protection cannot be verified"
+msgstr "de bescherming kan niet worden gecontroleerd"
+
+msgid "Sealed Images Need Attention"
+msgstr "Gemaskeerde afbeeldingen vragen uw aandacht"
+
+msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
+msgstr "Deze afbeeldingen kunnen niet worden getoond, gekopieerd, geëxporteerd of bewerkt totdat hun bescherming is gecontroleerd. Er is niets verwijderd of gewijzigd.\n\n{list}"
+
+msgid "_Finish the Cleanup"
+msgstr "Opruiming _afronden"
+
+msgid "The protection of this image cannot be verified, so it is not shown"
+msgstr "De bescherming van deze afbeelding kan niet worden gecontroleerd, daarom wordt ze niet getoond"

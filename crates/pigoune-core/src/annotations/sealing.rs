@@ -29,6 +29,11 @@ impl SealRecord {
     }
 }
 
+#[must_use]
+pub fn hash_of_bytes(bytes: &[u8]) -> String {
+    blake3::hash(bytes).to_hex().to_string()
+}
+
 fn is_hash(text: &str) -> bool {
     text.len() == HASH_LENGTH
         && text

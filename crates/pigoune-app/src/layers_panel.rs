@@ -656,4 +656,63 @@ mod tests {
         }
         assert_eq!(seen.len(), 9);
     }
+
+    fn actions_of(state: RowState) -> Vec<String> {
+        let menu = menu_for(3, state);
+        let mut names = Vec::new();
+        for section in 0..menu.n_items() {
+            let Some(link) = menu.item_link(section, "section") else {
+                continue;
+            };
+            for item in 0..link.n_items() {
+                let action = link
+                    .item_attribute_value(item, "action", None)
+                    .and_then(|value| value.get::<String>())
+                    .expect("an action");
+                names.push(action.trim_start_matches("layer.").to_owned());
+            }
+        }
+        names
+    }
+
+    #[test]
+    fn a_sealed_marker_offers_only_to_remove_the_marker() {
+        let state = RowState {
+            sealed: true,
+            ..RowState::default()
+        };
+        assert_eq!(actions_of(state), vec!["marker"]);
+    }
+
+    #[test]
+    fn the_menu_offers_the_opposite_of_the_current_visibility_and_lock() {
+        let plain = actions_of(RowState::default());
+        assert!(plain.contains(&"hide".to_owned()) && plain.contains(&"lock".to_owned()));
+        assert!(!plain.contains(&"show".to_owned()) && !plain.contains(&"unlock".to_owned()));
+        let frozen = actions_of(RowState {
+            hidden: true,
+            locked: true,
+            sealed: false,
+        });
+        assert!(frozen.contains(&"show".to_owned()) && frozen.contains(&"unlock".to_owned()));
+        assert!(!frozen.contains(&"hide".to_owned()) && !frozen.contains(&"lock".to_owned()));
+        assert!(
+            frozen.contains(&"delete".to_owned()),
+            "a locked layer can still be deleted on purpose"
+        );
+    }
+
+    #[test]
+    fn a_changed_visibility_or_lock_rebuilds_the_list() {
+        let base = view(&["Rectangle 1"], None);
+        let mut hidden = base.clone();
+        hidden.rows[0].hidden = true;
+        assert!(!base.same_structure(&hidden));
+        let mut locked = base.clone();
+        locked.rows[0].locked = true;
+        assert!(!base.same_structure(&locked));
+        let mut sealed = base.clone();
+        sealed.rows[0].sealed = true;
+        assert!(!base.same_structure(&sealed));
+    }
 }
