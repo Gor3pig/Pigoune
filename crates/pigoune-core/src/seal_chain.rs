@@ -7,35 +7,35 @@ pub struct Link {
 pub const CHAIN: [Link; 8] = [
     Link {
         name: "generations of files",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "transactional validation",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "hash verification",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "protected previews",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "every way out of an image",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "interruption handling",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "previous generations handling",
-        ready: false,
+        ready: true,
     },
     Link {
         name: "regression tests",
-        ready: false,
+        ready: true,
     },
 ];
 

@@ -418,6 +418,9 @@ impl LayersPanel {
         button.add_css_class("circular");
         button.set_valign(gtk::Align::Center);
         button.set_focus_on_click(false);
+        if on_icon == LOCKED_ICON && !on {
+            button.set_opacity(0.4);
+        }
         button.set_tooltip_text(Some(if on { &on_tip } else { &off_tip }));
         let dispatch = self.dispatch.clone();
         button.connect_clicked(move |_| dispatch(make(id, !on)));
