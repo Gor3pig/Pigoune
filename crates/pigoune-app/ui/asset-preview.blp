@@ -439,6 +439,42 @@ template $PigouneAssetPreview: Adw.Bin {
               "preview-step",
             ]
           }
+
+          [overlay]
+          Button compare_button {
+            halign: end;
+            valign: end;
+            margin-end: 18;
+            margin-bottom: 18;
+            visible: false;
+            focus-on-click: false;
+            tooltip-text: _("Hold to See the Original Image");
+
+            styles [
+              "circular",
+              "osd",
+            ]
+
+            accessibility {
+              label: _("Original Image");
+            }
+
+            child: Stack compare_stack {
+              StackPage {
+                name: "icon";
+
+                child: Image {
+                  icon-name: "view-reveal-symbolic";
+                };
+              }
+
+              StackPage {
+                name: "busy";
+
+                child: Adw.Spinner {};
+              }
+            };
+          }
         }
 
         Adw.Banner load_banner {

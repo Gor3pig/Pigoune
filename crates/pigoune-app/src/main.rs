@@ -27,6 +27,7 @@ mod collection_places;
 mod collection_sort;
 mod color_chips;
 mod color_sampler;
+mod compare_hold;
 mod config;
 mod conversion_memory;
 mod conversion_report;
@@ -137,6 +138,8 @@ mod whats_new;
 mod window;
 #[cfg(test)]
 mod wording_tests;
+#[cfg(test)]
+mod zoom_comparison_tests;
 mod zoom_math;
 mod zoom_view;
 
