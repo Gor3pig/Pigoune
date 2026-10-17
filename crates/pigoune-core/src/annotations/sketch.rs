@@ -5,7 +5,8 @@ pub const ROUGHNESS_CHOICES: [&str; 3] = ["precise", "sketchy", "very_sketchy"];
 
 const ELLIPSE_POINTS: u8 = 9;
 const ELLIPSE_WANDER: f32 = 0.6;
-const ELLIPSE_OVERLAP: f32 = 0.35;
+const ELLIPSE_PASS_TIE: f32 = 0.85;
+const ELLIPSE_OVERLAP: f32 = 0.2;
 const QUARTER_ARC_HANDLE: f32 = 0.552_284_8;
 const LONGEST_EFFECTIVE_LENGTH: f32 = 400.0;
 const SHORTEST_VISIBLE_LENGTH: f32 = 0.001;
@@ -99,6 +100,7 @@ pub enum PathStep {
     MoveTo(Point),
     QuadTo(Point, Point),
     CubicTo(Point, Point, Point),
+    LineTo(Point),
 }
 
 pub type Stroke = Vec<PathStep>;
@@ -205,7 +207,7 @@ fn wobbly_line(
 }
 
 #[must_use]
-pub fn sketch_line(from: Point, to: Point, hand: &Hand, salt: u32) -> Vec<Stroke> {
+pub fn sketch_line(from: Point, to: Point, hand: Hand, salt: u32) -> Vec<Stroke> {
     (0..hand.passes)
         .map(|pass| {
             let mut dice = Dice::new(hand.seed, salt, pass);
@@ -215,7 +217,7 @@ pub fn sketch_line(from: Point, to: Point, hand: &Hand, salt: u32) -> Vec<Stroke
 }
 
 #[must_use]
-pub fn sketch_outline(points: &[Point], closed: bool, hand: &Hand, salt: u32) -> Vec<Stroke> {
+pub fn sketch_outline(points: &[Point], closed: bool, hand: Hand, salt: u32) -> Vec<Stroke> {
     let edges = if closed {
         points.len()
     } else {
@@ -236,7 +238,7 @@ pub fn sketched_curve(
     from: Point,
     control: Point,
     to: Point,
-    hand: &Hand,
+    hand: Hand,
     salt: u32,
     pass: u8,
 ) -> (Point, Point, Point) {
@@ -255,7 +257,7 @@ pub fn sketched_curve(
 }
 
 #[must_use]
-pub fn sketch_curve(from: Point, control: Point, to: Point, hand: &Hand, salt: u32) -> Vec<Stroke> {
+pub fn sketch_curve(from: Point, control: Point, to: Point, hand: Hand, salt: u32) -> Vec<Stroke> {
     (0..hand.passes)
         .map(|pass| {
             let (start, bend, end) = sketched_curve(from, control, to, hand, salt, pass);
@@ -290,7 +292,7 @@ fn smooth_through(points: &[Point]) -> Stroke {
 }
 
 #[must_use]
-pub fn sketch_ellipse(bounds: Rect, hand: &Hand, salt: u32) -> Vec<Stroke> {
+pub fn sketch_ellipse(bounds: Rect, hand: Hand, salt: u32) -> Vec<Stroke> {
     let (radius_x, radius_y) = (bounds.width / 2.0, bounds.height / 2.0);
     let center = Point {
         x: bounds.x + radius_x,
@@ -301,6 +303,10 @@ pub fn sketch_ellipse(bounds: Rect, hand: &Hand, salt: u32) -> Vec<Stroke> {
         .parameters()
         .amplitude((radius_x + radius_y).max(0.0));
     let amplitude = reach * ELLIPSE_WANDER;
+    let mut first_dice = Dice::new(hand.seed, salt, 0);
+    first_dice.signed();
+    first_dice.unsigned();
+    let shared: Vec<f32> = (0..=ELLIPSE_POINTS).map(|_| first_dice.signed()).collect();
     (0..hand.passes)
         .map(|pass| {
             let mut dice = Dice::new(hand.seed, salt, pass);
@@ -310,7 +316,14 @@ pub fn sketch_ellipse(bounds: Rect, hand: &Hand, salt: u32) -> Vec<Stroke> {
             let points: Vec<Point> = (0..=ELLIPSE_POINTS)
                 .map(|step| {
                     let angle = start + sweep * f32::from(step) / count;
-                    let wander = amplitude * dice.signed();
+                    let fresh = dice.signed();
+                    let wander = amplitude
+                        * if pass == 0 {
+                            fresh
+                        } else {
+                            shared[usize::from(step)] * ELLIPSE_PASS_TIE
+                                + fresh * (1.0 - ELLIPSE_PASS_TIE)
+                        };
                     let (sine, cosine) = angle.sin_cos();
                     Point {
                         x: center.x + (radius_x + wander) * cosine,
@@ -357,7 +370,7 @@ fn corner_arcs(bounds: Rect, corner: f32) -> [[Point; 4]; 4] {
 }
 
 #[must_use]
-pub fn sketch_rectangle(bounds: Rect, corner: f32, hand: &Hand, salt: u32) -> Vec<Stroke> {
+pub fn sketch_rectangle(bounds: Rect, corner: f32, hand: Hand, salt: u32) -> Vec<Stroke> {
     let corner = corner.clamp(0.0, bounds.width.min(bounds.height) / 2.0);
     let (left, top) = (bounds.x, bounds.y);
     let (right, bottom) = (left + bounds.width, top + bounds.height);
@@ -394,6 +407,41 @@ pub fn sketch_rectangle(bounds: Rect, corner: f32, hand: &Hand, salt: u32) -> Ve
     strokes
 }
 
+fn single_pass(hand: Hand) -> Hand {
+    Hand { passes: 1, ..hand }
+}
+
+fn join(outline: &mut Stroke, piece: &[PathStep]) {
+    for step in piece {
+        outline.push(match *step {
+            PathStep::MoveTo(to) if !outline.is_empty() => PathStep::LineTo(to),
+            other => other,
+        });
+    }
+}
+
+#[must_use]
+pub fn sketch_ellipse_outline(bounds: Rect, hand: Hand, salt: u32) -> Stroke {
+    sketch_ellipse(bounds, single_pass(hand), salt)
+        .into_iter()
+        .next()
+        .unwrap_or_default()
+}
+
+#[must_use]
+pub fn sketch_rectangle_outline(bounds: Rect, corner: f32, hand: Hand, salt: u32) -> Stroke {
+    let strokes = sketch_rectangle(bounds, corner, single_pass(hand), salt);
+    let (sides, arcs) = strokes.split_at(strokes.len().min(4));
+    let mut outline = Stroke::new();
+    for (index, side) in sides.iter().enumerate() {
+        join(&mut outline, side);
+        if let Some(arc) = arcs.get(index) {
+            join(&mut outline, arc);
+        }
+    }
+    outline
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -409,7 +457,7 @@ mod tests {
             .iter()
             .flatten()
             .flat_map(|step| match *step {
-                PathStep::MoveTo(a) => vec![a],
+                PathStep::MoveTo(a) | PathStep::LineTo(a) => vec![a],
                 PathStep::QuadTo(a, b) => vec![a, b],
                 PathStep::CubicTo(a, b, c) => vec![a, b, c],
             })
@@ -422,7 +470,7 @@ mod tests {
             let mut current = point(0.0, 0.0);
             for step in stroke {
                 match *step {
-                    PathStep::MoveTo(to) => {
+                    PathStep::MoveTo(to) | PathStep::LineTo(to) => {
                         current = to;
                         drawn.push(to);
                     }
@@ -476,7 +524,7 @@ mod tests {
     #[test]
     fn the_same_seed_always_draws_the_same_strokes() {
         for level in LEVELS {
-            let draw = || sketch_line(point(0.0, 0.0), point(120.0, 40.0), &hand(level, 77), 1);
+            let draw = || sketch_line(point(0.0, 0.0), point(120.0, 40.0), hand(level, 77), 1);
             assert_eq!(draw(), draw());
         }
     }
@@ -485,7 +533,7 @@ mod tests {
     fn another_seed_or_salt_draws_other_strokes() {
         let line = |seed, salt| {
             let hand = hand(Roughness::Sketchy, seed);
-            sketch_line(point(0.0, 0.0), point(120.0, 40.0), &hand, salt)
+            sketch_line(point(0.0, 0.0), point(120.0, 40.0), hand, salt)
         };
         assert_ne!(line(1, 1), line(2, 1));
         assert_ne!(line(1, 1), line(1, 2));
@@ -494,7 +542,7 @@ mod tests {
     #[test]
     fn every_pass_of_a_line_differs_so_that_it_looks_hand_drawn() {
         let hand = hand(Roughness::VerySketchy, 5);
-        let strokes = sketch_line(point(0.0, 0.0), point(200.0, 0.0), &hand, 0);
+        let strokes = sketch_line(point(0.0, 0.0), point(200.0, 0.0), hand, 0);
         assert_eq!(strokes.len(), 2);
         assert_ne!(strokes[0], strokes[1]);
     }
@@ -503,19 +551,16 @@ mod tests {
     fn a_broken_line_is_drawn_once_so_that_its_dashes_do_not_double_up() {
         let hand = Hand::new(Roughness::Sketchy, 5, true);
         assert_eq!(
-            sketch_line(point(0.0, 0.0), point(200.0, 0.0), &hand, 0).len(),
+            sketch_line(point(0.0, 0.0), point(200.0, 0.0), hand, 0).len(),
             1
         );
         let two_passes = Hand::new(Roughness::Sketchy, 5, false);
-        let once = sketch_line(point(0.0, 0.0), point(200.0, 0.0), &hand, 0);
-        let twice = sketch_line(point(0.0, 0.0), point(200.0, 0.0), &two_passes, 0);
+        let once = sketch_line(point(0.0, 0.0), point(200.0, 0.0), hand, 0);
+        let twice = sketch_line(point(0.0, 0.0), point(200.0, 0.0), two_passes, 0);
         assert_eq!(once[0], twice[0]);
+        assert_eq!(sketch_ellipse(area(0.0, 0.0, 80.0, 40.0), hand, 0).len(), 1);
         assert_eq!(
-            sketch_ellipse(area(0.0, 0.0, 80.0, 40.0), &hand, 0).len(),
-            1
-        );
-        assert_eq!(
-            sketch_rectangle(area(0.0, 0.0, 80.0, 40.0), 8.0, &hand, 0).len(),
+            sketch_rectangle(area(0.0, 0.0, 80.0, 40.0), 8.0, hand, 0).len(),
             8
         );
     }
@@ -526,8 +571,7 @@ mod tests {
         for level in LEVELS {
             let mut widest = 0.0_f32;
             for seed in 0..200 {
-                let strokes =
-                    sketch_line(point(0.0, 0.0), point(400.0, 0.0), &hand(level, seed), 0);
+                let strokes = sketch_line(point(0.0, 0.0), point(400.0, 0.0), hand(level, seed), 0);
                 for point in every_point(&strokes) {
                     widest = widest.max(point.y.abs());
                 }
@@ -551,8 +595,8 @@ mod tests {
             let reach = level.farthest_reach();
             for seed in 0..100 {
                 let hand = hand(level, seed);
-                let rectangle = sketch_rectangle(area(10.0, 20.0, 300.0, 200.0), 24.0, &hand, 3);
-                let ellipse = sketch_ellipse(area(10.0, 20.0, 300.0, 200.0), &hand, 4);
+                let rectangle = sketch_rectangle(area(10.0, 20.0, 300.0, 200.0), 24.0, hand, 3);
+                let ellipse = sketch_ellipse(area(10.0, 20.0, 300.0, 200.0), hand, 4);
                 for set in [rectangle, ellipse] {
                     for point in drawn_points(&set) {
                         assert!(point.x >= 10.0 - reach && point.x <= 310.0 + reach);
@@ -566,8 +610,8 @@ mod tests {
     #[test]
     fn a_slightly_larger_shape_keeps_the_same_hand_instead_of_boiling() {
         let hand = hand(Roughness::Sketchy, 9);
-        let small = every_point(&sketch_line(point(0.0, 0.0), point(100.0, 0.0), &hand, 0));
-        let large = every_point(&sketch_line(point(0.0, 0.0), point(104.0, 0.0), &hand, 0));
+        let small = every_point(&sketch_line(point(0.0, 0.0), point(100.0, 0.0), hand, 0));
+        let large = every_point(&sketch_line(point(0.0, 0.0), point(104.0, 0.0), hand, 0));
         assert_eq!(small.len(), large.len());
         for (a, b) in small.iter().zip(&large) {
             assert!((a.y - b.y).abs() < 0.5, "{a:?} {b:?}");
@@ -579,12 +623,12 @@ mod tests {
         for level in LEVELS {
             let hand = hand(level, 1);
             let strokes = [
-                sketch_line(point(5.0, 5.0), point(5.0, 5.0), &hand, 0),
-                sketch_rectangle(area(0.0, 0.0, 0.0, 0.0), 10.0, &hand, 0),
-                sketch_ellipse(area(0.0, 0.0, 0.0, 0.0), &hand, 0),
-                sketch_outline(&[point(1.0, 1.0)], true, &hand, 0),
-                sketch_outline(&[], false, &hand, 0),
-                sketch_curve(point(0.0, 0.0), point(0.0, 0.0), point(0.0, 0.0), &hand, 0),
+                sketch_line(point(5.0, 5.0), point(5.0, 5.0), hand, 0),
+                sketch_rectangle(area(0.0, 0.0, 0.0, 0.0), 10.0, hand, 0),
+                sketch_ellipse(area(0.0, 0.0, 0.0, 0.0), hand, 0),
+                sketch_outline(&[point(1.0, 1.0)], true, hand, 0),
+                sketch_outline(&[], false, hand, 0),
+                sketch_curve(point(0.0, 0.0), point(0.0, 0.0), point(0.0, 0.0), hand, 0),
             ];
             for set in strokes {
                 for point in every_point(&set) {
@@ -603,7 +647,7 @@ mod tests {
     #[test]
     fn the_hand_drawn_strokes_of_a_fixed_seed_never_change_silently() {
         let hand = hand(Roughness::Sketchy, 42);
-        let strokes = sketch_line(point(0.0, 0.0), point(100.0, 50.0), &hand, 7);
+        let strokes = sketch_line(point(0.0, 0.0), point(100.0, 50.0), hand, 7);
         let text: Vec<String> = every_point(&strokes)
             .iter()
             .map(|point| format!("{:.2},{:.2}", point.x, point.y))

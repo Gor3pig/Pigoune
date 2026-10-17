@@ -99,4 +99,15 @@ mod tests {
         let plan = plan(&ids(2), vec!["A".to_owned()], 2);
         assert!(matches!(plan.refusal, Some(Refusal::HiddenMasks(_))));
     }
+
+    #[test]
+    fn dragging_out_never_offers_to_continue_with_a_hidden_mask() {
+        let window = include_str!("window.rs");
+        let start = window
+            .find("drag_export::plan(")
+            .expect("the drag uses the plan");
+        let around: String = window[start..].lines().take(30).collect();
+        assert!(!around.contains("mask_alert"), "the drag only refuses");
+        assert!(!include_str!("mask_alert.rs").contains("Drag"));
+    }
 }
