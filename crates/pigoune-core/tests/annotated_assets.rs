@@ -570,3 +570,33 @@ fn thousands_of_annotated_resources_are_listed_with_their_renderings_quickly() {
         renders.values().map(|render| render.key.clone()).collect();
     assert_eq!(keys.len(), copies, "every image has its own rendering");
 }
+
+#[test]
+fn a_rendering_of_another_version_of_the_drawing_is_forgotten_when_the_library_is_opened() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("a.png", 1);
+    fixture
+        .library
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("saved");
+    let render = fixture
+        .library
+        .annotation_render(id)
+        .expect("q")
+        .expect("render");
+    let folder = render.file.parent().expect("folder").to_owned();
+    fs::create_dir_all(&folder).expect("folder");
+    let current = render.file.clone();
+    let stale = folder.join(format!("{}-{}.png", id, "0".repeat(render.key.len())));
+    fs::write(&current, b"current").expect("written");
+    fs::write(&stale, b"stale").expect("written");
+    let root = fixture.library.root().to_owned();
+    drop(fixture.library);
+    let reopened = Library::open(&root).expect("reopened");
+    assert!(
+        current.is_file(),
+        "the rendering of the current drawing stays"
+    );
+    assert!(!stale.exists(), "the rendering of an older drawing goes");
+    drop(reopened);
+}

@@ -42,10 +42,10 @@ impl Roughness {
                 reach: 0.0,
             },
             Self::Sketchy => Parameters {
-                bow: 0.12,
-                jitter: 0.25,
-                overshoot: 0.6,
-                reach: 2.5,
+                bow: 0.18,
+                jitter: 0.3,
+                overshoot: 0.8,
+                reach: 3.4,
             },
             Self::VerySketchy => Parameters {
                 bow: 0.34,
@@ -407,41 +407,6 @@ pub fn sketch_rectangle(bounds: Rect, corner: f32, hand: Hand, salt: u32) -> Vec
     strokes
 }
 
-fn single_pass(hand: Hand) -> Hand {
-    Hand { passes: 1, ..hand }
-}
-
-fn join(outline: &mut Stroke, piece: &[PathStep]) {
-    for step in piece {
-        outline.push(match *step {
-            PathStep::MoveTo(to) if !outline.is_empty() => PathStep::LineTo(to),
-            other => other,
-        });
-    }
-}
-
-#[must_use]
-pub fn sketch_ellipse_outline(bounds: Rect, hand: Hand, salt: u32) -> Stroke {
-    sketch_ellipse(bounds, single_pass(hand), salt)
-        .into_iter()
-        .next()
-        .unwrap_or_default()
-}
-
-#[must_use]
-pub fn sketch_rectangle_outline(bounds: Rect, corner: f32, hand: Hand, salt: u32) -> Stroke {
-    let strokes = sketch_rectangle(bounds, corner, single_pass(hand), salt);
-    let (sides, arcs) = strokes.split_at(strokes.len().min(4));
-    let mut outline = Stroke::new();
-    for (index, side) in sides.iter().enumerate() {
-        join(&mut outline, side);
-        if let Some(arc) = arcs.get(index) {
-            join(&mut outline, arc);
-        }
-    }
-    outline
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -654,7 +619,7 @@ mod tests {
             .collect();
         assert_eq!(
             text.join(" "),
-            "-0.50,-0.06 33.13,16.72 66.37,34.29 100.38,50.33 -0.27,-0.00 32.95,17.51 66.47,34.41 100.52,50.26"
+            "-1.02,-0.17 32.91,16.74 66.26,34.83 100.75,50.62 -0.56,-0.03 32.74,17.96 66.50,35.02 101.04,50.52"
         );
     }
 

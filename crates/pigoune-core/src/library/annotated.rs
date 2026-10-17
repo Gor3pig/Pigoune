@@ -10,7 +10,7 @@ use super::{
 };
 use crate::annotations::AnnotationDocument;
 
-pub const RENDER_VERSION: u32 = 1;
+pub const RENDER_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnnotationRender {
@@ -135,17 +135,57 @@ impl Library {
     }
 
     fn render_of(&self, id: AssetId, content_hash: &str, document: String) -> AnnotationRender {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(content_hash.as_bytes());
-        hasher.update(&[0]);
-        hasher.update(document.as_bytes());
-        hasher.update(&[0]);
-        hasher.update(&RENDER_VERSION.to_le_bytes());
-        let key = hasher.finalize().to_hex()[..32].to_owned();
+        let key = render_key(content_hash, &document, RENDER_VERSION);
         AnnotationRender {
             file: layout::annotated_render_path(&self.root, id, &key),
             key,
             document,
         }
+    }
+}
+
+fn render_key(content_hash: &str, document: &str, version: u32) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(content_hash.as_bytes());
+    hasher.update(&[0]);
+    hasher.update(document.as_bytes());
+    hasher.update(&[0]);
+    hasher.update(&version.to_le_bytes());
+    hasher.finalize().to_hex()[..32].to_owned()
+}
+
+impl Library {
+    pub(super) fn forget_stale_annotated_renders(&self) {
+        let Ok(renders) = self.annotation_renders() else {
+            return;
+        };
+        let current: std::collections::HashSet<std::path::PathBuf> =
+            renders.into_values().map(|render| render.file).collect();
+        let Ok(entries) = std::fs::read_dir(layout::annotated_dir(&self.root)) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            if !current.contains(&entry.path()) {
+                let _ = std::fs::remove_file(entry.path());
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RENDER_VERSION, render_key};
+
+    #[test]
+    fn a_new_version_of_the_drawing_gives_a_new_key_for_the_same_document() {
+        let document = r#"{"version":1}"#;
+        assert_ne!(
+            render_key("hash", document, RENDER_VERSION),
+            render_key("hash", document, RENDER_VERSION - 1)
+        );
+        assert_eq!(
+            render_key("hash", document, RENDER_VERSION),
+            render_key("hash", document, RENDER_VERSION)
+        );
     }
 }

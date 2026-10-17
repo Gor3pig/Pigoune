@@ -184,14 +184,16 @@ impl Library {
         remove_unfinished_imports(root);
         export::forget_exports(root);
 
-        Ok(Self {
+        let library = Self {
             root: root.to_path_buf(),
             connection,
             history: History::default(),
             screen: None,
             query_cache: query_cache::SharedQueryCache::default(),
             _exclusive_access: exclusive_access,
-        })
+        };
+        library.forget_stale_annotated_renders();
+        Ok(library)
     }
 
     pub fn set_screen(&mut self, screen: Option<Dimensions>) {
