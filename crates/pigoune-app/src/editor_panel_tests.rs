@@ -99,4 +99,48 @@ pub fn the_panels_only_change_what_is_visible() {
     assert!(imp.tools_grid.is_visible() && !imp.tools_hint.is_visible());
     assert!(imp.layers_scroller.is_visible() && imp.properties_scroller.is_visible());
     assert_same(&before, &state(&editor), "everything shown again");
+
+    let header_of = |button: &gtk::Widget| {
+        button
+            .ancestor(adw::HeaderBar::static_type())
+            .and_downcast::<adw::HeaderBar>()
+    };
+    assert_eq!(
+        header_of(imp.save_button.upcast_ref()).as_ref(),
+        Some(&*imp.right_header)
+    );
+    assert!(imp.split_view.shows_sidebar());
+    assert!(editor.toggle_sidebar());
+    assert!(!imp.split_view.shows_sidebar(), "the sidebar is hidden");
+    assert!(!imp.sidebar_toggle.is_active());
+    for button in [
+        imp.save_button.upcast_ref::<gtk::Widget>(),
+        imp.output_button.upcast_ref(),
+        imp.capture_button.upcast_ref(),
+    ] {
+        assert_eq!(
+            header_of(button).as_ref(),
+            Some(&*imp.left_header),
+            "save, copy and capture stay reachable"
+        );
+    }
+    assert!(imp.left_header.shows_end_title_buttons());
+    assert_same(&before, &state(&editor), "sidebar hidden");
+    assert!(editor.toggle_sidebar());
+    assert!(imp.split_view.shows_sidebar() && imp.sidebar_toggle.is_active());
+    assert_eq!(
+        header_of(imp.save_button.upcast_ref()).as_ref(),
+        Some(&*imp.right_header)
+    );
+    assert!(!imp.left_header.shows_end_title_buttons());
+    assert_same(&before, &state(&editor), "sidebar shown again");
+
+    editor.set_compact(true);
+    assert!(
+        !editor.toggle_sidebar(),
+        "a narrow window has no sidebar to toggle"
+    );
+    assert!(!imp.split_view.shows_sidebar());
+    editor.set_compact(false);
+    assert!(imp.split_view.shows_sidebar());
 }
