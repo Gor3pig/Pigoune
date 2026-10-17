@@ -31,7 +31,8 @@ pub use session::{EditSession, LayerMove, Refusal};
 pub use shape::{Geometry, Shape};
 pub use sketch::{
     Hand, PathStep, ROUGHNESS_CHOICES, Roughness, SEED_OPTION, Stroke, seed_for_object,
-    sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle, sketched_curve,
+    sketch_curve, sketch_ellipse, sketch_ellipse_outline, sketch_line, sketch_outline,
+    sketch_rectangle, sketch_rectangle_outline, sketched_curve,
 };
 pub use snapping::{Guide, Snap, Snapping, guide_extent, snap_move};
 pub use tools::{
