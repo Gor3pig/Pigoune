@@ -85,7 +85,7 @@ pub use library_export::{
 };
 pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
-pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
+pub use schema::{CURRENT_FORMAT_VERSION, MigrationStop, oldest_compatible_version};
 pub use seal::{FinalizeReport, SaveRequest, SealProblem, SealStatus, SealStep};
 pub use search::{
     AssetFilter, MAX_QUERY_WORDS, comparable, query_groups, query_text, query_word_count,
@@ -133,6 +133,21 @@ impl Library {
     }
 
     pub fn open(root: &Path) -> Result<Self, LibraryError> {
+        Self::open_halting_at(root, None)
+    }
+
+    #[doc(hidden)]
+    pub fn open_halting_during_migration(
+        root: &Path,
+        stop: schema::MigrationStop,
+    ) -> Result<Self, LibraryError> {
+        Self::open_halting_at(root, Some(stop))
+    }
+
+    fn open_halting_at(
+        root: &Path,
+        stop: Option<schema::MigrationStop>,
+    ) -> Result<Self, LibraryError> {
         if !root.is_dir() {
             return Err(LibraryError::NotFound(root.to_path_buf()));
         }
@@ -153,7 +168,7 @@ impl Library {
         schema::configure_connection(&connection)?;
         schema::ensure_is_intact(&connection)?;
         let found_version = schema::read_format_version(&connection)?;
-        schema::migrate_to_current_version(&mut connection, root)?;
+        schema::migrate_halting_at(&mut connection, root, stop)?;
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
