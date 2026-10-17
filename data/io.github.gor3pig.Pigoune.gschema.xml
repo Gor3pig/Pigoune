@@ -103,6 +103,26 @@
       <summary>Show pixel grid</summary>
       <description>Whether thin lines separate the pixels of a picture zoomed to 800% or more in the detailed preview.</description>
     </key>
+    <key name="editor-sidebar-hidden" type="b">
+      <default>false</default>
+      <summary>Annotation sidebar hidden</summary>
+      <description>Whether the sidebar of the annotation editor is hidden to leave more room to the image.</description>
+    </key>
+    <key name="editor-tools-expanded" type="b">
+      <default>true</default>
+      <summary>Annotation tools expanded</summary>
+      <description>Whether the tools of the annotation editor are shown.</description>
+    </key>
+    <key name="editor-properties-expanded" type="b">
+      <default>true</default>
+      <summary>Annotation properties expanded</summary>
+      <description>Whether the properties of the annotation editor are shown.</description>
+    </key>
+    <key name="editor-layers-expanded" type="b">
+      <default>true</default>
+      <summary>Annotation layers expanded</summary>
+      <description>Whether the layers of the annotation editor are shown.</description>
+    </key>
     <key name="sidebar-collections-expanded" type="b">
       <default>true</default>
       <summary>Collections section expanded</summary>

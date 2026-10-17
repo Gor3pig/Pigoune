@@ -102,6 +102,8 @@ mod imp {
         #[template_child]
         pub left_header: TemplateChild<adw::HeaderBar>,
         #[template_child]
+        pub split_view: TemplateChild<adw::OverlaySplitView>,
+        #[template_child]
         pub right_header: TemplateChild<adw::HeaderBar>,
         #[template_child]
         pub save_button: TemplateChild<gtk::Button>,
@@ -125,6 +127,8 @@ mod imp {
         pub layers_arrow: TemplateChild<gtk::Image>,
         #[template_child]
         pub tools_toggle: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub sidebar_toggle: TemplateChild<gtk::ToggleButton>,
         #[template_child]
         pub tools_arrow: TemplateChild<gtk::Image>,
         #[template_child]
@@ -183,6 +187,8 @@ mod imp {
         pub option_interaction: Cell<bool>,
         #[property(get, set)]
         pub compact: Cell<bool>,
+        #[property(get, set)]
+        pub sidebar_hidden: Cell<bool>,
         pub active_tool: Cell<EditorTool>,
         pub pending_text_edit: Cell<Option<u32>>,
         pub persistent_tool: Cell<Option<EditorTool>>,
@@ -247,6 +253,26 @@ glib::wrapper! {
 
 #[gtk::template_callbacks]
 impl PigouneEditor {
+    pub fn bind_settings(&self, settings: &gio::Settings) {
+        let imp = self.imp();
+        settings
+            .bind("editor-sidebar-hidden", self, "sidebar-hidden")
+            .build();
+        settings
+            .bind("editor-tools-expanded", &*imp.tools_toggle, "active")
+            .build();
+        settings
+            .bind(
+                "editor-properties-expanded",
+                &*imp.properties_toggle,
+                "active",
+            )
+            .build();
+        settings
+            .bind("editor-layers-expanded", &*imp.layers_toggle, "active")
+            .build();
+    }
+
     pub fn connect_closed(&self, callback: impl Fn() + 'static) {
         self.imp().on_closed.replace(Some(Box::new(callback)));
     }
@@ -431,6 +457,13 @@ impl PigouneEditor {
         self.update_panel();
         self.follow_zoom();
         self.connect_compact_notify(Self::place_panel);
+        self.connect_sidebar_hidden_notify(Self::place_panel);
+        imp.sidebar_toggle.connect_toggled(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |toggle| editor.set_sidebar_hidden(!toggle.is_active())
+        ));
+        self.sync_sidebar();
         imp.bar_icon
             .set_icon_name(Some(EditorTool::Select.icon_name()));
     }
@@ -921,6 +954,7 @@ impl PigouneEditor {
 
     fn place_panel(&self) {
         let imp = self.imp();
+        self.sync_sidebar();
         let panel = imp.panel.get();
         let compact = self.compact();
         self.place_sections(compact);
@@ -936,16 +970,36 @@ impl PigouneEditor {
         self.place_output_buttons();
     }
 
+    fn sync_sidebar(&self) {
+        let imp = self.imp();
+        let compact = self.compact();
+        let hidden = self.sidebar_hidden();
+        imp.split_view.set_show_sidebar(!compact && !hidden);
+        imp.left_header
+            .set_show_end_title_buttons(compact || hidden);
+        if imp.sidebar_toggle.is_active() == hidden {
+            imp.sidebar_toggle.set_active(!hidden);
+        }
+    }
+
+    fn toggle_sidebar(&self) -> bool {
+        if self.compact() {
+            return false;
+        }
+        self.set_sidebar_hidden(!self.sidebar_hidden());
+        true
+    }
+
     fn place_output_buttons(&self) {
         let imp = self.imp();
         let save = imp.save_button.get();
         let output = imp.output_button.get();
         let capture = imp.capture_button.get();
-        let compact = self.compact();
-        if imp.output_in_left_header.replace(compact) == compact {
+        let in_left_header = self.compact() || self.sidebar_hidden();
+        if imp.output_in_left_header.replace(in_left_header) == in_left_header {
             return;
         }
-        let (from, to) = if compact {
+        let (from, to) = if in_left_header {
             (&*imp.right_header, &*imp.left_header)
         } else {
             (&*imp.left_header, &*imp.right_header)
@@ -1923,6 +1977,9 @@ impl PigouneEditor {
     fn handle_key(&self, key: gdk::Key, modifiers: gdk::ModifierType) -> glib::Propagation {
         if !self.is_mapped() {
             return glib::Propagation::Proceed;
+        }
+        if key == gdk::Key::F9 && modifiers.is_empty() && self.toggle_sidebar() {
+            return glib::Propagation::Stop;
         }
         let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
         if self.imp().text_edit.get().is_some() {

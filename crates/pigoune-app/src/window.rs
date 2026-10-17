@@ -692,6 +692,7 @@ impl PigouneWindow {
         window.restore_window_state(&settings);
         window.bind_grid_settings(&settings);
         window.imp().asset_details.bind_sections(&settings);
+        window.imp().editor.bind_settings(&settings);
         window
             .imp()
             .asset_grid
