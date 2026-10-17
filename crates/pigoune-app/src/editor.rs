@@ -40,6 +40,7 @@ pub struct EditedCapture {
 const TOOLS_PER_ROW: usize = 3;
 const COMPACT_TOOLS_PER_ROW: usize = 7;
 const COMPACT_SECTION_HEIGHT: i32 = 200;
+const LAYERS_MINIMUM_HEIGHT: i32 = 150;
 const HANDLE_REACH_PIXELS: f64 = 9.0;
 const SNAP_PIXELS: f64 = 6.0;
 const NUDGE_SMALL: f32 = 1.0;
@@ -150,6 +151,7 @@ mod imp {
         pub properties_position: Cell<i32>,
         pub sections_placed: Cell<bool>,
         pub sections_open: Cell<(bool, bool)>,
+        pub divider_dragged: Cell<bool>,
         pub layer_edit_buttons: RefCell<Vec<gtk::Button>>,
         #[template_child]
         pub bottom_sheet: TemplateChild<adw::BottomSheet>,
@@ -813,6 +815,34 @@ impl PigouneEditor {
             self,
             move |_| editor.place_divider()
         ));
+        let press = gtk::GestureClick::new();
+        press.set_propagation_phase(gtk::PropagationPhase::Capture);
+        press.connect_pressed(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_, _, _, _| editor.imp().divider_dragged.set(true)
+        ));
+        press.connect_released(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_, _, _, _| editor.imp().divider_dragged.set(false)
+        ));
+        press.connect_cancel(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_, _| editor.imp().divider_dragged.set(false)
+        ));
+        imp.sections_paned.add_controller(press);
+        imp.sections_paned.connect_position_notify(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |paned| {
+                let imp = editor.imp();
+                if imp.divider_dragged.get() && imp.sections_open.get() == (true, true) {
+                    imp.properties_position.set(paned.position());
+                }
+            }
+        ));
     }
 
     fn place_divider(&self) {
@@ -841,10 +871,7 @@ impl PigouneEditor {
         let properties = imp.properties_toggle.is_active();
         let layers = imp.layers_toggle.is_active();
         let paned = imp.sections_paned.get();
-        let (was_properties, was_layers) = imp.sections_open.replace((properties, layers));
-        if was_properties && was_layers && imp.sections_placed.get() && paned.position() > 0 {
-            imp.properties_position.set(paned.position());
-        }
+        imp.sections_open.set((properties, layers));
         set_section_arrow(&imp.properties_arrow, properties);
         set_section_arrow(&imp.layers_arrow, layers);
         imp.properties_scroller.set_visible(properties);
@@ -853,6 +880,11 @@ impl PigouneEditor {
         paned.set_resize_start_child(properties);
         paned.set_resize_end_child(layers || !properties);
         self.place_paned();
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move || editor.place_paned()
+        ));
     }
 
     fn place_paned(&self) {
@@ -863,7 +895,11 @@ impl PigouneEditor {
         }
         let header = |section: &gtk::Box| section.measure(gtk::Orientation::Vertical, -1).0;
         let position = match imp.sections_open.get() {
-            (true, true) => imp.properties_position.get(),
+            (true, true) => {
+                let lowest = header(&imp.properties_section);
+                let highest = (paned.height() - LAYERS_MINIMUM_HEIGHT).max(lowest);
+                imp.properties_position.get().clamp(lowest, highest)
+            }
             (false, _) => header(&imp.properties_section),
             (true, false) => paned.height() - header(&imp.layers_section),
         };
@@ -876,6 +912,12 @@ impl PigouneEditor {
         set_section_arrow(&imp.tools_arrow, shown);
         imp.tools_grid.set_visible(shown);
         imp.tools_hint.set_visible(!shown);
+        self.place_paned();
+        glib::idle_add_local_once(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move || editor.place_paned()
+        ));
     }
 
     fn place_sections(&self, compact: bool) {

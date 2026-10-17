@@ -237,3 +237,36 @@ pub fn the_sidebar_button_stays_where_it_is() {
     }
     window.close();
 }
+
+pub fn the_layers_can_always_be_reached_after_folding_and_unfolding_the_panels() {
+    let _ = adw::init();
+    let _ = gtk::gio::resources_register_include!("pigoune.gresource");
+    let window = gtk::Window::new();
+    window.set_default_size(1200, 800);
+    let editor: PigouneEditor = glib::Object::new();
+    window.set_child(Some(&editor));
+    let asset = AssetId::parse("00000000-0000-7000-8000-000000000004").expect("id");
+    editor.open_item(asset, &texture(), document());
+    editor.imp().drawing.borrow_mut().session.select(Some(1));
+    editor.after_edit();
+    window.present();
+    settle(600);
+    let imp = editor.imp();
+    assert!(
+        imp.layers_scroller.height() > 40,
+        "the layers show at first"
+    );
+    for round in 0..4 {
+        imp.tools_toggle.set_active(false);
+        imp.layers_toggle.set_active(false);
+        settle(300);
+        imp.layers_toggle.set_active(true);
+        imp.tools_toggle.set_active(true);
+        settle(1500);
+        assert!(
+            imp.layers_scroller.height() > 40 && imp.layers_toggle.height() > 10,
+            "round {round}: the layers are pushed out of the panel"
+        );
+    }
+    window.close();
+}
