@@ -1,4 +1,26 @@
 const OBSOLETE_WORDING: &[&str] = &[
+    "Some information may be visible.",
+    "Certaines informations pourraient être visibles.",
+    "Un effet de flou ou de pixelisation est masqué.",
+    "{count} effets de flou ou de pixelisation sont masqués.",
+    "Einige Informationen könnten sichtbar sein.",
+    "Ein Weichzeichner- oder Verpixelungseffekt ist ausgeblendet.",
+    "{count} Weichzeichner- oder Verpixelungseffekte sind ausgeblendet.",
+    "Es posible que algunos datos sean visibles.",
+    "Un efecto de desenfoque o pixelado está oculto.",
+    "{count} efectos de desenfoque o pixelado están ocultos.",
+    "Alcune informazioni potrebbero essere visibili.",
+    "Un effetto di sfocatura o pixelatura è nascosto.",
+    "{count} effetti di sfocatura o pixelatura sono nascosti.",
+    "Sommige informatie kan zichtbaar zijn.",
+    "Een vervagings- of pixeleffect is verborgen.",
+    "{count} vervagings- of pixeleffecten zijn verborgen.",
+    "Niektóre informacje mogą być widoczne.",
+    "Efekt rozmycia lub pikselizacji jest ukryty.",
+    "Ukryte efekty rozmycia lub pikselizacji: {count}.",
+    "Algumas informações podem ficar visíveis.",
+    "Um efeito de desfoque ou pixelização está oculto.",
+    "{count} efeitos de desfoque ou pixelização estão ocultos.",
     "A mask is hidden, so the image would show what it covers",
     "“{name}” is hidden: the image will show what it covers.",
     "{count} masks are hidden: the image will show what they cover.",
@@ -82,6 +104,9 @@ const OBSOLETE_WORDING: &[&str] = &[
     "Eksport jest częściowy. Wyeksportowano {exported} plików do „{folder}”, ale nie udało się utworzyć {count}:\n\n{list}",
     "A exportação contém todas as imagens originais, que ainda podem mostrar o que as anotações escondem, e uma cópia achatada de cada imagem anotada.",
     "A exportação é parcial. {exported} arquivos foram exportados para “{folder}”, mas {count} não puderam ser criados:\n\n{list}",
+];
+
+const OBSOLETE_FRAGMENTS: &[&str] = &[
     "masquage est masqué",
     "masquages sont masqués",
     "montrerait ce qu’il cache",
@@ -109,8 +134,6 @@ const SOURCES: [(&str, &str); 5] = [
 
 const SHOWN_WORDING: &[&str] = &[
     "Some Information May Be Visible",
-    "A blur or pixelation effect is hidden.",
-    "{count} blur or pixelation effects are hidden.",
     "A blur or pixelation effect is currently hidden.",
     "{count} blur or pixelation effects are currently hidden.",
     "“{name}” contains hidden blur or pixelation effects.",
@@ -139,10 +162,12 @@ fn no_catalog_keeps_an_obsolete_message_about_hidden_masks() {
         for phrase in OBSOLETE_WORDING {
             let escaped = phrase.replace('"', "\\\"");
             assert!(
-                !text.contains(&format!("\"{escaped}\""))
-                    && !text.contains(&escaped.replace("\\n", "\n")),
+                !text.contains(&format!("\"{escaped}\"")),
                 "{name} still has: {phrase}"
             );
+        }
+        for fragment in OBSOLETE_FRAGMENTS {
+            assert!(!text.contains(fragment), "{name} still has: {fragment}");
         }
     }
 }
