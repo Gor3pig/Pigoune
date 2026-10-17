@@ -23,14 +23,32 @@ const FORBIDDEN_CHARACTERS: [char; 2] = ['/', '\0'];
 const REPLACEMENT: char = '-';
 const MAX_EXTENSION_CHARS: usize = 5;
 const DEFAULT_EXTENSION: &str = "png";
+pub const FLAT_EXTENSION: &str = "png";
+
+pub type FlatFiles = std::collections::HashMap<AssetId, PathBuf>;
+
+pub fn flat_unavailable() -> io::Error {
+    io::Error::new(
+        io::ErrorKind::NotFound,
+        "the annotated image could not be rendered",
+    )
+}
 
 impl Library {
-    pub fn export_copies(&self, assets: &[AssetId]) -> Result<Vec<PathBuf>, LibraryError> {
-        self.fresh_copies(assets, &layout::export_dir(&self.root))
+    pub fn export_copies(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        self.fresh_copies(assets, &layout::export_dir(&self.root), flats)
     }
 
-    pub fn clipboard_copies(&self, assets: &[AssetId]) -> Result<Vec<PathBuf>, LibraryError> {
-        self.fresh_copies(assets, &layout::clipboard_dir(&self.root))
+    pub fn clipboard_copies(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        self.fresh_copies(assets, &layout::clipboard_dir(&self.root), flats)
     }
 
     pub fn save_pasted_image(
@@ -50,16 +68,25 @@ impl Library {
         Ok(path)
     }
 
-    pub fn opening_copy(&self, asset: AssetId) -> Result<Option<PathBuf>, LibraryError> {
+    pub fn opening_copy(
+        &self,
+        asset: AssetId,
+        flats: &FlatFiles,
+    ) -> Result<Option<PathBuf>, LibraryError> {
         let folder = layout::opening_dir(&self.root).join(asset.to_string());
-        Ok(self.fresh_copies(&[asset], &folder)?.pop())
+        Ok(self.fresh_copies(&[asset], &folder, flats)?.pop())
     }
 
-    pub fn export_to(&self, assets: &[AssetId], folder: &Path) -> Result<CopyReport, LibraryError> {
+    pub fn export_to(
+        &self,
+        assets: &[AssetId],
+        folder: &Path,
+        flats: &FlatFiles,
+    ) -> Result<CopyReport, LibraryError> {
         if !folder.is_dir() {
             return Err(LibraryError::NotFound(folder.to_path_buf()));
         }
-        self.copy_into(assets, folder)
+        self.copy_into(assets, folder, flats)
     }
 
     pub fn save_converted(
@@ -86,17 +113,24 @@ impl Library {
         &self,
         assets: &[AssetId],
         folder: &Path,
+        flats: &FlatFiles,
     ) -> Result<Vec<PathBuf>, LibraryError> {
         let _ = fs::remove_dir_all(folder);
         fs::create_dir_all(folder)?;
-        let report = self.copy_into(assets, folder)?;
+        let report = self.copy_into(assets, folder, flats)?;
         match report.failures.into_iter().next() {
             Some(failure) => Err(failure.error.into()),
             None => Ok(report.copies),
         }
     }
 
-    fn copy_into(&self, assets: &[AssetId], folder: &Path) -> Result<CopyReport, LibraryError> {
+    fn copy_into(
+        &self,
+        assets: &[AssetId],
+        folder: &Path,
+        flats: &FlatFiles,
+    ) -> Result<CopyReport, LibraryError> {
+        let annotated = self.annotated_ids()?;
         let mut taken = HashSet::new();
         let mut copies = Vec::new();
         let mut failures = Vec::new();
@@ -104,18 +138,22 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
-            if let Some(refusal) = self.sealing_refusal(*id) {
-                failures.push(failure_of(&asset, refusal));
-                continue;
-            }
-            let mut source = match File::open(self.file_of(&asset)) {
+            let (path, extension) = if annotated.contains(id) {
+                let Some(flat) = flats.get(id) else {
+                    failures.push(failure_of(&asset, flat_unavailable()));
+                    continue;
+                };
+                (flat.clone(), Some(FLAT_EXTENSION.to_owned()))
+            } else {
+                (self.file_of(&asset), original_extension(&asset))
+            };
+            let mut source = match File::open(path) {
                 Ok(source) => source,
                 Err(error) => {
                     failures.push(failure_of(&asset, error));
                     continue;
                 }
             };
-            let extension = original_extension(&asset);
             let (mut file, copy) = create_free_file(
                 folder,
                 &base_name_of(&asset),
@@ -132,18 +170,6 @@ impl Library {
             }
         }
         Ok(CopyReport { copies, failures })
-    }
-}
-
-impl Library {
-    pub(super) fn sealing_refusal(&self, id: AssetId) -> Option<io::Error> {
-        match self.seal_status(id) {
-            Ok(status) if status.allows_output() => None,
-            _ => Some(io::Error::new(
-                io::ErrorKind::PermissionDenied,
-                "the sealing of this image cannot be verified",
-            )),
-        }
     }
 }
 

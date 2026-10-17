@@ -8,6 +8,7 @@ pub const FILES_DIR_NAME: &str = "files";
 pub const CACHE_DIR_NAME: &str = "cache";
 const DETAILS_FILE_NAME: &str = "visual-details.db";
 const THUMBNAILS_DIR_NAME: &str = "thumbnails";
+const ANNOTATED_DIR_NAME: &str = "annotated";
 const EXPORT_DIR_NAME: &str = "export";
 const CLIPBOARD_DIR_NAME: &str = "clipboard";
 const OPENING_DIR_NAME: &str = "open";
@@ -15,7 +16,6 @@ const PASTED_DIR_NAME: &str = "pasted";
 
 const MAX_NAME_BYTES: usize = 200;
 const BUCKET_NAME_LENGTH: usize = 2;
-pub const ORIGINAL_FILE_NAME: &str = "original.png";
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
 
 pub fn library_folder_name(requested_name: &str) -> Result<String, LibraryError> {
@@ -61,6 +61,24 @@ pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
 
 pub fn details_path(root: &Path) -> PathBuf {
     root.join(CACHE_DIR_NAME).join(DETAILS_FILE_NAME)
+}
+
+pub fn annotated_dir(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME).join(ANNOTATED_DIR_NAME)
+}
+
+pub fn annotated_render_path(root: &Path, id: AssetId, key: &str) -> PathBuf {
+    annotated_dir(root).join(format!("{id}-{key}.png"))
+}
+
+pub fn is_annotated_render_of(id: AssetId, file_name: &str) -> bool {
+    file_name
+        .strip_prefix(&format!("{id}-"))
+        .is_some_and(|rest| {
+            Path::new(rest)
+                .extension()
+                .is_some_and(|extension| extension == "png" || extension == "partial")
+        })
 }
 
 pub fn thumbnails_dir(root: &Path) -> PathBuf {
@@ -114,45 +132,6 @@ pub fn stored_path(id: AssetId, original_file_name: &str) -> String {
         "{FILES_DIR_NAME}/{}/{id}/{original_file_name}",
         bucket_name(id)
     )
-}
-
-pub fn original_generation_name(generation: u32) -> String {
-    if generation == 0 {
-        ORIGINAL_FILE_NAME.to_owned()
-    } else {
-        format!("original.{generation}.png")
-    }
-}
-
-pub fn original_generation_path(id: AssetId, generation: u32) -> String {
-    stored_path(id, &original_generation_name(generation))
-}
-
-pub fn original_generation_of(file_name: &str) -> Option<u32> {
-    if file_name == ORIGINAL_FILE_NAME {
-        return Some(0);
-    }
-    let digits = file_name.strip_prefix("original.")?.strip_suffix(".png")?;
-    let canonical = !digits.is_empty()
-        && !digits.starts_with('0')
-        && digits.bytes().all(|byte| byte.is_ascii_digit());
-    canonical.then(|| digits.parse().ok()).flatten()
-}
-
-pub fn unfinished_seal_name(id: AssetId, generation: u32) -> String {
-    format!(".{id}-seal-{generation}{UNFINISHED_IMPORT_SUFFIX}")
-}
-
-pub fn is_unfinished_seal_name(id: AssetId, file_name: &str) -> bool {
-    let prefix = format!(".{id}-seal-");
-    file_name
-        .strip_prefix(&prefix)
-        .and_then(|rest| rest.strip_suffix(UNFINISHED_IMPORT_SUFFIX))
-        .is_some_and(|digits| {
-            !digits.is_empty()
-                && !digits.starts_with('0')
-                && digits.bytes().all(|byte| byte.is_ascii_digit())
-        })
 }
 
 pub fn unfinished_import_dir(root: &Path, id: AssetId) -> PathBuf {

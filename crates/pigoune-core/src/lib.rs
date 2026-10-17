@@ -2,16 +2,16 @@ pub mod annotations;
 pub mod library;
 mod media;
 mod raster;
-pub mod seal_chain;
 
+pub use library::MigrationStop;
 pub use library::{
-    ALMOST_IDENTICAL_DISTANCE, AdoptError, AnnotatedError, AnnotatedImage, Annotations, Asset,
+    ALMOST_IDENTICAL_DISTANCE, AdoptError, AnnotatedError, AnnotationRender, Annotations, Asset,
     AssetCommand, AssetError, AssetFilter, AssetId, AssetView, CACHE_DIR_NAME,
     CURRENT_FORMAT_VERSION, Change, ChangeStamp, Collection, CollectionCommand, CollectionError,
     CollectionId, CollectionLook, CollectionPath, CollectionRemoval, ColorShare, ConfirmedRemoval,
     CopyFailure, CopyReport, DATABASE_FILE_NAME, DUPLICATE_DISTANCE, DuplicateCommand,
     DuplicateError, DuplicateGroup, DuplicateKind, DuplicatePlan, DuplicateProgress, ExportFailure,
-    ExportOutline, FILES_DIR_NAME, FormatShare, GroupMember, HISTORY_LIMIT, HealthIssue,
+    ExportOutline, FILES_DIR_NAME, FlatFiles, FormatShare, GroupMember, HISTORY_LIMIT, HealthIssue,
     HealthPlan, HealthProgress, HealthReport, HealthTarget, IDENTICAL_DETAIL_GAP, IgnoreAction,
     IgnoreId, IgnoreKind, IgnoreOutcome, IgnoredEntry, ImportControl, ImportEnding, ImportError,
     ImportOutcome, ImportProgress, ImportSummary, LARGE_FILE_BYTES, LIBRARY_EXTENSION,
@@ -24,7 +24,6 @@ pub use library::{
     oldest_compatible_version, query_groups, query_text, query_word_count, same_tag_name,
     thumbnail_cache_bytes_in,
 };
-pub use library::{FinalizeReport, MigrationStop, SaveRequest, SealProblem, SealStatus, SealStep};
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,
     VisualAnalysis, VisualDetail, VisualHash, animation_timing, dominant_colors, icon_from_pngs,

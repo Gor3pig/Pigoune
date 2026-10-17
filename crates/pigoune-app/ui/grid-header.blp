@@ -89,6 +89,14 @@ template $PigouneGridHeader: Adw.Bin {
 
     [end]
     Button {
+      icon-name: "camera-photo-symbolic";
+      tooltip-text: _("Take a Screenshot to Annotate");
+      action-name: "win.capture";
+      focus-on-click: false;
+    }
+
+    [end]
+    Button {
       visible: bind template.narrow inverted;
       icon-name: "zoom-in-symbolic";
       tooltip-text: _("Larger Thumbnails");

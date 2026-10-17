@@ -1541,25 +1541,6 @@ msgstr "Sem anotações"
 msgid "Annotations: {count}"
 msgstr "Anotações: {count}"
 
-#: crates/pigoune-app/src/editor.rs:1173
-msgid "Lock the Masks?"
-msgstr "Travar os mascaramentos?"
-
-#: crates/pigoune-app/src/editor.rs:1175
-msgid ""
-"The blur and the pixelation will be applied to the original image for good, "
-"and this cannot be undone. A pixelation with large cells removes the "
-"details, but a light blur may still be partly recoverable."
-msgstr ""
-"O desfoque e a pixelização serão aplicados definitivamente à imagem "
-"original, e isso não pode ser desfeito. Uma pixelização com células "
-"grandes remove os detalhes, mas um desfoque leve ainda pode ser "
-"parcialmente recuperável."
-
-#: crates/pigoune-app/src/editor.rs:1179
-msgid "_Lock"
-msgstr "_Travar"
-
 #: crates/pigoune-app/src/editor.rs:1247
 msgid "Copy to Clipboard"
 msgstr "Copiar para a área de transferência"
@@ -1626,14 +1607,6 @@ msgstr "Não foi possível exportar a imagem"
 #: crates/pigoune-app/src/editor.rs:1332
 msgid "Image exported"
 msgstr "Imagem exportada"
-
-#: crates/pigoune-app/src/editor.rs:1359
-msgid "Could Not Lock the Masks"
-msgstr "Não foi possível travar os mascaramentos"
-
-#: crates/pigoune-app/src/editor.rs:1360
-msgid "The original image was left unchanged."
-msgstr "A imagem original não foi modificada."
 
 #: crates/pigoune-app/src/editor_options.rs:44
 #: crates/pigoune-app/src/filter_choices.rs:269
@@ -2430,11 +2403,6 @@ msgstr "Remover da coleção “{name}”"
 msgid "Remove from All Collections"
 msgstr "Remover de todas as coleções"
 
-#: crates/pigoune-app/src/window.rs:2917
-#: crates/pigoune-app/ui/asset-details.blp:287
-msgid "Edit Annotations…"
-msgstr "Editar anotações…"
-
 #: crates/pigoune-app/src/window.rs:2921
 #: crates/pigoune-app/ui/asset-details.blp:310
 #: crates/pigoune-app/ui/asset-details.blp:321
@@ -2444,14 +2412,6 @@ msgstr "Ver original"
 #: crates/pigoune-app/src/window.rs:2963
 msgid "Could Not Open the Annotations"
 msgstr "Não foi possível abrir as anotações"
-
-#: crates/pigoune-app/src/window.rs:2965
-msgid ""
-"The original image or its annotations could not be read. They may come from "
-"a newer version of Pigoune."
-msgstr ""
-"Não foi possível ler a imagem original ou suas anotações. Elas podem vir de "
-"uma versão mais recente do Pigoune."
 
 #: crates/pigoune-app/src/window.rs:3006
 msgid "These assets are already in the trash. Restore them or empty the trash."
@@ -6561,15 +6521,6 @@ msgid_plural "{name} and {count} others"
 msgstr[0] "{name} e mais {count}"
 msgstr[1] "{name} e mais {count}"
 
-#: crates/pigoune-app/ui/editor.blp:61
-msgid "The original image still shows what the blur and pixelation hide"
-msgstr ""
-"A imagem original ainda mostra o que o desfoque e a pixelização escondem"
-
-#: crates/pigoune-app/ui/editor.blp:62
-msgid "Lock Masks"
-msgstr "Travar mascaramentos"
-
 #: crates/pigoune-app/ui/editor.blp:145
 msgid "Save"
 msgstr "Salvar"
@@ -8493,9 +8444,6 @@ msgstr "Excluir"
 msgid "Drag to Reorder"
 msgstr "Arraste para reordenar"
 
-msgid "Remove Marker"
-msgstr "Remover o marcador"
-
 msgid "Show"
 msgstr "Mostrar"
 
@@ -8504,12 +8452,6 @@ msgstr "Ocultar"
 
 msgid "Unlock"
 msgstr "Desbloquear"
-
-msgid "Applied Masks"
-msgstr "Máscaras aplicadas"
-
-msgid "Masking applied"
-msgstr "Máscara aplicada"
 
 msgid "A mask is hidden, so the image would show what it covers"
 msgstr "Uma máscara está oculta: a imagem mostraria o que ela cobre"
@@ -8532,62 +8474,32 @@ msgstr "_Mostrar as máscaras"
 msgid "Lock"
 msgstr "Bloquear"
 
-msgid "Remove the Marker?"
-msgstr "Remover o marcador?"
+msgid "The annotated image could not be rendered"
+msgstr "Não foi possível gerar a imagem anotada"
 
-msgid "This removes the marker from the list. The pixels of the original image are not restored."
-msgstr "Isso remove o marcador da lista. Os pixels da imagem original não são restaurados."
+msgid "Animated images cannot be annotated yet"
+msgstr "Imagens animadas ainda não podem ser anotadas"
 
-msgid "_Remove"
-msgstr "_Remover"
+msgid "The image or its annotations could not be read. They may come from a newer version of Pigoune."
+msgstr "Não foi possível ler a imagem ou suas anotações. Elas podem vir de uma versão mais recente do Pigoune."
 
-msgid "Seal Masks"
-msgstr "Aplicar as máscaras"
+msgid "Take a Screenshot?"
+msgstr "Fazer uma captura de tela?"
 
-msgid "Could Not Seal the Masks"
-msgstr "Não foi possível aplicar as máscaras"
+msgid "The image being annotated is not saved. Save it first, or let the screenshot replace it."
+msgstr "A imagem que está sendo anotada não foi salva. Salve-a primeiro ou deixe a captura substituí-la."
 
-msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
-msgstr "O desfoque e a pixelização serão aplicados à imagem de forma definitiva, e o histórico de desfazer será apagado. Um desfoque ou uma pixelização não garante anonimato: um desfoque leve pode ser parcialmente recuperável. As cópias da imagem guardadas em outro lugar, como arquivos, a área de transferência ou backups, não são alteradas."
+msgid "_Replace Without Saving"
+msgstr "_Substituir sem salvar"
 
-msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
-msgstr "Sob uma máscara: {names}. Depois de aplicar, eles aparecem nítidos sobre a imagem mascarada."
+msgid "_Save and Capture"
+msgstr "_Salvar e capturar"
 
-msgid "The content of {names} stays saved in the document."
-msgstr "O conteúdo de {names} continua salvo no documento."
+msgid "(annotated)"
+msgstr "(anotada)"
 
-msgid "Seal the Masks?"
-msgstr "Aplicar as máscaras?"
+msgid "Export the Original Images Too?"
+msgstr "Exportar também as imagens originais?"
 
-msgid "_Seal"
-msgstr "_Aplicar"
-
-msgid "Seal and _Hide Covered"
-msgstr "Aplicar e _ocultar o que está coberto"
-
-msgid "There is no visible mask to seal"
-msgstr "Nenhuma máscara visível para aplicar"
-
-msgid "The image and its masks were left unchanged."
-msgstr "A imagem e suas máscaras não foram alteradas."
-
-msgid "Masks sealed"
-msgstr "Máscaras aplicadas"
-
-msgid "the sealing is not finished"
-msgstr "a aplicação não foi concluída"
-
-msgid "the protection cannot be verified"
-msgstr "a proteção não pode ser verificada"
-
-msgid "Sealed Images Need Attention"
-msgstr "Imagens mascaradas precisam de atenção"
-
-msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
-msgstr "Essas imagens não podem ser exibidas, copiadas, exportadas nem editadas até que sua proteção seja verificada. Nada foi excluído ou alterado.\n\n{list}"
-
-msgid "_Finish the Cleanup"
-msgstr "_Concluir a limpeza"
-
-msgid "The protection of this image cannot be verified, so it is not shown"
-msgstr "A proteção desta imagem não pode ser verificada, por isso ela não é exibida"
+msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
+msgstr "A exportação contém todas as imagens originais, que ainda podem mostrar o que as anotações escondem, e uma cópia achatada de cada imagem anotada."

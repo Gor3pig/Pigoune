@@ -4,7 +4,7 @@ use gtk::glib;
 use gtk::prelude::*;
 
 use crate::asset_object::PigouneAssetObject;
-use crate::thumbnails::{self, ThumbnailCache};
+use crate::thumbnails::ThumbnailCache;
 
 const CELLS: usize = 4;
 const COLUMNS: usize = 2;
@@ -90,15 +90,14 @@ fn load(
     cache: &Rc<ThumbnailCache>,
 ) -> glib::JoinHandle<()> {
     let id = asset.id();
-    let file = asset.file().to_path_buf();
-    let thumbnail_file = asset.thumbnail_file().to_path_buf();
+    let asset = asset.clone();
     glib::spawn_future_local(glib::clone!(
         #[weak]
         image,
         #[strong]
         cache,
         async move {
-            if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
+            if let Some(texture) = asset.thumbnail(&image).await {
                 cache.remember(id, texture.clone());
                 image.set_paintable(Some(&texture));
             }

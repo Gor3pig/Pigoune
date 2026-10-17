@@ -1,15 +1,18 @@
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
+use crate::annotated_files;
+use crate::thumbnails;
 use adw::subclass::prelude::*;
-use gtk::glib;
 use gtk::prelude::*;
-use pigoune_core::{Asset, AssetId, TextField};
+use gtk::{gdk, glib};
+use pigoune_core::{AnnotationRender, Asset, AssetId, TextField};
 
 pub struct AssetEntry {
     pub asset: Asset,
     pub file: PathBuf,
     pub thumbnail_file: PathBuf,
+    pub annotation: Option<AnnotationRender>,
 }
 
 mod imp {
@@ -157,8 +160,9 @@ impl PigouneAssetObject {
             && *added_at_unix_ms == other.added_at_unix_ms
             && *trashed_at_unix_ms == other.trashed_at_unix_ms
             && *colors == other.colors
-            && self.file() == newer.file()
+            && self.source_file() == newer.source_file()
             && self.thumbnail_file() == newer.thumbnail_file()
+            && self.annotation_key() == newer.annotation_key()
     }
 
     pub fn adopt_edits_of(&self, newer: &Self) -> bool {
@@ -184,12 +188,32 @@ impl PigouneAssetObject {
         renamed
     }
 
-    pub fn file(&self) -> &Path {
+    pub fn source_file(&self) -> &Path {
         &self.entry().file
     }
 
     pub fn thumbnail_file(&self) -> &Path {
         &self.entry().thumbnail_file
+    }
+
+    pub fn annotation(&self) -> Option<&AnnotationRender> {
+        self.entry().annotation.as_ref()
+    }
+
+    pub fn annotation_key(&self) -> Option<&str> {
+        self.annotation().map(|render| render.key.as_str())
+    }
+
+    pub async fn display_file(&self, widget: &impl IsA<gtk::Widget>) -> Option<PathBuf> {
+        match self.annotation() {
+            Some(render) => annotated_files::ensure(render, self.source_file(), widget).await,
+            None => Some(self.source_file().to_path_buf()),
+        }
+    }
+
+    pub async fn thumbnail(&self, widget: &impl IsA<gtk::Widget>) -> Option<gdk::Texture> {
+        let source = async { self.display_file(widget).await };
+        thumbnails::thumbnail_from(source, self.thumbnail_file()).await
     }
 }
 
@@ -229,6 +253,7 @@ mod tests {
             asset,
             file: PathBuf::from("/library/files/logo.png"),
             thumbnail_file: PathBuf::from("/library/thumbnail.png"),
+            annotation: None,
         })
     }
 
@@ -242,6 +267,7 @@ mod tests {
             asset: asset("Logo", false, 10),
             file: PathBuf::from("/other-library/files/logo.png"),
             thumbnail_file: PathBuf::from("/library/thumbnail.png"),
+            annotation: None,
         })));
     }
 

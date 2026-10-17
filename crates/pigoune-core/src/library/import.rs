@@ -33,14 +33,6 @@ impl PreparedFile {
     pub(super) fn byte_size(&self) -> u64 {
         self.digest.byte_size
     }
-
-    pub(super) fn media(&self) -> &MediaInfo {
-        &self.media
-    }
-
-    pub(super) fn original_file_name(&self) -> &str {
-        &self.original_file_name
-    }
 }
 
 impl Library {

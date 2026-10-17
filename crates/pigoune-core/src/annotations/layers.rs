@@ -11,7 +11,6 @@ pub struct LayerEntry {
     pub summary: String,
     pub hidden: bool,
     pub locked: bool,
-    pub sealed: bool,
 }
 
 #[must_use]
@@ -30,7 +29,6 @@ pub fn layer_entries(document: &AnnotationDocument) -> Vec<LayerEntry> {
                 summary: summary_of(shape.kind.as_str(), shape.text("content")),
                 hidden: object.state.hidden,
                 locked: object.state.locked,
-                sealed: object.state.sealed,
             })
         })
         .collect()

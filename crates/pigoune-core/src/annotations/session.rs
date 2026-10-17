@@ -4,7 +4,6 @@ use std::rc::Rc;
 use serde_json::Value;
 
 use super::geometry::{self, HitMode};
-use super::sealing::{self, OverlapChoice, SealPlan, SealRecord};
 use super::{
     AnnotationDocument, AnnotationObject, Crop, Geometry, ObjectContent, ObjectState, Point, Rect,
     Shape,
@@ -59,7 +58,6 @@ pub enum LayerMove {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Refusal {
     Locked,
-    Sealed,
 }
 
 type TextMeasure = dyn Fn(&Shape) -> (f32, f32);
@@ -230,13 +228,7 @@ impl EditSession {
     #[must_use]
     pub fn refusal(&self, id: u32) -> Option<Refusal> {
         let state = &self.document.objects.iter().find(|o| o.id == id)?.state;
-        if state.sealed {
-            Some(Refusal::Sealed)
-        } else if state.locked {
-            Some(Refusal::Locked)
-        } else {
-            None
-        }
+        state.locked.then_some(Refusal::Locked)
     }
 
     fn can_edit(&self, id: u32) -> bool {
@@ -310,48 +302,14 @@ impl EditSession {
             .position(|object| object.id == id)
     }
 
-    #[must_use]
-    pub fn seal_plan(&self) -> SealPlan {
-        sealing::plan(&self.document, |object| {
-            object.shape().and_then(|shape| self.bounds_of(shape))
-        })
-    }
-
-    #[must_use]
-    pub fn sealed_document(
-        &self,
-        plan: &SealPlan,
-        choice: OverlapChoice,
-        record: SealRecord,
-    ) -> AnnotationDocument {
-        sealing::apply(&self.document, plan, choice, record)
-    }
-
-    pub fn adopt_sealed(&mut self, document: AnnotationDocument) {
-        self.document = document;
-        self.undo.clear();
-        self.redo.clear();
-        self.selected = None;
-        self.gesture = None;
-        self.nudging = None;
-        self.option_series = None;
-        self.saved_at = Some(0);
-    }
-
-    #[must_use]
-    pub fn sealed_floor(&self) -> usize {
-        self.document.sealed_count()
-    }
-
     fn target_position(&self, id: u32, movement: LayerMove) -> Option<usize> {
         let position = self.position_of(id)?;
         let last = self.document.objects.len().checked_sub(1)?;
-        let floor = self.sealed_floor();
         let target = match movement {
             LayerMove::Front => last,
             LayerMove::Forward => (position + 1).min(last),
-            LayerMove::Backward => position.saturating_sub(1).max(floor),
-            LayerMove::Back => floor,
+            LayerMove::Backward => position.saturating_sub(1),
+            LayerMove::Back => 0,
         };
         (target != position).then_some(target)
     }
@@ -398,7 +356,7 @@ impl EditSession {
             target_position
         };
         let to = if from < slot { slot - 1 } else { slot };
-        if to == from || to < self.sealed_floor() {
+        if to == from {
             return false;
         }
         self.relocate(from, to);
@@ -449,7 +407,7 @@ impl EditSession {
     }
 
     pub fn duplicate_object(&mut self, id: u32, offset: f32) -> Option<u32> {
-        if self.gesture.is_some() || self.refusal(id) == Some(Refusal::Sealed) {
+        if self.gesture.is_some() {
             return None;
         }
         let position = self.position_of(id)?;
@@ -476,25 +434,10 @@ impl EditSession {
     }
 
     pub fn remove_object(&mut self, id: u32) -> bool {
-        if self.gesture.is_some() || self.refusal(id) == Some(Refusal::Sealed) {
+        if self.gesture.is_some() {
             return false;
         }
         let Some(index) = self.document.objects.iter().position(|o| o.id == id) else {
-            return false;
-        };
-        let object = self.document.objects.remove(index);
-        if self.selected == Some(id) {
-            self.selected = None;
-        }
-        self.record(Edit::Removed { index, object });
-        true
-    }
-
-    pub fn remove_marker(&mut self, id: u32) -> bool {
-        if self.gesture.is_some() || !self.document.is_sealed_marker(id) {
-            return false;
-        }
-        let Some(index) = self.position_of(id) else {
             return false;
         };
         let object = self.document.objects.remove(index);
@@ -521,7 +464,7 @@ impl EditSession {
     }
 
     fn change_state(&mut self, id: u32, change: impl FnOnce(&mut ObjectState)) -> bool {
-        if self.gesture.is_some() || self.refusal(id) == Some(Refusal::Sealed) {
+        if self.gesture.is_some() {
             return false;
         }
         let Some(object) = self.document.objects.iter_mut().find(|o| o.id == id) else {

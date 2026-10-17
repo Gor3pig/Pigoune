@@ -11,7 +11,6 @@ use pigoune_core::annotations::{
 use crate::annotation_export;
 use crate::annotation_render::{self, Backdrop, PixelCache};
 use crate::color_sampler;
-use crate::mask_lock;
 
 const WIDTH: i32 = 200;
 const HEIGHT: i32 = 120;
@@ -118,14 +117,6 @@ impl Rig {
         self.cache.borrow_mut().clear();
         let texture = annotation_export::final_texture(&self.backdrop(), document, &self.context)
             .expect("the final image is rendered");
-        picture(&texture)
-    }
-
-    fn baked(&self, document: &AnnotationDocument) -> Picture {
-        self.cache.borrow_mut().clear();
-        let ids: Vec<u32> = document.masks().iter().map(|(id, _)| *id).collect();
-        let texture = mask_lock::bake(&self.backdrop(), document, &ids, &self.context)
-            .expect("the masks are baked");
         picture(&texture)
     }
 
@@ -680,55 +671,7 @@ fn the_export_matches_the_preview(rig: &Rig) {
     assert_eq!(preview.data, export.data, "the final image is the preview");
 }
 
-fn locking_bakes_the_masks_into_the_original_only(rig: &Rig) {
-    let both = document(vec![
-        boxed(
-            "blur",
-            20.0,
-            20.0,
-            60.0,
-            60.0,
-            &[("radius", number_to_value(8.0))],
-        ),
-        boxed(
-            "pixelate",
-            100.0,
-            20.0,
-            60.0,
-            60.0,
-            &[("cell", number_to_value(10.0))],
-        ),
-        boxed("rectangle", 30.0, 90.0, 40.0, 20.0, &[]),
-    ]);
-    let baked = rig.baked(&both);
-    assert_eq!((baked.width, baked.height), (WIDTH, HEIGHT));
-    assert_unchanged(&baked, (0, 0), (18, HEIGHT), "left of the masks");
-    assert_unchanged(&baked, (0, 82), (WIDTH, HEIGHT), "no annotation is baked");
-    assert_unchanged(&baked, (82, 0), (98, HEIGHT), "between the masks");
-    let blurred = contrast(&baked, (25, 30), (75, 70));
-    let original = contrast(
-        &rig.export(&AnnotationDocument::default()),
-        (25, 30),
-        (75, 70),
-    );
-    assert!(blurred * 4 < original, "the blur is baked");
-    let first = baked.at(100, 20);
-    for y in 20..30 {
-        for x in 100..110 {
-            assert_eq!(
-                baked.at(x, y),
-                first,
-                "the pixelation is baked in uniform cells"
-            );
-        }
-    }
-    assert_eq!(
-        rig.export(&AnnotationDocument::default()).data,
-        picture(&rig.texture).data
-    );
-}
-
-fn hidden_and_sealed_objects_are_not_drawn_and_locked_ones_are(rig: &Rig) {
+fn hidden_objects_are_not_drawn_and_locked_ones_are(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let red = [
         ("fill", Value::from(true)),
@@ -759,50 +702,6 @@ fn hidden_and_sealed_objects_are_not_drawn_and_locked_ones_are(rig: &Rig) {
     );
     session.undo();
     assert_eq!(rig.export(session.document()).data, shown.data);
-
-    let mut sealed = document(vec![boxed("blur", 20.0, 20.0, 60.0, 60.0, &[])]);
-    sealed.objects[0].state.sealed = true;
-    assert_eq!(
-        rig.export(&sealed).data,
-        plain.data,
-        "a sealed marker is never drawn again"
-    );
-}
-
-fn baking_chains_overlapping_masks_like_the_screen_does(rig: &Rig) {
-    let blur = |x: f32| {
-        boxed(
-            "blur",
-            x,
-            20.0,
-            60.0,
-            60.0,
-            &[("radius", number_to_value(6.0))],
-        )
-    };
-    let both = document(vec![blur(20.0), blur(50.0)]);
-    let baked = rig.baked(&both);
-    assert_eq!(
-        baked.data,
-        rig.export(&both).data,
-        "the second mask blurs what the first one already blurred"
-    );
-    let alone = rig.baked(&document(vec![blur(50.0)]));
-    assert_ne!(
-        baked.data, alone.data,
-        "the overlap is blurred twice, not once"
-    );
-
-    let mut with_hidden = document(vec![
-        blur(20.0),
-        boxed("pixelate", 100.0, 20.0, 50.0, 50.0, &[]),
-    ]);
-    with_hidden.objects[1].state.hidden = true;
-    assert_eq!(
-        rig.baked(&with_hidden).data,
-        rig.baked(&document(vec![blur(20.0)])).data,
-        "a hidden mask is not baked"
-    );
 }
 
 fn the_color_sampler_reads_the_pixel_it_is_given(rig: &Rig) {
@@ -881,9 +780,7 @@ fn rendering_suite() {
     pixelation_makes_uniform_cells_and_follows_its_region(&rig);
     an_annotation_after_a_mask_stays_sharp(&rig);
     the_export_matches_the_preview(&rig);
-    locking_bakes_the_masks_into_the_original_only(&rig);
-    hidden_and_sealed_objects_are_not_drawn_and_locked_ones_are(&rig);
-    baking_chains_overlapping_masks_like_the_screen_does(&rig);
+    hidden_objects_are_not_drawn_and_locked_ones_are(&rig);
     the_color_sampler_reads_the_pixel_it_is_given(&rig);
     the_png_export_carries_pixels_and_nothing_else(&rig);
 }

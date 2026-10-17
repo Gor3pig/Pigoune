@@ -1544,25 +1544,6 @@ msgstr "Geen annotaties"
 msgid "Annotations: {count}"
 msgstr "Annotaties: {count}"
 
-#: crates/pigoune-app/src/editor.rs:1173
-msgid "Lock the Masks?"
-msgstr "Maskeringen vergrendelen?"
-
-#: crates/pigoune-app/src/editor.rs:1175
-msgid ""
-"The blur and the pixelation will be applied to the original image for good, "
-"and this cannot be undone. A pixelation with large cells removes the "
-"details, but a light blur may still be partly recoverable."
-msgstr ""
-"De vervaging en de pixelatie worden definitief toegepast op de originele "
-"afbeelding en dit kan niet ongedaan worden gemaakt. Een pixelatie met "
-"grote cellen verwijdert de details, maar een lichte vervaging kan deels "
-"herstelbaar blijven."
-
-#: crates/pigoune-app/src/editor.rs:1179
-msgid "_Lock"
-msgstr "_Vergrendelen"
-
 #: crates/pigoune-app/src/editor.rs:1247
 msgid "Copy to Clipboard"
 msgstr "Naar klembord kopiëren"
@@ -1629,14 +1610,6 @@ msgstr "Afbeelding kon niet worden geëxporteerd"
 #: crates/pigoune-app/src/editor.rs:1332
 msgid "Image exported"
 msgstr "Afbeelding geëxporteerd"
-
-#: crates/pigoune-app/src/editor.rs:1359
-msgid "Could Not Lock the Masks"
-msgstr "Maskeringen konden niet worden vergrendeld"
-
-#: crates/pigoune-app/src/editor.rs:1360
-msgid "The original image was left unchanged."
-msgstr "De originele afbeelding is niet gewijzigd."
 
 #: crates/pigoune-app/src/editor_options.rs:44
 #: crates/pigoune-app/src/filter_choices.rs:269
@@ -2436,11 +2409,6 @@ msgstr "Uit de verzameling ‘{name}’ verwijderen"
 msgid "Remove from All Collections"
 msgstr "Uit alle verzamelingen verwijderen"
 
-#: crates/pigoune-app/src/window.rs:2917
-#: crates/pigoune-app/ui/asset-details.blp:287
-msgid "Edit Annotations…"
-msgstr "Aantekeningen bewerken…"
-
 #: crates/pigoune-app/src/window.rs:2921
 #: crates/pigoune-app/ui/asset-details.blp:310
 #: crates/pigoune-app/ui/asset-details.blp:321
@@ -2450,14 +2418,6 @@ msgstr "Origineel bekijken"
 #: crates/pigoune-app/src/window.rs:2963
 msgid "Could Not Open the Annotations"
 msgstr "Aantekeningen konden niet worden geopend"
-
-#: crates/pigoune-app/src/window.rs:2965
-msgid ""
-"The original image or its annotations could not be read. They may come from "
-"a newer version of Pigoune."
-msgstr ""
-"De originele afbeelding of de aantekeningen konden niet worden gelezen. Ze "
-"komen mogelijk van een nieuwere versie van Pigoune."
 
 #: crates/pigoune-app/src/window.rs:3006
 msgid "These assets are already in the trash. Restore them or empty the trash."
@@ -6593,15 +6553,6 @@ msgid_plural "{name} and {count} others"
 msgstr[0] "{name} en {count} ander"
 msgstr[1] "{name} en {count} andere"
 
-#: crates/pigoune-app/ui/editor.blp:61
-msgid "The original image still shows what the blur and pixelation hide"
-msgstr ""
-"De originele afbeelding toont nog wat de vervaging en de pixelatie verbergen"
-
-#: crates/pigoune-app/ui/editor.blp:62
-msgid "Lock Masks"
-msgstr "Maskeringen vergrendelen"
-
 #: crates/pigoune-app/ui/editor.blp:145
 msgid "Save"
 msgstr "Opslaan"
@@ -8537,9 +8488,6 @@ msgstr "Verwijderen"
 msgid "Drag to Reorder"
 msgstr "Sleep om te herschikken"
 
-msgid "Remove Marker"
-msgstr "Markering verwijderen"
-
 msgid "Show"
 msgstr "Tonen"
 
@@ -8548,12 +8496,6 @@ msgstr "Verbergen"
 
 msgid "Unlock"
 msgstr "Ontgrendelen"
-
-msgid "Applied Masks"
-msgstr "Toegepaste maskeringen"
-
-msgid "Masking applied"
-msgstr "Maskering toegepast"
 
 msgid "A mask is hidden, so the image would show what it covers"
 msgstr "Een maskering is verborgen: de afbeelding zou tonen wat ze bedekt"
@@ -8576,62 +8518,32 @@ msgstr "Maskeringen _tonen"
 msgid "Lock"
 msgstr "Vergrendelen"
 
-msgid "Remove the Marker?"
-msgstr "Markering verwijderen?"
+msgid "The annotated image could not be rendered"
+msgstr "De geannoteerde afbeelding kon niet worden gemaakt"
 
-msgid "This removes the marker from the list. The pixels of the original image are not restored."
-msgstr "Hiermee verdwijnt de markering uit de lijst. De pixels van de oorspronkelijke afbeelding worden niet hersteld."
+msgid "Animated images cannot be annotated yet"
+msgstr "Geanimeerde afbeeldingen kunnen nog niet worden geannoteerd"
 
-msgid "_Remove"
-msgstr "_Verwijderen"
+msgid "The image or its annotations could not be read. They may come from a newer version of Pigoune."
+msgstr "De afbeelding of haar annotaties konden niet worden gelezen. Ze komen mogelijk van een nieuwere versie van Pigoune."
 
-msgid "Seal Masks"
-msgstr "Maskeringen toepassen"
+msgid "Take a Screenshot?"
+msgstr "Een schermafbeelding maken?"
 
-msgid "Could Not Seal the Masks"
-msgstr "Maskeringen konden niet worden toegepast"
+msgid "The image being annotated is not saved. Save it first, or let the screenshot replace it."
+msgstr "De afbeelding die wordt geannoteerd is niet opgeslagen. Sla ze eerst op, of laat de schermafbeelding ze vervangen."
 
-msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
-msgstr "De vervaging en de pixelatie worden definitief op de afbeelding toegepast en de geschiedenis om ongedaan te maken wordt gewist. Een vervaging of pixelatie garandeert geen anonimiteit: een lichte vervaging is soms deels te herstellen. Elders bewaarde kopieën van de afbeelding, zoals bestanden, het klembord of back-ups, worden niet gewijzigd."
+msgid "_Replace Without Saving"
+msgstr "_Vervangen zonder opslaan"
 
-msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
-msgstr "Onder een maskering: {names}. Na het toepassen worden ze scherp boven de gemaskeerde afbeelding getoond."
+msgid "_Save and Capture"
+msgstr "_Opslaan en maken"
 
-msgid "The content of {names} stays saved in the document."
-msgstr "De inhoud van {names} blijft in het document opgeslagen."
+msgid "(annotated)"
+msgstr "(geannoteerd)"
 
-msgid "Seal the Masks?"
-msgstr "Maskeringen toepassen?"
+msgid "Export the Original Images Too?"
+msgstr "Ook de originele afbeeldingen exporteren?"
 
-msgid "_Seal"
-msgstr "_Toepassen"
-
-msgid "Seal and _Hide Covered"
-msgstr "Toepassen en bedekte items _verbergen"
-
-msgid "There is no visible mask to seal"
-msgstr "Geen zichtbare maskering om toe te passen"
-
-msgid "The image and its masks were left unchanged."
-msgstr "De afbeelding en haar maskeringen zijn ongewijzigd gelaten."
-
-msgid "Masks sealed"
-msgstr "Maskeringen toegepast"
-
-msgid "the sealing is not finished"
-msgstr "het toepassen is niet afgerond"
-
-msgid "the protection cannot be verified"
-msgstr "de bescherming kan niet worden gecontroleerd"
-
-msgid "Sealed Images Need Attention"
-msgstr "Gemaskeerde afbeeldingen vragen uw aandacht"
-
-msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
-msgstr "Deze afbeeldingen kunnen niet worden getoond, gekopieerd, geëxporteerd of bewerkt totdat hun bescherming is gecontroleerd. Er is niets verwijderd of gewijzigd.\n\n{list}"
-
-msgid "_Finish the Cleanup"
-msgstr "Opruiming _afronden"
-
-msgid "The protection of this image cannot be verified, so it is not shown"
-msgstr "De bescherming van deze afbeelding kan niet worden gecontroleerd, daarom wordt ze niet getoond"
+msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
+msgstr "De export bevat elke originele afbeelding, die nog kan tonen wat de annotaties verbergen, en een afgevlakte kopie van elke geannoteerde afbeelding."

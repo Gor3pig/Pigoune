@@ -6,15 +6,10 @@ use pigoune_core::annotations::{
     AnnotationDocument, AnnotationObject, BLUR, DocumentError, Geometry, Options, Rect, Shape,
 };
 use pigoune_core::{
-    AnnotatedError, AnnotatedImage, AssetColor, AssetCommand, AssetId, AssetView, DominantColor,
-    ImportOutcome, Library, Rgb,
+    AnnotatedError, AssetCommand, AssetId, AssetView, ImportOutcome, Library, TagCommand, TextField,
 };
 use rusqlite::Connection;
 use tempfile::TempDir;
-
-fn plain_document() -> AnnotationDocument {
-    AnnotationDocument::default()
-}
 
 fn blur_shape(x: f32) -> Shape {
     Shape::new(
@@ -29,8 +24,8 @@ fn blur_shape(x: f32) -> Shape {
     )
 }
 
-fn document_with_a_blur() -> AnnotationDocument {
-    AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur_shape(1.0))])
+fn document_with_a_blur(x: f32) -> AnnotationDocument {
+    AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur_shape(x))])
 }
 
 fn sample(name: &str) -> PathBuf {
@@ -40,7 +35,7 @@ fn sample(name: &str) -> PathBuf {
 }
 
 struct Fixture {
-    workspace: TempDir,
+    _workspace: TempDir,
     sources: TempDir,
     library: Library,
 }
@@ -50,7 +45,7 @@ impl Fixture {
         let workspace = tempfile::tempdir().expect("temporary directory");
         let library = Library::create(workspace.path(), "Essai").expect("library");
         Self {
-            workspace,
+            _workspace: workspace,
             sources: tempfile::tempdir().expect("sources"),
             library,
         }
@@ -64,32 +59,18 @@ impl Fixture {
         path
     }
 
-    fn import(&mut self, name: &str, rendered: usize, original: usize) -> AssetId {
-        let rendered = self.png(name, rendered);
-        let original = self.png("original-source.png", original);
-        self.library
-            .import_annotated(AnnotatedImage {
-                rendered: &rendered,
-                original: &original,
-                document: &plain_document(),
-            })
-            .expect("annotated image is imported")
+    fn import(&mut self, name: &str, number: usize) -> AssetId {
+        let path = self.png(name, number);
+        let ImportOutcome::Imported(id) = self.library.import_file(&path, None).expect("imported")
+        else {
+            panic!("a new image");
+        };
+        id
     }
 
     fn stored_file(&self, id: AssetId) -> PathBuf {
-        let asset = self
-            .library
-            .asset(id)
-            .expect("query")
-            .expect("asset exists");
+        let asset = self.library.asset(id).expect("q").expect("asset");
         self.library.root().join(asset.stored_path)
-    }
-
-    fn asset_count(&self) -> usize {
-        self.library
-            .visible_assets_in(AssetView::All)
-            .expect("listed")
-            .len()
     }
 
     fn files_on_disk(&self) -> Vec<PathBuf> {
@@ -127,256 +108,139 @@ fn collect(folder: &Path, found: &mut Vec<PathBuf>) {
 }
 
 #[test]
-fn an_annotated_image_keeps_its_rendering_its_original_and_its_document() {
+fn annotating_an_existing_resource_attaches_a_document_and_never_touches_the_file() {
     let mut fixture = Fixture::new();
+    let id = fixture.import("photo.png", 1);
+    let before = fs::read(fixture.stored_file(id)).expect("file");
+    let asset_before = fixture.library.asset(id).expect("q").expect("asset");
+    assert!(fixture.library.annotations(id).expect("q").is_none());
 
-    let id = fixture.import("Capture 2026-10-15 14-32.png", 1, 2);
-
-    assert_eq!(fixture.asset_count(), 1);
-    let asset = fixture.library.asset(id).expect("query").expect("exists");
-    assert_eq!(asset.display_name, "Capture 2026-10-15 14-32");
-    assert_eq!(
-        fs::read(fixture.stored_file(id)).expect("rendering"),
-        fs::read(fixture.png("again.png", 1)).expect("source")
-    );
-    let original = fixture
-        .library
-        .original_path(id)
-        .expect("query")
-        .expect("annotated");
-    assert_eq!(
-        fs::read(original).expect("original"),
-        fs::read(fixture.png("again.png", 2)).expect("source")
-    );
-    let annotations = fixture
-        .library
-        .annotations(id)
-        .expect("query")
-        .expect("some");
-    assert_eq!(
-        annotations.document,
-        plain_document().to_json().expect("json")
-    );
-    assert!(!annotations.has_masks);
-    assert_eq!(fixture.files_on_disk().len(), 2);
-}
-
-#[test]
-fn an_ordinary_resource_has_no_annotations_and_no_original() {
-    let mut fixture = Fixture::new();
-    let outcome = fixture
-        .library
-        .import_file(&sample("red-dot.png"), None)
-        .expect("imported");
-    let ImportOutcome::Imported(id) = outcome else {
-        panic!("the resource is new");
-    };
-
-    assert_eq!(fixture.library.annotations(id).expect("query"), None);
-    assert_eq!(fixture.library.original_path(id).expect("query"), None);
-}
-
-#[test]
-fn a_rendering_already_in_the_library_is_refused_and_names_the_existing_resource() {
-    let mut fixture = Fixture::new();
-    let first = fixture.import("a.png", 1, 2);
-    let before = fixture.files_on_disk();
-    let rendered = fixture.png("b.png", 1);
-    let original = fixture.png("c.png", 3);
-
-    let result = fixture.library.import_annotated(AnnotatedImage {
-        rendered: &rendered,
-        original: &original,
-        document: &plain_document(),
-    });
-
-    assert!(matches!(result, Err(AnnotatedError::AlreadyPresent(existing)) if existing == first));
-    assert_eq!(fixture.asset_count(), 1);
-    assert_eq!(fixture.files_on_disk(), before);
-}
-
-#[test]
-fn a_rendering_equal_to_an_ordinary_import_is_refused_too() {
-    let mut fixture = Fixture::new();
     fixture
         .library
-        .import_file(&sample("red-dot.png"), None)
-        .expect("imported");
-    let rendered = sample("red-dot.png");
-    let original = fixture.png("o.png", 5);
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("saved");
 
-    let result = fixture.library.import_annotated(AnnotatedImage {
-        rendered: &rendered,
-        original: &original,
-        document: &plain_document(),
-    });
-
-    assert!(matches!(result, Err(AnnotatedError::AlreadyPresent(_))));
-    assert_eq!(fixture.asset_count(), 1);
+    assert_eq!(fs::read(fixture.stored_file(id)).expect("file"), before);
+    let asset_after = fixture.library.asset(id).expect("q").expect("asset");
+    assert_eq!(asset_after.content_hash, asset_before.content_hash);
+    assert_eq!(asset_after.stored_path, asset_before.stored_path);
+    assert_eq!(asset_after.byte_size, asset_before.byte_size);
+    assert_eq!(fixture.files_on_disk().len(), 1, "no copy, no extra file");
+    assert_eq!(fixture.library.annotated_ids().expect("ids").len(), 1);
+    assert_eq!(
+        fixture
+            .library
+            .annotation_document(id)
+            .expect("q")
+            .expect("some"),
+        document_with_a_blur(1.0)
+    );
+    assert_eq!(fixture.problems(), 0);
 }
 
 #[test]
-fn anything_but_a_png_is_refused_without_a_trace() {
+fn successive_saves_replace_the_document_of_the_same_resource() {
     let mut fixture = Fixture::new();
-    let png = fixture.png("ok.png", 1);
-    let photo = sample("blue-photo.jpg");
-    let fake = fixture.sources.path().join("fake.png");
-    fs::write(&fake, b"not an image").expect("written");
-    let absent = fixture.sources.path().join("absent.png");
+    let id = fixture.import("photo.png", 1);
+    fixture
+        .library
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("first");
+    fixture
+        .library
+        .save_annotations(id, &document_with_a_blur(9.0))
+        .expect("second");
 
-    for (rendered, original) in [
-        (&photo, &png),
-        (&png, &photo),
-        (&fake, &png),
-        (&png, &fake),
-        (&png, &absent),
-        (&absent, &png),
-    ] {
-        let result = fixture.library.import_annotated(AnnotatedImage {
-            rendered,
-            original,
-            document: &plain_document(),
-        });
-        assert!(result.is_err(), "{rendered:?} / {original:?}: {result:?}");
+    assert_eq!(fixture.asset_count(), 1);
+    assert_eq!(
+        fixture
+            .library
+            .annotation_document(id)
+            .expect("q")
+            .expect("some"),
+        document_with_a_blur(9.0)
+    );
+    let rows: i64 = fixture
+        .database()
+        .query_row("SELECT count(*) FROM asset_annotations", [], |row| {
+            row.get(0)
+        })
+        .expect("counted");
+    assert_eq!(rows, 1);
+}
+
+impl Fixture {
+    fn asset_count(&self) -> usize {
+        self.library
+            .visible_assets_in(AssetView::All)
+            .expect("listed")
+            .len()
     }
-
-    assert_eq!(fixture.asset_count(), 0);
-    assert!(fixture.files_on_disk().is_empty());
 }
 
 #[test]
-fn a_rendering_cannot_take_the_name_reserved_for_the_original() {
+fn saving_an_empty_document_removes_the_annotations() {
     let mut fixture = Fixture::new();
-    let rendered = fixture.png("original.png", 1);
-    let original = fixture.png("o.png", 2);
-
-    let result = fixture.library.import_annotated(AnnotatedImage {
-        rendered: &rendered,
-        original: &original,
-        document: &plain_document(),
-    });
-
-    assert!(matches!(result, Err(AnnotatedError::ReservedName(_))));
-    assert_eq!(fixture.asset_count(), 0);
-}
-
-#[test]
-fn updating_replaces_the_rendering_and_the_document_but_never_the_original() {
-    let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
+    let id = fixture.import("photo.png", 1);
     fixture
         .library
-        .record_colors(
-            id,
-            &[DominantColor {
-                family: AssetColor::Red,
-                average: Rgb::new(1, 2, 3),
-            }],
-        )
-        .expect("colors recorded");
-    let original_before =
-        fs::read(fixture.library.original_path(id).expect("q").expect("some")).expect("original");
-    let new_rendering = fixture.png("new.png", 9);
-
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("saved");
     fixture
         .library
-        .update_annotated(id, &new_rendering, &document_with_a_blur())
-        .expect("updated");
-
-    assert_eq!(
-        fs::read(fixture.stored_file(id)).expect("rendering"),
-        fs::read(&new_rendering).expect("source")
-    );
-    let asset = fixture.library.asset(id).expect("query").expect("exists");
-    assert_eq!(
-        asset.byte_size,
-        fs::metadata(&new_rendering).expect("meta").len()
-    );
-    assert!(asset.colors.is_empty());
-    assert_eq!(
-        fixture.library.assets_awaiting_colors(10).expect("listed"),
-        [id]
-    );
-    let annotations = fixture.library.annotations(id).expect("q").expect("some");
-    assert_eq!(
-        annotations.document,
-        document_with_a_blur().to_json().expect("json")
-    );
-    assert!(annotations.has_masks);
-    assert_eq!(
-        fs::read(fixture.library.original_path(id).expect("q").expect("some")).expect("original"),
-        original_before
-    );
-    assert_eq!(fixture.files_on_disk().len(), 2);
-    assert_eq!(fixture.problems(), 0);
+        .save_annotations(id, &AnnotationDocument::default())
+        .expect("emptied");
+    assert!(fixture.library.annotations(id).expect("q").is_none());
+    assert!(fixture.library.annotated_ids().expect("ids").is_empty());
 }
 
 #[test]
-fn updating_with_the_same_rendering_only_changes_the_document() {
+fn favorites_notes_tags_and_names_are_untouched_by_annotating() {
     let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
-    let same = fixture.png("same.png", 1);
+    let id = fixture.import("photo.png", 1);
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::Batch(vec![
+            AssetCommand::SetFavorite {
+                assets: vec![id],
+                favorite: true,
+            },
+            AssetCommand::SetText {
+                asset: id,
+                field: TextField::Note,
+                value: "holiday".to_owned(),
+            },
+            AssetCommand::Rename {
+                asset: id,
+                name: "Holiday".to_owned(),
+            },
+        ]))
+        .expect("metadata");
+    fixture
+        .library
+        .apply_tag_command(&TagCommand::Add {
+            assets: vec![id],
+            name: "trip".to_owned(),
+        })
+        .expect("tag");
+    let before = fixture.library.asset(id).expect("q").expect("asset");
 
     fixture
         .library
-        .update_annotated(id, &same, &document_with_a_blur())
-        .expect("updated");
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("saved");
 
-    let annotations = fixture.library.annotations(id).expect("q").expect("some");
-    assert_eq!(
-        annotations.document,
-        document_with_a_blur().to_json().expect("json")
-    );
-    assert!(annotations.has_masks);
-    assert_eq!(fixture.problems(), 0);
+    let after = fixture.library.asset(id).expect("q").expect("asset");
+    assert_eq!(before, after);
+    assert!(after.is_favorite);
+    assert_eq!(after.note, "holiday");
+    assert_eq!(after.display_name, "Holiday");
+    assert_eq!(fixture.library.tags_of(id).expect("tags").len(), 1);
 }
 
 #[test]
-fn updating_into_another_resources_rendering_is_refused_and_changes_nothing() {
+fn annotating_an_unknown_resource_is_refused() {
     let mut fixture = Fixture::new();
-    let first = fixture.import("a.png", 1, 2);
-    let second = fixture.import("b.png", 3, 4);
-    let collision = fixture.png("c.png", 1);
-    let stored_before = fs::read(fixture.stored_file(second)).expect("rendering");
-
-    let result = fixture
-        .library
-        .update_annotated(second, &collision, &document_with_a_blur());
-
-    assert!(matches!(result, Err(AnnotatedError::AlreadyPresent(other)) if other == first));
-    assert_eq!(
-        fs::read(fixture.stored_file(second)).expect("rendering"),
-        stored_before
-    );
-    let annotations = fixture
-        .library
-        .annotations(second)
-        .expect("q")
-        .expect("some");
-    assert_eq!(
-        annotations.document,
-        plain_document().to_json().expect("json")
-    );
-    assert_eq!(fixture.files_on_disk().len(), 4);
-    assert_eq!(fixture.problems(), 0);
-}
-
-#[test]
-fn only_an_annotated_resource_can_be_updated() {
-    let mut fixture = Fixture::new();
-    let ImportOutcome::Imported(plain) = fixture
-        .library
-        .import_file(&sample("red-dot.png"), None)
-        .expect("imported")
-    else {
-        panic!("new");
-    };
-    let rendering = fixture.png("r.png", 4);
-
-    assert!(matches!(
-        fixture.library.update_annotated(plain, &rendering, &plain_document()),
-        Err(AnnotatedError::NotAnnotated(id)) if id == plain
-    ));
     let elsewhere = tempfile::tempdir().expect("temporary directory");
     let mut other = Library::create(elsewhere.path(), "Autre").expect("library");
     let ImportOutcome::Imported(unknown) = other
@@ -386,34 +250,95 @@ fn only_an_annotated_resource_can_be_updated() {
         panic!("new");
     };
     assert!(matches!(
-        fixture.library.update_annotated(unknown, &rendering, &plain_document()),
+        fixture
+            .library
+            .save_annotations(unknown, &document_with_a_blur(1.0)),
         Err(AnnotatedError::AssetNotFound(id)) if id == unknown
     ));
 }
 
 #[test]
-fn trashing_and_restoring_keeps_the_annotations_and_deleting_for_good_removes_everything() {
+fn a_new_capture_is_imported_with_its_document_in_one_call() {
     let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
+    let capture = fixture.png("capture.png", 7);
 
+    let id = fixture
+        .library
+        .import_with_annotations(&capture, &document_with_a_blur(1.0))
+        .expect("imported");
+
+    assert_eq!(
+        fs::read(fixture.stored_file(id)).expect("stored"),
+        fs::read(&capture).expect("source")
+    );
+    assert_eq!(
+        fixture
+            .library
+            .annotation_document(id)
+            .expect("q")
+            .expect("some"),
+        document_with_a_blur(1.0)
+    );
+    assert_eq!(fixture.files_on_disk().len(), 1);
+    assert_eq!(fixture.problems(), 0);
+}
+
+#[test]
+fn an_image_already_in_the_library_is_refused_and_names_the_existing_resource() {
+    let mut fixture = Fixture::new();
+    let existing = fixture.import("a.png", 1);
+    let again = fixture.png("b.png", 1);
+
+    assert!(matches!(
+        fixture
+            .library
+            .import_with_annotations(&again, &document_with_a_blur(1.0)),
+        Err(AnnotatedError::AlreadyPresent(id)) if id == existing
+    ));
+    assert!(fixture.library.annotations(existing).expect("q").is_none());
+    assert_eq!(fixture.asset_count(), 1);
+}
+
+#[test]
+fn a_document_that_cannot_be_written_is_refused_without_a_trace() {
+    let mut fixture = Fixture::new();
+    let capture = fixture.png("capture.png", 1);
+    let broken =
+        AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur_shape(f32::NAN))]);
+
+    assert!(matches!(
+        fixture.library.import_with_annotations(&capture, &broken),
+        Err(AnnotatedError::Document(_))
+    ));
+    assert_eq!(fixture.asset_count(), 0);
+    assert!(fixture.files_on_disk().is_empty());
+
+    let id = fixture.import("photo.png", 2);
+    assert!(matches!(
+        fixture.library.save_annotations(id, &broken),
+        Err(AnnotatedError::Document(_))
+    ));
+    assert!(fixture.library.annotations(id).expect("q").is_none());
+}
+
+#[test]
+fn trashing_and_restoring_keeps_the_annotations_and_deleting_for_good_removes_them() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("photo.png", 1);
     fixture
         .library
-        .apply_asset_command(&AssetCommand::SetTrashed {
-            assets: vec![id],
-            trashed: true,
-        })
-        .expect("trashed");
-    assert!(fixture.library.annotations(id).expect("q").is_some());
-    fixture
-        .library
-        .apply_asset_command(&AssetCommand::SetTrashed {
-            assets: vec![id],
-            trashed: false,
-        })
-        .expect("restored");
-    assert!(fixture.library.annotations(id).expect("q").is_some());
-    assert_eq!(fixture.files_on_disk().len(), 2);
-
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("saved");
+    for trashed in [true, false] {
+        fixture
+            .library
+            .apply_asset_command(&AssetCommand::SetTrashed {
+                assets: vec![id],
+                trashed,
+            })
+            .expect("moved");
+        assert!(fixture.library.annotations(id).expect("q").is_some());
+    }
     fixture
         .library
         .apply_asset_command(&AssetCommand::SetTrashed {
@@ -434,69 +359,39 @@ fn trashing_and_restoring_keeps_the_annotations_and_deleting_for_good_removes_ev
 }
 
 #[test]
-fn removing_the_record_of_a_missing_rendering_removes_the_original_too() {
-    let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
-    fs::remove_file(fixture.stored_file(id)).expect("rendering lost");
-
-    fixture
-        .library
-        .remove_record_of_missing_file(id)
-        .expect("record removed");
-
-    assert!(fixture.files_on_disk().is_empty());
-    assert_eq!(fixture.library.annotations(id).expect("q"), None);
-}
-
-#[test]
-fn the_original_is_a_recorded_file_and_counts_in_the_storage_use() {
-    let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
-
-    let rendering = fs::metadata(fixture.stored_file(id)).expect("meta").len();
-    let original = fs::metadata(fixture.library.original_path(id).expect("q").expect("some"))
-        .expect("meta")
-        .len();
-
-    assert_eq!(fixture.problems(), 0);
-    let storage = fixture.library.storage_use().expect("storage");
-    assert_eq!(storage.resources, rendering + original);
-}
-
-#[test]
 fn a_library_reopened_still_has_its_annotations() {
     let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
+    let id = fixture.import("photo.png", 1);
+    fixture
+        .library
+        .save_annotations(id, &document_with_a_blur(4.0))
+        .expect("saved");
     let root = fixture.library.root().to_path_buf();
-    drop(fixture.library);
+    let spare = tempfile::tempdir().expect("spare folder");
+    let parked = Library::create(spare.path(), "Parking").expect("parking library");
+    drop(std::mem::replace(&mut fixture.library, parked));
 
-    let library = Library::open(&root).expect("opens");
+    let reopened = Library::open(&root).expect("reopened");
 
     assert_eq!(
-        library.annotation_document(id).expect("q").expect("some"),
-        plain_document()
+        reopened.annotation_document(id).expect("q").expect("some"),
+        document_with_a_blur(4.0)
     );
-    drop(fixture.workspace);
 }
 
 #[test]
 fn an_unknown_tool_survives_a_trip_through_the_library() {
     let mut fixture = Fixture::new();
-    let rendered = fixture.png("cap.png", 1);
-    let original = fixture.png("o.png", 2);
+    let id = fixture.import("photo.png", 1);
     let document = AnnotationDocument::from_json(
         r#"{"version":1,"objects":[{"id":1,"kind":"lasso","points":[[1,2]]}],"frame":{"margin":3}}"#,
     )
     .expect("read");
 
-    let id = fixture
+    fixture
         .library
-        .import_annotated(AnnotatedImage {
-            rendered: &rendered,
-            original: &original,
-            document: &document,
-        })
-        .expect("imported");
+        .save_annotations(id, &document)
+        .expect("saved");
 
     assert_eq!(
         fixture
@@ -511,7 +406,11 @@ fn an_unknown_tool_survives_a_trip_through_the_library() {
 #[test]
 fn a_document_written_by_a_newer_version_is_reported_but_the_image_stays_usable() {
     let mut fixture = Fixture::new();
-    let id = fixture.import("cap.png", 1, 2);
+    let id = fixture.import("photo.png", 1);
+    fixture
+        .library
+        .save_annotations(id, &document_with_a_blur(1.0))
+        .expect("saved");
     fixture
         .database()
         .execute(
@@ -520,10 +419,8 @@ fn a_document_written_by_a_newer_version_is_reported_but_the_image_stays_usable(
         )
         .expect("document replaced");
 
-    let result = fixture.library.annotation_document(id);
-
     assert!(matches!(
-        result,
+        fixture.library.annotation_document(id),
         Err(AnnotatedError::Document(DocumentError::TooNew {
             found: 9,
             ..
@@ -536,17 +433,29 @@ fn a_document_written_by_a_newer_version_is_reported_but_the_image_stays_usable(
 #[test]
 fn a_document_with_a_blur_is_flagged_and_a_plain_one_is_not() {
     let mut fixture = Fixture::new();
-    let plain = fixture.import("a.png", 1, 2);
-    let rendered = fixture.png("b.png", 3);
-    let original = fixture.png("o.png", 4);
-    let blurred = fixture
+    let plain = fixture.import("a.png", 1);
+    let blurred = fixture.import("b.png", 2);
+    let rectangle = Shape::new(
+        "rectangle",
+        Geometry::Box(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 5.0,
+            height: 5.0,
+        }),
+        Options::new(),
+    );
+    fixture
         .library
-        .import_annotated(AnnotatedImage {
-            rendered: &rendered,
-            original: &original,
-            document: &document_with_a_blur(),
-        })
-        .expect("imported");
+        .save_annotations(
+            plain,
+            &AnnotationDocument::new(None, vec![AnnotationObject::new(1, rectangle)]),
+        )
+        .expect("saved");
+    fixture
+        .library
+        .save_annotations(blurred, &document_with_a_blur(1.0))
+        .expect("saved");
 
     assert!(
         !fixture
@@ -567,20 +476,66 @@ fn a_document_with_a_blur_is_flagged_and_a_plain_one_is_not() {
 }
 
 #[test]
-fn a_document_that_cannot_be_written_is_refused_without_a_trace() {
+fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
     let mut fixture = Fixture::new();
-    let rendered = fixture.png("cap.png", 1);
-    let original = fixture.png("o.png", 2);
-    let broken =
-        AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur_shape(f32::NAN))]);
-
-    let result = fixture.library.import_annotated(AnnotatedImage {
-        rendered: &rendered,
-        original: &original,
-        document: &broken,
-    });
-
-    assert!(matches!(result, Err(AnnotatedError::Document(_))));
-    assert_eq!(fixture.asset_count(), 0);
-    assert!(fixture.files_on_disk().is_empty());
+    let first = fixture.import("a.png", 1);
+    let second = fixture.import("b.png", 2);
+    assert_eq!(
+        fixture.library.annotation_render_key(first).expect("q"),
+        None
+    );
+    for id in [first, second] {
+        fixture
+            .library
+            .save_annotations(id, &document_with_a_blur(1.0))
+            .expect("saved");
+    }
+    let key = fixture
+        .library
+        .annotation_render_key(first)
+        .expect("q")
+        .expect("key");
+    assert_ne!(
+        fixture
+            .library
+            .annotation_render_key(second)
+            .expect("q")
+            .expect("key"),
+        key,
+        "two images with the same document do not share a rendering"
+    );
+    fixture
+        .library
+        .save_annotations(first, &document_with_a_blur(1.0))
+        .expect("saved again");
+    assert_eq!(
+        fixture.library.annotation_render_key(first).expect("q"),
+        Some(key.clone()),
+        "saving the same document again changes nothing"
+    );
+    fixture
+        .library
+        .save_annotations(first, &document_with_a_blur(2.0))
+        .expect("changed");
+    let changed = fixture
+        .library
+        .annotation_render_key(first)
+        .expect("q")
+        .expect("key");
+    assert_ne!(changed, key);
+    let mut hidden = document_with_a_blur(2.0);
+    hidden.objects[0].state.hidden = true;
+    fixture
+        .library
+        .save_annotations(first, &hidden)
+        .expect("hidden");
+    assert_ne!(
+        fixture
+            .library
+            .annotation_render_key(first)
+            .expect("q")
+            .expect("key"),
+        changed,
+        "hiding a layer changes the picture"
+    );
 }

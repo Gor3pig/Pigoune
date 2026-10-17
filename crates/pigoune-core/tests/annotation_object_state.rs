@@ -36,7 +36,7 @@ fn a_new_object_is_visible_unlocked_and_unnamed() {
     assert!(object.is_rendered() && object.is_pickable() && object.is_editable());
     assert_eq!(object.state.name, None);
     let json = session.document().to_json().expect("serializable");
-    for field in ["hidden", "locked", "sealed", "name"] {
+    for field in ["hidden", "locked", "name"] {
         assert!(!json.contains(field), "{field} is only written when set");
     }
 }

@@ -2,14 +2,13 @@ use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use pigoune_core::{AssetId, Dimensions, RgbaImage};
 
 use crate::asset_colors;
-use crate::blocked_images;
 use crate::load_slots::LoadSlots;
 
 pub const THUMBNAIL_PIXELS: u32 = 256;
@@ -17,7 +16,6 @@ const REMEMBERED_THUMBNAILS: usize = 600;
 const MOST_CONCURRENT_LOADS: usize = 4;
 const SVG_MIME_TYPE: &str = "image/svg+xml";
 const RGBA_CHANNELS: usize = 4;
-const UNREADABLE_PATH: &str = "/nonexistent/pigoune-blocked-image";
 
 thread_local! {
     static LOAD_SLOTS: LoadSlots = LoadSlots::new(MOST_CONCURRENT_LOADS);
@@ -62,15 +60,20 @@ fn touch(use_order: &mut VecDeque<AssetId>, id: AssetId) {
 }
 
 pub async fn thumbnail(file: &Path, thumbnail_file: &Path) -> Option<gdk::Texture> {
-    if blocked_images::is_blocked(file) {
-        return None;
-    }
+    thumbnail_from(async { Some(file.to_path_buf()) }, thumbnail_file).await
+}
+
+pub async fn thumbnail_from(
+    source: impl std::future::Future<Output = Option<PathBuf>>,
+    thumbnail_file: &Path,
+) -> Option<gdk::Texture> {
     let slots = LOAD_SLOTS.with(Clone::clone);
     let _slot = slots.acquire().await;
     if let Some(stored) = load_stored(thumbnail_file).await {
         return Some(stored);
     }
-    let texture = render(file, THUMBNAIL_PIXELS).await?;
+    let file = source.await?;
+    let texture = render(&file, THUMBNAIL_PIXELS).await?;
     store(&texture, thumbnail_file);
     Some(texture)
 }
@@ -109,12 +112,7 @@ fn write_atomically(destination: &Path, content: &[u8]) -> io::Result<()> {
 }
 
 pub fn loader_for(file: &Path) -> glycin::Loader {
-    let readable = if blocked_images::is_blocked(file) {
-        Path::new(UNREADABLE_PATH)
-    } else {
-        file
-    };
-    let mut loader = glycin::Loader::new(gio::File::for_path(readable));
+    let mut loader = glycin::Loader::new(gio::File::for_path(file));
     loader.use_expose_base_dir(false);
     loader
 }
@@ -166,9 +164,6 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
 }
 
 pub async fn load_icon_size(file: &Path, size: Dimensions) -> Option<DetailedImage> {
-    if blocked_images::is_blocked(file) {
-        return None;
-    }
     let (bytes, _) = gio::File::for_path(file)
         .load_contents_future()
         .await
