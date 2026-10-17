@@ -90,4 +90,22 @@ mod tests {
         assert_eq!(fs::read(&file).expect("read"), b"newer");
         let _ = fs::remove_dir_all(folder);
     }
+
+    #[test]
+    fn the_size_of_a_png_is_read_from_its_header_and_nothing_else_is_a_size() {
+        let folder = std::env::temp_dir().join(format!("pigoune-size-test-{}", std::process::id()));
+        fs::create_dir_all(&folder).expect("folder");
+        let mut header = vec![0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13];
+        header.extend_from_slice(b"IHDR");
+        header.extend_from_slice(&640_u32.to_be_bytes());
+        header.extend_from_slice(&480_u32.to_be_bytes());
+        let png = folder.join("a.png");
+        fs::write(&png, &header).expect("written");
+        assert_eq!(png_size(&png), Some((640, 480)));
+        let text = folder.join("b.png");
+        fs::write(&text, b"not an image at all, but long enough to be read").expect("written");
+        assert_eq!(png_size(&text), None);
+        assert_eq!(png_size(&folder.join("missing.png")), None);
+        let _ = fs::remove_dir_all(folder);
+    }
 }

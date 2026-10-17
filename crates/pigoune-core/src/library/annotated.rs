@@ -22,7 +22,6 @@ pub struct AnnotationRender {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Annotations {
     pub document: String,
-    pub has_masks: bool,
     pub updated_at_unix_ms: i64,
 }
 
@@ -31,14 +30,13 @@ impl Library {
         Ok(self
             .connection
             .query_row(
-                "SELECT document, has_masks, updated_at_unix_ms
+                "SELECT document, updated_at_unix_ms
                  FROM asset_annotations WHERE asset_id = ?1",
                 [id],
                 |row| {
                     Ok(Annotations {
                         document: row.get(0)?,
-                        has_masks: row.get(1)?,
-                        updated_at_unix_ms: row.get(2)?,
+                        updated_at_unix_ms: row.get(1)?,
                     })
                 },
             )
@@ -75,18 +73,12 @@ impl Library {
         let transaction = self.connection.transaction()?;
         if has_any {
             transaction.execute(
-                "INSERT INTO asset_annotations (asset_id, document, has_masks, updated_at_unix_ms)
-                 VALUES (?1, ?2, ?3, ?4)
+                "INSERT INTO asset_annotations (asset_id, document, updated_at_unix_ms)
+                 VALUES (?1, ?2, ?3)
                  ON CONFLICT (asset_id) DO UPDATE SET
                     document = excluded.document,
-                    has_masks = excluded.has_masks,
                     updated_at_unix_ms = excluded.updated_at_unix_ms",
-                params![
-                    id,
-                    stored_document,
-                    document.hides_content(),
-                    clock::now_unix_ms()
-                ],
+                params![id, stored_document, clock::now_unix_ms()],
             )?;
         } else {
             transaction.execute("DELETE FROM asset_annotations WHERE asset_id = ?1", [id])?;
@@ -112,10 +104,6 @@ impl Library {
             | ImportOutcome::AddedToCollection(id)
             | ImportOutcome::RestoredFromTrash(id) => Err(AnnotatedError::AlreadyPresent(id)),
         }
-    }
-
-    pub fn annotation_render_key(&self, id: AssetId) -> Result<Option<String>, LibraryError> {
-        Ok(self.annotation_render(id)?.map(|render| render.key))
     }
 
     pub fn annotation_render(&self, id: AssetId) -> Result<Option<AnnotationRender>, LibraryError> {

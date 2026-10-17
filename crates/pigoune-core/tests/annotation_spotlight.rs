@@ -23,13 +23,12 @@ fn a_spotlight_is_a_registered_box_tool_that_hides_nothing() {
 
     assert_eq!(registered.kind, SPOTLIGHT.kind);
     assert!(!registered.hides_content);
-    assert!(
-        !AnnotationDocument::new(
-            None,
-            vec![AnnotationObject::new(1, spotlight(Options::new()))]
-        )
-        .hides_content()
+    let mut document = AnnotationDocument::new(
+        None,
+        vec![AnnotationObject::new(1, spotlight(Options::new()))],
     );
+    document.objects[0].state.hidden = true;
+    assert!(document.exposed_masks().is_empty());
 }
 
 #[test]

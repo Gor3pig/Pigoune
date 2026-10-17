@@ -97,10 +97,12 @@ The trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>: a mistake can always be fi
 <td colspan="2" valign="top">
 
 ### Capture and annotate
-Take a screenshot or paste an image, then annotate it in an editor inside your library: shapes,
-curved arrows, texts, numbered steps, a spotlight, and a blur or a pixelation to hide what is
-private. The original capture is always kept untouched next to the annotated image, which you can
-copy, export as a PNG or save in your library, and reopen to change its annotations later.
+Take a screenshot, paste an image or open any still image of your library, then annotate it in an
+editor inside your library: shapes, curved arrows, texts, numbered steps, a spotlight, and a blur
+or a pixelation to hide what is private. The image itself is never modified: the annotations are
+kept with it and can be reopened and changed later. Copying, dragging or exporting an annotated
+image gives a flattened PNG, and exporting the whole library gives every original plus a flattened
+copy of each annotated one.
 
 </td>
 </tr>

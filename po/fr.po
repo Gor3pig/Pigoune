@@ -8868,9 +8868,6 @@ msgstr "Prendre une capture d'écran ?"
 msgid "The image being annotated is not saved. Save it first, or let the screenshot replace it."
 msgstr "L'image en cours d'annotation n'est pas enregistrée. Enregistrez-la d'abord, ou laissez la capture la remplacer."
 
-msgid "_Replace Without Saving"
-msgstr "_Remplacer sans enregistrer"
-
 msgid "_Save and Capture"
 msgstr "_Enregistrer puis capturer"
 
@@ -8882,3 +8879,6 @@ msgstr "Exporter aussi les images d'origine ?"
 
 msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
 msgstr "L'export contient toutes les images d'origine, qui peuvent encore montrer ce que les annotations cachent, et une copie aplatie de chaque image annotée."
+
+msgid "_Discard and Capture"
+msgstr "_Abandonner puis capturer"

@@ -3606,7 +3606,7 @@ impl PigouneWindow {
             )),
         );
         dialog.add_response("cancel", &gettext("_Cancel"));
-        dialog.add_response("discard", &gettext("_Replace Without Saving"));
+        dialog.add_response("discard", &gettext("_Discard and Capture"));
         dialog.add_response("save", &gettext("_Save and Capture"));
         dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
         dialog.set_response_appearance("save", adw::ResponseAppearance::Suggested);

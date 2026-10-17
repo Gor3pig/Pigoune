@@ -431,57 +431,16 @@ fn a_document_written_by_a_newer_version_is_reported_but_the_image_stays_usable(
 }
 
 #[test]
-fn a_document_with_a_blur_is_flagged_and_a_plain_one_is_not() {
-    let mut fixture = Fixture::new();
-    let plain = fixture.import("a.png", 1);
-    let blurred = fixture.import("b.png", 2);
-    let rectangle = Shape::new(
-        "rectangle",
-        Geometry::Box(Rect {
-            x: 0.0,
-            y: 0.0,
-            width: 5.0,
-            height: 5.0,
-        }),
-        Options::new(),
-    );
-    fixture
-        .library
-        .save_annotations(
-            plain,
-            &AnnotationDocument::new(None, vec![AnnotationObject::new(1, rectangle)]),
-        )
-        .expect("saved");
-    fixture
-        .library
-        .save_annotations(blurred, &document_with_a_blur(1.0))
-        .expect("saved");
-
-    assert!(
-        !fixture
-            .library
-            .annotations(plain)
-            .expect("q")
-            .expect("some")
-            .has_masks
-    );
-    assert!(
-        fixture
-            .library
-            .annotations(blurred)
-            .expect("q")
-            .expect("some")
-            .has_masks
-    );
-}
-
-#[test]
 fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
     let mut fixture = Fixture::new();
     let first = fixture.import("a.png", 1);
     let second = fixture.import("b.png", 2);
     assert_eq!(
-        fixture.library.annotation_render_key(first).expect("q"),
+        fixture
+            .library
+            .annotation_render(first)
+            .expect("q")
+            .map(|render| render.key),
         None
     );
     for id in [first, second] {
@@ -492,15 +451,17 @@ fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
     }
     let key = fixture
         .library
-        .annotation_render_key(first)
+        .annotation_render(first)
         .expect("q")
-        .expect("key");
+        .expect("render")
+        .key;
     assert_ne!(
         fixture
             .library
-            .annotation_render_key(second)
+            .annotation_render(second)
             .expect("q")
-            .expect("key"),
+            .expect("render")
+            .key,
         key,
         "two images with the same document do not share a rendering"
     );
@@ -509,7 +470,11 @@ fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
         .save_annotations(first, &document_with_a_blur(1.0))
         .expect("saved again");
     assert_eq!(
-        fixture.library.annotation_render_key(first).expect("q"),
+        fixture
+            .library
+            .annotation_render(first)
+            .expect("q")
+            .map(|render| render.key),
         Some(key.clone()),
         "saving the same document again changes nothing"
     );
@@ -519,9 +484,10 @@ fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
         .expect("changed");
     let changed = fixture
         .library
-        .annotation_render_key(first)
+        .annotation_render(first)
         .expect("q")
-        .expect("key");
+        .expect("render")
+        .key;
     assert_ne!(changed, key);
     let mut hidden = document_with_a_blur(2.0);
     hidden.objects[0].state.hidden = true;
@@ -532,9 +498,10 @@ fn the_render_key_follows_the_image_and_the_document_and_nothing_else() {
     assert_ne!(
         fixture
             .library
-            .annotation_render_key(first)
+            .annotation_render(first)
             .expect("q")
-            .expect("key"),
+            .expect("render")
+            .key,
         changed,
         "hiding a layer changes the picture"
     );
