@@ -237,19 +237,26 @@ fn an_enormous_document_is_refused_before_being_read() {
 }
 
 #[test]
-fn only_the_tools_that_hide_content_make_a_document_hide_content() {
-    let with = |shape: Shape| AnnotationDocument::new(None, vec![AnnotationObject::new(1, shape)]);
+fn only_the_hidden_blur_and_pixelation_are_exposed_masks() {
+    let with = |shape: Shape| {
+        let mut document = AnnotationDocument::new(None, vec![AnnotationObject::new(1, shape)]);
+        document.objects[0].state.hidden = true;
+        document
+    };
 
     for shape in every_tool() {
         let hides = matches!(shape.kind.as_str(), "blur" | "pixelate");
-        assert_eq!(with(shape).hides_content(), hides);
+        assert_eq!(!with(shape).exposed_masks().is_empty(), hides);
     }
-    assert!(!AnnotationDocument::default().hides_content());
-    assert!(full_document().hides_content());
+    assert!(AnnotationDocument::default().exposed_masks().is_empty());
+    assert!(
+        full_document().exposed_masks().is_empty(),
+        "nothing is hidden"
+    );
     let unknown =
         AnnotationDocument::from_json(r#"{"version":1,"objects":[{"id":1,"kind":"mosaic"}]}"#)
             .expect("read");
-    assert!(!unknown.hides_content());
+    assert!(unknown.exposed_masks().is_empty());
 }
 
 #[test]

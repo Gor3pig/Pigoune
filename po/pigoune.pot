@@ -8052,10 +8052,6 @@ msgid "The image being annotated is not saved. Save it first, or let the screens
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "_Replace Without Saving"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
 msgid "_Save and Capture"
 msgstr ""
 
@@ -8069,4 +8065,8 @@ msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
 msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "_Discard and Capture"
 msgstr ""

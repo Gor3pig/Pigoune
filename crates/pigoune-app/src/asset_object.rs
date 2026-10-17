@@ -282,4 +282,32 @@ mod tests {
         assert_eq!(shown.display_name(), "Renamed");
         assert!(!shown.adopt_edits_of(&newer));
     }
+
+    fn annotated(asset: Asset, key: &str) -> PigouneAssetObject {
+        PigouneAssetObject::new(AssetEntry {
+            asset,
+            file: PathBuf::from("/library/files/logo.png"),
+            thumbnail_file: PathBuf::from("/library/thumbnail.png"),
+            annotation: Some(pigoune_core::AnnotationRender {
+                key: key.to_owned(),
+                document: "{}".to_owned(),
+                file: PathBuf::from(format!("/library/cache/annotated/{key}.png")),
+            }),
+        })
+    }
+
+    #[test]
+    fn a_changed_annotation_makes_the_picture_different_and_the_source_stays_the_file() {
+        let shown = annotated(asset("Logo", false, 10), "one");
+
+        assert!(shown.is_unchanged_by(&annotated(asset("Renamed", true, 10), "one")));
+        assert!(!shown.is_unchanged_by(&annotated(asset("Logo", false, 10), "two")));
+        assert!(!shown.is_unchanged_by(&object(asset("Logo", false, 10))));
+        assert_eq!(
+            shown.source_file(),
+            PathBuf::from("/library/files/logo.png")
+        );
+        assert_eq!(shown.annotation_key(), Some("one"));
+        assert_eq!(object(asset("Logo", false, 10)).annotation_key(), None);
+    }
 }

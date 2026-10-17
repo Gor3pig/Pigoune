@@ -309,13 +309,6 @@ impl AnnotationDocument {
     }
 
     #[must_use]
-    pub fn hides_content(&self) -> bool {
-        self.objects
-            .iter()
-            .any(|object| object.shape().is_some_and(Shape::hides_content))
-    }
-
-    #[must_use]
     pub fn exposed_masks(&self) -> Vec<u32> {
         self.objects
             .iter()

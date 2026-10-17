@@ -102,11 +102,13 @@ Corbeille et annulation avec <kbd>Ctrl</kbd>+<kbd>Z</kbd> : une erreur se rattra
 <td colspan="2" valign="top">
 
 ### Capturer et annoter
-Faites une capture d'écran ou collez une image, puis annotez-la dans un éditeur intégré à votre
-bibliothèque : formes, flèches courbes, textes, étapes numérotées, projecteur, et flou ou
-pixelisation pour cacher ce qui est privé. La capture d'origine est toujours conservée intacte à
-côté de l'image annotée, que vous pouvez copier, exporter en PNG ou enregistrer dans votre
-bibliothèque, et rouvrir plus tard pour changer ses annotations.
+Faites une capture d'écran, collez une image ou ouvrez n'importe quelle image fixe de votre
+bibliothèque, puis annotez-la dans un éditeur intégré à votre bibliothèque : formes, flèches
+courbes, textes, étapes numérotées, projecteur, et flou ou pixelisation pour cacher ce qui est
+privé. L'image elle-même n'est jamais modifiée : les annotations sont conservées avec elle et
+peuvent être rouvertes et modifiées plus tard. Copier, glisser ou exporter une image annotée donne
+un PNG aplati, et l'export de toute la bibliothèque donne chaque original plus une copie aplatie de
+chaque image annotée.
 
 </td>
 </tr>

@@ -32,7 +32,6 @@ fn drawn() -> Shape {
 fn a_document_without_masks_hides_nothing() {
     let document = AnnotationDocument::new(None, vec![AnnotationObject::new(1, drawn())]);
 
-    assert!(!document.hides_content());
     assert!(document.exposed_masks().is_empty());
 }
 
@@ -47,7 +46,7 @@ fn the_blur_and_the_pixelation_are_the_privacy_masks() {
         ],
     );
 
-    assert!(document.hides_content());
+    assert_eq!(document.exposed_masks(), Vec::<u32>::new());
 }
 
 #[test]

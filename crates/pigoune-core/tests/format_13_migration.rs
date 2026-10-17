@@ -217,7 +217,7 @@ fn assert_nothing_lost(before: &Dump, after: &Dump, what: &str) {
     }
 }
 
-const NEW_COLUMNS: [&str; 4] = ["asset_id", "document", "has_masks", "updated_at_unix_ms"];
+const NEW_COLUMNS: [&str; 3] = ["asset_id", "document", "updated_at_unix_ms"];
 
 fn only_the_12_tables(dump: &Dump) -> Dump {
     dump.iter()
