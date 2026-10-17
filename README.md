@@ -98,7 +98,8 @@ The trash and undo with <kbd>Ctrl</kbd>+<kbd>Z</kbd>: a mistake can always be fi
 
 ### Capture and annotate
 Take a screenshot, paste an image or open any still image of your library, then annotate it in an
-editor inside your library: shapes, curved arrows, texts, numbered steps, a spotlight, and a blur
+editor inside your library: shapes with solid, dashed or dotted lines and an optional
+hand-drawn look, curved arrows, texts, numbered steps, a spotlight, and a blur
 or a pixelation to hide what is private. The image itself is never modified: the annotations are
 kept with it and can be reopened and changed later. Copying, dragging or exporting an annotated
 image gives a flattened PNG, and exporting the whole library gives every original plus a flattened

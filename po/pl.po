@@ -1617,10 +1617,6 @@ msgstr "Krycie"
 msgid "Thickness"
 msgstr "Grubość"
 
-#: crates/pigoune-app/src/editor_options.rs:47
-msgid "Line Style"
-msgstr "Styl linii"
-
 #: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
 msgstr "Krzywizna"
@@ -8574,29 +8570,8 @@ msgstr "Ukryj"
 msgid "Unlock"
 msgstr "Odblokuj"
 
-msgid "A mask is hidden, so the image would show what it covers"
-msgstr "Maskowanie jest ukryte: obraz pokazałby to, co ono zakrywa"
-
-msgid "“{name}” is hidden: the image will show what it covers."
-msgstr "„{name}” jest ukryte: obraz pokaże to, co ono zakrywa."
-
-msgid "{count} masks are hidden: the image will show what they cover."
-msgstr "Ukrytych maskowań: {count}. Obraz pokaże to, co one zakrywają."
-
-msgid "A Mask Is Hidden"
-msgstr "Maskowanie jest ukryte"
-
-msgid "Continue _Anyway"
-msgstr "Mimo to _kontynuuj"
-
-msgid "_Show the Masks"
-msgstr "_Pokaż maskowania"
-
 msgid "Lock"
 msgstr "Zablokuj"
-
-msgid "The annotated image could not be rendered"
-msgstr "Nie udało się wygenerować obrazu z adnotacjami"
 
 msgid "Animated images cannot be annotated yet"
 msgstr "Obrazów animowanych nie można jeszcze opisywać"
@@ -8619,17 +8594,8 @@ msgstr "(z adnotacjami)"
 msgid "Export the Original Images Too?"
 msgstr "Wyeksportować także oryginalne obrazy?"
 
-msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
-msgstr "Eksport zawiera każdy oryginalny obraz, który może nadal pokazywać to, co ukrywają adnotacje, oraz spłaszczoną kopię każdego obrazu z adnotacjami."
-
 msgid "_Discard and Capture"
 msgstr "_Odrzuć i zrób zrzut"
-
-msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
-msgstr "Pokaż ukryte maskowania obrazu „{name}”, zanim przeciągniesz go poza Pigoune"
-
-msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
-msgstr "Pokaż ukryte maskowania {count} obrazów, zanim przeciągniesz je poza Pigoune"
 
 msgid "The annotated image is still being prepared. Try dragging it again in a moment"
 msgstr "Obraz z adnotacjami jest jeszcze przygotowywany. Spróbuj przeciągnąć go ponownie za chwilę"
@@ -8639,9 +8605,6 @@ msgstr "nie udało się utworzyć wersji z adnotacjami"
 
 msgid "Export Incomplete"
 msgstr "Eksport niepełny"
-
-msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
-msgstr "Eksport jest częściowy. Wyeksportowano {exported} plików do „{folder}”, ale nie udało się utworzyć {count}:\n\n{list}"
 
 msgid "Annotate the Selected Image"
 msgstr "Opisz zaznaczony obraz"
@@ -8660,3 +8623,75 @@ msgstr "Szkicowy"
 
 msgid "Very Sketchy"
 msgstr "Bardzo szkicowy"
+
+msgid "Some Information May Be Visible"
+msgstr "Niektóre informacje mogą być widoczne"
+
+msgid "Some information may be visible."
+msgstr "Niektóre informacje mogą być widoczne."
+
+msgid "A blur or pixelation effect is hidden."
+msgstr "Efekt rozmycia lub pikselizacji jest ukryty."
+
+msgid "{count} blur or pixelation effects are hidden."
+msgstr "Ukryte efekty rozmycia lub pikselizacji: {count}."
+
+msgid "A blur or pixelation effect is currently hidden."
+msgstr "Efekt rozmycia lub pikselizacji jest obecnie ukryty."
+
+msgid "{count} blur or pixelation effects are currently hidden."
+msgstr "Obecnie ukrytych efektów rozmycia lub pikselizacji: {count}."
+
+msgid "{count} images contain hidden blur or pixelation effects."
+msgstr "Obrazy z ukrytymi efektami rozmycia lub pikselizacji: {count}."
+
+msgid "The copied image could reveal information you meant to hide."
+msgstr "Skopiowany obraz może ujawnić informacje, które miały pozostać ukryte."
+
+msgid "The copied images could reveal information you meant to hide."
+msgstr "Skopiowane obrazy mogą ujawnić informacje, które miały pozostać ukryte."
+
+msgid "The exported image could reveal information you meant to hide."
+msgstr "Wyeksportowany obraz może ujawnić informacje, które miały pozostać ukryte."
+
+msgid "The exported images could reveal information you meant to hide."
+msgstr "Wyeksportowane obrazy mogą ujawnić informacje, które miały pozostać ukryte."
+
+msgid "The opened image could reveal information you meant to hide."
+msgstr "Otwarty obraz może ujawnić informacje, które miały pozostać ukryte."
+
+msgid "The opened images could reveal information you meant to hide."
+msgstr "Otwarte obrazy mogą ujawnić informacje, które miały pozostać ukryte."
+
+msgid "_Copy Anyway"
+msgstr "Mimo to _skopiuj"
+
+msgid "_Export Anyway"
+msgstr "Mimo to _wyeksportuj"
+
+msgid "_Open Anyway"
+msgstr "Mimo to _otwórz"
+
+msgid "_Show Hidden Effects"
+msgstr "_Pokaż ukryte efekty"
+
+msgid "To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects."
+msgstr "Aby przeciągnąć „{name}” poza Pigoune, najpierw pokaż ukryte efekty rozmycia lub pikselizacji."
+
+msgid "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects."
+msgstr "Aby przeciągnąć {count} obrazów poza Pigoune, najpierw pokaż ich ukryte efekty rozmycia lub pikselizacji."
+
+msgid "The annotated image could not be created"
+msgstr "Nie udało się wygenerować obrazu z adnotacjami"
+
+msgid "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr "Eksport jest niepełny. Wyeksportowano {exported} plików do „{folder}”, ale nie udało się utworzyć {count}:\n\n{list}"
+
+msgid "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included."
+msgstr "Eksport zawiera każdy oryginalny obraz, który może nadal pokazywać to, co ukrywają adnotacje, oraz kopię każdego obrazu z adnotacjami, z wbudowanymi adnotacjami."
+
+msgid "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and give them a precise, sketchy or very sketchy hand-drawn look."
+msgstr ""
+
+msgid "“{name}” contains hidden blur or pixelation effects."
+msgstr "„{name}” zawiera ukryte efekty rozmycia lub pikselizacji."

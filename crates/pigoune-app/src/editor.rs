@@ -22,7 +22,7 @@ use crate::editor_tool::EditorTool;
 use crate::image_conversion;
 use crate::layers_model;
 use crate::layers_panel::{self, LayerAction, LayerRow, LayersPanel, LayersView};
-use crate::mask_alert::{self, MaskChoice};
+use crate::mask_alert::{self, MaskChoice, Operation, Scope};
 use crate::tool_flow;
 use crate::zoom_view::PointerEvent;
 
@@ -1612,15 +1612,17 @@ impl PigouneEditor {
         for button in imp.layer_edit_buttons.borrow().iter() {
             button.set_sensitive(has_selection);
         }
-        let exposed = !self
-            .imp()
+        let exposed = imp
             .drawing
             .borrow()
             .session
             .document()
             .exposed_masks()
-            .is_empty();
-        imp.mask_banner.set_revealed(exposed);
+            .len();
+        if exposed > 0 {
+            imp.mask_banner.set_title(&mask_alert::banner_text(exposed));
+        }
+        imp.mask_banner.set_revealed(exposed > 0);
         imp.zoom_view.queue_draw();
         self.sync_layers();
         self.keep_keyboard_focus();
@@ -1733,13 +1735,13 @@ impl PigouneEditor {
             .collect()
     }
 
-    async fn output_is_allowed(&self) -> bool {
+    async fn output_is_allowed(&self, operation: Operation) -> bool {
         self.commit_text();
         let names = self.exposed_mask_names();
         if names.is_empty() {
             return true;
         }
-        match mask_alert::ask(self, &names, true).await {
+        match mask_alert::ask(self, &Scope::Effects(names.len()), operation, true).await {
             MaskChoice::Continue => true,
             MaskChoice::ShowMasks => {
                 self.show_exposed_masks();
@@ -1768,7 +1770,7 @@ impl PigouneEditor {
     }
 
     async fn copy_image(&self) {
-        if !self.output_is_allowed().await {
+        if !self.output_is_allowed(Operation::Copy).await {
             return;
         }
         let Some(texture) = self.final_texture() else {
@@ -1810,7 +1812,7 @@ impl PigouneEditor {
     }
 
     async fn export_image(&self) {
-        if !self.output_is_allowed().await {
+        if !self.output_is_allowed(Operation::Export).await {
             return;
         }
         let dialog = gtk::FileDialog::builder()

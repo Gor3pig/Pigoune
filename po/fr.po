@@ -152,7 +152,7 @@ msgid ""
 "Annotations stay editable: the untouched capture is kept next to the "
 "annotated image, which is the one shown and exported. Annotate reopens it "
 "and View Original shows the capture as it was."
-msgstr "Les annotations restent modifiables : la capture intacte est conservée à côté de l’image annotée, qui est celle qu’on voit et qu’on exporte. Annoter la rouvre et Voir l’original montre la capture telle qu’elle était."
+msgstr "Les annotations restent modifiables : la capture intacte est conservée à côté de l’image annotée, qui est celle qu’on voit et qu’on exporte. Annoter la rouvre et Voir l’original montre la capture telle qu’elle était."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:112
 msgid ""
@@ -192,7 +192,7 @@ msgid ""
 "The Duplicates tab is lighter: the trash button only appears once something "
 "is ticked, and each group has a clearer title."
 msgstr ""
-"L’onglet Doublons est plus léger : le bouton de la corbeille n’apparaît "
+"L’onglet Doublons est plus léger : le bouton de la corbeille n’apparaît "
 "qu’une fois une case cochée, et chaque groupe a un titre plus clair."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:123
@@ -261,7 +261,7 @@ msgid ""
 "by one, the assets to move to the trash. A confirmation lists exactly what "
 "will move, and Pigoune checks every asset again just before moving it."
 msgstr ""
-"Plus rien n’est coché à votre place : choisissez l’élément à garder, puis "
+"Plus rien n’est coché à votre place : choisissez l’élément à garder, puis "
 "cochez un par un ceux à mettre à la corbeille. Une confirmation liste "
 "exactement ce qui sera déplacé, et Pigoune revérifie chaque élément juste "
 "avant de le déplacer."
@@ -297,7 +297,7 @@ msgstr ""
 "Les versions précédentes pouvaient proposer des éléments sans rapport comme "
 "doublons, et « Garder celui-ci » pouvait tous les envoyer à la corbeille. "
 "Ils y restent jusqu’au vidage de la corbeille ou, si le vidage automatique "
-"est activé, pendant 30 jours : ouvrez la Corbeille et restaurez ceux que "
+"est activé, pendant 30 jours : ouvrez la Corbeille et restaurez ceux que "
 "vous voulez."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:151
@@ -352,7 +352,7 @@ msgid ""
 msgstr ""
 "Un nouvel onglet Doublons dans « Gérer la bibliothèque » regroupe les "
 "éléments qui se ressemblent, comme le même logo en PNG et en SVG. Gardez "
-"celui que vous voulez : les autres vont à la corbeille, et Annuler les "
+"celui que vous voulez : les autres vont à la corbeille, et Annuler les "
 "ramène."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:164
@@ -389,7 +389,7 @@ msgid ""
 msgstr ""
 "Une nouvelle option des Préférences, dans Affichage, transforme les noms des "
 "éléments en simple texte. Un nom non cliquable compte comme de l’espace "
-"vide : un rectangle de sélection peut en partir, et rien n’y est "
+"vide : un rectangle de sélection peut en partir, et rien n’y est "
 "sélectionné, ouvert ou glissé."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:174
@@ -397,7 +397,7 @@ msgid ""
 "Clicking just outside a thumbnail no longer selects it: the clickable area "
 "is now exactly the thumbnail and its name."
 msgstr ""
-"Un clic juste à côté d’une vignette ne la sélectionne plus : la zone "
+"Un clic juste à côté d’une vignette ne la sélectionne plus : la zone "
 "cliquable est maintenant exactement la vignette et son nom."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:180
@@ -434,7 +434,7 @@ msgid ""
 "New shortcuts: Ctrl+K adds the selection to a collection, Ctrl+M moves it, "
 "Ctrl+T adds a tag, Ctrl+Shift+Z redoes and Ctrl+W closes the window."
 msgstr ""
-"Nouveaux raccourcis : Ctrl+K ajoute la sélection à une collection, Ctrl+M la "
+"Nouveaux raccourcis : Ctrl+K ajoute la sélection à une collection, Ctrl+M la "
 "déplace, Ctrl+T ajoute un tag, Ctrl+Maj+Z rétablit et Ctrl+W ferme la "
 "fenêtre."
 
@@ -501,7 +501,7 @@ msgid ""
 "grid: your scroll position and selection stay put."
 msgstr ""
 "Mettre en favori, ajouter un tag ou renommer un élément ne reconstruit plus "
-"la grille : votre position de défilement et votre sélection restent en place."
+"la grille : votre position de défilement et votre sélection restent en place."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:198
 msgid "The records in Manage Library now show their thumbnails at once."
@@ -537,14 +537,14 @@ msgid ""
 "tags, then move the pointer out of the tag list."
 msgstr ""
 "Pigoune ne se ferme plus quand on maintient des éléments glissés sur un tag "
-"ayant des sous-tags, puis qu'on sort le pointeur de la liste des tags."
+"ayant des sous-tags, puis qu’on sort le pointeur de la liste des tags."
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:214
 msgid ""
 "A finishing release: simpler tag navigation, accurate counts, wider image "
 "support and much faster deletion of large selections."
 msgstr ""
-"Une version de finitions : navigation dans les tags simplifiée, compteurs "
+"Une version de finitions : navigation dans les tags simplifiée, compteurs "
 "fidèles, meilleure prise en charge des images et suppression des grosses "
 "sélections bien plus rapide."
 
@@ -1834,7 +1834,7 @@ msgstr "Gor3pig"
 
 #: crates/pigoune-app/src/editor.rs:340
 msgid "Discard the Changes?"
-msgstr "Abandonner les modifications ?"
+msgstr "Abandonner les modifications ?"
 
 #: crates/pigoune-app/src/editor.rs:342
 msgid "The annotations and changes made to this capture will be lost."
@@ -1873,7 +1873,7 @@ msgstr "Aucune annotation"
 #: crates/pigoune-app/src/editor.rs:1151
 #, rust-format
 msgid "Annotations: {count}"
-msgstr "Annotations : {count}"
+msgstr "Annotations : {count}"
 
 #: crates/pigoune-app/src/editor.rs:1247
 msgid "Copy to Clipboard"
@@ -1956,10 +1956,6 @@ msgstr "Opacité"
 #: crates/pigoune-app/src/editor_options.rs:46
 msgid "Thickness"
 msgstr "Épaisseur"
-
-#: crates/pigoune-app/src/editor_options.rs:47
-msgid "Line Style"
-msgstr "Style de trait"
 
 #: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
@@ -2047,7 +2043,7 @@ msgstr "Rayon du flou"
 
 #: crates/pigoune-app/src/editor_options.rs:69
 msgid "Cell Size"
-msgstr "Taille des cellules"
+msgstr "Taille des blocs"
 
 #: crates/pigoune-app/src/editor_options.rs:76
 msgid "Numbers"
@@ -2059,7 +2055,7 @@ msgstr "Lettres"
 
 #: crates/pigoune-app/src/editor_options.rs:78
 msgid "Bubble Background"
-msgstr "Fond bulle"
+msgstr "Fond en bulle"
 
 #: crates/pigoune-app/src/editor_options.rs:79
 msgid "Even Shaft"
@@ -2079,15 +2075,15 @@ msgstr "Ovale"
 
 #: crates/pigoune-app/src/editor_options.rs:83
 msgid "Solid Line"
-msgstr "Continu"
+msgstr "Trait continu"
 
 #: crates/pigoune-app/src/editor_options.rs:84
 msgid "Dashed Line"
-msgstr "Tirets"
+msgstr "Trait en tirets"
 
 #: crates/pigoune-app/src/editor_options.rs:85
 msgid "Dotted Line"
-msgstr "Pointillés"
+msgstr "Trait pointillé"
 
 #: crates/pigoune-app/src/editor_options.rs:86
 msgid "Filled Triangle"
@@ -2099,7 +2095,7 @@ msgstr "Pointe ouverte"
 
 #: crates/pigoune-app/src/editor_options.rs:88
 msgid "Both Ends"
-msgstr "Aux deux bouts"
+msgstr "Aux deux extrémités"
 
 #: crates/pigoune-app/src/editor_options.rs:89
 msgid "No Head"
@@ -2135,7 +2131,7 @@ msgstr "Pastille pleine"
 
 #: crates/pigoune-app/src/editor_options.rs:97
 msgid "Outlined Badge"
-msgstr "Pastille cerclée"
+msgstr "Pastille à contour"
 
 #: crates/pigoune-app/src/editor_options.rs:98
 msgid "Small Head"
@@ -3263,7 +3259,7 @@ msgstr "Cette image est déjà enregistrée sous « {name} »."
 
 #: crates/pigoune-app/src/window.rs:5793
 msgid "Resume the Unsaved Capture?"
-msgstr "Reprendre la capture non enregistrée ?"
+msgstr "Reprendre la capture non enregistrée ?"
 
 #: crates/pigoune-app/src/window.rs:5795
 msgid ""
@@ -4741,7 +4737,7 @@ msgstr "Flamme"
 #: crates/pigoune-app/src/collection_looks.rs:641
 msgctxt "collection icon"
 msgid "Water Drop"
-msgstr "Goutte d'eau"
+msgstr "Goutte d’eau"
 
 #: crates/pigoune-app/src/collection_looks.rs:642
 msgctxt "collection icon"
@@ -4791,7 +4787,7 @@ msgstr "Trèfle"
 #: crates/pigoune-app/src/collection_looks.rs:651
 msgctxt "collection icon"
 msgid "Feather"
-msgstr "Plume d'oiseau"
+msgstr "Plume d’oiseau"
 
 #: crates/pigoune-app/src/collection_looks.rs:652
 msgctxt "collection icon"
@@ -6895,7 +6891,7 @@ msgstr "Outils"
 
 #: crates/pigoune-app/ui/editor.blp:190
 msgid "Aspect Ratio"
-msgstr "Format"
+msgstr "Proportions"
 
 #: crates/pigoune-app/ui/editor.blp:194
 msgid "Free"
@@ -7223,7 +7219,7 @@ msgstr[1] ""
 
 #: crates/pigoune-app/src/duplicates_ignored.rs:285
 msgid "Show All Ignored Duplicates Again?"
-msgstr "Réafficher tous les doublons ignorés ?"
+msgstr "Réafficher tous les doublons ignorés ?"
 
 #
 #: crates/pigoune-app/src/duplicates_ignored.rs:289
@@ -7317,7 +7313,7 @@ msgstr ""
 #, rust-format
 msgid "The first {count} are shown; deal with them, then search again."
 msgstr ""
-"Les {count} premiers sont affichés ; occupez-vous-en, puis relancez la "
+"Les {count} premiers sont affichés ; occupez-vous-en, puis relancez la "
 "recherche."
 
 #: crates/pigoune-app/src/duplicates_page.rs:589
@@ -7424,7 +7420,7 @@ msgstr ""
 #
 #: crates/pigoune-app/src/duplicates_page.rs:984
 msgid "Move to the Trash?"
-msgstr "Mettre à la corbeille ?"
+msgstr "Mettre à la corbeille ?"
 
 #
 #: crates/pigoune-app/src/duplicates_page.rs:987
@@ -7440,7 +7436,7 @@ msgid ""
 "Some assets changed since the search, so nothing was moved to the trash. "
 "Pigoune searches again."
 msgstr ""
-"Des éléments ont changé depuis la recherche : rien n’a été mis à la "
+"Des éléments ont changé depuis la recherche : rien n’a été mis à la "
 "corbeille. Pigoune relance la recherche."
 
 #
@@ -7967,7 +7963,7 @@ msgid ""
 "The drawing of “{name}” is too plain to be compared: one color, or nothing "
 "visible."
 msgstr ""
-"Le dessin de « {name} » est trop simple pour être comparé : une seule "
+"Le dessin de « {name} » est trop simple pour être comparé : une seule "
 "couleur, ou rien de visible."
 
 #: crates/pigoune-app/src/similar_dialog.rs:101
@@ -8353,7 +8349,7 @@ msgid ""
 "outline are no longer grouped. It analyzes your library again in the "
 "background."
 msgstr ""
-"Pigoune compare maintenant les couleurs et les détails : les éléments qui ne "
+"Pigoune compare maintenant les couleurs et les détails : les éléments qui ne "
 "partagent qu’un contour ne sont plus regroupés. Il analyse de nouveau votre "
 "bibliothèque en arrière-plan."
 
@@ -8390,7 +8386,7 @@ msgid ""
 "Clicking next to a thumbnail no longer selects it: the clickable area is "
 "exactly the thumbnail and its name."
 msgstr ""
-"Un clic à côté d’une vignette ne la sélectionne plus : la zone cliquable est "
+"Un clic à côté d’une vignette ne la sélectionne plus : la zone cliquable est "
 "exactement la vignette et son nom."
 
 #: crates/pigoune-app/src/whats_new.rs:124
@@ -8773,12 +8769,12 @@ msgstr "Cette combinaison de touches n’est pas prise en charge."
 #: crates/pigoune-app/src/editor.rs
 #, rust-format
 msgid "{tool}: Defaults"
-msgstr "{tool} : valeurs par défaut"
+msgstr "{tool} : valeurs par défaut"
 
 #: crates/pigoune-app/src/editor.rs
 #, rust-format
 msgid "{tool} (stays active)"
-msgstr "{tool} (reste actif)"
+msgstr "{tool} (reste sélectionné)"
 
 #: crates/pigoune-app/src/editor.rs
 msgid "This text is locked"
@@ -8803,7 +8799,7 @@ msgstr "Étape"
 #: crates/pigoune-app/src/editor.rs
 #, rust-format
 msgid "{tool}: {text}"
-msgstr "{tool} : {text}"
+msgstr "{tool} : {text}"
 
 #: crates/pigoune-app/src/editor.rs
 msgid "Duplicate"
@@ -8826,41 +8822,20 @@ msgstr "Masquer"
 msgid "Unlock"
 msgstr "Déverrouiller"
 
-msgid "A mask is hidden, so the image would show what it covers"
-msgstr "Un masquage est masqué : l'image montrerait ce qu'il cache"
-
-msgid "“{name}” is hidden: the image will show what it covers."
-msgstr "« {name} » est masqué : l'image montrera ce qu'il cache."
-
-msgid "{count} masks are hidden: the image will show what they cover."
-msgstr "{count} masquages sont masqués : l'image montrera ce qu'ils cachent."
-
-msgid "A Mask Is Hidden"
-msgstr "Un masquage est masqué"
-
-msgid "Continue _Anyway"
-msgstr "Continuer _quand même"
-
-msgid "_Show the Masks"
-msgstr "_Afficher les masquages"
-
 msgid "Lock"
 msgstr "Verrouiller"
-
-msgid "The annotated image could not be rendered"
-msgstr "L'image annotée n'a pas pu être produite"
 
 msgid "Animated images cannot be annotated yet"
 msgstr "Les images animées ne peuvent pas encore être annotées"
 
 msgid "The image or its annotations could not be read. They may come from a newer version of Pigoune."
-msgstr "L'image ou ses annotations n'ont pas pu être lues. Elles viennent peut-être d'une version plus récente de Pigoune."
+msgstr "L’image ou ses annotations n’ont pas pu être lues. Elles viennent peut-être d’une version plus récente de Pigoune."
 
 msgid "Take a Screenshot?"
-msgstr "Prendre une capture d'écran ?"
+msgstr "Faire une capture d’écran ?"
 
 msgid "The image being annotated is not saved. Save it first, or let the screenshot replace it."
-msgstr "L'image en cours d'annotation n'est pas enregistrée. Enregistrez-la d'abord, ou laissez la capture la remplacer."
+msgstr "L’image en cours d’annotation n’est pas enregistrée. Enregistrez-la d’abord, ou laissez la capture la remplacer."
 
 msgid "_Save and Capture"
 msgstr "_Enregistrer puis capturer"
@@ -8869,34 +8844,22 @@ msgid "(annotated)"
 msgstr "(annoté)"
 
 msgid "Export the Original Images Too?"
-msgstr "Exporter aussi les images d'origine ?"
-
-msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
-msgstr "L'export contient toutes les images d'origine, qui peuvent encore montrer ce que les annotations cachent, et une copie aplatie de chaque image annotée."
+msgstr "Exporter aussi les images d’origine ?"
 
 msgid "_Discard and Capture"
 msgstr "_Abandonner puis capturer"
 
-msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
-msgstr "Réaffichez les masquages cachés de « {name} » avant de le glisser hors de Pigoune"
-
-msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
-msgstr "Réaffichez les masquages cachés de {count} images avant de les glisser hors de Pigoune"
-
 msgid "The annotated image is still being prepared. Try dragging it again in a moment"
-msgstr "L'image annotée est encore en préparation. Réessayez de la glisser dans un instant"
+msgstr "L’image annotée est encore en préparation. Réessayez de la glisser dans un instant"
 
 msgid "its annotated version could not be created"
-msgstr "sa version annotée n'a pas pu être créée"
+msgstr "sa version annotée n’a pas pu être créée"
 
 msgid "Export Incomplete"
 msgstr "Export incomplet"
 
-msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
-msgstr "L'export est partiel. {exported} fichiers ont été exportés dans « {folder} », mais {count} n'ont pas pu être créés :\n\n{list}"
-
 msgid "Annotate the Selected Image"
-msgstr "Annoter l'image sélectionnée"
+msgstr "Annoter l’image sélectionnée"
 
 msgid "Line Type"
 msgstr "Type de trait"
@@ -8912,3 +8875,75 @@ msgstr "Esquissé"
 
 msgid "Very Sketchy"
 msgstr "Très esquissé"
+
+msgid "Some Information May Be Visible"
+msgstr "Certaines informations pourraient être visibles"
+
+msgid "Some information may be visible."
+msgstr "Certaines informations pourraient être visibles."
+
+msgid "A blur or pixelation effect is hidden."
+msgstr "Un effet de flou ou de pixelisation est masqué."
+
+msgid "{count} blur or pixelation effects are hidden."
+msgstr "{count} effets de flou ou de pixelisation sont masqués."
+
+msgid "A blur or pixelation effect is currently hidden."
+msgstr "Un effet de flou ou de pixelisation est actuellement masqué."
+
+msgid "{count} blur or pixelation effects are currently hidden."
+msgstr "{count} effets de flou ou de pixelisation sont actuellement masqués."
+
+msgid "{count} images contain hidden blur or pixelation effects."
+msgstr "{count} images contiennent des effets de flou ou de pixelisation masqués."
+
+msgid "The copied image could reveal information you meant to hide."
+msgstr "L’image copiée pourrait révéler des informations que vous souhaitiez cacher."
+
+msgid "The copied images could reveal information you meant to hide."
+msgstr "Les images copiées pourraient révéler des informations que vous souhaitiez cacher."
+
+msgid "The exported image could reveal information you meant to hide."
+msgstr "L’image exportée pourrait révéler des informations que vous souhaitiez cacher."
+
+msgid "The exported images could reveal information you meant to hide."
+msgstr "Les images exportées pourraient révéler des informations que vous souhaitiez cacher."
+
+msgid "The opened image could reveal information you meant to hide."
+msgstr "L’image ouverte pourrait révéler des informations que vous souhaitiez cacher."
+
+msgid "The opened images could reveal information you meant to hide."
+msgstr "Les images ouvertes pourraient révéler des informations que vous souhaitiez cacher."
+
+msgid "_Copy Anyway"
+msgstr "_Copier quand même"
+
+msgid "_Export Anyway"
+msgstr "_Exporter quand même"
+
+msgid "_Open Anyway"
+msgstr "_Ouvrir quand même"
+
+msgid "_Show Hidden Effects"
+msgstr "_Afficher les effets masqués"
+
+msgid "To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects."
+msgstr "Pour faire glisser « {name} » hors de Pigoune, affichez d’abord les effets de flou ou de pixelisation masqués."
+
+msgid "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects."
+msgstr "Pour faire glisser {count} images hors de Pigoune, affichez d’abord leurs effets de flou ou de pixelisation masqués."
+
+msgid "The annotated image could not be created"
+msgstr "L’image annotée n’a pas pu être créée"
+
+msgid "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr "L’export est incomplet. {exported} fichiers ont été exportés dans « {folder} », mais {count} n’ont pas pu être créés :\n\n{list}"
+
+msgid "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included."
+msgstr "L’export contient toutes les images d’origine, qui peuvent encore montrer ce que les annotations cachent, et une copie de chaque image annotée, annotations incluses."
+
+msgid "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and give them a precise, sketchy or very sketchy hand-drawn look."
+msgstr "Dessinez des formes, des lignes et des flèches avec un trait continu, en tirets ou pointillé, et donnez-leur un aspect précis, esquissé ou très esquissé, comme dessiné à la main."
+
+msgid "“{name}” contains hidden blur or pixelation effects."
+msgstr "« {name} » contient des effets de flou ou de pixelisation masqués."

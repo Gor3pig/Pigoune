@@ -32,6 +32,26 @@ software centers, the launcher and the settings descriptions. The other language
 In French, write a non-breaking space inside « » and before `:`, `;`, `?` and `!`, so a line
 break never separates them from the word. `./check.sh` checks the guillemets.
 
+## Glossary of the annotation editor
+
+Use one word for one idea, and name things by what the user sees.
+
+| English | Meaning | Note |
+|---|---|---|
+| annotation | anything drawn on an image | the whole set is the "annotations" |
+| layer | one annotation in the Layers panel | |
+| blur or pixelation effect | what hides information | always named explicitly; never replace it by a vague word that could suggest a privacy guarantee |
+| hide / show | visibility of a layer | only for visibility |
+| lock / unlock | forbid changes to a layer | |
+| annotated image / original image | the picture with its annotations / the untouched file | |
+| save / export / copy | to the library / to a file / to the clipboard | |
+| take a screenshot | the capture action | |
+| line type | solid, dashed or dotted stroke | |
+| hand-drawn look | precise, sketchy or very sketchy | |
+
+Translate these ideas naturally rather than word for word, and keep the same word for the same
+idea everywhere in your language.
+
 ## Adding a new language
 
 1. Create the file from the template, replacing `de` with your language code:

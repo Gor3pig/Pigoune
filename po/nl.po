@@ -1620,10 +1620,6 @@ msgstr "Dekking"
 msgid "Thickness"
 msgstr "Dikte"
 
-#: crates/pigoune-app/src/editor_options.rs:47
-msgid "Line Style"
-msgstr "Lijnstijl"
-
 #: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
 msgstr "Kromming"
@@ -8491,29 +8487,8 @@ msgstr "Verbergen"
 msgid "Unlock"
 msgstr "Ontgrendelen"
 
-msgid "A mask is hidden, so the image would show what it covers"
-msgstr "Een maskering is verborgen: de afbeelding zou tonen wat ze bedekt"
-
-msgid "“{name}” is hidden: the image will show what it covers."
-msgstr "“{name}” is verborgen: de afbeelding toont wat het bedekt."
-
-msgid "{count} masks are hidden: the image will show what they cover."
-msgstr "{count} maskeringen zijn verborgen: de afbeelding toont wat ze bedekken."
-
-msgid "A Mask Is Hidden"
-msgstr "Een maskering is verborgen"
-
-msgid "Continue _Anyway"
-msgstr "Toch _doorgaan"
-
-msgid "_Show the Masks"
-msgstr "Maskeringen _tonen"
-
 msgid "Lock"
 msgstr "Vergrendelen"
-
-msgid "The annotated image could not be rendered"
-msgstr "De geannoteerde afbeelding kon niet worden gemaakt"
 
 msgid "Animated images cannot be annotated yet"
 msgstr "Geanimeerde afbeeldingen kunnen nog niet worden geannoteerd"
@@ -8536,17 +8511,8 @@ msgstr "(geannoteerd)"
 msgid "Export the Original Images Too?"
 msgstr "Ook de originele afbeeldingen exporteren?"
 
-msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
-msgstr "De export bevat elke originele afbeelding, die nog kan tonen wat de annotaties verbergen, en een afgevlakte kopie van elke geannoteerde afbeelding."
-
 msgid "_Discard and Capture"
 msgstr "_Verwerpen en maken"
-
-msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
-msgstr "Toon de verborgen maskeringen van “{name}” voordat u de afbeelding uit Pigoune sleept"
-
-msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
-msgstr "Toon de verborgen maskeringen van {count} afbeeldingen voordat u ze uit Pigoune sleept"
 
 msgid "The annotated image is still being prepared. Try dragging it again in a moment"
 msgstr "De geannoteerde afbeelding wordt nog voorbereid. Probeer het zo meteen opnieuw"
@@ -8556,9 +8522,6 @@ msgstr "de geannoteerde versie kon niet worden gemaakt"
 
 msgid "Export Incomplete"
 msgstr "Export onvolledig"
-
-msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
-msgstr "De export is gedeeltelijk. {exported} bestanden zijn geëxporteerd naar “{folder}”, maar {count} konden niet worden gemaakt:\n\n{list}"
 
 msgid "Annotate the Selected Image"
 msgstr "De geselecteerde afbeelding annoteren"
@@ -8577,3 +8540,75 @@ msgstr "Schetsmatig"
 
 msgid "Very Sketchy"
 msgstr "Zeer schetsmatig"
+
+msgid "Some Information May Be Visible"
+msgstr "Sommige informatie kan zichtbaar zijn"
+
+msgid "Some information may be visible."
+msgstr "Sommige informatie kan zichtbaar zijn."
+
+msgid "A blur or pixelation effect is hidden."
+msgstr "Een vervagings- of pixeleffect is verborgen."
+
+msgid "{count} blur or pixelation effects are hidden."
+msgstr "{count} vervagings- of pixeleffecten zijn verborgen."
+
+msgid "A blur or pixelation effect is currently hidden."
+msgstr "Een vervagings- of pixeleffect is momenteel verborgen."
+
+msgid "{count} blur or pixelation effects are currently hidden."
+msgstr "{count} vervagings- of pixeleffecten zijn momenteel verborgen."
+
+msgid "{count} images contain hidden blur or pixelation effects."
+msgstr "{count} afbeeldingen bevatten verborgen vervagings- of pixeleffecten."
+
+msgid "The copied image could reveal information you meant to hide."
+msgstr "De gekopieerde afbeelding kan informatie onthullen die u wilde verbergen."
+
+msgid "The copied images could reveal information you meant to hide."
+msgstr "De gekopieerde afbeeldingen kunnen informatie onthullen die u wilde verbergen."
+
+msgid "The exported image could reveal information you meant to hide."
+msgstr "De geëxporteerde afbeelding kan informatie onthullen die u wilde verbergen."
+
+msgid "The exported images could reveal information you meant to hide."
+msgstr "De geëxporteerde afbeeldingen kunnen informatie onthullen die u wilde verbergen."
+
+msgid "The opened image could reveal information you meant to hide."
+msgstr "De geopende afbeelding kan informatie onthullen die u wilde verbergen."
+
+msgid "The opened images could reveal information you meant to hide."
+msgstr "De geopende afbeeldingen kunnen informatie onthullen die u wilde verbergen."
+
+msgid "_Copy Anyway"
+msgstr "Toch _kopiëren"
+
+msgid "_Export Anyway"
+msgstr "Toch _exporteren"
+
+msgid "_Open Anyway"
+msgstr "Toch _openen"
+
+msgid "_Show Hidden Effects"
+msgstr "Verborgen effecten _tonen"
+
+msgid "To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects."
+msgstr "Om “{name}” uit Pigoune te slepen, toont u eerst de verborgen vervagings- of pixeleffecten."
+
+msgid "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects."
+msgstr "Om {count} afbeeldingen uit Pigoune te slepen, toont u eerst hun verborgen vervagings- of pixeleffecten."
+
+msgid "The annotated image could not be created"
+msgstr "De geannoteerde afbeelding kon niet worden gemaakt"
+
+msgid "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr "De export is onvolledig. {exported} bestanden zijn geëxporteerd naar “{folder}”, maar {count} konden niet worden gemaakt:\n\n{list}"
+
+msgid "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included."
+msgstr "De export bevat elke originele afbeelding, die nog kan tonen wat de annotaties verbergen, en een kopie van elke geannoteerde afbeelding met de annotaties erin."
+
+msgid "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and give them a precise, sketchy or very sketchy hand-drawn look."
+msgstr ""
+
+msgid "“{name}” contains hidden blur or pixelation effects."
+msgstr "“{name}” bevat verborgen vervagings- of pixeleffecten."

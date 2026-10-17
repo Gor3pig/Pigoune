@@ -60,7 +60,7 @@ use crate::host_path;
 use crate::image_conversion::{self, ConversionSettings};
 use crate::import_report;
 use crate::library_info_dialog::{LibraryReport, PigouneLibraryInfoDialog};
-use crate::mask_alert::{self, MaskChoice};
+use crate::mask_alert::{self, MaskChoice, Operation, Scope};
 use crate::new_library_dialog::PigouneNewLibraryDialog;
 use crate::pasted_content::{self, Pasted};
 use crate::preferences_dialog;
@@ -1008,7 +1008,7 @@ impl PigouneWindow {
                 natural_size(asset),
             ));
         };
-        let unavailable = || gettext("The annotated image could not be rendered");
+        let unavailable = || gettext("The annotated image could not be created");
         let file = annotated_files::ensure(render, asset.source_file(), self)
             .await
             .ok_or_else(unavailable)?;
@@ -1031,9 +1031,11 @@ impl PigouneWindow {
             .collect()
     }
 
-    async fn output_is_allowed(&self, ids: &[AssetId]) -> bool {
+    async fn output_is_allowed(&self, ids: &[AssetId], operation: Operation) -> bool {
         let names = self.exposed_mask_names(ids);
-        names.is_empty() || mask_alert::ask(self, &names, false).await == MaskChoice::Continue
+        names.is_empty()
+            || mask_alert::ask(self, &Scope::Images(names), operation, false).await
+                == MaskChoice::Continue
     }
 
     fn offer_export_copies(&self) {
@@ -3546,7 +3548,7 @@ impl PigouneWindow {
         if selected.is_empty() {
             return;
         }
-        if !self.output_is_allowed(&selected).await {
+        if !self.output_is_allowed(&selected, Operation::Copy).await {
             return;
         }
         let flats = self.flat_files_for(&selected).await;
@@ -3781,7 +3783,7 @@ impl PigouneWindow {
         let Some(path) = folder.path() else {
             return;
         };
-        if !self.output_is_allowed(&selected).await {
+        if !self.output_is_allowed(&selected, Operation::Export).await {
             return;
         }
         let flats = self.flat_files_for(&selected).await;
@@ -3901,7 +3903,7 @@ impl PigouneWindow {
         let dialog = adw::AlertDialog::new(
             Some(&gettext("Export the Original Images Too?")),
             Some(&gettext(
-                "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image.",
+                "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included.",
             )),
         );
         dialog.add_response("cancel", &gettext("_Cancel"));
@@ -3979,7 +3981,7 @@ impl PigouneWindow {
         settings: ConversionSettings,
     ) {
         let ids: Vec<AssetId> = assets.iter().map(PigouneAssetObject::id).collect();
-        if !self.output_is_allowed(&ids).await {
+        if !self.output_is_allowed(&ids, Operation::Export).await {
             return;
         }
         let dialog = gtk::FileDialog::builder()
@@ -4078,7 +4080,7 @@ impl PigouneWindow {
     }
 
     async fn open_asset(&self, asset: AssetId, choose_application: bool) {
-        if !self.output_is_allowed(&[asset]).await {
+        if !self.output_is_allowed(&[asset], Operation::Open).await {
             return;
         }
         let flats = self.flat_files_for(&[asset]).await;
@@ -4114,7 +4116,7 @@ impl PigouneWindow {
             return;
         }
         let Ok((file, is_vector, natural)) = self.output_source(asset).await else {
-            self.show_toast(&gettext("The annotated image could not be rendered"));
+            self.show_toast(&gettext("The annotated image could not be created"));
             return;
         };
         let (mut screens, current) = screen_size::screens_of(self);

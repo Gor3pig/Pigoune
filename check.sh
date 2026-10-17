@@ -78,6 +78,15 @@ french_guillemets_use_non_breaking_spaces() {
     fi
 }
 
+french_typography_is_consistent() {
+    local found
+    found=$(grep -nP '^msgstr ".*(\w\x27\w| [:?!;](\s|\\n|"|$)|[Pp]ixellis)' po/fr.po || true)
+    if [ -n "$found" ]; then
+        printf 'po/fr.po: use a typographic apostrophe, a non-breaking space before : ? ! ; and the spelling pixelisation on these lines:\n%s\n' "$found"
+        return 1
+    fi
+}
+
 FULLY_TRANSLATED_LANGUAGE=fr
 
 translations_are_complete() {
@@ -136,6 +145,7 @@ step "AppStream metainfo" validate_metainfo
 step "Translatable files are listed" translatable_files_are_listed
 step "Translations are complete" translations_are_complete
 step "French guillemets" french_guillemets_use_non_breaking_spaces
+step "French typography" french_typography_is_consistent
 
 printf '\n'
 if [ ${#failures[@]} -eq 0 ]; then

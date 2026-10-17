@@ -45,7 +45,7 @@ pub fn partial_body(exported: usize, folder: &str, missing: &[Failure]) -> Strin
         .map(|failure| format!("{}: {}", failure.name, failure.reason))
         .collect();
     gettext(
-        "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}",
+        "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}",
     )
     .replace("{exported}", &exported.to_string())
     .replace("{folder}", folder)
@@ -93,7 +93,7 @@ mod tests {
         assert_eq!(missing[0].name, "Holiday");
         assert!(missing[0].reason.contains("annotated version"));
         let body = partial_body(exported, "Library", &missing);
-        assert!(body.contains("partial") && body.contains("Holiday") && body.contains('4'));
+        assert!(body.contains("incomplete") && body.contains("Holiday") && body.contains('4'));
     }
 
     #[test]

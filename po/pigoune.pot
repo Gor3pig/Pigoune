@@ -1616,10 +1616,6 @@ msgstr ""
 msgid "Thickness"
 msgstr ""
 
-#: crates/pigoune-app/src/editor_options.rs:47
-msgid "Line Style"
-msgstr ""
-
 #: crates/pigoune-app/src/editor_options.rs:48
 msgid "Curve"
 msgstr ""
@@ -7998,35 +7994,7 @@ msgid "Unlock"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "A mask is hidden, so the image would show what it covers"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "“{name}” is hidden: the image will show what it covers."
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "{count} masks are hidden: the image will show what they cover."
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "A Mask Is Hidden"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Continue _Anyway"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "_Show the Masks"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
 msgid "Lock"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "The annotated image could not be rendered"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
@@ -8058,19 +8026,7 @@ msgid "Export the Original Images Too?"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
-msgid "The export contains every original image, which may still show what the annotations hide, and a flattened copy of each annotated image."
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
 msgid "_Discard and Capture"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
@@ -8083,10 +8039,6 @@ msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
 msgid "Export Incomplete"
-msgstr ""
-
-#: crates/pigoune-app/src/layers_panel.rs
-msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
 msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
@@ -8111,4 +8063,100 @@ msgstr ""
 
 #: crates/pigoune-app/src/editor_options.rs
 msgid "Very Sketchy"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "Some Information May Be Visible"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "Some information may be visible."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "A blur or pixelation effect is hidden."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "{count} blur or pixelation effects are hidden."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "A blur or pixelation effect is currently hidden."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "{count} blur or pixelation effects are currently hidden."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "{count} images contain hidden blur or pixelation effects."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The copied image could reveal information you meant to hide."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The copied images could reveal information you meant to hide."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The exported image could reveal information you meant to hide."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The exported images could reveal information you meant to hide."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The opened image could reveal information you meant to hide."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The opened images could reveal information you meant to hide."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "_Copy Anyway"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "_Export Anyway"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "_Open Anyway"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "_Show Hidden Effects"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "To drag “{name}” out of Pigoune, first show its hidden blur or pixelation effects."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "To drag {count} images out of Pigoune, first show their hidden blur or pixelation effects."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The annotated image could not be created"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The export is incomplete. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "The export contains every original image, which may still show what the annotations hide, and a copy of each annotated image with its annotations included."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:110
+msgid "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and give them a precise, sketchy or very sketchy hand-drawn look."
+msgstr ""
+
+#: crates/pigoune-app/src/mask_alert.rs
+msgid "“{name}” contains hidden blur or pixelation effects."
 msgstr ""
