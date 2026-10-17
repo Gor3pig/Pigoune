@@ -927,4 +927,7 @@ fn rendering_suite() {
     crate::editor::panel_tests::the_panels_only_change_what_is_visible();
     crate::editor::panel_tests::hiding_an_effect_shows_nothing_and_leaves_the_canvas_alone();
     crate::editor::panel_tests::the_sidebar_button_stays_where_it_is();
+    crate::zoom_comparison_tests::the_original_fades_in_inside_the_frame_of_the_annotated_image(
+        &rig.renderer,
+    );
 }

@@ -4,6 +4,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::{gdk, glib, graphene, gsk};
 
+use crate::compare_hold::{self, Region};
 use crate::zoom_math::{self, Point, Size};
 
 const WHEEL_ZOOM_FACTOR: f64 = 1.25;
@@ -37,7 +38,7 @@ mod imp {
     use gtk::prelude::*;
     use gtk::{gdk, glib};
 
-    use super::{OverlayCallback, PointerCallback, ZoomChangedCallback};
+    use super::{OverlayCallback, PointerCallback, Region, ZoomChangedCallback};
     use crate::zoom_math::{Point, Size};
 
     pub struct PigouneZoomView {
@@ -64,6 +65,8 @@ mod imp {
         pub ctrl_held: Cell<bool>,
         pub drag_origin: Cell<Point>,
         pub cursor_override: RefCell<Option<String>>,
+        pub comparison: RefCell<Option<(gdk::Texture, Region)>>,
+        pub comparison_progress: Cell<f64>,
     }
 
     impl Default for PigouneZoomView {
@@ -98,6 +101,8 @@ mod imp {
                 ctrl_held: Cell::default(),
                 drag_origin: Cell::new(Point { x: 0.0, y: 0.0 }),
                 cursor_override: RefCell::default(),
+                comparison: RefCell::default(),
+                comparison_progress: Cell::default(),
             }
         }
     }
@@ -227,6 +232,28 @@ impl PigouneZoomView {
             imp.image.set(imp.full.get());
         }
         self.fit_to_view();
+    }
+
+    pub fn set_comparison(&self, layer: Option<(gdk::Texture, Region)>) {
+        let imp = self.imp();
+        imp.comparison.replace(layer);
+        imp.comparison_progress.set(0.0);
+        self.queue_draw();
+    }
+
+    pub fn set_comparison_progress(&self, progress: f64) {
+        let imp = self.imp();
+        let progress = if imp.comparison.borrow().is_some() {
+            progress.clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        imp.comparison_progress.set(progress);
+        self.queue_draw();
+    }
+
+    pub fn comparison_progress(&self) -> f64 {
+        self.imp().comparison_progress.get()
     }
 
     pub fn texture(&self) -> Option<gdk::Texture> {
@@ -446,7 +473,26 @@ impl PigouneZoomView {
             gsk::ScalingFilter::Trilinear
         };
         snapshot.push_clip(&bounds);
-        snapshot.append_scaled_texture(&texture, filter, &whole);
+        let layer = imp.comparison.borrow().clone();
+        let progress = imp.comparison_progress.get();
+        match layer.filter(|_| progress > 0.0) {
+            Some((original, region)) => {
+                snapshot.push_cross_fade(progress.min(1.0));
+                snapshot.append_scaled_texture(&texture, filter, &whole);
+                snapshot.pop();
+                let (x, y, width, height) = compare_hold::destination(
+                    (bounds.x(), bounds.y(), bounds.width(), bounds.height()),
+                    region,
+                );
+                snapshot.append_scaled_texture(
+                    &original,
+                    filter,
+                    &graphene::Rect::new(x, y, width, height),
+                );
+                snapshot.pop();
+            }
+            None => snapshot.append_scaled_texture(&texture, filter, &whole),
+        }
         snapshot.pop();
         if imp.shows_pixel_grid.get() && zoom_math::shows_pixel_grid(zoom, imp.is_vector.get()) {
             self.draw_pixel_grid(snapshot, &bounds, zoom);

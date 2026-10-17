@@ -106,7 +106,8 @@ Faites une capture d'écran, collez une image ou ouvrez n'importe quelle image f
 bibliothèque, puis annotez-la dans un éditeur intégré à votre bibliothèque : formes (trait continu, en tirets ou pointillé, aspect esquissé en option), flèches
 courbes, textes, étapes numérotées, projecteur, et flou ou pixelisation pour cacher ce qui est
 privé. L'image elle-même n'est jamais modifiée : les annotations sont conservées avec elle et
-peuvent être rouvertes et modifiées plus tard. Copier, glisser ou exporter une image annotée donne
+peuvent être rouvertes et modifiées plus tard ; dans l'aperçu détaillé, un bouton maintenu
+montre l'original tant que vous appuyez. Copier, glisser ou exporter une image annotée donne
 un PNG aplati, et l'export de toute la bibliothèque donne chaque original plus une copie aplatie de
 chaque image annotée.
 

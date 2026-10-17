@@ -6,11 +6,13 @@ use adw::subclass::prelude::*;
 use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene};
 
+use pigoune_core::annotations::AnnotationDocument;
 use pigoune_core::{Asset, AssetFormat, Dimensions};
 
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::compare_hold::{Comparison, Original, PressOutcome, region_of};
 use crate::shortcuts;
 use crate::swipe_steps;
 use crate::thumbnails::{self, ThumbnailCache};
@@ -29,6 +31,7 @@ const FAVORITE_STYLE: &str = "favorite";
 const FLOATING_HEADER: &str = "floating";
 const MOUSE_BACK_BUTTON: u32 = 8;
 const MOUSE_FORWARD_BUTTON: u32 = 9;
+const COMPARE_FADE_MS: u32 = 180;
 
 type ClosedCallback = Box<dyn Fn(Option<PigouneAssetObject>)>;
 type ShownCallback = Box<dyn Fn(&PigouneAssetObject)>;
@@ -128,6 +131,15 @@ mod imp {
         pub position: Cell<u32>,
         pub thumbnails: RefCell<Option<Rc<ThumbnailCache>>>,
         pub loading: RefCell<Option<glib::JoinHandle<()>>>,
+        #[template_child]
+        pub compare_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub compare_stack: TemplateChild<gtk::Stack>,
+        pub compare: Cell<crate::compare_hold::Comparison>,
+        pub compare_region: Cell<Option<crate::compare_hold::Region>>,
+        pub compare_loading: RefCell<Option<glib::JoinHandle<()>>>,
+        pub compare_animation: RefCell<Option<adw::TimedAnimation>>,
+        pub compare_window: RefCell<Option<(glib::WeakRef<gtk::Window>, glib::SignalHandlerId)>>,
         pub player: RefCell<Option<AnimationPlayer>>,
         pub paused_frame: RefCell<Option<(gdk::Texture, usize)>>,
         pub on_closed: RefCell<Option<ClosedCallback>>,
@@ -367,6 +379,7 @@ mod imp {
             self.obj().take_focus_on_click();
             self.obj().follow_strip();
             self.obj().refocus_after_menus();
+            self.obj().listen_to_comparison();
         }
     }
     impl WidgetImpl for PigouneAssetPreview {}
@@ -469,6 +482,9 @@ impl PigouneAssetPreview {
     }
 
     pub fn close(&self) {
+        self.release_comparison();
+        self.imp().zoom_view.set_comparison(None);
+        self.imp().compare_loading.take();
         self.set_fullscreen(false);
         let last = self.imp().showing.borrow().clone();
         if let Some(on_closed) = self.imp().on_closed.borrow().as_ref() {
@@ -1068,6 +1084,7 @@ impl PigouneAssetPreview {
         imp.zoom_view
             .show_image(remembered.as_ref(), width, height, is_vector);
         imp.showing.replace(Some(asset.clone()));
+        self.reset_comparison(&asset);
         if let Some(on_shown) = imp.on_shown.borrow().as_ref() {
             on_shown(&asset);
         }
@@ -1166,6 +1183,256 @@ impl PigouneAssetPreview {
         imp.loading.replace(Some(loading));
     }
 
+    fn listen_to_comparison(&self) {
+        let imp = self.imp();
+        let click = gtk::GestureClick::new();
+        click.set_propagation_phase(gtk::PropagationPhase::Capture);
+        click.connect_pressed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, _, _, _| preview.press_comparison()
+        ));
+        let preview = self.downgrade();
+        let release = move || {
+            if let Some(preview) = preview.upgrade() {
+                preview.release_comparison();
+            }
+        };
+        let on_released = release.clone();
+        click.connect_released(move |_, _, _, _| on_released());
+        let on_cancel = release.clone();
+        click.connect_cancel(move |_, _| on_cancel());
+        click.connect_unpaired_release(move |_, _, _, _, _| release());
+        imp.compare_button.add_controller(click);
+
+        let motion = gtk::EventControllerMotion::new();
+        motion.connect_leave(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_| preview.release_comparison()
+        ));
+        imp.compare_button.add_controller(motion);
+
+        let focus = gtk::EventControllerFocus::new();
+        focus.connect_leave(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_| preview.release_comparison()
+        ));
+        imp.compare_button.add_controller(focus);
+
+        let keys = gtk::EventControllerKey::new();
+        keys.set_propagation_phase(gtk::PropagationPhase::Capture);
+        keys.connect_key_pressed(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            #[upgrade_or]
+            glib::Propagation::Proceed,
+            move |_, key, _, _| {
+                if !is_hold_key(key) {
+                    return glib::Propagation::Proceed;
+                }
+                if !preview.imp().compare.get().is_held() {
+                    preview.press_comparison();
+                }
+                glib::Propagation::Stop
+            }
+        ));
+        keys.connect_key_released(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |_, key, _, _| {
+                if is_hold_key(key) {
+                    preview.release_comparison();
+                }
+            }
+        ));
+        imp.compare_button.add_controller(keys);
+
+        self.connect_unmap(Self::release_comparison);
+        self.connect_map(Self::follow_window_activity);
+    }
+
+    fn follow_window_activity(&self) {
+        let imp = self.imp();
+        let Some(window) = self.window() else {
+            return;
+        };
+        if let Some((previous, handler)) = imp.compare_window.take()
+            && let Some(previous) = previous.upgrade()
+        {
+            previous.disconnect(handler);
+        }
+        let handler = window.connect_is_active_notify(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            move |window| {
+                if !window.is_active() {
+                    preview.release_comparison();
+                }
+            }
+        ));
+        imp.compare_window
+            .replace(Some((window.downgrade(), handler)));
+    }
+
+    fn reset_comparison(&self, asset: &PigouneAssetObject) {
+        let imp = self.imp();
+        self.release_comparison();
+        if let Some(loading) = imp.compare_loading.take() {
+            loading.abort();
+        }
+        imp.zoom_view.set_comparison(None);
+        let Some(render) = asset.annotation() else {
+            imp.compare.set(Comparison::default());
+            imp.compare_region.set(None);
+            imp.compare_button.set_visible(false);
+            return;
+        };
+        let size = asset
+            .asset()
+            .dimensions
+            .map(|dimensions| (dimensions.width(), dimensions.height()));
+        let crop = AnnotationDocument::from_json(&render.document)
+            .ok()
+            .map(|document| document.crop);
+        let region = match crop {
+            Some(crop) => region_of(
+                crop.map(|crop| {
+                    (
+                        f64::from(crop.x),
+                        f64::from(crop.y),
+                        f64::from(crop.width),
+                        f64::from(crop.height),
+                    )
+                }),
+                size,
+            ),
+            None => None,
+        };
+        let available = region.is_some() && asset.source_file().is_file();
+        let pixels = size.map(|(width, height)| u64::from(width) * u64::from(height));
+        let mut comparison = imp.compare.get();
+        let generation = comparison.show_image(available, pixels);
+        imp.compare.set(comparison);
+        imp.compare_region.set(region);
+        imp.compare_button.set_visible(true);
+        self.update_comparison_button();
+        if comparison.original() == Original::Preparing {
+            self.load_original(generation);
+        }
+    }
+
+    fn load_original(&self, generation: u64) {
+        let imp = self.imp();
+        let Some(asset) = imp.showing.borrow().clone() else {
+            return;
+        };
+        let file = asset.source_file().to_path_buf();
+        let pixels = self.render_pixels();
+        if let Some(loading) = imp.compare_loading.take() {
+            loading.abort();
+        }
+        let loading = glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = preview)]
+            self,
+            async move {
+                let detailed = thumbnails::load_detailed(&file, pixels).await;
+                preview.original_loaded(generation, detailed.map(|detailed| detailed.texture));
+            }
+        ));
+        imp.compare_loading.replace(Some(loading));
+    }
+
+    fn original_loaded(&self, generation: u64, texture: Option<gdk::Texture>) {
+        let imp = self.imp();
+        let mut comparison = imp.compare.get();
+        if comparison.generation() != generation {
+            return;
+        }
+        let region = imp.compare_region.get();
+        let usable = texture.is_some() && region.is_some();
+        if let (Some(texture), Some(region)) = (texture, region) {
+            imp.zoom_view.set_comparison(Some((texture, region)));
+        }
+        let reveal = comparison.loaded(generation, usable);
+        imp.compare.set(comparison);
+        self.update_comparison_button();
+        if reveal {
+            self.reveal_original();
+        }
+    }
+
+    fn press_comparison(&self) {
+        let imp = self.imp();
+        let mut comparison = imp.compare.get();
+        let outcome = comparison.press();
+        let generation = comparison.generation();
+        imp.compare.set(comparison);
+        self.update_comparison_button();
+        match outcome {
+            PressOutcome::Reveal => self.reveal_original(),
+            PressOutcome::StartLoading => self.load_original(generation),
+            PressOutcome::Wait | PressOutcome::Nothing => {}
+        }
+    }
+
+    fn release_comparison(&self) {
+        let imp = self.imp();
+        let mut comparison = imp.compare.get();
+        comparison.release();
+        imp.compare.set(comparison);
+        if let Some(animation) = imp.compare_animation.take() {
+            animation.pause();
+        }
+        imp.zoom_view.set_comparison_progress(0.0);
+        self.update_comparison_button();
+    }
+
+    fn reveal_original(&self) {
+        let imp = self.imp();
+        if !imp.compare.get().revealed() {
+            return;
+        }
+        let preview = self.downgrade();
+        let target = adw::CallbackAnimationTarget::new(move |progress| {
+            let Some(preview) = preview.upgrade() else {
+                return;
+            };
+            let imp = preview.imp();
+            let shown = if imp.compare.get().revealed() {
+                progress
+            } else {
+                0.0
+            };
+            imp.zoom_view.set_comparison_progress(shown);
+        });
+        let animation = adw::TimedAnimation::builder()
+            .widget(&*imp.zoom_view)
+            .value_from(0.0)
+            .value_to(1.0)
+            .duration(COMPARE_FADE_MS)
+            .easing(adw::Easing::EaseOutCubic)
+            .target(&target)
+            .build();
+        animation.play();
+        imp.compare_animation.replace(Some(animation));
+    }
+
+    fn update_comparison_button(&self) {
+        let imp = self.imp();
+        let comparison = imp.compare.get();
+        let unavailable = comparison.original() == Original::Unavailable;
+        imp.compare_button.set_sensitive(!unavailable);
+        imp.compare_button.set_tooltip_text(Some(&if unavailable {
+            gettext("The original image is not available")
+        } else {
+            gettext("Hold to See the Original Image")
+        }));
+        imp.compare_stack
+            .set_visible_child_name(if comparison.waiting() { "busy" } else { "icon" });
+    }
+
     fn show_load_failure(&self, has_thumbnail: bool) {
         let banner = &self.imp().load_banner;
         banner.set_title(&if has_thumbnail {
@@ -1232,6 +1499,13 @@ impl Default for PigouneAssetPreview {
     fn default() -> Self {
         glib::Object::new()
     }
+}
+
+fn is_hold_key(key: gdk::Key) -> bool {
+    matches!(
+        key,
+        gdk::Key::space | gdk::Key::Return | gdk::Key::KP_Enter | gdk::Key::KP_Space
+    )
 }
 
 fn placeholder_size(asset: &PigouneAssetObject, thumbnail: Option<&gdk::Texture>) -> (u32, u32) {
