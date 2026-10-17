@@ -471,11 +471,12 @@ fn straight_rgba(texture: &gdk::Texture) -> Vec<u8> {
     downloader.set_format(gdk::MemoryFormat::R8g8b8a8);
     let (bytes, stride) = downloader.download_bytes();
     let row_length = usize::try_from(texture.width()).unwrap_or(0) * RGBA_CHANNELS;
-    bytes
-        .chunks(stride)
-        .flat_map(|row| &row[..row_length.min(row.len())])
-        .copied()
-        .collect()
+    let rows = usize::try_from(texture.height()).unwrap_or(0);
+    let mut pixels = Vec::with_capacity(row_length * rows);
+    for row in bytes.chunks(stride.max(1)) {
+        pixels.extend_from_slice(&row[..row_length.min(row.len())]);
+    }
+    pixels
 }
 
 fn opaque(rgba: &[u8], background: [u8; 3]) -> Vec<u8> {
@@ -801,6 +802,33 @@ mod tests {
         assert_eq!(
             flattened(&rgba, WHITE),
             [255, 255, 255, 255, 0, 0, 127, 127, 127]
+        );
+    }
+
+    #[test]
+    fn a_very_large_picture_is_copied_row_by_row_fast_even_in_an_unoptimized_build() {
+        let (width, height) = (6000_i32, 4000_i32);
+        let row_bytes = usize::try_from(width).expect("positive") * 4;
+        let pixels = vec![200_u8; row_bytes * usize::try_from(height).expect("positive")];
+        let texture = gtk::gdk::MemoryTexture::new(
+            width,
+            height,
+            gtk::gdk::MemoryFormat::R8g8b8a8Premultiplied,
+            &glib::Bytes::from_owned(pixels),
+            row_bytes,
+        );
+
+        let started = std::time::Instant::now();
+        let straight = straight_rgba(&texture.upcast());
+        let elapsed = started.elapsed();
+
+        assert_eq!(
+            straight.len(),
+            row_bytes * usize::try_from(height).expect("positive")
+        );
+        assert!(
+            elapsed < std::time::Duration::from_millis(800),
+            "24 megapixels took {elapsed:?}"
         );
     }
 }

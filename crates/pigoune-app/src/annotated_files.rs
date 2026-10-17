@@ -30,7 +30,7 @@ pub async fn ensure(
     }
     let document = AnnotationDocument::from_json(&render.document).ok()?;
     let texture = load_source(source).await?;
-    let flat = render_flat(&texture, &document, widget)?;
+    let flat = render_flat_yielding(&texture, &document, widget).await?;
     let png = image_conversion::png_bytes(&flat).await.ok()?;
     write_atomically(&render.file, &png).ok()?;
     Some(render.file.clone())
@@ -49,7 +49,7 @@ pub fn png_size(file: &Path) -> Option<(u32, u32)> {
     (&header[1..4] == b"PNG" && width > 0 && height > 0).then_some((width, height))
 }
 
-pub fn render_flat(
+pub async fn render_flat_yielding(
     texture: &gdk::Texture,
     document: &AnnotationDocument,
     widget: &impl IsA<gtk::Widget>,
@@ -61,7 +61,25 @@ pub fn render_flat(
         renderer: &renderer,
         cache: &cache,
     };
-    annotation_export::final_texture(&backdrop, document, &widget.pango_context())
+    annotation_export::final_texture_yielding(&backdrop, document, &widget.pango_context()).await
+}
+
+pub async fn reduced(
+    render: &AnnotationRender,
+    source: &Path,
+    widget: &impl IsA<gtk::Widget>,
+    longest_side: i32,
+) -> Option<gdk::Texture> {
+    let document = AnnotationDocument::from_json(&render.document).ok()?;
+    let texture = load_source(source).await?;
+    let renderer = widget.native()?.renderer()?;
+    let cache = PixelCache::default();
+    let backdrop = Backdrop {
+        texture: &texture,
+        renderer: &renderer,
+        cache: &cache,
+    };
+    annotation_export::reduced_texture(&backdrop, &document, &widget.pango_context(), longest_side)
 }
 
 fn write_atomically(destination: &Path, content: &[u8]) -> std::io::Result<()> {

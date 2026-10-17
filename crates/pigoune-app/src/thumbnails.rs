@@ -78,6 +78,24 @@ pub async fn thumbnail_from(
     Some(texture)
 }
 
+pub async fn thumbnail_drawn(
+    drawn: impl std::future::Future<Output = Option<gdk::Texture>>,
+    thumbnail_file: &Path,
+) -> Option<gdk::Texture> {
+    let slots = LOAD_SLOTS.with(Clone::clone);
+    let _slot = slots.acquire().await;
+    if let Some(stored) = load_stored(thumbnail_file).await {
+        return Some(stored);
+    }
+    let texture = drawn.await?;
+    store(&texture, thumbnail_file);
+    Some(texture)
+}
+
+pub fn side_of_thumbnails() -> i32 {
+    i32::try_from(THUMBNAIL_PIXELS).unwrap_or(i32::MAX)
+}
+
 async fn load_stored(thumbnail_file: &Path) -> Option<gdk::Texture> {
     if !thumbnail_file.is_file() {
         return None;
