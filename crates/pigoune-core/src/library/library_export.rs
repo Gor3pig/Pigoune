@@ -33,6 +33,7 @@ struct FilePlan {
     base_name: String,
     extension: Option<String>,
     source: PathBuf,
+    blocked: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -184,6 +185,7 @@ impl Library {
             base_name: base_name_of(asset),
             extension: original_extension(asset),
             source: self.file_of(asset),
+            blocked: self.sealing_refusal(asset.id).is_some(),
         }
     }
 }
@@ -242,6 +244,12 @@ fn write_folder(
 }
 
 fn copy_file(file: &FilePlan, folder: &Path, taken: &mut HashSet<String>) -> io::Result<()> {
+    if file.blocked {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "the sealing of this image cannot be verified",
+        ));
+    }
     let (mut target, copy) =
         create_free_file(folder, &file.base_name, file.extension.as_deref(), taken)?;
     let copied = File::open(&file.source).and_then(|mut source| io::copy(&mut source, &mut target));

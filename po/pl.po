@@ -8658,3 +8658,63 @@ msgstr "_Pokaż maskowania"
 
 msgid "Lock"
 msgstr "Zablokuj"
+
+msgid "Remove the Marker?"
+msgstr "Usunąć znacznik?"
+
+msgid "This removes the marker from the list. The pixels of the original image are not restored."
+msgstr "Znacznik zniknie z listy. Piksele oryginalnego obrazu nie zostaną przywrócone."
+
+msgid "_Remove"
+msgstr "_Usuń"
+
+msgid "Seal Masks"
+msgstr "Zastosuj maskowania"
+
+msgid "Could Not Seal the Masks"
+msgstr "Nie udało się zastosować maskowań"
+
+msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
+msgstr "Rozmycie i pikselizacja zostaną zastosowane do obrazu na stałe, a historia cofania zostanie wyczyszczona. Rozmycie ani pikselizacja nie gwarantują anonimowości: lekkie rozmycie bywa częściowo możliwe do odtworzenia. Kopie obrazu zapisane gdzie indziej, na przykład pliki, schowek lub kopie zapasowe, nie zostaną zmienione."
+
+msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
+msgstr "Pod maskowaniem: {names}. Po zastosowaniu będą widoczne ostro nad zamaskowanym obrazem."
+
+msgid "The content of {names} stays saved in the document."
+msgstr "Zawartość {names} pozostaje zapisana w dokumencie."
+
+msgid "Seal the Masks?"
+msgstr "Zastosować maskowania?"
+
+msgid "_Seal"
+msgstr "_Zastosuj"
+
+msgid "Seal and _Hide Covered"
+msgstr "Zastosuj i _ukryj zasłonięte"
+
+msgid "There is no visible mask to seal"
+msgstr "Brak widocznego maskowania do zastosowania"
+
+msgid "The image and its masks were left unchanged."
+msgstr "Obraz i jego maskowania nie zostały zmienione."
+
+msgid "Masks sealed"
+msgstr "Maskowania zastosowane"
+
+msgid "the sealing is not finished"
+msgstr "stosowanie nie zostało zakończone"
+
+msgid "the protection cannot be verified"
+msgstr "nie można zweryfikować ochrony"
+
+msgid "Sealed Images Need Attention"
+msgstr "Zamaskowane obrazy wymagają uwagi"
+
+msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
+msgstr "Tych obrazów nie można wyświetlić, skopiować, wyeksportować ani edytować, dopóki ich ochrona nie zostanie zweryfikowana. Nic nie zostało usunięte ani zmienione.\n\n{list}"
+
+msgid "_Finish the Cleanup"
+msgstr "_Dokończ czyszczenie"
+
+msgid "The protection of this image cannot be verified, so it is not shown"
+msgstr "Nie można zweryfikować ochrony tego obrazu, więc nie jest wyświetlany"

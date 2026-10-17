@@ -13,6 +13,7 @@ mod asset_preview;
 mod asset_sort;
 mod asset_tile;
 mod background_import;
+mod blocked_images;
 mod capture_draft;
 mod chart_slices;
 mod clipboard_content;

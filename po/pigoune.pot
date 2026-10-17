@@ -8084,3 +8084,83 @@ msgstr ""
 #: crates/pigoune-app/src/layers_panel.rs
 msgid "Lock"
 msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Remove the Marker?"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "This removes the marker from the list. The pixels of the original image are not restored."
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "_Remove"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Seal Masks"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Could Not Seal the Masks"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "The content of {names} stays saved in the document."
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Seal the Masks?"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "_Seal"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Seal and _Hide Covered"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "There is no visible mask to seal"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "The image and its masks were left unchanged."
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Masks sealed"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "the sealing is not finished"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "the protection cannot be verified"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Sealed Images Need Attention"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "_Finish the Cleanup"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "The protection of this image cannot be verified, so it is not shown"
+msgstr ""

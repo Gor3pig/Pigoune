@@ -24,6 +24,7 @@ pub use library::{
     oldest_compatible_version, query_groups, query_text, query_word_count, same_tag_name,
     thumbnail_cache_bytes_in,
 };
+pub use library::{FinalizeReport, SaveRequest, SealProblem, SealStatus, SealStep};
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,
     VisualAnalysis, VisualDetail, VisualHash, animation_timing, dominant_colors, icon_from_pngs,

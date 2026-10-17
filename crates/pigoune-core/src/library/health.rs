@@ -3,6 +3,7 @@ use std::fs;
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 
+use super::seal::SealStatus;
 use super::{AssetId, Library, LibraryError, content, layout};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,6 +22,7 @@ pub struct HealthPlan {
     root: PathBuf,
     targets: Vec<HealthTarget>,
     originals: Vec<PathBuf>,
+    sealing: Vec<(AssetId, SealStatus)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,12 +44,13 @@ pub struct HealthReport {
     pub missing: Vec<HealthIssue>,
     pub damaged: Vec<HealthIssue>,
     pub unrecorded: Vec<PathBuf>,
+    pub sealing: Vec<(HealthIssue, SealStatus)>,
 }
 
 impl HealthReport {
     #[must_use]
     pub fn problems(&self) -> usize {
-        self.missing.len() + self.damaged.len() + self.unrecorded.len()
+        self.missing.len() + self.damaged.len() + self.unrecorded.len() + self.sealing.len()
     }
 }
 
@@ -76,10 +79,12 @@ impl Library {
             })?
             .collect::<Result<_, _>>()?;
         let originals = self.annotated_originals()?;
+        let sealing = self.seal_attention()?;
         Ok(HealthPlan {
             root: self.root.clone(),
             targets,
             originals,
+            sealing,
         })
     }
 }
@@ -88,13 +93,13 @@ impl Library {
     fn annotated_originals(&self) -> Result<Vec<PathBuf>, LibraryError> {
         let mut statement = self
             .connection
-            .prepare("SELECT asset_id FROM asset_annotations")?;
-        let ids: Vec<AssetId> = statement
-            .query_map([], |row| row.get(0))?
+            .prepare("SELECT asset_id, seal_generation FROM asset_annotations")?;
+        let found: Vec<(AssetId, u32)> = statement
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
             .collect::<Result<_, _>>()?;
-        Ok(ids
+        Ok(found
             .into_iter()
-            .map(|id| PathBuf::from(layout::original_stored_path(id)))
+            .map(|(id, generation)| PathBuf::from(layout::original_generation_path(id, generation)))
             .collect())
     }
 }
@@ -129,6 +134,16 @@ impl HealthPlan {
             return None;
         }
         report.unrecorded = self.unrecorded_files();
+        report.sealing = self
+            .sealing
+            .iter()
+            .filter_map(|(id, status)| {
+                self.targets
+                    .iter()
+                    .find(|target| target.id == *id)
+                    .map(|target| (issue_of(target), *status))
+            })
+            .collect();
         Some(report)
     }
 

@@ -8565,3 +8565,63 @@ msgstr "_Mostra le mascherature"
 
 msgid "Lock"
 msgstr "Blocca"
+
+msgid "Remove the Marker?"
+msgstr "Rimuovere il segnaposto?"
+
+msgid "This removes the marker from the list. The pixels of the original image are not restored."
+msgstr "Il segnaposto viene rimosso dall'elenco. I pixel dell'immagine originale non vengono ripristinati."
+
+msgid "_Remove"
+msgstr "_Rimuovi"
+
+msgid "Seal Masks"
+msgstr "Applica le mascherature"
+
+msgid "Could Not Seal the Masks"
+msgstr "Impossibile applicare le mascherature"
+
+msgid "The blur and the pixelation will be applied to the image for good, and the undo history will be cleared. A blur or a pixelation is not a guaranteed anonymisation: a light blur may still be partly recoverable. Copies of the image kept elsewhere, such as files, the clipboard or backups, are not changed."
+msgstr "La sfocatura e la pixelatura verranno applicate all'immagine in modo definitivo e la cronologia per annullare verrà cancellata. Una sfocatura o una pixelatura non garantisce l'anonimato: una sfocatura leggera può essere in parte recuperabile. Le copie dell'immagine conservate altrove, come file, appunti o backup, non vengono modificate."
+
+msgid "Under a mask: {names}. After sealing, they are shown sharp over the sealed image."
+msgstr "Sotto una mascheratura: {names}. Dopo l'applicazione verranno mostrati nitidi sopra l'immagine mascherata."
+
+msgid "The content of {names} stays saved in the document."
+msgstr "Il contenuto di {names} resta salvato nel documento."
+
+msgid "Seal the Masks?"
+msgstr "Applicare le mascherature?"
+
+msgid "_Seal"
+msgstr "_Applica"
+
+msgid "Seal and _Hide Covered"
+msgstr "Applica e _nascondi gli elementi coperti"
+
+msgid "There is no visible mask to seal"
+msgstr "Nessuna mascheratura visibile da applicare"
+
+msgid "The image and its masks were left unchanged."
+msgstr "L'immagine e le sue mascherature non sono state modificate."
+
+msgid "Masks sealed"
+msgstr "Mascherature applicate"
+
+msgid "the sealing is not finished"
+msgstr "l'applicazione non è terminata"
+
+msgid "the protection cannot be verified"
+msgstr "la protezione non può essere verificata"
+
+msgid "Sealed Images Need Attention"
+msgstr "Alcune immagini mascherate richiedono attenzione"
+
+msgid "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}"
+msgstr "Queste immagini non possono essere mostrate, copiate, esportate o modificate finché la loro protezione non è verificata. Nulla è stato eliminato o modificato.\n\n{list}"
+
+msgid "_Finish the Cleanup"
+msgstr "_Termina la pulizia"
+
+msgid "The protection of this image cannot be verified, so it is not shown"
+msgstr "La protezione di questa immagine non può essere verificata, quindi non viene mostrata"

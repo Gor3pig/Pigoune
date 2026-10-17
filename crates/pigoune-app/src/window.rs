@@ -15,10 +15,10 @@ use pigoune_core::{
     AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId, CollectionLook,
     CollectionPath, CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind,
     HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError,
-    LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
-    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
-    TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors, library_display_name,
-    visual_analysis,
+    LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SealStatus, SimilarSearch,
+    SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
+    TagError, TagId, TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors,
+    library_display_name, visual_analysis,
 };
 
 use crate::analysis_pace;
@@ -26,6 +26,7 @@ use crate::asset_colors;
 use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
+use crate::blocked_images;
 use crate::capture_draft;
 use crate::clipboard_content;
 use crate::collection_choice;
@@ -212,6 +213,7 @@ const IMAGE_MIME_TYPES: [&str; 13] = [
 ];
 
 const CLOSE_RESPONSE: &str = "close";
+const FINISH_SEALING_RESPONSE: &str = "finish";
 const CAPTURE_TAG: &str = "capture";
 const DEFAULT_VECTOR_EXPORT_PIXELS: u32 = 512;
 const OPEN_ANOTHER_RESPONSE: &str = "open-another";
@@ -2023,12 +2025,14 @@ impl PigouneWindow {
             self.recent_libraries_limit(),
         ));
         imp.current_view.set(self.view_on_opening());
+        self.refresh_sealing_guard();
         self.refresh_assets();
         imp.stack.set_visible_child_name(LIBRARY_PAGE);
         imp.import_button.set_visible(true);
         imp.history_buttons.set_visible(true);
         self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
+        self.show_sealing_attention();
         self.offer_draft();
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
@@ -2938,6 +2942,9 @@ impl PigouneWindow {
         let Some(id) = self.annotated_selection() else {
             return;
         };
+        if !self.sealing_allows_output(id) {
+            return;
+        }
         let loaded = self.imp().library.borrow().as_ref().map(|library| {
             Ok::<_, AnnotatedError>((library.original_path(id)?, library.annotation_document(id)?))
         });
@@ -2957,6 +2964,121 @@ impl PigouneWindow {
         }
     }
 
+    fn refresh_sealing_guard(&self) {
+        let paths = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.blocked_paths().ok())
+            .unwrap_or_default();
+        if blocked_images::replace(paths) {
+            self.imp().asset_grid.forget_thumbnails();
+        }
+    }
+
+    fn sealing_allows_output(&self, id: AssetId) -> bool {
+        let verdict = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .map(|library| library.ensure_may_leave(id));
+        match verdict {
+            Some(Err(_)) => {
+                self.show_sealing_attention();
+                false
+            }
+            _ => true,
+        }
+    }
+
+    fn sealing_attention_lines(&self) -> (Vec<String>, bool) {
+        let library = self.imp().library.borrow();
+        let Some(library) = library.as_ref() else {
+            return (Vec::new(), false);
+        };
+        let attention = library.seal_attention().unwrap_or_default();
+        let unfinished = attention
+            .iter()
+            .any(|(_, status)| *status == SealStatus::Finalizing);
+        let lines = attention
+            .iter()
+            .map(|(id, status)| {
+                let name = library
+                    .asset(*id)
+                    .ok()
+                    .flatten()
+                    .map_or_else(String::new, |asset| asset.display_name);
+                let reason = if *status == SealStatus::Finalizing {
+                    gettext("the sealing is not finished")
+                } else {
+                    gettext("the protection cannot be verified")
+                };
+                format!("{name}: {reason}")
+            })
+            .collect();
+        (lines, unfinished)
+    }
+
+    fn show_sealing_attention(&self) {
+        let (lines, unfinished) = self.sealing_attention_lines();
+        if lines.is_empty() {
+            return;
+        }
+        let alert = adw::AlertDialog::new(
+            Some(&gettext("Sealed Images Need Attention")),
+            Some(
+                &gettext(
+                    "These images cannot be shown, copied, exported or edited until their protection is verified. Nothing was deleted or changed.\n\n{list}",
+                )
+                .replace("{list}", &lines.join("\n")),
+            ),
+        );
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        if unfinished {
+            alert.add_response(FINISH_SEALING_RESPONSE, &gettext("_Finish the Cleanup"));
+            alert.set_response_appearance(
+                FINISH_SEALING_RESPONSE,
+                adw::ResponseAppearance::Suggested,
+            );
+        }
+        alert.connect_response(
+            Some(FINISH_SEALING_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| window.finish_sealing()
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn finish_sealing(&self) {
+        let attention = {
+            let mut library = self.imp().library.borrow_mut();
+            let Some(library) = library.as_mut() else {
+                return;
+            };
+            let pending: Vec<AssetId> = library
+                .seal_attention()
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|(_, status)| *status == SealStatus::Finalizing)
+                .map(|(id, _)| id)
+                .collect();
+            for id in pending {
+                let _ = library.finalize_save(id);
+            }
+            true
+        };
+        if attention {
+            self.refresh_sealing_guard();
+            self.refresh_assets();
+            self.show_sealing_attention();
+        }
+    }
+
     fn show_annotation_failure(&self) {
         let alert = adw::AlertDialog::new(
             Some(&gettext("Could Not Open the Annotations")),
@@ -2972,6 +3094,9 @@ impl PigouneWindow {
         let Some(id) = self.annotated_selection() else {
             return;
         };
+        if !self.sealing_allows_output(id) {
+            return;
+        }
         let original = self
             .imp()
             .library
@@ -5643,6 +5768,13 @@ impl PigouneWindow {
             self,
             move |capture| window.save_capture(capture)
         ));
+        self.imp().editor.connect_seal(glib::clone!(
+            #[weak(rename_to = window)]
+            self,
+            #[upgrade_or]
+            false,
+            move |capture| window.persist_seal(capture)
+        ));
         self.imp().editor.connect_notice(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -5650,7 +5782,25 @@ impl PigouneWindow {
         ));
     }
 
-    fn save_edited_annotations(&self, id: AssetId, capture: &EditedCapture) {
+    fn store_edited_annotations(
+        &self,
+        id: AssetId,
+        capture: &EditedCapture,
+    ) -> Option<Result<(), AnnotatedError>> {
+        let stored_generation = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()?
+            .annotations(id)
+            .ok()
+            .flatten()
+            .map_or(0, |annotations| annotations.seal_generation);
+        let sealing = capture
+            .document
+            .seal
+            .as_ref()
+            .is_some_and(|record| record.generation > stored_generation);
         let folder = std::env::temp_dir().join(format!("pigoune-capture-{}", std::process::id()));
         let rendered = folder.join("rendered.png");
         let original = folder.join("source.png");
@@ -5661,18 +5811,32 @@ impl PigouneWindow {
             })
             .and_then(|()| fs::create_dir_all(&folder))
             .and_then(|()| fs::write(&rendered, &capture.rendered))
-            .and_then(|()| fs::write(&original, &capture.original));
+            .and_then(|()| {
+                if sealing {
+                    fs::write(&original, &capture.original)
+                } else {
+                    Ok(())
+                }
+            });
         let stored = match written {
             Ok(()) => self.imp().library.borrow_mut().as_mut().map(|library| {
-                library
-                    .update_annotated(id, &rendered, &capture.document)
-                    .and_then(|()| library.replace_original(id, &original))
+                if sealing {
+                    library.seal_annotated(id, &rendered, &original, &capture.document)
+                } else {
+                    library.update_annotated(id, &rendered, &capture.document)
+                }
             }),
             Err(_) => Some(Err(AnnotatedError::Unreadable(rendered.clone()))),
         };
         let _ = fs::remove_dir_all(&folder);
+        stored
+    }
+
+    fn save_edited_annotations(&self, id: AssetId, capture: &EditedCapture) {
+        let stored = self.store_edited_annotations(id, capture);
         match stored {
             Some(Ok(())) => {
+                self.refresh_sealing_guard();
                 self.imp().asset_grid.forget_thumbnails();
                 self.refresh_assets();
                 self.analyse_colors();
@@ -5688,6 +5852,37 @@ impl PigouneWindow {
             Some(Err(_)) => self.show_capture_not_saved(),
             None => {}
         }
+    }
+
+    fn persist_seal(&self, capture: &EditedCapture) -> bool {
+        let Some(id) = capture.replaces else {
+            return false;
+        };
+        let stored = self.store_edited_annotations(id, capture);
+        let wanted = capture
+            .document
+            .seal
+            .as_ref()
+            .map(|record| record.generation);
+        let sealed = match stored {
+            Some(Ok(())) => true,
+            Some(Err(_)) => self.sealing_reached(id, wanted),
+            None => false,
+        };
+        self.refresh_sealing_guard();
+        sealed
+    }
+
+    fn sealing_reached(&self, id: AssetId, wanted: Option<u32>) -> bool {
+        let mut library = self.imp().library.borrow_mut();
+        let Some(library) = library.as_mut() else {
+            return false;
+        };
+        let _ = library.finalize_save(id);
+        matches!(
+            library.seal_status(id),
+            Ok(SealStatus::Verified { generation }) if Some(generation) == wanted
+        )
     }
 
     fn show_capture_not_saved(&self) {

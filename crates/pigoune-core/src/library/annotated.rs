@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 
 use rusqlite::{Connection, OptionalExtension, params};
@@ -6,9 +5,9 @@ use rusqlite::{Connection, OptionalExtension, params};
 use super::content::{self, ContentDigest};
 use super::import::{self, PreparedFile};
 use super::import_batch::ImportBatch;
+use super::seal::SaveRequest;
 use super::staging::StagingDir;
-use super::trash::forget_thumbnails;
-use super::{AnnotatedError, AssetId, Library, clock, details_store, layout};
+use super::{AnnotatedError, AssetId, Library, clock, layout};
 use crate::annotations::AnnotationDocument;
 use crate::media::{self, AssetFormat};
 
@@ -24,6 +23,7 @@ pub struct Annotations {
     pub document: String,
     pub has_masks: bool,
     pub updated_at_unix_ms: i64,
+    pub seal_generation: u32,
 }
 
 impl Library {
@@ -33,10 +33,17 @@ impl Library {
     ) -> Result<AssetId, AnnotatedError> {
         let stored_document = image.document.to_json()?;
         let prepared = prepared_png(image.rendered)?;
-        if prepared.original_file_name() == layout::ORIGINAL_FILE_NAME {
+        if layout::original_generation_of(prepared.original_file_name()).is_some() {
             return Err(AnnotatedError::ReservedName(image.rendered.to_path_buf()));
         }
         ensure_png(image.original)?;
+        if let Some(record) = &image.document.seal
+            && (!record.is_well_formed() || content::digest(image.original)?.hash != record.base)
+        {
+            return Err(AnnotatedError::InvalidSeal(
+                "the sealed image is not the one the record names",
+            ));
+        }
         if let Some(existing) = self.find_by_content_hash(&prepared.digest().hash)? {
             return Err(AnnotatedError::AlreadyPresent(existing));
         }
@@ -59,72 +66,38 @@ impl Library {
         rendered: &Path,
         document: &AnnotationDocument,
     ) -> Result<(), AnnotatedError> {
-        let stored_document = document.to_json()?;
-        let asset = self.asset(id)?.ok_or(AnnotatedError::AssetNotFound(id))?;
-        if self.annotations(id)?.is_none() {
-            return Err(AnnotatedError::NotAnnotated(id));
-        }
-        let prepared = prepared_png(rendered)?;
-        match self.find_by_content_hash(&prepared.digest().hash)? {
-            Some(other) if other != id => return Err(AnnotatedError::AlreadyPresent(other)),
-            _ => {}
-        }
-        let destination = self.root.join(&asset.stored_path);
-        let temporary = destination.with_file_name(layout::unfinished_replacement_name(id));
-        let _ = fs::remove_file(&temporary);
-        let copied = content::copy_with_digest(rendered, &temporary);
-        if !matches!(&copied, Ok(copied) if copied == prepared.digest()) {
-            let _ = fs::remove_file(&temporary);
-            return Err(AnnotatedError::Unreadable(rendered.to_path_buf()));
-        }
-        let result = self.swap_in(
+        self.commit_save(
             id,
-            &prepared,
-            &temporary,
-            &destination,
-            (&stored_document, document.hides_content()),
-        );
-        if result.is_err() {
-            let _ = fs::remove_file(&temporary);
-            return result;
-        }
-        details_store::forget(&mut self.connection, &[id]);
-        forget_thumbnails(&self.root, id);
-        Ok(())
+            &SaveRequest {
+                rendered,
+                document,
+                sealed_original: None,
+            },
+        )
     }
 
-    pub fn replace_original(&mut self, id: AssetId, original: &Path) -> Result<(), AnnotatedError> {
-        self.annotations(id)?
-            .ok_or(AnnotatedError::NotAnnotated(id))?;
-        ensure_png(original)?;
-        let destination = self.root.join(layout::original_stored_path(id));
-        let temporary = destination.with_file_name(layout::unfinished_original_name(id));
-        let _ = fs::remove_file(&temporary);
-        let copied = match content::copy_with_digest(original, &temporary) {
-            Ok(copied) => copied,
-            Err(error) => {
-                let _ = fs::remove_file(&temporary);
-                return Err(error.into());
-            }
-        };
-        let transaction = self.connection.transaction()?;
-        transaction.execute(
-            "UPDATE asset_annotations SET original_byte_size = ?2 WHERE asset_id = ?1",
-            params![id, copied.byte_size],
-        )?;
-        if let Err(error) = fs::rename(&temporary, &destination) {
-            let _ = fs::remove_file(&temporary);
-            return Err(error.into());
-        }
-        transaction.commit()?;
-        Ok(())
+    pub fn seal_annotated(
+        &mut self,
+        id: AssetId,
+        rendered: &Path,
+        sealed_original: &Path,
+        document: &AnnotationDocument,
+    ) -> Result<(), AnnotatedError> {
+        self.commit_save(
+            id,
+            &SaveRequest {
+                rendered,
+                document,
+                sealed_original: Some(sealed_original),
+            },
+        )
     }
 
     pub fn annotations(&self, id: AssetId) -> Result<Option<Annotations>, super::LibraryError> {
         Ok(self
             .connection
             .query_row(
-                "SELECT document, has_masks, updated_at_unix_ms
+                "SELECT document, has_masks, updated_at_unix_ms, seal_generation
                  FROM asset_annotations WHERE asset_id = ?1",
                 [id],
                 |row| {
@@ -132,6 +105,7 @@ impl Library {
                         document: row.get(0)?,
                         has_masks: row.get(1)?,
                         updated_at_unix_ms: row.get(2)?,
+                        seal_generation: row.get(3)?,
                     })
                 },
             )
@@ -148,9 +122,10 @@ impl Library {
     }
 
     pub fn original_path(&self, id: AssetId) -> Result<Option<PathBuf>, super::LibraryError> {
-        Ok(self
-            .annotations(id)?
-            .map(|_| self.root.join(layout::original_stored_path(id))))
+        Ok(self.annotations(id)?.map(|stored| {
+            self.root
+                .join(layout::original_generation_path(id, stored.seal_generation))
+        }))
     }
 
     fn store_annotated(
@@ -166,7 +141,14 @@ impl Library {
         if &content::copy_with_digest(image.rendered, &rendered_copy)? != prepared.digest() {
             return Err(AnnotatedError::Unreadable(image.rendered.to_path_buf()));
         }
-        let original_copy = staging.path().join(layout::ORIGINAL_FILE_NAME);
+        let generation = image
+            .document
+            .seal
+            .as_ref()
+            .map_or(0, |seal| seal.generation);
+        let original_copy = staging
+            .path()
+            .join(layout::original_generation_name(generation));
         let original: ContentDigest = content::copy_with_digest(image.original, &original_copy)?;
 
         let savepoint = self.connection.savepoint()?;
@@ -176,42 +158,9 @@ impl Library {
         batch.stage(staging, layout::asset_dir(&self.root, id));
         Ok(id)
     }
-
-    fn swap_in(
-        &mut self,
-        id: AssetId,
-        prepared: &PreparedFile,
-        temporary: &Path,
-        destination: &Path,
-        (document, has_masks): (&str, bool),
-    ) -> Result<(), AnnotatedError> {
-        let transaction = self.connection.transaction()?;
-        let dimensions = prepared.media().dimensions;
-        transaction.execute(
-            "UPDATE assets SET width = ?2, height = ?3, byte_size = ?4, content_hash = ?5,
-                               is_animated = ?6, colors = NULL, visual_hash = NULL
-             WHERE id = ?1",
-            params![
-                id,
-                dimensions.map(media::Dimensions::width),
-                dimensions.map(media::Dimensions::height),
-                prepared.digest().byte_size,
-                prepared.digest().hash,
-                prepared.media().is_animated,
-            ],
-        )?;
-        transaction.execute(
-            "UPDATE asset_annotations SET document = ?2, has_masks = ?3, updated_at_unix_ms = ?4
-             WHERE asset_id = ?1",
-            params![id, document, has_masks, clock::now_unix_ms()],
-        )?;
-        fs::rename(temporary, destination)?;
-        transaction.commit()?;
-        Ok(())
-    }
 }
 
-fn prepared_png(path: &Path) -> Result<PreparedFile, AnnotatedError> {
+pub(super) fn prepared_png(path: &Path) -> Result<PreparedFile, AnnotatedError> {
     let prepared = import::prepare(path)?;
     if prepared.media().format != AssetFormat::Png {
         return Err(AnnotatedError::NotPng(path.to_path_buf()));
@@ -219,7 +168,7 @@ fn prepared_png(path: &Path) -> Result<PreparedFile, AnnotatedError> {
     Ok(prepared)
 }
 
-fn ensure_png(path: &Path) -> Result<(), AnnotatedError> {
+pub(super) fn ensure_png(path: &Path) -> Result<(), AnnotatedError> {
     match media::inspect(path) {
         Ok(info) if info.format == AssetFormat::Png => Ok(()),
         Ok(_) | Err(media::InspectError::Unsupported) => {
@@ -238,14 +187,21 @@ fn insert_annotations(
 ) -> Result<(), AnnotatedError> {
     connection.execute(
         "INSERT INTO asset_annotations
-            (asset_id, document, has_masks, original_byte_size, updated_at_unix_ms)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
+            (asset_id, document, has_masks, original_byte_size, updated_at_unix_ms,
+             seal_generation, seal_base_hash)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         params![
             id,
             stored_document,
             image.document.hides_content(),
             original_byte_size,
-            clock::now_unix_ms()
+            clock::now_unix_ms(),
+            image
+                .document
+                .seal
+                .as_ref()
+                .map_or(0, |seal| seal.generation),
+            image.document.seal.as_ref().map(|seal| seal.base.as_str()),
         ],
     )?;
     Ok(())

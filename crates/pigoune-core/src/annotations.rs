@@ -26,7 +26,7 @@ pub use layers::{LayerEntry, layer_entries};
 pub use options::{
     DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,
 };
-pub use sealing::{OverlapChoice, SealPlan, SealRecord};
+pub use sealing::{OverlapChoice, SealPlan, SealRecord, hash_of_bytes};
 pub use serde_json::Value;
 pub use session::{EditSession, LayerMove, Refusal};
 pub use shape::{Geometry, Shape};

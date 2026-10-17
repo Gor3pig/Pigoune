@@ -11,6 +11,7 @@ use pigoune_core::{Asset, AssetFormat, Dimensions};
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
+use crate::blocked_images;
 use crate::shortcuts;
 use crate::swipe_steps;
 use crate::thumbnails::{self, ThumbnailCache};
@@ -1117,6 +1118,7 @@ impl PigouneAssetPreview {
             loading.abort();
         }
         let file = asset.file().to_path_buf();
+        let blocked = blocked_images::is_blocked(&file);
         let animated = asset.asset().is_animated.then(|| asset.clone());
         let has_thumbnail = imp
             .thumbnails
@@ -1129,7 +1131,7 @@ impl PigouneAssetPreview {
             async move {
                 let Some(detailed) = thumbnails::load_detailed(&file, vector_pixels).await else {
                     if first_view {
-                        preview.show_load_failure(has_thumbnail);
+                        preview.show_load_failure(has_thumbnail, blocked);
                     }
                     return;
                 };
@@ -1153,9 +1155,11 @@ impl PigouneAssetPreview {
         imp.loading.replace(Some(loading));
     }
 
-    fn show_load_failure(&self, has_thumbnail: bool) {
+    fn show_load_failure(&self, has_thumbnail: bool, blocked: bool) {
         let banner = &self.imp().load_banner;
-        banner.set_title(&if has_thumbnail {
+        banner.set_title(&if blocked {
+            gettext("The protection of this image cannot be verified, so it is not shown")
+        } else if has_thumbnail {
             gettext("The full-size image could not be loaded: showing its thumbnail")
         } else {
             gettext("This image could not be loaded: its file may be missing or damaged")

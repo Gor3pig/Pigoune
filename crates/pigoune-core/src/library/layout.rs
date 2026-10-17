@@ -116,8 +116,43 @@ pub fn stored_path(id: AssetId, original_file_name: &str) -> String {
     )
 }
 
-pub fn original_stored_path(id: AssetId) -> String {
-    stored_path(id, ORIGINAL_FILE_NAME)
+pub fn original_generation_name(generation: u32) -> String {
+    if generation == 0 {
+        ORIGINAL_FILE_NAME.to_owned()
+    } else {
+        format!("original.{generation}.png")
+    }
+}
+
+pub fn original_generation_path(id: AssetId, generation: u32) -> String {
+    stored_path(id, &original_generation_name(generation))
+}
+
+pub fn original_generation_of(file_name: &str) -> Option<u32> {
+    if file_name == ORIGINAL_FILE_NAME {
+        return Some(0);
+    }
+    let digits = file_name.strip_prefix("original.")?.strip_suffix(".png")?;
+    let canonical = !digits.is_empty()
+        && !digits.starts_with('0')
+        && digits.bytes().all(|byte| byte.is_ascii_digit());
+    canonical.then(|| digits.parse().ok()).flatten()
+}
+
+pub fn unfinished_seal_name(id: AssetId, generation: u32) -> String {
+    format!(".{id}-seal-{generation}{UNFINISHED_IMPORT_SUFFIX}")
+}
+
+pub fn is_unfinished_seal_name(id: AssetId, file_name: &str) -> bool {
+    let prefix = format!(".{id}-seal-");
+    file_name
+        .strip_prefix(&prefix)
+        .and_then(|rest| rest.strip_suffix(UNFINISHED_IMPORT_SUFFIX))
+        .is_some_and(|digits| {
+            !digits.is_empty()
+                && !digits.starts_with('0')
+                && digits.bytes().all(|byte| byte.is_ascii_digit())
+        })
 }
 
 pub fn unfinished_import_dir(root: &Path, id: AssetId) -> PathBuf {
@@ -126,10 +161,6 @@ pub fn unfinished_import_dir(root: &Path, id: AssetId) -> PathBuf {
 
 pub fn unfinished_replacement_name(id: AssetId) -> String {
     format!(".{id}{UNFINISHED_IMPORT_SUFFIX}")
-}
-
-pub fn unfinished_original_name(id: AssetId) -> String {
-    format!(".{id}-original{UNFINISHED_IMPORT_SUFFIX}")
 }
 
 pub fn is_unfinished_import(entry_name: &str) -> bool {
