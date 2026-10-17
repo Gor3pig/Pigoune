@@ -120,7 +120,15 @@ mod imp {
         #[template_child]
         pub layers_section: TemplateChild<gtk::Box>,
         #[template_child]
-        pub layers_heading: TemplateChild<gtk::Label>,
+        pub layers_toggle: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub layers_arrow: TemplateChild<gtk::Image>,
+        #[template_child]
+        pub tools_toggle: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub tools_arrow: TemplateChild<gtk::Image>,
+        #[template_child]
+        pub tools_hint: TemplateChild<gtk::Label>,
         #[template_child]
         pub properties_toggle: TemplateChild<gtk::ToggleButton>,
         #[template_child]
@@ -137,6 +145,7 @@ mod imp {
         pub canvas_menu: RefCell<Option<gtk::PopoverMenu>>,
         pub properties_position: Cell<i32>,
         pub sections_placed: Cell<bool>,
+        pub sections_open: Cell<(bool, bool)>,
         pub layer_edit_buttons: RefCell<Vec<gtk::Button>>,
         #[template_child]
         pub bottom_sheet: TemplateChild<adw::BottomSheet>,
@@ -754,10 +763,21 @@ impl PigouneEditor {
 
     fn setup_sections(&self) {
         let imp = self.imp();
+        imp.sections_open.set((true, true));
         imp.properties_toggle.connect_toggled(glib::clone!(
             #[weak(rename_to = editor)]
             self,
-            move |toggle| editor.show_properties(toggle.is_active())
+            move |_| editor.apply_sections()
+        ));
+        imp.layers_toggle.connect_toggled(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| editor.apply_sections()
+        ));
+        imp.tools_toggle.connect_toggled(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            move |_| editor.show_tools()
         ));
         imp.sections_paned.connect_map(glib::clone!(
             #[weak(rename_to = editor)]
@@ -781,32 +801,52 @@ impl PigouneEditor {
                 if height > 0 && !imp.sections_placed.replace(true) {
                     let position = height * 11 / 20;
                     imp.properties_position.set(position);
-                    if imp.properties_toggle.is_active() {
-                        paned.set_position(position);
-                    }
+                    editor.place_paned();
                 }
             }
         ));
     }
 
-    fn show_properties(&self, shown: bool) {
+    fn apply_sections(&self) {
         let imp = self.imp();
-        imp.properties_scroller.set_visible(shown);
-        imp.properties_arrow.set_icon_name(Some(if shown {
-            "pan-down-symbolic"
-        } else {
-            "pan-end-symbolic"
-        }));
-        if shown {
-            imp.sections_paned
-                .set_position(imp.properties_position.get());
-        } else {
-            imp.properties_position.set(imp.sections_paned.position());
-            let (header, _, _, _) = imp
-                .properties_section
-                .measure(gtk::Orientation::Vertical, -1);
-            imp.sections_paned.set_position(header);
+        let properties = imp.properties_toggle.is_active();
+        let layers = imp.layers_toggle.is_active();
+        let paned = imp.sections_paned.get();
+        let (was_properties, was_layers) = imp.sections_open.replace((properties, layers));
+        if was_properties && was_layers && imp.sections_placed.get() && paned.position() > 0 {
+            imp.properties_position.set(paned.position());
         }
+        set_section_arrow(&imp.properties_arrow, properties);
+        set_section_arrow(&imp.layers_arrow, layers);
+        imp.properties_scroller.set_visible(properties);
+        imp.layers_scroller.set_visible(layers);
+        imp.layer_buttons.set_visible(layers);
+        paned.set_resize_start_child(properties);
+        paned.set_resize_end_child(layers || !properties);
+        self.place_paned();
+    }
+
+    fn place_paned(&self) {
+        let imp = self.imp();
+        let paned = imp.sections_paned.get();
+        if !imp.sections_placed.get() || paned.height() <= 0 {
+            return;
+        }
+        let header = |section: &gtk::Box| section.measure(gtk::Orientation::Vertical, -1).0;
+        let position = match imp.sections_open.get() {
+            (true, true) => imp.properties_position.get(),
+            (false, _) => header(&imp.properties_section),
+            (true, false) => paned.height() - header(&imp.layers_section),
+        };
+        paned.set_position(position);
+    }
+
+    fn show_tools(&self) {
+        let imp = self.imp();
+        let shown = imp.tools_toggle.is_active();
+        set_section_arrow(&imp.tools_arrow, shown);
+        imp.tools_grid.set_visible(shown);
+        imp.tools_hint.set_visible(!shown);
     }
 
     fn place_sections(&self, compact: bool) {
@@ -817,7 +857,7 @@ impl PigouneEditor {
             parent.is::<adw::ViewStack>()
                 || parent.parent().is_some_and(|p| p.is::<adw::ViewStack>())
         });
-        imp.layers_heading.set_visible(!compact);
+        imp.layers_toggle.set_visible(!compact);
         imp.layer_buttons.set_halign(if compact {
             gtk::Align::End
         } else {
@@ -833,6 +873,8 @@ impl PigouneEditor {
             scroller.set_min_content_height(COMPACT_SECTION_HEIGHT);
             imp.layers_scroller
                 .set_min_content_height(COMPACT_SECTION_HEIGHT);
+            imp.layers_scroller.set_visible(true);
+            imp.layer_buttons.set_visible(true);
             imp.sections_stack
                 .add_titled(&scroller, Some("properties"), &gettext("Properties"));
             imp.sections_stack
@@ -844,7 +886,7 @@ impl PigouneEditor {
             imp.sections_paned.set_end_child(Some(&layers));
             scroller.set_min_content_height(60);
             imp.layers_scroller.set_min_content_height(90);
-            scroller.set_visible(imp.properties_toggle.is_active());
+            self.apply_sections();
         }
     }
 
@@ -2271,6 +2313,7 @@ impl PigouneEditor {
         let imp = self.imp();
         let tool = imp.active_tool.get();
         imp.bar_icon.set_icon_name(Some(tool.icon_name()));
+        imp.tools_hint.set_label(&tool.label());
         imp.bar_label
             .set_label(&if imp.persistent_tool.get() == Some(tool) {
                 gettext("{tool} (stays active)").replace("{tool}", &tool.label())
@@ -2387,3 +2430,15 @@ fn complete_options(definition: &ToolDefinition, shape: &Shape) -> Options {
     }
     options
 }
+
+fn set_section_arrow(arrow: &gtk::Image, shown: bool) {
+    arrow.set_icon_name(Some(if shown {
+        "pan-down-symbolic"
+    } else {
+        "pan-end-symbolic"
+    }));
+}
+
+#[cfg(test)]
+#[path = "editor_panel_tests.rs"]
+pub mod panel_tests;
