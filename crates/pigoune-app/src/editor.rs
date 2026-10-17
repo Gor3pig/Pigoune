@@ -189,7 +189,9 @@ mod imp {
         #[template_child]
         pub text_view: TemplateChild<gtk::TextView>,
         #[template_child]
-        pub mask_banner: TemplateChild<adw::Banner>,
+        pub mask_notice: TemplateChild<gtk::Revealer>,
+        #[template_child]
+        pub mask_notice_label: TemplateChild<gtk::Label>,
         #[template_child]
         pub layer_buttons: TemplateChild<gtk::Box>,
         pub layer_move_buttons: RefCell<Vec<(LayerMove, gtk::Button)>>,
@@ -1580,6 +1582,12 @@ impl PigouneEditor {
     }
 
     #[template_callback]
+    fn on_show_hidden_effects_clicked(&self) {
+        self.show_exposed_masks();
+        self.imp().zoom_view.grab_focus();
+    }
+
+    #[template_callback]
     fn on_crop_reset_clicked(&self) {
         if let Some(crop) = self.imp().drawing.borrow_mut().crop_editor.as_mut() {
             crop.reset();
@@ -1619,15 +1627,29 @@ impl PigouneEditor {
             .document()
             .exposed_masks()
             .len();
-        if exposed > 0 {
-            imp.mask_banner.set_title(&mask_alert::banner_text(exposed));
-        }
-        imp.mask_banner.set_revealed(exposed > 0);
+        self.show_mask_notice(exposed);
         imp.zoom_view.queue_draw();
         self.sync_layers();
         self.keep_keyboard_focus();
         if imp.drawing.borrow().session.is_modified() {
             self.schedule_draft();
+        }
+    }
+
+    fn show_mask_notice(&self, count: usize) {
+        let imp = self.imp();
+        if count == 0 {
+            imp.mask_notice.set_reveal_child(false);
+            return;
+        }
+        let text = mask_alert::banner_text(count);
+        let changed = imp.mask_notice_label.label() != text;
+        imp.mask_notice_label.set_label(&text);
+        let announce = changed || !imp.mask_notice.reveals_child();
+        imp.mask_notice.set_reveal_child(true);
+        if announce {
+            imp.mask_notice
+                .announce(&text, gtk::AccessibleAnnouncementPriority::Medium);
         }
     }
 
