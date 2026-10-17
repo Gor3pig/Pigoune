@@ -6,9 +6,10 @@ use std::hash::{Hash, Hasher};
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Point, Rect, Shape,
-    TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
+    AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, PathStep, Point, Rect, Shape,
+    Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
     curve_polyline, dash_pattern, guide_extent, handles, head_size_factor, shape_bounds,
+    sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle, sketched_curve,
     step_label, text_visual_bounds,
 };
 
@@ -192,33 +193,63 @@ fn drop_shadow(scene: Option<&Scene>) -> gsk::Shadow {
     )
 }
 
-fn draw_closed(snapshot: &gtk::Snapshot, shape: &Shape, path: &gsk::Path) {
+fn sketched_path(strokes: &[Stroke]) -> gsk::Path {
+    let builder = gsk::PathBuilder::new();
+    for step in strokes.iter().flatten() {
+        match *step {
+            PathStep::MoveTo(to) => builder.move_to(to.x, to.y),
+            PathStep::QuadTo(control, to) => builder.quad_to(control.x, control.y, to.x, to.y),
+            PathStep::CubicTo(first, second, to) => {
+                builder.cubic_to(first.x, first.y, second.x, second.y, to.x, to.y);
+            }
+        }
+    }
+    builder.to_path()
+}
+
+fn draw_closed(snapshot: &gtk::Snapshot, shape: &Shape, path: &gsk::Path, outline: &gsk::Path) {
     if let Some(fill) = shape.fill_color() {
         snapshot.append_fill(path, gsk::FillRule::Winding, &rgba(fill));
     }
-    snapshot.append_stroke(path, &stroke_of(shape, false), &rgba(shape.stroke_color()));
+    snapshot.append_stroke(
+        outline,
+        &stroke_of(shape, false),
+        &rgba(shape.stroke_color()),
+    );
 }
 
 fn draw_rectangle(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     if let Some(bounds) = box_of(shape) {
         let path = rounded_rectangle_path(bounds, shape.number("corner_radius"));
-        draw_closed(snapshot, shape, &path);
+        if shape.roughness().is_precise() {
+            draw_closed(snapshot, shape, &path, &path);
+        } else {
+            let strokes = sketch_rectangle(bounds, shape.number("corner_radius"), &shape.hand(), 0);
+            draw_closed(snapshot, shape, &path, &sketched_path(&strokes));
+        }
     }
 }
 
 fn draw_ellipse(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     if let Some(bounds) = box_of(shape) {
-        draw_closed(snapshot, shape, &ellipse_path(bounds));
+        let path = ellipse_path(bounds);
+        if shape.roughness().is_precise() {
+            draw_closed(snapshot, shape, &path, &path);
+        } else {
+            let strokes = sketch_ellipse(bounds, &shape.hand(), 0);
+            draw_closed(snapshot, shape, &path, &sketched_path(&strokes));
+        }
     }
 }
 
 fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
     if let Some((from, to)) = ends_of(shape) {
-        snapshot.append_stroke(
-            &segment_path(from, to),
-            &stroke_of(shape, true),
-            &rgba(shape.stroke_color()),
-        );
+        let path = if shape.roughness().is_precise() {
+            segment_path(from, to)
+        } else {
+            sketched_path(&sketch_line(from, to, &shape.hand(), 0))
+        };
+        snapshot.append_stroke(&path, &stroke_of(shape, true), &rgba(shape.stroke_color()));
     }
 }
 
@@ -233,6 +264,8 @@ fn head_path(tip: Point, left: Point, right: Point, closed: bool) -> gsk::Path {
     builder.to_path()
 }
 
+const ARROW_SHAFT_SALT: u32 = 100;
+const ARROW_HEAD_SALT: u32 = 200;
 const TAPER_TAIL: f32 = 0.12;
 const TAPER_HEAD_SHARE: f32 = 1.6;
 
@@ -377,18 +410,32 @@ fn draw_arrow_parts(snapshot: &gtk::Snapshot, shape: &Shape, color: gdk::RGBA) {
         ),
         None => (shaft_from, None, shaft_to),
     };
+    let level = shape.roughness();
+    let hand = shape.hand();
     if shape.choice("shaft") == "tapered" && !double {
-        snapshot.append_fill(
-            &tapered_shaft(shaft_from, control, shaft_to, width),
-            gsk::FillRule::Winding,
-            &color,
-        );
+        let tapered = if level.is_precise() {
+            tapered_shaft(shaft_from, control, shaft_to, width)
+        } else {
+            let middle = control.unwrap_or(Point {
+                x: f32::midpoint(shaft_from.x, shaft_to.x),
+                y: f32::midpoint(shaft_from.y, shaft_to.y),
+            });
+            let (start, bend, end) =
+                sketched_curve(shaft_from, middle, shaft_to, &hand, ARROW_SHAFT_SALT, 0);
+            tapered_shaft(start, Some(bend), end, width)
+        };
+        snapshot.append_fill(&tapered, gsk::FillRule::Winding, &color);
     } else {
-        snapshot.append_stroke(
-            &shaft_path(shaft_from, control, shaft_to),
-            &stroke_of(shape, true),
-            &color,
-        );
+        let path = if level.is_precise() {
+            shaft_path(shaft_from, control, shaft_to)
+        } else {
+            let strokes = match control {
+                Some(bend) => sketch_curve(shaft_from, bend, shaft_to, &hand, ARROW_SHAFT_SALT),
+                None => sketch_line(shaft_from, shaft_to, &hand, ARROW_SHAFT_SALT),
+            };
+            sketched_path(&strokes)
+        };
+        snapshot.append_stroke(&path, &stroke_of(shape, true), &color);
     }
     let mut heads = Vec::new();
     match head_style {
@@ -396,14 +443,24 @@ fn draw_arrow_parts(snapshot: &gtk::Snapshot, shape: &Shape, color: gdk::RGBA) {
         "double" => heads.extend([end, start]),
         _ => heads.push(end),
     }
-    for head in heads {
-        let path = head_path(head.tip, head.left, head.right, head_style != "open");
-        if head_style == "open" {
-            snapshot.append_stroke(&path, &solid, &color);
+    for (index, head) in heads.into_iter().enumerate() {
+        let open = head_style == "open";
+        let path = head_path(head.tip, head.left, head.right, !open);
+        let outline = if level.is_precise() {
+            path.clone()
         } else {
+            let salt = ARROW_HEAD_SALT + u32::try_from(index).unwrap_or(0) * 16;
+            let strokes = if open {
+                sketch_outline(&[head.left, head.tip, head.right], false, &hand, salt)
+            } else {
+                sketch_outline(&[head.tip, head.left, head.right], true, &hand, salt)
+            };
+            sketched_path(&strokes)
+        };
+        if !open {
             snapshot.append_fill(&path, gsk::FillRule::Winding, &color);
-            snapshot.append_stroke(&path, &solid, &color);
         }
+        snapshot.append_stroke(&outline, &solid, &color);
     }
 }
 
@@ -442,9 +499,18 @@ fn draw_free_stroke(snapshot: &gtk::Snapshot, shape: &Shape, cap: gsk::LineCap) 
     let Geometry::Polyline(points) = &shape.geometry else {
         return;
     };
-    let stroke = gsk::Stroke::new(shape.number("width").max(0.5));
+    let width = shape.number("width").max(0.5);
+    let stroke = gsk::Stroke::new(width);
     stroke.set_line_join(gsk::LineJoin::Round);
-    stroke.set_line_cap(cap);
+    let dash = shape.choice("dash");
+    if let Some(pattern) = dash_pattern(dash, width) {
+        stroke.set_dash(&pattern);
+    }
+    stroke.set_line_cap(if dash == "dotted" {
+        gsk::LineCap::Round
+    } else {
+        cap
+    });
     snapshot.append_stroke(
         &stroke_path(points, shape.toggle("smooth")),
         &stroke,

@@ -148,12 +148,6 @@ msgid ""
 "and View Original shows the capture as it was."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:111
-msgid ""
-"Lock the masks to apply every blur and pixelation to the original capture "
-"too, for good."
-msgstr ""
-
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:112
 msgid ""
 "Copy or export the annotated image as a PNG, or save it in the library, "
@@ -8097,4 +8091,24 @@ msgstr ""
 
 #: crates/pigoune-app/src/layers_panel.rs
 msgid "Annotate the Selected Image"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Line Type"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Hand-Drawn Look"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Precise"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Sketchy"
+msgstr ""
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Very Sketchy"
 msgstr ""

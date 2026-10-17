@@ -5,6 +5,7 @@ mod layers;
 mod options;
 mod session;
 mod shape;
+mod sketch;
 mod snapping;
 mod tools;
 
@@ -28,13 +29,17 @@ pub use options::{
 pub use serde_json::Value;
 pub use session::{EditSession, LayerMove, Refusal};
 pub use shape::{Geometry, Shape};
+pub use sketch::{
+    Hand, PathStep, ROUGHNESS_CHOICES, Roughness, SEED_OPTION, Stroke, seed_for_object,
+    sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle, sketched_curve,
+};
 pub use snapping::{Guide, Snap, Snapping, guide_extent, snap_move};
 pub use tools::{
     ARROW, BADGE_SIZE, BADGE_STYLE, BLUR, BOLD, CELL, COLOR, CONTENT, CORNER_RADIUS, CURVE, DASH,
     DASH_CHOICES, DIMMING, ELLIPSE, FILL, FILL_OPACITY, FONT_FAMILY, FONT_FAMILY_CHOICES,
     FONT_SIZE, GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, HIGHLIGHT_COLOR,
     HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, ITALIC, LINE, OPACITY, Outline, PEN, PIXELATE,
-    RADIUS, RECTANGLE, SEQUENCE, SEQUENCE_CHOICES, SHADOW, SHAFT, SHAFT_CHOICES, SMOOTH,
+    RADIUS, RECTANGLE, ROUGHNESS, SEQUENCE, SEQUENCE_CHOICES, SHADOW, SHAFT, SHAFT_CHOICES, SMOOTH,
     SPOT_SHAPE, SPOT_SHAPE_CHOICES, SPOTLIGHT, STEP, TEXT, TEXT_BACKGROUND,
     TEXT_BACKGROUND_CHOICES, TEXT_OUTLINE, ToolDefinition, WIDTH, definition, definitions,
 };

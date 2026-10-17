@@ -653,6 +653,141 @@ fn an_annotation_after_a_mask_stays_sharp(rig: &Rig) {
     );
 }
 
+fn hand_drawn_shapes() -> Vec<Shape> {
+    let look = |level: &str| ("roughness", Value::from(level));
+    vec![
+        boxed("rectangle", 20.0, 15.0, 70.0, 40.0, &[look("sketchy")]),
+        boxed("ellipse", 110.0, 15.0, 70.0, 40.0, &[look("very_sketchy")]),
+        segment("line", (20.0, 75.0), (90.0, 95.0), &[look("sketchy")]),
+        segment(
+            "arrow",
+            (110.0, 75.0),
+            (180.0, 100.0),
+            &[look("very_sketchy")],
+        ),
+    ]
+}
+
+fn the_precise_look_is_the_look_of_every_older_shape(rig: &Rig) {
+    for kind in ["rectangle", "ellipse"] {
+        let plain = rig.export(&document(vec![boxed(kind, 30.0, 20.0, 100.0, 60.0, &[])]));
+        let precise = rig.export(&document(vec![boxed(
+            kind,
+            30.0,
+            20.0,
+            100.0,
+            60.0,
+            &[("roughness", Value::from("precise"))],
+        )]));
+        let mut old = boxed(kind, 30.0, 20.0, 100.0, 60.0, &[]);
+        old.options = Options::new();
+        let without_option = rig.export(&document(vec![old]));
+        assert_eq!(plain.data, precise.data, "{kind} precise");
+        assert_eq!(plain.data, without_option.data, "{kind} without the option");
+    }
+}
+
+fn a_hand_drawn_shape_is_always_drawn_the_same_way(rig: &Rig) {
+    let sketched = document(hand_drawn_shapes());
+    let first = rig.export(&sketched);
+    assert_eq!(first.data, rig.export(&sketched).data, "same document");
+    let saved = sketched.to_json().expect("saved");
+    let reopened = AnnotationDocument::from_json(&saved).expect("read");
+    assert_eq!(
+        first.data,
+        rig.export(&reopened).data,
+        "after saving and reading"
+    );
+    assert_eq!(first.data, rig.preview(&sketched).data, "the preview");
+}
+
+fn a_hand_drawn_shape_differs_from_the_precise_one_but_stays_near_it(rig: &Rig) {
+    let precise_shapes: Vec<Shape> = hand_drawn_shapes()
+        .into_iter()
+        .map(|shape| shape.with_option("roughness", Value::from("precise")))
+        .collect();
+    let precise = rig.export(&document(precise_shapes));
+    let sketched = rig.export(&document(hand_drawn_shapes()));
+    assert_ne!(precise.data, sketched.data);
+    assert_unchanged(&sketched, (0, 0), (WIDTH, 5), "far above everything");
+    assert_unchanged(&sketched, (0, 112), (WIDTH, HEIGHT), "far below everything");
+    assert_unchanged(&sketched, (0, 0), (8, HEIGHT), "far left of everything");
+    assert_unchanged(
+        &sketched,
+        (194, 0),
+        (WIDTH, HEIGHT),
+        "far right of everything",
+    );
+}
+
+fn a_duplicate_looks_exactly_like_its_original(rig: &Rig) {
+    let flat = uniform_rig(rig, 255);
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let original = session.add(boxed(
+        "ellipse",
+        10.0,
+        10.0,
+        60.0,
+        40.0,
+        &[("roughness", Value::from("very_sketchy"))],
+    ));
+    session.duplicate_object(original, 60.0).expect("copy");
+    let result = flat.export(session.document());
+    let mut inked = 0;
+    for y in 0..57 {
+        for x in 0..80 {
+            assert_eq!(
+                result.at(x, y),
+                result.at(x + 60, y + 60),
+                "pixel ({x}, {y})"
+            );
+            inked += usize::from(result.at(x, y) != [255, 255, 255, 255]);
+        }
+    }
+    assert!(inked > 100, "the ellipse is drawn");
+}
+
+fn a_hand_drawn_look_changes_with_the_seed_of_the_shape(rig: &Rig) {
+    let flat = uniform_rig(rig, 255);
+    let ellipse = || {
+        boxed(
+            "ellipse",
+            30.0,
+            20.0,
+            100.0,
+            60.0,
+            &[("roughness", Value::from("very_sketchy"))],
+        )
+    };
+    let spacer = segment("line", (150.0, 105.0), (190.0, 110.0), &[]);
+    let first = flat.export(&document(vec![ellipse()]));
+    let second = flat.export(&document(vec![spacer, ellipse()]));
+    let region = |picture: &Picture| {
+        (10..100)
+            .flat_map(|y| (10..150).map(move |x| picture.at(x, y)))
+            .collect::<Vec<_>>()
+    };
+    assert_ne!(region(&first), region(&second));
+}
+
+fn a_dashed_pen_stroke_leaves_gaps_and_a_solid_one_does_not(rig: &Rig) {
+    let flat = uniform_rig(rig, 255);
+    let points = [(20.0, 60.0), (100.0, 60.0), (180.0, 60.0)];
+    let row = |dash: &str| {
+        let picture = flat.export(&document(vec![stroke(
+            "pen",
+            &points,
+            &[("dash", Value::from(dash)), ("width", number_to_value(6.0))],
+        )]));
+        (30..170)
+            .filter(|x| picture.at(*x, 60) == [255, 255, 255, 255])
+            .count()
+    };
+    assert_eq!(row("solid"), 0, "a solid stroke has no gap");
+    assert!(row("dashed") > 20, "a dashed stroke has gaps");
+    assert!(row("dotted") > 20, "a dotted stroke has gaps");
+}
+
 fn the_export_matches_the_preview(rig: &Rig) {
     let everything = document(vec![
         boxed("rectangle", 10.0, 10.0, 60.0, 40.0, &[]),
@@ -779,6 +914,12 @@ fn rendering_suite() {
     blur_covers_only_its_region_and_follows_it(&rig);
     pixelation_makes_uniform_cells_and_follows_its_region(&rig);
     an_annotation_after_a_mask_stays_sharp(&rig);
+    the_precise_look_is_the_look_of_every_older_shape(&rig);
+    a_hand_drawn_shape_is_always_drawn_the_same_way(&rig);
+    a_hand_drawn_shape_differs_from_the_precise_one_but_stays_near_it(&rig);
+    a_duplicate_looks_exactly_like_its_original(&rig);
+    a_hand_drawn_look_changes_with_the_seed_of_the_shape(&rig);
+    a_dashed_pen_stroke_leaves_gaps_and_a_solid_one_does_not(&rig);
     the_export_matches_the_preview(&rig);
     hidden_objects_are_not_drawn_and_locked_ones_are(&rig);
     the_color_sampler_reads_the_pixel_it_is_given(&rig);

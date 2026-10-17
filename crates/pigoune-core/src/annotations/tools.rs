@@ -1,5 +1,6 @@
 use super::Color;
 use super::options::{DefaultValue, OptionKind, OptionSpec};
+use super::sketch::ROUGHNESS_CHOICES;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GeometryKind {
@@ -77,6 +78,13 @@ pub const DASH: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const ROUGHNESS: OptionSpec = OptionSpec {
+    id: "roughness",
+    kind: OptionKind::Choice(&ROUGHNESS_CHOICES),
+    default: DefaultValue::Choice("precise"),
+    shown_if: None,
+};
+
 pub const HEAD_CHOICES: [&str; 4] = ["triangle", "open", "double", "none"];
 
 pub const HEAD: OptionSpec = OptionSpec {
@@ -137,6 +145,7 @@ pub const RECTANGLE: ToolDefinition = ToolDefinition {
         OPACITY,
         WIDTH,
         DASH,
+        ROUGHNESS,
         CORNER_RADIUS,
         FILL,
         FILL_OPACITY,
@@ -149,7 +158,16 @@ pub const ELLIPSE: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::Box,
     outline: Outline::Ellipse,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, DASH, FILL, FILL_OPACITY, SHADOW],
+    options: &[
+        COLOR,
+        OPACITY,
+        WIDTH,
+        DASH,
+        ROUGHNESS,
+        FILL,
+        FILL_OPACITY,
+        SHADOW,
+    ],
 };
 
 pub const LINE: ToolDefinition = ToolDefinition {
@@ -157,7 +175,7 @@ pub const LINE: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::TwoPoints,
     outline: Outline::Segment,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, DASH, SHADOW],
+    options: &[COLOR, OPACITY, WIDTH, DASH, ROUGHNESS, SHADOW],
 };
 
 pub const CURVE: OptionSpec = OptionSpec {
@@ -186,7 +204,7 @@ pub const ARROW: ToolDefinition = ToolDefinition {
     outline: Outline::Segment,
     hides_content: false,
     options: &[
-        COLOR, OPACITY, WIDTH, DASH, HEAD, HEAD_SIZE, CURVE, SHAFT, SHADOW,
+        COLOR, OPACITY, WIDTH, DASH, ROUGHNESS, HEAD, HEAD_SIZE, CURVE, SHAFT, SHADOW,
     ],
 };
 
@@ -296,7 +314,7 @@ pub const PEN: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::Polyline,
     outline: Outline::Stroke,
     hides_content: false,
-    options: &[COLOR, OPACITY, WIDTH, SMOOTH, SHADOW],
+    options: &[COLOR, OPACITY, WIDTH, DASH, SMOOTH, SHADOW],
 };
 
 pub const HIGHLIGHTER: ToolDefinition = ToolDefinition {

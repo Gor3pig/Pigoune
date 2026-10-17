@@ -154,12 +154,6 @@ msgid ""
 "and View Original shows the capture as it was."
 msgstr "Les annotations restent modifiables : la capture intacte est conservée à côté de l’image annotée, qui est celle qu’on voit et qu’on exporte. Annoter la rouvre et Voir l’original montre la capture telle qu’elle était."
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:111
-msgid ""
-"Lock the masks to apply every blur and pixelation to the original capture "
-"too, for good."
-msgstr "Verrouillez les masquages pour appliquer aussi chaque flou et chaque pixelisation à la capture d’origine, définitivement."
-
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:112
 msgid ""
 "Copy or export the annotated image as a PNG, or save it in the library, "
@@ -8903,3 +8897,18 @@ msgstr "L'export est partiel. {exported} fichiers ont été exportés dans « {
 
 msgid "Annotate the Selected Image"
 msgstr "Annoter l'image sélectionnée"
+
+msgid "Line Type"
+msgstr "Type de trait"
+
+msgid "Hand-Drawn Look"
+msgstr "Aspect du tracé"
+
+msgid "Precise"
+msgstr "Précis"
+
+msgid "Sketchy"
+msgstr "Esquissé"
+
+msgid "Very Sketchy"
+msgstr "Très esquissé"
