@@ -2,7 +2,7 @@
 
 (() => {
   const SUPPORTED_LANGUAGES = ["en", "fr"];
-  const FRENCH_ANCHORS = { "#install": "#installer", "#systems": "#systemes" };
+  const FRENCH_ANCHORS = { "#install": "#installer" };
 
   function chosenLanguage() {
     try {
