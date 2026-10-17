@@ -60,6 +60,7 @@ pub struct ExportOutline {
 #[derive(Debug)]
 pub struct ExportFailure {
     pub name: String,
+    pub annotated_copy: bool,
     pub error: LibraryError,
 }
 
@@ -265,6 +266,7 @@ fn write_folder(
             Ok(()) => report.exported += 1,
             Err(error) => report.failures.push(ExportFailure {
                 name: file.display_name.clone(),
+                annotated_copy: file.flat_of.is_some(),
                 error: error.into(),
             }),
         }

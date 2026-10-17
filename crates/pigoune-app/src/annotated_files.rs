@@ -36,6 +36,11 @@ pub async fn ensure(
     Some(render.file.clone())
 }
 
+pub fn cropped_size(document: &str) -> Option<(u32, u32)> {
+    let crop = AnnotationDocument::from_json(document).ok()?.crop?;
+    Some((crop.width, crop.height))
+}
+
 pub fn png_size(file: &Path) -> Option<(u32, u32)> {
     let mut header = [0_u8; 24];
     std::io::Read::read_exact(&mut fs::File::open(file).ok()?, &mut header).ok()?;
@@ -89,6 +94,15 @@ mod tests {
         write_atomically(&file, b"newer").expect("replaced");
         assert_eq!(fs::read(&file).expect("read"), b"newer");
         let _ = fs::remove_dir_all(folder);
+    }
+
+    #[test]
+    fn a_crop_gives_the_size_of_the_flattened_image_and_no_crop_gives_none() {
+        let cropped =
+            r#"{"version":1,"crop":{"x":10,"y":20,"width":300,"height":120},"objects":[]}"#;
+        assert_eq!(cropped_size(cropped), Some((300, 120)));
+        assert_eq!(cropped_size(r#"{"version":1,"objects":[]}"#), None);
+        assert_eq!(cropped_size("not a document"), None);
     }
 
     #[test]

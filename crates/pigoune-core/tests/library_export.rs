@@ -465,11 +465,33 @@ fn a_missing_flattened_copy_is_reported_and_the_original_is_still_exported() {
         .expect("exported");
 
     assert_eq!(report.failures.len(), 1);
+    assert!(
+        report.failures[0].annotated_copy,
+        "the missing piece is the flattened copy"
+    );
+    assert_eq!(report.failures[0].name, "blue-photo");
     assert_eq!(report.exported, 1);
     assert_eq!(
         names_in(&report.folder.join("Non classés")),
         ["blue-photo.jpg"]
     );
+}
+
+#[test]
+fn a_failure_of_an_original_is_not_mistaken_for_a_missing_flattened_copy() {
+    let mut setup = Setup::new();
+    let photo = import(&mut setup.library, "blue-photo.jpg", None);
+    let asset = setup.library.asset(photo).expect("q").expect("asset");
+    fs::remove_file(setup.library.file_of(&asset)).expect("original removed");
+
+    let report = setup
+        .plan()
+        .run(setup.destination.path(), &FlatFiles::new())
+        .expect("report");
+
+    assert_eq!(report.failures.len(), 1);
+    assert!(!report.failures[0].annotated_copy);
+    assert_eq!(report.exported, 0);
 }
 
 #[test]
