@@ -27,17 +27,6 @@ impl Scope {
     }
 }
 
-pub fn banner_text(count: usize) -> String {
-    let sentence = gettext("Some information may be visible.");
-    let state = if count == 1 {
-        gettext("A blur or pixelation effect is hidden.")
-    } else {
-        gettext("{count} blur or pixelation effects are hidden.")
-            .replace("{count}", &count.to_string())
-    };
-    format!("{state} {sentence}")
-}
-
 fn state_text(scope: &Scope) -> String {
     match scope {
         Scope::Effects(1) => gettext("A blur or pixelation effect is currently hidden."),
@@ -155,11 +144,5 @@ mod tests {
         assert!(copy.contains("copied") && export.contains("exported") && open.contains("opened"));
         let several = body_text(&Scope::Images(names(2)), Operation::Export);
         assert!(several.contains("exported images"));
-    }
-
-    #[test]
-    fn the_banner_counts_the_hidden_effects() {
-        assert!(!banner_text(1).contains("{count}"));
-        assert!(banner_text(2).contains('2'));
     }
 }

@@ -84,44 +84,6 @@ template $PigouneEditor: Adw.Bin {
               "annotation-editor",
             ]
           }
-
-          [overlay]
-          Revealer mask_notice {
-            halign: center;
-            valign: start;
-            margin-top: 12;
-            margin-start: 12;
-            margin-end: 12;
-            transition-type: slide_down;
-            reveal-child: false;
-
-            child: Box {
-              accessible-role: alert;
-              spacing: 12;
-
-              styles [
-                "toolbar",
-                "osd",
-              ]
-
-              Image {
-                icon-name: "dialog-warning-symbolic";
-              }
-
-              Label mask_notice_label {
-                wrap: true;
-                max-width-chars: 44;
-                xalign: 0;
-              }
-
-              Button {
-                label: _("_Show Hidden Effects");
-                use-underline: true;
-                valign: center;
-                clicked => $on_show_hidden_effects_clicked() swapped;
-              }
-            };
-          }
         };
 
         [bottom]

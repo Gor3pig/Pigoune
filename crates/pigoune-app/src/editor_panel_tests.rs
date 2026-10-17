@@ -73,10 +73,6 @@ pub fn the_panels_only_change_what_is_visible() {
     editor.open_item(asset, &texture(), document());
     editor.choose_tool(EditorTool::Rectangle);
     let imp = editor.imp();
-    assert!(
-        imp.mask_notice.reveals_child(),
-        "a hidden blur is announced by the floating notice"
-    );
     let before = state(&editor);
 
     imp.tools_toggle.set_active(false);
@@ -88,10 +84,6 @@ pub fn the_panels_only_change_what_is_visible() {
     imp.properties_toggle.set_active(false);
     assert!(!imp.properties_scroller.is_visible());
     assert_same(&before, &state(&editor), "everything folded");
-    assert!(
-        imp.mask_notice.reveals_child(),
-        "folding a panel never hides the notice"
-    );
 
     imp.properties_toggle.set_active(true);
     imp.layers_toggle.set_active(true);
@@ -143,4 +135,44 @@ pub fn the_panels_only_change_what_is_visible() {
     assert!(!imp.split_view.shows_sidebar());
     editor.set_compact(false);
     assert!(imp.split_view.shows_sidebar());
+}
+
+pub fn hiding_an_effect_shows_nothing_and_leaves_the_canvas_alone() {
+    let _ = adw::init();
+    let _ = gtk::gio::resources_register_include!("pigoune.gresource");
+    let editor: PigouneEditor = glib::Object::new();
+    let notices = std::rc::Rc::new(std::cell::Cell::new(0_usize));
+    editor.connect_notice({
+        let notices = notices.clone();
+        move |_| notices.set(notices.get() + 1)
+    });
+    let asset = AssetId::parse("00000000-0000-7000-8000-000000000002").expect("id");
+    editor.open_item(asset, &texture(), document());
+    let imp = editor.imp();
+    let canvas = || {
+        let point = imp.zoom_view.view_to_image(10.0, 10.0);
+        (
+            imp.zoom_view.zoom().to_bits(),
+            imp.zoom_view.width(),
+            imp.zoom_view.height(),
+            point.x.to_bits(),
+            point.y.to_bits(),
+        )
+    };
+    let before = canvas();
+    let blur = imp
+        .drawing
+        .borrow()
+        .session
+        .document()
+        .exposed_masks()
+        .first()
+        .copied()
+        .expect("the blur is hidden");
+    for hidden in [false, true, false, true] {
+        imp.drawing.borrow_mut().session.set_hidden(blur, hidden);
+        editor.after_edit();
+        assert_eq!(canvas(), before, "the canvas does not move, resize or zoom");
+    }
+    assert_eq!(notices.get(), 0, "hiding an effect shows no notification");
 }
