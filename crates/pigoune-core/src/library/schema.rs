@@ -2,24 +2,17 @@ use std::path::Path;
 
 use rusqlite::{Connection, ErrorCode};
 
-use super::{LibraryError, animation_recheck, buckets, details_store};
+use super::{LibraryError, animation_recheck, buckets, details_store, dimension_recheck};
 
 pub const CURRENT_FORMAT_VERSION: u32 = 13;
 pub const FORMAT_MOVING_VISUAL_DETAILS: u32 = 12;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 const PAGE_CACHE_KIB: i64 = 65_536;
 
-#[doc(hidden)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MigrationStop {
     BeforeCommit,
     AfterCommit,
-}
-
-fn halt_if(stop: Option<MigrationStop>, here: MigrationStop) {
-    if stop == Some(here) {
-        std::process::abort();
-    }
 }
 
 enum Migration {
@@ -27,6 +20,7 @@ enum Migration {
     RecheckAnimations,
     RecordBucketedPaths,
     MoveVisualDetails,
+    AnnotationsAndOrientation,
 }
 
 const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = [
@@ -52,7 +46,7 @@ const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::Statements(include_str!("migrations/v10.sql")),
     Migration::Statements(include_str!("migrations/v11.sql")),
     Migration::MoveVisualDetails,
-    Migration::Statements(include_str!("migrations/v13.sql")),
+    Migration::AnnotationsAndOrientation,
 ];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
@@ -105,13 +99,26 @@ pub fn migrate_to_current_version(
     connection: &mut Connection,
     root: &Path,
 ) -> Result<(), LibraryError> {
-    migrate_halting_at(connection, root, None)
+    migrate_reaching(connection, root, &mut |_| {})
 }
 
+#[cfg(feature = "migration-stops")]
 pub fn migrate_halting_at(
     connection: &mut Connection,
     root: &Path,
-    stop: Option<MigrationStop>,
+    stop: MigrationStop,
+) -> Result<(), LibraryError> {
+    migrate_reaching(connection, root, &mut |reached| {
+        if reached == stop {
+            std::process::abort();
+        }
+    })
+}
+
+fn migrate_reaching(
+    connection: &mut Connection,
+    root: &Path,
+    reached: &mut dyn FnMut(MigrationStop),
 ) -> Result<(), LibraryError> {
     let found = read_format_version(connection)?;
     if found > CURRENT_FORMAT_VERSION {
@@ -131,9 +138,9 @@ pub fn migrate_halting_at(
         }
     }
     transaction.pragma_update(None, "user_version", CURRENT_FORMAT_VERSION)?;
-    halt_if(stop, MigrationStop::BeforeCommit);
+    reached(MigrationStop::BeforeCommit);
     transaction.commit()?;
-    halt_if(stop, MigrationStop::AfterCommit);
+    reached(MigrationStop::AfterCommit);
     Ok(())
 }
 
@@ -142,6 +149,10 @@ fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<
         Migration::Statements(statements) => Ok(connection.execute_batch(statements)?),
         Migration::RecheckAnimations => animation_recheck::mark_animated_assets(connection, root),
         Migration::RecordBucketedPaths => buckets::record_bucketed_paths(connection),
+        Migration::AnnotationsAndOrientation => {
+            connection.execute_batch(include_str!("migrations/v13.sql"))?;
+            dimension_recheck::correct_oriented_dimensions(connection, root)
+        }
         Migration::MoveVisualDetails => {
             connection.execute_batch(include_str!("migrations/v12.sql"))?;
             details_store::move_out_of_assets(connection, root)

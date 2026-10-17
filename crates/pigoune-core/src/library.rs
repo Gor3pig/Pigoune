@@ -10,6 +10,7 @@ mod collection;
 mod collection_command;
 mod content;
 mod details_store;
+mod dimension_recheck;
 mod duplicate_removal;
 mod duplicates;
 mod error;
@@ -84,7 +85,9 @@ pub use library_export::{
 };
 pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
-pub use schema::{CURRENT_FORMAT_VERSION, MigrationStop, oldest_compatible_version};
+#[cfg(feature = "migration-stops")]
+pub use schema::MigrationStop;
+pub use schema::{CURRENT_FORMAT_VERSION, oldest_compatible_version};
 pub use search::{
     AssetFilter, MAX_QUERY_WORDS, comparable, query_groups, query_text, query_word_count,
 };
@@ -130,20 +133,24 @@ impl Library {
     }
 
     pub fn open(root: &Path) -> Result<Self, LibraryError> {
-        Self::open_halting_at(root, None)
+        Self::open_with(root, |connection, root| {
+            schema::migrate_to_current_version(connection, root)
+        })
     }
 
-    #[doc(hidden)]
+    #[cfg(feature = "migration-stops")]
     pub fn open_halting_during_migration(
         root: &Path,
         stop: schema::MigrationStop,
     ) -> Result<Self, LibraryError> {
-        Self::open_halting_at(root, Some(stop))
+        Self::open_with(root, |connection, root| {
+            schema::migrate_halting_at(connection, root, stop)
+        })
     }
 
-    fn open_halting_at(
+    fn open_with(
         root: &Path,
-        stop: Option<schema::MigrationStop>,
+        migrate: impl FnOnce(&mut Connection, &Path) -> Result<(), LibraryError>,
     ) -> Result<Self, LibraryError> {
         if !root.is_dir() {
             return Err(LibraryError::NotFound(root.to_path_buf()));
@@ -165,7 +172,7 @@ impl Library {
         schema::configure_connection(&connection)?;
         schema::ensure_is_intact(&connection)?;
         let found_version = schema::read_format_version(&connection)?;
-        schema::migrate_halting_at(&mut connection, root, stop)?;
+        migrate(&mut connection, root)?;
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
         fs::create_dir_all(root.join(CACHE_DIR_NAME))?;

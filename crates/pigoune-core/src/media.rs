@@ -5,6 +5,7 @@ mod format;
 mod frame_timing;
 mod gif;
 mod ico;
+mod orientation;
 mod png;
 mod rgb;
 mod shape;
@@ -102,6 +103,10 @@ fn inspect_binary(path: &Path, format: AssetFormat) -> Result<MediaInfo, Inspect
     })
 }
 
+pub fn dimensions_of(path: &Path, format: AssetFormat) -> Option<Dimensions> {
+    probe_dimensions(path, format).ok()
+}
+
 fn probe_dimensions(path: &Path, format: AssetFormat) -> Result<Dimensions, InspectError> {
     let dimensions = if format == AssetFormat::Bmp {
         bmp::size(path)?
@@ -113,6 +118,10 @@ fn probe_dimensions(path: &Path, format: AssetFormat) -> Result<Dimensions, Insp
     };
     if dimensions.width().max(dimensions.height()) > LARGEST_SIDE {
         return Err(InspectError::Unreadable);
+    }
+    if orientation::swaps_sides(path, format) {
+        return Dimensions::new(dimensions.height(), dimensions.width())
+            .ok_or(InspectError::Unreadable);
     }
     Ok(dimensions)
 }

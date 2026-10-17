@@ -38,6 +38,7 @@ struct Fixture {
     root: PathBuf,
     plain: AssetId,
     others: Vec<AssetId>,
+    turned: AssetId,
 }
 
 fn become_format_12(root: &Path) {
@@ -45,6 +46,44 @@ fn become_format_12(root: &Path) {
     connection
         .execute_batch("DROP TABLE asset_annotations; PRAGMA user_version = 12;")
         .expect("format 12");
+}
+
+fn turned_jpeg() -> Vec<u8> {
+    let mut tiff = vec![
+        b'I', b'I', 42, 0, 8, 0, 0, 0, 1, 0, 0x12, 1, 3, 0, 1, 0, 0, 0, 6, 0, 0, 0,
+    ];
+    tiff.extend_from_slice(&[0, 0, 0, 0]);
+    let mut payload = b"Exif\0\0".to_vec();
+    payload.extend(tiff);
+    let mut bytes = vec![0xFF, 0xD8, 0xFF, 0xE1];
+    bytes.extend_from_slice(
+        &u16::try_from(payload.len() + 2)
+            .expect("small")
+            .to_be_bytes(),
+    );
+    bytes.extend(payload);
+    bytes.extend_from_slice(&[0xFF, 0xC0, 0, 17, 8, 1, 0x90, 2, 0x58]);
+    bytes.extend_from_slice(&[3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+    bytes.extend_from_slice(&[0xFF, 0xDA, 0, 2, 0xFF, 0xD9]);
+    bytes
+}
+
+fn corrected(dump: &Dump, id: AssetId) -> Dump {
+    let mut fixed = dump.clone();
+    let (columns, rows) = fixed.get_mut("assets").expect("assets");
+    let position = |name: &str| {
+        columns
+            .iter()
+            .position(|column| column == name)
+            .expect("column")
+    };
+    let (id_column, width, height) = (position("id"), position("width"), position("height"));
+    for row in rows {
+        if row[id_column].contains(&id.to_string()) {
+            row.swap(width, height);
+        }
+    }
+    fixed
 }
 
 fn build_format_12(parent: &Path) -> Fixture {
@@ -99,14 +138,28 @@ fn build_format_12(parent: &Path) -> Fixture {
             name: "trip".to_owned(),
         })
         .expect("tag");
+    let turned_path = sources.join("turned.jpg");
+    fs::write(&turned_path, turned_jpeg()).expect("turned picture");
+    let ImportOutcome::Imported(turned) = library.import_file(&turned_path, None).expect("import")
+    else {
+        panic!("new");
+    };
     let root = library.root().to_path_buf();
     drop(library);
     fs::remove_dir_all(&sources).expect("sources removed");
+    Connection::open(root.join("library.db"))
+        .expect("database")
+        .execute(
+            "UPDATE assets SET width = 600, height = 400 WHERE id = ?1",
+            [turned],
+        )
+        .expect("the sizes as an old version stored them");
     become_format_12(&root);
     Fixture {
         root,
         plain,
         others,
+        turned,
     }
 }
 
@@ -234,8 +287,8 @@ fn a_format_12_library_keeps_every_element_file_and_value_when_it_becomes_format
     let files_before = files(&fixture.root);
     assert_eq!(schema_state(&fixture.root).0, 12);
     assert!(schema_state(&fixture.root).1.is_empty());
-    assert_eq!(rows_before["assets"].1.len(), 4);
-    assert_eq!(files_before.len(), 4, "{files_before:?}");
+    assert_eq!(rows_before["assets"].1.len(), 5);
+    assert_eq!(files_before.len(), 5, "{files_before:?}");
 
     let mut library = Library::open(&fixture.root).expect("migrates");
 
@@ -253,9 +306,9 @@ fn a_format_12_library_keeps_every_element_file_and_value_when_it_becomes_format
     assert_eq!(columns, NEW_COLUMNS);
     let after = dump(&fixture.root);
     assert_nothing_lost(
-        &only_the_12_tables(&rows_before),
+        &corrected(&only_the_12_tables(&rows_before), fixture.turned),
         &only_the_12_tables(&after),
-        "migration",
+        "migration: only the sides of the turned picture changed",
     );
     assert!(after["asset_annotations"].1.is_empty());
 
@@ -263,7 +316,12 @@ fn a_format_12_library_keeps_every_element_file_and_value_when_it_becomes_format
     assert!(plain.is_favorite);
     assert_eq!(plain.note, "a note that must survive");
     assert_eq!(library.tags_of(fixture.others[0]).expect("tags").len(), 1);
-    assert_eq!(library.visible_assets().expect("assets").len(), 4);
+    assert_eq!(library.visible_assets().expect("assets").len(), 5);
+    let turned = library.asset(fixture.turned).expect("q").expect("asset");
+    assert_eq!(
+        turned.dimensions.map(|size| (size.width(), size.height())),
+        Some((400, 600))
+    );
     let report = library
         .health_plan()
         .expect("plan")
@@ -358,7 +416,12 @@ fn an_abrupt_stop_during_the_migration_leaves_either_the_old_or_the_new_whole_st
         migrate_in_a_child_that_aborts(&isolated, stop);
 
         expect_only_whole_states(&isolated, expect_before_reopening);
-        assert_nothing_lost(&rows_before, &only_the_12_tables(&dump(&isolated)), stop);
+        let expected_now = if expect_before_reopening == 12 {
+            rows_before.clone()
+        } else {
+            corrected(&rows_before, fixture.turned)
+        };
+        assert_nothing_lost(&expected_now, &only_the_12_tables(&dump(&isolated)), stop);
         assert_eq!(files(&isolated), files_before, "{stop}: images untouched");
 
         let library = Library::open(&isolated).expect("the library opens after the stop");
@@ -369,7 +432,11 @@ fn an_abrupt_stop_during_the_migration_leaves_either_the_old_or_the_new_whole_st
         );
         drop(library);
         expect_only_whole_states(&isolated, 13);
-        assert_nothing_lost(&rows_before, &only_the_12_tables(&dump(&isolated)), stop);
+        assert_nothing_lost(
+            &corrected(&rows_before, fixture.turned),
+            &only_the_12_tables(&dump(&isolated)),
+            stop,
+        );
         assert_eq!(
             files(&isolated),
             files_before,

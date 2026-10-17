@@ -3,6 +3,7 @@ pub mod library;
 mod media;
 mod raster;
 
+#[cfg(feature = "migration-stops")]
 pub use library::MigrationStop;
 pub use library::{
     ALMOST_IDENTICAL_DISTANCE, AdoptError, AnnotatedError, AnnotationRender, Annotations, Asset,
