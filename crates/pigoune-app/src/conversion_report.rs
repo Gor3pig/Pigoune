@@ -2,6 +2,7 @@ use gettextrs::{gettext, ngettext};
 
 use crate::image_conversion::{ConversionError, TargetFormat};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Failure {
     pub name: String,
     pub reason: String,

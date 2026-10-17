@@ -40,6 +40,7 @@ use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTre
 use crate::conversion_memory;
 use crate::conversion_report;
 use crate::displayed_view;
+use crate::drag_export;
 use crate::drop_action;
 use crate::drop_message;
 use crate::drop_places;
@@ -51,6 +52,7 @@ use crate::duplicates_page::{
 use crate::editor::EditedCapture;
 use crate::error_messages;
 use crate::export_as_dialog::PigouneExportAsDialog;
+use crate::export_outcome::{self, Outcome as ExportOutcome};
 use crate::flatpak_updates::FlatpakUpdates;
 use crate::grid_header::SearchScope;
 use crate::health_page::{Adopted, HealthActions, Refusal, Replaced, Trashed};
@@ -155,6 +157,7 @@ const PASTE_AND_ANNOTATE_ACTION: &str = "win.paste-and-annotate";
 const CAPTURE_ACTION: &str = "win.capture";
 const CAPTURE_SETTLE: std::time::Duration = std::time::Duration::from_millis(350);
 const LARGEST_CAPTURE_SIDE: i32 = 8000;
+const WARMED_RENDERINGS: usize = 8;
 const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
@@ -936,24 +939,39 @@ impl PigouneWindow {
         ));
     }
 
-    fn ready_flat_files(&self, ids: &[AssetId]) -> (Vec<AssetId>, FlatFiles) {
+    fn ready_flat_files(&self, ids: &[AssetId]) -> (FlatFiles, usize) {
         let library = self.imp().library.borrow();
         let Some(library) = library.as_ref() else {
-            return (Vec::new(), FlatFiles::new());
+            return (FlatFiles::new(), 0);
         };
         let mut flats = FlatFiles::new();
-        let mut exportable = Vec::new();
+        let mut not_ready = 0;
         for id in ids {
             match library.annotation_render(*id) {
                 Ok(Some(render)) if render.file.is_file() => {
                     flats.insert(*id, render.file);
-                    exportable.push(*id);
                 }
-                Ok(Some(_)) | Err(_) => {}
-                Ok(None) => exportable.push(*id),
+                Ok(Some(_)) | Err(_) => not_ready += 1,
+                Ok(None) => {}
             }
         }
-        (exportable, flats)
+        (flats, not_ready)
+    }
+
+    fn warm_annotated_renderings(&self, shown: &[PigouneAssetObject]) {
+        let ids: Vec<AssetId> = shown
+            .iter()
+            .filter(|asset| asset.annotation().is_some())
+            .map(PigouneAssetObject::id)
+            .take(WARMED_RENDERINGS)
+            .collect();
+        if ids.is_empty() {
+            return;
+        }
+        let window = self.clone();
+        glib::spawn_future_local(async move {
+            window.flat_files_for(&ids).await;
+        });
     }
 
     async fn flat_files_for(&self, ids: &[AssetId]) -> FlatFiles {
@@ -1024,13 +1042,18 @@ impl PigouneWindow {
             self,
             #[upgrade_or_default]
             move |assets| {
-                let (exportable, flats) = window.ready_flat_files(assets);
+                let (flats, not_ready) = window.ready_flat_files(assets);
+                let plan = drag_export::plan(assets, window.exposed_mask_names(assets), not_ready);
+                if let Some(refusal) = &plan.refusal {
+                    window.show_toast(&drag_export::refusal_text(refusal));
+                    return Vec::new();
+                }
                 window
                     .imp()
                     .library
                     .borrow()
                     .as_ref()
-                    .and_then(|library| library.export_copies(&exportable, &flats).ok())
+                    .and_then(|library| library.export_copies(&plan.files, &flats).ok())
                     .unwrap_or_default()
             }
         ));
@@ -2987,6 +3010,7 @@ impl PigouneWindow {
             }
             several => imp.asset_details.show_group(several, &thumbnails),
         }
+        self.warm_annotated_renderings(selected);
         let access = match selected {
             [single] => self.annotation_access(single),
             _ => AnnotationAccess::None,
@@ -3889,19 +3913,25 @@ impl PigouneWindow {
     }
 
     fn finish_library_export(&self, report: &LibraryExportReport) {
-        if report.exported > 0 {
-            self.show_export_toast(report.exported, &gio::File::for_path(&report.folder));
-        }
-        if !report.failures.is_empty() {
-            let failures: Vec<conversion_report::Failure> = report
-                .failures
-                .iter()
-                .map(|failure| conversion_report::Failure {
-                    name: failure.name.clone(),
-                    reason: error_messages::describe(&failure.error),
-                })
-                .collect();
-            self.show_export_failures(&failures);
+        let folder = gio::File::for_path(&report.folder);
+        match export_outcome::outcome_of(report) {
+            ExportOutcome::Complete(count) => {
+                if count > 0 {
+                    self.show_export_toast(count, &folder);
+                }
+            }
+            ExportOutcome::Partial { exported, missing } => {
+                let alert = adw::AlertDialog::new(
+                    Some(&export_outcome::partial_heading()),
+                    Some(&export_outcome::partial_body(
+                        exported,
+                        &folder_name(&folder),
+                        &missing,
+                    )),
+                );
+                alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+                alert.present(Some(self));
+            }
         }
     }
 
@@ -3911,9 +3941,10 @@ impl PigouneWindow {
             return;
         }
         let paused_frame = self.paused_preview_frame();
+        let natural = output_natural_size(&assets[0]);
         let dialog = PigouneExportAsDialog::new(
-            conversion_memory::load(self.settings(), natural_size(&assets[0])),
-            natural_size(&assets[0]),
+            conversion_memory::load(self.settings(), natural),
+            natural,
             assets.len(),
             screen_size::screen_of(self),
             glib::clone!(
@@ -7176,6 +7207,13 @@ fn wallpaper_folder() -> Result<PathBuf, String> {
     let folder = glib::user_cache_dir().join("pigoune").join("wallpapers");
     std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
     Ok(folder)
+}
+
+fn output_natural_size(asset: &PigouneAssetObject) -> (u32, u32) {
+    asset
+        .annotation()
+        .and_then(|render| annotated_files::cropped_size(&render.document))
+        .unwrap_or_else(|| natural_size(asset))
 }
 
 fn natural_size(asset: &PigouneAssetObject) -> (u32, u32) {

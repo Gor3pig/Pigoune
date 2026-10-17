@@ -8525,3 +8525,21 @@ msgstr "La exportación contiene todas las imágenes originales, que pueden most
 
 msgid "_Discard and Capture"
 msgstr "_Descartar y capturar"
+
+msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
+msgstr "Muestre los enmascaramientos ocultos de «{name}» antes de arrastrarla fuera de Pigoune"
+
+msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
+msgstr "Muestre los enmascaramientos ocultos de {count} imágenes antes de arrastrarlas fuera de Pigoune"
+
+msgid "The annotated image is still being prepared. Try dragging it again in a moment"
+msgstr "La imagen anotada aún se está preparando. Vuelva a intentar arrastrarla en un momento"
+
+msgid "its annotated version could not be created"
+msgstr "no se pudo crear su versión anotada"
+
+msgid "Export Incomplete"
+msgstr "Exportación incompleta"
+
+msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr "La exportación es parcial. Se exportaron {exported} archivos a «{folder}», pero no se pudieron crear {count}:\n\n{list}"

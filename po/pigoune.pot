@@ -8070,3 +8070,27 @@ msgstr ""
 #: crates/pigoune-app/src/layers_panel.rs
 msgid "_Discard and Capture"
 msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Show the hidden masks of “{name}” before dragging it out of Pigoune"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Show the hidden masks of {count} images before dragging them out of Pigoune"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "The annotated image is still being prepared. Try dragging it again in a moment"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "its annotated version could not be created"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "Export Incomplete"
+msgstr ""
+
+#: crates/pigoune-app/src/layers_panel.rs
+msgid "The export is partial. {exported} files were exported to “{folder}”, but {count} could not be created:\n\n{list}"
+msgstr ""
