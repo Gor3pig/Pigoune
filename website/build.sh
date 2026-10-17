@@ -29,7 +29,7 @@ cp "$repository/data/screenshots/01.png" "$output/images/share.png"
 for screenshot in "$repository"/data/screenshots/[0-9][0-9].png; do
     to_webp "$screenshot" "$output/images/$(basename "$screenshot" .png).webp"
 done
-for number in 02 03 04 05 06 07 11; do
+for number in 02 03 04 05 06 07 11 12 13; do
     to_thumbnail "$repository/data/screenshots/$number.png" "$output/images/thumb-$number.webp"
 done
 to_webp "$repository/website/wallpaper-desktop.png" "$output/images/wallpaper-desktop.webp"
