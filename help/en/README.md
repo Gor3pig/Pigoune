@@ -336,9 +336,10 @@ Assets cannot be dropped onto a smart collection, since its content follows its 
 
 ## Capturing and annotating
 
-Pigoune can take a screenshot, or take any image you paste, and let you annotate it before it
-joins your library. The editor opens inside the window of an open library, so there is always a
-place to keep the result.
+Pigoune can take a screenshot, take any image you paste, or open an image that is already in your
+library, and let you annotate it. The editor opens inside the window of an open library, so there
+is always a place to keep the result. Annotations never change the original file: they are kept
+next to it and you can change them later.
 
 ### Start a capture
 
@@ -352,6 +353,9 @@ place to keep the result.
   `flatpak run io.github.gor3pig.Pigoune --capture`) to a key in the settings of your desktop. If
   Pigoune is not running, it starts, reopens your last library and takes the screenshot.
 
+- **Annotate an image of your library**: select it and choose **Annotate…** in the details panel or
+  the context menu, or press <kbd>Ctrl</kbd>+<kbd>E</kbd>.
+
 Images can be up to 8000 pixels on a side.
 
 ### Annotate
@@ -363,21 +367,23 @@ bottom). Each tool has a letter that selects it, shown in its tooltip.
 |---|---|---|
 | Select | <kbd>V</kbd> | Select, move and resize an annotation (<kbd>Delete</kbd> removes it) |
 | Crop | <kbd>C</kbd> | Keep only a part of the image, with free or fixed proportions |
-| Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Outlines, optionally filled or with rounded corners |
-| Line, Arrow | <kbd>L</kbd>, <kbd>A</kbd> | Straight or curved, with several heads, solid, dashed or dotted, even or tapered |
+| Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Outlines, optionally filled or with rounded corners, solid, dashed or dotted, precise or hand-drawn |
+| Line, Arrow | <kbd>L</kbd>, <kbd>A</kbd> | Straight or curved, with several heads, solid, dashed or dotted, precise or hand-drawn, even or tapered |
 | Text | <kbd>T</kbd> | Click, type, then click elsewhere or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>; font, size, bold, italic, background, bubble and outline |
 | Steps | <kbd>N</kbd> | Numbered (or lettered) badges that renumber themselves |
-| Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Freehand strokes, smoothed |
+| Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Freehand strokes, smoothed (the pen can also be dashed or dotted) |
 | Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide what is private; they apply to everything drawn under them |
 | Spotlight | <kbd>S</kbd> | Dims everything but a rectangle or an oval |
 
 Every tool remembers its last settings (color with an eyedropper to take one from the image,
-opacity, thickness, shadow and more). Hold <kbd>Shift</kbd> while drawing for straight lines at
+opacity, thickness, shadow and more). **Line Type** chooses a solid, dashed or dotted stroke, and
+**Hand-Drawn Look** (Precise, Sketchy or Very Sketchy) gives rectangles, ellipses, lines and arrows
+the slightly wobbly look of a drawing made by hand; a shape keeps the same look every time you
+open it, and a copy looks exactly like the original. Hold <kbd>Shift</kbd> while drawing for straight lines at
 multiples of 45 degrees and perfect squares or circles, and hold <kbd>Alt</kbd> while moving to
 switch off the guides that align an annotation with the image and with the other annotations.
-The four buttons of **Layers** (or <kbd>Ctrl</kbd>+<kbd>]</kbd> and <kbd>Ctrl</kbd>+<kbd>[</kbd>,
-with <kbd>Shift</kbd> for the extremes) change the order of the annotations. Undo and redo work
-as everywhere, with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.
+Undo and redo work as everywhere, with <kbd>Ctrl</kbd>+<kbd>Z</kbd> and
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>.
 
 A new annotation stays selected: you can move it, resize it by its handles and change its settings
 right away, without leaving the tool you are using. With a drawing tool, press on the outline of an
@@ -387,14 +393,46 @@ middle: drag it to bend the arrow, double-click it to straighten the arrow. A se
 or spotlight has a round handle in its center: drag it to move the area with any tool. The arrow keys nudge
 the selection by one pixel (ten with <kbd>Shift</kbd>) and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicates it.
 
+### Layers
+
+The **Layers** panel lists the annotations from front to back. The buttons above the list (or
+<kbd>Ctrl</kbd>+<kbd>]</kbd> and <kbd>Ctrl</kbd>+<kbd>[</kbd>, with <kbd>Shift</kbd> for the
+extremes), or dragging a row, change the order. The eye of a row hides or shows its annotation and
+the padlock locks it so that it cannot be moved by mistake; the right-click menu of a row renames,
+duplicates or deletes it. Hiding a layer only hides it in the editor and in the result: nothing is
+deleted, and you can show it again at any time.
+
+### Your workspace
+
+**Tools**, **Properties** and **Layers** each fold and unfold with a click on their title. The
+button next to **Redo** in the header, or <kbd>F9</kbd>, hides the whole panel to give the image
+more room; **Save** and the copy, export and capture buttons then move to the header. Pigoune
+remembers which sections are folded and whether the panel is hidden, and none of this changes your
+annotations, the selected tool or the zoom.
+
+
 ### Hide what is private
 
-A blur or a pixelation hides what is under it, annotations included. While your annotations stay
-editable, the untouched capture is kept in the library and still shows what you hid, so a banner
-tells you so. **Lock Masks** applies every blur and pixelation to that original capture too, for
-good, and the exported image never contains the original. A pixelation with large cells removes
-the details they cover; a light blur is not an anonymization and may be partly recoverable, so
-prefer a pixelation or a strong blur for anything sensitive.
+A **Blur** or a **Pixelate** annotation hides what is under it, annotations included. Like every
+annotation, it is non-destructive: the original file stays exactly as it was imported, the blur or
+pixelation stays editable and is saved with the other annotations, and you can move it, resize it,
+hide it or change it later.
+
+That also means the original image is still in your library, with what you hid. Pigoune takes this
+into account:
+
+- if a blur or a pixelation is hidden (with the eye of its layer), some information may be visible
+  again in the result, so Pigoune warns you before you **copy**, **export** or **open with another
+  application** an image that has one, and offers to show it first when you are in the editor;
+- dragging such an image out of Pigoune is refused until you show the hidden effects again, with
+  no way to go on anyway;
+- exporting the whole library gives every original **and** a copy of each annotated image, so the
+  originals may contain things that are no longer visible on the annotated copies. Pigoune asks
+  whether you want the originals too before it exports.
+
+A pixelation with large cells removes the details it covers; a light blur is not an anonymization
+and may be partly recoverable, so prefer a pixelation or a strong blur for anything sensitive, and
+do not share the original file.
 
 ### Keep the result
 
@@ -406,10 +444,18 @@ prefer a pixelation or a strong blur for anything sensitive.
   the next time a library opens.
 
 Select an annotated asset and choose **Annotate…** (in the details panel or the context menu) to
-reopen its annotations: saving updates the same asset. **View Original** opens the untouched
-capture in another application. The grid, the preview, the duplicates and the exports all use the
-annotated image; the original stays next to it, moves to the trash and comes back with it, and
-counts in the storage of your library.
+reopen its annotations: saving updates the same asset. **View Original** opens a copy of the
+untouched image in another application. The grid, the preview and the duplicates use the annotated
+image, and copying or exporting it gives a flattened PNG; the original stays next to it, moves to
+the trash and comes back with it, and counts in the storage of your library.
+
+### Compare with the original
+
+In the detailed preview, an annotated image shows an eye button at the bottom right. **Hold** it
+down to see the original image, and release it: the annotated image comes back at once. It is a
+momentary view, not a switch, so nothing stays on screen by mistake: the annotated image also
+comes back if you change image, close the preview or leave the window. Nothing is changed or
+saved, and the button is dimmed if the original file is not available.
 
 ## Trash and undo
 
@@ -445,6 +491,9 @@ A library is a regular folder whose name ends with `.pigoune`. It contains:
 Because everything is inside this folder, a library is **portable**: copy it to an external
 drive or to another computer and open it there with Pigoune. To back it up, copy the whole
 folder while Pigoune is closed.
+
+A library that has been opened and upgraded with Pigoune 3.0 can no longer be opened with Pigoune
+2.12 or older; **Manage Library** shows which versions can open it.
 
 A library can only be open in one Pigoune window at a time. If you keep a library in a synced
 folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening it on another.
@@ -596,6 +645,8 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune. Most of the
 | Paste files or an image to import | <kbd>Ctrl</kbd>+<kbd>V</kbd> |
 | Take a screenshot to annotate | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
 | Paste an image to annotate | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> |
+| Annotate the selected image | <kbd>Ctrl</kbd>+<kbd>E</kbd> |
+| Show or hide the panel of the annotation editor | <kbd>F9</kbd> |
 | Rename the selected asset | <kbd>F2</kbd> |
 | Add to or remove from favorites | <kbd>Ctrl</kbd>+<kbd>D</kbd> |
 | Add a tag | <kbd>Ctrl</kbd>+<kbd>T</kbd> |
