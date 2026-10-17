@@ -52,3 +52,25 @@ pub fn bake(
         &|snapshot| paint_masks(snapshot, backdrop, &masks, context),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn every_entry_to_the_sealing_is_behind_the_release_of_its_chain() {
+        let editor = include_str!("editor.rs");
+        let gated = editor.matches("seal_chain::sealing_available()").count();
+        assert!(gated >= 3, "the label, the click and the flow are gated");
+        let click = editor
+            .split("fn on_lock_masks_clicked")
+            .nth(1)
+            .and_then(|rest| rest.split("fn ").next())
+            .expect("the click handler exists");
+        assert!(click.contains("sealing_available"));
+        let flow = editor
+            .split("async fn seal_masks")
+            .nth(1)
+            .and_then(|rest| rest.split("fn ").next())
+            .expect("the flow exists");
+        assert!(flow.contains("sealing_available"));
+    }
+}
