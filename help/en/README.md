@@ -64,7 +64,7 @@ There are four ways to bring assets in.
 
 | Way | How |
 |---|---|
-| **Import button** | Click **+** at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>I</kbd>, then choose **Import Files…** or **Import Folder…**. |
+| **Import menu** | Click **+** at the top of the sidebar, or press <kbd>Ctrl</kbd>+<kbd>I</kbd>, then choose **Import Files…** or **Import Folder…**. |
 | **Drag and drop** | Drag files or folders from Files onto the window, or onto **All**, **Unclassified** or a collection in the sidebar. |
 | **Copy and paste** | Copy files in Files, or an image (a screenshot, an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd>. |
 | **From a web page** | Drag an image from a web page onto the window, or onto a collection of the sidebar. |
@@ -89,7 +89,7 @@ Pigoune keeps what the browser gives it: the original file with Chrome or Brave,
 
 HEIC photos are shown when the system can decode them, which the Flatpak package does.
 
-When you import a duplicate into a collection, the asset then belongs to that collection only.
+When you import a file that is already there into a collection, the existing asset is added to that collection and stays in the others. If it was in the trash, it is restored and then belongs to that collection only.
 
 > [!TIP]
 > Your original files are never modified or moved. You can delete them once they are imported.
@@ -210,7 +210,7 @@ Pigoune shows its parent instead, and undoing brings you back to the tag.
 </details>
 
 > [!NOTE]
-> A library with nested tags can only be opened by Pigoune 2.5 or later. Your existing tags become first-level tags and nothing is lost.
+> Your existing tags become first-level tags and nothing is lost.
 
 ### Favorites
 
@@ -306,7 +306,7 @@ The last, rainbow swatch opens the GNOME color chooser to pick any color, for ex
 Colors add up with types and favorites: red and SVG show the red SVG files.
 
 > [!NOTE]
-> When a library is opened with Pigoune 2.0 for the first time, its assets are analyzed in the background while you keep working. An asset not analyzed yet matches no color.
+> When an older library is opened for the first time, its assets are analyzed in the background while you keep working. An asset not analyzed yet matches no color.
 
 #### Orientation and screen size
 
@@ -346,9 +346,7 @@ It always searches the whole library, the trash left aside. Assets cannot be dro
 | **Open** it | Click it in the sidebar. You can still search inside it. |
 | **Change** it | **Edit…** in its right-click menu, or <kbd>F2</kbd>. |
 | **Delete** it | **Delete…**. Only the saved search goes: the assets stay in the library. |
-| **Reorder** | Drag them in the sidebar, or sort them with the **⋯** button next to their title. |
-
-Sorting offers the name or the creation date.
+| **Reorder** | Drag them in the sidebar, or sort them by name or creation date with the **⋯** button next to their title. |
 
 *See also: [Organizing](#organizing), [Looking at assets](#looking-at-assets).* · [Back to contents](#contents)
 
@@ -427,7 +425,7 @@ Take your assets out of Pigoune, or turn them into something else: a copy, an ex
 | Find look-alikes | **Find Similar…** | [Find similar assets](#find-similar-assets) |
 | Make a wallpaper | **Frame and Set as Wallpaper…** | [Wallpapers](#wallpapers) |
 
-Except for dragging and copying, these actions are in the right-click menu of an asset.
+Except for dragging, copying and exporting the whole library, these actions are in the right-click menu of an asset.
 
 ### Drag and copy
 
@@ -464,7 +462,7 @@ Change the format and the size while you export. Choose **Convert and Export…*
 |---|---|
 | **Quality** | JPEG and AVIF offer a quality setting. |
 | **Background** | A background color fills the transparent areas. JPEG always uses one, since it has no transparency. |
-| **ICO sizes** | Tick the sizes to include (16, 32, 48 and 256 by default). They all go into a single icon file. |
+| **Icon Sizes** | Tick the sizes to include (16, 32, 48 and 256 by default). They all go into a single icon file. |
 
 The other formats keep transparency, unless you turn off **Keep Transparency** to use a background color too.
 
@@ -473,7 +471,7 @@ The other formats keep transparency, unless you turn off **Keep Transparency** t
 | Option | Effect |
 |---|---|
 | **Width and height** | In pixels or as a percentage. 100% keeps the original size. |
-| **Padlock** | Closed, proportions are kept: changing one side updates the other. Open it to stretch an image freely. |
+| **Keep Proportions** (the padlock) | Closed, proportions are kept: changing one side updates the other. Open it to stretch an image freely. |
 | **Size of My Screen** | Fits several images to your screen at once: each image takes exactly the size of the screen Pigoune is shown on, for example 1920 × 1080. |
 | **Fill the Screen** | Covers the whole screen and cuts the edges that overflow, around the center. |
 | **Whole Image** | Keeps the whole image and fills the bands with the background color, or leaves them transparent when transparency is kept. |
@@ -501,7 +499,7 @@ With the padlock closed, several images of different shapes each fit inside the 
 Your library stays untouched: save your changes under a new name and import them if you want to keep them.
 
 > [!WARNING]
-> The file shown by **Show in Files** is the real file. Do not move, rename or edit it from there: the library health check would point it out.
+> The file shown by **Show in Files** is the real file. Do not move, rename or edit it from there: the check in the **Health** tab would point it out.
 
 ### Find similar assets
 
@@ -525,6 +523,11 @@ A large window shows a virtual screen at the real resolution of the screen Pigou
 | **Move** the image | Drag it. |
 | **Zoom** | Use the mouse wheel, the slider, or <kbd>+</kbd> and <kbd>-</kbd>. |
 | **Adjust** | Use the arrow keys (<kbd>Shift</kbd> moves further). |
+
+Three buttons set the framing:
+
+| Button | Effect |
+|---|---|
 | **Fill** | Comes back to the framing of GNOME. |
 | **Whole** | Shows all of the image. |
 | **100%** | Shows one pixel of the image per pixel of the screen. |
@@ -625,7 +628,7 @@ Images can be up to 8000 pixels on a side.
 
 ### Annotate
 
-The tools are in the panel on the right (in a narrow window, in the panel that rises from the bottom). Each tool has a letter that selects it, shown in its tooltip.
+The tools are in the editor panel, on the right (in a narrow window, in the panel that rises from the bottom). Each tool has a letter that selects it, shown in its tooltip.
 
 | Tool | Key | What it does |
 |---|---|---|
@@ -636,14 +639,14 @@ The tools are in the panel on the right (in a narrow window, in the panel that r
 | Text | <kbd>T</kbd> | Click, type, then click elsewhere or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> |
 | Steps | <kbd>N</kbd> | Numbered (or lettered) badges that renumber themselves |
 | Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Smoothed freehand strokes |
-| Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide what is private, under everything drawn above |
+| Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide private information: the effect applies to everything drawn below it |
 | Spotlight | <kbd>S</kbd> | Dims everything but a rectangle or an oval |
 
-<kbd>Delete</kbd> removes the selected annotation. **Crop** works with free or fixed proportions. Blur and pixelation apply to everything drawn under them.
+<kbd>Delete</kbd> removes the selected annotation. **Crop** works with free or fixed proportions.
 
 #### Settings of a tool
 
-Every tool remembers its last settings: color (with an eyedropper to take one from the image), opacity, thickness, shadow and more. The text tool also has font, size, bold, italic, background, bubble and outline.
+Every tool remembers its last settings until Pigoune is closed: color (with an eyedropper to take one from the image), opacity, thickness, shadow and more. The text tool also has font, size, bold, italic, background, bubble and outline.
 
 - **Line Type** chooses a solid, dashed or dotted stroke, for rectangles, ellipses, lines, arrows and the pen.
 - **Hand-Drawn Look** (Precise, Sketchy or Very Sketchy) gives rectangles, ellipses, lines and arrows the slightly wobbly look of a drawing made by hand.
@@ -681,13 +684,13 @@ Every annotation is a layer. The **Layers** panel lists them from front to back.
 
 <kbd>Ctrl</kbd>+<kbd>]</kbd> and <kbd>Ctrl</kbd>+<kbd>[</kbd> change the order too, with <kbd>Shift</kbd> for the extremes.
 
-Hiding a layer only hides it in the editor and in the result. Nothing is deleted, and you can show it again at any time.
+A hidden layer disappears from the editor and from the result, but it is not deleted: you can show it again at any time.
 
 ### Your workspace
 
 **Tools**, **Properties** and **Layers** each fold and unfold with a click on their title.
 
-The button next to **Redo** in the header, or <kbd>F9</kbd>, hides the whole panel to give the image more room. **Save** and the copy, export and capture buttons then move to the header.
+The button next to **Redo** in the header, or <kbd>F9</kbd>, hides the whole editor panel to give the image more room. **Save** and the copy, export and capture buttons then move to the header.
 
 Pigoune remembers which sections are folded and whether the panel is hidden. None of this changes your annotations, the selected tool or the zoom.
 
@@ -696,7 +699,7 @@ Pigoune remembers which sections are folded and whether the panel is hidden. Non
 A **Blur** or a **Pixelate** annotation hides what is under it, annotations included. Like every annotation, it never destroys anything: the original file stays exactly as it was imported, and the blur or pixelation stays editable. It is saved with the other annotations, and you can move it, resize it, hide it or change it later.
 
 > [!WARNING]
-> The original image stays in your library, with what you hid. A pixelation with large cells removes the details it covers, but a light blur is not an anonymization and may be partly recoverable. For anything sensitive, prefer a pixelation or a strong blur, and do not share the original file.
+> The original image stays in your library, with what you hid. A pixelation with large blocks removes the details it covers, but a light blur is not an anonymization and may be partly recoverable. For anything sensitive, prefer a pixelation or a strong blur, and do not share the original file.
 
 Pigoune takes this into account:
 
@@ -771,7 +774,7 @@ A library is a regular folder whose name ends with `.pigoune`. Everything Pigoun
 
 - `files/`: a copy of every asset, with its original file name, sorted into small subfolders so that even very large libraries stay easy to handle.
 - `library.db`: the database holding collections, tags and all other information.
-- `cache/`: the thumbnails and the detailed signatures of the drawings, which Pigoune can rebuild at any time.
+- `cache/`: the thumbnails and the analysis data of the images, which Pigoune can rebuild at any time.
 
 ### Move and back up
 
@@ -788,9 +791,9 @@ Choose **Manage Library** in the main menu to see what the open library holds an
 
 | Tab | What it is for |
 |---|---|
-| **Overview** | Numbers and records of the library |
-| **Content** | How formats and colors are shared |
-| **Storage** | What the library takes on your disk |
+| **Overview** | See the numbers and records of the library |
+| **Content** | See how formats and colors are shared |
+| **Storage** | See what the library takes on your disk |
 | **Health** | Check the files against the database |
 | **Duplicates** | Find assets that look alike |
 | **Export** | Copy every asset into folders |
@@ -819,7 +822,7 @@ The **Health** tab compares the files on the disk with the library's database.
 
 <img src="../../data/screenshots/11.png" alt="The Health tab listing a missing file, a damaged file and an unregistered file, each with its buttons" width="720">
 
-**Check** reads every file, including those in the trash, and lists:
+**Check** reads every file, except those in the trash, and lists:
 
 - the **missing** files;
 - the **damaged** files, whose content no longer matches what was imported;
@@ -831,14 +834,14 @@ The check runs in the background and can be canceled. It never changes or delete
 
 - **Add** (or **Add All**) puts an unregistered file back in the library, in Unclassified, without moving the file. Pigoune explains why when a file cannot be added, for example when it is not an image.
 - **Replace…** lets you choose a copy of the original of a missing or damaged file. Pigoune accepts it only if its content is identical to what was imported, then puts it back in place and keeps the asset's name, tags and collections.
-- **Remove…** removes a missing asset from the library when no copy is left, after a confirmation that says it cannot be undone. A damaged file, which still exists, never offers it.
+- **Remove from the Library** removes a missing asset when no copy is left, after a confirmation that says it cannot be undone. A damaged file, which still exists, never offers it.
 - **Move to Trash** is offered for a damaged file instead. You can undo it from the message that appears.
 
 ### Find duplicates
 
 The **Duplicates** tab groups the assets that look alike, such as the same logo as a PNG and an SVG, or in two sizes.
 
-Pigoune analyzes the drawing of every asset quietly in the background, only while you are not using it. The Overview tab shows how far it has got, and the Duplicates page says how many assets are still waiting.
+Pigoune analyzes the image of every asset quietly in the background, only while you are not using it. The Overview tab shows how far it has got, and the Duplicates tab says how many assets are still waiting.
 
 #### Run the search
 
@@ -855,15 +858,15 @@ Click **Search**. Pigoune first looks closely, once, at the assets that could be
 3. Click **Move N Assets to the Trash…**, which appears once something is ticked. A summary shows what is kept and what goes to the trash, with the collections, tags and notes that stay behind.
 4. Confirm. Only the assets you ticked are moved, and **Cancel** changes nothing.
 
-If the assets changed since the search, Pigoune moves nothing and searches again. The message that appears lets you undo it, and the trash keeps assets for 30 days. Choosing a row shows that asset in All.
+If the assets changed since the search, Pigoune moves nothing and searches again. The message that appears lets you undo it: the assets stay in the trash until you empty it. Choosing a row shows that asset in All.
 
 #### Ignore look-alikes that are not duplicates
 
 - **Ignore Group** in the “⋯” menu of a group, or **Not a Duplicate** in the “⋯” menu of one row, stops Pigoune from offering those assets as duplicates of each other. The message lets you undo it.
-- **Ignored (N)** at the top of the page counts the assets you ignored and lists them, one entry each time: a group, or a single asset with the assets it is kept apart from.
+- **Ignored (N)**, at the top of the tab, lists what you ignored. Each entry is either a group or a single asset with the assets it is kept apart from.
 - **Stop Ignoring** undoes exactly one entry, and **Show All Again…** all of them.
 
-The same button is there when you reopen Manage Library, and Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) keeps the page up to date.
+The **Ignored** button stays there when you reopen **Manage Library**, and **Undo** (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) updates the list.
 
 <details>
 <summary>How ignoring works</summary>
@@ -872,14 +875,11 @@ Ignoring a group only concerns the assets of that group. They are no longer offe
 
 </details>
 
-> [!NOTE]
-> A library opened with Pigoune 2.10 or later can no longer be opened by an older version.
-
 ### Export the whole library
 
 The **Export** tab copies every asset into a folder you choose.
 
-- Pigoune creates a folder named after the library, with one sub-folder for each collection and sub-collection, and puts the original files inside. The page shows an example made from your own library.
+- Pigoune creates a folder named after the library, with one sub-folder for each collection and sub-collection, and puts the original files inside. The tab shows an example made from your own library.
 - Assets that belong to no collection go into an **Unclassified** folder. An asset that belongs to several collections is copied into each of them. Assets in the trash are left out.
 - An annotated image is exported as its original **and** a copy of the annotated image. See [Hide what is private](#hide-what-is-private).
 - Nothing is ever overwritten: if a folder with that name already exists, the export is created as `Name (2)`. The button is disabled when the library is empty.
@@ -903,7 +903,7 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>. 
 | **Reopen the Last Entry** | A library opens on the entry you used last instead of **All**. |
 | **Show What’s New After an Update** | A short window lists the main news the first time a new version starts. |
 | **Confirm Before Emptying the Trash** | Asks you to confirm before the trash is emptied. |
-| **Empty the Trash Automatically** | Assets are deleted for good after 30 days in the trash. |
+| **Empty the Trash Automatically** | Assets are deleted for good after 30 days in the trash. Off by default. |
 
 A few windows provided by GNOME, such as the one to choose a folder, may stay in the language of the system. Choose 0 recent libraries to turn the list off. The About window keeps the news of the current version.
 
@@ -952,7 +952,7 @@ Most of the shortcuts listed in [Keyboard shortcuts](#keyboard-shortcuts) can be
 
 ### Style and colors
 
-Pigoune follows the style and the accent color you choose in GNOME **Settings**, under **Appearance**: light or dark style, and the color of selections, switches and highlights.
+The style and the accent color are not set in Preferences: Pigoune follows the ones you choose in GNOME **Settings**, under **Appearance**. They cover the light or dark style, and the color of selections, switches and highlights.
 
 *See also: [Keyboard shortcuts](#keyboard-shortcuts), [Your library](#your-library).* · [Back to contents](#contents)
 
