@@ -84,7 +84,7 @@ then restart your session.
 
 ### 2. Install Pigoune
 
-Open [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) with Software, or
+Open [pigoune.flatpakref](https://gor3pig.github.io/Pigoune/pigoune.flatpakref) with the Software app, or
 run this command:
 
 ```sh
@@ -93,7 +93,7 @@ flatpak install --user https://gor3pig.github.io/Pigoune/pigoune.flatpakref
 
 ### 3. Stay up to date
 
-Pigoune updates itself like your other apps, and every update is signed. The `.flatpak` file of
+Pigoune is updated like your other apps: the Software app offers each new version, and every update is signed. The `.flatpak` file of
 each version is also attached to its [release](https://github.com/Gor3pig/Pigoune/releases), and
 you can build Pigoune yourself by following [CONTRIBUTING.md](CONTRIBUTING.md).
 
