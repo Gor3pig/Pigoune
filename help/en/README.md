@@ -118,7 +118,7 @@ Collections work like folders, and can contain other collections.
 
 Create a collection with the **+** button next to **Collections** in the sidebar.
 
-Then right-click it to create a sub-collection, rename it (<kbd>F2</kbd>), customize it, move it with **Move to…** (into another collection or to the top level) or delete it. The menu is laid out the same way for tags.
+Then right-click it to create a sub-collection, rename it (<kbd>F2</kbd>), customize it, move it with **Move to…** (into another collection or to the top level) or delete it. The tags menu works the same way.
 
 | To… | Do this |
 |---|---|
@@ -273,7 +273,7 @@ In a narrow window, the field gives way to a magnifier button at the top right. 
 | `logo, goat` | Assets containing *logo* **or** *goat* |
 | `red logo, goat` | Assets containing both *red* and *logo*, or else *goat* |
 
-A **space** means *and*, a **comma** means *or*. Commas cut the search into groups: an asset is found as soon as it contains all the words of one group. For example, *logo* can be in the name and *goat* in a tag.
+A **space** means *and*, a **comma** means *or*. Commas cut the search into groups: an asset is found as soon as it contains all the words of one group, wherever those words are: for example *logo* in the name and *goat* in a tag.
 
 #### Word pills
 
@@ -442,7 +442,7 @@ Some applications, such as Files, may show a move pointer. It is the copy handed
 
 Choose **Export To…** in the right-click menu, then a folder. Existing files are never overwritten.
 
-To export the whole library as ordinary folders, use the **Export** tab of **Manage Library** (see [Your library](#your-library)). **Export…** creates a folder named after the library, with one sub-folder for each collection and sub-collection, exactly as in the sidebar, and puts the original files inside.
+To export the whole library as ordinary folders, use the **Export** tab of **Manage Library** (see [Export the whole library](#export-the-whole-library)).
 
 ### Convert and export
 
@@ -542,7 +542,7 @@ Three buttons set the framing:
 
 What goes past the screen stays visible, faded. When the image is enlarged past 100%, a notice over the screen warns that it will look blurry.
 
-The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its real size, as a simulation that a short notice recalls. <kbd>Esc</kbd> comes back.
+The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its real size, as a simulation, which a short notice recalls. <kbd>Esc</kbd> comes back.
 
 #### Image and screens
 
@@ -661,7 +661,7 @@ Every tool remembers its last settings until Pigoune is closed: color (with an e
 
 A new annotation stays selected: you can move it, resize it by its handles and change its settings right away, without leaving the tool you are using.
 
-- With a drawing tool, press on the outline of an annotation to grab it, or anywhere else, even inside another annotation, to draw. The **Select** tool grabs an annotation by its inside too.
+- With a drawing tool, click the outline of an annotation to select it, or anywhere else, even inside another annotation, to draw. The **Select** tool selects an annotation by its inside too.
 - A selected arrow has a round handle in the middle: drag it to bend the arrow, double-click it to straighten the arrow.
 - A selected blur, pixelation or spotlight has a round handle in its center: drag it to move the area with any tool.
 - The arrow keys nudge the selection by one pixel (ten with <kbd>Shift</kbd>).
@@ -707,7 +707,7 @@ Pigoune takes this into account:
 
 ### Keep the result
 
-- **Save** adds the annotated image to your library under a name made of the date, with the `capture` tag, and shows it selected. An image that is already in the library is refused, and the message names the existing asset.
+- **Save** adds the annotated image to your library under a name based on the date, with the `capture` tag, and shows it selected. An image that is already in the library is refused, and the message names the existing asset.
 - The menu next to **Save** copies the annotated image to the clipboard or exports it as a PNG.
 - If Pigoune closes while you edit, the capture is kept as a draft, and Pigoune offers to resume it the next time a library opens.
 
@@ -715,7 +715,7 @@ Pigoune takes this into account:
 
 Select an annotated asset and choose **Annotate…** (in the details panel or the context menu). Saving updates the same asset. **View Original** opens a copy of the untouched image in another application.
 
-The grid, the preview and the duplicates use the annotated image. Copying or exporting it gives a flattened PNG. The original stays next to it, moves to the trash and comes back with it, and counts in the storage of your library.
+The grid, the preview and the duplicates use the annotated image. Copying or exporting it gives a flattened PNG. The original stays next to it: it follows the annotated image to the trash and back, and counts in the storage of your library.
 
 ### Compare with the original
 
