@@ -74,7 +74,7 @@ A pasted image is named **Pasted image** followed by the date and time; you can 
 <details>
 <summary>What the browser hands over</summary>
 
-Pigoune keeps what the browser gives it: the original file with Chrome or Brave, a PNG copy of the picture with Firefox. It names the asset after the file name the browser suggests. If the drop holds no image, a message says so.
+Pigoune keeps what the browser gives it: the original file with Chrome or Brave, a PNG copy of the image with Firefox. It names the asset after the file name the browser suggests. If the drop holds no image, a message says so.
 
 </details>
 
@@ -145,7 +145,7 @@ While you drag, the pointer shows what you are doing: a plain arrow for a move, 
 
 ### Tags
 
-A tag is a keyword that describes an asset. Tags can be nested, like *Subject › Animals › goat*.
+A tag is a keyword that describes an asset. Tags can be nested, like *Subject › Animals › Goat*.
 
 #### Write and add tags
 
@@ -186,7 +186,7 @@ Type a path with a slash, for example `animals/goat`, to create or reuse each le
 
 #### Move around nested tags
 
-The Tags section of the sidebar always shows what the grid shows.
+The Tags section of the sidebar always mirrors what the grid shows.
 
 | Gesture | Result |
 |---|---|
@@ -194,7 +194,7 @@ The Tags section of the sidebar always shows what the grid shows.
 | Click the path above the pills | You climb back up. **Tags** returns to the first level and shows the whole library again. |
 | Choose anything else in the sidebar | The Tags section goes back to the first level. |
 
-The search badge and the messages name a tag with its full path, for example *subject › animals*. If some of the assets you had selected are not in the new view, a short message says how many.
+The search label and the messages name a tag with its full path, for example *subject › animals*. If some of the assets you had selected are not in the new view, a short message says how many.
 
 #### Reorganize tags
 
@@ -231,7 +231,7 @@ In the details panel:
 | **File** | Shows when the asset was added and the name of the original file. |
 | **Quick actions** | Under the name, **Open With…**, **Copy** and **Export…** act on the asset directly. |
 
-Each group folds and unfolds with a click on its title, which also shows a short summary. Pigoune remembers which ones are open.
+Each group folds and unfolds with a click on its title. The title also shows a short summary. Pigoune remembers which ones are open.
 
 ### Several assets at once
 
@@ -252,13 +252,13 @@ Search by words, narrow the grid with filters, and save a search that keeps itse
 
 Click the search field, press <kbd>Ctrl</kbd>+<kbd>F</kbd>, or simply start typing.
 
-Pigoune searches names, tags, notes, sources, licenses and authors. It ignores case, accents and ligatures (*coeur* finds *cœur*), and a word can be just part of a word: `cat` also finds *category*.
+Pigoune searches names, tags, notes, sources, licenses and authors. It ignores case, accents and ligatures (*coeur* finds *cœur*), and a word can match just part of a longer word: `cat` also finds *category*.
 
 The search does not look at the format. To keep only SVG files, for example, use the **Filters** button.
 
 #### Where it looks
 
-A small label at the start of the search field says where Pigoune looks: **Everywhere**, or the name of the entry selected in the sidebar. Click it to choose **In the Whole Library** or **In** the entry.
+A small label at the start of the search field says where Pigoune looks: **Everywhere**, or the name of the entry selected in the sidebar. Click it to choose **In the Whole Library** or **In** followed by the name of the entry.
 
 - When you choose an entry in the sidebar while a search is looking everywhere, the grid shows that entry with your search applied inside it. Typing again widens the search as before.
 - In **All**, the trash and smart collections, the label stays without a menu, because the search always looks there.
@@ -273,7 +273,7 @@ In a narrow window, the field gives way to a magnifier button at the top right. 
 | `logo, goat` | Assets containing *logo* **or** *goat* |
 | `red logo, goat` | Assets containing both *red* and *logo*, or else *goat* |
 
-A **space** means *and*, a **comma** means *or*. Commas cut the search into groups: an asset is found as soon as it contains all the words of one group, wherever those words are: for example *logo* in the name and *goat* in a tag.
+A **space** means *and*, a **comma** means *or*. Commas cut the search into groups: an asset is found as soon as it contains all the words of one group, wherever those words are. For example, *logo* can be in the name and *goat* in a tag.
 
 #### Word pills
 
@@ -299,7 +299,7 @@ Tick one or several formats to keep only those, for example SVG. **Favorites Onl
 
 #### Colors
 
-Pigoune notes the main colors of each asset, up to three that each cover at least 15% of the visible picture, transparent areas left aside. **Filters** offers thirteen colors: pick red and blue to see the assets that are mainly red or blue.
+Pigoune notes the main colors of each asset, up to three that each cover at least 15% of the visible image, transparent areas left aside. **Filters** offers thirteen colors: pick red and blue to see the assets that are mainly red or blue.
 
 The last, rainbow swatch opens the GNOME color chooser to pick any color, for example the exact color of a brand. Pigoune then keeps the assets with a main color close to it. Click the swatch again to remove it.
 
@@ -346,7 +346,7 @@ It always searches the whole library, the trash left aside. Assets cannot be dro
 | **Open** it | Click it in the sidebar. You can still search inside it. |
 | **Change** it | **Edit…** in its right-click menu, or <kbd>F2</kbd>. |
 | **Delete** it | **Delete…**. Only the saved search goes: the assets stay in the library. |
-| **Reorder** | Drag them in the sidebar, or sort them by name or creation date with the **⋯** button next to their title. |
+| **Reorder** them | Drag them in the sidebar, or sort them by name or creation date with the **⋯** button next to their title. |
 
 *See also: [Organizing](#organizing), [Looking at assets](#looking-at-assets).* · [Back to contents](#contents)
 
@@ -370,7 +370,7 @@ Press <kbd>Space</kbd> or double-click an asset to open the detailed preview. A 
 
 | To… | Do this |
 |---|---|
-| **Zoom** | Use the scroll wheel, or <kbd>+</kbd> and <kbd>-</kbd>. |
+| **Zoom** | Use the mouse wheel, or <kbd>+</kbd> and <kbd>-</kbd>. |
 | **Fit the window** | Press <kbd>0</kbd>. |
 | **Show the actual size** | Press <kbd>1</kbd>. |
 | **Move a zoomed image** | Drag it to examine any part of it, even a corner brought to the middle of the screen, or use <kbd>Shift</kbd> and the arrow keys. |
@@ -394,7 +394,7 @@ A right-click on the image offers **Open With…**, **Show in Files**, **Copy**,
 #### Check icons and pixels
 
 - A dashed outline shows the real edges of the image, transparent margins included. Turn it off with **Show Image Bounds** in the zoom menu.
-- From 800% on, a light grid separates the pixels of pictures, which helps to check icons and pixel art. Turn it off with **Show Pixel Grid** in the zoom menu.
+- From 800% on, a light grid separates the pixels of images, which helps to check icons and pixel art. Turn it off with **Show Pixel Grid** in the zoom menu.
 - For an ICO file holding several sizes, buttons below the image show each size as it was drawn (16, 32, 48, 256…).
 
 #### Animations
@@ -472,7 +472,7 @@ The other formats keep transparency, unless you turn off **Keep Transparency** t
 | **Keep Proportions** (the padlock) | Closed, proportions are kept: changing one side updates the other. Open it to stretch an image freely. |
 | **Size of My Screen** | Fits several images to your screen at once: each image takes exactly the size of the screen Pigoune is shown on, for example 1920 × 1080. |
 | **Fill the Screen** | Centers the image, covers the whole screen and cuts what overflows. |
-| **Whole Image** | Keeps the whole image and fills the bands with the background color, or leaves them transparent when transparency is kept. |
+| **Whole Image** | Keeps the whole image and fills the empty bands with the background color, or leaves them transparent when transparency is kept. |
 
 With the padlock closed, each image keeps its proportions and fits inside the given width and height, even when the images do not all have the same shape.
 
@@ -506,7 +506,7 @@ Choose **Find Similar…** in the right-click menu of a single asset. A window l
 Each one is marked **Almost identical**, **Very close** or **Similar**. Within each mark, the assets whose colors are closest come first. Choosing one shows it in All.
 
 > [!NOTE]
-> If the asset has not been analyzed yet, or its drawing is too plain to compare (a single color, or nothing visible), the window says so.
+> If the asset has not been analyzed yet, or its image is too plain to compare (a single color, or nothing visible), the window says so.
 
 ### Wallpapers
 
@@ -526,7 +526,7 @@ Three buttons set the framing:
 
 | Button | Effect |
 |---|---|
-| **Fill** | Comes back to the framing of GNOME. |
+| **Fill** | Returns to GNOME's own framing. |
 | **Whole** | Shows all of the image. |
 | **100%** | Shows one pixel of the image per pixel of the screen. |
 
@@ -538,11 +538,11 @@ Three buttons set the framing:
 |---|---|
 | **Mirror** | Flips the image from left to right, in the wallpaper only. |
 | **Rule of Thirds** | Shows the grid of thirds, to place the subject. |
-| **Snap** | On at first: the dragged image catches the center and the edges of the screen, a blue line showing where. |
+| **Snap** | On by default: the dragged image catches the center and the edges of the screen, a blue line showing where. |
 
 What goes past the screen stays visible, faded. When the image is enlarged past 100%, a notice over the screen warns that it will look blurry.
 
-The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its real size, as a simulation, which a short notice recalls. <kbd>Esc</kbd> comes back.
+The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its real size. A short notice reminds you that it is a simulation. <kbd>Esc</kbd> comes back.
 
 #### Image and screens
 
@@ -554,7 +554,7 @@ The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its real 
 
 Like **Mirror**, **Darken** changes the wallpaper only, never the asset.
 
-The simulation imitates GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being chosen at first.
+The simulation imitates GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie; the one you use is selected by default.
 
 #### Empty space
 
@@ -562,7 +562,7 @@ Under **Empty Space**, choose what fills the screen around a smaller image.
 
 | Choice | What it does |
 |---|---|
-| **Color** | Black at first. Pick from the main colors of the image, black and white. |
+| **Color** | Black by default. Pick one of the main colors of the image, or black or white. |
 | **Gradient** | Starts from the two main colors of the image, from top to bottom. |
 | **Blur** | The same image, enlarged and blurred behind it. |
 | **Mosaic** | The image repeated over the whole screen, handy for patterns. |
@@ -573,13 +573,13 @@ A gradient has three more settings:
 
 | Setting | Effect |
 |---|---|
-| **Angle** | Turns the gradient (0° goes up, 90° to the right, 180° down). |
+| **Angle** | Rotates the gradient (0° goes up, 90° to the right, 180° down). |
 | **Start Color** and **End Color** | Open the GNOME color chooser. |
 | **Swap Colors** | Exchanges the two colors. |
 
 #### Set the wallpaper
 
-**Set as Wallpaper** makes an image exactly the size of the screen, so the desktop shows exactly what you framed. A small window shows the preparation, then GNOME asks you to confirm.
+**Set as Wallpaper** makes an image the size of the screen, so the desktop shows what you framed. A small window shows the preparation, then GNOME asks you to confirm.
 
 Tick **Also Add the Edited Version to the Library** to keep that image as a new asset.
 
@@ -612,7 +612,7 @@ Copy an image anywhere, then choose **Paste and Annotate** in the import menu or
 
 Select the image and choose **Annotate…** in the details panel or the context menu, or press <kbd>Ctrl</kbd>+<kbd>E</kbd>.
 
-#### Start from a shortcut of your desktop
+#### Start from a desktop shortcut
 
 Bind the command `pigoune --capture` (or the full Flatpak command below) to a key in the settings of your desktop:
 
@@ -702,7 +702,7 @@ A **Blur** or a **Pixelate** annotation hides what is under it, annotations incl
 Pigoune takes this into account:
 
 - If a blur or a pixelation is hidden (with the eye of its layer), some information may be visible again in the result. Pigoune warns you before you **copy**, **export** or **open with another application** an image that has one, and offers to show it first when you are in the editor.
-- Dragging such an image out of Pigoune is refused until you show the hidden effects again, with no way to go on anyway.
+- Dragging such an image out of Pigoune is refused until you show the hidden effects again, with no option to continue anyway.
 - Exporting the whole library gives every original **and** a copy of each annotated image, so the originals may contain things that are no longer visible on the annotated copies. Pigoune asks whether you want the originals too before it exports.
 
 ### Keep the result
@@ -847,7 +847,7 @@ Click **Search**. Pigoune first analyzes in detail, once, the assets that could 
 
 - A group shows its first six assets. **Show More** adds twenty at a time, and the thumbnails load as you scroll.
 - Each group is only a suggestion: the assets look alike, which does not make them identical.
-- Pigoune compares the drawings in two steps, then marks each asset **Identical** or **Probable** against the largest one. A group only holds assets that all look alike, and holds 40 assets at most.
+- Pigoune compares the images in two steps, then marks each asset **Identical** or **Probable** against the largest one. A group only holds assets that all look alike, and holds 40 assets at most.
 
 #### Clean up a group
 
@@ -856,9 +856,9 @@ Click **Search**. Pigoune first analyzes in detail, once, the assets that could 
 3. Click **Move N Assets to the Trash…**, which appears once something is ticked. A summary shows what is kept and what goes to the trash, with the collections, tags and notes that stay behind.
 4. Confirm. Only the assets you ticked are moved, and **Cancel** changes nothing.
 
-If the assets changed since the search, Pigoune moves nothing and searches again.
+A message lets you undo the move: the assets stay in the trash until you empty it.
 
-The message that appears lets you undo it: the assets stay in the trash until you empty it.
+If the assets changed since the search, Pigoune moves nothing and searches again.
 
 Choosing a row shows that asset in All.
 
@@ -1007,7 +1007,7 @@ Press <kbd>Ctrl</kbd>+<kbd>?</kbd> to see every shortcut in Pigoune. Most of the
 | Take a screenshot to annotate | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> |
 | Paste an image to annotate | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> |
 | Annotate the selected image | <kbd>Ctrl</kbd>+<kbd>E</kbd> |
-| Show or hide the panel of the editor | <kbd>F9</kbd> |
+| Show or hide the editor panel | <kbd>F9</kbd> |
 
 The letters of the tools are listed in [Annotate](#annotate).
 
@@ -1040,7 +1040,7 @@ No. Pigoune works fully offline, with no account and no telemetry. Checking for 
 
 ### How do I update Pigoune?
 
-Software takes care of it: it offers each new version, and installs it by itself when automatic updates are turned on. `flatpak update` installs it too.
+The Software app takes care of it: it offers each new version, and installs it by itself when automatic updates are turned on. `flatpak update` installs it too.
 
 If Pigoune stays open, a banner at the top of the window also says so within half an hour. Click **Update**, wait for the installation, then click **Restart**.
 
