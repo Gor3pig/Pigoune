@@ -312,7 +312,7 @@ Colors add up with types and favorites: red and SVG show the red SVG files.
 
 **Orientation** keeps the assets in **Landscape**, **Portrait** or **Square** format. Pick two orientations to see both. An image counts as square when its sides differ by 5% at most.
 
-**Fits My Screen** keeps the images at least as large as the screen Pigoune is shown on, in real pixels and in both directions, for example 1920 × 1080 or larger. They fill the screen without being enlarged, so without blur. SVG files are always left aside.
+**Fits My Screen** keeps the images at least as large as the screen Pigoune is shown on, in real pixels, in width and in height, for example 1920 × 1080 or larger. They fill the screen without being enlarged, so without blur. SVG files are always left aside.
 
 > [!TIP]
 > **Landscape** and **Fits My Screen** together find good wallpapers.
@@ -337,7 +337,7 @@ It always searches the whole library, the trash left aside. Assets cannot be dro
 2. Give it a name.
 3. Choose at least one criterion: words to find, types, orientations, colors, **Fits My Screen** or **Favorites Only**.
 
-**Words to Find** works exactly like the search field: spaces and commas, and pills whose **and** and **or** cut or join the groups. **Fits My Screen** follows the screen Pigoune is shown on when you open the smart collection.
+**Words to Find** works like the search field: spaces and commas, and pills whose **and** and **or** cut or join the groups. **Fits My Screen** follows the screen Pigoune is shown on when you open the smart collection.
 
 #### Use and manage
 
@@ -362,7 +362,7 @@ Browse the grid, then open the detailed preview to examine an asset closely.
 
 ### The detailed preview
 
-Press <kbd>Space</kbd> or double-click an asset to open the detailed preview. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
+Press <kbd>Space</kbd> or double-click an asset to open the detailed preview. A double-click opens the default application instead if you turned that setting on in **Preferences**. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to go back.
 
 <img src="../../data/screenshots/03.png" alt="The detailed preview of a rocket illustration, with a strip of thumbnails at the bottom" width="720">
 
@@ -373,10 +373,8 @@ Press <kbd>Space</kbd> or double-click an asset to open the detailed preview. Pr
 | **Zoom** | Use the scroll wheel, or <kbd>+</kbd> and <kbd>-</kbd>. |
 | **Fit the window** | Press <kbd>0</kbd>. |
 | **Show the actual size** | Press <kbd>1</kbd>. |
-| **Move a zoomed image** | Drag it, or use <kbd>Shift</kbd> and the arrow keys. |
+| **Move a zoomed image** | Drag it to examine any part of it, even a corner brought to the middle of the screen, or use <kbd>Shift</kbd> and the arrow keys. |
 | **Change the background** | Use the **Background** button of the top bar. |
-
-You can drag the image to examine any part of it, even a corner brought to the middle of the screen.
 
 #### Go from one asset to the next
 
@@ -473,10 +471,10 @@ The other formats keep transparency, unless you turn off **Keep Transparency** t
 | **Width and height** | In pixels or as a percentage. 100% keeps the original size. |
 | **Keep Proportions** (the padlock) | Closed, proportions are kept: changing one side updates the other. Open it to stretch an image freely. |
 | **Size of My Screen** | Fits several images to your screen at once: each image takes exactly the size of the screen Pigoune is shown on, for example 1920 × 1080. |
-| **Fill the Screen** | Covers the whole screen and cuts the edges that overflow, around the center. |
+| **Fill the Screen** | Centers the image, covers the whole screen and cuts what overflows. |
 | **Whole Image** | Keeps the whole image and fills the bands with the background color, or leaves them transparent when transparency is kept. |
 
-With the padlock closed, several images of different shapes each fit inside the given width and height.
+With the padlock closed, each image keeps its proportions and fits inside the given width and height, even when the images do not all have the same shape.
 
 <details>
 <summary>Good to know</summary>
@@ -556,7 +554,7 @@ The full screen button, or <kbd>F11</kbd>, shows the virtual screen at its real 
 
 Like **Mirror**, **Darken** changes the wallpaper only, never the asset.
 
-It imitates GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being chosen at first.
+The simulation imitates GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC or Budgie, the one in use being chosen at first.
 
 #### Empty space
 
@@ -624,7 +622,7 @@ flatpak run io.github.gor3pig.Pigoune --capture
 
 If Pigoune is not running, it starts, reopens your last library and takes the screenshot.
 
-Images can be up to 8000 pixels on a side.
+An image to annotate (a screenshot, a pasted image or an image from your library) can be up to 8000 pixels on a side.
 
 ### Annotate
 
@@ -636,7 +634,7 @@ The tools are in the editor panel, on the right (in a narrow window, in the pane
 | Crop | <kbd>C</kbd> | Keep only a part of the image |
 | Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Outlines, filled or with rounded corners |
 | Line, Arrow | <kbd>L</kbd>, <kbd>A</kbd> | Straight or curved, with several heads |
-| Text | <kbd>T</kbd> | Click, type, then click elsewhere or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> |
+| Text | <kbd>T</kbd> | Add text: click, type, then click elsewhere or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to finish |
 | Steps | <kbd>N</kbd> | Numbered (or lettered) badges that renumber themselves |
 | Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Smoothed freehand strokes |
 | Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide private information: the effect applies to everything drawn below it |
@@ -696,7 +694,7 @@ Pigoune remembers which sections are folded and whether the panel is hidden. Non
 
 ### Hide what is private
 
-A **Blur** or a **Pixelate** annotation hides what is under it, annotations included. Like every annotation, it never destroys anything: the original file stays exactly as it was imported, and the blur or pixelation stays editable. It is saved with the other annotations, and you can move it, resize it, hide it or change it later.
+A **Blur** or a **Pixelate** annotation hides what is under it, annotations included. Like every annotation, it never destroys anything: the original file stays as it was imported. It is saved with the other annotations and stays editable: you can move it, resize it or hide it later.
 
 > [!WARNING]
 > The original image stays in your library, with what you hid. A pixelation with large blocks removes the details it covers, but a light blur is not an anonymization and may be partly recoverable. For anything sensitive, prefer a pixelation or a strong blur, and do not share the original file.
@@ -787,7 +785,7 @@ A library can only be open in one Pigoune window at a time. If you keep a librar
 
 ### Manage Library
 
-Choose **Manage Library** in the main menu to see what the open library holds and to look after it. It has six tabs.
+Choose **Manage Library** in the main menu to see what the open library holds and to look after it. The window has six tabs.
 
 | Tab | What it is for |
 |---|---|
@@ -812,7 +810,7 @@ A ring chart shows how the space is shared between formats, by size or by number
 
 A single bar shows what the library takes on its disk, split between the assets, the thumbnails, the database and the trash, next to the other files and the free space.
 
-Below, you find where the library is stored, with buttons to copy its location or open its folder, and whether that disk is removable. You also find the space taken by the thumbnails, when the library was created and which versions of Pigoune can open it.
+Below are the location of the library (with buttons to copy it or open its folder), whether that disk is removable, the space taken by the thumbnails, when the library was created and which versions of Pigoune can open it.
 
 **Clear** next to the thumbnails frees their space. They are made again when they are needed.
 
@@ -833,7 +831,7 @@ The check runs in the background and can be canceled. It never changes or delete
 #### Fix a problem
 
 - **Add** (or **Add All**) puts an unregistered file back in the library, in Unclassified, without moving the file. Pigoune explains why when a file cannot be added, for example when it is not an image.
-- **Replace…** lets you choose a copy of the original of a missing or damaged file. Pigoune accepts it only if its content is identical to what was imported, then puts it back in place and keeps the asset's name, tags and collections.
+- **Replace…** lets you choose a sound copy of a missing or damaged file. Pigoune accepts it only if its content is identical to what was imported, then puts it into the library and keeps the asset's name, tags and collections.
 - **Remove from the Library** removes a missing asset when no copy is left, after a confirmation that says it cannot be undone. A damaged file, which still exists, never offers it.
 - **Move to Trash** is offered for a damaged file instead. You can undo it from the message that appears.
 
@@ -845,20 +843,24 @@ Pigoune analyzes the image of every asset quietly in the background, only while 
 
 #### Run the search
 
-Click **Search**. Pigoune first looks closely, once, at the assets that could be duplicates, then compares them, with a progress bar and a **Cancel** button. It lists the groups, the largest image first.
+Click **Search**. Pigoune first analyzes in detail, once, the assets that could be duplicates, then compares them, with a progress bar and a **Cancel** button. It lists the groups; in each one, the largest image comes first.
 
 - A group shows its first six assets. **Show More** adds twenty at a time, and the thumbnails load as you scroll.
 - Each group is only a suggestion: the assets look alike, which does not make them identical.
-- Pigoune compares the drawings in two steps, then marks each asset **Identical** or **Probable** against the largest one. A group only holds assets that all agree with each other, at most 40 at a time.
+- Pigoune compares the drawings in two steps, then marks each asset **Identical** or **Probable** against the largest one. A group only holds assets that all look alike, and holds 40 assets at most.
 
 #### Clean up a group
 
-1. Pick the asset to keep with its round button. The largest image is picked first, and picking it deletes nothing.
+1. Pick the asset to keep with its round button. The largest image is picked first, and this choice deletes nothing.
 2. Tick the box (“Move to Trash”) on each asset you want to remove. Nothing is ticked for you.
 3. Click **Move N Assets to the Trash…**, which appears once something is ticked. A summary shows what is kept and what goes to the trash, with the collections, tags and notes that stay behind.
 4. Confirm. Only the assets you ticked are moved, and **Cancel** changes nothing.
 
-If the assets changed since the search, Pigoune moves nothing and searches again. The message that appears lets you undo it: the assets stay in the trash until you empty it. Choosing a row shows that asset in All.
+If the assets changed since the search, Pigoune moves nothing and searches again.
+
+The message that appears lets you undo it: the assets stay in the trash until you empty it.
+
+Choosing a row shows that asset in All.
 
 #### Ignore look-alikes that are not duplicates
 
@@ -897,15 +899,13 @@ Open **Preferences** from the main menu, or press <kbd>Ctrl</kbd>+<kbd>,</kbd>. 
 
 | Setting | What it does |
 |---|---|
-| **Interface Language** | Follows your system, or choose another language. It applies at the next start; **Restart** does it at once. |
+| **Interface Language** | Follows your system, or choose another language. It applies at the next start; **Restart** does it at once. A few windows provided by GNOME, such as the one to choose a folder, may stay in the language of the system. |
 | **Reopen the Last Library** | At startup, opens the library you left open. Turn it off to start from the welcome page. |
-| **Recent Libraries** | How many recent libraries the main menu and the welcome page offer, from 0 to 8. |
+| **Recent Libraries** | How many recent libraries the main menu and the welcome page offer, from 0 to 8. Choose 0 to turn the list off. |
 | **Reopen the Last Entry** | A library opens on the entry you used last instead of **All**. |
-| **Show What’s New After an Update** | A short window lists the main news the first time a new version starts. |
+| **Show What’s New After an Update** | A short window lists the main news the first time a new version starts. The About window keeps the news of the current version. |
 | **Confirm Before Emptying the Trash** | Asks you to confirm before the trash is emptied. |
 | **Empty the Trash Automatically** | Assets are deleted for good after 30 days in the trash. Off by default. |
-
-A few windows provided by GNOME, such as the one to choose a folder, may stay in the language of the system. Choose 0 recent libraries to turn the list off. The About window keeps the news of the current version.
 
 ### Display
 
@@ -945,7 +945,7 @@ Tags with no matching asset are dimmed while you search or filter.
 Most of the shortcuts listed in [Keyboard shortcuts](#keyboard-shortcuts) can be changed here. Select an action, then press the new key combination.
 
 - Pigoune refuses a combination already used by another action, and tells you which one.
-- It also refuses a single letter (typing in the grid starts a search, so use <kbd>Ctrl</kbd> or <kbd>Alt</kbd> with a key, or a function key), and the keys it keeps for itself, such as <kbd>F2</kbd>, <kbd>F10</kbd> and <kbd>F11</kbd>.
+- It also refuses a single letter, because typing in the grid starts a search (use <kbd>Ctrl</kbd> or <kbd>Alt</kbd> with a key, or a function key), and the keys it keeps for itself, such as <kbd>F2</kbd>, <kbd>F10</kbd> and <kbd>F11</kbd>.
 - A button next to a changed shortcut brings back its default, and **Restore All Shortcuts** brings back all of them.
 - The standard shortcuts (copy, paste, select all, undo, redo and quit) are shown with a lock and cannot be changed.
 - Some actions, such as importing a folder, exporting or restoring assets, have no shortcut until you give them one.

@@ -4,7 +4,7 @@
 
 Pigoune range tous vos éléments graphiques (icônes, logos, illustrations) dans une seule bibliothèque bien organisée. Ce guide vous montre comment l’utiliser, de votre premier import aux réglages avancés.
 
-<img src="../../data/screenshots/01.png" alt="La fenêtre principale de Pigoune : la barre latérale avec les collections et les tags, une grille d’icônes et les détails de l’élément sélectionné" width="800">
+<img src="../../data/screenshots/01.png" alt="La fenêtre principale de Pigoune : la barre latérale avec les collections et les tags, une grille d’icônes et les détails de l’élément sélectionné" width="800">
 
 ## Sommaire
 
@@ -72,9 +72,9 @@ Il y a quatre façons de faire entrer des éléments.
 Une image collée s’appelle **Image collée** suivie de la date et de l’heure ; vous pouvez la renommer ensuite.
 
 <details>
-<summary>Ce que remet le navigateur</summary>
+<summary>Ce que fournit le navigateur</summary>
 
-Pigoune garde ce que le navigateur lui remet : le fichier d’origine avec Chrome ou Brave, une copie PNG de l’image avec Firefox. Il nomme l’élément d’après le nom de fichier que le navigateur propose. Si le glissement ne contient aucune image, un message le dit.
+Pigoune garde ce que le navigateur lui fournit : le fichier d’origine avec Chrome ou Brave, une copie PNG de l’image avec Firefox. Il nomme l’élément d’après le nom de fichier que le navigateur propose. Si le glissement ne contient aucune image, un message le dit.
 
 </details>
 
@@ -87,7 +87,7 @@ Pigoune garde ce que le navigateur lui remet : le fichier d’origine avec Chro
 | **Doublons** | Un fichier déjà présent n’est jamais copié deux fois. S’il est à la corbeille, l’importer le sort de la corbeille. |
 | **Dossiers** | Quand vous importez un dossier, ses sous-dossiers deviennent des collections. |
 
-Les photos HEIC s’affichent quand le système sait les décoder, ce que fait le paquet Flatpak.
+Les photos HEIC s’affichent si le système sait les décoder, ce qui est le cas avec le paquet Flatpak.
 
 Si vous importez dans une collection un fichier déjà présent, l’élément existant est ajouté à cette collection et reste dans les autres. S’il était à la corbeille, il est restauré et n’appartient alors qu’à cette collection.
 
@@ -118,7 +118,7 @@ Les collections fonctionnent comme des dossiers et peuvent contenir d’autres c
 
 Créez une collection avec le bouton **+** à côté de **Collections**, dans la barre latérale.
 
-Faites ensuite un clic droit dessus pour y créer une sous-collection, la renommer (<kbd>F2</kbd>), la personnaliser, la déplacer avec **Déplacer vers…** (dans une autre collection ou au premier niveau) ou la supprimer. Le menu est présenté de la même façon pour les tags.
+Faites ensuite un clic droit dessus pour y créer une sous-collection, la renommer (<kbd>F2</kbd>), la personnaliser, la déplacer avec **Déplacer vers…** (dans une autre collection ou au premier niveau) ou la supprimer. Le menu des tags fonctionne de la même façon.
 
 | Pour… | Faites ceci |
 |---|---|
@@ -145,13 +145,13 @@ Pendant le glisser, le curseur indique ce que vous faites : une flèche simple 
 
 ### Les tags
 
-Un tag est un mot-clé qui décrit un élément. Les tags peuvent être imbriqués, comme *Sujet › Animaux › chèvre*.
+Un tag est un mot-clé qui décrit un élément. Les tags peuvent être imbriqués, comme *Sujet › Animaux › Chèvre*.
 
 #### Écrire et ajouter des tags
 
 Un tag est un seul mot de 20 caractères au plus. Pour réunir plusieurs mots, utilisez un tiret (*flat-design*).
 
-Une espace ou une virgule termine le tag en cours de saisie, ce qui permet d’en saisir plusieurs à la fois.
+La barre d’espace ou une virgule termine le tag en cours de saisie, ce qui permet d’en saisir plusieurs à la fois.
 
 | Pour ajouter des tags… | Faites ceci |
 |---|---|
@@ -159,7 +159,7 @@ Une espace ou une virgule termine le tag en cours de saisie, ce qui permet d’e
 | **Depuis le menu** | Choisissez **Ajouter un tag…** dans le menu du clic droit. |
 | **En glissant** | Glissez des éléments sur un tag de la barre latérale. |
 
-Gardez les éléments glissés une seconde au-dessus d’un tag qui a des sous-tags : ils s’ouvrent, et vous pouvez déposer les éléments sur l’un d’eux. La barre latérale revient ensuite à sa place.
+Maintenez les éléments glissés une seconde au-dessus d’un tag qui a des sous-tags : ce tag s’ouvre, et vous pouvez les déposer sur l’un de ses sous-tags. La barre latérale revient ensuite à sa place.
 
 #### Parcourir les tags dans la barre latérale
 
@@ -186,7 +186,7 @@ Tapez un chemin avec une barre oblique, par exemple `animaux/chèvre`, pour cré
 
 #### Se déplacer dans les tags imbriqués
 
-La section Tags de la barre latérale montre toujours ce que montre la grille.
+La section Tags de la barre latérale reflète toujours ce qu’affiche la grille.
 
 | Geste | Résultat |
 |---|---|
@@ -198,7 +198,7 @@ La pastille de recherche et les messages nomment un tag avec son chemin complet,
 
 #### Réorganiser les tags
 
-Faites un clic droit sur un tag pour **Nouveau sous-tag…**, **Déplacer vers…**, **Fusionner dans…** et **Supprimer…**. Vous pouvez aussi glisser une pastille sur un autre tag, sur un niveau du chemin ou sur **Tags** pour la déplacer.
+Le clic droit sur un tag propose **Nouveau sous-tag…**, **Déplacer vers…**, **Fusionner dans…** et **Supprimer…**. Vous pouvez aussi glisser une pastille sur un autre tag, sur un niveau du chemin ou sur **Tags** pour la déplacer.
 
 Chaque changement s’annule. Quand vous supprimez un tag qui a des sous-tags, vous choisissez de les supprimer aussi ou de les remonter d’un niveau.
 
@@ -227,7 +227,7 @@ Dans le panneau de détails :
 | Quoi | Comment |
 |---|---|
 | **Renommer** | Cliquez sur le nom de l’élément, ou appuyez sur <kbd>F2</kbd>. |
-| **Note et crédits** | Écrivez une note et indiquez la source, la licence et l’auteur, ce qui est bien pratique au moment de réutiliser l’élément. |
+| **Note et crédits** | Écrivez une note et indiquez la source, la licence et l’auteur, ce qui est utile pour réutiliser l’élément. |
 | **Fichier** | Indique quand l’élément a été ajouté et le nom du fichier d’origine. |
 | **Actions rapides** | Sous le nom, **Ouvrir avec…**, **Copier** et **Exporter…** agissent directement sur l’élément. |
 
@@ -252,16 +252,16 @@ Cherchez par mots, affinez la grille avec des filtres, et enregistrez une recher
 
 Cliquez dans le champ de recherche, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd>, ou commencez simplement à taper.
 
-Pigoune cherche dans les noms, les tags, les notes, les sources, les licences et les auteurs. Il ignore les majuscules, les accents et les ligatures (*coeur* trouve *cœur*), et un mot peut n’être qu’un morceau de mot : `chat` trouve aussi *château*.
+Pigoune cherche dans les noms, les tags, les notes, les sources, les licences et les auteurs. Il ignore les majuscules, les accents et les ligatures (*coeur* trouve *cœur*), et un fragment de mot suffit : `chat` trouve aussi *château*.
 
-La recherche ne regarde pas le format. Pour ne garder que les SVG, par exemple, utilisez le bouton **Filtres**.
+La recherche ne porte pas sur le format. Pour ne garder que les SVG, par exemple, utilisez le bouton **Filtres**.
 
 #### Où il cherche
 
-Une petite pastille au début du champ de recherche indique où Pigoune cherche : **Partout**, ou le nom de l’entrée sélectionnée dans la barre latérale. Cliquez dessus pour choisir **Dans toute la bibliothèque** ou **Dans** l’entrée.
+Une petite pastille au début du champ de recherche indique où Pigoune cherche : **Partout**, ou le nom de l’entrée sélectionnée dans la barre latérale. Cliquez dessus pour choisir **Dans toute la bibliothèque** ou **Dans**, suivi du nom de l’entrée.
 
-- Quand vous choisissez une entrée de la barre latérale alors qu’une recherche regarde partout, la grille montre cette entrée avec votre recherche appliquée dedans. Taper de nouveau élargit la recherche comme avant.
-- Dans **Tout**, la corbeille et les collections dynamiques, la pastille reste sans menu, car la recherche y regarde toujours au même endroit.
+- Quand vous choisissez une entrée de la barre latérale alors qu’une recherche porte sur toute la bibliothèque, la grille montre cette entrée avec votre recherche appliquée dedans. Taper de nouveau élargit la recherche comme avant.
+- Dans **Tout**, la corbeille et les collections dynamiques, la pastille reste sans menu, car la recherche y porte toujours sur le même ensemble.
 
 Dans une fenêtre étroite, le champ laisse la place à une loupe en haut à droite. Cliquez dessus, appuyez sur <kbd>Ctrl</kbd>+<kbd>F</kbd> ou commencez à taper : une barre de recherche pleine largeur s’ouvre sous la barre de titre, avec la même pastille et le bouton **Filtres**. <kbd>Échap</kbd> la ferme et efface la recherche.
 
@@ -273,7 +273,7 @@ Dans une fenêtre étroite, le champ laisse la place à une loupe en haut à dro
 | `logo, chèvre` | Les éléments qui contiennent *logo* **ou** *chèvre* |
 | `logo rouge, chèvre` | Ce qui contient à la fois *logo* et *rouge*, ou bien *chèvre* |
 
-Une **espace** veut dire *et*, une **virgule** veut dire *ou*. Les virgules découpent la recherche en groupes : un élément est trouvé dès qu’il contient tous les mots d’un groupe. Par exemple, *logo* peut être dans le nom et *chèvre* dans un tag.
+La **barre d’espace** veut dire *et*, la **virgule** veut dire *ou*. Les virgules découpent la recherche en groupes : un élément est trouvé dès qu’il contient tous les mots d’un groupe, où que ces mots se trouvent : par exemple *logo* dans le nom et *chèvre* dans un tag.
 
 #### Les pastilles de mots
 
@@ -299,7 +299,7 @@ Cochez un ou plusieurs formats pour ne garder que ceux-là, par exemple SVG. **F
 
 #### Couleurs
 
-Pigoune note les couleurs principales de chaque élément, jusqu’à trois qui couvrent chacune au moins 15 % de l’image visible, sans compter les zones transparentes. **Filtres** propose treize couleurs : choisissez rouge et bleu pour voir les éléments surtout rouges ou bleus.
+Pigoune note les couleurs principales de chaque élément, jusqu’à trois qui couvrent chacune au moins 15 % de l’image visible, sans compter les zones transparentes. **Filtres** propose treize couleurs : choisissez rouge et bleu pour voir les éléments surtout rouges ou bleus.
 
 La dernière pastille, arc-en-ciel, ouvre le sélecteur de couleur de GNOME pour choisir n’importe quelle couleur, par exemple la couleur exacte d’une charte graphique. Pigoune garde alors les éléments dont une couleur principale en est proche. Un nouveau clic sur la pastille la retire.
 
@@ -310,9 +310,9 @@ Les couleurs s’ajoutent aux types et aux favoris : rouge et SVG montrent les 
 
 #### Orientation et taille d’écran
 
-**Orientation** garde les éléments au format **Paysage**, **Portrait** ou **Carré**. Choisissez-en deux pour voir les deux. Une image compte comme carrée quand ses côtés diffèrent de 5 % au plus.
+**Orientation** garde les éléments au format **Paysage**, **Portrait** ou **Carré**. Choisissez-en deux pour voir les deux. Une image compte comme carrée quand ses côtés diffèrent de 5 % au plus.
 
-**Adapté à mon écran** garde les images au moins aussi grandes que l’écran où se trouve Pigoune, en vrais pixels et dans les deux sens, par exemple 1920 × 1080 ou plus. Elles remplissent l’écran sans être agrandies, donc sans flou. Les SVG sont toujours mis de côté.
+**Adapté à mon écran** garde les images au moins aussi grandes que l’écran où se trouve Pigoune, en pixels réels, en largeur comme en hauteur, par exemple 1920 × 1080 ou plus. Elles remplissent l’écran sans être agrandies, donc sans flou. Les SVG sont toujours écartés.
 
 > [!TIP]
 > **Paysage** et **Adapté à mon écran** ensemble trouvent de bons fonds d’écran.
@@ -337,7 +337,7 @@ Elle cherche toujours dans toute la bibliothèque, sauf la corbeille. On ne peut
 2. Donnez-lui un nom.
 3. Choisissez au moins un critère : des mots à rechercher, des types, des orientations, des couleurs, **Adapté à mon écran** ou **Favoris seulement**.
 
-**Mots à rechercher** fonctionne exactement comme le champ de recherche : espaces et virgules, et pastilles dont les **et** et les **ou** coupent ou réunissent les groupes. **Adapté à mon écran** suit l’écran où se trouve Pigoune au moment où vous ouvrez la collection dynamique.
+**Mots à rechercher** fonctionne comme le champ de recherche : espaces et virgules, et pastilles dont les **et** et les **ou** coupent ou réunissent les groupes. **Adapté à mon écran** suit l’écran où se trouve Pigoune au moment où vous ouvrez la collection dynamique.
 
 #### Utiliser et gérer
 
@@ -362,7 +362,7 @@ Parcourez la grille, puis ouvrez l’aperçu détaillé pour examiner un éléme
 
 ### L’aperçu détaillé
 
-Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur un élément pour ouvrir l’aperçu détaillé. Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd> pour revenir.
+Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur un élément pour ouvrir l’aperçu détaillé. Le double-clic ouvre l’application par défaut si vous avez activé ce réglage dans les **Préférences**. Appuyez sur <kbd>Espace</kbd> ou <kbd>Échap</kbd> pour revenir.
 
 <img src="../../data/screenshots/03.png" alt="L’aperçu détaillé d’une illustration de fusée, avec une bande de vignettes en bas" width="720">
 
@@ -373,10 +373,8 @@ Appuyez sur <kbd>Espace</kbd> ou double-cliquez sur un élément pour ouvrir l�
 | **Zoomer** | Utilisez la molette, ou <kbd>+</kbd> et <kbd>-</kbd>. |
 | **Ajuster à la fenêtre** | Appuyez sur <kbd>0</kbd>. |
 | **Voir la taille réelle** | Appuyez sur <kbd>1</kbd>. |
-| **Déplacer une image zoomée** | Faites-la glisser, ou utilisez <kbd>Maj</kbd> et les flèches. |
+| **Déplacer une image zoomée** | Faites-la glisser pour en examiner n’importe quelle partie, même un coin amené au milieu de l’écran, ou utilisez <kbd>Maj</kbd> et les flèches. |
 | **Changer le fond** | Utilisez le bouton **Fond** de la barre du haut. |
-
-Vous pouvez faire glisser l’image pour en examiner n’importe quelle partie, même un coin amené au milieu de l’écran.
 
 #### Passer d’un élément à l’autre
 
@@ -396,12 +394,12 @@ Un clic droit sur l’image propose **Ouvrir avec…**, **Afficher dans Fichiers
 #### Vérifier icônes et pixels
 
 - Un contour en pointillés montre les vrais bords de l’image, marges transparentes comprises. Désactivez-le avec **Afficher les limites de l’image** dans le menu du zoom.
-- À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier une icône ou du pixel art. Désactivez-la avec **Afficher la grille des pixels** dans le menu du zoom.
+- À partir de 800 %, une grille légère sépare les pixels des images, pratique pour vérifier une icône ou du pixel art. Désactivez-la avec **Afficher la grille des pixels** dans le menu du zoom.
 - Pour un fichier ICO qui contient plusieurs tailles, des boutons sous l’image affichent chaque taille telle qu’elle a été dessinée (16, 32, 48, 256…).
 
 #### Animations
 
-Pour une animation, une barre sous l’image la met en pause, la relance et la parcourt image par image, en indiquant l’image affichée.
+Pour une animation, une barre sous l’image la met en pause, la relance et la parcourt image par image, en indiquant laquelle est affichée.
 
 Au clavier, <kbd>K</kbd> met en pause ou relance, et <kbd>,</kbd> et <kbd>.</kbd> affichent l’image précédente et suivante.
 
@@ -470,20 +468,20 @@ Les autres formats gardent la transparence, sauf si vous désactivez **Garder la
 
 | Option | Effet |
 |---|---|
-| **Largeur et hauteur** | En pixels ou en pourcentage. 100 % garde la taille d’origine. |
+| **Largeur et hauteur** | En pixels ou en pourcentage. 100 % garde la taille d’origine. |
 | **Garder les proportions** (le cadenas) | Fermé, les proportions sont gardées : changer un côté ajuste l’autre. Ouvrez-le pour étirer librement une image. |
 | **Taille de mon écran** | Adapte plusieurs images à votre écran d’un coup : chaque image prend exactement la taille de l’écran où se trouve Pigoune, par exemple 1920 × 1080. |
-| **Remplir l’écran** | Couvre tout l’écran et coupe les bords qui dépassent, autour du centre. |
+| **Remplir l’écran** | Centre l’image, couvre tout l’écran et coupe ce qui dépasse. |
 | **Image entière** | Garde toute l’image et remplit les bandes avec la couleur de fond, ou les laisse transparentes quand la transparence est gardée. |
 
-Cadenas fermé, plusieurs images de formes différentes tiennent chacune dans la largeur et la hauteur indiquées.
+Cadenas fermé, chaque image garde ses proportions et tient dans la largeur et la hauteur indiquées, même si les images n’ont pas toutes la même forme.
 
 <details>
 <summary>À savoir</summary>
 
 - Un SVG reste net à toutes les tailles ; une image en pixels agrandie devient floue.
 - Un fichier redimensionné porte sa taille dans son nom, par exemple `logo-512x384.png`.
-- Depuis l’aperçu, une animation en pause sur une image exporte cette image, nommée par exemple `spinner-image-3.png`.
+- Depuis l’aperçu, une animation en pause exporte l’image affichée, nommée par exemple `spinner-image-3.png`.
 - Pigoune retient votre format, votre qualité, votre fond et votre unité pour le prochain export, et la taille repart toujours de l’original.
 - L’original reste intact dans la bibliothèque, et les fichiers existants ne sont jamais écrasés.
 
@@ -530,9 +528,9 @@ Trois boutons règlent le cadrage :
 |---|---|
 | **Remplir** | Revient au cadrage de GNOME. |
 | **Entière** | Montre toute l’image. |
-| **100 %** | Montre un pixel de l’image par pixel de l’écran. |
+| **100 %** | Montre un pixel de l’image par pixel de l’écran. |
 
-<img src="../../data/screenshots/09.png" alt="La fenêtre de cadrage du fond d’écran : un écran virtuel avec une image en portrait sur un fond flouté, et ses réglages" width="720">
+<img src="../../data/screenshots/09.png" alt="La fenêtre de cadrage du fond d’écran : un écran virtuel avec une image en portrait sur un fond flouté, et ses réglages" width="720">
 
 #### Aides au cadrage
 
@@ -542,21 +540,21 @@ Trois boutons règlent le cadrage :
 | **Règle des tiers** | Affiche la grille des tiers, pour placer le sujet. |
 | **Magnétisme** | Actif au départ : l’image glissée s’accroche au centre et aux bords de l’écran, une ligne bleue montrant où. |
 
-Ce qui dépasse de l’écran reste visible, en pâle. Quand l’image est agrandie au-delà de 100 %, une pastille sur l’écran prévient qu’elle sera floue.
+Ce qui dépasse de l’écran reste visible, estompé. Quand l’image est agrandie au-delà de 100 %, une pastille sur l’écran prévient qu’elle sera floue.
 
-Le bouton plein écran, ou <kbd>F11</kbd>, montre l’écran virtuel en vraie grandeur, comme une simulation que rappelle une courte pastille. <kbd>Échap</kbd> pour revenir.
+Le bouton plein écran, ou <kbd>F11</kbd>, montre l’écran virtuel en vraie grandeur, comme une simulation, ce que rappelle une courte pastille. <kbd>Échap</kbd> pour revenir.
 
 #### Image et écrans
 
 | Option | Effet |
 |---|---|
-| **Assombrir** (sous **Image**) | Assombrit tout le fond d’écran, jusqu’à 60 %, pour que les icônes et les barres restent lisibles. |
-| **Préparer pour** | Avec plusieurs écrans, choisit celui pour lequel le fond d’écran est fabriqué. GNOME affiche le même fond d’écran sur tous les écrans et l’adapte aux autres. |
+| **Assombrir** (sous **Image**) | Assombrit tout le fond d’écran, jusqu’à 60 %, pour que les icônes et les barres restent lisibles. |
+| **Préparer pour** | Avec plusieurs écrans, choisit celui pour lequel le fond d’écran est généré. GNOME affiche le même fond d’écran sur tous les écrans et l’adapte aux autres. |
 | **Simulation du bureau** | Dessine une imitation des barres de votre bureau sur l’écran virtuel. Désactivez-la pour voir l’image seule. |
 
 Comme **Miroir**, **Assombrir** ne change que le fond d’écran, jamais l’élément.
 
-Elle imite GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez étant choisi d’office.
+La simulation imite GNOME, KDE Plasma, Cinnamon, Xfce, MATE, COSMIC ou Budgie, celui que vous utilisez étant choisi d’office.
 
 #### Espace vide
 
@@ -581,7 +579,7 @@ Un dégradé a trois réglages de plus :
 
 #### Définir le fond d’écran
 
-**Définir comme fond d’écran** fabrique une image exactement à la taille de l’écran : le bureau montre exactement ce que vous avez cadré. Une petite fenêtre montre la préparation, puis GNOME vous demande de confirmer.
+**Définir comme fond d’écran** crée une image à la taille de l’écran : le bureau montre ce que vous avez cadré. Une petite fenêtre montre la préparation, puis GNOME vous demande de confirmer.
 
 Cochez **Ajouter aussi à la bibliothèque la version modifiée** pour garder cette image comme nouvel élément.
 
@@ -624,7 +622,7 @@ flatpak run io.github.gor3pig.Pigoune --capture
 
 Si Pigoune n’est pas lancé, il démarre, rouvre votre dernière bibliothèque et fait la capture.
 
-Les images peuvent faire jusqu’à 8000 pixels de côté.
+Une image à annoter (capture, image collée ou image de la bibliothèque) peut mesurer jusqu’à 8000 pixels de côté.
 
 ### Annoter
 
@@ -636,7 +634,7 @@ Les outils sont dans le panneau de l’éditeur, à droite (dans une fenêtre é
 | Rogner | <kbd>C</kbd> | Ne garder qu’une partie de l’image |
 | Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Contours, remplis ou à coins arrondis |
 | Ligne, Flèche | <kbd>L</kbd>, <kbd>A</kbd> | Droites ou courbes, avec plusieurs pointes |
-| Texte | <kbd>T</kbd> | Cliquez, tapez, puis cliquez ailleurs ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> |
+| Texte | <kbd>T</kbd> | Ajouter du texte : cliquez, tapez, puis cliquez ailleurs ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour terminer |
 | Étapes | <kbd>N</kbd> | Pastilles numérotées (ou lettrées) qui se renumérotent seules |
 | Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés |
 | Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher une information privée : l’effet s’applique à tout ce qui est dessiné en dessous |
@@ -646,24 +644,24 @@ Les outils sont dans le panneau de l’éditeur, à droite (dans une fenêtre é
 
 #### Les réglages d’un outil
 
-Chaque outil retient ses derniers réglages jusqu’à la fermeture de Pigoune : couleur (avec une pipette pour en prélever une dans l’image), opacité, épaisseur, ombre et plus. L’outil Texte a aussi la police, la taille, le gras, l’italique, le fond, la bulle et le contour.
+Chaque outil retient ses derniers réglages jusqu’à la fermeture de Pigoune : couleur (avec une pipette pour en prélever une dans l’image), opacité, épaisseur, ombre et d’autres réglages. L’outil Texte a aussi la police, la taille, le gras, l’italique, le fond, la bulle et le contour.
 
 - **Type de trait** choisit un trait continu, en tirets ou pointillé, pour les rectangles, ellipses, lignes, flèches et le crayon.
 - **Aspect du tracé** (Précis, Esquissé ou Très esquissé) donne aux rectangles, ellipses, lignes et flèches l’allure légèrement tremblée d’un dessin fait à la main.
-- Une forme garde le même aspect à chaque ouverture, et une copie est exactement semblable à l’original.
+- Une forme garde le même tracé à chaque ouverture, et sa copie est identique à l’original.
 - Les flèches peuvent être régulières ou effilées.
 
 #### Dessiner avec précision
 
-- Maintenez <kbd>Maj</kbd> en dessinant pour des lignes droites à des multiples de 45 degrés, et de parfaits carrés ou cercles.
-- Maintenez <kbd>Alt</kbd> en déplaçant pour couper les guides qui alignent une annotation sur l’image et sur les autres annotations.
+- Maintenez <kbd>Maj</kbd> en dessinant pour des lignes droites à des multiples de 45 degrés, et des carrés et des cercles parfaits.
+- Maintenez <kbd>Alt</kbd> en déplaçant pour désactiver les guides qui alignent une annotation sur l’image et sur les autres annotations.
 - Annuler et rétablir fonctionnent comme partout : <kbd>Ctrl</kbd>+<kbd>Z</kbd> et <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd>.
 
 #### Sélectionner et modifier
 
 Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la redimensionner par ses poignées et changer ses réglages tout de suite, sans quitter l’outil en cours.
 
-- Avec un outil de dessin, appuyez sur le contour d’une annotation pour la saisir, ou n’importe où ailleurs, même à l’intérieur d’une autre annotation, pour dessiner. L’outil **Sélection** saisit aussi une annotation par son intérieur.
+- Avec un outil de dessin, cliquez sur le contour d’une annotation pour la sélectionner, ou n’importe où ailleurs, même à l’intérieur d’une autre annotation, pour dessiner. L’outil **Sélection** sélectionne aussi une annotation par son intérieur.
 - Une flèche sélectionnée a une poignée ronde au milieu : tirez-la pour courber la flèche, double-cliquez dessus pour la redresser.
 - Un flou, une pixelisation ou un projecteur sélectionné a une poignée ronde au centre : tirez-la pour déplacer la zone avec n’importe quel outil.
 - Les flèches du clavier déplacent la sélection d’un pixel (dix avec <kbd>Maj</kbd>).
@@ -696,7 +694,7 @@ Pigoune retient les sections repliées et l’état du panneau. Rien de cela ne 
 
 ### Cacher ce qui est privé
 
-Une annotation **Flou** ou **Pixelisation** cache ce qui est dessous, annotations comprises. Comme toute annotation, elle ne détruit rien : le fichier d’origine reste exactement tel qu’il a été importé, et le flou ou la pixelisation reste modifiable. Elle s’enregistre avec les autres annotations, et vous pouvez la déplacer, la redimensionner, la masquer ou la changer plus tard.
+Une annotation **Flou** ou **Pixelisation** cache ce qui est dessous, annotations comprises. Comme toute annotation, elle ne détruit rien : le fichier d’origine reste tel qu’il a été importé. Elle est enregistrée avec les autres annotations et reste modifiable : vous pouvez la déplacer, la redimensionner ou la masquer plus tard.
 
 > [!WARNING]
 > L’image d’origine reste dans votre bibliothèque, avec ce que vous aviez caché. Une pixelisation à gros blocs supprime les détails qu’elle recouvre, mais un flou léger n’est pas une anonymisation et peut rester en partie récupérable. Pour tout ce qui est sensible, préférez une pixelisation ou un flou fort, et ne partagez pas le fichier d’origine.
@@ -709,7 +707,7 @@ Pigoune en tient compte :
 
 ### Garder le résultat
 
-- **Enregistrer** ajoute l’image annotée à votre bibliothèque sous un nom fait de la date, avec le tag `capture`, et l’affiche sélectionnée. Une image déjà présente dans la bibliothèque est refusée, et le message nomme l’élément existant.
+- **Enregistrer** ajoute l’image annotée à votre bibliothèque sous un nom qui reprend la date, avec le tag `capture`, et l’affiche sélectionnée. Une image déjà présente dans la bibliothèque est refusée, et le message nomme l’élément existant.
 - Le menu à côté d’**Enregistrer** copie l’image annotée dans le presse-papiers ou l’exporte en PNG.
 - Si Pigoune se ferme pendant que vous modifiez, la capture est gardée en brouillon, et Pigoune propose de la reprendre la prochaine fois qu’une bibliothèque s’ouvre.
 
@@ -717,7 +715,7 @@ Pigoune en tient compte :
 
 Sélectionnez un élément annoté et choisissez **Annoter…** (dans le panneau de détails ou le menu contextuel). L’enregistrement met à jour le même élément. **Voir l’original** ouvre une copie de l’image intacte dans une autre application.
 
-La grille, l’aperçu et les doublons utilisent l’image annotée. La copier ou l’exporter donne un PNG aplati. L’original reste à côté, va à la corbeille et en revient avec elle, et compte dans l’espace utilisé par votre bibliothèque.
+La grille, l’aperçu et les doublons utilisent l’image annotée. La copier ou l’exporter donne un PNG aplati. L’original reste rangé à côté de l’image annotée : il suit celle-ci à la corbeille comme à la restauration, et compte dans l’espace utilisé par votre bibliothèque.
 
 ### Comparer avec l’original
 
@@ -787,7 +785,7 @@ Une bibliothèque ne peut être ouverte que dans une seule fenêtre de Pigoune �
 
 ### Gérer la bibliothèque
 
-Choisissez **Gérer la bibliothèque** dans le menu principal pour voir ce que contient la bibliothèque ouverte et vous en occuper. Elle compte six onglets.
+Choisissez **Gérer la bibliothèque** dans le menu principal pour voir ce que contient la bibliothèque ouverte et vous en occuper. La fenêtre compte six onglets.
 
 | Onglet | À quoi il sert |
 |---|---|
@@ -812,9 +810,9 @@ Un graphique en anneau montre comment la place se répartit entre les formats, e
 
 Une seule barre montre la place de la bibliothèque sur son disque, répartie entre les éléments, les vignettes, la base de données et la corbeille, à côté des autres fichiers et de l’espace libre.
 
-En dessous, vous trouvez l’emplacement de la bibliothèque, avec des boutons pour le copier ou ouvrir son dossier, et si ce disque est amovible. Vous y trouvez aussi la place prise par les vignettes, sa date de création et les versions de Pigoune capables de l’ouvrir.
+En dessous figurent l’emplacement de la bibliothèque (avec des boutons pour le copier ou ouvrir son dossier), l’indication d’un disque amovible, la place prise par les vignettes, la date de création de la bibliothèque et les versions de Pigoune capables de l’ouvrir.
 
-**Vider**, à côté des vignettes, libère leur place. Elles sont recréées quand on en a besoin.
+**Vider**, à côté des vignettes, libère leur place. Pigoune les recrée quand il en a besoin.
 
 ### Vérifier la santé de la bibliothèque
 
@@ -828,12 +826,12 @@ L’onglet **Santé** compare les fichiers du disque avec la base de données de
 - les fichiers **endommagés**, dont le contenu ne correspond plus à ce qui a été importé ;
 - les fichiers **non référencés**, qui sont dans le dossier de la bibliothèque mais que la base de données ne connaît pas.
 
-La vérification se fait en arrière-plan et peut être annulée. Elle ne modifie ni ne supprime jamais rien d’elle-même. Les éléments qui sont dans la corbeille ne sont pas signalés : leurs fichiers partent avec la corbeille, et si vous en restaurez un, la vérification suivante le regarde de nouveau.
+La vérification se fait en arrière-plan et peut être annulée. Elle ne modifie et ne supprime jamais rien d’elle-même. Les éléments qui sont dans la corbeille ne sont pas signalés : leurs fichiers partent avec la corbeille, et si vous en restaurez un, la vérification suivante le vérifie de nouveau.
 
 #### Corriger un problème
 
 - **Ajouter** (ou **Tout ajouter**) remet un fichier non référencé dans la bibliothèque, dans Non classés, sans déplacer le fichier. Pigoune explique pourquoi quand un fichier ne peut pas être ajouté, par exemple s’il n’est pas une image.
-- **Remplacer…** permet de choisir une copie du fichier d’origine d’un fichier manquant ou endommagé. Pigoune ne l’accepte que si son contenu est identique à ce qui a été importé, puis la remet en place en conservant le nom, les tags et les collections de l’élément.
+- **Remplacer…** permet de choisir une copie saine d’un fichier manquant ou endommagé. Pigoune ne l’accepte que si son contenu est identique à ce qui a été importé, puis la place dans la bibliothèque en conservant le nom, les tags et les collections de l’élément.
 - **Retirer de la bibliothèque** enlève un élément manquant dont il ne reste aucune copie, après une confirmation qui précise que c’est définitif. Un fichier endommagé, qui existe encore, ne le propose jamais.
 - **Mettre à la corbeille** est proposé à la place pour un fichier endommagé. Vous pouvez l’annuler depuis le message qui apparaît.
 
@@ -845,20 +843,24 @@ Pigoune analyse discrètement l’image de chaque élément en arrière-plan, se
 
 #### Lancer la recherche
 
-Cliquez sur **Rechercher**. Pigoune regarde d’abord de près, une seule fois, les éléments qui pourraient être des doublons, puis les compare, avec une barre de progression et un bouton **Annuler**. Il liste les groupes, la plus grande image en premier.
+Cliquez sur **Rechercher**. Pigoune commence par analyser en détail, une seule fois, les éléments qui pourraient être des doublons, puis les compare, avec une barre de progression et un bouton **Annuler**. Il liste les groupes ; dans chacun, la plus grande image vient en premier.
 
 - Un groupe montre ses six premiers éléments. **Afficher les N autres** en ajoute vingt à la fois, et les vignettes se chargent au fil du défilement.
 - Chaque groupe n’est qu’une suggestion : les éléments se ressemblent, ce qui ne les rend pas identiques.
-- Pigoune compare les dessins en deux temps, puis marque chaque élément **Identique** ou **Probable** par rapport au plus grand. Un groupe ne réunit que des éléments qui s’accordent tous entre eux, 40 au plus à la fois.
+- Pigoune compare les dessins en deux temps, puis marque chaque élément **Identique** ou **Probable** par rapport au plus grand. Un groupe ne réunit que des éléments qui se ressemblent tous entre eux, et compte 40 éléments au plus.
 
 #### Nettoyer un groupe
 
-1. Choisissez l’élément à garder avec son bouton rond. La plus grande image est choisie d’abord, et la choisir ne supprime rien.
+1. Choisissez l’élément à garder avec son bouton rond. La plus grande image est présélectionnée ; ce choix ne supprime rien.
 2. Cochez la case (« Mettre à la corbeille ») de chaque élément à retirer. Rien n’est coché à votre place.
 3. Cliquez sur **Mettre N éléments à la corbeille…**, qui apparaît dès qu’une case est cochée. Un récapitulatif montre ce qui est gardé et ce qui part à la corbeille, avec les collections, tags et notes qui restent derrière.
 4. Confirmez. Seuls les éléments cochés sont déplacés, et **Annuler** ne change rien.
 
-Si les éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le message qui apparaît permet d’annuler : les éléments restent dans la corbeille jusqu’à ce que vous la vidiez. Choisir une ligne affiche cet élément dans Tout.
+Si les éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche.
+
+Le message qui apparaît permet d’annuler : les éléments restent dans la corbeille jusqu’à ce que vous la vidiez.
+
+Choisir une ligne affiche cet élément dans Tout.
 
 #### Ignorer ce qui n’est pas un doublon
 
@@ -897,15 +899,13 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur <kbd>Ctrl<
 
 | Réglage | Ce qu’il fait |
 |---|---|
-| **Langue de l’interface** | Suit votre système, ou choisissez une autre langue. Elle s’applique au prochain démarrage ; **Redémarrer** le fait tout de suite. |
+| **Langue de l’interface** | Suit votre système, ou choisissez une autre langue. Elle s’applique au prochain démarrage ; **Redémarrer** le fait tout de suite. Quelques fenêtres fournies par GNOME, comme celle qui permet de choisir un dossier, peuvent rester dans la langue du système. |
 | **Rouvrir la dernière bibliothèque** | Au lancement, ouvre la bibliothèque laissée ouverte. Désactivez-le pour partir de la page d’accueil. |
-| **Bibliothèques récentes** | Combien de bibliothèques récentes le menu principal et la page d’accueil proposent, de 0 à 8. |
+| **Bibliothèques récentes** | Combien de bibliothèques récentes le menu principal et la page d’accueil proposent, de 0 à 8. Choisissez 0 pour désactiver la liste. |
 | **Rouvrir la dernière entrée** | Une bibliothèque s’ouvre sur l’entrée utilisée la dernière fois plutôt que sur **Tout**. |
-| **Afficher les nouveautés après une mise à jour** | Une courte fenêtre présente les principales nouveautés au premier démarrage d’une nouvelle version. |
+| **Afficher les nouveautés après une mise à jour** | Une courte fenêtre présente les principales nouveautés au premier démarrage d’une nouvelle version. La fenêtre À propos garde les nouveautés de la version en cours. |
 | **Confirmer avant de vider la corbeille** | Demande confirmation avant que la corbeille soit vidée. |
 | **Vider automatiquement la corbeille** | Les éléments sont supprimés définitivement après 30 jours dans la corbeille. Désactivé au départ. |
-
-Quelques fenêtres fournies par GNOME, comme celle qui permet de choisir un dossier, peuvent rester dans la langue du système. Choisissez 0 bibliothèque récente pour désactiver la liste. La fenêtre À propos garde les nouveautés de la version en cours.
 
 ### Affichage
 
@@ -936,7 +936,7 @@ Les tags qui n’ont aucun élément correspondant sont estompés pendant une re
 | Réglage | Ce qu’il fait |
 |---|---|
 | **Ouvrir les éléments au double-clic** | Un double-clic ouvre l’élément dans son application par défaut au lieu de l’aperçu. <kbd>Espace</kbd> ouvre toujours l’aperçu. |
-| **Rechercher dans toute la bibliothèque** | La recherche et les filtres regardent partout, pas seulement dans l’entrée sélectionnée, sauf dans la corbeille et dans les collections dynamiques. |
+| **Rechercher dans toute la bibliothèque** | La recherche et les filtres portent sur toute la bibliothèque, pas seulement sur l’entrée sélectionnée, sauf dans la corbeille et dans les collections dynamiques. |
 
 **Rechercher dans toute la bibliothèque** est activé au premier démarrage, et la pastille du champ de recherche le change à tout moment.
 
@@ -945,7 +945,7 @@ Les tags qui n’ont aucun élément correspondant sont estompés pendant une re
 La plupart des raccourcis listés dans [Raccourcis clavier](#raccourcis-clavier) peuvent être modifiés ici. Sélectionnez une action, puis appuyez sur la nouvelle combinaison de touches.
 
 - Pigoune refuse une combinaison déjà utilisée par une autre action, en vous disant laquelle.
-- Il refuse aussi une lettre seule (taper dans la grille lance une recherche, utilisez donc <kbd>Ctrl</kbd> ou <kbd>Alt</kbd> avec une touche, ou une touche de fonction), et les touches qu’il garde pour lui, comme <kbd>F2</kbd>, <kbd>F10</kbd> et <kbd>F11</kbd>.
+- Il refuse aussi une lettre seule, car taper dans la grille lance une recherche (utilisez <kbd>Ctrl</kbd> ou <kbd>Alt</kbd> avec une touche, ou une touche de fonction), et les touches qu’il garde pour lui, comme <kbd>F2</kbd>, <kbd>F10</kbd> et <kbd>F11</kbd>.
 - Un bouton à côté d’un raccourci modifié rétablit sa valeur par défaut, et **Rétablir tous les raccourcis** les rétablit tous.
 - Les raccourcis standards (copier, coller, tout sélectionner, annuler, rétablir et quitter) sont affichés avec un cadenas et ne peuvent pas être modifiés.
 - Quelques actions, comme importer un dossier, exporter ou restaurer des éléments, n’ont aucun raccourci tant que vous ne leur en donnez pas un.
@@ -1040,7 +1040,7 @@ Non. Pigoune fonctionne entièrement hors ligne, sans compte et sans télémétr
 
 ### Comment mettre Pigoune à jour ?
 
-Logiciels s’en charge : il propose chaque nouvelle version, et l’installe tout seul si les mises à jour automatiques sont activées. `flatpak update` l’installe aussi.
+L’application Logiciels s’en charge : il propose chaque nouvelle version, et l’installe tout seul si les mises à jour automatiques sont activées. `flatpak update` l’installe aussi.
 
 Si Pigoune reste ouvert, une bannière en haut de la fenêtre l’annonce aussi dans la demi-heure. Cliquez sur **Mettre à jour**, attendez la fin de l’installation, puis cliquez sur **Redémarrer**.
 
