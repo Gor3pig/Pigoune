@@ -231,7 +231,7 @@ Dans le panneau de détails :
 | **Fichier** | Indique quand l’élément a été ajouté et le nom du fichier d’origine. |
 | **Actions rapides** | Sous le nom, **Ouvrir avec…**, **Copier** et **Exporter…** agissent directement sur l’élément. |
 
-Chaque groupe se replie et se déplie d’un clic sur son titre, qui affiche aussi un court résumé. Pigoune retient ceux qui sont ouverts.
+Chaque groupe se replie et se déplie d’un clic sur son titre. Le titre affiche aussi un court résumé. Pigoune retient ceux qui sont ouverts.
 
 ### Plusieurs éléments à la fois
 
@@ -273,7 +273,7 @@ Dans une fenêtre étroite, le champ laisse la place à une loupe en haut à dro
 | `logo, chèvre` | Les éléments qui contiennent *logo* **ou** *chèvre* |
 | `logo rouge, chèvre` | Ce qui contient à la fois *logo* et *rouge*, ou bien *chèvre* |
 
-La **barre d’espace** veut dire *et*, la **virgule** veut dire *ou*. Les virgules découpent la recherche en groupes : un élément est trouvé dès qu’il contient tous les mots d’un groupe, où que ces mots se trouvent : par exemple *logo* dans le nom et *chèvre* dans un tag.
+La **barre d’espace** veut dire *et*, la **virgule** veut dire *ou*. Les virgules découpent la recherche en groupes : un élément est trouvé dès qu’il contient tous les mots d’un groupe, où que ces mots se trouvent. Par exemple, *logo* peut être dans le nom et *chèvre* dans un tag.
 
 #### Les pastilles de mots
 
@@ -506,7 +506,7 @@ Choisissez **Trouver des éléments similaires…** dans le menu du clic droit d
 Chacun est marqué **Presque identique**, **Très proche** ou **Ressemblant**. Dans chaque mention, ceux dont les couleurs sont les plus proches passent en premier. En choisir un l’affiche dans Tout.
 
 > [!NOTE]
-> Si l’élément n’a pas encore été analysé, ou si son dessin est trop simple pour être comparé (une seule couleur, ou rien de visible), la fenêtre le dit.
+> Si l’élément n’a pas encore été analysé, ou si son image est trop simple pour être comparée (une seule couleur, ou rien de visible), la fenêtre le dit.
 
 ### Fonds d’écran
 
@@ -542,7 +542,7 @@ Trois boutons règlent le cadrage :
 
 Ce qui dépasse de l’écran reste visible, estompé. Quand l’image est agrandie au-delà de 100 %, une pastille sur l’écran prévient qu’elle sera floue.
 
-Le bouton plein écran, ou <kbd>F11</kbd>, montre l’écran virtuel en vraie grandeur, comme une simulation, ce que rappelle une courte pastille. <kbd>Échap</kbd> pour revenir.
+Le bouton plein écran, ou <kbd>F11</kbd>, montre l’écran virtuel en vraie grandeur. Une courte pastille rappelle qu’il s’agit d’une simulation. <kbd>Échap</kbd> pour revenir.
 
 #### Image et écrans
 
@@ -562,7 +562,7 @@ Sous **Espace vide**, choisissez ce qui remplit l’écran autour d’une image 
 
 | Choix | Ce qu’il fait |
 |---|---|
-| **Couleur** | Noire au départ. Choisissez parmi les couleurs principales de l’image, le noir et le blanc. |
+| **Couleur** | Noire au départ. Choisissez l’une des couleurs principales de l’image, le noir ou le blanc. |
 | **Dégradé** | Part des deux couleurs principales de l’image, du haut vers le bas. |
 | **Flou** | La même image, agrandie et floutée derrière elle. |
 | **Mosaïque** | L’image répétée sur tout l’écran, pratique pour les motifs. |
@@ -847,7 +847,7 @@ Cliquez sur **Rechercher**. Pigoune commence par analyser en détail, une seule 
 
 - Un groupe montre ses six premiers éléments. **Afficher les N autres** en ajoute vingt à la fois, et les vignettes se chargent au fil du défilement.
 - Chaque groupe n’est qu’une suggestion : les éléments se ressemblent, ce qui ne les rend pas identiques.
-- Pigoune compare les dessins en deux temps, puis marque chaque élément **Identique** ou **Probable** par rapport au plus grand. Un groupe ne réunit que des éléments qui se ressemblent tous entre eux, et compte 40 éléments au plus.
+- Pigoune compare les images en deux temps, puis marque chaque élément **Identique** ou **Probable** par rapport au plus grand. Un groupe ne réunit que des éléments qui se ressemblent tous entre eux, et compte 40 éléments au plus.
 
 #### Nettoyer un groupe
 
@@ -856,9 +856,9 @@ Cliquez sur **Rechercher**. Pigoune commence par analyser en détail, une seule 
 3. Cliquez sur **Mettre N éléments à la corbeille…**, qui apparaît dès qu’une case est cochée. Un récapitulatif montre ce qui est gardé et ce qui part à la corbeille, avec les collections, tags et notes qui restent derrière.
 4. Confirmez. Seuls les éléments cochés sont déplacés, et **Annuler** ne change rien.
 
-Si les éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche.
+Un message permet d’annuler le déplacement : les éléments restent dans la corbeille jusqu’à ce que vous la vidiez.
 
-Le message qui apparaît permet d’annuler : les éléments restent dans la corbeille jusqu’à ce que vous la vidiez.
+Si les éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche.
 
 Choisir une ligne affiche cet élément dans Tout.
 
