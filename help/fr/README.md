@@ -64,7 +64,7 @@ Il y a quatre façons de faire entrer des éléments.
 
 | Façon | Comment |
 |---|---|
-| **Bouton d’import** | Cliquez sur **+** en haut de la barre latérale, ou appuyez sur <kbd>Ctrl</kbd>+<kbd>I</kbd>, puis choisissez **Importer des fichiers…** ou **Importer un dossier…**. |
+| **Menu d’importation** | Cliquez sur **+** en haut de la barre latérale, ou appuyez sur <kbd>Ctrl</kbd>+<kbd>I</kbd>, puis choisissez **Importer des fichiers…** ou **Importer un dossier…**. |
 | **Glisser-déposer** | Glissez des fichiers ou des dossiers depuis Fichiers sur la fenêtre, ou sur **Tout**, **Non classés** ou une collection de la barre latérale. |
 | **Copier-coller** | Copiez des fichiers dans Fichiers, ou une image (une capture d’écran, une image d’une page web), puis appuyez sur <kbd>Ctrl</kbd>+<kbd>V</kbd>. |
 | **Depuis une page web** | Glissez une image d’une page web sur la fenêtre, ou sur une collection de la barre latérale. |
@@ -89,7 +89,7 @@ Pigoune garde ce que le navigateur lui remet : le fichier d’origine avec Chro
 
 Les photos HEIC s’affichent quand le système sait les décoder, ce que fait le paquet Flatpak.
 
-Si vous importez un doublon dans une collection, l’élément n’appartient alors qu’à cette collection.
+Si vous importez dans une collection un fichier déjà présent, l’élément existant est ajouté à cette collection et reste dans les autres. S’il était à la corbeille, il est restauré et n’appartient alors qu’à cette collection.
 
 > [!TIP]
 > Vos fichiers d’origine ne sont jamais modifiés ni déplacés. Vous pouvez les supprimer une fois importés.
@@ -124,7 +124,7 @@ Faites ensuite un clic droit dessus pour y créer une sous-collection, la renomm
 |---|---|
 | **Personnaliser** | Clic droit, **Personnaliser…**, choisissez une couleur et une icône, puis **Enregistrer**. **Par défaut** remet le dossier gris. |
 | **Réorganiser** | Glissez les collections dans la barre latérale, ou triez-les par nom ou par date de création avec le bouton **⋯** à côté de **Collections**. |
-| **Replier** | Cliquez sur le titre d’une section de la barre latérale, ou appuyez sur <kbd>Entrée</kbd> quand il a le focus du clavier. Pigoune retient les sections repliées. |
+| **Replier** | Cliquez sur le titre d’une section de la barre latérale, ou appuyez sur <kbd>Entrée</kbd> quand il est sélectionné au clavier. Pigoune retient les sections repliées. |
 
 **Non classés** regroupe les éléments qui n’appartiennent à aucune collection.
 
@@ -210,7 +210,7 @@ Pigoune affiche son parent, et l’annulation vous ramène sur le tag.
 </details>
 
 > [!NOTE]
-> Une bibliothèque avec des tags imbriqués ne peut être ouverte que par Pigoune 2.5 ou plus récent. Vos tags actuels deviennent des tags de premier niveau, sans rien perdre.
+> Vos tags actuels deviennent des tags de premier niveau, sans rien perdre.
 
 ### Les favoris
 
@@ -306,7 +306,7 @@ La dernière pastille, arc-en-ciel, ouvre le sélecteur de couleur de GNOME pour
 Les couleurs s’ajoutent aux types et aux favoris : rouge et SVG montrent les SVG rouges.
 
 > [!NOTE]
-> À la première ouverture d’une bibliothèque avec Pigoune 2.0, ses éléments sont analysés en arrière-plan pendant que vous continuez à travailler. Un élément pas encore analysé ne correspond à aucune couleur.
+> À la première ouverture d’une ancienne bibliothèque, ses éléments sont analysés en arrière-plan pendant que vous continuez à travailler. Un élément pas encore analysé ne correspond à aucune couleur.
 
 #### Orientation et taille d’écran
 
@@ -346,9 +346,7 @@ Elle cherche toujours dans toute la bibliothèque, sauf la corbeille. On ne peut
 | **L’ouvrir** | Cliquez dessus dans la barre latérale. Vous pouvez encore chercher à l’intérieur. |
 | **La modifier** | **Modifier…** dans son menu du clic droit, ou <kbd>F2</kbd>. |
 | **La supprimer** | **Supprimer…**. Seule la recherche enregistrée disparaît : les éléments restent dans la bibliothèque. |
-| **Les réorganiser** | Glissez-les dans la barre latérale, ou triez-les avec le bouton **⋯** à côté de leur titre. |
-
-Le tri propose le nom ou la date de création.
+| **Les réorganiser** | Glissez-les dans la barre latérale, ou triez-les par nom ou par date de création avec le bouton **⋯** à côté de leur titre. |
 
 *Voir aussi : [Organiser](#organiser), [Regarder vos éléments](#regarder-vos-éléments).* · [Retour au sommaire](#sommaire)
 
@@ -427,7 +425,7 @@ Sortez vos éléments de Pigoune, ou transformez-les : une copie, un export, un
 | Trouver ce qui se ressemble | **Trouver des éléments similaires…** | [Trouver des éléments similaires](#trouver-des-éléments-similaires) |
 | Faire un fond d’écran | **Cadrer et définir comme fond d’écran…** | [Fonds d’écran](#fonds-décran) |
 
-Sauf le glisser et la copie, ces actions sont dans le menu du clic droit d’un élément.
+Hormis le glisser-déposer, la copie et l’export de toute la bibliothèque, ces actions sont dans le menu du clic droit d’un élément.
 
 ### Glisser et copier
 
@@ -446,7 +444,7 @@ Certaines applications, comme Fichiers, peuvent afficher un curseur de déplacem
 
 Choisissez **Exporter vers…** dans le menu du clic droit, puis un dossier. Les fichiers existants ne sont jamais écrasés.
 
-Pour exporter toute la bibliothèque en dossiers ordinaires, utilisez l’onglet **Export** de **Gérer la bibliothèque** (voir [Votre bibliothèque](#votre-bibliothèque)). **Exporter…** crée un dossier au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, exactement comme dans la barre latérale, et y place les fichiers d’origine.
+Pour exporter toute la bibliothèque en dossiers ordinaires, utilisez l’onglet **Export** de **Gérer la bibliothèque** (voir [Exporter toute la bibliothèque](#exporter-toute-la-bibliothèque)).
 
 ### Convertir et exporter
 
@@ -464,7 +462,7 @@ Changez le format et la taille pendant l’export. Choisissez **Convertir et exp
 |---|---|
 | **Qualité** | JPEG et AVIF proposent un réglage de qualité. |
 | **Fond** | Une couleur de fond remplit les zones transparentes. Le JPEG en utilise toujours une, car il n’a pas de transparence. |
-| **Tailles ICO** | Cochez les tailles à inclure (16, 32, 48 et 256 par défaut). Elles vont toutes dans un seul fichier d’icône. |
+| **Tailles de l’icône** | Cochez les tailles à inclure (16, 32, 48 et 256 par défaut). Elles vont toutes dans un seul fichier d’icône. |
 
 Les autres formats gardent la transparence, sauf si vous désactivez **Garder la transparence** pour utiliser aussi une couleur de fond.
 
@@ -473,7 +471,7 @@ Les autres formats gardent la transparence, sauf si vous désactivez **Garder la
 | Option | Effet |
 |---|---|
 | **Largeur et hauteur** | En pixels ou en pourcentage. 100 % garde la taille d’origine. |
-| **Cadenas** | Fermé, les proportions sont gardées : changer un côté ajuste l’autre. Ouvrez-le pour étirer librement une image. |
+| **Garder les proportions** (le cadenas) | Fermé, les proportions sont gardées : changer un côté ajuste l’autre. Ouvrez-le pour étirer librement une image. |
 | **Taille de mon écran** | Adapte plusieurs images à votre écran d’un coup : chaque image prend exactement la taille de l’écran où se trouve Pigoune, par exemple 1920 × 1080. |
 | **Remplir l’écran** | Couvre tout l’écran et coupe les bords qui dépassent, autour du centre. |
 | **Image entière** | Garde toute l’image et remplit les bandes avec la couleur de fond, ou les laisse transparentes quand la transparence est gardée. |
@@ -501,7 +499,7 @@ Cadenas fermé, plusieurs images de formes différentes tiennent chacune dans la
 Votre bibliothèque reste intacte : enregistrez vos modifications sous un nouveau nom et importez-les si vous voulez les garder.
 
 > [!WARNING]
-> Le fichier montré par **Afficher dans Fichiers** est le vrai fichier. Ne le déplacez pas, ne le renommez pas et ne le modifiez pas depuis là : le bilan de santé de la bibliothèque le signalerait.
+> Le fichier montré par **Afficher dans Fichiers** est le vrai fichier. Ne le déplacez pas, ne le renommez pas et ne le modifiez pas depuis là : la vérification de l’onglet **Santé** le signalerait.
 
 ### Trouver des éléments similaires
 
@@ -525,6 +523,11 @@ Une grande fenêtre montre un écran virtuel à la résolution réelle de l’é
 | **Déplacer** l’image | Faites-la glisser. |
 | **Zoomer** | Utilisez la molette, le curseur, ou <kbd>+</kbd> et <kbd>-</kbd>. |
 | **Ajuster** | Utilisez les flèches (<kbd>Maj</kbd> pour aller plus loin). |
+
+Trois boutons règlent le cadrage :
+
+| Bouton | Effet |
+|---|---|
 | **Remplir** | Revient au cadrage de GNOME. |
 | **Entière** | Montre toute l’image. |
 | **100 %** | Montre un pixel de l’image par pixel de l’écran. |
@@ -625,7 +628,7 @@ Les images peuvent faire jusqu’à 8000 pixels de côté.
 
 ### Annoter
 
-Les outils sont dans le volet de droite (dans une fenêtre étroite, dans le volet qui monte du bas). Chaque outil a une lettre qui le sélectionne, indiquée dans son infobulle.
+Les outils sont dans le panneau de l’éditeur, à droite (dans une fenêtre étroite, dans le panneau qui monte du bas). Chaque outil a une lettre qui le sélectionne, indiquée dans son infobulle.
 
 | Outil | Touche | Ce qu’il fait |
 |---|---|---|
@@ -636,14 +639,14 @@ Les outils sont dans le volet de droite (dans une fenêtre étroite, dans le vol
 | Texte | <kbd>T</kbd> | Cliquez, tapez, puis cliquez ailleurs ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> |
 | Étapes | <kbd>N</kbd> | Pastilles numérotées (ou lettrées) qui se renumérotent seules |
 | Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés |
-| Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher ce qui est privé, sous tout ce qui est dessiné au-dessus |
+| Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher une information privée : l’effet s’applique à tout ce qui est dessiné en dessous |
 | Projecteur | <kbd>S</kbd> | Assombrit tout sauf un rectangle ou un ovale |
 
-<kbd>Suppr</kbd> supprime l’annotation sélectionnée. **Rogner** fonctionne avec des proportions libres ou fixes. Le flou et la pixelisation s’appliquent à tout ce qui est dessiné dessous.
+<kbd>Suppr</kbd> supprime l’annotation sélectionnée. **Rogner** fonctionne avec des proportions libres ou fixes.
 
 #### Les réglages d’un outil
 
-Chaque outil retient ses derniers réglages : couleur (avec une pipette pour en prélever une dans l’image), opacité, épaisseur, ombre et plus. L’outil Texte a aussi la police, la taille, le gras, l’italique, le fond, la bulle et le contour.
+Chaque outil retient ses derniers réglages jusqu’à la fermeture de Pigoune : couleur (avec une pipette pour en prélever une dans l’image), opacité, épaisseur, ombre et plus. L’outil Texte a aussi la police, la taille, le gras, l’italique, le fond, la bulle et le contour.
 
 - **Type de trait** choisit un trait continu, en tirets ou pointillé, pour les rectangles, ellipses, lignes, flèches et le crayon.
 - **Aspect du tracé** (Précis, Esquissé ou Très esquissé) donne aux rectangles, ellipses, lignes et flèches l’allure légèrement tremblée d’un dessin fait à la main.
@@ -681,13 +684,13 @@ Chaque annotation est un calque. Le panneau **Calques** les liste de l’avant v
 
 <kbd>Ctrl</kbd>+<kbd>]</kbd> et <kbd>Ctrl</kbd>+<kbd>[</kbd> changent aussi l’ordre, avec <kbd>Maj</kbd> pour les extrêmes.
 
-Masquer un calque ne le cache que dans l’éditeur et dans le résultat. Rien n’est supprimé, et vous pouvez le réafficher à tout moment.
+Un calque masqué disparaît de l’éditeur et du résultat, mais n’est pas supprimé : vous pouvez le réafficher à tout moment.
 
 ### Votre espace de travail
 
 **Outils**, **Propriétés** et **Calques** se replient et se déplient d’un clic sur leur titre.
 
-Le bouton à côté de **Rétablir** dans l’en-tête, ou <kbd>F9</kbd>, masque tout le panneau pour laisser plus de place à l’image. **Enregistrer** et les boutons de copie, d’export et de capture passent alors dans l’en-tête.
+Le bouton à côté de **Rétablir** dans l’en-tête, ou <kbd>F9</kbd>, masque tout le panneau de l’éditeur pour laisser plus de place à l’image. **Enregistrer** et les boutons de copie, d’export et de capture passent alors dans l’en-tête.
 
 Pigoune retient les sections repliées et l’état du panneau. Rien de cela ne change vos annotations, l’outil choisi ou le zoom.
 
@@ -696,7 +699,7 @@ Pigoune retient les sections repliées et l’état du panneau. Rien de cela ne 
 Une annotation **Flou** ou **Pixelisation** cache ce qui est dessous, annotations comprises. Comme toute annotation, elle ne détruit rien : le fichier d’origine reste exactement tel qu’il a été importé, et le flou ou la pixelisation reste modifiable. Elle s’enregistre avec les autres annotations, et vous pouvez la déplacer, la redimensionner, la masquer ou la changer plus tard.
 
 > [!WARNING]
-> L’image d’origine reste dans votre bibliothèque, avec ce que vous aviez caché. Une pixelisation à grandes cellules supprime les détails qu’elle recouvre, mais un flou léger n’est pas une anonymisation et peut rester en partie récupérable. Pour tout ce qui est sensible, préférez une pixelisation ou un flou fort, et ne partagez pas le fichier d’origine.
+> L’image d’origine reste dans votre bibliothèque, avec ce que vous aviez caché. Une pixelisation à gros blocs supprime les détails qu’elle recouvre, mais un flou léger n’est pas une anonymisation et peut rester en partie récupérable. Pour tout ce qui est sensible, préférez une pixelisation ou un flou fort, et ne partagez pas le fichier d’origine.
 
 Pigoune en tient compte :
 
@@ -771,7 +774,7 @@ Une bibliothèque est un simple dossier dont le nom se termine par `.pigoune`. T
 
 - `files/` : une copie de chaque élément, avec son nom de fichier d’origine, rangée dans de petits sous-dossiers pour que même une très grande bibliothèque reste facile à manipuler.
 - `library.db` : la base de données qui contient les collections, les tags et toutes les autres informations.
-- `cache/` : les vignettes et les signatures détaillées des dessins, que Pigoune peut refaire à tout moment.
+- `cache/` : les vignettes et les données d’analyse des images, que Pigoune peut refaire à tout moment.
 
 ### La déplacer et la sauvegarder
 
@@ -788,9 +791,9 @@ Choisissez **Gérer la bibliothèque** dans le menu principal pour voir ce que c
 
 | Onglet | À quoi il sert |
 |---|---|
-| **Vue d’ensemble** | Les chiffres et les records de la bibliothèque |
-| **Contenu** | La répartition des formats et des couleurs |
-| **Stockage** | Ce que la bibliothèque prend sur votre disque |
+| **Vue d’ensemble** | Voir les chiffres et les records de la bibliothèque |
+| **Contenu** | Voir la répartition des formats et des couleurs |
+| **Stockage** | Voir la place que la bibliothèque prend sur votre disque |
 | **Santé** | Comparer les fichiers à la base de données |
 | **Doublons** | Trouver les éléments qui se ressemblent |
 | **Export** | Copier tous les éléments dans des dossiers |
@@ -819,7 +822,7 @@ L’onglet **Santé** compare les fichiers du disque avec la base de données de
 
 <img src="../../data/screenshots/11.png" alt="L’onglet Santé qui liste un fichier manquant, un fichier endommagé et un fichier non référencé, chacun avec ses boutons" width="720">
 
-**Vérifier** lit chaque fichier, ceux de la corbeille compris, et liste :
+**Vérifier** lit chaque fichier, sauf ceux de la corbeille, et liste :
 
 - les fichiers **manquants** ;
 - les fichiers **endommagés**, dont le contenu ne correspond plus à ce qui a été importé ;
@@ -831,14 +834,14 @@ La vérification se fait en arrière-plan et peut être annulée. Elle ne modifi
 
 - **Ajouter** (ou **Tout ajouter**) remet un fichier non référencé dans la bibliothèque, dans Non classés, sans déplacer le fichier. Pigoune explique pourquoi quand un fichier ne peut pas être ajouté, par exemple s’il n’est pas une image.
 - **Remplacer…** permet de choisir une copie du fichier d’origine d’un fichier manquant ou endommagé. Pigoune ne l’accepte que si son contenu est identique à ce qui a été importé, puis la remet en place en conservant le nom, les tags et les collections de l’élément.
-- **Retirer…** retire de la bibliothèque un élément manquant dont il ne reste aucune copie, après une confirmation qui précise que c’est définitif. Un fichier endommagé, qui existe encore, ne le propose jamais.
+- **Retirer de la bibliothèque** enlève un élément manquant dont il ne reste aucune copie, après une confirmation qui précise que c’est définitif. Un fichier endommagé, qui existe encore, ne le propose jamais.
 - **Mettre à la corbeille** est proposé à la place pour un fichier endommagé. Vous pouvez l’annuler depuis le message qui apparaît.
 
 ### Trouver les doublons
 
 L’onglet **Doublons** regroupe les éléments qui se ressemblent, comme le même logo en PNG et en SVG, ou en deux tailles.
 
-Pigoune analyse discrètement le dessin de chaque élément en arrière-plan, seulement quand vous ne l’utilisez pas. L’onglet Vue d’ensemble montre où il en est, et la page Doublons indique combien d’éléments attendent encore.
+Pigoune analyse discrètement l’image de chaque élément en arrière-plan, seulement quand vous ne l’utilisez pas. L’onglet Vue d’ensemble montre où il en est, et l’onglet Doublons indique combien d’éléments attendent encore.
 
 #### Lancer la recherche
 
@@ -855,31 +858,28 @@ Cliquez sur **Rechercher**. Pigoune regarde d’abord de près, une seule fois, 
 3. Cliquez sur **Mettre N éléments à la corbeille…**, qui apparaît dès qu’une case est cochée. Un récapitulatif montre ce qui est gardé et ce qui part à la corbeille, avec les collections, tags et notes qui restent derrière.
 4. Confirmez. Seuls les éléments cochés sont déplacés, et **Annuler** ne change rien.
 
-Si les éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le message qui apparaît permet d’annuler, et la corbeille garde les éléments 30 jours. Choisir une ligne affiche cet élément dans Tous.
+Si les éléments ont changé depuis la recherche, Pigoune ne déplace rien et relance la recherche. Le message qui apparaît permet d’annuler : les éléments restent dans la corbeille jusqu’à ce que vous la vidiez. Choisir une ligne affiche cet élément dans Tout.
 
 #### Ignorer ce qui n’est pas un doublon
 
 - **Ignorer le groupe** dans le menu « ⋯ » d’un groupe, ou **Pas un doublon** dans le menu « ⋯ » d’une ligne, empêche Pigoune de proposer ces éléments comme doublons les uns des autres. Le message permet d’annuler.
-- **Ignorés (N)** en haut de la page compte les éléments que vous avez ignorés et les liste, une entrée à chaque fois : un groupe, ou un seul élément avec ceux dont il est écarté.
+- **Ignorés (N)**, en haut de l’onglet, liste ce que vous avez ignoré. Chaque entrée est soit un groupe, soit un seul élément avec ceux dont il est écarté.
 - **Ne plus ignorer** défait exactement une entrée, et **Tout réafficher…** toutes.
 
-Le même bouton est là quand vous rouvrez Gérer la bibliothèque, et Annuler (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) garde la page à jour.
+Le bouton **Ignorés** reste là quand vous rouvrez **Gérer la bibliothèque**, et **Annuler** (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) met la liste à jour.
 
 <details>
-<summary>Comment fonctionne l’ignorance</summary>
+<summary>Ce que change « Ignorer »</summary>
 
 Ignorer un groupe ne concerne que les éléments de ce groupe. Ils ne sont plus proposés ensemble, ni avec les autres éléments qui leur ressemblent, et ces autres éléments restent proposés dans leurs propres groupes. Une nouvelle image qui ressemble à l’un d’eux reste proposée avec celui-ci.
 
 </details>
 
-> [!NOTE]
-> Une bibliothèque ouverte avec Pigoune 2.10 ou plus récent ne peut plus être ouverte par une version plus ancienne.
-
 ### Exporter toute la bibliothèque
 
 L’onglet **Export** copie tous les éléments dans un dossier de votre choix.
 
-- Pigoune crée un dossier au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place les fichiers d’origine. La page montre un exemple tiré de votre propre bibliothèque.
+- Pigoune crée un dossier au nom de la bibliothèque, avec un sous-dossier par collection et sous-collection, et y place les fichiers d’origine. L’onglet montre un exemple tiré de votre propre bibliothèque.
 - Les éléments qui n’appartiennent à aucune collection vont dans un dossier **Non classés**. Un élément qui appartient à plusieurs collections est copié dans chacune. Les éléments à la corbeille sont laissés de côté.
 - Une image annotée est exportée avec son original **et** une copie de l’image annotée. Voir [Cacher ce qui est privé](#cacher-ce-qui-est-privé).
 - Rien n’est jamais écrasé : si un dossier du même nom existe déjà, l’export est créé sous le nom `Nom (2)`. Le bouton est grisé quand la bibliothèque est vide.
@@ -903,7 +903,7 @@ Ouvrez les **Préférences** depuis le menu principal, ou appuyez sur <kbd>Ctrl<
 | **Rouvrir la dernière entrée** | Une bibliothèque s’ouvre sur l’entrée utilisée la dernière fois plutôt que sur **Tout**. |
 | **Afficher les nouveautés après une mise à jour** | Une courte fenêtre présente les principales nouveautés au premier démarrage d’une nouvelle version. |
 | **Confirmer avant de vider la corbeille** | Demande confirmation avant que la corbeille soit vidée. |
-| **Vider automatiquement la corbeille** | Les éléments sont supprimés définitivement après 30 jours dans la corbeille. |
+| **Vider automatiquement la corbeille** | Les éléments sont supprimés définitivement après 30 jours dans la corbeille. Désactivé au départ. |
 
 Quelques fenêtres fournies par GNOME, comme celle qui permet de choisir un dossier, peuvent rester dans la langue du système. Choisissez 0 bibliothèque récente pour désactiver la liste. La fenêtre À propos garde les nouveautés de la version en cours.
 
@@ -952,7 +952,7 @@ La plupart des raccourcis listés dans [Raccourcis clavier](#raccourcis-clavier)
 
 ### Style et couleurs
 
-Pigoune suit le style et la couleur d’accentuation choisis dans les **Paramètres** de GNOME, rubrique **Apparence** : style clair ou sombre, et couleur des sélections, des interrupteurs et des surlignages.
+Le style et la couleur d’accentuation ne se règlent pas dans les Préférences : Pigoune suit ceux que vous choisissez dans les **Paramètres** de GNOME, rubrique **Apparence**. Ils couvrent le style clair ou sombre, et la couleur des sélections, des interrupteurs et des surlignages.
 
 *Voir aussi : [Raccourcis clavier](#raccourcis-clavier), [Votre bibliothèque](#votre-bibliothèque).* · [Retour au sommaire](#sommaire)
 
@@ -1054,6 +1054,6 @@ Il n’y en a pas. Pigoune reconnaît les doublons et ajoute plutôt l’éléme
 
 ### Comment signaler un bug ou proposer une idée ?
 
-Ouvrez une issue sur [GitHub](https://github.com/Gor3pig/Pigoune/issues).
+Ouvrez un ticket (*issue*) sur [GitHub](https://github.com/Gor3pig/Pigoune/issues).
 
 *Voir aussi : [Premiers pas](#premiers-pas).* · [Retour au sommaire](#sommaire)
