@@ -108,6 +108,38 @@ pub fn filter(view: AssetView) -> ViewFilter {
     }
 }
 
+const TAG_REACH: &str = "WITH RECURSIVE reach(tag_id, ancestor_id) AS (
+        SELECT id, id FROM tags
+        UNION
+        SELECT reach.tag_id, tags.parent_id FROM reach
+        JOIN tags ON tags.id = reach.ancestor_id
+        WHERE tags.parent_id IS NOT NULL
+    )";
+
+fn tag_counts_query(restricted: bool) -> String {
+    if restricted {
+        format!(
+            "{TAG_REACH}
+             SELECT reach.ancestor_id, count(DISTINCT assets.id) FROM reach
+             LEFT JOIN asset_tags ON asset_tags.tag_id = reach.tag_id
+             LEFT JOIN assets ON assets.id = asset_tags.asset_id
+                 AND assets.trashed_at_unix_ms IS NULL
+                 AND assets.id IN (SELECT value FROM json_each(?1))
+             GROUP BY reach.ancestor_id"
+        )
+    } else {
+        format!(
+            "{TAG_REACH}
+             SELECT reach.ancestor_id, count(DISTINCT asset_tags.asset_id) FROM reach
+             LEFT JOIN asset_tags ON asset_tags.tag_id = reach.tag_id
+                 AND asset_tags.asset_id NOT IN (
+                     SELECT id FROM assets WHERE trashed_at_unix_ms IS NOT NULL
+                 )
+             GROUP BY reach.ancestor_id"
+        )
+    }
+}
+
 impl Library {
     pub fn view_count(&self, view: AssetView) -> Result<usize, LibraryError> {
         if let AssetView::Smart(id) = view {
@@ -197,20 +229,7 @@ impl Library {
             })?
             .collect::<Result<_, _>>()?;
 
-        let mut statement = self.connection.prepare(&format!(
-            "WITH RECURSIVE reach(tag_id, ancestor_id) AS (
-                 SELECT id, id FROM tags
-                 UNION
-                 SELECT reach.tag_id, tags.parent_id FROM reach
-                 JOIN tags ON tags.id = reach.ancestor_id
-                 WHERE tags.parent_id IS NOT NULL
-             )
-             SELECT reach.ancestor_id, count(DISTINCT assets.id) FROM reach
-             LEFT JOIN asset_tags ON asset_tags.tag_id = reach.tag_id
-             LEFT JOIN assets ON assets.id = asset_tags.asset_id
-                 AND assets.trashed_at_unix_ms IS NULL{restriction}
-             GROUP BY reach.ancestor_id"
-        ))?;
+        let mut statement = self.connection.prepare(&tag_counts_query(ids.is_some()))?;
         let tags = statement
             .query_map(params_from_iter(ids), |row| {
                 let total: i64 = row.get(1)?;
