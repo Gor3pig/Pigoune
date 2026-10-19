@@ -41,6 +41,8 @@ mod drag_export;
 mod drag_icon;
 mod drop_action;
 mod drop_message;
+#[cfg(test)]
+mod drop_message_reference;
 mod drop_places;
 mod dropped_content;
 mod duplicates_ignored;
