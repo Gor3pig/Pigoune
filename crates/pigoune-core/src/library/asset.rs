@@ -241,7 +241,28 @@ impl Library {
         )?)
     }
 
+    fn keeping_queries_cached(
+        &mut self,
+        write: impl FnOnce(&mut Self) -> Result<(), LibraryError>,
+    ) -> Result<(), LibraryError> {
+        let outside_transaction = self.connection.is_autocommit();
+        let before = self.connection.total_changes();
+        let written = write(self);
+        if outside_transaction && written.is_ok() {
+            self.query_cache
+                .carry(before, self.connection.total_changes());
+        }
+        written
+    }
+
     pub fn record_visual_details_batch(
+        &mut self,
+        batch: &[(AssetId, Option<VisualDetail>)],
+    ) -> Result<(), LibraryError> {
+        self.keeping_queries_cached(|library| library.store_visual_details(batch))
+    }
+
+    fn store_visual_details(
         &mut self,
         batch: &[(AssetId, Option<VisualDetail>)],
     ) -> Result<(), LibraryError> {
@@ -263,6 +284,13 @@ impl Library {
     }
 
     pub fn record_visual_analysis_batch(
+        &mut self,
+        batch: &[(AssetId, Option<VisualAnalysis>)],
+    ) -> Result<(), LibraryError> {
+        self.keeping_queries_cached(|library| library.store_visual_analysis(batch))
+    }
+
+    fn store_visual_analysis(
         &mut self,
         batch: &[(AssetId, Option<VisualAnalysis>)],
     ) -> Result<(), LibraryError> {
@@ -378,5 +406,227 @@ impl ToSql for AssetFormat {
 impl FromSql for AssetFormat {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         Self::from_code(value.as_str()?).ok_or(FromSqlError::InvalidType)
+    }
+}
+
+#[cfg(test)]
+mod cache_tests {
+    use std::path::Path;
+    use std::sync::Arc;
+
+    use rusqlite::Connection;
+
+    use super::{AssetView, DominantColor, Library, LibraryError};
+    use crate::library::{AssetCommand, AssetId, ImportOutcome, TagCommand};
+    use crate::media::{AssetColor, Rgb};
+
+    struct Fixture {
+        _workspace: tempfile::TempDir,
+        library: Library,
+        assets: Vec<AssetId>,
+    }
+
+    fn fixture() -> Fixture {
+        let workspace = tempfile::tempdir().expect("temporary directory");
+        let mut library = Library::create(workspace.path(), "Essai").expect("library is created");
+        let mut assets = Vec::new();
+        for name in ["red-dot.png", "dark-circle.svg", "blue-photo.jpg"] {
+            let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/fixtures")
+                .join(name);
+            match library.import_file(&source, None).expect("import succeeds") {
+                ImportOutcome::Imported(id) => assets.push(id),
+                outcome => panic!("unexpected outcome {outcome:?}"),
+            }
+        }
+        library
+            .apply_tag_command(&TagCommand::Add {
+                assets: assets.clone(),
+                name: "Brands/Logo".to_owned(),
+            })
+            .expect("assets are tagged");
+        Fixture {
+            _workspace: workspace,
+            library,
+            assets,
+        }
+    }
+
+    fn warm(library: &Library) -> (Arc<Vec<super::Asset>>, Arc<Vec<super::Asset>>) {
+        let all = library.shared_assets(AssetView::All).expect("listing");
+        let trash = library.shared_assets(AssetView::Trash).expect("trash");
+        library.tag_names_by_asset().expect("tag names");
+        (all, trash)
+    }
+
+    fn still_cached(library: &Library, all: &Arc<Vec<super::Asset>>) -> bool {
+        Arc::ptr_eq(
+            &library.shared_assets(AssetView::All).expect("listing"),
+            all,
+        )
+    }
+
+    #[test]
+    fn the_hash_the_details_and_both_in_a_row_keep_a_valid_cache() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        let (all, _) = warm(&fixture.library);
+        let tags = fixture.library.tag_names_by_asset().expect("tag names");
+
+        fixture
+            .library
+            .record_visual_analysis_batch(&[(id, None)])
+            .expect("the analysis is recorded");
+        assert!(still_cached(&fixture.library, &all));
+        fixture
+            .library
+            .record_visual_details_batch(&[(id, None)])
+            .expect("the details are recorded");
+        assert!(still_cached(&fixture.library, &all));
+        fixture
+            .library
+            .record_visual_analysis_batch(&[(id, None)])
+            .expect("the analysis is recorded again");
+        assert!(still_cached(&fixture.library, &all));
+        assert!(Arc::ptr_eq(
+            &fixture.library.tag_names_by_asset().expect("tag names"),
+            &tags
+        ));
+    }
+
+    #[test]
+    fn a_cache_already_stale_before_the_write_is_not_revived() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        let (all, _) = warm(&fixture.library);
+        fixture
+            .library
+            .apply_asset_command(&AssetCommand::SetFavorite {
+                assets: vec![id],
+                favorite: true,
+            })
+            .expect("a favorite is set");
+
+        fixture
+            .library
+            .record_visual_analysis_batch(&[(id, None)])
+            .expect("the analysis is recorded");
+
+        assert!(!still_cached(&fixture.library, &all));
+        let shown = fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+        assert!(
+            shown
+                .iter()
+                .any(|asset| asset.id == id && asset.is_favorite)
+        );
+    }
+
+    #[test]
+    fn a_colour_write_after_the_analysis_still_invalidates_the_cache() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        let (all, _) = warm(&fixture.library);
+        fixture
+            .library
+            .record_visual_analysis_batch(&[(id, None)])
+            .expect("the analysis is recorded");
+        assert!(still_cached(&fixture.library, &all));
+        let colours = vec![DominantColor {
+            family: AssetColor::Red,
+            average: Rgb::new(200, 20, 20),
+        }];
+
+        fixture
+            .library
+            .record_colors_batch(&[(id, colours.clone())])
+            .expect("colours are recorded");
+
+        assert!(!still_cached(&fixture.library, &all));
+        let shown = fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+        assert!(
+            shown
+                .iter()
+                .any(|asset| asset.id == id && asset.colors == colours)
+        );
+    }
+
+    #[test]
+    fn a_write_that_fails_halfway_keeps_the_usual_invalidation_and_the_error() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        let (all, _) = warm(&fixture.library);
+        let details = fixture
+            .library
+            .root
+            .join(crate::library::CACHE_DIR_NAME)
+            .join("visual-details.db");
+        let outside = Connection::open(&details).expect("the details file opens");
+        let definition: String = outside
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE name = 'asset_details'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("the details table exists");
+        outside
+            .execute_batch("DROP TABLE asset_details")
+            .expect("the table is dropped");
+
+        let result = fixture.library.record_visual_analysis_batch(&[(id, None)]);
+        outside
+            .execute_batch(&definition)
+            .expect("the table is restored");
+
+        assert!(matches!(result, Err(LibraryError::Database(_))));
+        assert!(!still_cached(&fixture.library, &all));
+    }
+
+    #[test]
+    fn nothing_is_carried_when_the_connection_was_inside_a_transaction() {
+        let mut fixture = fixture();
+        let (all, _) = warm(&fixture.library);
+        fixture
+            .library
+            .connection
+            .execute_batch("BEGIN")
+            .expect("a transaction opens");
+
+        let written = fixture.library.keeping_queries_cached(|library| {
+            library
+                .connection
+                .execute("UPDATE assets SET note = 'changed'", [])?;
+            Ok(())
+        });
+        fixture
+            .library
+            .connection
+            .execute_batch("COMMIT")
+            .expect("the transaction commits");
+
+        assert!(written.is_ok());
+        assert!(!still_cached(&fixture.library, &all));
+    }
+
+    #[test]
+    fn a_library_without_a_warm_cache_is_unaffected() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+
+        fixture
+            .library
+            .record_visual_details_batch(&[(id, None)])
+            .expect("the details are recorded");
+
+        let all = fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+        assert_eq!(all.len(), 3);
     }
 }
