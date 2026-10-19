@@ -68,16 +68,16 @@ glib::wrapper! {
 
 impl PigouneAssetObject {
     pub fn new(entry: AssetEntry) -> Self {
+        let object: Self = glib::Object::new();
+        let imp = object.imp();
         let asset = &entry.asset;
-        let object: Self = glib::Object::builder()
-            .property("favorite", asset.is_favorite)
-            .property("display-name", &asset.display_name)
-            .property("note", &asset.note)
-            .property("source-url", &asset.source_url)
-            .property("license", &asset.license)
-            .property("author", &asset.author)
-            .build();
-        if object.imp().entry.set(entry).is_err() {
+        imp.favorite.set(asset.is_favorite);
+        imp.display_name.replace(asset.display_name.clone());
+        imp.note.replace(asset.note.clone());
+        imp.source_url.replace(asset.source_url.clone());
+        imp.license.replace(asset.license.clone());
+        imp.author.replace(asset.author.clone());
+        if imp.entry.set(entry).is_err() {
             unreachable!("a new asset object has no entry yet");
         }
         object
@@ -295,6 +295,37 @@ mod tests {
         assert!(shown.favorite());
         assert_eq!(shown.display_name(), "Renamed");
         assert!(!shown.adopt_edits_of(&newer));
+    }
+
+    #[test]
+    fn a_new_object_carries_every_edit_of_its_asset_and_still_notifies_later_changes() {
+        let mut source = asset("Logo", true, 10);
+        source.note = "a note".to_owned();
+        source.source_url = "https://example.org/logo".to_owned();
+        source.license = "CC0".to_owned();
+        source.author = "Someone".to_owned();
+        let shown = object(source);
+
+        assert!(shown.favorite());
+        assert_eq!(shown.display_name(), "Logo");
+        assert_eq!(shown.note(), "a note");
+        assert_eq!(shown.source_url(), "https://example.org/logo");
+        assert_eq!(shown.license(), "CC0");
+        assert_eq!(shown.author(), "Someone");
+        assert_eq!(shown.id(), shown.asset().id);
+        let before = shown.name_key();
+        assert_eq!(*before, gtk::glib::FilenameCollationKey::from("Logo"));
+
+        let notified = std::rc::Rc::new(std::cell::Cell::new(0));
+        let counter = notified.clone();
+        shown.connect_display_name_notify(move |_| counter.set(counter.get() + 1));
+        shown.set_display_name("Renamed");
+
+        assert_eq!(notified.get(), 1);
+        assert_eq!(
+            *shown.name_key(),
+            gtk::glib::FilenameCollationKey::from("Renamed")
+        );
     }
 
     fn annotated(asset: Asset, key: &str) -> PigouneAssetObject {

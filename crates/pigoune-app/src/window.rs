@@ -7370,13 +7370,13 @@ fn asset_objects(
     let mut renders = library.annotation_renders()?;
     Ok(library
         .find_assets_in(view, filter)?
-        .iter()
+        .into_iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {
-                file: library.file_of(asset),
+                file: library.file_of(&asset),
                 thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
                 annotation: renders.remove(&asset.id),
-                asset: asset.clone(),
+                asset,
             })
         })
         .collect())
@@ -7411,4 +7411,175 @@ fn ignoring_failure_title() -> String {
 
 fn showing_again_failure_title() -> String {
     gettext("Unable to Show Again")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::{Path, PathBuf};
+
+    use pigoune_core::annotations::{
+        AnnotationDocument, AnnotationObject, BLUR, Geometry, Options, Rect, Shape,
+    };
+    use pigoune_core::{
+        AssetCommand, AssetFilter, AssetView, CollectionCommand, ImportOutcome, Library, TagCommand,
+    };
+
+    use super::{AssetEntry, PigouneAssetObject, THUMBNAIL_PIXELS, asset_objects};
+
+    const FILES: [&str; 5] = [
+        "red-dot.png",
+        "dark-circle.svg",
+        "blue-photo.jpg",
+        "navy-tile.bmp",
+        "green-square.webp",
+    ];
+
+    struct Folder(PathBuf);
+
+    impl Folder {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "pigoune-grid-test-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_or(0, |elapsed| elapsed.as_nanos())
+            ));
+            std::fs::create_dir_all(&path).expect("temporary folder is created");
+            Self(path)
+        }
+    }
+
+    impl Drop for Folder {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn fixture(name: &str) -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../pigoune-core/tests/fixtures")
+            .join(name)
+    }
+
+    fn reference(
+        library: &Library,
+        view: AssetView,
+        filter: &AssetFilter,
+    ) -> Vec<PigouneAssetObject> {
+        let mut renders = library.annotation_renders().expect("renders are read");
+        library
+            .find_assets_in(view, filter)
+            .expect("assets are listed")
+            .iter()
+            .map(|asset| {
+                PigouneAssetObject::new(AssetEntry {
+                    file: library.file_of(asset),
+                    thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
+                    annotation: renders.remove(&asset.id),
+                    asset: asset.clone(),
+                })
+            })
+            .collect()
+    }
+
+    fn same_objects(left: &[PigouneAssetObject], right: &[PigouneAssetObject]) {
+        assert_eq!(left.len(), right.len());
+        for (first, second) in left.iter().zip(right) {
+            assert_eq!(first.asset(), second.asset());
+            assert_eq!(first.source_file(), second.source_file());
+            assert_eq!(first.thumbnail_file(), second.thumbnail_file());
+            assert_eq!(first.annotation_key(), second.annotation_key());
+            assert_eq!(first.favorite(), second.favorite());
+            assert_eq!(first.display_name(), second.display_name());
+            assert_eq!(first.note(), second.note());
+        }
+    }
+
+    #[test]
+    fn the_grid_objects_follow_the_listing_in_order_with_every_view_and_filter() {
+        let folder = Folder::new();
+        let mut library = Library::create(&folder.0, "Essai").expect("library is created");
+        let collection = library
+            .create_collection("Tech", None)
+            .expect("collection is created");
+        let mut ids = Vec::new();
+        for name in FILES {
+            match library
+                .import_file(&fixture(name), Some(collection))
+                .expect("import succeeds")
+            {
+                ImportOutcome::Imported(id) => ids.push(id),
+                outcome => panic!("unexpected outcome {outcome:?}"),
+            }
+        }
+        library
+            .apply_asset_command(&AssetCommand::SetFavorite {
+                assets: vec![ids[0], ids[2]],
+                favorite: true,
+            })
+            .expect("favorites are set");
+        library
+            .apply_asset_command(&AssetCommand::SetTrashed {
+                assets: vec![ids[4]],
+                trashed: true,
+            })
+            .expect("an asset is trashed");
+        library
+            .apply_tag_command(&TagCommand::Add {
+                assets: vec![ids[1], ids[2]],
+                name: "Brands/Logo".to_owned(),
+            })
+            .expect("assets are tagged");
+        library
+            .apply_collection_command(&CollectionCommand::RemoveAssets {
+                collection,
+                assets: vec![ids[3]],
+            })
+            .expect("an asset leaves the collection");
+        let blur = Shape::new(
+            "blur",
+            Geometry::Box(Rect {
+                x: 1.0,
+                y: 2.0,
+                width: 30.0,
+                height: 40.0,
+            }),
+            Options::defaults(BLUR.options),
+        );
+        library
+            .save_annotations(
+                ids[1],
+                &AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur)]),
+            )
+            .expect("an annotation is saved");
+        let tag = library.tags().expect("tags are listed")[0].id;
+        let views = [
+            AssetView::All,
+            AssetView::Favorites,
+            AssetView::Unclassified,
+            AssetView::Collection(collection),
+            AssetView::Tag(tag),
+            AssetView::Trash,
+        ];
+        let filters = [
+            AssetFilter::default(),
+            AssetFilter::text("blue"),
+            AssetFilter::text("zzz"),
+            AssetFilter {
+                favorites_only: true,
+                ..AssetFilter::default()
+            },
+        ];
+        let mut annotated_seen = false;
+        for view in views {
+            for filter in &filters {
+                let built = asset_objects(&library, view, filter).expect("objects are built");
+                let expected = reference(&library, view, filter);
+                same_objects(&built, &expected);
+                annotated_seen |= built.iter().any(|object| object.annotation_key().is_some());
+            }
+        }
+        assert!(annotated_seen, "the annotated asset must appear in a view");
+    }
 }
