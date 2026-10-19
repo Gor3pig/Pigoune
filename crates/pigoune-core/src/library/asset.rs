@@ -241,10 +241,10 @@ impl Library {
         )?)
     }
 
-    fn keeping_queries_cached(
+    pub(super) fn keeping_queries_cached<T, E>(
         &mut self,
-        write: impl FnOnce(&mut Self) -> Result<(), LibraryError>,
-    ) -> Result<(), LibraryError> {
+        write: impl FnOnce(&mut Self) -> Result<T, E>,
+    ) -> Result<T, E> {
         let outside_transaction = self.connection.is_autocommit();
         let before = self.connection.total_changes();
         let written = write(self);
@@ -601,7 +601,7 @@ mod cache_tests {
             library
                 .connection
                 .execute("UPDATE assets SET note = 'changed'", [])?;
-            Ok(())
+            Ok::<(), LibraryError>(())
         });
         fixture
             .library

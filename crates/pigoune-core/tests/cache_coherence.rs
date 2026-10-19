@@ -881,3 +881,342 @@ fn visual_analysis_writes_in_every_order_keep_the_reads_equal_to_a_reopened_libr
         .expect("assets are trashed");
     fixture.assert_coherent("the hash then the trash");
 }
+
+fn membership_steps(fixture: &Fixture) -> Vec<(&'static str, CollectionCommand)> {
+    let everything = fixture.assets.clone();
+    let collections = fixture.collections();
+    let [first, second, nested, deepest] = collections[..4] else {
+        panic!("four collections");
+    };
+    let mut with_duplicates = everything[..20].to_vec();
+    with_duplicates.extend_from_slice(&everything[10..30]);
+    vec![
+        (
+            "mass add to a top collection",
+            CollectionCommand::AddAssets {
+                collection: first,
+                assets: everything.clone(),
+            },
+        ),
+        (
+            "add again, everything already there",
+            CollectionCommand::AddAssets {
+                collection: first,
+                assets: everything.clone(),
+            },
+        ),
+        (
+            "empty selection",
+            CollectionCommand::AddAssets {
+                collection: second,
+                assets: Vec::new(),
+            },
+        ),
+        (
+            "duplicates in the selection",
+            CollectionCommand::AddAssets {
+                collection: nested,
+                assets: with_duplicates.clone(),
+            },
+        ),
+        (
+            "mass move into a nested collection",
+            CollectionCommand::MoveAssets {
+                from: first,
+                to: deepest,
+                assets: everything.clone(),
+            },
+        ),
+        (
+            "move with duplicates",
+            CollectionCommand::MoveAssets {
+                from: deepest,
+                to: second,
+                assets: with_duplicates.clone(),
+            },
+        ),
+        (
+            "mass removal",
+            CollectionCommand::RemoveAssets {
+                collection: second,
+                assets: everything.clone(),
+            },
+        ),
+        (
+            "removal of assets that are not there",
+            CollectionCommand::RemoveAssets {
+                collection: second,
+                assets: everything[..5].to_vec(),
+            },
+        ),
+    ]
+}
+
+fn membership_failure_steps(fixture: &Fixture) -> Vec<(&'static str, CollectionCommand)> {
+    let everything = fixture.assets.clone();
+    let collections = fixture.collections();
+    let [first, second, nested, _] = collections[..4] else {
+        panic!("four collections");
+    };
+    let unknown = asset_id(ASSETS + 700);
+    let mut with_duplicates = everything[..20].to_vec();
+    with_duplicates.extend_from_slice(&everything[10..30]);
+    vec![
+        (
+            "failure: an unknown asset in the middle",
+            CollectionCommand::AddAssets {
+                collection: second,
+                assets: vec![everything[0], unknown, everything[1]],
+            },
+        ),
+        (
+            "failure: a batch whose second command fails",
+            CollectionCommand::Batch(vec![
+                CollectionCommand::AddAssets {
+                    collection: first,
+                    assets: everything[..10].to_vec(),
+                },
+                CollectionCommand::RemoveAssets {
+                    collection: first,
+                    assets: vec![unknown],
+                },
+                CollectionCommand::AddAssets {
+                    collection: first,
+                    assets: vec![unknown],
+                },
+            ]),
+        ),
+        (
+            "a batch of memberships",
+            CollectionCommand::Batch(vec![
+                CollectionCommand::AddAssets {
+                    collection: nested,
+                    assets: everything[..15].to_vec(),
+                },
+                CollectionCommand::MoveAssets {
+                    from: nested,
+                    to: first,
+                    assets: everything[5..12].to_vec(),
+                },
+            ]),
+        ),
+    ]
+}
+
+#[test]
+fn membership_commands_at_every_scale_stay_equal_to_a_reopened_library() {
+    let mut fixture = Fixture::new();
+    let mut steps = membership_steps(&fixture);
+    steps.extend(membership_failure_steps(&fixture));
+    for (label, command) in &steps {
+        let _ = observe(&fixture.library);
+        let _ = fixture.library.apply_collection_command(command);
+        fixture.assert_coherent(label);
+    }
+    for round in 0..6 {
+        let _ = observe(&fixture.library);
+        let _ = fixture.library.undo();
+        fixture.assert_coherent(&format!("undo {round}"));
+    }
+    for round in 0..6 {
+        let _ = observe(&fixture.library);
+        let _ = fixture.library.redo();
+        fixture.assert_coherent(&format!("redo {round}"));
+    }
+}
+
+type Step = Box<dyn Fn(&mut Fixture)>;
+
+fn interleaved_steps(fixture: &Fixture) -> Vec<(&'static str, Step)> {
+    let everything = fixture.assets.clone();
+    let collections = fixture.collections();
+    let [first, second, nested, _] = collections[..4] else {
+        panic!("four collections");
+    };
+    let membership = |collection: CollectionId, from: usize, to: usize| -> Step {
+        let assets = everything[from..to].to_vec();
+        Box::new(move |fixture: &mut Fixture| {
+            let _ = fixture
+                .library
+                .apply_collection_command(&CollectionCommand::AddAssets {
+                    collection,
+                    assets: assets.clone(),
+                });
+        })
+    };
+    vec![
+        ("add to first", membership(first, 0, 40)),
+        (
+            "favorite",
+            Box::new(|fixture| {
+                let assets = fixture.assets[..8].to_vec();
+                let _ = fixture
+                    .library
+                    .apply_asset_command(&AssetCommand::SetFavorite {
+                        assets,
+                        favorite: true,
+                    });
+            }),
+        ),
+        ("add to second right after", membership(second, 10, 50)),
+        (
+            "trash assets",
+            Box::new(|fixture| {
+                let assets = fixture.assets[..6].to_vec();
+                let _ = fixture
+                    .library
+                    .apply_asset_command(&AssetCommand::SetTrashed {
+                        assets,
+                        trashed: true,
+                    });
+            }),
+        ),
+        ("add to nested", membership(nested, 0, 30)),
+        (
+            "restore assets",
+            Box::new(|fixture| {
+                let assets = fixture.assets[..6].to_vec();
+                let _ = fixture
+                    .library
+                    .apply_asset_command(&AssetCommand::SetTrashed {
+                        assets,
+                        trashed: false,
+                    });
+            }),
+        ),
+    ]
+}
+
+fn interleaved_late_steps(fixture: &Fixture) -> Vec<(&'static str, Step)> {
+    let everything = fixture.assets.clone();
+    let collections = fixture.collections();
+    let [first, second, nested, _] = collections[..4] else {
+        panic!("four collections");
+    };
+    let tags = fixture.library.tags().expect("tags are listed");
+    let named = |name: &str| tags.iter().find(|tag| tag.name == name).expect("tag").id;
+    let (alpha, beta, epsilon) = (named("Alpha"), named("Beta"), named("Epsilon"));
+    let membership = |collection: CollectionId, from: usize, to: usize| -> Step {
+        let assets = everything[from..to].to_vec();
+        Box::new(move |fixture: &mut Fixture| {
+            let _ = fixture
+                .library
+                .apply_collection_command(&CollectionCommand::AddAssets {
+                    collection,
+                    assets: assets.clone(),
+                });
+        })
+    };
+    vec![
+        (
+            "merge tags",
+            Box::new(move |fixture| {
+                let _ = fixture.library.apply_tag_command(&TagCommand::Merge {
+                    from: epsilon,
+                    into: beta,
+                });
+            }),
+        ),
+        ("add after the merge", membership(first, 40, 60)),
+        (
+            "dissolve a tag",
+            Box::new(move |fixture| {
+                let _ = fixture
+                    .library
+                    .apply_tag_command(&TagCommand::Dissolve { tag: alpha });
+            }),
+        ),
+        (
+            "remove from second",
+            Box::new(move |fixture| {
+                let _ =
+                    fixture
+                        .library
+                        .apply_collection_command(&CollectionCommand::RemoveAssets {
+                            collection: second,
+                            assets: fixture.assets[..25].to_vec(),
+                        });
+            }),
+        ),
+        (
+            "delete a tag",
+            Box::new(move |fixture| {
+                let _ = fixture
+                    .library
+                    .apply_tag_command(&TagCommand::Delete { tag: beta });
+            }),
+        ),
+        (
+            "trash a collection with assets",
+            Box::new(move |fixture| {
+                let _ = fixture
+                    .library
+                    .apply_collection_command(&CollectionCommand::Trash { id: nested });
+            }),
+        ),
+        (
+            "collection command trashing assets",
+            Box::new(move |fixture| {
+                let assets = fixture.assets[30..36].to_vec();
+                let _ = fixture
+                    .library
+                    .apply_collection_command(&CollectionCommand::SetTrashed {
+                        collections: Vec::new(),
+                        assets,
+                        trashed: true,
+                    });
+            }),
+        ),
+        (
+            "a batch of a membership and a trashing",
+            Box::new(move |fixture| {
+                let assets = fixture.assets[40..46].to_vec();
+                let _ = fixture
+                    .library
+                    .apply_collection_command(&CollectionCommand::Batch(vec![
+                        CollectionCommand::AddAssets {
+                            collection: first,
+                            assets: assets.clone(),
+                        },
+                        CollectionCommand::SetTrashed {
+                            collections: Vec::new(),
+                            assets,
+                            trashed: true,
+                        },
+                    ]));
+            }),
+        ),
+        ("add once more", membership(first, 0, 70)),
+    ]
+}
+
+#[test]
+fn neutral_and_non_neutral_writes_interleaved_never_leave_a_stale_read() {
+    let mut fixture = Fixture::new();
+    let everything = fixture.assets.clone();
+    let _ = fixture.library.apply_tag_command(&TagCommand::Add {
+        assets: everything[..30].to_vec(),
+        name: "Alpha/Beta".to_owned(),
+    });
+    let _ = fixture.library.apply_tag_command(&TagCommand::Add {
+        assets: everything[20..50].to_vec(),
+        name: "Epsilon".to_owned(),
+    });
+    let mut steps = interleaved_steps(&fixture);
+    steps.extend(interleaved_late_steps(&fixture));
+    for (label, step) in &steps {
+        let _ = observe(&fixture.library);
+        step(&mut fixture);
+        fixture.assert_coherent(label);
+    }
+    for round in 0..steps.len() {
+        let _ = observe(&fixture.library);
+        let _ = fixture.library.undo();
+        fixture.assert_coherent(&format!("undo {round}"));
+    }
+    for round in 0..steps.len() {
+        let _ = observe(&fixture.library);
+        let _ = fixture.library.redo();
+        fixture.assert_coherent(&format!("redo {round}"));
+    }
+}

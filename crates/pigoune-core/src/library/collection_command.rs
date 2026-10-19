@@ -158,6 +158,17 @@ impl Library {
         &mut self,
         command: &CollectionCommand,
     ) -> Result<CollectionCommand, CollectionError> {
+        if changes_only_memberships(command) {
+            self.keeping_queries_cached(|library| library.write_collection_command(command))
+        } else {
+            self.write_collection_command(command)
+        }
+    }
+
+    fn write_collection_command(
+        &mut self,
+        command: &CollectionCommand,
+    ) -> Result<CollectionCommand, CollectionError> {
         let transaction = self.connection.transaction()?;
         let inverse = apply(&transaction, command)?;
         transaction.commit()?;
@@ -534,6 +545,23 @@ fn subtree(connection: &Connection, root: CollectionId) -> Result<Vec<Collection
     Ok(ids)
 }
 
+fn changes_only_memberships(command: &CollectionCommand) -> bool {
+    match command {
+        CollectionCommand::AddAssets { .. }
+        | CollectionCommand::RemoveAssets { .. }
+        | CollectionCommand::MoveAssets { .. } => true,
+        CollectionCommand::Batch(commands) => commands.iter().all(changes_only_memberships),
+        CollectionCommand::Create { .. }
+        | CollectionCommand::Delete { .. }
+        | CollectionCommand::Rename { .. }
+        | CollectionCommand::Restyle { .. }
+        | CollectionCommand::Move { .. }
+        | CollectionCommand::Arrange { .. }
+        | CollectionCommand::Trash { .. }
+        | CollectionCommand::SetTrashed { .. } => false,
+    }
+}
+
 fn removals_outside(
     assets: &[AssetId],
     held: &HashMap<AssetId, Vec<CollectionId>>,
@@ -587,4 +615,388 @@ fn assets_only_in(
         }
     }
     Ok(trashed)
+}
+
+#[cfg(test)]
+mod cache_tests {
+    use std::path::Path;
+    use std::sync::Arc;
+
+    use super::{CollectionCommand, CollectionError};
+    use crate::library::{
+        Asset, AssetCommand, AssetId, AssetView, Change, CollectionId, ImportOutcome, Library,
+        TagCommand,
+    };
+
+    type Step = Box<dyn Fn(&mut Library)>;
+
+    struct Fixture {
+        _workspace: tempfile::TempDir,
+        library: Library,
+        assets: Vec<AssetId>,
+        first: CollectionId,
+        second: CollectionId,
+        child: CollectionId,
+    }
+
+    fn fixture() -> Fixture {
+        let workspace = tempfile::tempdir().expect("temporary directory");
+        let mut library = Library::create(workspace.path(), "Essai").expect("library is created");
+        let mut assets = Vec::new();
+        for name in ["red-dot.png", "dark-circle.svg", "blue-photo.jpg"] {
+            let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/fixtures")
+                .join(name);
+            match library.import_file(&source, None).expect("import succeeds") {
+                ImportOutcome::Imported(id) => assets.push(id),
+                outcome => panic!("unexpected outcome {outcome:?}"),
+            }
+        }
+        let first = library
+            .create_collection("First", None)
+            .expect("collection");
+        let second = library
+            .create_collection("Second", None)
+            .expect("collection");
+        let child = library
+            .create_collection("Child", Some(first))
+            .expect("collection");
+        library
+            .apply_collection_command(&CollectionCommand::AddAssets {
+                collection: first,
+                assets: vec![assets[0]],
+            })
+            .expect("an asset is filed");
+        library
+            .apply_tag_command(&TagCommand::Add {
+                assets: assets.clone(),
+                name: "Brands/Logo".to_owned(),
+            })
+            .expect("assets are tagged");
+        Fixture {
+            _workspace: workspace,
+            library,
+            assets,
+            first,
+            second,
+            child,
+        }
+    }
+
+    fn warm(library: &Library) -> Arc<Vec<Asset>> {
+        let all = library.shared_assets(AssetView::All).expect("listing");
+        library.shared_assets(AssetView::Trash).expect("trash");
+        library.tag_names_by_asset().expect("tag names");
+        all
+    }
+
+    fn still_cached(library: &Library, all: &Arc<Vec<Asset>>) -> bool {
+        Arc::ptr_eq(
+            &library.shared_assets(AssetView::All).expect("listing"),
+            all,
+        )
+    }
+
+    fn copy_tree(from: &Path, to: &Path) {
+        std::fs::create_dir_all(to).expect("folder is created");
+        for entry in std::fs::read_dir(from).expect("folder is read") {
+            let entry = entry.expect("entry is read");
+            let target = to.join(entry.file_name());
+            if entry.file_type().expect("type is read").is_dir() {
+                copy_tree(&entry.path(), &target);
+            } else {
+                std::fs::copy(entry.path(), &target).expect("file is copied");
+            }
+        }
+    }
+
+    fn reopened_listing(library: &Library) -> Vec<Asset> {
+        let copy = tempfile::tempdir().expect("temporary directory");
+        let root = copy.path().join("copy.pigoune");
+        copy_tree(library.root(), &root);
+        Library::open(&root)
+            .expect("the copy opens")
+            .visible_assets_in(AssetView::All)
+            .expect("listing")
+    }
+
+    #[test]
+    fn adding_removing_and_moving_assets_keep_a_valid_cache() {
+        let mut fixture = fixture();
+        let [first_asset, second_asset, third_asset] = fixture.assets[..] else {
+            panic!("three assets");
+        };
+        let all = warm(&fixture.library);
+        let tags = fixture.library.tag_names_by_asset().expect("tag names");
+        let commands = [
+            CollectionCommand::AddAssets {
+                collection: fixture.second,
+                assets: vec![first_asset, second_asset, second_asset],
+            },
+            CollectionCommand::AddAssets {
+                collection: fixture.second,
+                assets: vec![first_asset],
+            },
+            CollectionCommand::AddAssets {
+                collection: fixture.second,
+                assets: Vec::new(),
+            },
+            CollectionCommand::MoveAssets {
+                from: fixture.second,
+                to: fixture.child,
+                assets: vec![first_asset, third_asset],
+            },
+            CollectionCommand::RemoveAssets {
+                collection: fixture.child,
+                assets: vec![first_asset],
+            },
+            CollectionCommand::Batch(vec![
+                CollectionCommand::AddAssets {
+                    collection: fixture.first,
+                    assets: vec![second_asset],
+                },
+                CollectionCommand::RemoveAssets {
+                    collection: fixture.first,
+                    assets: vec![first_asset],
+                },
+            ]),
+        ];
+
+        let mut recorded = 0;
+        for command in &commands {
+            let before = fixture.library.latest_change();
+            fixture
+                .library
+                .apply_collection_command(command)
+                .expect("the command applies");
+            recorded += usize::from(fixture.library.latest_change() != before);
+            assert!(
+                still_cached(&fixture.library, &all),
+                "{command:?} kept the cache"
+            );
+        }
+        assert!(recorded >= 4, "most commands are recorded");
+        for round in 0..recorded {
+            let undone = fixture.library.undo().expect("undo runs");
+            assert!(
+                matches!(undone, Some(Change::Collection(_))),
+                "undo {round} undoes a collection change"
+            );
+            assert!(still_cached(&fixture.library, &all), "undo {round} kept it");
+        }
+        for round in 0..recorded {
+            fixture.library.redo().expect("redo runs");
+            assert!(still_cached(&fixture.library, &all), "redo {round} kept it");
+        }
+        assert!(Arc::ptr_eq(
+            &fixture.library.tag_names_by_asset().expect("tag names"),
+            &tags
+        ));
+        assert_eq!(*all, reopened_listing(&fixture.library));
+    }
+
+    #[test]
+    fn every_other_collection_command_still_drops_the_cache() {
+        let mut fixture = fixture();
+        let asset = fixture.assets[1];
+        let spare = fixture
+            .library
+            .create_collection("Spare", None)
+            .expect("collection");
+        let commands = [
+            CollectionCommand::Rename {
+                id: fixture.second,
+                name: "Renamed".to_owned(),
+            },
+            CollectionCommand::Move {
+                id: fixture.child,
+                parent: Some(fixture.second),
+            },
+            CollectionCommand::Arrange {
+                parent: None,
+                order: {
+                    let mut order = vec![fixture.first, fixture.second, spare];
+                    order.reverse();
+                    order
+                },
+            },
+            CollectionCommand::SetTrashed {
+                collections: Vec::new(),
+                assets: vec![asset],
+                trashed: true,
+            },
+            CollectionCommand::Trash { id: fixture.second },
+            CollectionCommand::Delete { id: spare },
+            CollectionCommand::Batch(vec![
+                CollectionCommand::AddAssets {
+                    collection: fixture.first,
+                    assets: vec![fixture.assets[2]],
+                },
+                CollectionCommand::Rename {
+                    id: fixture.first,
+                    name: "Mixed".to_owned(),
+                },
+            ]),
+        ];
+        for command in &commands {
+            let all = warm(&fixture.library);
+            fixture
+                .library
+                .apply_collection_command(command)
+                .expect("the command applies");
+            assert!(
+                !still_cached(&fixture.library, &all),
+                "{command:?} dropped the cache"
+            );
+        }
+        let all = warm(&fixture.library);
+        fixture
+            .library
+            .create_collection("Created", None)
+            .expect("collection");
+        assert!(!still_cached(&fixture.library, &all));
+    }
+
+    #[test]
+    fn trash_restore_and_tag_commands_still_drop_the_cache() {
+        let mut fixture = fixture();
+        let asset = fixture.assets[0];
+        let tag = fixture
+            .library
+            .tags()
+            .expect("tags")
+            .into_iter()
+            .find(|tag| tag.name == "Logo")
+            .expect("the leaf tag")
+            .id;
+        let parent = fixture
+            .library
+            .tags()
+            .expect("tags")
+            .into_iter()
+            .find(|tag| tag.name == "Brands")
+            .expect("the parent tag")
+            .id;
+        let other = fixture
+            .library
+            .apply_tag_command(&TagCommand::Add {
+                assets: vec![asset],
+                name: "Other".to_owned(),
+            })
+            .map(|_| {
+                fixture
+                    .library
+                    .tags()
+                    .expect("tags")
+                    .into_iter()
+                    .find(|tag| tag.name == "Other")
+                    .expect("the new tag")
+                    .id
+            })
+            .expect("a tag is added");
+        let steps: Vec<Step> = vec![
+            Box::new(move |library| {
+                library
+                    .apply_asset_command(&AssetCommand::SetTrashed {
+                        assets: vec![asset],
+                        trashed: true,
+                    })
+                    .expect("trashed");
+            }),
+            Box::new(move |library| {
+                library
+                    .apply_asset_command(&AssetCommand::SetTrashed {
+                        assets: vec![asset],
+                        trashed: false,
+                    })
+                    .expect("restored");
+            }),
+            Box::new(move |library| {
+                library
+                    .apply_tag_command(&TagCommand::Merge {
+                        from: other,
+                        into: tag,
+                    })
+                    .expect("merged");
+            }),
+            Box::new(move |library| {
+                library
+                    .apply_tag_command(&TagCommand::Dissolve { tag: parent })
+                    .expect("dissolved");
+            }),
+            Box::new(move |library| {
+                library
+                    .apply_tag_command(&TagCommand::Delete { tag })
+                    .expect("deleted");
+            }),
+        ];
+        for step in steps {
+            let all = warm(&fixture.library);
+            step(&mut fixture.library);
+            assert!(!still_cached(&fixture.library, &all));
+        }
+    }
+
+    #[test]
+    fn a_failed_membership_command_leaves_a_coherent_cache_and_the_error() {
+        let mut fixture = fixture();
+        let unknown = AssetId::parse("00000000-0000-7000-8000-000000000999").expect("valid id");
+        let all = warm(&fixture.library);
+
+        let failed = fixture
+            .library
+            .apply_collection_command(&CollectionCommand::AddAssets {
+                collection: fixture.second,
+                assets: vec![fixture.assets[1], unknown],
+            });
+
+        assert!(matches!(failed, Err(CollectionError::AssetNotFound(id)) if id == unknown));
+        let shown = fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+        assert_eq!(*shown, reopened_listing(&fixture.library));
+        assert_eq!(shown.len(), all.len());
+        assert!(
+            !fixture
+                .library
+                .collections_of(fixture.assets[1])
+                .expect("memberships")
+                .contains(&fixture.second),
+            "nothing of a failed command stays"
+        );
+    }
+
+    #[test]
+    fn a_cache_already_stale_is_not_revived_by_a_membership_command() {
+        let mut fixture = fixture();
+        let asset = fixture.assets[0];
+        let all = warm(&fixture.library);
+        fixture
+            .library
+            .apply_asset_command(&AssetCommand::SetFavorite {
+                assets: vec![asset],
+                favorite: true,
+            })
+            .expect("a favorite is set");
+
+        fixture
+            .library
+            .apply_collection_command(&CollectionCommand::AddAssets {
+                collection: fixture.second,
+                assets: vec![asset],
+            })
+            .expect("the asset is filed");
+
+        assert!(!still_cached(&fixture.library, &all));
+        let shown = fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+        assert!(
+            shown
+                .iter()
+                .any(|candidate| candidate.id == asset && candidate.is_favorite)
+        );
+    }
 }
