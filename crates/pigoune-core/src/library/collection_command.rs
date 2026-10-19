@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use rusqlite::{Connection, OptionalExtension, params};
 
@@ -108,7 +108,8 @@ impl Library {
         &self,
         assets: &[AssetId],
     ) -> Result<Option<CollectionCommand>, LibraryError> {
-        let removals = self.removals_outside(assets, None)?;
+        let held = self.collections_held_by(assets)?;
+        let removals = removals_outside(assets, &held, None);
         if removals.is_empty() {
             return Ok(None);
         }
@@ -120,10 +121,14 @@ impl Library {
         assets: &[AssetId],
         target: CollectionId,
     ) -> Result<Option<CollectionCommand>, LibraryError> {
-        let mut commands = self.removals_outside(assets, Some(target))?;
+        let held = self.collections_held_by(assets)?;
+        let mut commands = removals_outside(assets, &held, Some(target));
         let mut newcomers = Vec::new();
         for asset in assets {
-            if !self.collections_of(*asset)?.contains(&target) {
+            if !held
+                .get(asset)
+                .is_some_and(|collections| collections.contains(&target))
+            {
                 newcomers.push(*asset);
             }
         }
@@ -135,25 +140,6 @@ impl Library {
             assets: newcomers,
         });
         Ok(Some(CollectionCommand::Batch(commands)))
-    }
-
-    fn removals_outside(
-        &self,
-        assets: &[AssetId],
-        kept: Option<CollectionId>,
-    ) -> Result<Vec<CollectionCommand>, LibraryError> {
-        let mut by_collection: BTreeMap<CollectionId, Vec<AssetId>> = BTreeMap::new();
-        for asset in assets {
-            for collection in self.collections_of(*asset)? {
-                if Some(collection) != kept {
-                    by_collection.entry(collection).or_default().push(*asset);
-                }
-            }
-        }
-        Ok(by_collection
-            .into_iter()
-            .map(|(collection, assets)| CollectionCommand::RemoveAssets { collection, assets })
-            .collect())
     }
 
     pub fn apply_collection_command(
@@ -546,6 +532,25 @@ fn subtree(connection: &Connection, root: CollectionId) -> Result<Vec<Collection
         .query_map([root], |row| row.get(0))?
         .collect::<Result<_, _>>()?;
     Ok(ids)
+}
+
+fn removals_outside(
+    assets: &[AssetId],
+    held: &HashMap<AssetId, Vec<CollectionId>>,
+    kept: Option<CollectionId>,
+) -> Vec<CollectionCommand> {
+    let mut by_collection: BTreeMap<CollectionId, Vec<AssetId>> = BTreeMap::new();
+    for asset in assets {
+        for collection in held.get(asset).into_iter().flatten() {
+            if Some(*collection) != kept {
+                by_collection.entry(*collection).or_default().push(*asset);
+            }
+        }
+    }
+    by_collection
+        .into_iter()
+        .map(|(collection, assets)| CollectionCommand::RemoveAssets { collection, assets })
+        .collect()
 }
 
 fn assets_only_in(
