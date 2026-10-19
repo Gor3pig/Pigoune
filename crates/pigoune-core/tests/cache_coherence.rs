@@ -305,18 +305,18 @@ impl Fixture {
             .collect()
     }
 
-    fn reopened(&self) -> Library {
+    fn reopened(&self) -> (TempDir, Library) {
         let copy = tempfile::tempdir().expect("temporary directory");
         let root = copy.path().join("copy.pigoune");
         copy_tree(&self.root(), &root);
         let library = Library::open(&root).expect("a copy of the library opens");
-        std::mem::forget(copy);
-        library
+        (copy, library)
     }
 
     fn assert_coherent(&self, context: &str) {
         let live = observe(&self.library);
-        let fresh = observe(&self.reopened());
+        let (_copy, reopened) = self.reopened();
+        let fresh = observe(&reopened);
         assert_eq!(live.tags, fresh.tags, "tags differ ({context})");
         assert_eq!(
             live.all, fresh.all,
@@ -783,4 +783,101 @@ fn a_failed_command_and_a_half_finished_background_write_leave_the_caches_cohere
     );
     assert!(partial.is_ok());
     fixture.assert_coherent("a partial import");
+}
+
+#[test]
+fn visual_analysis_writes_in_every_order_keep_the_reads_equal_to_a_reopened_library() {
+    let mut fixture = Fixture::new();
+    let batch: Vec<AssetId> = fixture.assets.iter().take(12).copied().collect();
+    let analyses: Vec<(AssetId, Option<pigoune_core::VisualAnalysis>)> =
+        batch.iter().map(|asset| (*asset, None)).collect();
+    let details: Vec<(AssetId, Option<pigoune_core::VisualDetail>)> =
+        batch.iter().map(|asset| (*asset, None)).collect();
+    let colours: Vec<(AssetId, Vec<DominantColor>)> = batch
+        .iter()
+        .map(|asset| {
+            (
+                *asset,
+                vec![DominantColor {
+                    family: AssetColor::Red,
+                    average: Rgb::new(210, 30, 30),
+                }],
+            )
+        })
+        .collect();
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_visual_analysis_batch(&analyses)
+        .expect("the hash is recorded");
+    fixture.assert_coherent("the hash only");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_visual_details_batch(&details)
+        .expect("the details are recorded");
+    fixture.assert_coherent("the details only");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_visual_analysis_batch(&analyses)
+        .expect("the hash is recorded");
+    fixture
+        .library
+        .record_visual_details_batch(&details)
+        .expect("the details are recorded");
+    fixture.assert_coherent("the hash then the details");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_visual_analysis_batch(&analyses)
+        .expect("the hash is recorded");
+    fixture
+        .library
+        .record_colors_batch(&colours)
+        .expect("colours are recorded");
+    fixture.assert_coherent("the hash then the colours");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_colors_batch(&colours[..3])
+        .expect("colours are recorded");
+    fixture
+        .library
+        .record_visual_details_batch(&details)
+        .expect("the details are recorded");
+    fixture.assert_coherent("the colours then the details");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetFavorite {
+            assets: batch.clone(),
+            favorite: true,
+        })
+        .expect("favorites are set");
+    fixture
+        .library
+        .record_visual_analysis_batch(&analyses)
+        .expect("the hash is recorded");
+    fixture.assert_coherent("a favorite then the hash with a stale cache");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_visual_analysis_batch(&analyses)
+        .expect("the hash is recorded");
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: batch,
+            trashed: true,
+        })
+        .expect("assets are trashed");
+    fixture.assert_coherent("the hash then the trash");
 }

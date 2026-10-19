@@ -25,6 +25,13 @@ impl QueryCache {
 pub(super) struct SharedQueryCache(Mutex<QueryCache>);
 
 impl SharedQueryCache {
+    pub fn carry(&self, before: u64, after: u64) {
+        let mut cache = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if cache.stamp == Some(before) {
+            cache.stamp = Some(after);
+        }
+    }
+
     pub fn lock(&self, stamp: u64) -> MutexGuard<'_, QueryCache> {
         let mut cache = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         cache.follow(stamp);
