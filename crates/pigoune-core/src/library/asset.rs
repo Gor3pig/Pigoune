@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use super::collection::{distinct_count, ids_as_json};
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, layout};
 use crate::media::{
@@ -49,6 +50,16 @@ impl Library {
                 asset_from_row,
             )
             .optional()?)
+    }
+
+    pub fn all_are_favorite(&self, assets: &[AssetId]) -> Result<bool, LibraryError> {
+        let favorites: i64 = self.connection.query_row(
+            "SELECT count(*) FROM assets
+             WHERE is_favorite = 1 AND id IN (SELECT value FROM json_each(?1))",
+            [ids_as_json(assets)],
+            |row| row.get(0),
+        )?;
+        Ok(usize::try_from(favorites).is_ok_and(|favorites| favorites == distinct_count(assets)))
     }
 
     pub fn visible_assets(&self) -> Result<Vec<Asset>, LibraryError> {

@@ -143,11 +143,7 @@ fn describe_favorites(assets: &[AssetId], subject: &str, library: &Library) -> S
 }
 
 fn all_favorite(assets: &[AssetId], library: &Library) -> bool {
-    assets.iter().all(|asset| {
-        library
-            .asset(*asset)
-            .is_ok_and(|found| found.is_some_and(|found| found.is_favorite))
-    })
+    library.all_are_favorite(assets).unwrap_or(false)
 }
 
 fn subject(assets: &[AssetId], library: &Library) -> Option<String> {
@@ -180,19 +176,13 @@ fn shortened(name: &str) -> String {
 }
 
 fn all_in_collection(assets: &[AssetId], collection: CollectionId, library: &Library) -> bool {
-    assets.iter().all(|asset| {
-        library
-            .collections_of(*asset)
-            .is_ok_and(|collections| collections.contains(&collection))
-    })
+    library
+        .all_in_collection(assets, collection)
+        .unwrap_or(false)
 }
 
 fn all_tagged(assets: &[AssetId], tag: TagId, library: &Library) -> bool {
-    assets.iter().all(|asset| {
-        library
-            .tags_of(*asset)
-            .is_ok_and(|tags| tags.iter().any(|carried| carried.id == tag))
-    })
+    library.all_have_tag(assets, tag).unwrap_or(false)
 }
 
 fn with_subject(text: &str, subject: &str) -> String {

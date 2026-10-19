@@ -1,6 +1,7 @@
-use rusqlite::{Connection, OptionalExtension, Row};
+use rusqlite::{Connection, OptionalExtension, Row, params};
 use unicode_normalization::UnicodeNormalization;
 
+use super::collection::{distinct_count, ids_as_json};
 use super::{AssetId, Library, LibraryError, TagId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,6 +43,18 @@ impl Library {
             .query_map([asset], from_row)?
             .collect::<Result<_, _>>()?;
         Ok(tags)
+    }
+
+    pub fn all_have_tag(&self, assets: &[AssetId], tag: TagId) -> Result<bool, LibraryError> {
+        let tagged: i64 = self.connection.query_row(
+            "SELECT count(DISTINCT asset_tags.asset_id) FROM asset_tags
+             JOIN tags ON tags.id = asset_tags.tag_id
+             WHERE asset_tags.tag_id = ?2
+                 AND asset_tags.asset_id IN (SELECT value FROM json_each(?1))",
+            params![ids_as_json(assets), tag],
+            |row| row.get(0),
+        )?;
+        Ok(usize::try_from(tagged).is_ok_and(|tagged| tagged == distinct_count(assets)))
     }
 
     pub fn tag_named(&self, name: &str) -> Result<Option<Tag>, LibraryError> {

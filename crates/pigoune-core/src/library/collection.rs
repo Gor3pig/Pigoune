@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use rusqlite::{Connection, OptionalExtension, Row, params};
 use unicode_normalization::UnicodeNormalization;
@@ -106,6 +106,45 @@ impl Library {
             .query_map([asset], |row| row.get(0))?
             .collect::<Result<_, _>>()?;
         Ok(ids)
+    }
+
+    pub(super) fn collections_held_by(
+        &self,
+        assets: &[AssetId],
+    ) -> Result<HashMap<AssetId, Vec<CollectionId>>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT asset_collections.asset_id, asset_collections.collection_id
+             FROM asset_collections
+             JOIN collections ON collections.id = asset_collections.collection_id
+             WHERE asset_collections.asset_id IN (SELECT value FROM json_each(?1))
+                 AND collections.trashed_at_unix_ms IS NULL
+             ORDER BY asset_collections.asset_id, asset_collections.collection_id",
+        )?;
+        let mut held: HashMap<AssetId, Vec<CollectionId>> = HashMap::new();
+        for row in
+            statement.query_map([ids_as_json(assets)], |row| Ok((row.get(0)?, row.get(1)?)))?
+        {
+            let (asset, collection) = row?;
+            held.entry(asset).or_default().push(collection);
+        }
+        Ok(held)
+    }
+
+    pub fn all_in_collection(
+        &self,
+        assets: &[AssetId],
+        collection: CollectionId,
+    ) -> Result<bool, LibraryError> {
+        let present: i64 = self.connection.query_row(
+            "SELECT count(DISTINCT asset_collections.asset_id) FROM asset_collections
+             JOIN collections ON collections.id = asset_collections.collection_id
+             WHERE asset_collections.collection_id = ?2
+                 AND collections.trashed_at_unix_ms IS NULL
+                 AND asset_collections.asset_id IN (SELECT value FROM json_each(?1))",
+            params![ids_as_json(assets), collection],
+            |row| row.get(0),
+        )?;
+        Ok(usize::try_from(present).is_ok_and(|present| present == distinct_count(assets)))
     }
 
     pub fn collection_paths(&self) -> Result<Vec<CollectionPath>, LibraryError> {
@@ -265,4 +304,13 @@ pub fn find_child_named(
 
 pub fn comparable_name(name: &str) -> String {
     name.trim().nfc().collect::<String>().to_lowercase()
+}
+
+pub(super) fn ids_as_json(assets: &[AssetId]) -> String {
+    let quoted: Vec<String> = assets.iter().map(|asset| format!("\"{asset}\"")).collect();
+    format!("[{}]", quoted.join(","))
+}
+
+pub(super) fn distinct_count(assets: &[AssetId]) -> usize {
+    assets.iter().collect::<HashSet<_>>().len()
 }
