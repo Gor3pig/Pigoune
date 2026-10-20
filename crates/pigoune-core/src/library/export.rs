@@ -63,44 +63,17 @@ impl Library {
         space: SpaceProbe<'_>,
     ) -> Result<Vec<PathBuf>, LibraryError> {
         let root = layout::export_dir(&self.root);
-        export_lifetime::secure_root(&root)?;
-        export_lifetime::remove_unfinished(&root);
-        let items = self.export_items(assets, flats)?;
-        let needed = items.iter().map(|item| item.bytes).sum();
-        export_lifetime::make_room(
-            &export_lifetime::list_entries(&root),
+        run_operation(
+            &root,
+            &[root.as_path()],
+            &|_| false,
+            || self.transfer_items(assets, flats),
             now_ms,
-            needed,
-            &mut || space(&root),
-            &mut |entry| export_lifetime::remove_entry(&root, entry),
+            space,
         )
-        .map_err(|_| LibraryError::StorageFull)?;
-        let operation = loop {
-            let name = export_lifetime::operation_name(now_ms, random_part());
-            match export_lifetime::create_staging(&root, &name) {
-                Ok(_) => break name,
-                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
-                Err(error) => return Err(error.into()),
-            }
-        };
-        let staging = root.join(export_lifetime::staging_name(&operation));
-        let outcome = fill_operation(&items, &staging).and_then(|(names, bytes)| {
-            export_lifetime::publish(&root, &operation, bytes)?;
-            Ok(names)
-        });
-        match outcome {
-            Ok(names) => {
-                let published = root.join(&operation);
-                Ok(names.iter().map(|name| published.join(name)).collect())
-            }
-            Err(error) => {
-                export_lifetime::discard_staging(&root, &operation);
-                Err(error)
-            }
-        }
     }
 
-    fn export_items(
+    fn transfer_items(
         &self,
         assets: &[AssetId],
         flats: &FlatFiles,
@@ -314,6 +287,45 @@ fn now_ms() -> u64 {
 
 fn random_part() -> u64 {
     Uuid::now_v7().as_u64_pair().1
+}
+
+fn run_operation(
+    root: &Path,
+    budget_roots: &[&Path],
+    protected: &dyn Fn(&Path) -> bool,
+    items_for: impl FnOnce() -> Result<Vec<ExportItem>, LibraryError>,
+    now_ms: u64,
+    space: SpaceProbe<'_>,
+) -> Result<Vec<PathBuf>, LibraryError> {
+    export_lifetime::secure_root(root)?;
+    export_lifetime::remove_unfinished(root);
+    let items = items_for()?;
+    let needed = items.iter().map(|item| item.bytes).sum();
+    export_lifetime::make_room_across(budget_roots, now_ms, needed, protected, &mut || space(root))
+        .map_err(|_| LibraryError::StorageFull)?;
+    let operation = loop {
+        let name = export_lifetime::operation_name(now_ms, random_part());
+        match export_lifetime::create_staging(root, &name) {
+            Ok(_) => break name,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error.into()),
+        }
+    };
+    let staging = root.join(export_lifetime::staging_name(&operation));
+    let outcome = fill_operation(&items, &staging).and_then(|(names, bytes)| {
+        export_lifetime::publish(root, &operation, bytes)?;
+        Ok(names)
+    });
+    match outcome {
+        Ok(names) => {
+            let published = root.join(&operation);
+            Ok(names.iter().map(|name| published.join(name)).collect())
+        }
+        Err(error) => {
+            export_lifetime::discard_staging(root, &operation);
+            Err(error)
+        }
+    }
 }
 
 fn fill_operation(
