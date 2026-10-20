@@ -29,7 +29,7 @@ use crate::asset_facts;
 use crate::asset_object::{AssetEntry, PigouneAssetObject};
 use crate::background_import::{self, FinishedImport};
 use crate::capture_draft;
-use crate::clipboard_content;
+use crate::clipboard_install;
 use crate::collection_choice;
 use crate::collection_chooser;
 use crate::collection_drop::{self, CollectionDrop};
@@ -3562,15 +3562,21 @@ impl PigouneWindow {
         }
         let flats = self.flat_files_for(&selected).await;
         let prepared = self.imp().library.borrow().as_ref().map(|library| {
-            let copies = library.clipboard_copies(&selected, &flats)?;
             let first_name = library.asset(selected[0])?.map(|asset| asset.display_name);
+            let copies =
+                library.clipboard_copies_checking(&selected, &flats, &drag_export::volume_space)?;
             Ok::<_, LibraryError>((copies, first_name))
         });
         match prepared {
             Some(Ok((copies, first_name))) if !copies.is_empty() => {
-                self.clipboard()
-                    .set_content(Some(&clipboard_content::provider(&copies)))
-                    .ok();
+                let installed =
+                    self.imp().library.borrow().as_ref().map(|library| {
+                        clipboard_install::install(library, &self.clipboard(), &copies)
+                    });
+                if !matches!(installed, Some(Ok(()))) {
+                    self.show_toast(&clipboard_install::failure_text());
+                    return;
+                }
                 let message = match (copies.len(), first_name) {
                     (1, Some(name)) => gettext("“{name}” copied").replace("{name}", &name),
                     (count, _) => ngettext(
@@ -3581,6 +3587,9 @@ impl PigouneWindow {
                     .replace("{count}", &count.to_string()),
                 };
                 self.show_toast(&message);
+            }
+            Some(Err(LibraryError::StorageFull)) => {
+                self.show_toast(&clipboard_install::storage_text());
             }
             Some(Err(error)) => self.show_library_error(&error),
             Some(Ok(_)) | None => {}

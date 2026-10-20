@@ -17,6 +17,7 @@ mod background_import;
 mod capture_draft;
 mod chart_slices;
 mod clipboard_content;
+mod clipboard_install;
 mod collection_choice;
 mod collection_chooser;
 mod collection_drop;
