@@ -3,6 +3,9 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
+use uuid::Uuid;
+
+use super::export_lifetime::{self, SpaceProbe};
 use super::{Asset, AssetId, Library, LibraryError, layout};
 
 #[derive(Debug)]
@@ -40,7 +43,91 @@ impl Library {
         assets: &[AssetId],
         flats: &FlatFiles,
     ) -> Result<Vec<PathBuf>, LibraryError> {
-        self.fresh_copies(assets, &layout::export_dir(&self.root), flats)
+        self.export_copies_checking(assets, flats, &|_| None)
+    }
+
+    pub fn export_copies_checking(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+        space: SpaceProbe<'_>,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        self.export_operation(assets, flats, now_ms(), space)
+    }
+
+    pub(super) fn export_operation(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+        now_ms: u64,
+        space: SpaceProbe<'_>,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        let root = layout::export_dir(&self.root);
+        export_lifetime::secure_root(&root)?;
+        export_lifetime::remove_unfinished(&root);
+        let items = self.export_items(assets, flats)?;
+        let needed = items.iter().map(|item| item.bytes).sum();
+        export_lifetime::make_room(
+            &export_lifetime::list_entries(&root),
+            now_ms,
+            needed,
+            &mut || space(&root),
+            &mut |entry| export_lifetime::remove_entry(&root, entry),
+        )
+        .map_err(|_| LibraryError::StorageFull)?;
+        let operation = loop {
+            let name = export_lifetime::operation_name(now_ms, random_part());
+            match export_lifetime::create_staging(&root, &name) {
+                Ok(_) => break name,
+                Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+                Err(error) => return Err(error.into()),
+            }
+        };
+        let staging = root.join(export_lifetime::staging_name(&operation));
+        let outcome = fill_operation(&items, &staging).and_then(|(names, bytes)| {
+            export_lifetime::publish(&root, &operation, bytes)?;
+            Ok(names)
+        });
+        match outcome {
+            Ok(names) => {
+                let published = root.join(&operation);
+                Ok(names.iter().map(|name| published.join(name)).collect())
+            }
+            Err(error) => {
+                export_lifetime::discard_staging(&root, &operation);
+                Err(error)
+            }
+        }
+    }
+
+    fn export_items(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+    ) -> Result<Vec<ExportItem>, LibraryError> {
+        let annotated = self.annotated_ids()?;
+        let mut items = Vec::new();
+        for id in assets {
+            let Some(asset) = self.asset(*id)? else {
+                continue;
+            };
+            let (source, extension) = if annotated.contains(id) {
+                let Some(flat) = flats.get(id) else {
+                    return Err(flat_unavailable().into());
+                };
+                (flat.clone(), Some(FLAT_EXTENSION.to_owned()))
+            } else {
+                (self.file_of(&asset), original_extension(&asset))
+            };
+            let bytes = fs::metadata(&source)?.len();
+            items.push(ExportItem {
+                source,
+                base: base_name_of(&asset),
+                extension,
+                bytes,
+            });
+        }
+        Ok(items)
     }
 
     pub fn clipboard_copies(
@@ -212,8 +299,44 @@ pub(super) fn create_free_file(
     }
 }
 
+struct ExportItem {
+    source: PathBuf,
+    base: String,
+    extension: Option<String>,
+    bytes: u64,
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |elapsed| u64::try_from(elapsed.as_millis()).unwrap_or(0))
+}
+
+fn random_part() -> u64 {
+    Uuid::now_v7().as_u64_pair().1
+}
+
+fn fill_operation(
+    items: &[ExportItem],
+    staging: &Path,
+) -> Result<(Vec<String>, u64), LibraryError> {
+    let mut taken = HashSet::new();
+    let mut names = Vec::with_capacity(items.len());
+    let mut bytes = 0;
+    for item in items {
+        let mut source = File::open(&item.source)?;
+        let (mut file, copy) =
+            create_free_file(staging, &item.base, item.extension.as_deref(), &mut taken)?;
+        bytes += io::copy(&mut source, &mut file)?;
+        if let Some(name) = copy.file_name() {
+            names.push(name.to_string_lossy().into_owned());
+        }
+    }
+    Ok((names, bytes))
+}
+
 pub fn forget_exports(root: &Path) {
-    let _ = fs::remove_dir_all(layout::export_dir(root));
+    export_lifetime::tidy(&layout::export_dir(root), now_ms());
     let _ = fs::remove_dir_all(layout::clipboard_dir(root));
     let _ = fs::remove_dir_all(layout::opening_dir(root));
     let _ = fs::remove_dir_all(layout::pasted_dir(root));
@@ -324,5 +447,212 @@ mod tests {
         assert_eq!(free_name("Logo", Some("svg"), &mut taken), "Logo.svg");
         assert_eq!(free_name("logo", Some("svg"), &mut taken), "logo (2).svg");
         assert_eq!(free_name("Logo", Some("svg"), &mut taken), "Logo (3).svg");
+    }
+}
+
+#[cfg(test)]
+mod operations {
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+    use std::path::{Path, PathBuf};
+
+    use super::super::export_lifetime::VolumeSpace;
+    use super::super::{AssetId, ImportOutcome, Library, LibraryError};
+    use super::FlatFiles;
+
+    const HOUR: u64 = 60 * 60 * 1000;
+    const GIB: u64 = 1024 * 1024 * 1024;
+    const NOW: u64 = 5_000 * HOUR;
+
+    fn fixture(name: &str) -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures")
+            .join(name)
+    }
+
+    fn library() -> (tempfile::TempDir, Library) {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let library = Library::create(workspace.path(), "Essai").expect("library");
+        (workspace, library)
+    }
+
+    fn import(library: &mut Library, name: &str) -> AssetId {
+        match library.import_file(&fixture(name), None).expect("import") {
+            ImportOutcome::Imported(id) => id,
+            outcome => panic!("unexpected outcome {outcome:?}"),
+        }
+    }
+
+    #[expect(
+        clippy::unnecessary_wraps,
+        reason = "it stands in for a probe that may not know the free space"
+    )]
+    fn roomy(_: &Path) -> Option<VolumeSpace> {
+        Some(VolumeSpace {
+            free: 500 * GIB,
+            total: 1000 * GIB,
+        })
+    }
+
+    fn entries(library: &Library) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(super::layout::export_dir(library.root()))
+            .expect("export folder")
+            .flatten()
+            .map(|entry| entry.file_name().to_string_lossy().into_owned())
+            .collect();
+        names.sort();
+        names
+    }
+
+    #[test]
+    fn the_next_export_removes_what_is_older_than_a_day_and_keeps_the_rest() {
+        let (_workspace, mut library) = library();
+        let png = import(&mut library, "red-dot.png");
+        let old = library
+            .export_operation(&[png], &FlatFiles::new(), NOW - 30 * HOUR, &roomy)
+            .expect("old");
+        let middle = library
+            .export_operation(&[png], &FlatFiles::new(), NOW - 5 * HOUR, &roomy)
+            .expect("middle");
+        let recent = library
+            .export_operation(&[png], &FlatFiles::new(), NOW - HOUR, &roomy)
+            .expect("recent");
+
+        let current = library
+            .export_operation(&[png], &FlatFiles::new(), NOW, &roomy)
+            .expect("current");
+
+        assert!(!old[0].exists());
+        assert!(middle[0].exists() && recent[0].exists() && current[0].exists());
+    }
+
+    #[test]
+    fn an_export_that_does_not_fit_fails_without_removing_anything_recent() {
+        let (_workspace, mut library) = library();
+        let png = import(&mut library, "red-dot.png");
+        let recent = library
+            .export_operation(&[png], &FlatFiles::new(), NOW - HOUR, &roomy)
+            .expect("recent");
+        let before = entries(&library);
+        let cramped = |_: &Path| {
+            Some(VolumeSpace {
+                free: GIB / 2,
+                total: 100 * GIB,
+            })
+        };
+
+        let result = library.export_operation(&[png], &FlatFiles::new(), NOW, &cramped);
+
+        assert!(matches!(result, Err(LibraryError::StorageFull)));
+        assert!(recent[0].exists());
+        assert_eq!(entries(&library), before);
+    }
+
+    #[test]
+    fn a_short_volume_frees_the_oldest_normal_export_and_then_succeeds() {
+        let (_workspace, mut library) = library();
+        let png = import(&mut library, "red-dot.png");
+        let normal = library
+            .export_operation(&[png], &FlatFiles::new(), NOW - 10 * HOUR, &roomy)
+            .expect("normal");
+        let recent = library
+            .export_operation(&[png], &FlatFiles::new(), NOW - HOUR, &roomy)
+            .expect("recent");
+        let watched = normal[0].clone();
+        let space = move |_: &Path| {
+            Some(VolumeSpace {
+                free: if watched.exists() { GIB / 2 } else { 500 * GIB },
+                total: 100 * GIB,
+            })
+        };
+
+        let current = library
+            .export_operation(&[png], &FlatFiles::new(), NOW, &space)
+            .expect("there is room once the old export is gone");
+
+        assert!(!normal[0].exists());
+        assert!(recent[0].exists() && current[0].exists());
+    }
+
+    #[test]
+    fn the_size_of_a_flattened_copy_is_counted_not_the_size_of_the_original() {
+        let (workspace, mut library) = library();
+        let png = import(&mut library, "red-dot.png");
+        let shape = crate::annotations::Shape::new(
+            "rectangle",
+            crate::annotations::Geometry::Box(crate::annotations::Rect {
+                x: 0.0,
+                y: 0.0,
+                width: 2.0,
+                height: 2.0,
+            }),
+            crate::annotations::Options::new(),
+        );
+        library
+            .save_annotations(
+                png,
+                &crate::annotations::AnnotationDocument::new(
+                    None,
+                    vec![crate::annotations::AnnotationObject::new(1, shape)],
+                ),
+            )
+            .expect("annotated");
+        let flat = workspace.path().join("flat.png");
+        fs::write(&flat, vec![0_u8; 5 * 1024 * 1024]).expect("large flattened copy");
+        let mut flats = FlatFiles::new();
+        flats.insert(png, flat);
+        let tight = |_: &Path| {
+            Some(VolumeSpace {
+                free: GIB + 1024 * 1024,
+                total: 10 * GIB,
+            })
+        };
+
+        let refused = library.export_operation(&[png], &flats, NOW, &tight);
+
+        assert!(matches!(refused, Err(LibraryError::StorageFull)));
+        assert!(entries(&library).is_empty());
+    }
+
+    #[test]
+    fn a_copy_that_fails_halfway_removes_only_the_new_operation() {
+        let (_workspace, mut library) = library();
+        let svg = import(&mut library, "dark-circle.svg");
+        let png = import(&mut library, "red-dot.png");
+        let previous = library
+            .export_operation(&[svg], &FlatFiles::new(), NOW - HOUR, &roomy)
+            .expect("previous");
+        let before = entries(&library);
+        let asset = library.asset(png).expect("read").expect("exists");
+        let source = library.file_of(&asset);
+        fs::set_permissions(&source, fs::Permissions::from_mode(0o000)).expect("locked");
+
+        let result = library.export_operation(&[svg, png], &FlatFiles::new(), NOW, &roomy);
+
+        fs::set_permissions(&source, fs::Permissions::from_mode(0o644)).expect("unlocked");
+        assert!(result.is_err());
+        assert!(previous[0].exists());
+        assert_eq!(entries(&library), before);
+    }
+
+    #[test]
+    fn publishing_is_complete_before_the_paths_are_given() {
+        let (_workspace, mut library) = library();
+        let svg = import(&mut library, "dark-circle.svg");
+        let png = import(&mut library, "red-dot.png");
+
+        let copies = library
+            .export_operation(&[svg, png], &FlatFiles::new(), NOW, &roomy)
+            .expect("copies");
+
+        for copy in &copies {
+            assert!(copy.is_file());
+            assert!(!copy.to_string_lossy().contains(".partial"));
+        }
+        assert!(
+            entries(&library)
+                .iter()
+                .all(|name| !name.ends_with(".partial"))
+        );
     }
 }

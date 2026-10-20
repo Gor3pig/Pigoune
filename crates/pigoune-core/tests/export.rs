@@ -136,22 +136,261 @@ fn copies_never_touch_the_library_files() {
     );
 }
 
+const HOUR_MS: u64 = 60 * 60 * 1000;
+
+fn export_folder(fixture: &Fixture) -> PathBuf {
+    fixture.library.root().join("cache").join("export")
+}
+
+fn write_flat(fixture: &Fixture, name: &str, contents: &[u8]) -> PathBuf {
+    let path = fixture.workspace.path().join(name);
+    fs::write(&path, contents).expect("flat file is written");
+    path
+}
+
+fn annotate(fixture: &mut Fixture, id: AssetId) {
+    let shape = pigoune_core::annotations::Shape::new(
+        "rectangle",
+        pigoune_core::annotations::Geometry::Box(pigoune_core::annotations::Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 2.0,
+            height: 2.0,
+        }),
+        pigoune_core::annotations::Options::new(),
+    );
+    fixture
+        .library
+        .save_annotations(
+            id,
+            &pigoune_core::annotations::AnnotationDocument::new(
+                None,
+                vec![pigoune_core::annotations::AnnotationObject::new(1, shape)],
+            ),
+        )
+        .expect("annotated");
+}
+
+fn remove_annotations(fixture: &mut Fixture, id: AssetId) {
+    fixture
+        .library
+        .save_annotations(
+            id,
+            &pigoune_core::annotations::AnnotationDocument::new(None, Vec::new()),
+        )
+        .expect("annotations removed");
+}
+
+fn operation_name(started_ms: u64, random: u64) -> String {
+    format!("{started_ms:013x}-{random:016x}")
+}
+
+fn now_ms() -> u64 {
+    u64::try_from(
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_millis(),
+    )
+    .expect("fits")
+}
+
 #[test]
-fn a_new_export_and_a_reopening_forget_the_previous_copies() {
+fn two_exports_never_share_a_path_and_the_first_keeps_its_files() {
     let mut fixture = Fixture::new();
     let svg = fixture.import("dark-circle.svg");
     let png = fixture.import("red-dot.png");
-    let old = fixture.export(&[svg]).remove(0);
+    fixture.rename(svg, "same");
+    fixture.rename(png, "same");
 
-    let new = fixture.export(&[png]).remove(0);
-    assert!(!old.exists());
-    assert!(new.exists());
+    let first = fixture.export(&[svg]);
+    let second = fixture.export(&[png]);
+
+    assert_ne!(first, second);
+    assert!(first[0].exists() && second[0].exists());
+    assert_eq!(
+        fs::read(&first[0]).expect("first is read"),
+        fs::read(sample_file("dark-circle.svg")).expect("fixture")
+    );
+    assert_eq!(
+        fs::read(&second[0]).expect("second is read"),
+        fs::read(sample_file("red-dot.png")).expect("fixture")
+    );
+}
+
+#[test]
+fn the_names_inside_an_export_are_the_same_as_before() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("dark-circle.svg");
+    let png = fixture.import("red-dot.png");
+    fixture.rename(svg, "Logo");
+    fixture.rename(png, "Logo");
+
+    let copies = fixture.export(&[svg, png]);
+
+    assert_eq!(file_name(&copies[0]), "Logo.svg");
+    assert_eq!(file_name(&copies[1]), "Logo.png");
+    assert_eq!(copies[0].parent(), copies[1].parent());
+}
+
+#[test]
+fn an_annotated_image_exported_first_never_turns_into_the_original_afterwards() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("red-dot.png");
+    fixture.rename(id, "pair");
+    annotate(&mut fixture, id);
+    let flat = write_flat(&fixture, "flat.png", b"flattened and safe");
+    let mut flats = FlatFiles::new();
+    flats.insert(id, flat);
+    let promised = fixture
+        .library
+        .export_copies(&[id], &flats)
+        .expect("the flattened copy is prepared")
+        .remove(0);
+
+    remove_annotations(&mut fixture, id);
+    let later = fixture.export(&[id]).remove(0);
+
+    assert_ne!(promised, later);
+    assert_eq!(
+        fs::read(&promised).expect("promised is read"),
+        b"flattened and safe"
+    );
+    assert_eq!(
+        fs::read(&later).expect("later is read"),
+        fs::read(sample_file("red-dot.png")).expect("fixture")
+    );
+}
+
+#[test]
+fn two_items_with_the_same_name_never_swap_their_contents_between_exports() {
+    let mut fixture = Fixture::new();
+    let first = fixture.import("dark-circle.svg");
+    let second = fixture.import("blue-photo.jpg");
+    let third = fixture.import("red-dot.png");
+    for id in [first, second, third] {
+        fixture.rename(id, "dup");
+    }
+    let before = fixture.export(&[first, third, second]);
+    let contents: Vec<Vec<u8>> = before
+        .iter()
+        .map(|path| fs::read(path).expect("read"))
+        .collect();
+
+    fixture.export(&[second, first, third]);
+    fixture.export(&[third, second, first]);
+
+    for (path, expected) in before.iter().zip(&contents) {
+        assert_eq!(&fs::read(path).expect("still readable"), expected);
+    }
+}
+
+#[test]
+fn many_successive_exports_all_stay_readable() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    let exports: Vec<PathBuf> = (0..6).map(|_| fixture.export(&[png]).remove(0)).collect();
+
+    for path in &exports {
+        assert!(path.exists());
+    }
+    let distinct: std::collections::HashSet<&PathBuf> = exports.iter().collect();
+    assert_eq!(distinct.len(), exports.len());
+}
+
+#[test]
+fn a_reopening_keeps_recent_exports_and_removes_the_ones_older_than_a_day() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    let recent = fixture.export(&[png]).remove(0);
+    let folder = export_folder(&fixture);
+    let old = folder.join(operation_name(now_ms() - 30 * HOUR_MS, 7));
+    let middle = folder.join(operation_name(now_ms() - 5 * HOUR_MS, 8));
+    for path in [&old, &middle] {
+        fs::create_dir(path).expect("operation");
+        fs::write(path.join("a.png"), b"a").expect("file");
+    }
+    let unfinished = folder.join(format!(".{}.partial", operation_name(now_ms(), 9)));
+    fs::create_dir(&unfinished).expect("unfinished work");
 
     let root = fixture.library.root().to_path_buf();
     drop(fixture.library);
     let _reopened = Library::open(&root).expect("library reopens");
-    assert!(!new.exists());
+
+    assert!(recent.exists());
+    assert!(middle.join("a.png").exists());
+    assert!(!old.exists());
+    assert!(!unfinished.exists());
     drop(fixture.workspace);
+}
+
+#[test]
+fn a_failed_export_leaves_no_trace_and_the_previous_one_intact() {
+    let mut fixture = Fixture::new();
+    let svg = fixture.import("dark-circle.svg");
+    let png = fixture.import("red-dot.png");
+    let previous = fixture.export(&[svg]).remove(0);
+    let before: Vec<String> = fs::read_dir(export_folder(&fixture))
+        .expect("export folder")
+        .flatten()
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect();
+    let asset = fixture.asset(png);
+    fs::remove_file(fixture.library.file_of(&asset)).expect("source is lost");
+
+    assert!(
+        fixture
+            .library
+            .export_copies(&[svg, png], &FlatFiles::new())
+            .is_err()
+    );
+
+    let mut after: Vec<String> = fs::read_dir(export_folder(&fixture))
+        .expect("export folder")
+        .flatten()
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect();
+    let mut expected = before;
+    expected.sort();
+    after.sort();
+    assert_eq!(after, expected);
+    assert_eq!(
+        fs::read(&previous).expect("previous is read"),
+        fs::read(sample_file("dark-circle.svg")).expect("fixture")
+    );
+}
+
+#[test]
+fn the_export_folders_are_private_to_the_user() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    let copy = fixture.export(&[png]).remove(0);
+
+    let operation = copy.parent().expect("operation folder");
+    for folder in [operation, operation.parent().expect("export folder")] {
+        assert_eq!(
+            fs::metadata(folder).expect("metadata").permissions().mode() & 0o777,
+            0o700
+        );
+    }
+}
+
+#[test]
+fn exports_never_touch_the_library_files_even_after_many_operations() {
+    let mut fixture = Fixture::new();
+    let png = fixture.import("red-dot.png");
+    let asset = fixture.asset(png);
+    let original = fs::read(fixture.library.file_of(&asset)).expect("original");
+    for _ in 0..4 {
+        let copy = fixture.export(&[png]).remove(0);
+        fs::write(&copy, b"modified by the destination").expect("copy is changed");
+    }
+    assert_eq!(
+        fs::read(fixture.library.file_of(&asset)).expect("original"),
+        original
+    );
 }
 
 #[test]

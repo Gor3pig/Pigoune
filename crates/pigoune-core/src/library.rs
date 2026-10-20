@@ -15,6 +15,7 @@ mod duplicate_removal;
 mod duplicates;
 mod error;
 mod export;
+mod export_lifetime;
 mod health;
 mod history;
 mod id;
@@ -70,6 +71,7 @@ pub use error::{
     ReplaceError,
 };
 pub use export::{CopyFailure, CopyReport, FlatFiles};
+pub use export_lifetime::{SpaceProbe, VolumeSpace};
 pub use health::{HealthIssue, HealthPlan, HealthProgress, HealthReport, HealthTarget};
 pub use history::{Change, ChangeStamp, HISTORY_LIMIT, UndoError};
 pub use id::{AssetId, CollectionId, IgnoreId, SmartCollectionId, TagId};
