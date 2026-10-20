@@ -2,9 +2,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use pigoune_core::{
-    AssetCommand, AssetId, AssetView, CACHE_DIR_NAME, ImportOutcome, Library, LibraryError,
-};
+use pigoune_core::{AssetCommand, AssetId, AssetView, ImportOutcome, Library, LibraryError};
 use tempfile::TempDir;
 
 struct Fixture {
@@ -56,16 +54,6 @@ fn sample(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures")
         .join(name)
-}
-
-fn file_names(folder: &Path) -> Vec<String> {
-    let mut names: Vec<String> = fs::read_dir(folder)
-        .expect("folder is read")
-        .flatten()
-        .map(|entry| entry.file_name().to_string_lossy().into_owned())
-        .collect();
-    names.sort();
-    names
 }
 
 #[test]
@@ -265,7 +253,7 @@ fn changing_the_copy_given_to_another_application_leaves_the_library_alone() {
 }
 
 #[test]
-fn temporary_copies_are_forgotten_when_the_library_is_opened_again() {
+fn a_recent_clipboard_copy_survives_a_reopening_of_the_library() {
     let mut fixture = Fixture::new();
     let asset = fixture.import("red-dot.png");
     let copies = fixture
@@ -278,9 +266,7 @@ fn temporary_copies_are_forgotten_when_the_library_is_opened_again() {
 
     let reopened = Library::open(&root).expect("library opens again");
 
-    assert!(!copies[0].exists());
-    let cache = root.join(CACHE_DIR_NAME);
-    assert!(!cache.join("clipboard").exists() || file_names(&cache.join("clipboard")).is_empty());
+    assert!(copies[0].exists());
     drop(reopened);
 }
 

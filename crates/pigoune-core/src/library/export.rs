@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use super::export_lifetime::{self, SpaceProbe};
+use super::live_transfer;
 use super::{Asset, AssetId, Library, LibraryError, layout};
 
 #[derive(Debug)]
@@ -63,10 +64,11 @@ impl Library {
         space: SpaceProbe<'_>,
     ) -> Result<Vec<PathBuf>, LibraryError> {
         let root = layout::export_dir(&self.root);
+        let clipboard = layout::clipboard_dir(&self.root);
         run_operation(
             &root,
-            &[root.as_path()],
-            &|_| false,
+            &[root.as_path(), clipboard.as_path()],
+            &live_transfer::is_protected,
             || self.transfer_items(assets, flats),
             now_ms,
             space,
@@ -108,7 +110,39 @@ impl Library {
         assets: &[AssetId],
         flats: &FlatFiles,
     ) -> Result<Vec<PathBuf>, LibraryError> {
-        self.fresh_copies(assets, &layout::clipboard_dir(&self.root), flats)
+        self.clipboard_copies_checking(assets, flats, &|_| None)
+    }
+
+    pub fn clipboard_copies_checking(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+        space: SpaceProbe<'_>,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        self.clipboard_operation(assets, flats, now_ms(), space)
+    }
+
+    pub(super) fn clipboard_operation(
+        &self,
+        assets: &[AssetId],
+        flats: &FlatFiles,
+        now_ms: u64,
+        space: SpaceProbe<'_>,
+    ) -> Result<Vec<PathBuf>, LibraryError> {
+        let items = self.transfer_items(assets, flats)?;
+        if items.is_empty() {
+            return Ok(Vec::new());
+        }
+        let root = layout::clipboard_dir(&self.root);
+        let export = layout::export_dir(&self.root);
+        run_operation(
+            &root,
+            &[export.as_path(), root.as_path()],
+            &live_transfer::is_protected,
+            || Ok(items),
+            now_ms,
+            space,
+        )
     }
 
     pub fn save_pasted_image(
@@ -348,8 +382,13 @@ fn fill_operation(
 }
 
 pub fn forget_exports(root: &Path) {
-    export_lifetime::tidy(&layout::export_dir(root), now_ms());
-    let _ = fs::remove_dir_all(layout::clipboard_dir(root));
+    let now = now_ms();
+    export_lifetime::tidy(&layout::export_dir(root), now);
+    export_lifetime::tidy_except(
+        &layout::clipboard_dir(root),
+        now,
+        &live_transfer::is_protected,
+    );
     let _ = fs::remove_dir_all(layout::opening_dir(root));
     let _ = fs::remove_dir_all(layout::pasted_dir(root));
 }
