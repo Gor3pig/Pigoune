@@ -1051,13 +1051,17 @@ impl PigouneWindow {
                     window.show_toast(&drag_export::refusal_text(refusal));
                     return Vec::new();
                 }
-                window
-                    .imp()
-                    .library
-                    .borrow()
-                    .as_ref()
-                    .and_then(|library| library.export_copies(&plan.files, &flats).ok())
-                    .unwrap_or_default()
+                let exported = window.imp().library.borrow().as_ref().map(|library| {
+                    library.export_copies_checking(&plan.files, &flats, &drag_export::volume_space)
+                });
+                match exported {
+                    Some(Ok(copies)) => copies,
+                    Some(Err(LibraryError::StorageFull)) => {
+                        window.show_toast(&drag_export::storage_text());
+                        Vec::new()
+                    }
+                    Some(Err(_)) | None => Vec::new(),
+                }
             }
         ));
     }

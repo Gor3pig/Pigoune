@@ -20,10 +20,10 @@ pub use library::{
     LibraryOverview, LibraryRecords, MAX_QUERY_WORDS, MOST_CHOSEN_AT_ONCE, MOST_IN_A_GROUP,
     PROBABLE_DETAIL_GAP, RemovalError, RemoveRecordError, ReplaceError, SIMILAR_DISTANCE,
     SimilarAsset, SimilarSearch, SmartCollection, SmartCollectionCommand, SmartCollectionError,
-    SmartCollectionId, StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField,
-    UndoError, VERY_CLOSE_DISTANCE, ViewCounts, comparable, library_display_name,
-    oldest_compatible_version, query_groups, query_text, query_word_count, same_tag_name,
-    thumbnail_cache_bytes_in,
+    SmartCollectionId, SpaceProbe, StorageUse, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
+    TextField, UndoError, VERY_CLOSE_DISTANCE, ViewCounts, VolumeSpace, comparable,
+    library_display_name, oldest_compatible_version, query_groups, query_text, query_word_count,
+    same_tag_name, thumbnail_cache_bytes_in,
 };
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,

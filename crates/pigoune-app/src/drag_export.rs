@@ -1,5 +1,9 @@
+use std::path::Path;
+
 use gettextrs::gettext;
-use pigoune_core::AssetId;
+use gtk::gio;
+use gtk::prelude::*;
+use pigoune_core::{AssetId, VolumeSpace};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Refusal {
@@ -47,6 +51,27 @@ pub fn refusal_text(refusal: &Refusal) -> String {
             "The annotated image is still being prepared. Try dragging it again in a moment",
         ),
     }
+}
+
+pub fn storage_text() -> String {
+    gettext(
+        "Not enough free space to drag these files out of Pigoune. Dragging inside Pigoune still works",
+    )
+}
+
+pub fn volume_space(folder: &Path) -> Option<VolumeSpace> {
+    let attributes = format!(
+        "{},{}",
+        gio::FILE_ATTRIBUTE_FILESYSTEM_FREE,
+        gio::FILE_ATTRIBUTE_FILESYSTEM_SIZE
+    );
+    let information = gio::File::for_path(folder)
+        .query_filesystem_info(&attributes, gio::Cancellable::NONE)
+        .ok()?;
+    Some(VolumeSpace {
+        free: information.attribute_uint64(gio::FILE_ATTRIBUTE_FILESYSTEM_FREE),
+        total: information.attribute_uint64(gio::FILE_ATTRIBUTE_FILESYSTEM_SIZE),
+    })
 }
 
 #[cfg(test)]
@@ -98,6 +123,13 @@ mod tests {
     fn hidden_masks_come_before_a_rendering_that_is_not_ready() {
         let plan = plan(&ids(2), vec!["A".to_owned()], 2);
         assert!(matches!(plan.refusal, Some(Refusal::HiddenMasks(_))));
+    }
+
+    #[test]
+    fn the_storage_text_says_the_internal_drag_still_works() {
+        let text = storage_text();
+        assert!(text.contains("free space"));
+        assert!(text.contains("still works"));
     }
 
     #[test]
