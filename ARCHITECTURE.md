@@ -133,11 +133,13 @@ My logos.pigoune/
     ├── visual-details.db           detailed signatures for duplicates, recomputed when missing
     ├── thumbnails/<pixels>/<xx>/<uuid>.png   disposable, regenerated when missing
     ├── annotated/<uuid>-<key>.png            flattened annotated pictures, disposable
-    └── export/<operation>/<name>             copies handed to other applications by a drag, disposable
+    ├── export/<operation>/<name>             copies handed to other applications by a drag, disposable
+    └── clipboard/<operation>/<name>          copies offered by the clipboard, disposable
 ```
 
 - Paths stored in the database are relative to the library, which keeps it portable.
 - Dragging assets out of Pigoune writes the copies into a folder of their own, `cache/export/<operation>/`, named after the start time and a random part. The folder is prepared as `.<operation>.partial` and renamed once every copy succeeded, so another application only ever receives complete files, and a path handed out once is never given to other content. An operation younger than two hours is never removed; one between two and twenty-four hours is removed only when the export budget (8 GiB) or the free space (at least 1 GiB or 5% of the volume must remain) needs it; one older than twenty-four hours is removed by the next export or the next opening of the library. If the space is missing, the new drag stays inside Pigoune and a message says so, and nothing recent is deleted to make room. No signal tells Pigoune when another application has finished reading, so these durations are a protection and not a guarantee: an application that keeps a path much longer than that can find the file gone.
+- Copying assets to the clipboard works the same way in `cache/clipboard/<operation>/`: one folder per copy, prepared aside and renamed once complete, never reused, and counted together with the exports in the same 8 GiB budget and the same free-space reserve, with the same durations (an opening of the library now only removes unfinished work and what is older than a day). The content that the clipboard currently offers is registered before it is installed and is never removed, whatever its age, until a newer content has been installed: a copy that is refused for lack of space, that fails or that the clipboard rejects leaves the previous content and its files as they were (the folder of a copy that was rejected is removed at once, since nobody received it), and a message says so. An application that reads the file list long after the copy can still find files gone once the durations above have passed.
 - `<xx>` is a bucket named after the last two hexadecimal digits of the asset UUID, so that no
   folder holds more than a small share of the assets. These digits are random, unlike the
   beginning of a UUIDv7, which encodes the creation time.
