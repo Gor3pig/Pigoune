@@ -1113,7 +1113,7 @@ impl PigouneWindow {
         imp.counts_refresh.replace(Some(pending));
     }
 
-    fn reset_search(&self) {
+    fn clear_search(&self) {
         let imp = self.imp();
         imp.search_query.replace(String::new());
         imp.view_chosen_by_click.set(false);
@@ -1122,6 +1122,10 @@ impl PigouneWindow {
         imp.grid_header.show_filter_count(0);
         imp.grid_header.search_entry().set_text("");
         imp.query_pills.show_query("");
+    }
+
+    fn reset_search(&self) {
+        self.clear_search();
         self.schedule_counts_refresh();
     }
 
@@ -2122,7 +2126,7 @@ impl PigouneWindow {
         settings::store_string(self.settings(), settings::LAST_LIBRARY_PATH, &path);
         imp.asset_grid.forget_thumbnails();
         self.forget_undo_toast();
-        self.reset_search();
+        self.clear_search();
         let mut library = library;
         library.set_screen(imp.screen.get());
         imp.library.replace(Some(library));
@@ -6228,6 +6232,8 @@ impl PigouneWindow {
     }
 
     fn refresh_sidebar_revealing(&self, reveal: Vec<CollectionId>) {
+        #[cfg(test)]
+        SIDEBAR_REFRESHES.with(|count| count.set(count.get() + 1));
         let imp = self.imp();
         let order = self.collection_order();
         let show_counts = self.settings().boolean(settings::SHOW_COUNTS);
@@ -7412,6 +7418,15 @@ fn ignoring_failure_title() -> String {
 fn showing_again_failure_title() -> String {
     gettext("Unable to Show Again")
 }
+
+#[cfg(test)]
+thread_local! {
+    static SIDEBAR_REFRESHES: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+#[cfg(test)]
+#[path = "window_opening_tests.rs"]
+pub mod opening_tests;
 
 #[cfg(test)]
 mod tests {

@@ -931,4 +931,8 @@ fn rendering_suite() {
     crate::zoom_comparison_tests::the_original_fades_in_inside_the_frame_of_the_annotated_image(
         &rig.renderer,
     );
+    crate::window::opening_tests::opening_a_library_refreshes_the_sidebar_once_and_shows_the_same_rows();
+    crate::window::opening_tests::the_other_users_of_the_search_reset_still_refresh_the_counts_later();
+    crate::window::opening_tests::a_pending_refresh_never_shows_the_previous_library();
+    crate::window::opening_tests::successive_openings_and_closings_stay_consistent();
 }
