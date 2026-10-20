@@ -14,6 +14,7 @@ const RANDOM_DIGITS: usize = 16;
 const PRIVATE_FOLDER_MODE: u32 = 0o700;
 const STAGING_SUFFIX: &str = ".partial";
 const SIZE_SUFFIX: &str = ".bytes";
+const ROOT_SEPARATOR: char = ':';
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VolumeSpace {
@@ -213,6 +214,44 @@ fn modified_ms(metadata: &fs::Metadata) -> u64 {
         .map_or(0, |elapsed| u64::try_from(elapsed.as_millis()).unwrap_or(0))
 }
 
+pub fn make_room_across(
+    roots: &[&Path],
+    now_ms: u64,
+    needed: u64,
+    protected: &dyn Fn(&Path) -> bool,
+    probe: &mut dyn FnMut() -> Option<VolumeSpace>,
+) -> Result<(), Shortage> {
+    let mut entries = Vec::new();
+    for (index, root) in roots.iter().enumerate() {
+        for mut entry in list_entries(root) {
+            if protected(&root.join(&entry.name)) {
+                entry.started_ms = now_ms;
+            }
+            entry.name = format!("{index}{ROOT_SEPARATOR}{}", entry.name);
+            entries.push(entry);
+        }
+    }
+    make_room(&entries, now_ms, needed, probe, &mut |entry| {
+        let located = entry
+            .name
+            .split_once(ROOT_SEPARATOR)
+            .and_then(|(index, name)| {
+                let root = roots.get(index.parse::<usize>().ok()?)?;
+                Some((*root, name))
+            });
+        let Some((root, name)) = located else {
+            return Err(io::Error::from(io::ErrorKind::NotFound));
+        };
+        remove_entry(
+            root,
+            &Entry {
+                name: name.to_owned(),
+                ..entry.clone()
+            },
+        )
+    })
+}
+
 #[must_use]
 pub fn list_entries(root: &Path) -> Vec<Entry> {
     let Ok(children) = fs::read_dir(root) else {
@@ -287,9 +326,13 @@ pub fn remove_unfinished(root: &Path) {
 }
 
 pub fn tidy(root: &Path, now_ms: u64) {
+    tidy_except(root, now_ms, &|_| false);
+}
+
+pub fn tidy_except(root: &Path, now_ms: u64, protected: &dyn Fn(&Path) -> bool) {
     remove_unfinished(root);
     for entry in list_entries(root) {
-        if age_of(entry.started_ms, now_ms) == Age::Aged {
+        if age_of(entry.started_ms, now_ms) == Age::Aged && !protected(&root.join(&entry.name)) {
             let _ = remove_entry(root, &entry);
         }
     }
@@ -303,8 +346,8 @@ mod tests {
 
     use super::{
         Age, BUDGET_BYTES, Entry, EntryKind, MINIMUM_KEEP_MS, NORMAL_KEEP_MS, Shortage,
-        VolumeSpace, age_of, list_entries, make_room, operation_name, remove_entry, reserve_for,
-        secure_root, started_at, tidy,
+        VolumeSpace, age_of, list_entries, make_room, make_room_across, operation_name,
+        remove_entry, reserve_for, secure_root, started_at, tidy, tidy_except,
     };
 
     const HOUR: u64 = 60 * 60 * 1000;
@@ -557,5 +600,104 @@ mod tests {
         assert!(!root.join(format!(".{unfinished}.partial")).exists());
         assert!(!root.join(format!(".{unfinished}.bytes")).exists());
         assert!(root.join("unknown folder").exists());
+    }
+
+    fn published(root: &std::path::Path, hours_old: u64, bytes: u64) -> std::path::PathBuf {
+        secure_root(root).expect("root");
+        let name = operation_name(NOW - hours_old * HOUR, hours_old);
+        let staging = super::create_staging(root, &name).expect("staging");
+        fs::write(staging.join("a.png"), b"a").expect("file");
+        super::publish(root, &name, bytes).expect("published")
+    }
+
+    #[test]
+    fn two_roots_share_one_budget_and_free_the_oldest_normal_entry_of_either() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let first = workspace.path().join("first");
+        let second = workspace.path().join("second");
+        let oldest = published(&first, 20, 3 * GIB);
+        let middle = published(&second, 10, 3 * GIB);
+        let recent = published(&first, 1, 3 * GIB);
+
+        let result = make_room_across(&[&first, &second], NOW, GIB, &|_| false, &mut roomy);
+
+        assert_eq!(result, Ok(()));
+        assert!(!oldest.exists());
+        assert!(middle.exists());
+        assert!(recent.exists());
+    }
+
+    #[test]
+    fn a_single_root_behaves_as_before() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let root = workspace.path().join("only");
+        let aged = published(&root, 30, GIB);
+        let recent = published(&root, 1, GIB);
+
+        make_room_across(&[&root], NOW, GIB, &|_| false, &mut roomy).expect("there is room");
+
+        assert!(!aged.exists());
+        assert!(recent.exists());
+    }
+
+    #[test]
+    fn a_missing_root_counts_for_nothing() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let missing = workspace.path().join("missing");
+
+        let result = make_room_across(&[&missing], NOW, GIB, &|_| false, &mut roomy);
+
+        assert_eq!(result, Ok(()));
+    }
+
+    #[test]
+    fn a_protected_entry_is_kept_whatever_its_age_and_counts_as_recent() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let first = workspace.path().join("first");
+        let second = workspace.path().join("second");
+        let protected_old = published(&first, 30, 6 * GIB);
+        let normal = published(&second, 10, GIB);
+        let keep = protected_old.clone();
+
+        let result = make_room_across(
+            &[&first, &second],
+            NOW,
+            3 * GIB,
+            &|path| path == keep,
+            &mut roomy,
+        );
+
+        assert_eq!(result, Err(Shortage));
+        assert!(protected_old.exists());
+        assert!(normal.exists());
+    }
+
+    #[test]
+    fn a_protected_normal_entry_is_spared_while_an_older_unprotected_one_is_freed() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let root = workspace.path().join("root");
+        let protected_normal = published(&root, 5, 4 * GIB);
+        let older = published(&root, 20, 3 * GIB);
+        let keep = protected_normal.clone();
+
+        let result = make_room_across(&[&root], NOW, 2 * GIB, &|path| path == keep, &mut roomy);
+
+        assert_eq!(result, Ok(()));
+        assert!(protected_normal.exists());
+        assert!(!older.exists());
+    }
+
+    #[test]
+    fn tidying_can_spare_a_protected_old_operation() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let root = workspace.path().join("root");
+        let spared = published(&root, 30, 1);
+        let removed = published(&root, 40, 1);
+        let keep = spared.clone();
+
+        tidy_except(&root, NOW, &|path| path == keep);
+
+        assert!(spared.exists());
+        assert!(!removed.exists());
     }
 }
