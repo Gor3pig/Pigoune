@@ -25,6 +25,7 @@ mod import_batch;
 mod import_plan;
 mod layout;
 mod library_export;
+mod live_transfer;
 mod overview;
 mod query_cache;
 mod records;
@@ -85,6 +86,7 @@ pub use layout::{
 pub use library_export::{
     ExportFailure, ExportOutline, LibraryExportPlan, LibraryExportReport, OutlineFolder,
 };
+pub use live_transfer::ClipboardInstall;
 pub use overview::LibraryOverview;
 pub use records::LibraryRecords;
 #[cfg(feature = "migration-stops")]
