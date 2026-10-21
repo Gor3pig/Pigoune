@@ -180,7 +180,7 @@ fn an_unfinished_import_is_not_an_unrecorded_file() {
     let partial = library
         .root()
         .join(pigoune_core::FILES_DIR_NAME)
-        .join(".0190aaaa.partial");
+        .join(".01a15388-86c4-73c4-bcba-5e2c72ef0257.partial");
     fs::create_dir_all(&partial).expect("partial folder");
     fs::write(partial.join("half.png"), b"half").expect("partial file");
 

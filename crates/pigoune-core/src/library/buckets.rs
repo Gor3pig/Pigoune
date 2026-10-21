@@ -3,7 +3,7 @@ use std::path::Path;
 
 use rusqlite::{Connection, params};
 
-use super::{AssetId, LibraryError, layout};
+use super::{AssetId, LibraryError, cache_guard, layout};
 
 const THUMBNAIL_EXTENSION: &str = ".png";
 
@@ -46,15 +46,17 @@ fn move_folder_entries(folder: &Path, asset_of: fn(&str) -> Option<AssetId>, lef
         let Some(id) = asset_of(&name.to_string_lossy()) else {
             continue;
         };
-        if matches!(leftover, Leftover::Remove)
-            && !entry.file_type().is_ok_and(|kind| kind.is_file())
-        {
+        let wanted_kind = |kind: fs::FileType| match leftover {
+            Leftover::Remove => kind.is_file(),
+            Leftover::Keep => kind.is_dir(),
+        };
+        if !entry.file_type().is_ok_and(wanted_kind) {
             continue;
         }
         let bucket = folder.join(layout::bucket_name(id));
         let destination = bucket.join(&name);
         let moved = destination.symlink_metadata().is_err()
-            && fs::create_dir_all(&bucket).is_ok()
+            && cache_guard::make_plain_folder(&bucket).is_ok()
             && fs::rename(entry.path(), &destination).is_ok();
         if !moved && matches!(leftover, Leftover::Remove) {
             let _ = fs::remove_file(entry.path());

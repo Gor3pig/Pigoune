@@ -42,7 +42,7 @@ fn require(path: &Path, expected: Expected) -> Result<(), LibraryError> {
     }
 }
 
-fn make_plain_folder(path: &Path) -> Result<(), LibraryError> {
+pub(super) fn make_plain_folder(path: &Path) -> Result<(), LibraryError> {
     for _ in 0..2 {
         match fs::symlink_metadata(path) {
             Ok(metadata) if metadata.is_dir() => return Ok(()),

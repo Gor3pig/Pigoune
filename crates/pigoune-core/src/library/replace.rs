@@ -4,6 +4,7 @@ use std::path::Path;
 use super::content::{self, ContentDigest};
 use super::trash::forget_thumbnails;
 use super::{AssetId, Library, LibraryError, ReplaceError, layout};
+use super::{cache_guard, storage_guard};
 
 impl Library {
     pub fn replace_stored_file(&self, id: AssetId, source: &Path) -> Result<(), ReplaceError> {
@@ -22,22 +23,40 @@ impl Library {
         let folder = destination.parent().ok_or_else(|| {
             LibraryError::Io(std::io::Error::other("a stored file always has a folder"))
         })?;
-        fs::create_dir_all(folder)?;
+        storage_guard::prepare_asset_folder(&self.root, id)?;
         let temporary = folder.join(layout::unfinished_replacement_name(id));
-        let _ = fs::remove_file(&temporary);
+        match fs::symlink_metadata(&temporary) {
+            Ok(metadata) if metadata.is_file() => {
+                cache_guard::remove_plain_file(&temporary);
+            }
+            Ok(_) => return Err(LibraryError::UnsafeStorage(temporary).into()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(LibraryError::from(error).into()),
+        }
         let copied = content::copy_with_digest(source, &temporary);
         let result = match copied {
-            Ok(copied) if copied == wanted => {
-                fs::rename(&temporary, &destination).map_err(Into::into)
-            }
+            Ok(copied) if copied == wanted => publish(&temporary, &destination),
             Ok(_) => Err(ReplaceError::DifferentContent(source.to_path_buf())),
             Err(error) => Err(error.into()),
         };
         if result.is_err() {
-            let _ = fs::remove_file(&temporary);
+            cache_guard::remove_plain_file(&temporary);
             return result;
         }
         forget_thumbnails(&self.root, id);
         Ok(())
+    }
+}
+
+fn publish(temporary: &Path, destination: &Path) -> Result<(), ReplaceError> {
+    match fs::symlink_metadata(destination) {
+        Ok(metadata) if !metadata.is_file() => {
+            Err(LibraryError::UnsafeStorage(destination.to_path_buf()).into())
+        }
+        Ok(_) => fs::rename(temporary, destination).map_err(Into::into),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            fs::rename(temporary, destination).map_err(Into::into)
+        }
+        Err(error) => Err(LibraryError::from(error).into()),
     }
 }

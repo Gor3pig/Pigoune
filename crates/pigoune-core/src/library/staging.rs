@@ -30,7 +30,7 @@ impl StagingDir {
 impl Drop for StagingDir {
     fn drop(&mut self) {
         if !self.promoted {
-            let _ = fs::remove_dir_all(&self.path);
+            let _ = super::cache_guard::remove_tree_keeping_links(&self.path);
         }
     }
 }

@@ -54,7 +54,7 @@ impl Library {
 }
 
 fn forget_files(root: &Path, asset: AssetId) {
-    let _ = fs::remove_dir_all(layout::asset_dir(root, asset));
+    let _ = super::storage_guard::remove_asset_folder(root, asset);
     forget_thumbnails(root, asset);
 }
 

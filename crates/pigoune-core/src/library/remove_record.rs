@@ -21,7 +21,10 @@ impl Library {
         details_store::forget(&mut self.connection, &[id]);
         self.history.clear();
         forget_thumbnails(&self.root, id);
-        if inside && let Some(folder) = file.parent() {
+        if inside
+            && super::storage_guard::check_asset_folder(&self.root, id).is_ok()
+            && let Some(folder) = file.parent()
+        {
             let _ = fs::remove_dir(folder);
         }
         Ok(())

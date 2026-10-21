@@ -1,4 +1,3 @@
-use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -56,7 +55,7 @@ impl ImportBatch {
 
 fn promote(staging: StagingDir, destination: &Path) -> io::Result<()> {
     if let Some(bucket) = destination.parent() {
-        fs::create_dir_all(bucket)?;
+        super::storage_guard::prepare_bucket(bucket).map_err(io::Error::other)?;
     }
     staging.promote_to(destination)
 }
@@ -64,6 +63,6 @@ fn promote(staging: StagingDir, destination: &Path) -> io::Result<()> {
 fn roll_back(connection: &Connection, promoted: &[PathBuf]) {
     let _ = connection.execute_batch("ROLLBACK");
     for destination in promoted {
-        let _ = fs::remove_dir_all(destination);
+        let _ = super::cache_guard::remove_tree_keeping_links(destination);
     }
 }

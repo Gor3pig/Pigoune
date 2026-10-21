@@ -166,13 +166,13 @@ fn collect_files(root: &Path, folder: &Path, found: &mut Vec<PathBuf>) {
         return;
     };
     for entry in entries.flatten() {
-        if layout::is_unfinished_import(&entry.file_name().to_string_lossy()) {
-            continue;
-        }
-        let path = entry.path();
         let Ok(kind) = entry.file_type() else {
             continue;
         };
+        if kind.is_dir() && layout::is_unfinished_import(&entry.file_name().to_string_lossy()) {
+            continue;
+        }
+        let path = entry.path();
         if kind.is_dir() {
             collect_files(root, &path, found);
         } else if let Ok(relative) = path.strip_prefix(root) {
