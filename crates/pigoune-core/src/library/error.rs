@@ -21,6 +21,22 @@ pub fn cache_entry_label(path: &Path) -> String {
         .join("/")
 }
 
+#[must_use]
+pub fn storage_entry_label(path: &Path) -> String {
+    let components: Vec<Component<'_>> = path.components().collect();
+    let Some(start) = components.iter().rposition(|component| {
+        component.as_os_str() == super::layout::FILES_DIR_NAME
+            || component.as_os_str() == super::layout::DATABASE_FILE_NAME
+    }) else {
+        return path.display().to_string();
+    };
+    components[start..]
+        .iter()
+        .map(|component| component.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum LibraryError {
     #[error("the library name is empty or contains forbidden characters")]
@@ -45,6 +61,8 @@ pub enum LibraryError {
     Damaged,
     #[error("{} is a link or not the kind of item that Pigoune expects in the cache", cache_entry_label(.0))]
     UnsafeCache(PathBuf),
+    #[error("{} is a link, not the kind of item that Pigoune expects, or a place outside the library", storage_entry_label(.0))]
+    UnsafeStorage(PathBuf),
     #[error(transparent)]
     Io(io::Error),
     #[error(transparent)]

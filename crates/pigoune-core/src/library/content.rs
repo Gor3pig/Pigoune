@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::Path;
 
-use super::{ImportError, LibraryError};
+use super::{ImportError, LibraryError, OriginalFile};
 
 const CHUNK_LENGTH: usize = 64 * 1024;
 
@@ -23,12 +23,27 @@ pub fn copy_with_digest(source: &Path, destination: &Path) -> Result<ContentDige
     Ok(digest)
 }
 
+pub fn digest_original(original: &OriginalFile) -> Result<ContentDigest, ImportError> {
+    let unreadable = |_| ImportError::Unreadable(original.path().to_path_buf());
+    let reader = original.open().map_err(unreadable)?;
+    stream_from(reader, original.path(), |_| Ok(()))
+}
+
 fn stream(
+    source: &Path,
+    consume: impl FnMut(&[u8]) -> io::Result<()>,
+) -> Result<ContentDigest, ImportError> {
+    let unreadable = |_| ImportError::Unreadable(source.to_path_buf());
+    let reader = File::open(source).map_err(unreadable)?;
+    stream_from(reader, source, consume)
+}
+
+fn stream_from(
+    mut reader: File,
     source: &Path,
     mut consume: impl FnMut(&[u8]) -> io::Result<()>,
 ) -> Result<ContentDigest, ImportError> {
     let unreadable = |_| ImportError::Unreadable(source.to_path_buf());
-    let mut reader = File::open(source).map_err(unreadable)?;
     let mut hasher = blake3::Hasher::new();
     let mut buffer = vec![0; CHUNK_LENGTH];
     let mut byte_size = 0_u64;

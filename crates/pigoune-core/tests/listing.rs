@@ -90,7 +90,7 @@ fn the_file_of_an_asset_is_its_copy_inside_the_library() {
         .expect("asset is read")
         .expect("asset exists");
 
-    let file = library.file_of(&asset);
+    let file = library.root().join(&asset.stored_path);
 
     assert!(file.starts_with(library.root()));
     assert_eq!(

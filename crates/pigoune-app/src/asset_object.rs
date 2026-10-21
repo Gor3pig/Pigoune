@@ -6,11 +6,11 @@ use crate::thumbnails;
 use adw::subclass::prelude::*;
 use gtk::prelude::*;
 use gtk::{gdk, glib};
-use pigoune_core::{AnnotationRender, Asset, AssetId, TextField};
+use pigoune_core::{AnnotationRender, Asset, AssetId, OriginalFile, TextField};
 
 pub struct AssetEntry {
     pub asset: Asset,
-    pub file: PathBuf,
+    pub file: Option<OriginalFile>,
     pub thumbnail_file: PathBuf,
     pub annotation: Option<AnnotationRender>,
 }
@@ -188,8 +188,18 @@ impl PigouneAssetObject {
         renamed
     }
 
-    pub fn source_file(&self) -> &Path {
-        &self.entry().file
+    pub fn source_file(&self) -> Option<&Path> {
+        self.entry().file.as_ref().map(OriginalFile::path)
+    }
+
+    pub fn original(&self) -> Option<&OriginalFile> {
+        self.entry().file.as_ref()
+    }
+
+    pub fn readable_source(&self) -> Option<PathBuf> {
+        let original = self.entry().file.as_ref()?;
+        original.check().ok()?;
+        Some(original.path().to_path_buf())
     }
 
     pub fn thumbnail_file(&self) -> &Path {
@@ -206,26 +216,25 @@ impl PigouneAssetObject {
 
     pub async fn display_file(&self, widget: &impl IsA<gtk::Widget>) -> Option<PathBuf> {
         match self.annotation() {
-            Some(render) => annotated_files::ensure(render, self.source_file(), widget).await,
-            None => Some(self.source_file().to_path_buf()),
+            Some(render) => {
+                let source = self.readable_source()?;
+                annotated_files::ensure(render, &source, widget).await
+            }
+            None => self.readable_source(),
         }
     }
 
     pub async fn thumbnail(&self, widget: &impl IsA<gtk::Widget>) -> Option<gdk::Texture> {
         let Some(render) = self.annotation() else {
-            return thumbnails::thumbnail(self.source_file(), self.thumbnail_file()).await;
+            return thumbnails::thumbnail_of(self.original(), self.thumbnail_file()).await;
         };
         let drawn = async {
             if pigoune_core::cache_file(&render.file) == pigoune_core::CacheFile::Plain {
                 return thumbnails::render(&render.file, thumbnails::THUMBNAIL_PIXELS).await;
             }
-            annotated_files::reduced(
-                render,
-                self.source_file(),
-                widget,
-                thumbnails::side_of_thumbnails(),
-            )
-            .await
+            let source = self.readable_source()?;
+            annotated_files::reduced(render, &source, widget, thumbnails::side_of_thumbnails())
+                .await
         };
         thumbnails::thumbnail_drawn(drawn, self.thumbnail_file()).await
     }
@@ -235,16 +244,28 @@ impl PigouneAssetObject {
 mod tests {
     use std::path::PathBuf;
 
-    use pigoune_core::{Asset, AssetFormat, AssetId};
+    use pigoune_core::{Asset, AssetFormat, AssetId, OriginalFile};
 
     use super::{AssetEntry, PigouneAssetObject};
 
+    const ID: &str = "00000000-0000-7000-8000-000000000001";
+
+    fn original_in(root: &str) -> Option<OriginalFile> {
+        let id = AssetId::parse(ID).expect("valid id");
+        OriginalFile::new(
+            std::path::Path::new(root),
+            id,
+            &PathBuf::from(format!("files/01/{ID}/logo.png")),
+        )
+        .ok()
+    }
+
     fn asset(name: &str, favorite: bool, byte_size: u64) -> Asset {
         Asset {
-            id: AssetId::parse("00000000-0000-7000-8000-000000000001").expect("valid id"),
+            id: AssetId::parse(ID).expect("valid id"),
             display_name: name.to_owned(),
             original_file_name: "logo.png".to_owned(),
-            stored_path: PathBuf::from("files/logo.png"),
+            stored_path: PathBuf::from(format!("files/01/{ID}/logo.png")),
             format: AssetFormat::Png,
             dimensions: None,
             byte_size,
@@ -265,7 +286,7 @@ mod tests {
     fn object(asset: Asset) -> PigouneAssetObject {
         PigouneAssetObject::new(AssetEntry {
             asset,
-            file: PathBuf::from("/library/files/logo.png"),
+            file: original_in("/library"),
             thumbnail_file: PathBuf::from("/library/thumbnail.png"),
             annotation: None,
         })
@@ -279,7 +300,7 @@ mod tests {
         assert!(!shown.is_unchanged_by(&object(asset("Logo", false, 11))));
         assert!(!shown.is_unchanged_by(&PigouneAssetObject::new(AssetEntry {
             asset: asset("Logo", false, 10),
-            file: PathBuf::from("/other-library/files/logo.png"),
+            file: original_in("/other-library"),
             thumbnail_file: PathBuf::from("/library/thumbnail.png"),
             annotation: None,
         })));
@@ -331,7 +352,7 @@ mod tests {
     fn annotated(asset: Asset, key: &str) -> PigouneAssetObject {
         PigouneAssetObject::new(AssetEntry {
             asset,
-            file: PathBuf::from("/library/files/logo.png"),
+            file: original_in("/library"),
             thumbnail_file: PathBuf::from("/library/thumbnail.png"),
             annotation: Some(pigoune_core::AnnotationRender {
                 key: key.to_owned(),
@@ -350,9 +371,40 @@ mod tests {
         assert!(!shown.is_unchanged_by(&object(asset("Logo", false, 10))));
         assert_eq!(
             shown.source_file(),
-            PathBuf::from("/library/files/logo.png")
+            Some(PathBuf::from(format!("/library/files/01/{ID}/logo.png")).as_path())
         );
         assert_eq!(shown.annotation_key(), Some("one"));
         assert_eq!(object(asset("Logo", false, 10)).annotation_key(), None);
+    }
+
+    #[test]
+    fn an_asset_without_a_valid_original_has_no_source_and_nothing_is_read() {
+        let shown = PigouneAssetObject::new(AssetEntry {
+            asset: asset("Logo", false, 10),
+            file: None,
+            thumbnail_file: PathBuf::from("/library/thumbnail.png"),
+            annotation: None,
+        });
+
+        assert_eq!(shown.source_file(), None);
+        assert_eq!(shown.readable_source(), None);
+        assert!(original_in("/library").is_some());
+        let id = AssetId::parse(ID).expect("valid id");
+        assert!(
+            OriginalFile::new(
+                std::path::Path::new("/library"),
+                id,
+                &PathBuf::from("/etc/passwd")
+            )
+            .is_err()
+        );
+        assert!(
+            OriginalFile::new(
+                std::path::Path::new("/library"),
+                id,
+                &PathBuf::from(format!("files/01/{ID}/../../../x"))
+            )
+            .is_err()
+        );
     }
 }

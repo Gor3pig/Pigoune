@@ -578,7 +578,9 @@ impl PigouneAssetPreview {
         if let Some(loading) = imp.loading.take() {
             loading.abort();
         }
-        let file = asset.source_file().to_path_buf();
+        let Some(file) = asset.readable_source() else {
+            return;
+        };
         let shown = asset_at_size(asset.asset(), size);
         let loading = glib::spawn_future_local(glib::clone!(
             #[weak(rename_to = preview)]
@@ -1097,19 +1099,18 @@ impl PigouneAssetPreview {
 
     fn play_animation(&self, asset: &PigouneAssetObject) {
         let format = asset.asset().format;
-        let Some(timing) = pigoune_core::animation_timing(asset.source_file(), format) else {
+        let Some(source) = asset.readable_source() else {
+            return;
+        };
+        let Some(timing) = pigoune_core::animation_timing(&source, format) else {
             return;
         };
         let preview = self.downgrade();
-        let player = AnimationPlayer::start(
-            asset.source_file().to_path_buf(),
-            timing.frames,
-            move |frame, state| {
-                if let Some(preview) = preview.upgrade() {
-                    preview.show_frame(frame, state);
-                }
-            },
-        );
+        let player = AnimationPlayer::start(source, timing.frames, move |frame, state| {
+            if let Some(preview) = preview.upgrade() {
+                preview.show_frame(frame, state);
+            }
+        });
         self.imp().player.replace(Some(player));
         self.imp().animation_controls.set_visible(true);
     }
@@ -1310,7 +1311,10 @@ impl PigouneAssetPreview {
             ),
             None => None,
         };
-        let available = region.is_some() && asset.source_file().is_file();
+        let available = region.is_some()
+            && asset
+                .readable_source()
+                .is_some_and(|source| source.is_file());
         let pixels = size.map(|(width, height)| u64::from(width) * u64::from(height));
         let mut comparison = imp.compare.get();
         let generation = comparison.show_image(available, pixels);
@@ -1328,7 +1332,9 @@ impl PigouneAssetPreview {
         let Some(asset) = imp.showing.borrow().clone() else {
             return;
         };
-        let file = asset.source_file().to_path_buf();
+        let Some(file) = asset.readable_source() else {
+            return;
+        };
         let pixels = self.render_pixels();
         if let Some(loading) = imp.compare_loading.take() {
             loading.abort();

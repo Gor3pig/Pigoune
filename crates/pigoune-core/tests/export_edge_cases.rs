@@ -245,7 +245,8 @@ fn changing_the_copy_given_to_another_application_leaves_the_library_alone() {
 
     let stored = fixture
         .library
-        .file_of(&fixture.library.asset(asset).expect("read").expect("asset"));
+        .root()
+        .join(&(fixture.library.asset(asset).expect("read").expect("asset")).stored_path);
     assert_eq!(
         fs::read(stored).expect("stored file is read"),
         fs::read(sample("dark-circle.svg")).expect("sample is read")

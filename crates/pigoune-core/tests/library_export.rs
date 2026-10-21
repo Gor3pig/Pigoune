@@ -284,7 +284,7 @@ fn a_missing_stored_file_is_reported_and_the_others_are_exported() {
     let dot = import(&mut setup.library, "red-dot.png", Some(pack));
     import(&mut setup.library, "blue-photo.jpg", Some(pack));
     let asset = setup.library.asset(dot).expect("query").expect("asset");
-    fs::remove_file(setup.library.file_of(&asset)).expect("file removed");
+    fs::remove_file(setup.library.root().join(&asset.stored_path)).expect("file removed");
 
     let report = setup.export();
 
@@ -409,7 +409,8 @@ fn an_annotated_image_is_exported_as_its_original_and_a_flattened_copy() {
     let before = fs::read(
         setup
             .library
-            .file_of(&setup.library.asset(photo).expect("q").expect("asset")),
+            .root()
+            .join(&(setup.library.asset(photo).expect("q").expect("asset")).stored_path),
     )
     .expect("original");
 
@@ -482,7 +483,7 @@ fn a_failure_of_an_original_is_not_mistaken_for_a_missing_flattened_copy() {
     let mut setup = Setup::new();
     let photo = import(&mut setup.library, "blue-photo.jpg", None);
     let asset = setup.library.asset(photo).expect("q").expect("asset");
-    fs::remove_file(setup.library.file_of(&asset)).expect("original removed");
+    fs::remove_file(setup.library.root().join(&asset.stored_path)).expect("original removed");
 
     let report = setup
         .plan()

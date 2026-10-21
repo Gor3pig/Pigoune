@@ -145,6 +145,71 @@ fn opening_a_format_1_library_finds_its_animated_png_and_webp() {
 }
 
 #[test]
+fn a_format_1_library_with_the_historical_flat_layout_still_finds_its_animations() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let (root, ids) = library_as_saved_by_format_1(&workspace, &["blinking.png", "red-dot.png"]);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    for id in &ids {
+        let stored_path: String = connection
+            .query_row(
+                "SELECT stored_path FROM assets WHERE id = ?1",
+                [id.to_string()],
+                |row| row.get(0),
+            )
+            .expect("stored path readable");
+        let name = Path::new(&stored_path)
+            .file_name()
+            .expect("name")
+            .to_string_lossy()
+            .into_owned();
+        fs::rename(
+            root.join(FILES_DIR_NAME)
+                .join(bucket_of(*id))
+                .join(id.to_string()),
+            root.join(FILES_DIR_NAME).join(id.to_string()),
+        )
+        .expect("folder flattened");
+        connection
+            .execute(
+                "UPDATE assets SET stored_path = ?1 WHERE id = ?2",
+                [format!("{FILES_DIR_NAME}/{id}/{name}"), id.to_string()],
+            )
+            .expect("stored path flattened");
+    }
+    drop(connection);
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert!(is_animated(&library, ids[0]));
+    assert!(!is_animated(&library, ids[1]));
+}
+
+#[test]
+fn a_recorded_path_outside_the_library_is_ignored_by_the_upgrade_and_left_untouched() {
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let (root, ids) = library_as_saved_by_format_1(&workspace, &["blinking.png"]);
+    let outside = workspace.path().join("outside-animation.png");
+    fs::copy(fixture("blinking.png"), &outside).expect("outside copy");
+    let before = fs::read(&outside).expect("outside content");
+    Connection::open(root.join(DATABASE_FILE_NAME))
+        .expect("database opens")
+        .execute(
+            "UPDATE assets SET stored_path = ?1 WHERE id = ?2",
+            [outside.display().to_string(), ids[0].to_string()],
+        )
+        .expect("stored path replaced");
+
+    let library = Library::open(&root).expect("library opens");
+
+    assert_eq!(
+        library.format_version().expect("version readable"),
+        CURRENT_FORMAT_VERSION
+    );
+    assert!(!is_animated(&library, ids[0]));
+    assert_eq!(fs::read(&outside).expect("outside content"), before);
+}
+
+#[test]
 fn a_missing_file_does_not_prevent_the_upgrade() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let (root, ids) = library_as_saved_by_format_1(&workspace, &["blinking.png", "blinking.webp"]);
@@ -252,7 +317,7 @@ fn stored_file(library: &Library, id: AssetId) -> PathBuf {
         .asset(id)
         .expect("asset readable")
         .expect("asset exists");
-    library.file_of(&asset)
+    library.root().join(&asset.stored_path)
 }
 
 #[test]

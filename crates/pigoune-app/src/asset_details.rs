@@ -632,9 +632,11 @@ impl PigouneAssetDetails {
         let imp = self.imp();
         imp.preview
             .set_paintable(thumbnails.remembered(object.id()).as_ref());
-        if object.asset().is_animated {
+        if object.asset().is_animated
+            && let Some(source) = object.readable_source()
+        {
             let preview = imp.preview.get();
-            let playing = animation::play(object.source_file().to_path_buf(), move |frame| {
+            let playing = animation::play(source, move |frame| {
                 preview.set_paintable(Some(frame));
             });
             imp.loading.replace(Some(playing));

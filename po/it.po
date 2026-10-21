@@ -2069,6 +2069,19 @@ msgstr ""
 "Pigoune non la segue. Puoi esaminarla nella cartella della libreria, poi "
 "rinominarla o rimuoverla da te e riprovare."
 
+#: crates/pigoune-app/src/error_messages.rs:127
+#, rust-format
+msgid ""
+"Pigoune cannot use “{entry}” in this library, because it is a link, "
+"another kind of item than expected, or a place outside the library. For "
+"safety, Pigoune does not follow it. You can look at it in the library "
+"folder, then rename or remove it yourself and try again."
+msgstr ""
+"Pigoune non può usare “{entry}” in questa libreria, perché questa voce è "
+"un collegamento, non è del tipo previsto o si trova fuori dalla libreria. "
+"Per sicurezza, Pigoune non la segue. Puoi esaminarla nella cartella della "
+"libreria, poi rinominarla o rimuoverla da te e riprovare."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

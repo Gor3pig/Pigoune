@@ -257,7 +257,7 @@ fn a_copy_that_fails_halfway_changes_nothing_that_the_previous_copy_needs() {
     let previous = fixture.copy(&[first]);
     let before = visible_children(&fixture.clipboard_folder());
     let asset = fixture.library.asset(second).expect("read").expect("asset");
-    let stored = fixture.library.file_of(&asset);
+    let stored = fixture.library.root().join(&asset.stored_path);
     fs::set_permissions(&stored, fs::Permissions::from_mode(0o000)).expect("locked");
 
     let failed = fixture
@@ -362,7 +362,7 @@ fn copies_never_touch_the_library_files_even_after_many_operations() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png");
     let asset = fixture.library.asset(png).expect("read").expect("asset");
-    let stored = fixture.library.file_of(&asset);
+    let stored = fixture.library.root().join(&asset.stored_path);
     let before = fs::read(&stored).expect("original is read");
 
     for _ in 0..4 {

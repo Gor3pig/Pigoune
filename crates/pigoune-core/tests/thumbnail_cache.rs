@@ -32,7 +32,7 @@ fn the_thumbnail_cache_is_measured_and_cleared_without_touching_the_resources() 
 
     assert_eq!(library.thumbnail_cache_bytes(), 0);
     let asset = library.asset(id).expect("readable").expect("still there");
-    assert!(library.file_of(&asset).is_file());
+    assert!(library.root().join(&asset.stored_path).is_file());
     library
         .clear_thumbnail_cache()
         .expect("clearing twice is harmless");

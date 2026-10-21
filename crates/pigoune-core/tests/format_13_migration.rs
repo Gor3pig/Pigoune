@@ -330,8 +330,12 @@ fn a_format_12_library_keeps_every_element_file_and_value_when_it_becomes_format
     assert_eq!(report.problems(), 0);
 
     let id = fixture.others[0];
-    let bytes_before =
-        fs::read(library.file_of(&library.asset(id).expect("q").expect("asset"))).expect("file");
+    let bytes_before = fs::read(
+        library
+            .root()
+            .join(&(library.asset(id).expect("q").expect("asset")).stored_path),
+    )
+    .expect("file");
     let document = AnnotationDocument::new(None, vec![AnnotationObject::new(1, blur(3.0))]);
     library
         .save_annotations(id, &document)
@@ -341,7 +345,12 @@ fn a_format_12_library_keeps_every_element_file_and_value_when_it_becomes_format
         document
     );
     assert_eq!(
-        fs::read(library.file_of(&library.asset(id).expect("q").expect("asset"))).expect("file"),
+        fs::read(
+            library
+                .root()
+                .join(&(library.asset(id).expect("q").expect("asset")).stored_path)
+        )
+        .expect("file"),
         bytes_before,
         "the image is still untouched"
     );
