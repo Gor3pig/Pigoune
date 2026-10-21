@@ -390,18 +390,26 @@ fn the_opening_folders_are_private_to_the_user() {
 }
 
 #[test]
-fn a_link_in_place_of_the_asset_folder_is_replaced_and_never_followed() {
+fn a_link_in_place_of_the_asset_folder_is_refused_and_left_alone() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png");
     let elsewhere = fixture.workspace.path().join("elsewhere");
     fs::create_dir(&elsewhere).expect("folder");
     fs::write(elsewhere.join("keep.txt"), b"keep").expect("file");
     fs::create_dir_all(fixture.opening_folder()).expect("opening folder");
-    symlink(&elsewhere, fixture.opening_folder().join(png.to_string())).expect("link");
+    let link = fixture.opening_folder().join(png.to_string());
+    symlink(&elsewhere, &link).expect("link");
 
-    let copy = fixture.open(png);
+    let refused = fixture
+        .library
+        .opening_copy(png, &FlatFiles::new())
+        .expect_err("a link in place of the asset folder is refused");
 
-    assert!(copy.exists());
+    assert!(matches!(
+        refused,
+        pigoune_core::LibraryError::UnsafeCache(_)
+    ));
+    assert!(link.is_symlink());
     assert_eq!(names_in(&elsewhere), ["keep.txt"]);
 }
 

@@ -23,6 +23,9 @@ pub const CACHE_FOLDER_NAMES: [&str; 6] = [
     PASTED_DIR_NAME,
 ];
 
+const UUID_TEXT_LENGTH: usize = 36;
+const RENDER_KEY_LENGTH: usize = 32;
+const RANDOM_TEXT_LENGTH: usize = 16;
 const MAX_NAME_BYTES: usize = 200;
 const BUCKET_NAME_LENGTH: usize = 2;
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";
@@ -82,6 +85,23 @@ pub fn annotated_dir(root: &Path) -> PathBuf {
 
 pub fn annotated_render_path(root: &Path, id: AssetId, key: &str) -> PathBuf {
     annotated_dir(root).join(format!("{id}-{key}.png"))
+}
+
+pub fn annotated_render_owner(file_name: &str) -> Option<AssetId> {
+    let (identifier, rest) = file_name.split_at_checked(UUID_TEXT_LENGTH)?;
+    let id = AssetId::parse(identifier)?;
+    let rest = rest.strip_prefix('-')?;
+    let (key, extension) = rest.split_once('.')?;
+    let finished = extension == "png";
+    let unfinished = extension == "partial"
+        || extension.strip_suffix(".partial").is_some_and(|random| {
+            random.len() == RANDOM_TEXT_LENGTH
+                && random.bytes().all(|byte| byte.is_ascii_hexdigit())
+        });
+    (key.len() == RENDER_KEY_LENGTH
+        && key.bytes().all(|byte| byte.is_ascii_hexdigit())
+        && (finished || unfinished))
+        .then_some(id)
 }
 
 pub fn is_annotated_render_of(id: AssetId, file_name: &str) -> bool {

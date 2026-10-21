@@ -333,7 +333,7 @@ fn the_clipboard_folders_are_private_to_the_user() {
 }
 
 #[test]
-fn a_link_in_place_of_the_clipboard_folder_is_replaced_and_never_followed() {
+fn a_link_in_place_of_the_clipboard_folder_is_refused_and_left_alone() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png");
     let elsewhere = fixture.workspace.path().join("elsewhere");
@@ -343,9 +343,16 @@ fn a_link_in_place_of_the_clipboard_folder_is_replaced_and_never_followed() {
     let _ = fs::remove_dir_all(&folder);
     std::os::unix::fs::symlink(&elsewhere, &folder).expect("link");
 
-    let copy = fixture.copy(&[png]).remove(0);
+    let refused = fixture
+        .library
+        .clipboard_copies(&[png], &pigoune_core::FlatFiles::new())
+        .expect_err("a link in place of the clipboard folder is refused");
 
-    assert!(copy.exists());
+    assert!(matches!(
+        refused,
+        pigoune_core::LibraryError::UnsafeCache(_)
+    ));
+    assert!(folder.is_symlink());
     assert!(elsewhere.join("keep.txt").exists());
     assert_eq!(visible_children(&elsewhere), ["keep.txt"]);
 }

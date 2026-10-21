@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
 
+use super::cache_guard;
 use super::export_lifetime::{self, SpaceProbe};
 use super::live_transfer;
 use super::{Asset, AssetId, Library, LibraryError, layout};
@@ -148,8 +149,9 @@ impl Library {
         contents: &[u8],
     ) -> Result<PathBuf, LibraryError> {
         let folder = layout::pasted_dir(&self.root);
-        let _ = fs::remove_dir_all(&folder);
-        fs::create_dir_all(&folder)?;
+        cache_guard::check_folder(&self.root, &folder)?;
+        let _ = cache_guard::remove_tree_keeping_links(&folder);
+        cache_guard::create_cache_folder(&folder)?;
         let extension = safe_extension(extension);
         let base = export_base_name(name, Some(&extension)).unwrap_or_else(|| name.to_owned());
         let (mut file, path) =
@@ -187,6 +189,7 @@ impl Library {
             return Ok(None);
         }
         let opening = layout::opening_dir(&self.root);
+        cache_guard::check_folder(&self.root, &opening)?;
         export_lifetime::secure_root(&opening)?;
         let copies = run_operation(
             &opening.join(asset.to_string()),
@@ -359,6 +362,7 @@ fn run_operation(
     now_ms: u64,
     space: SpaceProbe<'_>,
 ) -> Result<Vec<PathBuf>, LibraryError> {
+    cache_guard::check_folder(library_root, root)?;
     export_lifetime::secure_root(root)?;
     export_lifetime::remove_unfinished(root);
     let items = items_for()?;
@@ -424,7 +428,7 @@ pub fn forget_exports(root: &Path) {
     export_lifetime::tidy_children(&layout::opening_dir(root), now, &|name| {
         AssetId::parse(name).is_some()
     });
-    let _ = fs::remove_dir_all(layout::pasted_dir(root));
+    let _ = cache_guard::remove_tree_keeping_links(&layout::pasted_dir(root));
 }
 
 fn safe_extension(extension: &str) -> String {

@@ -98,6 +98,18 @@ pub(super) fn ensure_cache_folder(root: &Path) -> Result<(), LibraryError> {
     make_plain_folder(&layout::cache_dir(root))
 }
 
+pub(super) fn check_folder(library_root: &Path, folder: &Path) -> Result<(), LibraryError> {
+    let relative = folder
+        .strip_prefix(library_root)
+        .map_err(|_| unsafe_entry(folder))?;
+    let mut current = library_root.to_path_buf();
+    for component in relative.components() {
+        current.push(component);
+        require(&current, Expected::Folder)?;
+    }
+    Ok(())
+}
+
 pub fn create_cache_folder(folder: &Path) -> Result<(), LibraryError> {
     let components: Vec<Component<'_>> = folder.components().collect();
     let Some(cache_index) = components
@@ -114,4 +126,33 @@ pub fn create_cache_folder(folder: &Path) -> Result<(), LibraryError> {
         }
     }
     Ok(())
+}
+
+pub(super) fn remove_tree_keeping_links(path: &Path) -> io::Result<Option<PathBuf>> {
+    let metadata = match fs::symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    if metadata.is_file() {
+        fs::remove_file(path)?;
+        return Ok(None);
+    }
+    if !metadata.is_dir() {
+        return Ok(Some(path.to_path_buf()));
+    }
+    let mut kept = None;
+    for child in fs::read_dir(path)? {
+        let found = remove_tree_keeping_links(&child?.path())?;
+        kept = kept.or(found);
+    }
+    if kept.is_none() {
+        fs::remove_dir(path)?;
+    }
+    Ok(kept)
+}
+
+pub(super) fn remove_plain_file(path: &Path) -> bool {
+    fs::symlink_metadata(path).is_ok_and(|metadata| metadata.is_file())
+        && fs::remove_file(path).is_ok()
 }

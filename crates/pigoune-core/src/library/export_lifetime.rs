@@ -1,8 +1,10 @@
 use std::fs;
-use std::io;
+use std::io::{self, Write};
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
+
+use super::{LibraryError, cache_guard};
 
 pub const MINIMUM_KEEP_MS: u64 = 2 * 60 * 60 * 1000;
 pub const NORMAL_KEEP_MS: u64 = 24 * 60 * 60 * 1000;
@@ -150,17 +152,18 @@ pub fn make_room(
     }
 }
 
-pub fn secure_root(root: &Path) -> io::Result<()> {
+pub fn secure_root(root: &Path) -> Result<(), LibraryError> {
     if let Ok(metadata) = fs::symlink_metadata(root)
         && !metadata.is_dir()
     {
-        fs::remove_file(root)?;
+        return Err(LibraryError::UnsafeCache(root.to_path_buf()));
     }
     fs::DirBuilder::new()
         .recursive(true)
         .mode(PRIVATE_FOLDER_MODE)
         .create(root)?;
-    fs::set_permissions(root, fs::Permissions::from_mode(PRIVATE_FOLDER_MODE))
+    fs::set_permissions(root, fs::Permissions::from_mode(PRIVATE_FOLDER_MODE))?;
+    Ok(())
 }
 
 pub fn create_staging(root: &Path, operation: &str) -> io::Result<PathBuf> {
@@ -178,14 +181,19 @@ pub fn create_staging(root: &Path, operation: &str) -> io::Result<PathBuf> {
 pub fn publish(root: &Path, operation: &str, bytes: u64) -> io::Result<PathBuf> {
     let staging = root.join(staging_name(operation));
     let published = root.join(operation);
-    fs::write(root.join(size_name(operation)), bytes.to_string())?;
+    let mut size_file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(root.join(size_name(operation)))?;
+    size_file.write_all(bytes.to_string().as_bytes())?;
+    drop(size_file);
     fs::rename(&staging, &published)?;
     Ok(published)
 }
 
 pub fn discard_staging(root: &Path, operation: &str) {
-    let _ = fs::remove_dir_all(root.join(staging_name(operation)));
-    let _ = fs::remove_file(root.join(size_name(operation)));
+    let _ = cache_guard::remove_tree_keeping_links(&root.join(staging_name(operation)));
+    cache_guard::remove_plain_file(&root.join(size_name(operation)));
 }
 
 fn folder_bytes(folder: &Path) -> u64 {
@@ -272,15 +280,9 @@ pub fn list_entries(root: &Path) -> Vec<Entry> {
                 kind: EntryKind::Operation,
                 started_ms,
             });
-        } else if (metadata.is_file() || metadata.file_type().is_symlink())
-            && !name.starts_with('.')
-        {
+        } else if metadata.is_file() && !name.starts_with('.') {
             entries.push(Entry {
-                bytes: if metadata.is_file() {
-                    metadata.len()
-                } else {
-                    0
-                },
+                bytes: metadata.len(),
                 name,
                 kind: EntryKind::LooseFile,
                 started_ms: modified_ms(&metadata),
@@ -295,13 +297,13 @@ pub fn remove_entry(root: &Path, entry: &Entry) -> io::Result<()> {
     let metadata = fs::symlink_metadata(&path)?;
     match entry.kind {
         EntryKind::Operation if metadata.is_dir() => {
-            fs::remove_dir_all(&path)?;
-            let _ = fs::remove_file(root.join(size_name(&entry.name)));
+            if cache_guard::remove_tree_keeping_links(&path)?.is_some() {
+                return Err(io::Error::other("a link was kept"));
+            }
+            cache_guard::remove_plain_file(&root.join(size_name(&entry.name)));
             Ok(())
         }
-        EntryKind::LooseFile if metadata.is_file() || metadata.file_type().is_symlink() => {
-            fs::remove_file(&path)
-        }
+        EntryKind::LooseFile if metadata.is_file() => fs::remove_file(&path),
         _ => Ok(()),
     }
 }
@@ -316,11 +318,11 @@ pub fn remove_unfinished(root: &Path) {
             continue;
         };
         if hidden_part(&name, STAGING_SUFFIX).is_some() && metadata.is_dir() {
-            let _ = fs::remove_dir_all(child.path());
+            let _ = cache_guard::remove_tree_keeping_links(&child.path());
         } else if let Some(operation) = hidden_part(&name, SIZE_SUFFIX)
             && fs::symlink_metadata(root.join(operation)).is_err()
         {
-            let _ = fs::remove_file(child.path());
+            cache_guard::remove_plain_file(&child.path());
         }
     }
 }
@@ -356,7 +358,7 @@ pub fn tidy_children(parent: &Path, now_ms: u64, is_root_name: &dyn Fn(&str) -> 
 mod tests {
     use std::cell::{Cell, RefCell};
     use std::fs;
-    use std::os::unix::fs::{PermissionsExt, symlink};
+    use std::os::unix::fs::symlink;
 
     use super::{
         Age, BUDGET_BYTES, Entry, EntryKind, MINIMUM_KEEP_MS, NORMAL_KEEP_MS, Shortage,
@@ -528,7 +530,7 @@ mod tests {
     }
 
     #[test]
-    fn the_export_folder_is_private_and_a_planted_link_is_replaced_not_followed() {
+    fn a_planted_link_in_place_of_the_export_folder_is_refused_and_left_alone() {
         let workspace = tempfile::tempdir().expect("workspace");
         let outside = workspace.path().join("outside");
         fs::create_dir(&outside).expect("outside");
@@ -536,23 +538,22 @@ mod tests {
         let root = workspace.path().join("export");
         symlink(&outside, &root).expect("link");
 
-        secure_root(&root).expect("secured");
+        assert!(matches!(
+            secure_root(&root),
+            Err(super::LibraryError::UnsafeCache(_))
+        ));
 
         assert!(
-            !fs::symlink_metadata(&root)
+            fs::symlink_metadata(&root)
                 .expect("root")
                 .file_type()
                 .is_symlink()
-        );
-        assert_eq!(
-            fs::metadata(&root).expect("root").permissions().mode() & 0o777,
-            0o700
         );
         assert_eq!(fs::read(outside.join("keep.txt")).expect("kept"), b"keep");
     }
 
     #[test]
-    fn removing_an_operation_never_follows_links_out_of_the_export_folder() {
+    fn an_operation_holding_links_is_left_in_place_and_nothing_outside_is_touched() {
         let workspace = tempfile::tempdir().expect("workspace");
         let outside = workspace.path().join("outside");
         fs::create_dir(&outside).expect("outside");
@@ -566,9 +567,10 @@ mod tests {
 
         let entries = list_entries(&root);
         assert_eq!(entries.len(), 1);
-        remove_entry(&root, &entries[0]).expect("removed");
+        assert!(remove_entry(&root, &entries[0]).is_err());
 
-        assert!(!root.join(&name).exists());
+        assert!(root.join(&name).join("escape").is_symlink());
+        assert!(root.join(&name).join("file").is_symlink());
         assert_eq!(fs::read(outside.join("keep.txt")).expect("kept"), b"keep");
     }
 
