@@ -163,8 +163,40 @@ impl Library {
         asset: AssetId,
         flats: &FlatFiles,
     ) -> Result<Option<PathBuf>, LibraryError> {
-        let folder = layout::opening_dir(&self.root).join(asset.to_string());
-        Ok(self.fresh_copies(&[asset], &folder, flats)?.pop())
+        self.opening_copy_checking(asset, flats, &|_| None)
+    }
+
+    pub fn opening_copy_checking(
+        &self,
+        asset: AssetId,
+        flats: &FlatFiles,
+        space: SpaceProbe<'_>,
+    ) -> Result<Option<PathBuf>, LibraryError> {
+        self.opening_operation(asset, flats, now_ms(), space)
+    }
+
+    pub(super) fn opening_operation(
+        &self,
+        asset: AssetId,
+        flats: &FlatFiles,
+        now_ms: u64,
+        space: SpaceProbe<'_>,
+    ) -> Result<Option<PathBuf>, LibraryError> {
+        let items = self.transfer_items(&[asset], flats)?;
+        if items.is_empty() {
+            return Ok(None);
+        }
+        let opening = layout::opening_dir(&self.root);
+        export_lifetime::secure_root(&opening)?;
+        let copies = run_operation(
+            &opening.join(asset.to_string()),
+            &self.root,
+            &live_transfer::is_protected,
+            || Ok(items),
+            now_ms,
+            space,
+        )?;
+        Ok(copies.into_iter().next())
     }
 
     pub fn export_to(
@@ -197,21 +229,6 @@ impl Library {
             create_free_file(folder, &base, Some(extension), &mut HashSet::new())?;
         file.write_all(contents)?;
         Ok(path)
-    }
-
-    fn fresh_copies(
-        &self,
-        assets: &[AssetId],
-        folder: &Path,
-        flats: &FlatFiles,
-    ) -> Result<Vec<PathBuf>, LibraryError> {
-        let _ = fs::remove_dir_all(folder);
-        fs::create_dir_all(folder)?;
-        let report = self.copy_into(assets, folder, flats)?;
-        match report.failures.into_iter().next() {
-            Some(failure) => Err(failure.error.into()),
-            None => Ok(report.copies),
-        }
     }
 
     fn copy_into(
@@ -404,7 +421,9 @@ pub fn forget_exports(root: &Path) {
         now,
         &live_transfer::is_protected,
     );
-    let _ = fs::remove_dir_all(layout::opening_dir(root));
+    export_lifetime::tidy_children(&layout::opening_dir(root), now, &|name| {
+        AssetId::parse(name).is_some()
+    });
     let _ = fs::remove_dir_all(layout::pasted_dir(root));
 }
 
