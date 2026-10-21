@@ -2096,6 +2096,16 @@ msgstr ""
 "kopie van de bibliotheek, bijvoorbeeld door de map te kopiëren met je "
 "bestandsbeheerder, en open dan de kopie."
 
+#: crates/pigoune-app/src/window.rs:7090
+msgid "The library was changed, so the image was not imported."
+msgstr ""
+"De bibliotheek is gewijzigd, dus de afbeelding is niet geïmporteerd."
+
+#: crates/pigoune-app/src/window.rs:7082
+msgid "An import is already in progress. Wait for it to finish, then try again."
+msgstr ""
+"Er loopt al een import. Wacht tot die klaar is en probeer het dan opnieuw."
+
 #: crates/pigoune-app/src/window.rs:6990
 msgid "Wait for the import to finish before changing the library."
 msgstr ""

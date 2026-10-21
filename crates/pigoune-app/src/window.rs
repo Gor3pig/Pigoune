@@ -1296,7 +1296,9 @@ impl PigouneWindow {
                     | AssetView::Trash => return,
                 };
                 glib::spawn_future_local(async move {
-                    window.import_content(dropped, collection).await;
+                    if let Some(guard) = window.begin_import_or_explain() {
+                        window.import_content(&guard, dropped, collection).await;
+                    }
                 });
             }
         ));
@@ -3649,9 +3651,12 @@ impl PigouneWindow {
         if self.paste_typed_text() {
             return;
         }
+        let Some(guard) = self.begin_import_or_explain() else {
+            return;
+        };
         match pasted_content::read(&self.clipboard()).await {
-            Pasted::Files(paths) => self.import_paths(paths).await,
-            Pasted::Image(texture) => self.import_pasted_image(&texture).await,
+            Pasted::Files(paths) => self.import_paths(&guard, paths).await,
+            Pasted::Image(texture) => self.import_pasted_image(&guard, &texture).await,
             Pasted::Nothing => self.show_toast(&gettext("Nothing to paste")),
         }
     }
@@ -3778,9 +3783,10 @@ impl PigouneWindow {
         self.show_editor();
     }
 
-    async fn import_pasted_image(&self, texture: &gdk::Texture) {
+    async fn import_pasted_image(&self, guard: &ImportGuard, texture: &gdk::Texture) {
         let png = texture.save_to_png_bytes();
         self.import_image_bytes(
+            guard,
             &pasted_content::image_name(),
             "png",
             &png,
@@ -3791,11 +3797,18 @@ impl PigouneWindow {
 
     async fn import_image_bytes(
         &self,
+        guard: &ImportGuard,
         name: &str,
         extension: &str,
         bytes: &[u8],
         collection: Option<CollectionId>,
     ) {
+        if !self.is_current(&guard.token) {
+            self.show_toast(&gettext(
+                "The library was changed, so the image was not imported.",
+            ));
+            return;
+        }
         let saved = self
             .imp()
             .library
@@ -3803,9 +3816,13 @@ impl PigouneWindow {
             .as_ref()
             .map(|library| library.save_pasted_image(name, extension, bytes));
         match saved {
-            Some(Ok(path)) => self.import_paths_into(vec![path], collection).await,
+            Some(Ok(path)) => {
+                self.import_paths_into(guard, vec![path], collection).await;
+            }
             Some(Err(error)) => self.show_library_error(&error),
-            None => {}
+            None => self.show_toast(&gettext(
+                "The library was changed, so the image was not imported.",
+            )),
         }
     }
 
@@ -4301,6 +4318,7 @@ impl PigouneWindow {
         adds_to_library: bool,
     ) {
         let failure = gettext("Unable to set “{name}” as wallpaper").replace("{name}", name);
+        let expected = self.library_token();
         let result = match prepared {
             Ok(file) => {
                 let window = self.downgrade();
@@ -4313,8 +4331,13 @@ impl PigouneWindow {
                     match response {
                         WallpaperResponse::Applied => {
                             if let Some(kept) = kept.clone() {
+                                let expected = expected.clone();
                                 glib::spawn_future_local(async move {
-                                    window.import_paths(vec![kept]).await;
+                                    if let Some(guard) =
+                                        window.begin_import_expecting(expected.as_ref())
+                                    {
+                                        window.import_paths(&guard, vec![kept]).await;
+                                    }
                                 });
                             }
                         }
@@ -5258,6 +5281,8 @@ impl PigouneWindow {
     }
 
     fn show_toast(&self, text: &str) {
+        #[cfg(test)]
+        import_tests::TOASTS.with(|shown| shown.borrow_mut().push(text.to_owned()));
         toasts::announce(&self.imp().toast_overlay, &adw::Toast::new(text));
     }
 
@@ -6950,7 +6975,8 @@ impl PigouneWindow {
     }
 
     fn import_is_possible_here(&self) -> bool {
-        drop_places::accepts_files(self.imp().current_view.get())
+        !self.imp().importing.get()
+            && drop_places::accepts_files(self.imp().current_view.get())
             && !self.is_previewing()
             && !self.is_editing()
     }
@@ -6971,7 +6997,9 @@ impl PigouneWindow {
     }
 
     fn why_import_is_refused(&self) -> String {
-        if self.is_previewing() {
+        if self.imp().importing.get() {
+            gettext("An import is already in progress. Wait for it to finish, then try again.")
+        } else if self.is_previewing() {
             gettext("Close the preview to import")
         } else if self.is_editing() {
             gettext("Close the editor to import")
@@ -6999,8 +7027,9 @@ impl PigouneWindow {
                 let imports = is_shortcut_of(IMPORT_FILES_ACTION)
                     || is_shortcut_of(IMPORT_FOLDER_ACTION)
                     || (is_shortcut_of(PASTE_ACTION) && !window.text_has_focus());
-                let refused =
-                    window.imp().library.borrow().is_some() && !window.import_is_possible_here();
+                let refused = (window.imp().library.borrow().is_some()
+                    || window.imp().importing.get())
+                    && !window.import_is_possible_here();
                 if imports && refused {
                     window.show_toast(&window.why_import_is_refused());
                 }
@@ -7047,6 +7076,34 @@ impl PigouneWindow {
             window: self.clone(),
             token,
         })
+    }
+
+    fn begin_import_expecting(&self, expected: Option<&LibraryToken>) -> Option<ImportGuard> {
+        if self.imp().importing.get() {
+            self.show_toast(&gettext(
+                "An import is already in progress. Wait for it to finish, then try again.",
+            ));
+            return None;
+        }
+        let Some(guard) = self.begin_import() else {
+            if expected.is_some() {
+                self.show_toast(&gettext(
+                    "The library was changed, so the image was not imported.",
+                ));
+            }
+            return None;
+        };
+        if expected.is_some_and(|token| *token != guard.token) {
+            self.show_toast(&gettext(
+                "The library was changed, so the image was not imported.",
+            ));
+            return None;
+        }
+        Some(guard)
+    }
+
+    fn begin_import_or_explain(&self) -> Option<ImportGuard> {
+        self.begin_import_expecting(None)
     }
 
     fn is_current(&self, token: &LibraryToken) -> bool {
@@ -7120,21 +7177,31 @@ impl PigouneWindow {
     }
 
     async fn import_dropped(&self, drop: &gdk::Drop) {
+        let Some(guard) = self.begin_import_or_explain() else {
+            drop.finish(gdk::DragAction::empty());
+            return;
+        };
         let dropped = dropped_content::read(drop).await;
         drop.finish(gdk::DragAction::COPY);
-        self.import_content(dropped, self.target_collection()).await;
+        self.import_content(&guard, dropped, self.target_collection())
+            .await;
     }
 
-    async fn import_content(&self, dropped: Dropped, collection: Option<CollectionId>) {
+    async fn import_content(
+        &self,
+        guard: &ImportGuard,
+        dropped: Dropped,
+        collection: Option<CollectionId>,
+    ) {
         match dropped {
-            Dropped::Files(paths) => self.import_paths_into(paths, collection).await,
+            Dropped::Files(paths) => self.import_paths_into(guard, paths, collection).await,
             Dropped::Image(DroppedImage {
                 bytes,
                 name,
                 extension,
             }) => {
                 let name = name.unwrap_or_else(pasted_content::image_name);
-                self.import_image_bytes(&name, &extension, &bytes, collection)
+                self.import_image_bytes(guard, &name, &extension, &bytes, collection)
                     .await;
             }
             Dropped::Nothing => self.show_toast(&nothing_to_import_text()),
@@ -7162,8 +7229,10 @@ impl PigouneWindow {
             .modal(true)
             .filters(&image_filters())
             .build();
-        if let Ok(files) = file_dialog.open_multiple_future(Some(self)).await {
-            self.import_paths(paths_of(&files)).await;
+        if let Ok(files) = file_dialog.open_multiple_future(Some(self)).await
+            && let Some(guard) = self.begin_import_or_explain()
+        {
+            self.import_paths(&guard, paths_of(&files)).await;
         }
     }
 
@@ -7173,24 +7242,19 @@ impl PigouneWindow {
             .accept_label(gettext("_Import"))
             .modal(true)
             .build();
-        if let Ok(folders) = file_dialog.select_multiple_folders_future(Some(self)).await {
-            self.import_paths(paths_of(&folders)).await;
+        if let Ok(folders) = file_dialog.select_multiple_folders_future(Some(self)).await
+            && let Some(guard) = self.begin_import_or_explain()
+        {
+            self.import_paths(&guard, paths_of(&folders)).await;
         }
     }
 
-    async fn import_paths(&self, paths: Vec<PathBuf>) {
-        self.import_paths_into(paths, self.target_collection())
+    async fn import_paths(&self, guard: &ImportGuard, paths: Vec<PathBuf>) {
+        self.import_paths_into(guard, paths, self.target_collection())
             .await;
     }
 
-    async fn import_paths_into(&self, paths: Vec<PathBuf>, collection: Option<CollectionId>) {
-        let Some(guard) = self.begin_import() else {
-            return;
-        };
-        self.import_paths_guarded(&guard, paths, collection).await;
-    }
-
-    async fn import_paths_guarded(
+    async fn import_paths_into(
         &self,
         guard: &ImportGuard,
         paths: Vec<PathBuf>,
@@ -7208,6 +7272,9 @@ impl PigouneWindow {
                 .map(|collection| collection.name)
         });
         let Some(library) = self.imp().library.take() else {
+            self.show_toast(&gettext(
+                "The library was changed, so the image was not imported.",
+            ));
             return;
         };
 

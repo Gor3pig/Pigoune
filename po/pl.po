@@ -2091,6 +2091,17 @@ msgstr ""
 "zmienić inną bibliotekę. Utwórz niezależną kopię biblioteki, na przykład "
 "kopiując jej katalog w menedżerze plików, a następnie otwórz kopię."
 
+#: crates/pigoune-app/src/window.rs:7090
+msgid "The library was changed, so the image was not imported."
+msgstr ""
+"Biblioteka została zmieniona, więc obraz nie został zaimportowany."
+
+#: crates/pigoune-app/src/window.rs:7082
+msgid "An import is already in progress. Wait for it to finish, then try again."
+msgstr ""
+"Import jest już w toku. Zaczekaj na jego zakończenie, a potem spróbuj "
+"ponownie."
+
 #: crates/pigoune-app/src/window.rs:6990
 msgid "Wait for the import to finish before changing the library."
 msgstr "Zaczekaj na zakończenie importu, zanim zmienisz bibliotekę."
