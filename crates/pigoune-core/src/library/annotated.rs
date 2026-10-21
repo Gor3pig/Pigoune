@@ -161,11 +161,20 @@ impl Library {
         };
         let current: std::collections::HashSet<std::path::PathBuf> =
             renders.into_values().map(|render| render.file).collect();
-        let Ok(entries) = std::fs::read_dir(layout::annotated_dir(&self.root)) else {
+        let annotated = layout::annotated_dir(&self.root);
+        if super::cache_guard::check_folder(&self.root, &annotated).is_err() {
+            return;
+        }
+        let Ok(entries) = std::fs::read_dir(annotated) else {
             return;
         };
         for entry in entries.flatten() {
-            if !current.contains(&entry.path()) {
+            let is_ours = entry
+                .file_name()
+                .to_str()
+                .is_some_and(|name| layout::annotated_render_owner(name).is_some());
+            let is_plain_file = entry.file_type().is_ok_and(|kind| kind.is_file());
+            if is_ours && is_plain_file && !current.contains(&entry.path()) {
                 let _ = std::fs::remove_file(entry.path());
             }
         }

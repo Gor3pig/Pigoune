@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use super::{Library, LibraryError, layout};
+use super::{Library, LibraryError, cache_guard, layout};
 
 #[must_use]
 pub fn thumbnail_cache_bytes_in(root: &Path) -> u64 {
@@ -16,16 +16,20 @@ impl Library {
     }
 
     pub fn clear_thumbnail_cache(&self) -> Result<(), LibraryError> {
+        let cache = layout::cache_dir(&self.root);
+        cache_guard::check_folder(&self.root, &cache)?;
+        let mut kept = None;
         for folder in [
             layout::thumbnails_dir(&self.root),
             layout::annotated_dir(&self.root),
         ] {
-            match fs::remove_dir_all(folder) {
-                Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
-                _ => {}
+            match cache_guard::remove_tree_keeping_links(&folder) {
+                Ok(found) => kept = kept.or(found),
+                Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+                Err(error) => return Err(error.into()),
             }
         }
-        Ok(())
+        kept.map_or(Ok(()), |path| Err(LibraryError::UnsafeCache(path)))
     }
 }
 

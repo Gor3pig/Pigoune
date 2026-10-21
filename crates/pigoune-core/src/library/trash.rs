@@ -4,7 +4,9 @@ use std::time::Duration;
 
 use rusqlite::params;
 
-use super::{AssetId, Library, LibraryError, clock, details_store, ignored_duplicates, layout};
+use super::{
+    AssetId, Library, LibraryError, cache_guard, clock, details_store, ignored_duplicates, layout,
+};
 
 pub const TRASH_RETENTION: Duration = Duration::from_hours(30 * 24);
 
@@ -58,16 +60,30 @@ fn forget_files(root: &Path, asset: AssetId) {
 
 pub(super) fn forget_thumbnails(root: &Path, asset: AssetId) {
     forget_annotated_renders(root, asset);
-    let Ok(sizes) = fs::read_dir(layout::thumbnails_dir(root)) else {
+    let thumbnails = layout::thumbnails_dir(root);
+    if cache_guard::check_folder(root, &thumbnails).is_err() {
+        return;
+    }
+    let Ok(sizes) = fs::read_dir(thumbnails) else {
         return;
     };
     for size in sizes.flatten() {
-        let _ = fs::remove_file(size.path().join(layout::thumbnail_in_size_dir(asset)));
+        if !size.file_type().is_ok_and(|kind| kind.is_dir()) {
+            continue;
+        }
+        let bucket = size.path().join(Path::new(&layout::bucket_name(asset)));
+        if fs::symlink_metadata(&bucket).is_ok_and(|metadata| metadata.is_dir()) {
+            cache_guard::remove_plain_file(&size.path().join(layout::thumbnail_in_size_dir(asset)));
+        }
     }
 }
 
 pub(super) fn forget_annotated_renders(root: &Path, asset: AssetId) {
-    let Ok(entries) = fs::read_dir(layout::annotated_dir(root)) else {
+    let annotated = layout::annotated_dir(root);
+    if cache_guard::check_folder(root, &annotated).is_err() {
+        return;
+    }
+    let Ok(entries) = fs::read_dir(annotated) else {
         return;
     };
     for entry in entries.flatten() {

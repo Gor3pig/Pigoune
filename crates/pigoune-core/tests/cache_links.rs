@@ -459,3 +459,287 @@ fn a_missing_cache_is_made_again_as_a_plain_folder() {
     let metadata = fs::symlink_metadata(&cache).expect("recreated");
     assert!(metadata.is_dir() && !metadata.file_type().is_symlink());
 }
+
+#[test]
+fn a_cache_swapped_for_a_link_after_the_opening_stops_every_write_and_removal() {
+    let fixture = Fixture::new();
+    let (root, ids) = fixture.library_with_assets();
+    let witness = witness_in(fixture.path());
+    let mut library = open(&root).expect("opens");
+    let cache = root.join(CACHE_DIR_NAME);
+    let moved = fixture.path().join("cache-moved");
+    fs::rename(&cache, &moved).expect("moved");
+    symlink(&witness, &cache).expect("link");
+    let before = snapshot(&witness);
+    let flats = FlatFiles::new();
+
+    let pasted = library.save_pasted_image("Pasted", "png", b"png").err();
+    assert!(pasted.as_ref().is_some_and(refused), "{pasted:?}");
+    let exported = library.export_copies(&ids, &flats).err();
+    assert!(exported.as_ref().is_some_and(refused), "{exported:?}");
+    let copied = library.clipboard_copies(&ids, &flats).err();
+    assert!(copied.as_ref().is_some_and(refused), "{copied:?}");
+    let opened = library.opening_copy(ids[0], &flats).err();
+    assert!(opened.as_ref().is_some_and(refused), "{opened:?}");
+    let cleared = library.clear_thumbnail_cache().err();
+    assert!(cleared.as_ref().is_some_and(refused), "{cleared:?}");
+    library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: vec![ids[0]],
+            trashed: true,
+        })
+        .expect("trashed");
+    library.empty_trash().expect("emptied");
+
+    assert_eq!(snapshot(&witness), before);
+    stays_a_link(&cache, &witness);
+}
+
+#[test]
+fn an_entry_swapped_for_a_link_after_the_opening_is_never_followed_or_replaced() {
+    for entry in ["export", "clipboard", "open", "pasted", "thumbnails"] {
+        let fixture = Fixture::new();
+        let (root, ids) = fixture.library_with_assets();
+        let witness = witness_in(fixture.path());
+        let library = open(&root).expect("opens");
+        let link = root.join(CACHE_DIR_NAME).join(entry);
+        Fixture::replace_with_link(&link, &witness);
+        let before = snapshot(&witness);
+        let flats = FlatFiles::new();
+        let outcome = match entry {
+            "export" => library.export_copies(&ids, &flats).err(),
+            "clipboard" => library.clipboard_copies(&ids, &flats).err(),
+            "open" => library.opening_copy(ids[0], &flats).err(),
+            "pasted" => library.save_pasted_image("Pasted", "png", b"png").err(),
+            _ => library.clear_thumbnail_cache().err(),
+        };
+        assert!(
+            outcome.as_ref().is_some_and(refused),
+            "{entry}: {outcome:?}"
+        );
+        assert_eq!(snapshot(&witness), before, "{entry}");
+        stays_a_link(&link, &witness);
+    }
+}
+
+#[test]
+fn an_opening_folder_that_is_a_link_is_refused_and_kept() {
+    let fixture = Fixture::new();
+    let (root, ids) = fixture.library_with_assets();
+    let witness = witness_in(fixture.path());
+    let library = open(&root).expect("opens");
+    let link = root
+        .join(CACHE_DIR_NAME)
+        .join("open")
+        .join(ids[0].to_string());
+    Fixture::replace_with_link(&link, &witness);
+    let before = snapshot(&witness);
+    let outcome = library.opening_copy(ids[0], &FlatFiles::new()).err();
+    assert!(outcome.as_ref().is_some_and(refused), "{outcome:?}");
+    assert_eq!(snapshot(&witness), before);
+    stays_a_link(&link, &witness);
+}
+
+#[test]
+fn links_left_in_the_working_folders_survive_the_cleanups() {
+    let fixture = Fixture::new();
+    let (root, _) = fixture.library_with_assets();
+    let witness = witness_in(fixture.path());
+    let witness_file = witness_file(fixture.path());
+    let cache = root.join(CACHE_DIR_NAME);
+    let loose = cache.join("export/loose-link.png");
+    let in_pasted = cache.join("pasted/inner-link.png");
+    fs::create_dir_all(cache.join("export")).expect("export");
+    fs::create_dir_all(cache.join("pasted")).expect("pasted");
+    symlink(&witness_file, &loose).expect("link");
+    symlink(&witness, &in_pasted).expect("link");
+    let old_operation = cache.join("export/0000000000000-0000000000000000");
+    fs::create_dir_all(&old_operation).expect("operation");
+    fs::write(old_operation.join("a.png"), b"a").expect("file");
+    symlink(&witness_file, old_operation.join("escape")).expect("link");
+    let before = snapshot(&witness);
+    drop(open(&root).expect("opens"));
+    assert_eq!(snapshot(&witness), before);
+    assert_eq!(
+        fs::read_to_string(&witness_file).expect("read"),
+        "do not touch"
+    );
+    stays_a_link(&loose, &witness_file);
+    stays_a_link(&in_pasted, &witness);
+    stays_a_link(&old_operation.join("escape"), &witness_file);
+}
+
+const RENDER_KEY: &str = "0123456789abcdef0123456789abcdef";
+
+fn old_file(path: &Path, minutes: u64) {
+    let file = fs::OpenOptions::new().write(true).open(path).expect("file");
+    file.set_modified(std::time::SystemTime::now() - Duration::from_secs(minutes * 60))
+        .expect("age");
+}
+
+#[test]
+fn the_stale_renders_cleanup_removes_only_plain_files_of_pigoune_and_never_links() {
+    let fixture = Fixture::new();
+    let (root, _) = fixture.library_with_assets();
+    let witness = witness_file(fixture.path());
+    let annotated = root.join(CACHE_DIR_NAME).join("annotated");
+    fs::create_dir_all(&annotated).expect("annotated");
+    let stale = annotated.join(format!("{SOME_ID}-{RENDER_KEY}.png"));
+    let stale_partial = annotated.join(format!("{SOME_ID}-{RENDER_KEY}.partial"));
+    let stale_unique = annotated.join(format!("{SOME_ID}-{RENDER_KEY}.0123456789abcdef.partial"));
+    let foreign = annotated.join("foreign.png");
+    let linked = annotated.join(format!("{SOME_ID}-fedcba9876543210fedcba9876543210.png"));
+    let linked_partial = annotated.join(format!(
+        "{SOME_ID}-fedcba9876543210fedcba9876543210.partial"
+    ));
+    for file in [&stale, &stale_partial, &stale_unique, &foreign] {
+        fs::write(file, b"x").expect("file");
+    }
+    symlink(&witness, &linked).expect("link");
+    symlink(&witness, &linked_partial).expect("link");
+
+    drop(open(&root).expect("opens"));
+
+    assert!(!stale.exists());
+    assert!(!stale_partial.exists());
+    assert!(!stale_unique.exists());
+    assert!(foreign.exists());
+    stays_a_link(&linked, &witness);
+    stays_a_link(&linked_partial, &witness);
+    assert_eq!(fs::read_to_string(&witness).expect("read"), "do not touch");
+}
+
+#[test]
+fn the_thumbnail_regrouping_moves_plain_files_and_leaves_links_where_they_are() {
+    let fixture = Fixture::new();
+    let (root, _) = fixture.library_with_assets();
+    let witness = witness_file(fixture.path());
+    let size = root.join(CACHE_DIR_NAME).join("thumbnails/256");
+    fs::create_dir_all(&size).expect("size folder");
+    let plain = size.join(format!("{SOME_ID}.png"));
+    let other_id = "01a10769-97bf-7319-b05f-99fc751d6380";
+    let linked = size.join(format!("{other_id}.png"));
+    fs::write(&plain, b"thumbnail").expect("file");
+    symlink(&witness, &linked).expect("link");
+
+    drop(open(&root).expect("opens"));
+
+    assert!(!plain.exists());
+    assert_eq!(
+        fs::read(size.join("7f").join(format!("{SOME_ID}.png"))).expect("moved"),
+        b"thumbnail"
+    );
+    stays_a_link(&linked, &witness);
+    assert_eq!(fs::read_to_string(&witness).expect("read"), "do not touch");
+}
+
+#[test]
+fn deleting_an_asset_for_good_removes_its_plain_cache_files_and_never_a_link() {
+    let fixture = Fixture::new();
+    let (root, ids) = fixture.library_with_assets();
+    let witness = witness_file(fixture.path());
+    let mut library = open(&root).expect("opens");
+    let thumbnail = library.thumbnail_file(ids[0], 256);
+    let linked_thumbnail = library.thumbnail_file(ids[1], 256);
+    for file in [&thumbnail, &linked_thumbnail] {
+        fs::create_dir_all(file.parent().expect("bucket")).expect("bucket");
+    }
+    fs::write(&thumbnail, b"thumbnail").expect("thumbnail");
+    symlink(&witness, &linked_thumbnail).expect("link");
+    let annotated = root.join(CACHE_DIR_NAME).join("annotated");
+    fs::create_dir_all(&annotated).expect("annotated");
+    let render = annotated.join(format!("{}-{RENDER_KEY}.png", ids[0]));
+    let linked_render = annotated.join(format!("{}-{RENDER_KEY}.png", ids[1]));
+    let render_partial =
+        annotated.join(format!("{}-{RENDER_KEY}.0123456789abcdef.partial", ids[0]));
+    fs::write(&render, b"render").expect("render");
+    fs::write(&render_partial, b"partial").expect("partial");
+    symlink(&witness, &linked_render).expect("link");
+    library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: ids.clone(),
+            trashed: true,
+        })
+        .expect("trashed");
+
+    assert_eq!(library.empty_trash().expect("emptied"), 2);
+
+    assert!(!thumbnail.exists());
+    assert!(!render.exists());
+    assert!(!render_partial.exists());
+    stays_a_link(&linked_thumbnail, &witness);
+    stays_a_link(&linked_render, &witness);
+    assert_eq!(fs::read_to_string(&witness).expect("read"), "do not touch");
+}
+
+#[test]
+fn clearing_the_thumbnails_removes_plain_files_keeps_links_and_names_the_first_one() {
+    let fixture = Fixture::new();
+    let (root, _) = fixture.library_with_assets();
+    let witness = witness_file(fixture.path());
+    let library = open(&root).expect("opens");
+    let size = root.join(CACHE_DIR_NAME).join("thumbnails/256/ab");
+    fs::create_dir_all(&size).expect("bucket");
+    let plain = size.join("plain.png");
+    let linked = size.join("linked.png");
+    fs::write(&plain, b"thumbnail").expect("file");
+    symlink(&witness, &linked).expect("link");
+
+    let error = library
+        .clear_thumbnail_cache()
+        .expect_err("a link is reported");
+
+    assert!(refused(&error), "{error:?}");
+    assert!(format!("{error}").contains("linked.png"), "{error}");
+    assert!(!plain.exists());
+    stays_a_link(&linked, &witness);
+    assert_eq!(fs::read_to_string(&witness).expect("read"), "do not touch");
+}
+
+#[test]
+fn a_paste_works_while_a_link_stays_in_the_pasted_folder() {
+    let fixture = Fixture::new();
+    let (root, _) = fixture.library_with_assets();
+    let witness = witness_file(fixture.path());
+    let library = open(&root).expect("opens");
+    let pasted = root.join(CACHE_DIR_NAME).join("pasted");
+    fs::create_dir_all(&pasted).expect("pasted");
+    let linked = pasted.join("Pasted image.png");
+    symlink(&witness, &linked).expect("link");
+
+    let path = library
+        .save_pasted_image("Pasted image", "png", b"png")
+        .expect("paste");
+
+    assert_ne!(path, linked);
+    assert_eq!(fs::read(&path).expect("read"), b"png");
+    stays_a_link(&linked, &witness);
+    assert_eq!(fs::read_to_string(&witness).expect("read"), "do not touch");
+}
+
+#[test]
+fn an_old_ordinary_working_folder_is_still_cleaned_after_an_interruption() {
+    let fixture = Fixture::new();
+    let (root, _) = fixture.library_with_assets();
+    let cache = root.join(CACHE_DIR_NAME);
+    let export = cache.join("export");
+    fs::create_dir_all(&export).expect("export");
+    let unfinished = export.join(".0000000000000-0000000000000000.partial");
+    fs::create_dir_all(&unfinished).expect("staging");
+    fs::write(unfinished.join("a.png"), b"a").expect("file");
+    fs::write(export.join(".0000000000000-0000000000000000.bytes"), b"1").expect("size");
+    let expired = export.join("0000000000000-1111111111111111");
+    fs::create_dir_all(&expired).expect("operation");
+    fs::write(expired.join("a.png"), b"a").expect("file");
+    old_file(&expired.join("a.png"), 3);
+
+    drop(open(&root).expect("opens"));
+
+    assert!(!unfinished.exists());
+    assert!(!expired.exists());
+    assert!(
+        !export
+            .join(".0000000000000-0000000000000000.bytes")
+            .exists()
+    );
+}

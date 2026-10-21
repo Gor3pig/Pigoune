@@ -25,7 +25,9 @@ pub fn move_into_buckets(root: &Path) {
         return;
     };
     for size in sizes.flatten() {
-        move_folder_entries(&size.path(), asset_of_thumbnail, Leftover::Remove);
+        if size.file_type().is_ok_and(|kind| kind.is_dir()) {
+            move_folder_entries(&size.path(), asset_of_thumbnail, Leftover::Remove);
+        }
     }
 }
 
@@ -44,6 +46,11 @@ fn move_folder_entries(folder: &Path, asset_of: fn(&str) -> Option<AssetId>, lef
         let Some(id) = asset_of(&name.to_string_lossy()) else {
             continue;
         };
+        if matches!(leftover, Leftover::Remove)
+            && !entry.file_type().is_ok_and(|kind| kind.is_file())
+        {
+            continue;
+        }
         let bucket = folder.join(layout::bucket_name(id));
         let destination = bucket.join(&name);
         let moved = destination.symlink_metadata().is_err()
