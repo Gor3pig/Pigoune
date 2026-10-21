@@ -63,11 +63,9 @@ impl Library {
         now_ms: u64,
         space: SpaceProbe<'_>,
     ) -> Result<Vec<PathBuf>, LibraryError> {
-        let root = layout::export_dir(&self.root);
-        let clipboard = layout::clipboard_dir(&self.root);
         run_operation(
-            &root,
-            &[root.as_path(), clipboard.as_path()],
+            &layout::export_dir(&self.root),
+            &self.root,
             &live_transfer::is_protected,
             || self.transfer_items(assets, flats),
             now_ms,
@@ -133,11 +131,9 @@ impl Library {
         if items.is_empty() {
             return Ok(Vec::new());
         }
-        let root = layout::clipboard_dir(&self.root);
-        let export = layout::export_dir(&self.root);
         run_operation(
-            &root,
-            &[export.as_path(), root.as_path()],
+            &layout::clipboard_dir(&self.root),
+            &self.root,
             &live_transfer::is_protected,
             || Ok(items),
             now_ms,
@@ -323,9 +319,24 @@ fn random_part() -> u64 {
     Uuid::now_v7().as_u64_pair().1
 }
 
+pub(super) fn transfer_budget_roots(library_root: &Path) -> Vec<PathBuf> {
+    let mut roots = vec![
+        layout::export_dir(library_root),
+        layout::clipboard_dir(library_root),
+    ];
+    if let Ok(children) = fs::read_dir(layout::opening_dir(library_root)) {
+        roots.extend(children.flatten().filter_map(|child| {
+            let name = child.file_name();
+            let is_folder = child.file_type().is_ok_and(|kind| kind.is_dir());
+            (is_folder && AssetId::parse(&name.to_string_lossy()).is_some()).then(|| child.path())
+        }));
+    }
+    roots
+}
+
 fn run_operation(
     root: &Path,
-    budget_roots: &[&Path],
+    library_root: &Path,
     protected: &dyn Fn(&Path) -> bool,
     items_for: impl FnOnce() -> Result<Vec<ExportItem>, LibraryError>,
     now_ms: u64,
@@ -335,8 +346,12 @@ fn run_operation(
     export_lifetime::remove_unfinished(root);
     let items = items_for()?;
     let needed = items.iter().map(|item| item.bytes).sum();
-    export_lifetime::make_room_across(budget_roots, now_ms, needed, protected, &mut || space(root))
-        .map_err(|_| LibraryError::StorageFull)?;
+    let budget_roots = transfer_budget_roots(library_root);
+    let budget_roots: Vec<&Path> = budget_roots.iter().map(PathBuf::as_path).collect();
+    export_lifetime::make_room_across(&budget_roots, now_ms, needed, protected, &mut || {
+        space(root)
+    })
+    .map_err(|_| LibraryError::StorageFull)?;
     let operation = loop {
         let name = export_lifetime::operation_name(now_ms, random_part());
         match export_lifetime::create_staging(root, &name) {

@@ -453,4 +453,77 @@ mod tests {
         assert!(matches!(refused, Err(LibraryError::StorageFull)));
         assert!(export[0].exists());
     }
+
+    fn published_in(root: &Path, hours_old: u64, bytes: u64) -> PathBuf {
+        export_lifetime::secure_root(root).expect("root");
+        let name = export_lifetime::operation_name(NOW - hours_old * HOUR, hours_old + 100);
+        let staging = export_lifetime::create_staging(root, &name).expect("staging");
+        fs::write(staging.join("a.png"), b"a").expect("file");
+        export_lifetime::publish(root, &name, bytes).expect("published")
+    }
+
+    fn opening_root(library: &Library, asset: AssetId) -> PathBuf {
+        layout::opening_dir(library.root()).join(asset.to_string())
+    }
+
+    #[test]
+    fn the_opening_copies_count_in_the_budget_of_every_other_transfer() {
+        let (_workspace, library, png) = library();
+        let opened = published_in(&opening_root(&library, png), 1, 8 * GIB);
+
+        let export = library.export_operation(&[png], &FlatFiles::new(), NOW, &roomy);
+        let copy = library.clipboard_operation(&[png], &FlatFiles::new(), NOW, &roomy);
+
+        assert!(matches!(export, Err(LibraryError::StorageFull)));
+        assert!(matches!(copy, Err(LibraryError::StorageFull)));
+        assert!(opened.exists());
+    }
+
+    #[test]
+    fn a_transfer_frees_an_old_opening_copy_when_it_needs_the_room() {
+        let (_workspace, library, png) = library();
+        let opened = published_in(&opening_root(&library, png), 10, GIB);
+        let watched = opened.clone();
+        let space = move |_: &Path| {
+            Some(VolumeSpace {
+                free: if watched.exists() { GIB / 2 } else { 500 * GIB },
+                total: 100 * GIB,
+            })
+        };
+
+        let copy = library
+            .clipboard_operation(&[png], &FlatFiles::new(), NOW, &space)
+            .expect("there is room once the old opening copy is gone");
+
+        assert!(!opened.exists());
+        assert!(copy[0].exists());
+    }
+
+    #[test]
+    fn a_recent_opening_copy_is_never_freed_by_another_transfer() {
+        let (_workspace, library, png) = library();
+        let opened = published_in(&opening_root(&library, png), 1, GIB);
+
+        let result = library.export_operation(&[png], &FlatFiles::new(), NOW, &cramped);
+
+        assert!(matches!(result, Err(LibraryError::StorageFull)));
+        assert!(opened.exists());
+    }
+
+    #[test]
+    fn folders_that_are_not_real_asset_folders_are_left_out_of_the_budget() {
+        let (workspace, library, png) = library();
+        let opening = layout::opening_dir(library.root());
+        let stranger = published_in(&opening.join("not-an-asset"), 1, 8 * GIB);
+        let elsewhere = workspace.path().join("elsewhere");
+        let outside = published_in(&elsewhere, 1, 8 * GIB);
+        let linked = opening.join("01a15389-0f99-7438-9ab3-9d143a65c533");
+        symlink(&elsewhere, &linked).expect("link");
+
+        let result = library.export_operation(&[png], &FlatFiles::new(), NOW, &roomy);
+
+        assert!(result.is_ok());
+        assert!(stranger.exists());
+        assert!(outside.exists());
+    }
 }
