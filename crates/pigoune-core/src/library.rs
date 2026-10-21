@@ -60,7 +60,10 @@ pub use asset_command::{AssetCommand, AssetError, TextField};
 pub use batch_import::{
     ImportControl, ImportEnding, ImportProgress, ImportSummary, LARGE_FILE_BYTES,
 };
-pub use cache_guard::{create_cache_folder, write_render_file, write_thumbnail_file};
+pub use cache_guard::{
+    CacheFile, cache_file, create_cache_folder, open_plain_file, write_render_file,
+    write_thumbnail_file,
+};
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use duplicate_removal::{ConfirmedRemoval, MOST_CHOSEN_AT_ONCE, RemovalError};

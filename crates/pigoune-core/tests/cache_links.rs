@@ -446,7 +446,8 @@ fn a_library_reached_through_a_link_is_opened_normally() {
     let (root, _) = fixture.library_with_assets();
     let door = fixture.path().join("door.pigoune");
     symlink(&root, &door).expect("link");
-    assert!(open(&door).is_ok());
+    let opened = open(&door);
+    assert!(opened.is_ok(), "{:?}", opened.err());
 }
 
 #[test]

@@ -949,7 +949,9 @@ impl PigouneWindow {
         let mut not_ready = 0;
         for id in ids {
             match library.annotation_render(*id) {
-                Ok(Some(render)) if render.file.is_file() => {
+                Ok(Some(render))
+                    if pigoune_core::cache_file(&render.file) == pigoune_core::CacheFile::Plain =>
+                {
                     flats.insert(*id, render.file);
                 }
                 Ok(Some(_)) | Err(_) => not_ready += 1,

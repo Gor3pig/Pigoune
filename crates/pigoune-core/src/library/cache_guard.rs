@@ -1,6 +1,7 @@
 use std::ffi::OsStr;
-use std::fs::{self, DirBuilder, OpenOptions};
+use std::fs::{self, DirBuilder, File, OpenOptions};
 use std::io::{self, Write};
+use std::os::unix::fs::MetadataExt;
 use std::path::{Component, Path, PathBuf};
 use std::time::Duration;
 
@@ -169,6 +170,44 @@ pub(super) fn remove_tree_keeping_links(path: &Path) -> io::Result<Option<PathBu
 pub(super) fn remove_plain_file(path: &Path) -> bool {
     fs::symlink_metadata(path).is_ok_and(|metadata| metadata.is_file())
         && fs::remove_file(path).is_ok()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CacheFile {
+    Plain,
+    Missing,
+    Unsafe,
+}
+
+#[must_use]
+pub fn cache_file(path: &Path) -> CacheFile {
+    match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.is_file() => CacheFile::Plain,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => CacheFile::Missing,
+        _ => CacheFile::Unsafe,
+    }
+}
+
+pub(super) fn plain_file_length(path: &Path) -> Result<u64, LibraryError> {
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.is_file() {
+        Ok(metadata.len())
+    } else {
+        Err(unsafe_entry(path))
+    }
+}
+
+pub fn open_plain_file(path: &Path) -> io::Result<File> {
+    let before = fs::symlink_metadata(path)?;
+    if !before.is_file() {
+        return Err(io::Error::other(unsafe_entry(path)));
+    }
+    let file = File::open(path)?;
+    let opened = file.metadata()?;
+    if !opened.is_file() || opened.dev() != before.dev() || opened.ino() != before.ino() {
+        return Err(io::Error::other(unsafe_entry(path)));
+    }
+    Ok(file)
 }
 
 pub fn write_thumbnail_file(destination: &Path, content: &[u8]) -> Result<(), LibraryError> {

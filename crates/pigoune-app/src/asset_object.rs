@@ -216,7 +216,7 @@ impl PigouneAssetObject {
             return thumbnails::thumbnail(self.source_file(), self.thumbnail_file()).await;
         };
         let drawn = async {
-            if render.file.is_file() {
+            if pigoune_core::cache_file(&render.file) == pigoune_core::CacheFile::Plain {
                 return thumbnails::render(&render.file, thumbnails::THUMBNAIL_PIXELS).await;
             }
             annotated_files::reduced(

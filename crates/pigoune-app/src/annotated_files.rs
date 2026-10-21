@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::{Path, PathBuf};
 
 use gtk::gdk;
@@ -24,8 +23,10 @@ pub async fn ensure(
     source: &Path,
     widget: &impl IsA<gtk::Widget>,
 ) -> Option<PathBuf> {
-    if render.file.is_file() {
-        return Some(render.file.clone());
+    match pigoune_core::cache_file(&render.file) {
+        pigoune_core::CacheFile::Plain => return Some(render.file.clone()),
+        pigoune_core::CacheFile::Unsafe => return None,
+        pigoune_core::CacheFile::Missing => {}
     }
     let document = AnnotationDocument::from_json(&render.document).ok()?;
     let texture = load_source(source).await?;
@@ -42,7 +43,7 @@ pub fn cropped_size(document: &str) -> Option<(u32, u32)> {
 
 pub fn png_size(file: &Path) -> Option<(u32, u32)> {
     let mut header = [0_u8; 24];
-    std::io::Read::read_exact(&mut fs::File::open(file).ok()?, &mut header).ok()?;
+    std::io::Read::read_exact(&mut pigoune_core::open_plain_file(file).ok()?, &mut header).ok()?;
     let width = u32::from_be_bytes(header[16..20].try_into().ok()?);
     let height = u32::from_be_bytes(header[20..24].try_into().ok()?);
     (&header[1..4] == b"PNG" && width > 0 && height > 0).then_some((width, height))
@@ -83,6 +84,8 @@ pub async fn reduced(
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use super::*;
 
     #[test]
@@ -128,6 +131,9 @@ mod tests {
         fs::write(&text, b"not an image at all, but long enough to be read").expect("written");
         assert_eq!(png_size(&text), None);
         assert_eq!(png_size(&folder.join("missing.png")), None);
+        let linked = folder.join("linked.png");
+        std::os::unix::fs::symlink(&png, &linked).expect("link");
+        assert_eq!(png_size(&linked), None);
         let _ = fs::remove_dir_all(folder);
     }
 }
