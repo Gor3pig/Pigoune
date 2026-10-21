@@ -25,7 +25,7 @@ pub const CACHE_FOLDER_NAMES: [&str; 6] = [
 
 const UUID_TEXT_LENGTH: usize = 36;
 const RENDER_KEY_LENGTH: usize = 32;
-const RANDOM_TEXT_LENGTH: usize = 16;
+pub const RANDOM_TEXT_LENGTH: usize = 16;
 const MAX_NAME_BYTES: usize = 200;
 const BUCKET_NAME_LENGTH: usize = 2;
 const UNFINISHED_IMPORT_SUFFIX: &str = ".partial";

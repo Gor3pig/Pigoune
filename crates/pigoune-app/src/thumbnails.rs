@@ -1,7 +1,5 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
 
 use gtk::prelude::*;
@@ -110,23 +108,8 @@ fn store(texture: &gdk::Texture, thumbnail_file: &Path) {
     let thumbnail_file = thumbnail_file.to_path_buf();
     drop(gio::spawn_blocking(move || {
         let png = texture.save_to_png_bytes();
-        let _ = write_atomically(&thumbnail_file, &png);
+        let _ = pigoune_core::write_thumbnail_file(&thumbnail_file, &png);
     }));
-}
-
-fn write_atomically(destination: &Path, content: &[u8]) -> io::Result<()> {
-    let folder = destination
-        .parent()
-        .ok_or_else(|| io::Error::other("a thumbnail file always has a folder"))?;
-    fs::create_dir_all(folder)?;
-    let file_name = destination
-        .file_name()
-        .ok_or_else(|| io::Error::other("a thumbnail file always has a name"))?;
-    let partial = folder.join(format!(".{}.partial", file_name.to_string_lossy()));
-    fs::write(&partial, content)?;
-    fs::rename(&partial, destination).inspect_err(|_| {
-        let _ = fs::remove_file(&partial);
-    })
 }
 
 pub fn loader_for(file: &Path) -> glycin::Loader {
@@ -266,7 +249,6 @@ mod tests {
 
     use super::{
         REMEMBERED_THUMBNAILS, ThumbnailCache, fit_within, load_stored, scaled_to, shrink,
-        write_atomically,
     };
     use crate::asset_colors;
 
@@ -330,9 +312,10 @@ mod tests {
     #[test]
     fn a_thumbnail_is_written_whole_with_its_folders() {
         let workspace = std::env::temp_dir().join(format!("pigoune-cache-{}", std::process::id()));
-        let destination = workspace.join("thumbnails/256/asset.png");
+        fs::create_dir_all(&workspace).expect("workspace");
+        let destination = workspace.join("cache/thumbnails/256/asset.png");
 
-        write_atomically(&destination, b"content").expect("thumbnail written");
+        pigoune_core::write_thumbnail_file(&destination, b"content").expect("thumbnail written");
 
         assert_eq!(fs::read(&destination).expect("readable"), b"content");
         let leftovers = fs::read_dir(destination.parent().expect("folder"))
@@ -359,13 +342,15 @@ mod tests {
     #[test]
     fn a_stored_thumbnail_is_read_back_and_a_damaged_one_is_ignored() {
         let workspace = std::env::temp_dir().join(format!("pigoune-stored-{}", std::process::id()));
-        let stored = workspace.join("stored.png");
-        let damaged = workspace.join("damaged.png");
-        let missing = workspace.join("missing.png");
+        fs::create_dir_all(&workspace).expect("workspace");
+        let stored = workspace.join("cache/stored.png");
+        let damaged = workspace.join("cache/damaged.png");
+        let missing = workspace.join("cache/missing.png");
         let pixels = glib::Bytes::from_owned(vec![200_u8; 3 * 4 * 4]);
         let texture = gdk::MemoryTexture::new(3, 4, gdk::MemoryFormat::R8g8b8a8, &pixels, 12);
-        write_atomically(&stored, &texture.save_to_png_bytes()).expect("stored");
-        write_atomically(&damaged, b"\x89PNG\r\n\x1a\nbroken").expect("damaged written");
+        pigoune_core::write_thumbnail_file(&stored, &texture.save_to_png_bytes()).expect("stored");
+        pigoune_core::write_thumbnail_file(&damaged, b"\x89PNG\r\n\x1a\nbroken")
+            .expect("damaged written");
 
         let context = glib::MainContext::new();
         let read_back = context.block_on(load_stored(&stored));
