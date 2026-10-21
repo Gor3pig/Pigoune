@@ -241,8 +241,10 @@ fn remove_unfinished_imports(root: &Path) {
         return;
     };
     for entry in entries.flatten() {
-        if layout::is_unfinished_import(&entry.file_name().to_string_lossy()) {
-            let _ = fs::remove_dir_all(entry.path());
+        if layout::is_unfinished_import(&entry.file_name().to_string_lossy())
+            && entry.file_type().is_ok_and(|kind| kind.is_dir())
+        {
+            let _ = cache_guard::remove_tree_keeping_links(&entry.path());
         }
     }
 }

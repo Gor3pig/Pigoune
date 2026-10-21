@@ -134,3 +134,32 @@ fn verify_files_folder(root: &Path) -> Result<(), LibraryError> {
     }
     Ok(())
 }
+
+pub(super) fn check_files_folder(root: &Path) -> Result<(), LibraryError> {
+    require_plain(&layout::files_dir(root), true)
+}
+
+pub(super) fn check_asset_folder(root: &Path, id: AssetId) -> Result<(), LibraryError> {
+    check_files_folder(root)?;
+    require_plain(&layout::bucket_dir(root, id), true)?;
+    require_plain(&layout::asset_dir(root, id), true)
+}
+
+pub(super) fn prepare_bucket(bucket: &Path) -> Result<(), LibraryError> {
+    if let Some(files) = bucket.parent() {
+        require_plain(files, true)?;
+    }
+    cache_guard::make_plain_folder(bucket).map_err(|_| refused(bucket))
+}
+
+pub(super) fn prepare_asset_folder(root: &Path, id: AssetId) -> Result<(), LibraryError> {
+    check_files_folder(root)?;
+    prepare_bucket(&layout::bucket_dir(root, id))?;
+    cache_guard::make_plain_folder(&layout::asset_dir(root, id)).map_err(|_| refused(root))
+}
+
+pub(super) fn remove_asset_folder(root: &Path, id: AssetId) -> Result<(), LibraryError> {
+    check_asset_folder(root, id)?;
+    cache_guard::remove_tree_keeping_links(&layout::asset_dir(root, id))?;
+    Ok(())
+}

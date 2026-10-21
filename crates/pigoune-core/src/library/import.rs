@@ -93,6 +93,7 @@ impl Library {
         place: impl FnOnce(&Connection) -> Result<Option<CollectionId>, LibraryError>,
         batch: &mut ImportBatch,
     ) -> Result<(), ImportError> {
+        super::storage_guard::check_files_folder(&self.root)?;
         let staging = StagingDir::create(layout::unfinished_import_dir(&self.root, id))?;
         let copy_path = staging.path().join(&prepared.original_file_name);
         if content::copy_with_digest(&prepared.source, &copy_path)? != prepared.digest {

@@ -196,7 +196,10 @@ pub fn unfinished_replacement_name(id: AssetId) -> String {
 }
 
 pub fn is_unfinished_import(entry_name: &str) -> bool {
-    entry_name.starts_with('.') && entry_name.ends_with(UNFINISHED_IMPORT_SUFFIX)
+    entry_name
+        .strip_prefix('.')
+        .and_then(|rest| rest.strip_suffix(UNFINISHED_IMPORT_SUFFIX))
+        .is_some_and(|id| AssetId::parse(id).is_some())
 }
 
 fn strip_library_extension(name: &str) -> &str {
