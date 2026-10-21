@@ -297,10 +297,15 @@ pub fn remove_entry(root: &Path, entry: &Entry) -> io::Result<()> {
     let metadata = fs::symlink_metadata(&path)?;
     match entry.kind {
         EntryKind::Operation if metadata.is_dir() => {
-            if cache_guard::remove_tree_keeping_links(&path)?.is_some() {
-                return Err(io::Error::other("a link was kept"));
+            let kept = cache_guard::remove_tree_keeping_links(&path)?;
+            let size_file = root.join(size_name(&entry.name));
+            if kept.is_some() && cache_guard::holds_plain_file(&path)? {
+                return Err(io::Error::other("plain files remain"));
             }
-            cache_guard::remove_plain_file(&root.join(size_name(&entry.name)));
+            cache_guard::remove_plain_file(&size_file);
+            if kept.is_some() && fs::symlink_metadata(&size_file).is_ok() {
+                return Err(io::Error::other("the size record remains"));
+            }
             Ok(())
         }
         EntryKind::LooseFile if metadata.is_file() => fs::remove_file(&path),
@@ -358,7 +363,7 @@ pub fn tidy_children(parent: &Path, now_ms: u64, is_root_name: &dyn Fn(&str) -> 
 mod tests {
     use std::cell::{Cell, RefCell};
     use std::fs;
-    use std::os::unix::fs::symlink;
+    use std::os::unix::fs::{PermissionsExt, symlink};
 
     use super::{
         Age, BUDGET_BYTES, Entry, EntryKind, MINIMUM_KEEP_MS, NORMAL_KEEP_MS, Shortage,
@@ -567,7 +572,7 @@ mod tests {
 
         let entries = list_entries(&root);
         assert_eq!(entries.len(), 1);
-        assert!(remove_entry(&root, &entries[0]).is_err());
+        remove_entry(&root, &entries[0]).expect("only links remain");
 
         assert!(root.join(&name).join("escape").is_symlink());
         assert!(root.join(&name).join("file").is_symlink());
@@ -715,5 +720,125 @@ mod tests {
 
         assert!(spared.exists());
         assert!(!removed.exists());
+    }
+
+    fn with_links(operation: &std::path::Path, outside: &std::path::Path) {
+        fs::create_dir(operation.join("sub")).expect("sub");
+        fs::write(operation.join("sub/b.png"), vec![1_u8; 4096]).expect("file");
+        symlink(outside.join("keep.txt"), operation.join("link")).expect("link");
+        symlink(outside, operation.join("sub/folder-link")).expect("link");
+    }
+
+    fn outside_witness(workspace: &std::path::Path) -> std::path::PathBuf {
+        let outside = workspace.join("outside");
+        fs::create_dir(&outside).expect("outside");
+        fs::write(outside.join("keep.txt"), b"keep").expect("witness");
+        outside
+    }
+
+    fn recorded_size_of(root: &std::path::Path, operation: &std::path::Path) -> std::path::PathBuf {
+        let name = operation.file_name().expect("name").to_string_lossy();
+        root.join(super::size_name(&name))
+    }
+
+    fn running_as_root() -> bool {
+        use std::os::unix::fs::MetadataExt;
+        fs::metadata("/proc/self").is_ok_and(|metadata| metadata.uid() == 0)
+    }
+
+    #[test]
+    fn removing_an_operation_that_holds_links_succeeds_once_every_plain_file_is_gone() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let outside = outside_witness(workspace.path());
+        let root = workspace.path().join("export");
+        let operation = published(&root, 30, 5 * GIB);
+        with_links(&operation, &outside);
+        let entries = list_entries(&root);
+        assert_eq!(entries[0].bytes, 5 * GIB);
+
+        remove_entry(&root, &entries[0]).expect("the plain files are gone");
+
+        assert!(!operation.join("a.png").exists());
+        assert!(!operation.join("sub/b.png").exists());
+        assert!(operation.join("link").is_symlink());
+        assert!(operation.join("sub/folder-link").is_symlink());
+        assert!(!recorded_size_of(&root, &operation).exists());
+        assert_eq!(list_entries(&root)[0].bytes, 0);
+        assert_eq!(fs::read(outside.join("keep.txt")).expect("kept"), b"keep");
+    }
+
+    #[test]
+    fn an_operation_that_kept_only_links_no_longer_weighs_on_the_budget() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let outside = outside_witness(workspace.path());
+        let root = workspace.path().join("export");
+        let operation = published(&root, 5, 9 * GIB);
+        with_links(&operation, &outside);
+
+        let result = make_room_across(&[&root], NOW, GIB, &|_| false, &mut roomy);
+
+        assert_eq!(result, Ok(()));
+        assert!(operation.join("link").is_symlink());
+        assert!(!operation.join("a.png").exists());
+        assert_eq!(fs::read(outside.join("keep.txt")).expect("kept"), b"keep");
+    }
+
+    #[test]
+    fn a_plain_file_that_cannot_be_removed_keeps_the_whole_operation_counted() {
+        if running_as_root() {
+            return;
+        }
+        let workspace = tempfile::tempdir().expect("workspace");
+        let outside = outside_witness(workspace.path());
+        let root = workspace.path().join("export");
+        let operation = published(&root, 5, 9 * GIB);
+        with_links(&operation, &outside);
+        fs::set_permissions(operation.join("sub"), fs::Permissions::from_mode(0o500))
+            .expect("read only folder");
+
+        let entries = list_entries(&root);
+        let removal = remove_entry(&root, &entries[0]);
+        let result = make_room_across(&[&root], NOW, GIB, &|_| false, &mut roomy);
+
+        fs::set_permissions(operation.join("sub"), fs::Permissions::from_mode(0o700))
+            .expect("folder restored");
+        assert!(removal.is_err());
+        assert!(operation.join("sub/b.png").exists());
+        assert!(recorded_size_of(&root, &operation).exists());
+        assert_eq!(list_entries(&root)[0].bytes, 9 * GIB);
+        assert_eq!(result, Err(Shortage));
+        assert_eq!(fs::read(outside.join("keep.txt")).expect("kept"), b"keep");
+    }
+
+    #[test]
+    fn an_operation_without_links_is_removed_with_its_size_record_as_before() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let root = workspace.path().join("export");
+        let operation = published(&root, 30, GIB);
+        let entries = list_entries(&root);
+
+        remove_entry(&root, &entries[0]).expect("removed");
+
+        assert!(!operation.exists());
+        assert!(!recorded_size_of(&root, &operation).exists());
+    }
+
+    #[test]
+    fn a_protected_operation_holding_links_is_neither_cleaned_nor_uncounted() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let outside = outside_witness(workspace.path());
+        let root = workspace.path().join("clipboard");
+        let operation = published(&root, 30, 6 * GIB);
+        with_links(&operation, &outside);
+        let keep = operation.clone();
+
+        let result = make_room_across(&[&root], NOW, 3 * GIB, &|path| path == keep, &mut roomy);
+        tidy_except(&root, NOW, &|path| path == keep);
+
+        assert_eq!(result, Err(Shortage));
+        assert!(operation.join("a.png").exists());
+        assert!(operation.join("sub/b.png").exists());
+        assert!(recorded_size_of(&root, &operation).exists());
+        assert!(operation.join("link").is_symlink());
     }
 }
