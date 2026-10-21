@@ -2050,6 +2050,19 @@ msgstr ""
 "Esta biblioteca parece danificada. Seus arquivos continuam na pasta “files” "
 "dela."
 
+#: crates/pigoune-app/src/error_messages.rs:123
+#, rust-format
+msgid ""
+"Pigoune cannot use “{entry}” in the cache of this library, because it is a "
+"link or another kind of item than expected. For safety, Pigoune does not "
+"follow it. You can look at it in the library folder, then rename or remove "
+"it yourself and try again."
+msgstr ""
+"O Pigoune não pode usar “{entry}” no cache desta biblioteca, porque esta "
+"entrada é um link ou não é do tipo esperado. Por segurança, o Pigoune não a "
+"segue. Você pode examiná-la na pasta da biblioteca e depois renomeá-la ou "
+"removê-la por conta própria, e tentar de novo."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

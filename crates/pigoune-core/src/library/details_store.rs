@@ -109,7 +109,8 @@ pub fn move_out_of_assets(connection: &Connection, root: &Path) -> Result<(), Li
 }
 
 fn copy_to_details_file(connection: &Connection, root: &Path) -> rusqlite::Result<()> {
-    fs::create_dir_all(root.join(layout::CACHE_DIR_NAME)).map_err(io_error)?;
+    super::cache_guard::ensure_cache_folder(root)
+        .map_err(|error| io_error(std::io::Error::other(error.to_string())))?;
     let mut target = Connection::open(layout::details_path(root))?;
     target.execute_batch(&SCHEMA.replace("details.", ""))?;
     let transaction = target.transaction()?;

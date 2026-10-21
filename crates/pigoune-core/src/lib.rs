@@ -22,8 +22,9 @@ pub use library::{
     ReplaceError, SIMILAR_DISTANCE, SimilarAsset, SimilarSearch, SmartCollection,
     SmartCollectionCommand, SmartCollectionError, SmartCollectionId, SpaceProbe, StorageUse,
     TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VERY_CLOSE_DISTANCE,
-    ViewCounts, VolumeSpace, comparable, library_display_name, oldest_compatible_version,
-    query_groups, query_text, query_word_count, same_tag_name, thumbnail_cache_bytes_in,
+    ViewCounts, VolumeSpace, cache_entry_label, comparable, create_cache_folder,
+    library_display_name, oldest_compatible_version, query_groups, query_text, query_word_count,
+    same_tag_name, thumbnail_cache_bytes_in,
 };
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,

@@ -120,6 +120,10 @@ pub fn describe(error: &LibraryError) -> String {
         LibraryError::Damaged => {
             gettext("This library seems to be damaged. Your files are still in its “files” folder.")
         }
+        LibraryError::UnsafeCache(entry) => gettext(
+            "Pigoune cannot use “{entry}” in the cache of this library, because it is a link or another kind of item than expected. For safety, Pigoune does not follow it. You can look at it in the library folder, then rename or remove it yourself and try again.",
+        )
+        .replace("{entry}", &pigoune_core::cache_entry_label(entry)),
         LibraryError::Io(_) | LibraryError::Database(_) => {
             gettext("An unexpected error occurred: {error}").replace("{error}", &error.to_string())
         }
@@ -208,5 +212,31 @@ pub fn describe_tag(error: &TagError) -> String {
         TagError::Cycle => gettext("A tag cannot be moved into itself or one of its sub-tags."),
         TagError::ContainsSlash => gettext("A tag name cannot contain a slash."),
         TagError::Library(error) => describe(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use pigoune_core::LibraryError;
+
+    use super::describe;
+
+    #[test]
+    fn a_refused_cache_entry_is_named_from_the_cache_folder_and_explained() {
+        let error = LibraryError::UnsafeCache(PathBuf::from(
+            "/library/Design.pigoune/cache/thumbnails/128",
+        ));
+
+        let text = describe(&error);
+
+        assert!(text.contains("“cache/thumbnails/128”"), "{text}");
+        assert!(text.contains("does not follow it"), "{text}");
+        assert!(text.contains("rename or remove it yourself"), "{text}");
+        assert!(
+            !text.contains('\u{2014}') && !text.contains('\u{2013}'),
+            "{text}"
+        );
     }
 }

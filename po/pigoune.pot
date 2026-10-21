@@ -2022,6 +2022,15 @@ msgid ""
 "This library seems to be damaged. Your files are still in its “files” folder."
 msgstr ""
 
+#: crates/pigoune-app/src/error_messages.rs:123
+#, rust-format
+msgid ""
+"Pigoune cannot use “{entry}” in the cache of this library, because it is a "
+"link or another kind of item than expected. For safety, Pigoune does not "
+"follow it. You can look at it in the library folder, then rename or remove "
+"it yourself and try again."
+msgstr ""
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

@@ -1,9 +1,25 @@
 use std::io;
-use std::path::PathBuf;
+use std::path::{Component, Path, PathBuf};
 
 use rusqlite::ErrorCode;
 
 use super::{AssetId, CollectionId};
+
+#[must_use]
+pub fn cache_entry_label(path: &Path) -> String {
+    let components: Vec<Component<'_>> = path.components().collect();
+    let Some(start) = components
+        .iter()
+        .rposition(|component| component.as_os_str() == super::layout::CACHE_DIR_NAME)
+    else {
+        return path.display().to_string();
+    };
+    components[start..]
+        .iter()
+        .map(|component| component.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum LibraryError {
@@ -27,6 +43,8 @@ pub enum LibraryError {
     PermissionDenied,
     #[error("the library database is damaged")]
     Damaged,
+    #[error("{} is a link or not the kind of item that Pigoune expects in the cache", cache_entry_label(.0))]
+    UnsafeCache(PathBuf),
     #[error(transparent)]
     Io(io::Error),
     #[error(transparent)]
