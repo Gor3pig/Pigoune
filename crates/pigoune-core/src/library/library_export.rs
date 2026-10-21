@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
-use std::fs::{self, File};
+use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
 use super::AssetId;
 use super::export::{
     FLAT_EXTENSION, FlatFiles, base_name_of, create_free_file, export_base_name, flat_unavailable,
-    free_name, original_extension,
+    free_name, open_source, original_extension,
 };
 use super::layout::library_display_name;
 use super::{Asset, AssetView, Collection, CollectionId, Library, LibraryError};
@@ -290,7 +290,8 @@ fn copy_file(
     };
     let (mut target, copy) =
         create_free_file(folder, &file.base_name, file.extension.as_deref(), taken)?;
-    let copied = File::open(&source_path).and_then(|mut source| io::copy(&mut source, &mut target));
+    let copied = open_source(&source_path, file.flat_of.is_some())
+        .and_then(|mut source| io::copy(&mut source, &mut target));
     if copied.is_err() {
         let _ = fs::remove_file(&copy);
     }

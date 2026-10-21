@@ -95,7 +95,7 @@ pub fn side_of_thumbnails() -> i32 {
 }
 
 async fn load_stored(thumbnail_file: &Path) -> Option<gdk::Texture> {
-    if !thumbnail_file.is_file() {
+    if pigoune_core::cache_file(thumbnail_file) != pigoune_core::CacheFile::Plain {
         return None;
     }
     let mut image = loader_for(thumbnail_file).load().await.ok()?;
@@ -104,6 +104,9 @@ async fn load_stored(thumbnail_file: &Path) -> Option<gdk::Texture> {
 }
 
 fn store(texture: &gdk::Texture, thumbnail_file: &Path) {
+    if pigoune_core::cache_file(thumbnail_file) == pigoune_core::CacheFile::Unsafe {
+        return;
+    }
     let texture = texture.clone();
     let thumbnail_file = thumbnail_file.to_path_buf();
     drop(gio::spawn_blocking(move || {
@@ -362,5 +365,32 @@ mod tests {
         assert_eq!((read_back.width(), read_back.height()), (3, 4));
         assert!(from_damaged.is_none());
         assert!(from_missing.is_none());
+    }
+
+    #[test]
+    fn a_thumbnail_that_is_a_link_is_never_loaded() {
+        let workspace = std::env::temp_dir().join(format!("pigoune-linked-{}", std::process::id()));
+        fs::create_dir_all(workspace.join("cache")).expect("workspace");
+        let outside = workspace.join("outside.png");
+        let pixels = glib::Bytes::from_owned(vec![200_u8; 3 * 4 * 4]);
+        let texture = gdk::MemoryTexture::new(3, 4, gdk::MemoryFormat::R8g8b8a8, &pixels, 12);
+        fs::write(&outside, texture.save_to_png_bytes()).expect("outside image");
+        let linked = workspace.join("cache/linked.png");
+        std::os::unix::fs::symlink(&outside, &linked).expect("link");
+        let broken = workspace.join("cache/broken.png");
+        std::os::unix::fs::symlink(workspace.join("nothing.png"), &broken).expect("link");
+
+        let context = glib::MainContext::new();
+        let from_link = context.block_on(load_stored(&linked));
+        let from_broken = context.block_on(load_stored(&broken));
+        let still_a_link = fs::symlink_metadata(&linked).expect("link").is_symlink();
+        let outside_kept =
+            fs::read(&outside).expect("outside") == texture.save_to_png_bytes().to_vec();
+
+        fs::remove_dir_all(&workspace).expect("workspace removed");
+        assert!(from_link.is_none());
+        assert!(from_broken.is_none());
+        assert!(still_a_link);
+        assert!(outside_kept);
     }
 }

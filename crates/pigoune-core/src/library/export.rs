@@ -85,20 +85,25 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
-            let (source, extension) = if annotated.contains(id) {
+            let (source, extension, rendered) = if annotated.contains(id) {
                 let Some(flat) = flats.get(id) else {
                     return Err(flat_unavailable().into());
                 };
-                (flat.clone(), Some(FLAT_EXTENSION.to_owned()))
+                (flat.clone(), Some(FLAT_EXTENSION.to_owned()), true)
             } else {
-                (self.file_of(&asset), original_extension(&asset))
+                (self.file_of(&asset), original_extension(&asset), false)
             };
-            let bytes = fs::metadata(&source)?.len();
+            let bytes = if rendered {
+                cache_guard::plain_file_length(&source)?
+            } else {
+                fs::metadata(&source)?.len()
+            };
             items.push(ExportItem {
                 source,
                 base: base_name_of(&asset),
                 extension,
                 bytes,
+                rendered,
             });
         }
         Ok(items)
@@ -248,16 +253,16 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
-            let (path, extension) = if annotated.contains(id) {
+            let (path, extension, rendered) = if annotated.contains(id) {
                 let Some(flat) = flats.get(id) else {
                     failures.push(failure_of(&asset, flat_unavailable()));
                     continue;
                 };
-                (flat.clone(), Some(FLAT_EXTENSION.to_owned()))
+                (flat.clone(), Some(FLAT_EXTENSION.to_owned()), true)
             } else {
-                (self.file_of(&asset), original_extension(&asset))
+                (self.file_of(&asset), original_extension(&asset), false)
             };
-            let mut source = match File::open(path) {
+            let mut source = match open_source(&path, rendered) {
                 Ok(source) => source,
                 Err(error) => {
                     failures.push(failure_of(&asset, error));
@@ -280,6 +285,14 @@ impl Library {
             }
         }
         Ok(CopyReport { copies, failures })
+    }
+}
+
+pub(super) fn open_source(path: &Path, rendered: bool) -> io::Result<File> {
+    if rendered {
+        cache_guard::open_plain_file(path)
+    } else {
+        File::open(path)
     }
 }
 
@@ -327,6 +340,7 @@ struct ExportItem {
     base: String,
     extension: Option<String>,
     bytes: u64,
+    rendered: bool,
 }
 
 fn now_ms() -> u64 {
@@ -406,7 +420,7 @@ fn fill_operation(
     let mut names = Vec::with_capacity(items.len());
     let mut bytes = 0;
     for item in items {
-        let mut source = File::open(&item.source)?;
+        let mut source = open_source(&item.source, item.rendered)?;
         let (mut file, copy) =
             create_free_file(staging, &item.base, item.extension.as_deref(), &mut taken)?;
         bytes += io::copy(&mut source, &mut file)?;
