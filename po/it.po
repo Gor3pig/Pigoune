@@ -2095,6 +2095,11 @@ msgstr ""
 "della libreria, per esempio copiandone la cartella con il gestore di "
 "file, poi apri la copia."
 
+#: crates/pigoune-app/src/window.rs:6990
+msgid "Wait for the import to finish before changing the library."
+msgstr ""
+"Attendi la fine dell’importazione prima di cambiare libreria."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

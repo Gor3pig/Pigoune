@@ -323,6 +323,7 @@ mod imp {
         pub activity: crate::analysis_pace::Activity,
         pub library_generation: Cell<u32>,
         pub library_actions_enabled: Cell<bool>,
+        pub importing: Cell<bool>,
         pub update_news: RefCell<Option<UpdateNews>>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
@@ -578,7 +579,7 @@ mod imp {
                 },
             );
             class.install_action(CLOSE_LIBRARY_ACTION, None, |window, _, _| {
-                window.close_library();
+                window.close_library_if_allowed();
             });
             class.install_action_async(IMPORT_FILES_ACTION, None, |window, _, _| async move {
                 window.choose_files_to_import().await;
@@ -675,6 +676,24 @@ mod imp {
 
     impl ApplicationWindowImpl for PigouneWindow {}
     impl AdwApplicationWindowImpl for PigouneWindow {}
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct LibraryToken {
+    root: PathBuf,
+    generation: u32,
+}
+
+struct ImportGuard {
+    window: PigouneWindow,
+    token: LibraryToken,
+}
+
+impl Drop for ImportGuard {
+    fn drop(&mut self) {
+        self.window.imp().importing.set(false);
+        self.window.set_importing(false);
+    }
 }
 
 glib::wrapper! {
@@ -1509,6 +1528,9 @@ impl PigouneWindow {
 
     async fn reopen_library_at(&self, root: PathBuf) {
         loop {
+            if self.refuse_library_switch() {
+                return;
+            }
             let error = match Library::open(&root) {
                 Ok(library) => {
                     self.show_library(library);
@@ -2091,7 +2113,11 @@ impl PigouneWindow {
         dialog.connect_library_created(glib::clone!(
             #[weak(rename_to = window)]
             self,
-            move |library| window.show_library(library)
+            move |library| {
+                if !window.refuse_library_switch() {
+                    window.show_library(library);
+                }
+            }
         ));
         dialog.present(Some(self));
     }
@@ -2110,7 +2136,7 @@ impl PigouneWindow {
     }
 
     fn open_library_at(&self, root: &Path) {
-        if self.is_showing_library_at(root) {
+        if self.refuse_library_switch() || self.is_showing_library_at(root) {
             return;
         }
         match Library::open(root) {
@@ -2635,6 +2661,9 @@ impl PigouneWindow {
     }
 
     fn open_recent_library(&self, path: &str) {
+        if self.refuse_library_switch() {
+            return;
+        }
         let root = PathBuf::from(path);
         if self.is_showing_library_at(&root) {
             return;
@@ -2656,11 +2685,19 @@ impl PigouneWindow {
         }
     }
 
+    fn close_library_if_allowed(&self) {
+        if !self.refuse_library_switch() {
+            self.close_library();
+        }
+    }
+
     fn close_library(&self) {
         let imp = self.imp();
         self.forget_undo_toast();
         self.reset_search();
         imp.library.replace(None);
+        imp.library_generation
+            .set(imp.library_generation.get().wrapping_add(1));
         imp.asset_grid.show_assets(&[]);
         imp.asset_grid.forget_thumbnails();
         settings::store_string(self.settings(), settings::LAST_LIBRARY_PATH, "");
@@ -3620,6 +3657,9 @@ impl PigouneWindow {
     }
 
     pub async fn capture_screenshot(&self) {
+        if self.refuse_library_switch() {
+            return;
+        }
         let imp = self.imp();
         if self.is_editing()
             && imp.editor.needs_saving()
@@ -6901,6 +6941,7 @@ impl PigouneWindow {
     }
 
     fn set_library_actions_enabled(&self, enabled: bool) {
+        let enabled = enabled && !self.imp().importing.get();
         for action in OPEN_LIBRARY_ACTIONS {
             self.action_set_enabled(action, enabled);
         }
@@ -6975,10 +7016,62 @@ impl PigouneWindow {
     }
 
     fn set_importing(&self, importing: bool) {
-        for action in [CREATE_LIBRARY_ACTION, OPEN_LIBRARY_ACTION] {
+        for action in [
+            CREATE_LIBRARY_ACTION,
+            OPEN_LIBRARY_ACTION,
+            OPEN_RECENT_LIBRARY_ACTION,
+        ] {
             self.action_set_enabled(action, !importing);
         }
-        self.set_library_actions_enabled(!importing && !self.is_editing());
+        let ready = !importing && self.imp().library.borrow().is_some() && !self.is_editing();
+        self.set_library_actions_enabled(ready);
+    }
+
+    fn library_token(&self) -> Option<LibraryToken> {
+        let imp = self.imp();
+        imp.library.borrow().as_ref().map(|library| LibraryToken {
+            root: library.root().to_path_buf(),
+            generation: imp.library_generation.get(),
+        })
+    }
+
+    fn begin_import(&self) -> Option<ImportGuard> {
+        let imp = self.imp();
+        if imp.importing.get() {
+            return None;
+        }
+        let token = self.library_token()?;
+        imp.importing.set(true);
+        self.set_importing(true);
+        Some(ImportGuard {
+            window: self.clone(),
+            token,
+        })
+    }
+
+    fn is_current(&self, token: &LibraryToken) -> bool {
+        self.imp().library_generation.get() == token.generation
+    }
+
+    fn restore_after_import(&self, guard: &ImportGuard, library: Library) -> bool {
+        let imp = self.imp();
+        let unchanged = self.is_current(&guard.token)
+            && imp.library.borrow().is_none()
+            && library.root() == guard.token.root;
+        if unchanged {
+            imp.library.replace(Some(library));
+        }
+        unchanged
+    }
+
+    fn refuse_library_switch(&self) -> bool {
+        let refused = self.imp().importing.get();
+        if refused {
+            self.show_toast(&gettext(
+                "Wait for the import to finish before changing the library.",
+            ));
+        }
+        refused
     }
 
     fn accept_dropped_files(&self) {
@@ -7091,6 +7184,18 @@ impl PigouneWindow {
     }
 
     async fn import_paths_into(&self, paths: Vec<PathBuf>, collection: Option<CollectionId>) {
+        let Some(guard) = self.begin_import() else {
+            return;
+        };
+        self.import_paths_guarded(&guard, paths, collection).await;
+    }
+
+    async fn import_paths_guarded(
+        &self,
+        guard: &ImportGuard,
+        paths: Vec<PathBuf>,
+        collection: Option<CollectionId>,
+    ) {
         if paths.is_empty() {
             return;
         }
@@ -7106,17 +7211,18 @@ impl PigouneWindow {
             return;
         };
 
-        self.set_importing(true);
         let finished = background_import::run(self, library, paths.clone(), collection).await;
-        self.set_importing(false);
 
         if let Some(FinishedImport { library, result }) = finished {
-            self.imp().library.replace(Some(library));
-            self.refresh_assets();
-            self.analyse_colors();
+            if self.restore_after_import(guard, library) {
+                self.refresh_assets();
+                self.analyse_colors();
+            }
             self.report_import(result, &paths, destination_name.as_deref());
         } else {
-            self.close_library();
+            if self.is_current(&guard.token) {
+                self.close_library();
+            }
             import_report::unexpected_stop_dialog().present(Some(self));
         }
     }
@@ -7459,6 +7565,10 @@ thread_local! {
 #[cfg(test)]
 #[path = "window_opening_tests.rs"]
 pub mod opening_tests;
+
+#[cfg(test)]
+#[path = "window_import_tests.rs"]
+pub mod import_tests;
 
 #[cfg(test)]
 mod tests {
