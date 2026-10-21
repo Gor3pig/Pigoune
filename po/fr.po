@@ -2433,6 +2433,11 @@ msgstr ""
 "indépendante de la bibliothèque, par exemple en copiant son dossier avec "
 "votre gestionnaire de fichiers, puis ouvrez la copie."
 
+#: crates/pigoune-app/src/window.rs:6990
+msgid "Wait for the import to finish before changing the library."
+msgstr ""
+"Attendez la fin de l’importation avant de changer de bibliothèque."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

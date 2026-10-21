@@ -16,10 +16,10 @@ const ISOLATED_CACHE: &str = "XDG_CACHE_HOME";
 const CHILD_FLAG: &str = "PIGOUNE_OPENING_TESTS_CHILD";
 const PROOF: &str = "OPENING TEST RAN:";
 
-struct Folder(PathBuf);
+pub(super) struct Folder(pub(super) PathBuf);
 
 impl Folder {
-    fn new(label: &str) -> Self {
+    pub(super) fn new(label: &str) -> Self {
         let path = std::env::temp_dir().join(format!(
             "pigoune-opening-{label}-{}-{}",
             std::process::id(),
@@ -38,13 +38,18 @@ impl Drop for Folder {
     }
 }
 
-fn fixture(name: &str) -> PathBuf {
+pub(super) fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../pigoune-core/tests/fixtures")
         .join(name)
 }
 
-fn library_with(folder: &Folder, name: &str, collection: &str, files: &[&str]) -> Library {
+pub(super) fn library_with(
+    folder: &Folder,
+    name: &str,
+    collection: &str,
+    files: &[&str],
+) -> Library {
     let mut library = Library::create(&folder.0, name).expect("library is created");
     let collection = library
         .create_collection(collection, None)
@@ -74,7 +79,7 @@ fn refreshes() -> u32 {
     SIDEBAR_REFRESHES.with(std::cell::Cell::get)
 }
 
-fn pump(duration: Duration) {
+pub(super) fn pump(duration: Duration) {
     let context = glib::MainContext::default();
     let end = Instant::now() + duration;
     while Instant::now() < end {
@@ -109,8 +114,8 @@ fn rows(window: &PigouneWindow) -> Vec<String> {
     described
 }
 
-struct Rig {
-    window: PigouneWindow,
+pub(super) struct Rig {
+    pub(super) window: PigouneWindow,
 }
 
 impl Drop for Rig {
@@ -139,7 +144,7 @@ fn application() -> adw::Application {
     })
 }
 
-fn rig() -> Rig {
+pub(super) fn rig() -> Rig {
     adw::init().expect("the opening tests need a display: run them through ./check.sh");
     gio::resources_register_include!("pigoune.gresource")
         .expect("the compiled resources are registered");

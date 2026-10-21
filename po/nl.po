@@ -2096,6 +2096,11 @@ msgstr ""
 "kopie van de bibliotheek, bijvoorbeeld door de map te kopiëren met je "
 "bestandsbeheerder, en open dan de kopie."
 
+#: crates/pigoune-app/src/window.rs:6990
+msgid "Wait for the import to finish before changing the library."
+msgstr ""
+"Wacht tot de import klaar is voordat je van bibliotheek wisselt."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format
