@@ -24,7 +24,7 @@ pub use library::{
     TRASH_RETENTION, Tag, TagCommand, TagError, TagId, TextField, UndoError, VERY_CLOSE_DISTANCE,
     ViewCounts, VolumeSpace, cache_entry_label, comparable, create_cache_folder,
     library_display_name, oldest_compatible_version, query_groups, query_text, query_word_count,
-    same_tag_name, thumbnail_cache_bytes_in,
+    same_tag_name, thumbnail_cache_bytes_in, write_render_file, write_thumbnail_file,
 };
 pub use media::{
     AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,

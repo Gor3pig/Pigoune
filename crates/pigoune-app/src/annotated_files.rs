@@ -1,5 +1,4 @@
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use gtk::gdk;
@@ -32,7 +31,7 @@ pub async fn ensure(
     let texture = load_source(source).await?;
     let flat = render_flat_yielding(&texture, &document, widget).await?;
     let png = image_conversion::png_bytes(&flat).await.ok()?;
-    write_atomically(&render.file, &png).ok()?;
+    pigoune_core::write_render_file(&render.file, &png).ok()?;
     Some(render.file.clone())
 }
 
@@ -82,21 +81,6 @@ pub async fn reduced(
     annotation_export::reduced_texture(&backdrop, &document, &widget.pango_context(), longest_side)
 }
 
-fn write_atomically(destination: &Path, content: &[u8]) -> std::io::Result<()> {
-    let folder = destination
-        .parent()
-        .ok_or_else(|| std::io::Error::other("a rendering always has a folder"))?;
-    fs::create_dir_all(folder)?;
-    let partial = destination.with_extension("partial");
-    let mut file = fs::File::create(&partial)?;
-    file.write_all(content)?;
-    file.sync_all()?;
-    drop(file);
-    fs::rename(&partial, destination).inspect_err(|_| {
-        let _ = fs::remove_file(&partial);
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -105,11 +89,17 @@ mod tests {
     fn a_rendering_is_written_whole_with_its_folders_and_leaves_no_unfinished_file() {
         let folder =
             std::env::temp_dir().join(format!("pigoune-render-test-{}", std::process::id()));
-        let file = folder.join("nested/one.png");
-        write_atomically(&file, b"png").expect("written");
+        fs::create_dir_all(&folder).expect("workspace");
+        let file = folder.join("cache/nested/one.png");
+        pigoune_core::write_render_file(&file, b"png").expect("written");
         assert_eq!(fs::read(&file).expect("read"), b"png");
-        assert!(!file.with_extension("partial").exists());
-        write_atomically(&file, b"newer").expect("replaced");
+        assert_eq!(
+            fs::read_dir(file.parent().expect("folder"))
+                .expect("folder")
+                .count(),
+            1
+        );
+        pigoune_core::write_render_file(&file, b"newer").expect("replaced");
         assert_eq!(fs::read(&file).expect("read"), b"newer");
         let _ = fs::remove_dir_all(folder);
     }
