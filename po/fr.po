@@ -2433,6 +2433,24 @@ msgstr ""
 "indépendante de la bibliothèque, par exemple en copiant son dossier avec "
 "votre gestionnaire de fichiers, puis ouvrez la copie."
 
+#: crates/pigoune-app/src/error_messages.rs:140
+msgid ""
+"The image could not be saved so that it can be imported. Check that the "
+"disk has free space and that you can write in the library folder, then "
+"try again."
+msgstr ""
+"L’image n’a pas pu être enregistrée pour être importée. Vérifiez que le "
+"disque a de la place et que vous pouvez écrire dans le dossier de la "
+"bibliothèque, puis réessayez."
+
+#: crates/pigoune-app/src/window.rs:6991
+msgid "Unable to Import the Dropped Image"
+msgstr "Impossible d’importer l’image déposée"
+
+#: crates/pigoune-app/src/window.rs:6990
+msgid "Unable to Paste the Image"
+msgstr "Impossible de coller l’image"
+
 #: crates/pigoune-app/src/window.rs:7090
 msgid "The library was changed, so the image was not imported."
 msgstr "La bibliothèque a changé, l’image n’a donc pas été importée."

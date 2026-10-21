@@ -2092,6 +2092,24 @@ msgstr ""
 "la biblioteca, por ejemplo copiando su carpeta con su gestor de archivos, "
 "y abra después la copia."
 
+#: crates/pigoune-app/src/error_messages.rs:140
+msgid ""
+"The image could not be saved so that it can be imported. Check that the "
+"disk has free space and that you can write in the library folder, then "
+"try again."
+msgstr ""
+"No se pudo guardar la imagen para importarla. Compruebe que el disco "
+"tiene espacio libre y que puede escribir en la carpeta de la biblioteca, "
+"y vuelva a intentarlo."
+
+#: crates/pigoune-app/src/window.rs:6991
+msgid "Unable to Import the Dropped Image"
+msgstr "No se puede importar la imagen soltada"
+
+#: crates/pigoune-app/src/window.rs:6990
+msgid "Unable to Paste the Image"
+msgstr "No se puede pegar la imagen"
+
 #: crates/pigoune-app/src/window.rs:7090
 msgid "The library was changed, so the image was not imported."
 msgstr "La biblioteca cambió, así que la imagen no se importó."

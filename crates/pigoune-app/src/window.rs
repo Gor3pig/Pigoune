@@ -678,6 +678,12 @@ mod imp {
     impl AdwApplicationWindowImpl for PigouneWindow {}
 }
 
+#[derive(Clone, Copy)]
+enum ImageOrigin {
+    Pasted,
+    Dropped,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct LibraryToken {
     root: PathBuf,
@@ -3787,6 +3793,7 @@ impl PigouneWindow {
         let png = texture.save_to_png_bytes();
         self.import_image_bytes(
             guard,
+            ImageOrigin::Pasted,
             &pasted_content::image_name(),
             "png",
             &png,
@@ -3798,6 +3805,7 @@ impl PigouneWindow {
     async fn import_image_bytes(
         &self,
         guard: &ImportGuard,
+        origin: ImageOrigin,
         name: &str,
         extension: &str,
         bytes: &[u8],
@@ -3819,7 +3827,7 @@ impl PigouneWindow {
             Some(Ok(path)) => {
                 self.import_paths_into(guard, vec![path], collection).await;
             }
-            Some(Err(error)) => self.show_library_error(&error),
+            Some(Err(error)) => self.show_image_save_error(origin, &error),
             None => self.show_toast(&gettext(
                 "The library was changed, so the image was not imported.",
             )),
@@ -6956,7 +6964,28 @@ impl PigouneWindow {
         }
     }
 
+    fn show_image_save_error(&self, origin: ImageOrigin, error: &LibraryError) {
+        glib::g_warning!("pigoune", "Unable to save the image to import: {error}");
+        let title = match origin {
+            ImageOrigin::Pasted => gettext("Unable to Paste the Image"),
+            ImageOrigin::Dropped => gettext("Unable to Import the Dropped Image"),
+        };
+        let body = error_messages::describe_image_save(error);
+        #[cfg(test)]
+        import_tests::ALERTS.with(|shown| shown.borrow_mut().push((title.clone(), body.clone())));
+        let alert = adw::AlertDialog::new(Some(&title), Some(&body));
+        alert.add_response(CLOSE_RESPONSE, &gettext("_Close"));
+        alert.present(Some(self));
+    }
+
     fn show_library_error(&self, error: &LibraryError) {
+        #[cfg(test)]
+        import_tests::ALERTS.with(|shown| {
+            shown.borrow_mut().push((
+                gettext("Unable to Show the Library"),
+                error_messages::describe(error),
+            ));
+        });
         let alert = adw::AlertDialog::new(
             Some(&gettext("Unable to Show the Library")),
             Some(&error_messages::describe(error)),
@@ -7201,8 +7230,15 @@ impl PigouneWindow {
                 extension,
             }) => {
                 let name = name.unwrap_or_else(pasted_content::image_name);
-                self.import_image_bytes(guard, &name, &extension, &bytes, collection)
-                    .await;
+                self.import_image_bytes(
+                    guard,
+                    ImageOrigin::Dropped,
+                    &name,
+                    &extension,
+                    &bytes,
+                    collection,
+                )
+                .await;
             }
             Dropped::Nothing => self.show_toast(&nothing_to_import_text()),
         }
