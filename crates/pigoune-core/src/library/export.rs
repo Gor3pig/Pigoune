@@ -88,7 +88,6 @@ impl Library {
             ))
         } else {
             let original = self.original_of(asset)?;
-            original.check()?;
             Ok((Source::Original(original), original_extension(asset)))
         }
     }
@@ -307,11 +306,15 @@ impl Source {
         }
     }
 
-    pub(super) fn open(&self) -> io::Result<File> {
+    pub(super) fn read(&self) -> Result<File, LibraryError> {
         match self {
-            Self::Original(original) => original.open(),
-            Self::Render(path) => cache_guard::open_plain_file(path),
+            Self::Original(original) => original.read(),
+            Self::Render(path) => cache_guard::open_plain_checked(path, cache_guard::unsafe_entry),
         }
+    }
+
+    pub(super) fn open(&self) -> io::Result<File> {
+        self.read().map_err(cache_guard::into_io)
     }
 }
 
@@ -438,7 +441,7 @@ fn fill_operation(
     let mut names = Vec::with_capacity(items.len());
     let mut bytes = 0;
     for item in items {
-        let mut source = item.source.open()?;
+        let mut source = item.source.read()?;
         let (mut file, copy) =
             create_free_file(staging, &item.base, item.extension.as_deref(), &mut taken)?;
         bytes += io::copy(&mut source, &mut file)?;
