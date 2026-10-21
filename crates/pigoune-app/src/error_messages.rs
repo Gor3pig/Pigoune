@@ -128,6 +128,9 @@ pub fn describe(error: &LibraryError) -> String {
             "Pigoune cannot use “{entry}” in this library, because it is a link, another kind of item than expected, or a place outside the library. For safety, Pigoune does not follow it. You can look at it in the library folder, then rename or remove it yourself and try again.",
         )
         .replace("{entry}", &pigoune_core::storage_entry_label(entry)),
+        LibraryError::SharedDatabase => gettext(
+            "The database of this library (“library.db”) is shared with another file through a hard link, so changes made here could change another library. Make an independent copy of the library, for example by copying its folder with your file manager, then open the copy.",
+        ),
         LibraryError::Io(_) | LibraryError::Database(_) => {
             gettext("An unexpected error occurred: {error}").replace("{error}", &error.to_string())
         }
@@ -253,6 +256,18 @@ mod tests {
         assert!(text.contains("“files/ab”"), "{text}");
         assert!(text.contains("does not follow it"), "{text}");
         assert!(text.contains("rename or remove it yourself"), "{text}");
+        assert!(
+            !text.contains('\u{2014}') && !text.contains('\u{2013}'),
+            "{text}"
+        );
+    }
+
+    #[test]
+    fn a_shared_database_asks_for_an_independent_copy() {
+        let text = describe(&LibraryError::SharedDatabase);
+
+        assert!(text.contains("hard link"), "{text}");
+        assert!(text.contains("independent copy"), "{text}");
         assert!(
             !text.contains('\u{2014}') && !text.contains('\u{2013}'),
             "{text}"

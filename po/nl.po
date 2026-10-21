@@ -2083,6 +2083,19 @@ msgstr ""
 "de map van de bibliotheek bekijken en het daarna zelf hernoemen of "
 "verwijderen, en het opnieuw proberen."
 
+#: crates/pigoune-app/src/error_messages.rs:132
+msgid ""
+"The database of this library (“library.db”) is shared with another file "
+"through a hard link, so changes made here could change another library. "
+"Make an independent copy of the library, for example by copying its "
+"folder with your file manager, then open the copy."
+msgstr ""
+"De database van deze bibliotheek (‘library.db’) wordt via een harde "
+"koppeling met een ander bestand gedeeld, dus wijzigingen die je hier "
+"maakt kunnen een andere bibliotheek wijzigen. Maak een onafhankelijke "
+"kopie van de bibliotheek, bijvoorbeeld door de map te kopiëren met je "
+"bestandsbeheerder, en open dan de kopie."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

@@ -1,5 +1,6 @@
 use std::fs::{self, File};
 use std::io;
+use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
 use super::{AssetId, LibraryError, cache_guard, layout};
@@ -93,4 +94,43 @@ impl OriginalFile {
         self.check().map_err(io::Error::other)?;
         cache_guard::open_plain_file(&self.path)
     }
+}
+
+const DATABASE_COMPANION_SUFFIXES: [&str; 3] = ["-journal", "-wal", "-shm"];
+
+pub(super) fn verify_storage(root: &Path) -> Result<(), LibraryError> {
+    let database = layout::database_path(root);
+    match fs::symlink_metadata(&database) {
+        Ok(metadata) if metadata.file_type().is_symlink() => return Err(refused(&database)),
+        Ok(metadata) if metadata.is_file() => {
+            if metadata.nlink() > 1 {
+                return Err(LibraryError::SharedDatabase);
+            }
+        }
+        Ok(_) => return Err(LibraryError::NotALibrary(root.to_path_buf())),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return Err(LibraryError::NotALibrary(root.to_path_buf()));
+        }
+        Err(error) => return Err(error.into()),
+    }
+    for suffix in DATABASE_COMPANION_SUFFIXES {
+        let mut companion = database.clone().into_os_string();
+        companion.push(suffix);
+        require_plain(Path::new(&companion), false)?;
+    }
+    verify_files_folder(root)
+}
+
+fn verify_files_folder(root: &Path) -> Result<(), LibraryError> {
+    let files = layout::files_dir(root);
+    require_plain(&files, true)?;
+    let Ok(entries) = fs::read_dir(&files) else {
+        return Ok(());
+    };
+    for entry in entries.flatten() {
+        if entry.file_type().is_ok_and(|kind| kind.is_symlink()) {
+            return Err(refused(&entry.path()));
+        }
+    }
+    Ok(())
 }

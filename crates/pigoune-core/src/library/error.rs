@@ -63,6 +63,8 @@ pub enum LibraryError {
     UnsafeCache(PathBuf),
     #[error("{} is a link, not the kind of item that Pigoune expects, or a place outside the library", storage_entry_label(.0))]
     UnsafeStorage(PathBuf),
+    #[error("the database of this library is shared with another file by a hard link")]
+    SharedDatabase,
     #[error(transparent)]
     Io(io::Error),
     #[error(transparent)]
