@@ -73,7 +73,7 @@ impl OriginalFile {
         self.id
     }
 
-    pub fn check(&self) -> Result<(), LibraryError> {
+    fn check_folders(&self) -> Result<(), LibraryError> {
         require_plain(&layout::files_dir(&self.root), true)?;
         match self.shape {
             Shape::Bucketed => {
@@ -87,12 +87,21 @@ impl OriginalFile {
                 )?;
             }
         }
+        Ok(())
+    }
+
+    pub fn check(&self) -> Result<(), LibraryError> {
+        self.check_folders()?;
         require_plain(&self.path, false)
     }
 
+    pub fn read(&self) -> Result<File, LibraryError> {
+        self.check_folders()?;
+        cache_guard::open_plain_checked(&self.path, refused)
+    }
+
     pub fn open(&self) -> io::Result<File> {
-        self.check().map_err(io::Error::other)?;
-        cache_guard::open_plain_file(&self.path)
+        self.read().map_err(cache_guard::into_io)
     }
 }
 

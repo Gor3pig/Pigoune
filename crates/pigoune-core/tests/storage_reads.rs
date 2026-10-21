@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::fs;
 use std::ops::ControlFlow;
 use std::os::unix::fs::symlink;
@@ -7,7 +8,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
-use pigoune_core::{AssetId, FlatFiles, ImportOutcome, Library, LibraryError};
+use pigoune_core::{AssetId, FlatFiles, ImportOutcome, Library, LibraryError, VolumeSpace};
 use rusqlite::Connection;
 use tempfile::TempDir;
 
@@ -335,4 +336,72 @@ fn an_unsafe_record_is_never_removed_or_repaired_by_a_refusal() {
             .is_some_and(|asset| asset.stored_path == trap.secret)
     );
     trap.secret_untouched();
+}
+
+fn swapping_once(swap: impl Fn()) -> impl Fn(&Path) -> Option<VolumeSpace> {
+    let done = Cell::new(false);
+    move |_| {
+        if !done.replace(true) {
+            swap();
+        }
+        None
+    }
+}
+
+#[test]
+fn a_link_put_in_place_of_the_original_after_the_preparation_is_never_read() {
+    for kind in ["export", "clipboard", "opening"] {
+        let trap = Trap::new();
+        let stored = trap.stored();
+        let library = trap.open();
+        let flats = FlatFiles::new();
+        let probe = swapping_once(|| {
+            fs::remove_file(&stored).expect("removed");
+            symlink(&trap.secret, &stored).expect("link");
+        });
+
+        let error = match kind {
+            "export" => library
+                .export_copies_checking(&[trap.photo], &flats, &probe)
+                .err(),
+            "clipboard" => library
+                .clipboard_copies_checking(&[trap.photo], &flats, &probe)
+                .err(),
+            _ => library
+                .opening_copy_checking(trap.photo, &flats, &probe)
+                .err(),
+        };
+
+        assert!(error.as_ref().is_some_and(refused), "{kind}: {error:?}");
+        nothing_secret_below(&trap.root.join("cache"));
+        trap.secret_untouched();
+        assert_eq!(fs::read_link(&stored).expect("link kept"), trap.secret);
+    }
+}
+
+#[test]
+fn a_folder_of_the_original_swapped_for_a_link_after_the_preparation_is_never_read() {
+    for level in ["bucket", "asset"] {
+        let trap = Trap::new();
+        let folder = if level == "bucket" {
+            trap.bucket()
+        } else {
+            trap.stored().parent().expect("folder").to_path_buf()
+        };
+        let moved = trap.outside("moved").join(level);
+        let library = trap.open();
+        let probe = swapping_once(|| {
+            fs::rename(&folder, &moved).expect("moved");
+            symlink(&moved, &folder).expect("link");
+        });
+
+        let error = library
+            .export_copies_checking(&[trap.photo], &FlatFiles::new(), &probe)
+            .err();
+
+        assert!(error.as_ref().is_some_and(refused), "{level}: {error:?}");
+        nothing_secret_below(&trap.root.join("cache"));
+        assert!(folder.is_symlink());
+        assert!(moved.is_dir());
+    }
 }

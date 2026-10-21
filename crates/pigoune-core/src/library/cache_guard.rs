@@ -24,7 +24,7 @@ enum Temporary {
     Visible,
 }
 
-fn unsafe_entry(path: &Path) -> LibraryError {
+pub(super) fn unsafe_entry(path: &Path) -> LibraryError {
     LibraryError::UnsafeCache(path.to_path_buf())
 }
 
@@ -213,17 +213,31 @@ pub(super) fn plain_file_length(path: &Path) -> Result<u64, LibraryError> {
     }
 }
 
-pub fn open_plain_file(path: &Path) -> io::Result<File> {
+pub(super) fn open_plain_checked(
+    path: &Path,
+    refused: fn(&Path) -> LibraryError,
+) -> Result<File, LibraryError> {
     let before = fs::symlink_metadata(path)?;
     if !before.is_file() {
-        return Err(io::Error::other(unsafe_entry(path)));
+        return Err(refused(path));
     }
     let file = File::open(path)?;
     let opened = file.metadata()?;
     if !opened.is_file() || opened.dev() != before.dev() || opened.ino() != before.ino() {
-        return Err(io::Error::other(unsafe_entry(path)));
+        return Err(refused(path));
     }
     Ok(file)
+}
+
+pub(super) fn into_io(error: LibraryError) -> io::Error {
+    match error {
+        LibraryError::Io(error) => error,
+        other => io::Error::other(other),
+    }
+}
+
+pub fn open_plain_file(path: &Path) -> io::Result<File> {
+    open_plain_checked(path, unsafe_entry).map_err(into_io)
 }
 
 pub fn write_thumbnail_file(destination: &Path, content: &[u8]) -> Result<(), LibraryError> {
