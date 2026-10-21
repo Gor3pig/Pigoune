@@ -4102,12 +4102,9 @@ impl PigouneWindow {
             return;
         }
         let flats = self.flat_files_for(&[asset]).await;
-        let prepared = self
-            .imp()
-            .library
-            .borrow()
-            .as_ref()
-            .map(|library| library.opening_copy(asset, &flats));
+        let prepared = self.imp().library.borrow().as_ref().map(|library| {
+            library.opening_copy_checking(asset, &flats, &drag_export::volume_space)
+        });
         let copy = match prepared {
             Some(Ok(Some(copy))) => copy,
             Some(Err(error)) => {

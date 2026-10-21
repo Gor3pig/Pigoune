@@ -133,6 +133,35 @@ mod tests {
     }
 
     #[test]
+    fn opening_with_another_application_asks_the_mask_question_before_the_copy_and_checks_the_space()
+     {
+        let window = include_str!("window.rs");
+        let start = window
+            .find("async fn open_asset(")
+            .expect("the opening is in the window");
+        let body: String = window[start..]
+            .lines()
+            .take(40)
+            .collect::<Vec<_>>()
+            .join("\n");
+        let question = body.find("output_is_allowed").expect("the opening asks");
+        let copy = body
+            .find("opening_copy_checking")
+            .expect("the copy is made with the space check");
+        let launch = body
+            .find("launch_future")
+            .expect("the application is launched");
+        assert!(question < copy && copy < launch);
+        assert!(!body.contains(".opening_copy("));
+    }
+
+    #[test]
+    fn a_full_disk_while_opening_is_explained_by_the_usual_message() {
+        let text = crate::error_messages::describe(&pigoune_core::LibraryError::StorageFull);
+        assert!(text.contains("free space"));
+    }
+
+    #[test]
     fn dragging_out_never_offers_to_continue_with_a_hidden_mask() {
         let window = include_str!("window.rs");
         let start = window
