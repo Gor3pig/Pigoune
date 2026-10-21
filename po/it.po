@@ -2095,6 +2095,16 @@ msgstr ""
 "della libreria, per esempio copiandone la cartella con il gestore di "
 "file, poi apri la copia."
 
+#: crates/pigoune-app/src/window.rs:7090
+msgid "The library was changed, so the image was not imported."
+msgstr ""
+"La libreria è cambiata, quindi l’immagine non è stata importata."
+
+#: crates/pigoune-app/src/window.rs:7082
+msgid "An import is already in progress. Wait for it to finish, then try again."
+msgstr ""
+"Un’importazione è già in corso. Attendi che finisca, poi riprova."
+
 #: crates/pigoune-app/src/window.rs:6990
 msgid "Wait for the import to finish before changing the library."
 msgstr ""

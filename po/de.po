@@ -2096,6 +2096,17 @@ msgstr ""
 "Bibliothek, zum Beispiel indem Sie ihren Ordner mit Ihrem Dateimanager "
 "kopieren, und öffnen Sie dann die Kopie."
 
+#: crates/pigoune-app/src/window.rs:7090
+msgid "The library was changed, so the image was not imported."
+msgstr ""
+"Die Bibliothek wurde gewechselt, daher wurde das Bild nicht importiert."
+
+#: crates/pigoune-app/src/window.rs:7082
+msgid "An import is already in progress. Wait for it to finish, then try again."
+msgstr ""
+"Ein Import läuft bereits. Warten Sie, bis er abgeschlossen ist, und "
+"versuchen Sie es dann erneut."
+
 #: crates/pigoune-app/src/window.rs:6990
 msgid "Wait for the import to finish before changing the library."
 msgstr ""

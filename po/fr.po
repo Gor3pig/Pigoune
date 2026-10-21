@@ -2433,6 +2433,16 @@ msgstr ""
 "indépendante de la bibliothèque, par exemple en copiant son dossier avec "
 "votre gestionnaire de fichiers, puis ouvrez la copie."
 
+#: crates/pigoune-app/src/window.rs:7090
+msgid "The library was changed, so the image was not imported."
+msgstr "La bibliothèque a changé, l’image n’a donc pas été importée."
+
+#: crates/pigoune-app/src/window.rs:7082
+msgid "An import is already in progress. Wait for it to finish, then try again."
+msgstr ""
+"Une importation est déjà en cours. Attendez qu’elle se termine, puis "
+"réessayez."
+
 #: crates/pigoune-app/src/window.rs:6990
 msgid "Wait for the import to finish before changing the library."
 msgstr ""
