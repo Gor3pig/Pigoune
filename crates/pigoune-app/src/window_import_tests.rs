@@ -22,6 +22,14 @@ thread_local! {
     pub(super) static TOASTS: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
+thread_local! {
+    pub(super) static ALERTS: std::cell::RefCell<Vec<(String, String)>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+fn alerts_shown() -> Vec<(String, String)> {
+    ALERTS.with(|shown| shown.borrow().clone())
+}
+
 fn toasts_shown() -> Vec<String> {
     TOASTS.with(|shown| shown.borrow().clone())
 }
@@ -346,7 +354,40 @@ pub fn the_guard_is_released_on_every_way_out() {
     assert!(actions_enabled(window));
 }
 
-const IMPORT_TESTS: [(&str, fn()); 10] = [
+pub fn a_pasted_image_that_cannot_be_saved_gets_a_message_about_the_paste() {
+    let rig = rig();
+    let window = &rig.window;
+    let folders = pair();
+    let (first_root, _) = two_libraries(window, &folders);
+    let before = asset_count(window);
+    let pasted = first_root.join("cache").join("pasted");
+    let _ = std::fs::remove_dir_all(&pasted);
+    std::fs::write(&pasted, b"in the way").expect("a file stands in place of the folder");
+    ALERTS.with(|shown| shown.borrow_mut().clear());
+    forget_toasts();
+    let pixels = glib::Bytes::from_owned(vec![200_u8; 3 * 4 * 4]);
+    let texture: gtk::gdk::Texture =
+        gtk::gdk::MemoryTexture::new(3, 4, gtk::gdk::MemoryFormat::R8g8b8a8, &pixels, 12).upcast();
+
+    let started = window.clone();
+    glib::MainContext::default().block_on(async move {
+        let guard = started.begin_import().expect("the paste starts");
+        started.import_pasted_image(&guard, &texture).await;
+    });
+
+    let alerts = alerts_shown();
+    assert_eq!(alerts.len(), 1, "{alerts:?}");
+    assert_eq!(alerts[0].0, "Unable to Paste the Image");
+    assert!(alerts[0].1.contains("cache/pasted"), "{alerts:?}");
+    assert_eq!(asset_count(window), before, "nothing was imported");
+    assert!(
+        !toasts_shown().iter().any(|text| text.contains("imported")),
+        "a failed paste is never announced as a success"
+    );
+    assert!(actions_enabled(window));
+}
+
+const IMPORT_TESTS: [(&str, fn()); 11] = [
     (
         "an_import_returns_its_own_library_and_gives_the_actions_back",
         an_import_returns_its_own_library_and_gives_the_actions_back,
@@ -386,6 +427,10 @@ const IMPORT_TESTS: [(&str, fn()); 10] = [
     (
         "the_guard_is_released_on_every_way_out",
         the_guard_is_released_on_every_way_out,
+    ),
+    (
+        "a_pasted_image_that_cannot_be_saved_gets_a_message_about_the_paste",
+        a_pasted_image_that_cannot_be_saved_gets_a_message_about_the_paste,
     ),
 ];
 

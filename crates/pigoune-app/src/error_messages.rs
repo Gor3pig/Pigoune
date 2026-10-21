@@ -137,6 +137,15 @@ pub fn describe(error: &LibraryError) -> String {
     }
 }
 
+pub fn describe_image_save(error: &LibraryError) -> String {
+    match error {
+        LibraryError::Io(_) | LibraryError::Database(_) => gettext(
+            "The image could not be saved so that it can be imported. Check that the disk has free space and that you can write in the library folder, then try again.",
+        ),
+        other => describe(other),
+    }
+}
+
 pub fn describe_collection(error: &CollectionError) -> String {
     match error {
         CollectionError::InvalidName => gettext("Enter a name for the collection."),
@@ -272,5 +281,27 @@ mod tests {
             !text.contains('\u{2014}') && !text.contains('\u{2013}'),
             "{text}"
         );
+    }
+
+    #[test]
+    fn an_image_that_cannot_be_saved_gets_a_plain_explanation_without_a_system_message() {
+        let unexpected = LibraryError::Io(std::io::Error::other("File too large (os error 27)"));
+
+        let text = super::describe_image_save(&unexpected);
+
+        assert!(text.contains("could not be saved"), "{text}");
+        assert!(!text.contains("os error"), "{text}");
+        assert!(!text.contains("unexpected"), "{text}");
+    }
+
+    #[test]
+    fn the_explicit_reasons_are_kept_for_an_image_that_cannot_be_saved() {
+        assert_eq!(
+            super::describe_image_save(&LibraryError::StorageFull),
+            describe(&LibraryError::StorageFull)
+        );
+        let refused =
+            LibraryError::UnsafeCache(PathBuf::from("/library/Design.pigoune/cache/pasted"));
+        assert!(super::describe_image_save(&refused).contains("“cache/pasted”"));
     }
 }
