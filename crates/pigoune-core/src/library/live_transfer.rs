@@ -256,7 +256,7 @@ mod tests {
         let installed = copy_at(&library, png, NOW);
         install(&library, &installed);
         let asset = library.asset(png).expect("read").expect("asset");
-        let stored = library.file_of(&asset);
+        let stored = library.root().join(&asset.stored_path);
         fs::set_permissions(&stored, fs::Permissions::from_mode(0o000)).expect("locked");
 
         let result =

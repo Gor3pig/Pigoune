@@ -131,7 +131,7 @@ fn copies_never_touch_the_library_files() {
         .expect("asset is read")
         .expect("asset exists");
     assert_eq!(
-        fs::read(fixture.library.file_of(&asset)).expect("original is read"),
+        fs::read(fixture.library.root().join(&asset.stored_path)).expect("original is read"),
         fs::read(sample_file("dark-circle.svg")).expect("fixture is read")
     );
 }
@@ -336,7 +336,7 @@ fn a_failed_export_leaves_no_trace_and_the_previous_one_intact() {
         .map(|entry| entry.file_name().to_string_lossy().into_owned())
         .collect();
     let asset = fixture.asset(png);
-    fs::remove_file(fixture.library.file_of(&asset)).expect("source is lost");
+    fs::remove_file(fixture.library.root().join(&asset.stored_path)).expect("source is lost");
 
     assert!(
         fixture
@@ -382,13 +382,13 @@ fn exports_never_touch_the_library_files_even_after_many_operations() {
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png");
     let asset = fixture.asset(png);
-    let original = fs::read(fixture.library.file_of(&asset)).expect("original");
+    let original = fs::read(fixture.library.root().join(&asset.stored_path)).expect("original");
     for _ in 0..4 {
         let copy = fixture.export(&[png]).remove(0);
         fs::write(&copy, b"modified by the destination").expect("copy is changed");
     }
     assert_eq!(
-        fs::read(fixture.library.file_of(&asset)).expect("original"),
+        fs::read(fixture.library.root().join(&asset.stored_path)).expect("original"),
         original
     );
 }

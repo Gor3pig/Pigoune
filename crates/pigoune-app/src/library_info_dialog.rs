@@ -399,12 +399,14 @@ impl PigouneLibraryInfoDialog {
             .build();
         row.add_prefix(&picture);
         row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
-        let file = self.root().join(&asset.stored_path);
+        let file = pigoune_core::OriginalFile::new(&self.root(), asset.id, &asset.stored_path).ok();
         glib::spawn_future_local(glib::clone!(
             #[weak]
             picture,
             async move {
-                if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
+                if let Some(texture) =
+                    thumbnails::thumbnail_of(file.as_ref(), &thumbnail_file).await
+                {
                     picture.set_paintable(Some(&texture));
                 }
             }

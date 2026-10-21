@@ -325,11 +325,11 @@ fn the_migration_corrects_the_sizes_of_turned_pictures_and_touches_nothing_else(
     let root = bench.library.root().to_path_buf();
     let missing_file = {
         let asset = bench.library.asset(missing).expect("q").expect("asset");
-        bench.library.file_of(&asset)
+        bench.library.root().join(&asset.stored_path)
     };
     let truncated_file = {
         let asset = bench.library.asset(truncated).expect("q").expect("asset");
-        bench.library.file_of(&asset)
+        bench.library.root().join(&asset.stored_path)
     };
     drop(bench.library);
     for (id, size) in [
@@ -402,7 +402,7 @@ fn a_big_library_is_corrected_in_a_reasonable_time_without_changing_other_rows()
     let template = bench.import("template.jpg", &jpeg(600, 400, Some(6)));
     let root = bench.library.root().to_path_buf();
     let asset = bench.library.asset(template).expect("q").expect("asset");
-    let source = bench.library.file_of(&asset);
+    let source = bench.library.root().join(&asset.stored_path);
     drop(bench.library);
     let connection = Connection::open(root.join("library.db")).expect("database");
     let columns: Vec<String> = connection

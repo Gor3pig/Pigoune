@@ -64,7 +64,9 @@ fn a_stored_file_that_disappeared_does_not_break_the_library() {
     else {
         panic!("the resource is new");
     };
-    let stored = library.file_of(&library.asset(asset).expect("read").expect("asset"));
+    let stored = library
+        .root()
+        .join(&(library.asset(asset).expect("read").expect("asset")).stored_path);
     let root = library.root().to_path_buf();
     drop(library);
     fs::remove_file(stored).expect("file is removed");

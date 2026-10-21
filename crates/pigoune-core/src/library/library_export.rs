@@ -5,11 +5,11 @@ use std::path::{Path, PathBuf};
 
 use super::AssetId;
 use super::export::{
-    FLAT_EXTENSION, FlatFiles, base_name_of, create_free_file, export_base_name, flat_unavailable,
-    free_name, open_source, original_extension,
+    FLAT_EXTENSION, FlatFiles, Source, base_name_of, create_free_file, export_base_name,
+    flat_unavailable, free_name, original_extension,
 };
 use super::layout::library_display_name;
-use super::{Asset, AssetView, Collection, CollectionId, Library, LibraryError};
+use super::{Asset, AssetView, Collection, CollectionId, Library, LibraryError, OriginalFile};
 
 const OUTLINE_DEPTH: usize = 2;
 const OUTLINE_LINES: usize = 5;
@@ -34,7 +34,7 @@ struct FilePlan {
     display_name: String,
     base_name: String,
     extension: Option<String>,
-    source: PathBuf,
+    source: Result<OriginalFile, PathBuf>,
     flat_of: Option<AssetId>,
 }
 
@@ -202,7 +202,9 @@ impl Library {
             display_name: asset.display_name.clone(),
             base_name: base_name_of(asset),
             extension: original_extension(asset),
-            source: self.file_of(asset),
+            source: self
+                .original_of(asset)
+                .map_err(|_| asset.stored_path.clone()),
             flat_of: None,
         };
         if !context.annotated.contains(&asset.id) {
@@ -212,7 +214,7 @@ impl Library {
             display_name: asset.display_name.clone(),
             base_name: format!("{} {}", base_name_of(asset), context.suffix),
             extension: Some(FLAT_EXTENSION.to_owned()),
-            source: PathBuf::new(),
+            source: Err(PathBuf::new()),
             flat_of: Some(asset.id),
         };
         vec![original, flat]
@@ -284,13 +286,21 @@ fn copy_file(
     flats: &FlatFiles,
     taken: &mut HashSet<String>,
 ) -> io::Result<()> {
-    let source_path = match file.flat_of {
-        Some(id) => flats.get(&id).cloned().ok_or_else(flat_unavailable)?,
-        None => file.source.clone(),
+    let source = match file.flat_of {
+        Some(id) => Source::Render(flats.get(&id).cloned().ok_or_else(flat_unavailable)?),
+        None => match &file.source {
+            Ok(original) => Source::Original(original.clone()),
+            Err(recorded) => {
+                return Err(io::Error::other(LibraryError::UnsafeStorage(
+                    recorded.clone(),
+                )));
+            }
+        },
     };
     let (mut target, copy) =
         create_free_file(folder, &file.base_name, file.extension.as_deref(), taken)?;
-    let copied = open_source(&source_path, file.flat_of.is_some())
+    let copied = source
+        .open()
         .and_then(|mut source| io::copy(&mut source, &mut target));
     if copied.is_err() {
         let _ = fs::remove_file(&copy);

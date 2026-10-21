@@ -987,7 +987,7 @@ impl PigouneWindow {
                 .filter_map(|id| {
                     let render = library.annotation_render(*id).ok().flatten()?;
                     let asset = library.asset(*id).ok().flatten()?;
-                    Some((*id, render, library.file_of(&asset)))
+                    Some((*id, render, readable_original(library, &asset)?))
                 })
                 .collect()
         };
@@ -1004,15 +1004,18 @@ impl PigouneWindow {
         &self,
         asset: &PigouneAssetObject,
     ) -> Result<(PathBuf, bool, (u32, u32)), String> {
+        let source = asset
+            .readable_source()
+            .ok_or_else(|| gettext("The original image is not available"))?;
         let Some(render) = asset.annotation() else {
             return Ok((
-                asset.source_file().to_path_buf(),
+                source,
                 asset.asset().format == AssetFormat::Svg,
                 natural_size(asset),
             ));
         };
         let unavailable = || gettext("The annotated image could not be created");
-        let file = annotated_files::ensure(render, asset.source_file(), self)
+        let file = annotated_files::ensure(render, &source, self)
             .await
             .ok_or_else(unavailable)?;
         let natural = annotated_files::png_size(&file).ok_or_else(unavailable)?;
@@ -1865,7 +1868,7 @@ impl PigouneWindow {
             .map(|asset| DuplicateMember {
                 id: asset.id,
                 summary: asset_facts::summary_text(&asset, None),
-                file: library.file_of(&asset),
+                file: library.original_of(&asset).ok(),
                 thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
                 name: asset.display_name,
             })
@@ -2400,12 +2403,12 @@ impl PigouneWindow {
         Some(
             ids.into_iter()
                 .filter_map(|id| library.asset(id).ok().flatten())
-                .map(|asset| {
-                    (
+                .filter_map(|asset| {
+                    Some((
                         asset.id,
-                        library.file_of(&asset),
+                        readable_original(library, &asset)?,
                         library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
-                    )
+                    ))
                 })
                 .collect(),
         )
@@ -3106,7 +3109,11 @@ impl PigouneWindow {
             return;
         };
         let document = document.unwrap_or_default();
-        let Some(image) = annotated_files::load_source(asset.source_file()).await else {
+        let Some(source) = asset.readable_source() else {
+            self.show_annotation_failure();
+            return;
+        };
+        let Some(image) = annotated_files::load_source(&source).await else {
             self.show_annotation_failure();
             return;
         };
@@ -3134,7 +3141,10 @@ impl PigouneWindow {
         let Some(asset) = self.annotation_target() else {
             return;
         };
-        let source = asset.source_file().to_path_buf();
+        let Some(source) = asset.readable_source() else {
+            self.show_annotation_failure();
+            return;
+        };
         let name = source
             .file_name()
             .map(|name| name.to_string_lossy().into_owned())
@@ -4091,7 +4101,11 @@ impl PigouneWindow {
         let [asset] = targeted.as_slice() else {
             return;
         };
-        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(asset.source_file())));
+        let Some(source) = asset.readable_source() else {
+            self.show_toast(&gettext("The file could not be shown in Files."));
+            return;
+        };
+        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(source)));
         if let Err(error) = launcher.open_containing_folder_future(Some(self)).await
             && !is_dismissed(&error)
         {
@@ -4632,7 +4646,7 @@ impl PigouneWindow {
                             id: other.id,
                             summary: asset_facts::summary_text(&other, None),
                             distance: similar.distance,
-                            file: library.file_of(&other),
+                            file: library.original_of(&other).ok(),
                             thumbnail_file: library.thumbnail_file(other.id, THUMBNAIL_PIXELS),
                             name: other.display_name,
                         })
@@ -7150,6 +7164,12 @@ impl PigouneWindow {
     }
 }
 
+fn readable_original(library: &Library, asset: &pigoune_core::Asset) -> Option<PathBuf> {
+    let original = library.original_of(asset).ok()?;
+    original.check().ok()?;
+    Some(original.path().to_path_buf())
+}
+
 fn descendant_button(widget: &gtk::Widget) -> Option<gtk::Button> {
     if let Ok(button) = widget.clone().downcast::<gtk::Button>() {
         return Some(button);
@@ -7391,7 +7411,7 @@ fn asset_objects(
         .into_iter()
         .map(|asset| {
             PigouneAssetObject::new(AssetEntry {
-                file: library.file_of(&asset),
+                file: library.original_of(&asset).ok(),
                 thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
                 annotation: renders.remove(&asset.id),
                 asset,
@@ -7501,7 +7521,7 @@ mod tests {
             .iter()
             .map(|asset| {
                 PigouneAssetObject::new(AssetEntry {
-                    file: library.file_of(asset),
+                    file: library.original_of(asset).ok(),
                     thumbnail_file: library.thumbnail_file(asset.id, THUMBNAIL_PIXELS),
                     annotation: renders.remove(&asset.id),
                     asset: asset.clone(),

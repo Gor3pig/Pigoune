@@ -3,7 +3,7 @@ use std::fs;
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 
-use super::{AssetId, Library, LibraryError, content, layout};
+use super::{AssetId, Library, LibraryError, OriginalFile, content, layout};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HealthTarget {
@@ -115,13 +115,18 @@ impl HealthPlan {
     }
 
     fn condition_of(&self, target: &HealthTarget) -> Condition {
-        let file = self.root.join(&target.stored_path);
-        match fs::metadata(&file) {
+        let Ok(original) = OriginalFile::new(&self.root, target.id, &target.stored_path) else {
+            return Condition::Missing;
+        };
+        if original.check().is_err() {
+            return Condition::Missing;
+        }
+        match fs::symlink_metadata(original.path()) {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Condition::Missing,
             Err(_) => Condition::Damaged,
             Ok(metadata) if !metadata.is_file() => Condition::Missing,
             Ok(metadata) if metadata.len() != target.expected_bytes => Condition::Damaged,
-            Ok(_) => match content::digest(&file) {
+            Ok(_) => match content::digest_original(&original) {
                 Ok(digest) if digest.hash == target.expected_hash => Condition::Intact,
                 _ => Condition::Damaged,
             },

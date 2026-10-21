@@ -67,6 +67,10 @@ pub fn files_dir(root: &Path) -> PathBuf {
     root.join(FILES_DIR_NAME)
 }
 
+pub fn bucket_dir(root: &Path, id: AssetId) -> PathBuf {
+    files_dir(root).join(bucket_name(id))
+}
+
 pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
     files_dir(root).join(bucket_name(id)).join(id.to_string())
 }
@@ -158,6 +162,22 @@ pub fn is_stored_path_of(id: AssetId, path: &Path) -> bool {
     path.components()
         .all(|component| matches!(component, Component::Normal(_)))
         && Path::new(&stored_path(id, name)) == path
+}
+
+pub fn original_path(root: &Path, id: AssetId, stored_path: &Path) -> Option<PathBuf> {
+    is_stored_path_of(id, stored_path).then(|| root.join(stored_path))
+}
+
+pub fn legacy_original_path(root: &Path, id: AssetId, stored_path: &Path) -> Option<PathBuf> {
+    let Some(Component::Normal(name)) = stored_path.components().next_back() else {
+        return None;
+    };
+    let legacy = format!("{FILES_DIR_NAME}/{id}/{}", name.to_str()?);
+    (stored_path
+        .components()
+        .all(|component| matches!(component, Component::Normal(_)))
+        && Path::new(&legacy) == stored_path)
+        .then(|| root.join(stored_path))
 }
 
 pub fn stored_path(id: AssetId, original_file_name: &str) -> String {

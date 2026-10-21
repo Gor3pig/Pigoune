@@ -35,7 +35,7 @@ pub struct DuplicateMember {
     pub id: AssetId,
     pub name: String,
     pub summary: String,
-    pub file: PathBuf,
+    pub file: Option<pigoune_core::OriginalFile>,
     pub thumbnail_file: PathBuf,
 }
 

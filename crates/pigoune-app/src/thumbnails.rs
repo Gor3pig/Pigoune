@@ -61,6 +61,15 @@ pub async fn thumbnail(file: &Path, thumbnail_file: &Path) -> Option<gdk::Textur
     thumbnail_from(async { Some(file.to_path_buf()) }, thumbnail_file).await
 }
 
+pub async fn thumbnail_of(
+    original: Option<&pigoune_core::OriginalFile>,
+    thumbnail_file: &Path,
+) -> Option<gdk::Texture> {
+    let original = original?;
+    original.check().ok()?;
+    thumbnail(original.path(), thumbnail_file).await
+}
+
 pub async fn thumbnail_from(
     source: impl std::future::Future<Output = Option<PathBuf>>,
     thumbnail_file: &Path,

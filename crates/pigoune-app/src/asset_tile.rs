@@ -363,8 +363,11 @@ impl PigouneAssetTile {
         {
             return;
         }
+        let Some(source) = asset.readable_source() else {
+            return;
+        };
         let picture = imp.picture.get();
-        let playing = animation::play(asset.source_file().to_path_buf(), move |frame| {
+        let playing = animation::play(source, move |frame| {
             picture.set_paintable(Some(frame));
             picture.set_opacity(1.0);
         });

@@ -8,7 +8,7 @@ use uuid::Uuid;
 use super::cache_guard;
 use super::export_lifetime::{self, SpaceProbe};
 use super::live_transfer;
-use super::{Asset, AssetId, Library, LibraryError, layout};
+use super::{Asset, AssetId, Library, LibraryError, OriginalFile, layout};
 
 #[derive(Debug)]
 pub struct CopyFailure {
@@ -74,6 +74,25 @@ impl Library {
         )
     }
 
+    fn source_of(
+        &self,
+        asset: &Asset,
+        annotated: bool,
+        flats: &FlatFiles,
+    ) -> Result<(Source, Option<String>), LibraryError> {
+        if annotated {
+            let flat = flats.get(&asset.id).ok_or_else(flat_unavailable)?;
+            Ok((
+                Source::Render(flat.clone()),
+                Some(FLAT_EXTENSION.to_owned()),
+            ))
+        } else {
+            let original = self.original_of(asset)?;
+            original.check()?;
+            Ok((Source::Original(original), original_extension(asset)))
+        }
+    }
+
     fn transfer_items(
         &self,
         assets: &[AssetId],
@@ -85,25 +104,13 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
-            let (source, extension, rendered) = if annotated.contains(id) {
-                let Some(flat) = flats.get(id) else {
-                    return Err(flat_unavailable().into());
-                };
-                (flat.clone(), Some(FLAT_EXTENSION.to_owned()), true)
-            } else {
-                (self.file_of(&asset), original_extension(&asset), false)
-            };
-            let bytes = if rendered {
-                cache_guard::plain_file_length(&source)?
-            } else {
-                fs::metadata(&source)?.len()
-            };
+            let (source, extension) = self.source_of(&asset, annotated.contains(id), flats)?;
+            let bytes = source.length()?;
             items.push(ExportItem {
                 source,
                 base: base_name_of(&asset),
                 extension,
                 bytes,
-                rendered,
             });
         }
         Ok(items)
@@ -253,16 +260,14 @@ impl Library {
             let Some(asset) = self.asset(*id)? else {
                 continue;
             };
-            let (path, extension, rendered) = if annotated.contains(id) {
-                let Some(flat) = flats.get(id) else {
-                    failures.push(failure_of(&asset, flat_unavailable()));
+            let (source, extension) = match self.source_of(&asset, annotated.contains(id), flats) {
+                Ok(found) => found,
+                Err(error) => {
+                    failures.push(failure_of(&asset, io::Error::other(error)));
                     continue;
-                };
-                (flat.clone(), Some(FLAT_EXTENSION.to_owned()), true)
-            } else {
-                (self.file_of(&asset), original_extension(&asset), false)
+                }
             };
-            let mut source = match open_source(&path, rendered) {
+            let mut source = match source.open() {
                 Ok(source) => source,
                 Err(error) => {
                     failures.push(failure_of(&asset, error));
@@ -288,11 +293,25 @@ impl Library {
     }
 }
 
-pub(super) fn open_source(path: &Path, rendered: bool) -> io::Result<File> {
-    if rendered {
-        cache_guard::open_plain_file(path)
-    } else {
-        File::open(path)
+#[derive(Debug, Clone)]
+pub(super) enum Source {
+    Original(OriginalFile),
+    Render(PathBuf),
+}
+
+impl Source {
+    fn length(&self) -> Result<u64, LibraryError> {
+        match self {
+            Self::Original(original) => Ok(fs::symlink_metadata(original.path())?.len()),
+            Self::Render(path) => cache_guard::plain_file_length(path),
+        }
+    }
+
+    pub(super) fn open(&self) -> io::Result<File> {
+        match self {
+            Self::Original(original) => original.open(),
+            Self::Render(path) => cache_guard::open_plain_file(path),
+        }
     }
 }
 
@@ -336,11 +355,10 @@ pub(super) fn create_free_file(
 }
 
 struct ExportItem {
-    source: PathBuf,
+    source: Source,
     base: String,
     extension: Option<String>,
     bytes: u64,
-    rendered: bool,
 }
 
 fn now_ms() -> u64 {
@@ -420,7 +438,7 @@ fn fill_operation(
     let mut names = Vec::with_capacity(items.len());
     let mut bytes = 0;
     for item in items {
-        let mut source = open_source(&item.source, item.rendered)?;
+        let mut source = item.source.open()?;
         let (mut file, copy) =
             create_free_file(staging, &item.base, item.extension.as_deref(), &mut taken)?;
         bytes += io::copy(&mut source, &mut file)?;
@@ -727,7 +745,7 @@ mod operations {
             .expect("previous");
         let before = entries(&library);
         let asset = library.asset(png).expect("read").expect("exists");
-        let source = library.file_of(&asset);
+        let source = library.root().join(&asset.stored_path);
         fs::set_permissions(&source, fs::Permissions::from_mode(0o000)).expect("locked");
 
         let result = library.export_operation(&[svg, png], &FlatFiles::new(), NOW, &roomy);

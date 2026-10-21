@@ -261,7 +261,7 @@ fn an_opening_that_fails_halfway_changes_nothing_that_the_previous_copy_needs() 
     let id = fixture.import("blue-photo.jpg");
     let previous = fixture.open(id);
     let asset = fixture.library.asset(id).expect("read").expect("asset");
-    let stored = fixture.library.file_of(&asset);
+    let stored = fixture.library.root().join(&asset.stored_path);
     let asset_folder = previous
         .parent()
         .and_then(Path::parent)
@@ -437,7 +437,7 @@ fn an_application_changing_its_copy_touches_neither_the_original_nor_the_other_c
     let mut fixture = Fixture::new();
     let png = fixture.import("red-dot.png");
     let asset = fixture.library.asset(png).expect("read").expect("asset");
-    let stored = fixture.library.file_of(&asset);
+    let stored = fixture.library.root().join(&asset.stored_path);
     let original = fs::read(&stored).expect("original is read");
     let first = fixture.open(png);
     let second = fixture.open(png);

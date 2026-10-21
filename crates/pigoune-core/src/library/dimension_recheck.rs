@@ -2,7 +2,7 @@ use std::path::Path;
 
 use rusqlite::{Connection, params};
 
-use super::LibraryError;
+use super::{AssetId, LibraryError, OriginalFile};
 use crate::media::{self, AssetFormat};
 
 const ORIENTED_FORMATS: [AssetFormat; 4] = [
@@ -18,7 +18,17 @@ pub fn correct_oriented_dimensions(
 ) -> Result<(), LibraryError> {
     for format in ORIENTED_FORMATS {
         for (id, stored_path, width, height) in stored_dimensions(connection, format)? {
-            let Some(found) = media::dimensions_of(&root.join(stored_path), format) else {
+            let Some(asset) = AssetId::parse(&id) else {
+                continue;
+            };
+            let Ok(original) = OriginalFile::for_migration(root, asset, Path::new(&stored_path))
+            else {
+                continue;
+            };
+            if original.check().is_err() {
+                continue;
+            }
+            let Some(found) = media::dimensions_of(original.path(), format) else {
                 continue;
             };
             let turned = found.width() == height && found.height() == width;

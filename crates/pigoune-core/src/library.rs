@@ -38,6 +38,7 @@ mod smart_collection;
 mod smart_collection_command;
 mod staging;
 mod storage;
+mod storage_guard;
 mod tag;
 mod tag_command;
 mod thumbnail_cache;
@@ -74,7 +75,7 @@ pub use duplicates::{
 };
 pub use error::{
     AdoptError, AnnotatedError, CollectionError, ImportError, LibraryError, RemoveRecordError,
-    ReplaceError, cache_entry_label,
+    ReplaceError, cache_entry_label, storage_entry_label,
 };
 pub use export::{CopyFailure, CopyReport, FlatFiles};
 pub use export_lifetime::{SpaceProbe, VolumeSpace};
@@ -103,6 +104,7 @@ pub use search::{
 pub use smart_collection::SmartCollection;
 pub use smart_collection_command::{SmartCollectionCommand, SmartCollectionError};
 pub use storage::{ColorShare, FormatShare, StorageUse};
+pub use storage_guard::OriginalFile;
 pub use tag::{Tag, same_tag_name};
 pub use tag_command::{LONGEST_TAG_NAME, TagCommand, TagError};
 pub use thumbnail_cache::thumbnail_cache_bytes_in;

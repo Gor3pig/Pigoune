@@ -124,6 +124,10 @@ pub fn describe(error: &LibraryError) -> String {
             "Pigoune cannot use “{entry}” in the cache of this library, because it is a link or another kind of item than expected. For safety, Pigoune does not follow it. You can look at it in the library folder, then rename or remove it yourself and try again.",
         )
         .replace("{entry}", &pigoune_core::cache_entry_label(entry)),
+        LibraryError::UnsafeStorage(entry) => gettext(
+            "Pigoune cannot use “{entry}” in this library, because it is a link, another kind of item than expected, or a place outside the library. For safety, Pigoune does not follow it. You can look at it in the library folder, then rename or remove it yourself and try again.",
+        )
+        .replace("{entry}", &pigoune_core::storage_entry_label(entry)),
         LibraryError::Io(_) | LibraryError::Database(_) => {
             gettext("An unexpected error occurred: {error}").replace("{error}", &error.to_string())
         }
@@ -232,6 +236,21 @@ mod tests {
         let text = describe(&error);
 
         assert!(text.contains("“cache/thumbnails/128”"), "{text}");
+        assert!(text.contains("does not follow it"), "{text}");
+        assert!(text.contains("rename or remove it yourself"), "{text}");
+        assert!(
+            !text.contains('\u{2014}') && !text.contains('\u{2013}'),
+            "{text}"
+        );
+    }
+
+    #[test]
+    fn an_unsafe_original_names_the_entry_and_never_promises_anything_else() {
+        let error = LibraryError::UnsafeStorage(PathBuf::from("/library/Design.pigoune/files/ab"));
+
+        let text = describe(&error);
+
+        assert!(text.contains("“files/ab”"), "{text}");
         assert!(text.contains("does not follow it"), "{text}");
         assert!(text.contains("rename or remove it yourself"), "{text}");
         assert!(

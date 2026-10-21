@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use rusqlite::{Connection, params};
 
-use super::LibraryError;
+use super::{AssetId, LibraryError, OriginalFile};
 use crate::media::{self, AssetFormat};
 
 const FORMATS_ANIMATED_SINCE_FORMAT_2: [AssetFormat; 2] = [AssetFormat::Png, AssetFormat::Webp];
@@ -10,7 +10,15 @@ const FORMATS_ANIMATED_SINCE_FORMAT_2: [AssetFormat; 2] = [AssetFormat::Png, Ass
 pub fn mark_animated_assets(connection: &Connection, root: &Path) -> Result<(), LibraryError> {
     for format in FORMATS_ANIMATED_SINCE_FORMAT_2 {
         for (id, stored_path) in still_assets(connection, format)? {
-            if media::is_animated(&root.join(stored_path), format).unwrap_or(false) {
+            let Some(asset) = AssetId::parse(&id) else {
+                continue;
+            };
+            let Ok(original) = OriginalFile::for_migration(root, asset, &stored_path) else {
+                continue;
+            };
+            if original.check().is_ok()
+                && media::is_animated(original.path(), format).unwrap_or(false)
+            {
                 connection.execute("UPDATE assets SET is_animated = 1 WHERE id = ?1", [id])?;
             }
         }

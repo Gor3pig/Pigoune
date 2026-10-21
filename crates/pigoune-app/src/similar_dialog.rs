@@ -16,7 +16,7 @@ pub struct SimilarEntry {
     pub name: String,
     pub summary: String,
     pub distance: u32,
-    pub file: PathBuf,
+    pub file: Option<pigoune_core::OriginalFile>,
     pub thumbnail_file: PathBuf,
 }
 

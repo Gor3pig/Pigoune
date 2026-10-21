@@ -2069,6 +2069,20 @@ msgstr ""
 "bekijken en het daarna zelf hernoemen of verwijderen, en het opnieuw "
 "proberen."
 
+#: crates/pigoune-app/src/error_messages.rs:127
+#, rust-format
+msgid ""
+"Pigoune cannot use “{entry}” in this library, because it is a link, "
+"another kind of item than expected, or a place outside the library. For "
+"safety, Pigoune does not follow it. You can look at it in the library "
+"folder, then rename or remove it yourself and try again."
+msgstr ""
+"Pigoune kan ‘{entry}’ in deze bibliotheek niet gebruiken, omdat dit item "
+"een symbolische koppeling is, niet van het verwachte type is of buiten de "
+"bibliotheek ligt. Uit veiligheid volgt Pigoune het niet. Je kunt het in "
+"de map van de bibliotheek bekijken en het daarna zelf hernoemen of "
+"verwijderen, en het opnieuw proberen."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

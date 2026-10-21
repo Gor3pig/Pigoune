@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use super::collection::{distinct_count, ids_as_json};
 use super::view::{self, AssetView, SUBTREE};
-use super::{AssetId, Library, LibraryError, layout};
+use super::{AssetId, Library, LibraryError, OriginalFile, layout};
 use crate::media::{
     self, AnimationTiming, AssetFormat, Dimensions, DominantColor, VisualAnalysis, VisualDetail,
     dominant_from_text,
@@ -167,18 +167,18 @@ impl Library {
         Ok(outside)
     }
 
-    #[must_use]
-    pub fn file_of(&self, asset: &Asset) -> PathBuf {
-        self.root.join(&asset.stored_path)
+    pub fn original_of(&self, asset: &Asset) -> Result<OriginalFile, LibraryError> {
+        OriginalFile::new(&self.root, asset.id, &asset.stored_path)
     }
 
     #[must_use]
     pub fn animation_timing(&self, asset: &Asset) -> Option<AnimationTiming> {
-        if asset.is_animated {
-            media::animation_timing(&self.file_of(asset), asset.format)
-        } else {
-            None
+        if !asset.is_animated {
+            return None;
         }
+        let original = self.original_of(asset).ok()?;
+        original.check().ok()?;
+        media::animation_timing(original.path(), asset.format)
     }
 
     pub fn thumbnail_file(&self, id: AssetId, pixels: u32) -> PathBuf {

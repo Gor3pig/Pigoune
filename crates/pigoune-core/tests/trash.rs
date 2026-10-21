@@ -70,7 +70,7 @@ impl Fixture {
             .asset(asset)
             .expect("asset is read")
             .expect("asset exists");
-        self.library.file_of(&asset)
+        self.library.root().join(&asset.stored_path)
     }
 }
 

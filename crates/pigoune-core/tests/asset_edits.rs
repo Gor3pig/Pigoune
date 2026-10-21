@@ -40,7 +40,7 @@ impl Fixture {
     }
 
     fn file(&self) -> PathBuf {
-        self.library.file_of(&self.read())
+        self.library.root().join(&(self.read()).stored_path)
     }
 }
 

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use gtk::glib;
-use pigoune_core::AssetId;
+use pigoune_core::{AssetId, OriginalFile};
 
 use crate::thumbnails::{self, ThumbnailCache};
 
@@ -17,13 +17,13 @@ pub fn blank() -> gtk::Picture {
         .build()
 }
 
-pub fn picture(file: PathBuf, thumbnail_file: PathBuf) -> gtk::Picture {
+pub fn picture(file: Option<OriginalFile>, thumbnail_file: PathBuf) -> gtk::Picture {
     let picture = blank();
     glib::spawn_future_local(glib::clone!(
         #[weak]
         picture,
         async move {
-            if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
+            if let Some(texture) = thumbnails::thumbnail_of(file.as_ref(), &thumbnail_file).await {
                 picture.set_paintable(Some(&texture));
             }
         }
@@ -34,7 +34,7 @@ pub fn picture(file: PathBuf, thumbnail_file: PathBuf) -> gtk::Picture {
 pub fn load(
     picture: &gtk::Picture,
     id: AssetId,
-    file: PathBuf,
+    file: Option<OriginalFile>,
     thumbnail_file: PathBuf,
     cache: &Rc<ThumbnailCache>,
 ) {
@@ -44,7 +44,7 @@ pub fn load(
         #[strong]
         cache,
         async move {
-            if let Some(texture) = thumbnails::thumbnail(&file, &thumbnail_file).await {
+            if let Some(texture) = thumbnails::thumbnail_of(file.as_ref(), &thumbnail_file).await {
                 cache.remember(id, texture.clone());
                 picture.set_paintable(Some(&texture));
             }
