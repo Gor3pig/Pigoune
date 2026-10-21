@@ -526,4 +526,111 @@ mod tests {
         assert!(stranger.exists());
         assert!(outside.exists());
     }
+
+    fn open_at(library: &Library, asset: AssetId, now_ms: u64) -> PathBuf {
+        library
+            .opening_operation(asset, &FlatFiles::new(), now_ms, &roomy)
+            .expect("opening copy is prepared")
+            .expect("asset exists")
+    }
+
+    #[test]
+    fn an_opening_never_frees_the_installed_clipboard_copy_even_after_a_day() {
+        let (_workspace, library, png) = library();
+        let installed = copy_at(&library, png, NOW);
+        install(&library, &installed);
+
+        let refused = library.opening_operation(png, &FlatFiles::new(), NOW + 30 * HOUR, &cramped);
+
+        assert!(matches!(refused, Err(LibraryError::StorageFull)));
+        assert!(installed[0].exists());
+    }
+
+    #[test]
+    fn an_opening_is_refused_when_recent_transfers_hold_the_shared_budget() {
+        let (_workspace, library, png) = library();
+        let export = library
+            .export_operation(&[png], &FlatFiles::new(), NOW, &roomy)
+            .expect("export");
+        let name = folder_of(&export)
+            .file_name()
+            .expect("name")
+            .to_string_lossy()
+            .into_owned();
+        fs::write(
+            layout::export_dir(library.root()).join(format!(".{name}.bytes")),
+            (8 * GIB).to_string(),
+        )
+        .expect("size");
+
+        let refused = library.opening_operation(png, &FlatFiles::new(), NOW + HOUR, &roomy);
+
+        assert!(matches!(refused, Err(LibraryError::StorageFull)));
+        assert!(export[0].exists());
+        assert!(
+            !layout::opening_dir(library.root())
+                .join(png.to_string())
+                .exists()
+                || fs::read_dir(layout::opening_dir(library.root()).join(png.to_string()))
+                    .expect("asset folder")
+                    .flatten()
+                    .all(|entry| entry.file_name().to_string_lossy().starts_with('.'))
+        );
+    }
+
+    #[test]
+    fn an_opening_frees_the_oldest_normal_transfer_of_any_kind_when_it_needs_the_room() {
+        let (_workspace, library, png) = library();
+        let stale = copy_at(&library, png, NOW - 10 * HOUR);
+        let recent = copy_at(&library, png, NOW - HOUR);
+        let watched = stale[0].clone();
+        let space = move |_: &Path| {
+            Some(VolumeSpace {
+                free: if watched.exists() { GIB / 2 } else { 500 * GIB },
+                total: 100 * GIB,
+            })
+        };
+
+        let opened = library
+            .opening_operation(png, &FlatFiles::new(), NOW, &space)
+            .expect("there is room once the old copy is gone")
+            .expect("asset exists");
+
+        assert!(!stale[0].exists());
+        assert!(recent[0].exists() && opened.exists());
+    }
+
+    #[test]
+    fn an_opening_removes_nothing_that_is_younger_than_two_hours() {
+        let (_workspace, library, png) = library();
+        let young = open_at(&library, png, NOW - HOUR);
+
+        let refused = library.opening_operation(png, &FlatFiles::new(), NOW, &cramped);
+
+        assert!(matches!(refused, Err(LibraryError::StorageFull)));
+        assert!(young.exists());
+    }
+
+    #[test]
+    fn an_opening_removes_what_is_older_than_a_day_when_there_is_room() {
+        let (_workspace, library, png) = library();
+        let old = open_at(&library, png, NOW - 30 * HOUR);
+        let middle = open_at(&library, png, NOW - 5 * HOUR);
+
+        let current = open_at(&library, png, NOW);
+
+        assert!(!old.exists());
+        assert!(middle.exists() && current.exists());
+    }
+
+    #[test]
+    fn two_openings_at_the_same_instant_never_share_a_path() {
+        let (_workspace, library, png) = library();
+
+        let first = open_at(&library, png, NOW);
+        let second = open_at(&library, png, NOW);
+
+        assert_ne!(first, second);
+        assert!(first.exists() && second.exists());
+    }
 }

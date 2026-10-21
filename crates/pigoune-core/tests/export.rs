@@ -506,7 +506,7 @@ fn an_opening_copy_takes_the_display_name() {
 }
 
 #[test]
-fn opening_copies_stay_until_the_library_is_reopened() {
+fn opening_copies_survive_a_reopening_of_the_library() {
     let mut fixture = Fixture::new();
     let svg = fixture.import("dark-circle.svg");
     let png = fixture.import("red-dot.png");
@@ -532,13 +532,13 @@ fn opening_copies_stay_until_the_library_is_reopened() {
     let root = fixture.library.root().to_path_buf();
     drop(fixture.library);
     let _reopened = Library::open(&root).expect("library reopens");
-    assert!(!first.exists());
-    assert!(!second.exists());
+    assert!(first.exists());
+    assert!(second.exists());
     drop(fixture.workspace);
 }
 
 #[test]
-fn opening_the_same_asset_twice_replaces_its_copy() {
+fn opening_the_same_asset_twice_gives_two_independent_copies() {
     let mut fixture = Fixture::new();
     let svg = fixture.import("dark-circle.svg");
     let first = fixture
@@ -555,7 +555,11 @@ fn opening_the_same_asset_twice_replaces_its_copy() {
         .expect("second copy")
         .expect("asset exists");
 
-    assert!(!first.exists());
+    assert_ne!(first, second);
+    assert_eq!(
+        fs::read(&first).expect("first is read"),
+        b"edited elsewhere"
+    );
     assert_eq!(file_name(&second), "Cercle.svg");
     assert_eq!(
         fs::read(&second).expect("copy is read"),

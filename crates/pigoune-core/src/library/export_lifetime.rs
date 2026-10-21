@@ -338,6 +338,20 @@ pub fn tidy_except(root: &Path, now_ms: u64, protected: &dyn Fn(&Path) -> bool) 
     }
 }
 
+pub fn tidy_children(parent: &Path, now_ms: u64, is_root_name: &dyn Fn(&str) -> bool) {
+    let Ok(children) = fs::read_dir(parent) else {
+        return;
+    };
+    for child in children.flatten() {
+        let name = child.file_name().to_string_lossy().into_owned();
+        let is_folder = fs::symlink_metadata(child.path()).is_ok_and(|metadata| metadata.is_dir());
+        if is_folder && is_root_name(&name) {
+            tidy(&child.path(), now_ms);
+            let _ = fs::remove_dir(child.path());
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::cell::{Cell, RefCell};
