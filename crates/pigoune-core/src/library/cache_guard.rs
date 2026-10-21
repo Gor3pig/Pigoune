@@ -167,6 +167,22 @@ pub(super) fn remove_tree_keeping_links(path: &Path) -> io::Result<Option<PathBu
     Ok(kept)
 }
 
+pub(super) fn holds_plain_file(path: &Path) -> io::Result<bool> {
+    let metadata = fs::symlink_metadata(path)?;
+    if metadata.is_file() {
+        return Ok(true);
+    }
+    if !metadata.is_dir() {
+        return Ok(false);
+    }
+    for child in fs::read_dir(path)? {
+        if holds_plain_file(&child?.path())? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 pub(super) fn remove_plain_file(path: &Path) -> bool {
     fs::symlink_metadata(path).is_ok_and(|metadata| metadata.is_file())
         && fs::remove_file(path).is_ok()
