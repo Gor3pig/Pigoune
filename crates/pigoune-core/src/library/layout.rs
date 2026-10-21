@@ -6,13 +6,22 @@ pub const LIBRARY_EXTENSION: &str = "pigoune";
 pub const DATABASE_FILE_NAME: &str = "library.db";
 pub const FILES_DIR_NAME: &str = "files";
 pub const CACHE_DIR_NAME: &str = "cache";
-const DETAILS_FILE_NAME: &str = "visual-details.db";
-const THUMBNAILS_DIR_NAME: &str = "thumbnails";
-const ANNOTATED_DIR_NAME: &str = "annotated";
-const EXPORT_DIR_NAME: &str = "export";
-const CLIPBOARD_DIR_NAME: &str = "clipboard";
-const OPENING_DIR_NAME: &str = "open";
-const PASTED_DIR_NAME: &str = "pasted";
+pub const DETAILS_FILE_NAME: &str = "visual-details.db";
+pub const DETAILS_SIDECAR_SUFFIXES: [&str; 3] = ["-journal", "-wal", "-shm"];
+pub const THUMBNAILS_DIR_NAME: &str = "thumbnails";
+pub const ANNOTATED_DIR_NAME: &str = "annotated";
+pub const EXPORT_DIR_NAME: &str = "export";
+pub const CLIPBOARD_DIR_NAME: &str = "clipboard";
+pub const OPENING_DIR_NAME: &str = "open";
+pub const PASTED_DIR_NAME: &str = "pasted";
+pub const CACHE_FOLDER_NAMES: [&str; 6] = [
+    THUMBNAILS_DIR_NAME,
+    ANNOTATED_DIR_NAME,
+    EXPORT_DIR_NAME,
+    CLIPBOARD_DIR_NAME,
+    OPENING_DIR_NAME,
+    PASTED_DIR_NAME,
+];
 
 const MAX_NAME_BYTES: usize = 200;
 const BUCKET_NAME_LENGTH: usize = 2;
@@ -57,6 +66,10 @@ pub fn files_dir(root: &Path) -> PathBuf {
 
 pub fn asset_dir(root: &Path, id: AssetId) -> PathBuf {
     files_dir(root).join(bucket_name(id)).join(id.to_string())
+}
+
+pub fn cache_dir(root: &Path) -> PathBuf {
+    root.join(CACHE_DIR_NAME)
 }
 
 pub fn details_path(root: &Path) -> PathBuf {

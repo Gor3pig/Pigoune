@@ -2055,6 +2055,20 @@ msgstr ""
 "Deze bibliotheek lijkt beschadigd. Je bestanden staan nog in haar map "
 "‘files’."
 
+#: crates/pigoune-app/src/error_messages.rs:123
+#, rust-format
+msgid ""
+"Pigoune cannot use “{entry}” in the cache of this library, because it is a "
+"link or another kind of item than expected. For safety, Pigoune does not "
+"follow it. You can look at it in the library folder, then rename or remove "
+"it yourself and try again."
+msgstr ""
+"Pigoune kan ‘{entry}’ in de cache van deze bibliotheek niet gebruiken, omdat"
+" dit item een symbolische koppeling is of niet van het verwachte type. Uit "
+"veiligheid volgt Pigoune het niet. Je kunt het in de map van de bibliotheek "
+"bekijken en het daarna zelf hernoemen of verwijderen, en het opnieuw "
+"proberen."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

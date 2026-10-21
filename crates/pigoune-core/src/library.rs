@@ -5,6 +5,7 @@ mod asset;
 mod asset_command;
 mod batch_import;
 mod buckets;
+mod cache_guard;
 mod clock;
 mod collection;
 mod collection_command;
@@ -59,6 +60,7 @@ pub use asset_command::{AssetCommand, AssetError, TextField};
 pub use batch_import::{
     ImportControl, ImportEnding, ImportProgress, ImportSummary, LARGE_FILE_BYTES,
 };
+pub use cache_guard::create_cache_folder;
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
 pub use duplicate_removal::{ConfirmedRemoval, MOST_CHOSEN_AT_ONCE, RemovalError};
@@ -69,7 +71,7 @@ pub use duplicates::{
 };
 pub use error::{
     AdoptError, AnnotatedError, CollectionError, ImportError, LibraryError, RemoveRecordError,
-    ReplaceError,
+    ReplaceError, cache_entry_label,
 };
 pub use export::{CopyFailure, CopyReport, FlatFiles};
 pub use export_lifetime::{SpaceProbe, VolumeSpace};
@@ -176,10 +178,11 @@ impl Library {
         schema::configure_connection(&connection)?;
         schema::ensure_is_intact(&connection)?;
         let found_version = schema::read_format_version(&connection)?;
+        cache_guard::verify_cache(root)?;
         migrate(&mut connection, root)?;
 
         fs::create_dir_all(root.join(FILES_DIR_NAME))?;
-        fs::create_dir_all(root.join(CACHE_DIR_NAME))?;
+        cache_guard::ensure_cache_folder(root)?;
         details_store::attach(&connection, root)?;
         if found_version < schema::FORMAT_MOVING_VISUAL_DETAILS {
             let _ = connection.execute_batch("VACUUM");

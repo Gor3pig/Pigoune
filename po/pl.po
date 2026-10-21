@@ -2051,6 +2051,20 @@ msgstr ""
 "Ta biblioteka wydaje się uszkodzona. Twoje pliki nadal są w jej katalogu "
 "„files”."
 
+#: crates/pigoune-app/src/error_messages.rs:123
+#, rust-format
+msgid ""
+"Pigoune cannot use “{entry}” in the cache of this library, because it is a "
+"link or another kind of item than expected. For safety, Pigoune does not "
+"follow it. You can look at it in the library folder, then rename or remove "
+"it yourself and try again."
+msgstr ""
+"Pigoune nie może użyć „{entry}” w pamięci podręcznej tej biblioteki, "
+"ponieważ ten wpis jest łączem symbolicznym lub nie ma oczekiwanego typu. Ze "
+"względów bezpieczeństwa Pigoune za nim nie podąża. Możesz go obejrzeć w "
+"katalogu biblioteki, a potem samodzielnie zmienić jego nazwę lub go usunąć i"
+" spróbować ponownie."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format
