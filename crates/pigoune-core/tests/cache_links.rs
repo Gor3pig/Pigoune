@@ -157,6 +157,12 @@ impl Fixture {
 }
 
 fn open(root: &Path) -> Result<Library, LibraryError> {
+    for _ in 0..100 {
+        match Library::open(root) {
+            Err(LibraryError::InUse) => thread::sleep(Duration::from_millis(20)),
+            other => return other,
+        }
+    }
     Library::open(root)
 }
 

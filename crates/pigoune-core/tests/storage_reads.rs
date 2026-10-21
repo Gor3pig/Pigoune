@@ -63,7 +63,7 @@ impl Trap {
     }
 
     fn open(&self) -> Library {
-        Library::open(&self.root).expect("opens")
+        open(&self.root).expect("opens")
     }
 
     fn stored(&self) -> PathBuf {
@@ -89,6 +89,16 @@ impl Trap {
     fn secret_untouched(&self) {
         assert_eq!(fs::read_to_string(&self.secret).expect("secret"), SECRET);
     }
+}
+
+fn open(root: &Path) -> Result<Library, LibraryError> {
+    for _ in 0..100 {
+        match Library::open(root) {
+            Err(LibraryError::InUse) => thread::sleep(Duration::from_millis(20)),
+            other => return other,
+        }
+    }
+    Library::open(root)
 }
 
 fn contents_below(folder: &Path) -> Vec<Vec<u8>> {
@@ -118,7 +128,10 @@ fn refused(error: &LibraryError) -> bool {
 }
 
 fn every_transfer_is_refused_and_nothing_is_copied(trap: &Trap) {
-    let library = trap.open();
+    every_transfer_of_an_open_library_is_refused(trap, &trap.open());
+}
+
+fn every_transfer_of_an_open_library_is_refused(trap: &Trap, library: &Library) {
     let flats = FlatFiles::new();
     let destination = trap.outside("destination");
     let library_destination = trap.outside("library-destination");
@@ -227,14 +240,15 @@ fn an_original_replaced_by_a_link_is_refused_and_left_alone() {
 }
 
 #[test]
-fn a_bucket_folder_that_is_a_link_is_refused_and_left_alone() {
+fn a_bucket_folder_swapped_for_a_link_after_the_opening_is_refused_and_left_alone() {
     let trap = Trap::new();
     let bucket = trap.bucket();
     let moved = trap.outside("moved-bucket").join("bucket");
+    let library = trap.open();
     fs::rename(&bucket, &moved).expect("moved");
     symlink(&moved, &bucket).expect("link");
 
-    every_transfer_is_refused_and_nothing_is_copied(&trap);
+    every_transfer_of_an_open_library_is_refused(&trap, &library);
 
     assert_eq!(fs::read_link(&bucket).expect("link kept"), moved);
     assert!(moved.is_dir());

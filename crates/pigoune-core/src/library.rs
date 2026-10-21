@@ -167,10 +167,8 @@ impl Library {
             return Err(LibraryError::NotFound(root.to_path_buf()));
         }
 
+        storage_guard::verify_storage(root)?;
         let database_path = layout::database_path(root);
-        if !database_path.is_file() {
-            return Err(LibraryError::NotALibrary(root.to_path_buf()));
-        }
 
         let exclusive_access = acquire_exclusive_access(root)?;
 

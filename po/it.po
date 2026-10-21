@@ -2082,6 +2082,19 @@ msgstr ""
 "Per sicurezza, Pigoune non la segue. Puoi esaminarla nella cartella della "
 "libreria, poi rinominarla o rimuoverla da te e riprovare."
 
+#: crates/pigoune-app/src/error_messages.rs:132
+msgid ""
+"The database of this library (“library.db”) is shared with another file "
+"through a hard link, so changes made here could change another library. "
+"Make an independent copy of the library, for example by copying its "
+"folder with your file manager, then open the copy."
+msgstr ""
+"Il database di questa libreria (“library.db”) è condiviso con un altro "
+"file tramite un collegamento fisico, quindi le modifiche fatte qui "
+"potrebbero modificare un’altra libreria. Crea una copia indipendente "
+"della libreria, per esempio copiandone la cartella con il gestore di "
+"file, poi apri la copia."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format

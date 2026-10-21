@@ -2420,6 +2420,19 @@ msgstr ""
 "pouvez l’examiner dans le dossier de la bibliothèque, puis la renommer ou "
 "la supprimer vous-même, et réessayer."
 
+#: crates/pigoune-app/src/error_messages.rs:132
+msgid ""
+"The database of this library (“library.db”) is shared with another file "
+"through a hard link, so changes made here could change another library. "
+"Make an independent copy of the library, for example by copying its "
+"folder with your file manager, then open the copy."
+msgstr ""
+"La base de données de cette bibliothèque (« library.db ») est partagée "
+"avec un autre fichier par un lien physique, si bien que des modifications "
+"faites ici pourraient modifier une autre bibliothèque. Faites une copie "
+"indépendante de la bibliothèque, par exemple en copiant son dossier avec "
+"votre gestionnaire de fichiers, puis ouvrez la copie."
+
 #: crates/pigoune-app/src/error_messages.rs:124
 #: crates/pigoune-app/src/import_report.rs:190
 #, rust-format
