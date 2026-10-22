@@ -216,11 +216,16 @@ struct Fixture {
 
 impl Fixture {
     fn new() -> Self {
+        Self::prepared(|_| {})
+    }
+
+    fn prepared(prepare: impl FnOnce(&Path)) -> Self {
         let workspace = tempfile::tempdir().expect("temporary directory");
         let library = Library::create(workspace.path(), "Essai").expect("library is created");
         let root = library.root().to_path_buf();
         drop(library);
         insert_assets(&root);
+        prepare(&root);
         let mut library = Library::open(&root).expect("library opens");
         let first = library.create_collection("C0", None).expect("collection");
         let second = library.create_collection("C1", None).expect("collection");
@@ -1219,4 +1224,303 @@ fn neutral_and_non_neutral_writes_interleaved_never_leave_a_stale_read() {
         let _ = fixture.library.redo();
         fixture.assert_coherent(&format!("redo {round}"));
     }
+}
+
+struct Sources {
+    folder: TempDir,
+    made: usize,
+}
+
+impl Sources {
+    fn new() -> Self {
+        Self {
+            folder: tempfile::tempdir().expect("temporary directory"),
+            made: 0,
+        }
+    }
+
+    fn file_in(&mut self, folder: &Path) -> PathBuf {
+        self.made += 1;
+        fs::create_dir_all(folder).expect("folder is created");
+        let mut bytes = fs::read(fixture_path("red-dot.png")).expect("sample is read");
+        bytes.extend_from_slice(format!("#{}", self.made).as_bytes());
+        let path = folder.join(format!("import-{}.png", self.made));
+        fs::write(&path, bytes).expect("source is written");
+        path
+    }
+
+    fn files(&mut self, count: usize) -> Vec<PathBuf> {
+        let folder = self.folder.path().to_path_buf();
+        (0..count).map(|_| self.file_in(&folder)).collect()
+    }
+}
+
+fn import_with_a_warm_cache(
+    fixture: &mut Fixture,
+    paths: &[PathBuf],
+    target: Option<CollectionId>,
+) -> pigoune_core::ImportSummary {
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .import_paths(paths, target, |_| true, |_| ImportControl::Continue)
+        .expect("the import runs")
+}
+
+fn listing_is_in_the_database_order(fixture: &Fixture) {
+    let shown = fixture
+        .library
+        .visible_assets_in(AssetView::All)
+        .expect("assets are listed");
+    for pair in shown.windows(2) {
+        assert!(
+            (pair[0].added_at_unix_ms, pair[0].id) > (pair[1].added_at_unix_ms, pair[1].id),
+            "the listing is not newest first"
+        );
+    }
+}
+
+fn new_and_known_imports(fixture: &mut Fixture, sources: &mut Sources, label: &str) {
+    let one = sources.files(1);
+    import_with_a_warm_cache(fixture, &one, None);
+    fixture.assert_coherent(&format!("{label}: one new item"));
+    listing_is_in_the_database_order(fixture);
+
+    let several = sources.files(3);
+    import_with_a_warm_cache(fixture, &several, None);
+    fixture.assert_coherent(&format!("{label}: several new items"));
+    listing_is_in_the_database_order(fixture);
+
+    let summary = import_with_a_warm_cache(
+        fixture,
+        &[one[0].clone(), sources.folder.path().join("missing.png")],
+        None,
+    );
+    assert_eq!(summary.already_present, 1);
+    fixture.assert_coherent(&format!("{label}: a duplicate and a missing file"));
+
+    let collection = fixture.collections()[0];
+    let into = sources.files(2);
+    import_with_a_warm_cache(fixture, &into, Some(collection));
+    fixture.assert_coherent(&format!("{label}: into a collection"));
+    let again = import_with_a_warm_cache(fixture, &into, Some(collection));
+    assert_eq!(again.already_present, 2);
+    fixture.assert_coherent(&format!("{label}: the same items into the same collection"));
+    let other = fixture.collections()[1];
+    let moved = import_with_a_warm_cache(fixture, &into, Some(other));
+    assert_eq!(moved.added_to_collection, 2);
+    fixture.assert_coherent(&format!("{label}: known items added to another collection"));
+
+    let trashed = import_with_a_warm_cache(fixture, &sources.files(1), None).imported[0];
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: vec![trashed],
+            trashed: true,
+        })
+        .expect("trashed");
+    fixture.assert_coherent(&format!("{label}: an item in the trash"));
+    let restored = import_with_a_warm_cache(
+        fixture,
+        &[sources
+            .folder
+            .path()
+            .join(format!("import-{}.png", sources.made))],
+        None,
+    );
+    assert_eq!(restored.restored_from_trash, 1);
+    fixture.assert_coherent(&format!("{label}: restored from the trash"));
+}
+
+fn folder_batched_cancelled_and_failed_imports(
+    fixture: &mut Fixture,
+    sources: &mut Sources,
+    label: &str,
+) {
+    let nested = sources.folder.path().join("album");
+    sources.file_in(&nested);
+    sources.file_in(&nested.join("deeper"));
+    import_with_a_warm_cache(fixture, std::slice::from_ref(&nested), None);
+    fixture.assert_coherent(&format!("{label}: a folder creating collections"));
+
+    let slow = sources.files(4);
+    let batches = fixture
+        .library
+        .import_paths(
+            &slow,
+            None,
+            |_| true,
+            |progress| {
+                if progress.done > 0 {
+                    std::thread::sleep(std::time::Duration::from_millis(450));
+                }
+                ImportControl::Continue
+            },
+        )
+        .expect("the import runs");
+    assert_eq!(batches.imported.len(), 4);
+    fixture.assert_coherent(&format!("{label}: several batches"));
+    listing_is_in_the_database_order(fixture);
+
+    let cancelled = sources.files(4);
+    let _ = observe(&fixture.library);
+    let summary = fixture
+        .library
+        .import_paths(
+            &cancelled,
+            None,
+            |_| true,
+            |progress| {
+                if progress.done == 2 {
+                    ImportControl::Cancel
+                } else {
+                    ImportControl::Continue
+                }
+            },
+        )
+        .expect("the import runs");
+    assert_eq!(summary.imported.len(), 2);
+    fixture.assert_coherent(&format!("{label}: cancelled halfway"));
+
+    let broken = sources.files(3);
+    let files = fixture.root().join("files");
+    let away = fixture.root().join("files-away");
+    let _ = observe(&fixture.library);
+    let summary = fixture
+        .library
+        .import_paths(
+            &broken,
+            None,
+            |_| true,
+            |progress| {
+                if progress.done == 1 {
+                    fs::rename(&files, &away).expect("the folder moves");
+                    std::os::unix::fs::symlink(&away, &files).expect("a link takes its place");
+                }
+                ImportControl::Continue
+            },
+        )
+        .expect("the import runs");
+    assert!(summary.imported.is_empty());
+    fs::remove_file(&files).expect("the link goes");
+    fs::rename(&away, &files).expect("the folder returns");
+    fixture.assert_coherent(&format!("{label}: interrupted after some work"));
+}
+
+fn imports_of_every_shape(mut fixture: Fixture, label: &str) {
+    let mut sources = Sources::new();
+    new_and_known_imports(&mut fixture, &mut sources, label);
+    folder_batched_cancelled_and_failed_imports(&mut fixture, &mut sources, label);
+}
+
+fn later_changes_on_imported_items(mut fixture: Fixture, label: &str) {
+    let mut sources = Sources::new();
+    let files = sources.files(3);
+    let imported = import_with_a_warm_cache(&mut fixture, &files, None).imported;
+    let first = imported[0];
+    let second = imported[1];
+
+    for (step, gesture) in [
+        "favorite",
+        "rename",
+        "tag",
+        "colours",
+        "visual analysis",
+        "visual details",
+        "annotation",
+        "trash",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let _ = observe(&fixture.library);
+        match step {
+            0 => fixture
+                .library
+                .apply_asset_command(&AssetCommand::SetFavorite {
+                    assets: vec![first],
+                    favorite: true,
+                })
+                .map(|_| ())
+                .expect("favorite"),
+            1 => fixture
+                .library
+                .apply_asset_command(&AssetCommand::Rename {
+                    asset: second,
+                    name: "logo renamed".to_owned(),
+                })
+                .map(|_| ())
+                .expect("rename"),
+            2 => fixture
+                .library
+                .apply_tag_command(&TagCommand::Add {
+                    assets: vec![first, second],
+                    name: "Alpha/Beta".to_owned(),
+                })
+                .map(|_| ())
+                .expect("tag"),
+            3 => fixture
+                .library
+                .record_colors_batch(&[(first, some_colors(&mut Dice(7)))])
+                .expect("colours"),
+            4 => fixture
+                .library
+                .record_visual_analysis_batch(&[(first, None), (second, None)])
+                .expect("analysis"),
+            5 => fixture
+                .library
+                .record_visual_details_batch(&[(second, None)])
+                .expect("details"),
+            6 => fixture
+                .library
+                .save_annotations(first, &blur_document(3.0))
+                .expect("annotation"),
+            _ => fixture
+                .library
+                .apply_asset_command(&AssetCommand::SetTrashed {
+                    assets: vec![second],
+                    trashed: true,
+                })
+                .map(|_| ())
+                .expect("trash"),
+        }
+        fixture.assert_coherent(&format!("{label}: {gesture} after an import"));
+    }
+}
+
+#[test]
+fn imports_of_every_shape_keep_the_cached_reads_equal_to_a_reopened_library() {
+    imports_of_every_shape(Fixture::new(), "plain");
+}
+
+#[test]
+fn imports_among_newer_and_older_items_keep_the_cached_reads_equal_to_a_reopened_library() {
+    let mixed = Fixture::prepared(|root| {
+        let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+        connection
+            .execute(
+                "UPDATE assets SET added_at_unix_ms = added_at_unix_ms + 99999999990000
+                 WHERE CAST(substr(content_hash, 6) AS INTEGER) % 2 = 0",
+                [],
+            )
+            .expect("some items are dated in the future");
+    });
+    imports_of_every_shape(mixed, "mixed dates");
+}
+
+#[test]
+fn the_deferred_writes_and_later_changes_after_an_import_stay_equal_to_a_reopened_library() {
+    later_changes_on_imported_items(Fixture::new(), "plain");
+}
+
+#[test]
+fn an_import_into_a_cache_that_was_never_filled_is_equal_to_a_reopened_library() {
+    let mut fixture = Fixture::new();
+    let mut sources = Sources::new();
+    let files = sources.files(2);
+    fixture
+        .library
+        .import_paths(&files, None, |_| true, |_| ImportControl::Continue)
+        .expect("the import runs");
+    fixture.assert_coherent("an import with no cache");
 }
