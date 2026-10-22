@@ -1524,3 +1524,172 @@ fn an_import_into_a_cache_that_was_never_filled_is_equal_to_a_reopened_library()
         .expect("the import runs");
     fixture.assert_coherent("an import with no cache");
 }
+
+fn tinted(family: AssetColor, level: u8) -> Vec<DominantColor> {
+    vec![DominantColor {
+        family,
+        average: Rgb::new(level, 30, 200 - level.min(190)),
+    }]
+}
+
+fn colours_stored_in(root: &Path) -> (usize, usize) {
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    let filled: i64 = connection
+        .query_row(
+            "SELECT count(*) FROM assets WHERE colors IS NOT NULL AND colors != ''",
+            [],
+            |row| row.get(0),
+        )
+        .expect("filled colours are counted");
+    let rows: i64 = connection
+        .query_row("SELECT count(*) FROM assets", [], |row| row.get(0))
+        .expect("rows are counted");
+    (
+        usize::try_from(filled).expect("a count"),
+        usize::try_from(rows).expect("a count"),
+    )
+}
+
+fn colours_seen_by_a_reopened_library(fixture: &Fixture) -> usize {
+    let (_copy, reopened) = fixture.reopened();
+    [AssetView::All, AssetView::Trash]
+        .into_iter()
+        .map(|view| {
+            reopened
+                .visible_assets_in(view)
+                .expect("assets are listed")
+                .iter()
+                .filter(|asset| !asset.colors.is_empty())
+                .count()
+        })
+        .sum()
+}
+
+#[test]
+fn colour_writes_keep_the_warm_caches_and_the_reads_equal_to_a_reopened_library() {
+    let mut fixture = Fixture::new();
+    let mut sources = Sources::new();
+    let alive = fixture.alive();
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetTrashed {
+            assets: alive[..6].to_vec(),
+            trashed: true,
+        })
+        .expect("some items are trashed");
+    let alive = fixture.alive();
+    let trashed = fixture.trashed();
+    let missing = asset_id(ASSETS + 900);
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_colors_batch(&[(alive[0], tinted(AssetColor::Red, 210))])
+        .expect("one colour is recorded");
+    fixture.assert_coherent("one active item");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_colors_batch(&[
+            (alive[1], tinted(AssetColor::Red, 200)),
+            (trashed[0], tinted(AssetColor::Red, 205)),
+            (alive[2], tinted(AssetColor::Blue, 20)),
+            (trashed[1], tinted(AssetColor::Blue, 25)),
+        ])
+        .expect("several colours are recorded");
+    fixture.assert_coherent("active and trashed items");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .record_colors_batch(&[
+            (alive[3], tinted(AssetColor::Red, 220)),
+            (alive[3], tinted(AssetColor::Green, 90)),
+            (missing, tinted(AssetColor::Red, 100)),
+            (alive[0], Vec::new()),
+            (trashed[2], Vec::new()),
+        ])
+        .expect("a mixed batch is recorded");
+    fixture.assert_coherent("repeated, absent and emptied");
+
+    let _ = observe(&fixture.library);
+    for round in 0..3_u8 {
+        fixture
+            .library
+            .record_colors_batch(&[
+                (
+                    alive[4 + usize::from(round)],
+                    tinted(AssetColor::Red, 200 + round),
+                ),
+                (alive[10], tinted(AssetColor::Gray, 100 + round)),
+            ])
+            .expect("successive batches are recorded");
+    }
+    fixture.assert_coherent("successive batches");
+
+    let _ = fixture.library.visible_assets_in(AssetView::All);
+    fixture
+        .library
+        .record_colors_batch(&[
+            (trashed[3], tinted(AssetColor::Red, 215)),
+            (alive[5], tinted(AssetColor::Red, 216)),
+        ])
+        .expect("only the listing is warm");
+    fixture.assert_coherent("only the listing of everything is warm");
+
+    colour_writes_around_imports_and_ordinary_writes(&mut fixture, &mut sources, &alive);
+}
+
+fn colour_writes_around_imports_and_ordinary_writes(
+    fixture: &mut Fixture,
+    sources: &mut Sources,
+    alive: &[AssetId],
+) {
+    let files = sources.files(2);
+    let summary = import_with_a_warm_cache(fixture, &files, None);
+    let imported: Vec<_> = summary
+        .imported
+        .iter()
+        .map(|id| (*id, tinted(AssetColor::Red, 230)))
+        .collect();
+    fixture
+        .library
+        .record_colors_batch(&imported)
+        .expect("imported items are coloured");
+    fixture.assert_coherent("colours of imported items");
+    let more = sources.files(1);
+    import_with_a_warm_cache(fixture, &more, None);
+    fixture.assert_coherent("an import after the colours");
+
+    let _ = observe(&fixture.library);
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetFavorite {
+            assets: vec![alive[7]],
+            favorite: true,
+        })
+        .expect("a favorite is set");
+    fixture
+        .library
+        .record_colors_batch(&[(alive[7], tinted(AssetColor::Red, 212))])
+        .expect("colours after an ordinary write");
+    fixture.assert_coherent("an ordinary write then a colour write");
+    fixture
+        .library
+        .record_colors_batch(&[(alive[8], tinted(AssetColor::Red, 213))])
+        .expect("a colour write");
+    fixture
+        .library
+        .apply_asset_command(&AssetCommand::SetFavorite {
+            assets: vec![alive[8]],
+            favorite: true,
+        })
+        .expect("a favorite is set");
+    fixture.assert_coherent("a colour write then an ordinary write");
+
+    let (filled, rows) = colours_stored_in(&fixture.root());
+    assert_eq!(filled, colours_seen_by_a_reopened_library(fixture));
+    assert_eq!(rows, fixture.alive().len() + fixture.trashed().len());
+    assert!(rows <= ASSETS + 3);
+}
