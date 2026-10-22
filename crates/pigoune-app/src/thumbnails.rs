@@ -57,6 +57,14 @@ fn touch(use_order: &mut VecDeque<AssetId>, id: AssetId) {
     use_order.push_back(id);
 }
 
+#[cfg(test)]
+pub fn hold_every_load_slot() -> Vec<crate::load_slots::Slot> {
+    let slots = LOAD_SLOTS.with(Clone::clone);
+    (0..MOST_CONCURRENT_LOADS)
+        .filter_map(|_| slots.try_acquire())
+        .collect()
+}
+
 pub async fn thumbnail(file: &Path, thumbnail_file: &Path) -> Option<gdk::Texture> {
     thumbnail_from(async { Some(file.to_path_buf()) }, thumbnail_file).await
 }

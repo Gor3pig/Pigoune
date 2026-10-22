@@ -20,7 +20,7 @@ impl LoadSlots {
     }
 
     #[cfg(test)]
-    fn try_acquire(&self) -> Option<Slot> {
+    pub fn try_acquire(&self) -> Option<Slot> {
         self.taken
             .try_send(())
             .ok()

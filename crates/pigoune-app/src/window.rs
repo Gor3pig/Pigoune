@@ -2219,10 +2219,21 @@ impl PigouneWindow {
 
     async fn wait_for_calm_in(&self, generation: u32) -> bool {
         self.imp().activity.wait_for_calm().await;
+        self.is_library_generation(generation)
+    }
+
+    fn is_library_generation(&self, generation: u32) -> bool {
         self.imp().library_generation.get() == generation
     }
 
-    fn record_colors(&self, analysed: &[(AssetId, Vec<pigoune_core::DominantColor>)]) -> bool {
+    fn record_colors(
+        &self,
+        generation: u32,
+        analysed: &[(AssetId, Vec<pigoune_core::DominantColor>)],
+    ) -> bool {
+        if !self.is_library_generation(generation) {
+            return false;
+        }
         let recorded = self
             .imp()
             .library
@@ -2236,7 +2247,14 @@ impl PigouneWindow {
         done
     }
 
-    fn record_analyses(&self, analysed: &[(AssetId, Option<VisualAnalysis>)]) -> bool {
+    fn record_analyses(
+        &self,
+        generation: u32,
+        analysed: &[(AssetId, Option<VisualAnalysis>)],
+    ) -> bool {
+        if !self.is_library_generation(generation) {
+            return false;
+        }
         let recorded = self
             .imp()
             .library
@@ -2255,7 +2273,7 @@ impl PigouneWindow {
             for (id, file, thumbnail_file) in pending {
                 if !self.imp().activity.is_calm()
                     && !analysed.is_empty()
-                    && !self.record_colors(&std::mem::take(&mut analysed))
+                    && !self.record_colors(generation, &std::mem::take(&mut analysed))
                 {
                     return false;
                 }
@@ -2273,7 +2291,7 @@ impl PigouneWindow {
                 };
                 analysed.push((id, colors));
             }
-            if !self.record_colors(&analysed) {
+            if !self.record_colors(generation, &analysed) {
                 return false;
             }
         }
@@ -2289,7 +2307,7 @@ impl PigouneWindow {
             for (id, file, thumbnail_file) in pending {
                 if !self.imp().activity.is_calm()
                     && !analysed.is_empty()
-                    && !self.record_analyses(&std::mem::take(&mut analysed))
+                    && !self.record_analyses(generation, &std::mem::take(&mut analysed))
                 {
                     return false;
                 }
@@ -2299,7 +2317,7 @@ impl PigouneWindow {
                 let analysis = analyse_drawing(&file, &thumbnail_file).await.flatten();
                 analysed.push((id, analysis));
             }
-            if !self.record_analyses(&analysed) {
+            if !self.record_analyses(generation, &analysed) {
                 return false;
             }
         }
@@ -7660,6 +7678,10 @@ pub mod opening_tests;
 #[cfg(test)]
 #[path = "window_import_tests.rs"]
 pub mod import_tests;
+
+#[cfg(test)]
+#[path = "window_analysis_tests.rs"]
+pub mod analysis_tests;
 
 #[cfg(test)]
 mod tests {
