@@ -143,11 +143,16 @@ impl Library {
         else {
             return;
         };
-        let Ok(rows) = self.asset_rows() else {
+        let (Ok(rows), Ok(links)) = (self.asset_rows(), self.link_rows()) else {
             return;
         };
-        self.query_cache
-            .adopt(before, self.connection.total_changes(), created, rows);
+        self.query_cache.adopt(
+            before,
+            self.connection.total_changes(),
+            created,
+            rows,
+            links,
+        );
     }
 
     fn import_in_batches(
@@ -567,6 +572,7 @@ mod cache_tests {
         let (all, _) = fixture.warm();
         let stamp = fixture.library.connection.total_changes();
         let rows = fixture.library.asset_rows().expect("rows");
+        let links = fixture.library.link_rows().expect("links");
 
         let refused = fixture.library.query_cache.adopt(
             stamp,
@@ -576,6 +582,7 @@ mod cache_tests {
                 visible: rows.visible + 1,
                 trashed: rows.trashed,
             },
+            links,
         );
         let refused_trash = fixture.library.query_cache.adopt(
             stamp,
@@ -585,11 +592,12 @@ mod cache_tests {
                 visible: rows.visible,
                 trashed: rows.trashed + 1,
             },
+            links,
         );
         let accepted = fixture
             .library
             .query_cache
-            .adopt(stamp, stamp + 1, Vec::new(), rows);
+            .adopt(stamp, stamp + 1, Vec::new(), rows, links);
 
         assert!(!refused && !refused_trash && accepted);
         let cache = fixture.library.query_cache.lock(stamp + 1);

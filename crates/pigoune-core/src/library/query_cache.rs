@@ -2,7 +2,7 @@ use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
-use super::{Asset, AssetId};
+use super::{Asset, AssetId, CollectionId, TagId};
 
 #[derive(Debug, Default)]
 pub(super) struct QueryCache {
@@ -11,12 +11,43 @@ pub(super) struct QueryCache {
     pub trash: Option<Arc<Vec<Asset>>>,
     pub tags: Option<Arc<HashMap<AssetId, Vec<String>>>>,
     pub texts: HashMap<AssetId, String>,
+    pub tag_counts: Option<Arc<Counted<TagId>>>,
+    pub collection_counts: Option<Arc<Counted<CollectionId>>>,
+}
+
+#[derive(Debug)]
+pub(super) struct Counted<K> {
+    pub rows: (usize, usize, usize),
+    pub counts: HashMap<K, usize>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) struct AssetRows {
     pub visible: usize,
     pub trashed: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) struct LinkRows {
+    pub tags: usize,
+    pub asset_tags: usize,
+    pub collections: usize,
+    pub asset_collections: usize,
+    pub trashed_assets: usize,
+}
+
+impl LinkRows {
+    pub fn behind_tag_counts(self) -> (usize, usize, usize) {
+        (self.tags, self.asset_tags, self.trashed_assets)
+    }
+
+    pub fn behind_collection_counts(self) -> (usize, usize, usize) {
+        (
+            self.collections,
+            self.asset_collections,
+            self.trashed_assets,
+        )
+    }
 }
 
 fn newest_first(asset: &Asset) -> (Reverse<i64>, Reverse<AssetId>) {
@@ -66,10 +97,19 @@ impl SharedQueryCache {
         let mut cache = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         if cache.stamp == Some(before) {
             cache.stamp = Some(after);
+            cache.tag_counts = None;
+            cache.collection_counts = None;
         }
     }
 
-    pub fn adopt(&self, before: u64, after: u64, imported: Vec<Asset>, rows: AssetRows) -> bool {
+    pub fn adopt(
+        &self,
+        before: u64,
+        after: u64,
+        imported: Vec<Asset>,
+        rows: AssetRows,
+        links: LinkRows,
+    ) -> bool {
         let mut cache = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         if cache.stamp != Some(before) {
             return false;
@@ -90,6 +130,20 @@ impl SharedQueryCache {
         if let Some(known) = cache.all.take() {
             let known = Arc::try_unwrap(known).unwrap_or_else(|shared| (*shared).clone());
             cache.all = Some(Arc::new(merged_by_key(known, imported, newest_first)));
+        }
+        if cache
+            .tag_counts
+            .as_ref()
+            .is_some_and(|known| known.rows != links.behind_tag_counts())
+        {
+            cache.tag_counts = None;
+        }
+        if cache
+            .collection_counts
+            .as_ref()
+            .is_some_and(|known| known.rows != links.behind_collection_counts())
+        {
+            cache.collection_counts = None;
         }
         cache.stamp = Some(after);
         true
