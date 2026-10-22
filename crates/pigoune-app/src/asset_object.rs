@@ -166,22 +166,23 @@ impl PigouneAssetObject {
     }
 
     pub fn adopt_edits_of(&self, newer: &Self) -> bool {
-        if self.favorite() != newer.favorite() {
-            self.set_favorite(newer.favorite());
+        let (mine, theirs) = (self.imp(), newer.imp());
+        if mine.favorite.get() != theirs.favorite.get() {
+            self.set_favorite(theirs.favorite.get());
         }
-        if self.note() != newer.note() {
+        if *mine.note.borrow() != *theirs.note.borrow() {
             self.set_note(newer.note());
         }
-        if self.source_url() != newer.source_url() {
+        if *mine.source_url.borrow() != *theirs.source_url.borrow() {
             self.set_source_url(newer.source_url());
         }
-        if self.license() != newer.license() {
+        if *mine.license.borrow() != *theirs.license.borrow() {
             self.set_license(newer.license());
         }
-        if self.author() != newer.author() {
+        if *mine.author.borrow() != *theirs.author.borrow() {
             self.set_author(newer.author());
         }
-        let renamed = self.display_name() != newer.display_name();
+        let renamed = *mine.display_name.borrow() != *theirs.display_name.borrow();
         if renamed {
             self.set_display_name(newer.display_name());
         }
@@ -316,6 +317,62 @@ mod tests {
         assert!(shown.favorite());
         assert_eq!(shown.display_name(), "Renamed");
         assert!(!shown.adopt_edits_of(&newer));
+    }
+
+    fn counting_notifications(shown: &PigouneAssetObject) -> std::rc::Rc<std::cell::Cell<u32>> {
+        let notified = std::rc::Rc::new(std::cell::Cell::new(0));
+        let counter = notified.clone();
+        gtk::prelude::ObjectExt::connect_notify_local(shown, None, move |_, _| {
+            counter.set(counter.get() + 1);
+        });
+        notified
+    }
+
+    #[test]
+    fn adopting_identical_edits_notifies_nothing() {
+        let mut source = asset("Logo", true, 10);
+        source.note = "a note".to_owned();
+        let shown = object(source.clone());
+        let notified = counting_notifications(&shown);
+
+        assert!(!shown.adopt_edits_of(&object(source)));
+
+        assert_eq!(notified.get(), 0);
+    }
+
+    #[test]
+    fn every_edited_field_is_adopted_and_notified_once() {
+        let shown = object(asset("Logo", false, 10));
+        let mut edited = asset("Logo", true, 10);
+        edited.note = "a note".to_owned();
+        edited.source_url = "https://example.org/logo".to_owned();
+        edited.license = "CC0".to_owned();
+        edited.author = "Someone".to_owned();
+        let notified = counting_notifications(&shown);
+
+        assert!(!shown.adopt_edits_of(&object(edited)));
+
+        assert_eq!(notified.get(), 5);
+        assert!(shown.favorite());
+        assert_eq!(shown.note(), "a note");
+        assert_eq!(shown.source_url(), "https://example.org/logo");
+        assert_eq!(shown.license(), "CC0");
+        assert_eq!(shown.author(), "Someone");
+        assert_eq!(shown.display_name(), "Logo");
+    }
+
+    #[test]
+    fn a_rename_is_reported_and_refreshes_the_sort_key() {
+        let shown = object(asset("Logo", false, 10));
+        let before = shown.name_key();
+
+        assert!(shown.adopt_edits_of(&object(asset("Zebra", false, 10))));
+
+        assert!(!std::rc::Rc::ptr_eq(&before, &shown.name_key()));
+        assert_eq!(
+            *shown.name_key(),
+            gtk::glib::FilenameCollationKey::from("Zebra")
+        );
     }
 
     #[test]
