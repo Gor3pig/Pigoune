@@ -1,8 +1,8 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use super::collection::{distinct_count, ids_as_json};
+use super::collection::{distinct_count, id_batches, ids_as_json};
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, OriginalFile, layout};
 use crate::media::{
@@ -50,6 +50,23 @@ impl Library {
                 asset_from_row,
             )
             .optional()?)
+    }
+
+    pub(super) fn assets_among(
+        &self,
+        assets: &[AssetId],
+    ) -> Result<HashMap<AssetId, Asset>, LibraryError> {
+        let mut statement = self.connection.prepare(&format!(
+            "SELECT {ASSET_COLUMNS} FROM assets WHERE id IN (SELECT value FROM json_each(?1))"
+        ))?;
+        let mut found = HashMap::new();
+        for batch in id_batches(assets) {
+            for asset in statement.query_map([ids_as_json(&batch)], asset_from_row)? {
+                let asset = asset?;
+                found.insert(asset.id, asset);
+            }
+        }
+        Ok(found)
     }
 
     pub fn all_are_favorite(&self, assets: &[AssetId]) -> Result<bool, LibraryError> {
