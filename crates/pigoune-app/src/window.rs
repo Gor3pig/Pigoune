@@ -965,27 +965,6 @@ impl PigouneWindow {
         ));
     }
 
-    fn ready_flat_files(&self, ids: &[AssetId]) -> (FlatFiles, usize) {
-        let library = self.imp().library.borrow();
-        let Some(library) = library.as_ref() else {
-            return (FlatFiles::new(), 0);
-        };
-        let mut flats = FlatFiles::new();
-        let mut not_ready = 0;
-        for id in ids {
-            match library.annotation_render(*id) {
-                Ok(Some(render))
-                    if pigoune_core::cache_file(&render.file) == pigoune_core::CacheFile::Plain =>
-                {
-                    flats.insert(*id, render.file);
-                }
-                Ok(Some(_)) | Err(_) => not_ready += 1,
-                Ok(None) => {}
-            }
-        }
-        (flats, not_ready)
-    }
-
     fn warm_annotated_renderings(&self, shown: &[PigouneAssetObject]) {
         let ids: Vec<AssetId> = shown
             .iter()
@@ -1075,8 +1054,17 @@ impl PigouneWindow {
             self,
             #[upgrade_or_default]
             move |assets| {
-                let (flats, not_ready) = window.ready_flat_files(assets);
-                let plan = drag_export::plan(assets, window.exposed_mask_names(assets), not_ready);
+                let Some(check) = window
+                    .imp()
+                    .library
+                    .borrow()
+                    .as_ref()
+                    .map(|library| library.check_drag_out(assets))
+                else {
+                    return Vec::new();
+                };
+                let flats = check.flats;
+                let plan = drag_export::plan(assets, check.hidden_mask_names, check.not_ready);
                 if let Some(refusal) = &plan.refusal {
                     window.show_toast(&drag_export::refusal_text(refusal));
                     return Vec::new();

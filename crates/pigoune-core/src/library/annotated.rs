@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use rusqlite::{OptionalExtension, params};
 
+use super::collection::{id_batches, ids_as_json};
 use super::trash::forget_thumbnails;
 use super::{
     AnnotatedError, AssetId, ImportOutcome, Library, LibraryError, clock, details_store, layout,
@@ -50,6 +51,23 @@ impl Library {
         self.annotations(id)?
             .map(|stored| Ok(AnnotationDocument::from_json(&stored.document)?))
             .transpose()
+    }
+
+    pub(super) fn annotated_among(
+        &self,
+        assets: &[AssetId],
+    ) -> Result<HashSet<AssetId>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT asset_id FROM asset_annotations
+             WHERE asset_id IN (SELECT value FROM json_each(?1))",
+        )?;
+        let mut found = HashSet::new();
+        for batch in id_batches(assets) {
+            for id in statement.query_map([ids_as_json(&batch)], |row| row.get(0))? {
+                found.insert(id?);
+            }
+        }
+        Ok(found)
     }
 
     pub fn annotated_ids(&self) -> Result<HashSet<AssetId>, LibraryError> {
@@ -134,7 +152,12 @@ impl Library {
             .collect())
     }
 
-    fn render_of(&self, id: AssetId, content_hash: &str, document: String) -> AnnotationRender {
+    pub(super) fn render_of(
+        &self,
+        id: AssetId,
+        content_hash: &str,
+        document: String,
+    ) -> AnnotationRender {
         let key = render_key(content_hash, &document, RENDER_VERSION);
         AnnotationRender {
             file: layout::annotated_render_path(&self.root, id, &key),

@@ -311,6 +311,21 @@ pub(super) fn ids_as_json(assets: &[AssetId]) -> String {
     format!("[{}]", quoted.join(","))
 }
 
+const IDS_PER_QUERY: usize = 500;
+
+pub(super) fn id_batches(assets: &[AssetId]) -> Vec<Vec<AssetId>> {
+    let mut seen = HashSet::new();
+    let distinct: Vec<AssetId> = assets
+        .iter()
+        .copied()
+        .filter(|asset| seen.insert(*asset))
+        .collect();
+    distinct
+        .chunks(IDS_PER_QUERY)
+        .map(<[AssetId]>::to_vec)
+        .collect()
+}
+
 pub(super) fn distinct_count(assets: &[AssetId]) -> usize {
     assets.iter().collect::<HashSet<_>>().len()
 }

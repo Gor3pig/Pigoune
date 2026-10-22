@@ -97,17 +97,18 @@ impl Library {
         assets: &[AssetId],
         flats: &FlatFiles,
     ) -> Result<Vec<ExportItem>, LibraryError> {
-        let annotated = self.annotated_ids()?;
+        let annotated = self.annotated_among(assets)?;
+        let found = self.assets_among(assets)?;
         let mut items = Vec::new();
         for id in assets {
-            let Some(asset) = self.asset(*id)? else {
+            let Some(asset) = found.get(id) else {
                 continue;
             };
-            let (source, extension) = self.source_of(&asset, annotated.contains(id), flats)?;
+            let (source, extension) = self.source_of(asset, annotated.contains(id), flats)?;
             let bytes = source.length()?;
             items.push(ExportItem {
                 source,
-                base: base_name_of(&asset),
+                base: base_name_of(asset),
                 extension,
                 bytes,
             });

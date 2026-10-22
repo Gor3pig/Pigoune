@@ -12,6 +12,7 @@ mod collection_command;
 mod content;
 mod details_store;
 mod dimension_recheck;
+mod drag_out;
 mod duplicate_removal;
 mod duplicates;
 mod error;
@@ -67,6 +68,7 @@ pub use cache_guard::{
 };
 pub use collection::{Collection, CollectionLook, CollectionPath};
 pub use collection_command::{CollectionCommand, CollectionRemoval};
+pub use drag_out::DragOutCheck;
 pub use duplicate_removal::{ConfirmedRemoval, MOST_CHOSEN_AT_ONCE, RemovalError};
 pub use duplicates::{
     ALMOST_IDENTICAL_DISTANCE, DUPLICATE_DISTANCE, DuplicateGroup, DuplicateKind, DuplicatePlan,
