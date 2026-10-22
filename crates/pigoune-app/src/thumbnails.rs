@@ -74,8 +74,14 @@ pub async fn thumbnail_of(
     thumbnail_file: &Path,
 ) -> Option<gdk::Texture> {
     let original = original?;
-    original.check().ok()?;
-    thumbnail(original.path(), thumbnail_file).await
+    thumbnail_from(
+        async {
+            original.check().ok()?;
+            Some(original.path().to_path_buf())
+        },
+        thumbnail_file,
+    )
+    .await
 }
 
 pub async fn thumbnail_from(
@@ -269,6 +275,7 @@ mod tests {
 
     use super::{
         REMEMBERED_THUMBNAILS, ThumbnailCache, fit_within, load_stored, scaled_to, shrink,
+        thumbnail_of,
     };
     use crate::asset_colors;
 
@@ -409,5 +416,83 @@ mod tests {
         assert!(from_broken.is_none());
         assert!(still_a_link);
         assert!(outside_kept);
+    }
+
+    struct Linked {
+        workspace: std::path::PathBuf,
+        original: pigoune_core::OriginalFile,
+        thumbnail_file: std::path::PathBuf,
+        outside: std::path::PathBuf,
+    }
+
+    fn library_whose_original_is_a_link(label: &str) -> Linked {
+        let id = asset_id(1);
+        let workspace =
+            std::env::temp_dir().join(format!("pigoune-{label}-{}", std::process::id()));
+        let folder = workspace.join(format!("files/01/{id}"));
+        fs::create_dir_all(&folder).expect("original folder");
+        let outside = workspace.join("outside.png");
+        let pixels = glib::Bytes::from_owned(vec![90_u8; 3 * 4 * 4]);
+        let texture = gdk::MemoryTexture::new(3, 4, gdk::MemoryFormat::R8g8b8a8, &pixels, 12);
+        fs::write(&outside, texture.save_to_png_bytes()).expect("outside image");
+        std::os::unix::fs::symlink(&outside, folder.join("logo.png")).expect("link");
+        let original = pigoune_core::OriginalFile::new(
+            &workspace,
+            id,
+            std::path::Path::new(&format!("files/01/{id}/logo.png")),
+        )
+        .expect("a conforming record");
+        let thumbnail_file = workspace.join(format!("cache/thumbnails/256/01/{id}.png"));
+        Linked {
+            workspace,
+            original,
+            thumbnail_file,
+            outside,
+        }
+    }
+
+    #[test]
+    fn a_stored_thumbnail_is_shown_without_looking_at_the_original() {
+        let linked = library_whose_original_is_a_link("stored-first");
+        let pixels = glib::Bytes::from_owned(vec![200_u8; 3 * 4 * 4]);
+        let texture = gdk::MemoryTexture::new(3, 4, gdk::MemoryFormat::R8g8b8a8, &pixels, 12);
+        pigoune_core::write_thumbnail_file(&linked.thumbnail_file, &texture.save_to_png_bytes())
+            .expect("stored");
+
+        let shown = glib::MainContext::new()
+            .block_on(thumbnail_of(Some(&linked.original), &linked.thumbnail_file));
+
+        fs::remove_dir_all(&linked.workspace).expect("workspace removed");
+        let shown = shown.expect("the stored thumbnail is shown");
+        assert_eq!((shown.width(), shown.height()), (3, 4));
+    }
+
+    #[test]
+    fn without_a_stored_thumbnail_a_linked_original_is_never_decoded() {
+        let linked = library_whose_original_is_a_link("linked-original");
+
+        let shown = glib::MainContext::new()
+            .block_on(thumbnail_of(Some(&linked.original), &linked.thumbnail_file));
+
+        let stored = linked.thumbnail_file.exists();
+        let outside_kept = linked.outside.is_file();
+        fs::remove_dir_all(&linked.workspace).expect("workspace removed");
+        assert!(shown.is_none());
+        assert!(!stored);
+        assert!(outside_kept);
+    }
+
+    #[test]
+    fn a_record_without_an_original_of_its_own_shows_nothing() {
+        let linked = library_whose_original_is_a_link("no-original");
+        let pixels = glib::Bytes::from_owned(vec![200_u8; 3 * 4 * 4]);
+        let texture = gdk::MemoryTexture::new(3, 4, gdk::MemoryFormat::R8g8b8a8, &pixels, 12);
+        pigoune_core::write_thumbnail_file(&linked.thumbnail_file, &texture.save_to_png_bytes())
+            .expect("stored");
+
+        let shown = glib::MainContext::new().block_on(thumbnail_of(None, &linked.thumbnail_file));
+
+        fs::remove_dir_all(&linked.workspace).expect("workspace removed");
+        assert!(shown.is_none());
     }
 }
