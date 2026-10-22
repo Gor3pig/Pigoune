@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use super::collection::{distinct_count, id_batches, ids_as_json};
+use super::query_cache::AssetRows;
 use super::view::{self, AssetView, SUBTREE};
 use super::{AssetId, Library, LibraryError, OriginalFile, layout};
 use crate::media::{
@@ -50,6 +51,20 @@ impl Library {
                 asset_from_row,
             )
             .optional()?)
+    }
+
+    pub(super) fn asset_rows(&self) -> Result<AssetRows, LibraryError> {
+        let (visible, trashed): (i64, i64) = self.connection.query_row(
+            "SELECT count(CASE WHEN trashed_at_unix_ms IS NULL THEN 1 END),
+                    count(CASE WHEN trashed_at_unix_ms IS NOT NULL THEN 1 END)
+             FROM assets",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )?;
+        Ok(AssetRows {
+            visible: usize::try_from(visible).unwrap_or(0),
+            trashed: usize::try_from(trashed).unwrap_or(0),
+        })
     }
 
     pub(super) fn assets_among(
@@ -124,7 +139,7 @@ impl Library {
         Ok(loaded)
     }
 
-    fn load_assets(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
+    pub(super) fn load_assets(&self, view: AssetView) -> Result<Vec<Asset>, LibraryError> {
         let filter = view::filter(view);
         let clause = filter.clause();
         let mut statement = self.connection.prepare(&format!(
