@@ -232,15 +232,30 @@ impl Library {
         &mut self,
         batch: &[(AssetId, Vec<DominantColor>)],
     ) -> Result<(), LibraryError> {
+        let outside_transaction = self.connection.is_autocommit();
+        let before = self.connection.total_changes();
         let transaction = self.connection.transaction()?;
+        let mut changed = 0;
         {
             let mut statement =
                 transaction.prepare_cached("UPDATE assets SET colors = ?2 WHERE id = ?1")?;
             for (id, colors) in batch {
-                statement.execute(params![id, media::dominant_text(colors)])?;
+                changed += statement.execute(params![id, media::dominant_text(colors)])?;
             }
         }
         transaction.commit()?;
+        if outside_transaction {
+            let stored: Vec<(AssetId, Vec<DominantColor>)> = batch
+                .iter()
+                .map(|(id, colors)| (*id, dominant_from_text(&media::dominant_text(colors))))
+                .collect();
+            self.query_cache.adopt_colors(
+                before,
+                self.connection.total_changes(),
+                &stored,
+                changed,
+            );
+        }
         Ok(())
     }
 
@@ -557,38 +572,6 @@ mod cache_tests {
     }
 
     #[test]
-    fn a_colour_write_after_the_analysis_still_invalidates_the_cache() {
-        let mut fixture = fixture();
-        let id = fixture.assets[0];
-        let (all, _) = warm(&fixture.library);
-        fixture
-            .library
-            .record_visual_analysis_batch(&[(id, None)])
-            .expect("the analysis is recorded");
-        assert!(still_cached(&fixture.library, &all));
-        let colours = vec![DominantColor {
-            family: AssetColor::Red,
-            average: Rgb::new(200, 20, 20),
-        }];
-
-        fixture
-            .library
-            .record_colors_batch(&[(id, colours.clone())])
-            .expect("colours are recorded");
-
-        assert!(!still_cached(&fixture.library, &all));
-        let shown = fixture
-            .library
-            .shared_assets(AssetView::All)
-            .expect("listing");
-        assert!(
-            shown
-                .iter()
-                .any(|asset| asset.id == id && asset.colors == colours)
-        );
-    }
-
-    #[test]
     fn a_write_that_fails_halfway_keeps_the_usual_invalidation_and_the_error() {
         let mut fixture = fixture();
         let id = fixture.assets[0];
@@ -660,5 +643,363 @@ mod cache_tests {
             .shared_assets(AssetView::All)
             .expect("listing");
         assert_eq!(all.len(), 3);
+    }
+
+    fn red() -> Vec<DominantColor> {
+        vec![DominantColor {
+            family: AssetColor::Red,
+            average: Rgb::new(200, 20, 20),
+        }]
+    }
+
+    fn blue() -> Vec<DominantColor> {
+        vec![DominantColor {
+            family: AssetColor::Blue,
+            average: Rgb::new(10, 40, 220),
+        }]
+    }
+
+    fn listing(library: &Library, view: AssetView) -> Vec<super::Asset> {
+        library
+            .shared_assets(view)
+            .expect("listing")
+            .as_ref()
+            .clone()
+    }
+
+    fn fresh(library: &Library, view: AssetView) -> Vec<super::Asset> {
+        library.load_assets(view).expect("fresh listing")
+    }
+
+    fn colours_of(assets: &[super::Asset], id: AssetId) -> Vec<DominantColor> {
+        assets
+            .iter()
+            .find(|asset| asset.id == id)
+            .map(|asset| asset.colors.clone())
+            .expect("the asset is listed")
+    }
+
+    fn trash(fixture: &mut Fixture, id: AssetId) {
+        fixture
+            .library
+            .apply_asset_command(&AssetCommand::SetTrashed {
+                assets: vec![id],
+                trashed: true,
+            })
+            .expect("trashed");
+    }
+
+    type Dependents = (
+        Option<Arc<std::collections::HashMap<AssetId, Vec<String>>>>,
+        usize,
+        bool,
+    );
+
+    fn cached_dependents(library: &Library) -> Dependents {
+        let cache = library.query_cache.lock(library.connection.total_changes());
+        (
+            cache.tags.clone(),
+            cache.texts.len(),
+            cache.tag_counts.is_some() && cache.collection_counts.is_some(),
+        )
+    }
+
+    #[test]
+    fn a_colour_write_patches_the_listing_and_keeps_what_does_not_depend_on_colours() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        warm(&fixture.library);
+        fixture
+            .library
+            .find_assets_in(AssetView::All, &crate::library::AssetFilter::text("logo"))
+            .expect("a search fills the texts");
+        fixture.library.view_counts().expect("counts");
+        let (tags, texts, counts) = cached_dependents(&fixture.library);
+        assert!(texts > 0 && counts);
+
+        fixture
+            .library
+            .record_colors_batch(&[(id, red())])
+            .expect("colours are recorded");
+
+        let shown = listing(&fixture.library, AssetView::All);
+        assert_eq!(shown, fresh(&fixture.library, AssetView::All));
+        assert_eq!(colours_of(&shown, id), red());
+        let (kept_tags, kept_texts, kept_counts) = cached_dependents(&fixture.library);
+        assert!(Arc::ptr_eq(&kept_tags.expect("tags"), &tags.expect("tags")));
+        assert_eq!((kept_texts, kept_counts), (texts, counts));
+    }
+
+    #[test]
+    fn active_and_trashed_items_are_both_patched_in_order_with_the_last_value_winning() {
+        let mut fixture = fixture();
+        let [first, second, third] = [fixture.assets[0], fixture.assets[1], fixture.assets[2]];
+        trash(&mut fixture, second);
+        warm(&fixture.library);
+        let absent = AssetId::parse("00000000-0000-7000-8000-000000000999").expect("valid id");
+
+        fixture
+            .library
+            .record_colors_batch(&[
+                (first, red()),
+                (second, red()),
+                (first, blue()),
+                (absent, red()),
+                (third, Vec::new()),
+            ])
+            .expect("colours are recorded");
+
+        for view in [AssetView::All, AssetView::Trash] {
+            assert_eq!(
+                listing(&fixture.library, view),
+                fresh(&fixture.library, view)
+            );
+        }
+        let active = listing(&fixture.library, AssetView::All);
+        let trashed = listing(&fixture.library, AssetView::Trash);
+        assert_eq!(colours_of(&active, first), blue());
+        assert!(colours_of(&active, third).is_empty());
+        assert_eq!(colours_of(&trashed, second), red());
+        assert_eq!(
+            active.iter().map(|asset| asset.id).collect::<Vec<_>>(),
+            fresh(&fixture.library, AssetView::All)
+                .iter()
+                .map(|asset| asset.id)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn colour_filters_and_smart_collections_follow_a_patched_listing() {
+        let mut fixture = fixture();
+        let id = fixture.assets[1];
+        let red_filter = crate::library::AssetFilter {
+            colors: vec![AssetColor::Red],
+            ..crate::library::AssetFilter::default()
+        };
+        let smart = fixture
+            .library
+            .create_smart_collection("Red things", &red_filter)
+            .expect("smart collection");
+        warm(&fixture.library);
+        assert!(
+            fixture
+                .library
+                .find_assets_in(AssetView::All, &red_filter)
+                .expect("search")
+                .is_empty()
+        );
+
+        fixture
+            .library
+            .record_colors_batch(&[(id, red())])
+            .expect("colours are recorded");
+
+        let found = fixture
+            .library
+            .find_assets_in(AssetView::All, &red_filter)
+            .expect("search");
+        assert_eq!(found.iter().map(|asset| asset.id).collect::<Vec<_>>(), [id]);
+        assert_eq!(
+            fixture
+                .library
+                .view_counts()
+                .expect("counts")
+                .of(AssetView::Smart(smart)),
+            1
+        );
+        fixture
+            .library
+            .record_colors_batch(&[(id, blue())])
+            .expect("colours are recorded");
+        assert!(
+            fixture
+                .library
+                .find_assets_in(AssetView::All, &red_filter)
+                .expect("search")
+                .is_empty()
+        );
+        assert_eq!(
+            fixture
+                .library
+                .view_counts()
+                .expect("counts")
+                .of(AssetView::Smart(smart)),
+            0
+        );
+    }
+
+    #[test]
+    fn an_absent_listing_stays_absent_and_the_present_one_is_patched() {
+        let mut fixture = fixture();
+        let [first, second] = [fixture.assets[0], fixture.assets[1]];
+        trash(&mut fixture, second);
+        fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+
+        fixture
+            .library
+            .record_colors_batch(&[(first, red()), (second, red())])
+            .expect("colours are recorded");
+
+        {
+            let cache = fixture
+                .library
+                .query_cache
+                .lock(fixture.library.connection.total_changes());
+            assert!(cache.all.is_some() && cache.trash.is_none());
+        }
+        assert_eq!(
+            listing(&fixture.library, AssetView::All),
+            fresh(&fixture.library, AssetView::All)
+        );
+        assert_eq!(
+            listing(&fixture.library, AssetView::Trash),
+            fresh(&fixture.library, AssetView::Trash)
+        );
+    }
+
+    #[test]
+    fn a_cache_that_was_never_filled_stays_unfilled() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+
+        fixture
+            .library
+            .record_colors_batch(&[(id, red())])
+            .expect("colours are recorded");
+
+        let cache = fixture
+            .library
+            .query_cache
+            .lock(fixture.library.connection.total_changes());
+        assert!(cache.all.is_none() && cache.trash.is_none() && cache.tags.is_none());
+    }
+
+    #[test]
+    fn an_adoption_that_does_not_add_up_is_refused_and_changes_nothing() {
+        let fixture = fixture();
+        let id = fixture.assets[0];
+        warm(&fixture.library);
+        let stamp = fixture.library.connection.total_changes();
+        let known = listing(&fixture.library, AssetView::All);
+        let batch = [(id, red())];
+        let cache = &fixture.library.query_cache;
+
+        assert!(!cache.adopt_colors(stamp + 1, stamp + 2, &batch, 1));
+        assert!(!cache.adopt_colors(stamp, stamp + 2, &batch, 1));
+        assert!(!cache.adopt_colors(stamp, stamp + 1, &batch, 2));
+        assert!(!cache.adopt_colors(stamp, stamp, &batch, 0));
+        assert_eq!(listing(&fixture.library, AssetView::All), known);
+
+        assert!(cache.adopt_colors(stamp, stamp + 1, &batch, 1));
+        assert_eq!(
+            colours_of(
+                &cache
+                    .lock(stamp + 1)
+                    .all
+                    .as_ref()
+                    .expect("listing")
+                    .to_vec(),
+                id
+            ),
+            red()
+        );
+    }
+
+    #[test]
+    fn a_batch_that_fails_halfway_leaves_a_listing_equal_to_the_database() {
+        let mut fixture = fixture();
+        let [first, second] = [fixture.assets[0], fixture.assets[1]];
+        warm(&fixture.library);
+        fixture
+            .library
+            .connection
+            .execute_batch(&format!(
+                "CREATE TEMP TRIGGER refuse_second BEFORE UPDATE ON assets
+                 WHEN NEW.id = '{second}'
+                 BEGIN SELECT RAISE(ABORT, 'refused'); END"
+            ))
+            .expect("the trigger is created");
+
+        let failed = fixture
+            .library
+            .record_colors_batch(&[(first, red()), (second, red())]);
+
+        assert!(matches!(failed, Err(LibraryError::Database(_))));
+        let shown = listing(&fixture.library, AssetView::All);
+        assert_eq!(shown, fresh(&fixture.library, AssetView::All));
+        assert!(colours_of(&shown, first).is_empty());
+        fixture
+            .library
+            .connection
+            .execute_batch("DROP TRIGGER refuse_second")
+            .expect("the trigger is dropped");
+        fixture
+            .library
+            .record_colors_batch(&[(first, red()), (second, blue())])
+            .expect("colours are recorded");
+        let shown = listing(&fixture.library, AssetView::All);
+        assert_eq!(shown, fresh(&fixture.library, AssetView::All));
+        assert_eq!(colours_of(&shown, second), blue());
+    }
+
+    #[test]
+    fn a_colour_write_inside_a_transaction_is_refused_and_adopts_nothing() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        warm(&fixture.library);
+        fixture
+            .library
+            .connection
+            .execute_batch("BEGIN")
+            .expect("a transaction opens");
+
+        let refused = fixture.library.record_colors_batch(&[(id, red())]);
+        fixture
+            .library
+            .connection
+            .execute_batch("ROLLBACK")
+            .expect("the transaction is rolled back");
+
+        assert!(refused.is_err());
+        let shown = listing(&fixture.library, AssetView::All);
+        assert_eq!(shown, fresh(&fixture.library, AssetView::All));
+        assert!(colours_of(&shown, id).is_empty());
+    }
+
+    #[test]
+    fn an_ordinary_write_after_a_colour_write_still_invalidates_the_listing() {
+        let mut fixture = fixture();
+        let id = fixture.assets[0];
+        let (all, _) = warm(&fixture.library);
+        fixture
+            .library
+            .record_colors_batch(&[(id, red())])
+            .expect("colours are recorded");
+        let patched = fixture
+            .library
+            .shared_assets(AssetView::All)
+            .expect("listing");
+        assert!(!Arc::ptr_eq(&patched, &all) || Arc::strong_count(&all) > 1);
+
+        fixture
+            .library
+            .apply_asset_command(&AssetCommand::SetFavorite {
+                assets: vec![id],
+                favorite: true,
+            })
+            .expect("favorite");
+
+        let shown = listing(&fixture.library, AssetView::All);
+        assert_eq!(shown, fresh(&fixture.library, AssetView::All));
+        assert!(
+            shown
+                .iter()
+                .any(|asset| asset.id == id && asset.is_favorite)
+        );
+        assert_eq!(colours_of(&shown, id), red());
     }
 }

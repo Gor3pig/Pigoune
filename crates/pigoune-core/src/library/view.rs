@@ -683,9 +683,9 @@ mod count_cache_tests {
     }
 
     #[test]
-    fn deferred_colour_writes_drop_the_maps() {
+    fn deferred_colour_writes_keep_the_count_maps_and_the_counts_stay_exact() {
         let mut fixture = fixture();
-        fixture.warm();
+        let warm = fixture.warm();
         fixture
             .library
             .record_colors_batch(&[(
@@ -697,7 +697,8 @@ mod count_cache_tests {
             )])
             .expect("colours");
 
-        assert!(nothing_kept(&fixture.kept()));
+        let kept = fixture.kept();
+        assert!(same(warm.0.as_ref(), kept.0.as_ref()) && same(warm.1.as_ref(), kept.1.as_ref()));
         fixture.assert_counts_are_recomputed_ones();
     }
 

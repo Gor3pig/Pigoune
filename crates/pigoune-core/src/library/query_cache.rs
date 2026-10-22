@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use super::{Asset, AssetId, CollectionId, TagId};
+use crate::media::DominantColor;
 
 #[derive(Debug, Default)]
 pub(super) struct QueryCache {
@@ -144,6 +145,47 @@ impl SharedQueryCache {
             .is_some_and(|known| known.rows != links.behind_collection_counts())
         {
             cache.collection_counts = None;
+        }
+        cache.stamp = Some(after);
+        true
+    }
+
+    pub fn adopt_colors(
+        &self,
+        before: u64,
+        after: u64,
+        batch: &[(AssetId, Vec<DominantColor>)],
+        changed: usize,
+    ) -> bool {
+        let mut guard = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let cache = &mut *guard;
+        if cache.stamp != Some(before) || after.checked_sub(before) != u64::try_from(changed).ok() {
+            return false;
+        }
+        let latest: HashMap<AssetId, &Vec<DominantColor>> =
+            batch.iter().map(|(id, colors)| (*id, colors)).collect();
+        let lists = [cache.all.as_ref(), cache.trash.as_ref()];
+        let shown: HashSet<AssetId> = lists
+            .iter()
+            .flatten()
+            .flat_map(|list| list.iter())
+            .map(|asset| asset.id)
+            .filter(|id| latest.contains_key(id))
+            .collect();
+        let accounted = batch.iter().filter(|(id, _)| shown.contains(id)).count();
+        let every_list_is_known = lists.iter().all(Option::is_some);
+        if accounted > changed || (every_list_is_known && accounted != changed) {
+            return false;
+        }
+        for list in [cache.all.as_mut(), cache.trash.as_mut()]
+            .into_iter()
+            .flatten()
+        {
+            for asset in Arc::make_mut(list).iter_mut() {
+                if let Some(colors) = latest.get(&asset.id) {
+                    asset.colors.clone_from(colors);
+                }
+            }
         }
         cache.stamp = Some(after);
         true
