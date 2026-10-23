@@ -262,6 +262,12 @@ impl EditSession {
     }
 
     fn bounds_of(&self, shape: &Shape) -> Option<Rect> {
+        if geometry::rotation_of(shape).abs() > f32::EPSILON {
+            let extent = (shape.kind == "text").then(|| self.text_extent(shape));
+            if let Some(bounds) = geometry::rotated_bounds(shape, extent) {
+                return Some(bounds);
+            }
+        }
         if let Some(bounds) = geometry::shape_bounds(shape) {
             return Some(bounds);
         }

@@ -500,6 +500,45 @@ fn the_rounded_spotlight_dims_its_corners_only(rig: &Rig) {
     );
 }
 
+fn a_turned_rectangle_is_drawn_turned_around_its_centre(rig: &Rig) {
+    let solid = |rotation: f32| {
+        rig.export(&document(vec![boxed(
+            "rectangle",
+            60.0,
+            50.0,
+            80.0,
+            20.0,
+            &[
+                ("fill", Value::from(true)),
+                ("fill_opacity", number_to_value(1.0)),
+                ("rotation", number_to_value(rotation)),
+            ],
+        )]))
+    };
+    let flat = solid(0.0);
+    assert!(
+        near(flat.at(65, 60), RED, 2),
+        "the flat bar covers its left end"
+    );
+    assert_eq!(flat.at(100, 25), source(100, 25), "and not the top");
+
+    let upright = solid(90.0);
+    assert!(
+        near(upright.at(100, 25), RED, 2),
+        "the turned bar reaches the top"
+    );
+    assert!(near(upright.at(100, 95), RED, 2), "and the bottom");
+    assert_eq!(
+        upright.at(65, 60),
+        source(65, 60),
+        "and leaves its old left end"
+    );
+    assert!(
+        near(upright.at(100, 60), RED, 2),
+        "the centre stays covered"
+    );
+}
+
 fn layers_follow_their_order(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let filled = [
@@ -964,6 +1003,7 @@ fn rendering_suite() {
     translucent_effects_blend_with_the_image(&rig);
     the_spotlight_dims_everything_around_it(&rig);
     the_rounded_spotlight_dims_its_corners_only(&rig);
+    a_turned_rectangle_is_drawn_turned_around_its_centre(&rig);
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);

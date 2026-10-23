@@ -9,8 +9,9 @@ use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, PathStep, Point, Rect, Shape,
     Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
     curve_polyline, dash_pattern, guide_extent, handles_with_extent, head_size_factor,
-    rounded_spot_radius, shape_bounds, sketch_curve, sketch_ellipse, sketch_line, sketch_outline,
-    sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
+    rotation_handle, rotation_of, rounded_spot_radius, shape_bounds, shape_pivot, sketch_curve,
+    sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle, sketched_curve, step_label,
+    text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -24,6 +25,7 @@ const BLUR_REACH_PER_RADIUS: f32 = 2.0;
 const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
 pub const HANDLE_SIZE: f32 = 10.0;
+pub const HANDLE_REACH_PIXELS: f32 = 9.0;
 
 pub type PixelCache = RefCell<HashMap<([u32; 5], u64), gdk::Texture>>;
 
@@ -165,20 +167,41 @@ pub fn append_shape(
     context: &pango::Context,
     scene: Option<&Scene>,
 ) {
-    if let Some((_, renderer)) = RENDERERS.iter().find(|(kind, _)| *kind == shape.kind) {
-        let draw = Draw {
-            pango: context,
-            ordinal,
-            scene,
-        };
-        if shape.toggle("shadow") {
-            snapshot.push_shadow(&[drop_shadow(scene)]);
-            renderer(snapshot, shape, &draw);
-            snapshot.pop();
-        } else {
-            renderer(snapshot, shape, &draw);
-        }
+    let Some((_, renderer)) = RENDERERS.iter().find(|(kind, _)| *kind == shape.kind) else {
+        return;
+    };
+    let draw = Draw {
+        pango: context,
+        ordinal,
+        scene,
+    };
+    let turned = turn_around_pivot(snapshot, shape, context);
+    if shape.toggle("shadow") {
+        snapshot.push_shadow(&[drop_shadow(scene)]);
+        renderer(snapshot, shape, &draw);
+        snapshot.pop();
+    } else {
+        renderer(snapshot, shape, &draw);
     }
+    if turned {
+        snapshot.restore();
+    }
+}
+
+fn turn_around_pivot(snapshot: &gtk::Snapshot, shape: &Shape, context: &pango::Context) -> bool {
+    let angle = rotation_of(shape);
+    if angle.abs() <= f32::EPSILON {
+        return false;
+    }
+    let extent = (shape.kind == "text").then(|| measure_text(context, shape));
+    let Some(pivot) = shape_pivot(shape, extent) else {
+        return false;
+    };
+    snapshot.save();
+    snapshot.translate(&graphene::Point::new(pivot.x, pivot.y));
+    snapshot.rotate(angle);
+    snapshot.translate(&graphene::Point::new(-pivot.x, -pivot.y));
+    true
 }
 
 fn drop_shadow(scene: Option<&Scene>) -> gsk::Shadow {
@@ -964,6 +987,7 @@ pub fn append_selection(
 ) {
     let (red, green, blue) = SELECTION_COLOR;
     let accent = gdk::RGBA::new(red, green, blue, 1.0);
+    let text_extent = (shape.kind == "text").then(|| measure_text(context, shape));
     let to_view = |point: Point| Point {
         x: bounds.x() + point.x * zoom,
         y: bounds.y() + point.y * zoom,
@@ -983,13 +1007,33 @@ pub fn append_selection(
         builder.add_rect(&frame);
         let dashed = gsk::Stroke::new(1.0);
         dashed.set_dash(&SELECTION_DASH);
-        snapshot.append_stroke(&builder.to_path(), &dashed, &accent);
+        let pivot = shape_pivot(shape, text_extent).map(to_view);
+        let angle = rotation_of(shape);
+        if let (Some(pivot), true) = (pivot, angle.abs() > f32::EPSILON) {
+            snapshot.save();
+            snapshot.translate(&graphene::Point::new(pivot.x, pivot.y));
+            snapshot.rotate(angle);
+            snapshot.translate(&graphene::Point::new(-pivot.x, -pivot.y));
+            snapshot.append_stroke(&builder.to_path(), &dashed, &accent);
+            snapshot.restore();
+        } else {
+            snapshot.append_stroke(&builder.to_path(), &dashed, &accent);
+        }
     }
     if !with_handles {
         return;
     }
-    let extent = (shape.kind == "text").then(|| measure_text(context, shape));
-    for (handle, point) in handles_with_extent(shape, extent) {
+    let found = handles_with_extent(shape, text_extent);
+    append_rotation_handle(
+        snapshot,
+        shape,
+        text_extent,
+        zoom,
+        &accent,
+        &to_view,
+        &found,
+    );
+    for (handle, point) in found {
         let center = to_view(point);
         if handle == Handle::Curve {
             let builder = gsk::PathBuilder::new();
@@ -1014,6 +1058,38 @@ pub fn append_selection(
         builder.add_rect(&square);
         snapshot.append_stroke(&builder.to_path(), &gsk::Stroke::new(1.5), &accent);
     }
+}
+
+fn append_rotation_handle(
+    snapshot: &gtk::Snapshot,
+    shape: &Shape,
+    extent: Option<(f32, f32)>,
+    zoom: f32,
+    accent: &gdk::RGBA,
+    to_view: &impl Fn(Point) -> Point,
+    found: &[(Handle, Point)],
+) {
+    let reach = HANDLE_REACH_PIXELS / zoom;
+    let Some(at) = rotation_handle(shape, extent, reach) else {
+        return;
+    };
+    let center = to_view(at);
+    if let Some((_, top)) = found.iter().find(|(handle, _)| *handle == Handle::Top) {
+        let top = to_view(*top);
+        let line = gsk::PathBuilder::new();
+        line.move_to(top.x, top.y);
+        line.line_to(center.x, center.y);
+        snapshot.append_stroke(&line.to_path(), &gsk::Stroke::new(1.0), accent);
+    }
+    let builder = gsk::PathBuilder::new();
+    builder.add_circle(&graphene::Point::new(center.x, center.y), HANDLE_SIZE / 2.0);
+    let path = builder.to_path();
+    snapshot.append_fill(
+        &path,
+        gsk::FillRule::Winding,
+        &gdk::RGBA::new(1.0, 1.0, 1.0, 1.0),
+    );
+    snapshot.append_stroke(&path, &gsk::Stroke::new(1.5), accent);
 }
 
 pub fn append_crop(

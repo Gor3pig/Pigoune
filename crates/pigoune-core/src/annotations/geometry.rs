@@ -16,6 +16,7 @@ const DASH_LENGTH_PER_WIDTH: f32 = 3.0;
 const DASH_GAP_PER_WIDTH: f32 = 2.0;
 const DOT_LENGTH: f32 = 0.01;
 const ROUNDED_SPOT_SHARE: f32 = 0.25;
+const ROTATE_HANDLE_REACHES: f32 = 3.0;
 pub const TEXT_BACKDROP_SHARE: f32 = 0.25;
 pub const TEXT_OUTLINE_SHARE: f32 = 0.06;
 
@@ -32,6 +33,7 @@ pub enum Handle {
     Start,
     End,
     Curve,
+    Rotate,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -356,7 +358,123 @@ pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
 }
 
 #[must_use]
+pub fn rotation_of(shape: &Shape) -> f32 {
+    shape.number("rotation")
+}
+
+#[must_use]
+pub fn rotate_point(point: Point, pivot: Point, degrees: f32) -> Point {
+    let (sin, cos) = degrees.to_radians().sin_cos();
+    let (dx, dy) = (point.x - pivot.x, point.y - pivot.y);
+    Point {
+        x: pivot.x + dx * cos - dy * sin,
+        y: pivot.y + dx * sin + dy * cos,
+    }
+}
+
+fn unturned_box(shape: &Shape, extent: Option<(f32, f32)>) -> Option<Rect> {
+    match &shape.geometry {
+        Geometry::Box(rect) => Some(normalized(*rect)),
+        Geometry::Anchor(_) if shape.kind == "text" => text_visual_bounds(
+            shape,
+            extent.unwrap_or_else(|| estimated_text_extent(shape)),
+        ),
+        _ => None,
+    }
+}
+
+#[must_use]
+pub fn shape_pivot(shape: &Shape, extent: Option<(f32, f32)>) -> Option<Point> {
+    unturned_box(shape, extent).map(|rect| Point {
+        x: rect.x + rect.width / 2.0,
+        y: rect.y + rect.height / 2.0,
+    })
+}
+
+fn is_turned(shape: &Shape) -> bool {
+    rotation_of(shape).abs() > f32::EPSILON
+}
+
+fn turned_back(shape: &Shape, point: Point, extent: Option<(f32, f32)>) -> Point {
+    if !is_turned(shape) {
+        return point;
+    }
+    shape_pivot(shape, extent).map_or(point, |pivot| {
+        rotate_point(point, pivot, -rotation_of(shape))
+    })
+}
+
+#[must_use]
+pub fn rotated_bounds(shape: &Shape, extent: Option<(f32, f32)>) -> Option<Rect> {
+    let rect = unturned_box(shape, extent)?;
+    let pivot = shape_pivot(shape, extent)?;
+    let angle = rotation_of(shape);
+    let corners = [
+        Point {
+            x: rect.x,
+            y: rect.y,
+        },
+        Point {
+            x: rect.x + rect.width,
+            y: rect.y,
+        },
+        Point {
+            x: rect.x + rect.width,
+            y: rect.y + rect.height,
+        },
+        Point {
+            x: rect.x,
+            y: rect.y + rect.height,
+        },
+    ]
+    .map(|corner| rotate_point(corner, pivot, angle));
+    let left = corners.iter().map(|c| c.x).fold(f32::INFINITY, f32::min);
+    let right = corners
+        .iter()
+        .map(|c| c.x)
+        .fold(f32::NEG_INFINITY, f32::max);
+    let top = corners.iter().map(|c| c.y).fold(f32::INFINITY, f32::min);
+    let bottom = corners
+        .iter()
+        .map(|c| c.y)
+        .fold(f32::NEG_INFINITY, f32::max);
+    Some(Rect {
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+    })
+}
+
+#[must_use]
+pub fn rotation_handle(shape: &Shape, extent: Option<(f32, f32)>, reach: f32) -> Option<Point> {
+    shape.definition()?.spec("rotation")?;
+    let rect = unturned_box(shape, extent)?;
+    let pivot = shape_pivot(shape, extent)?;
+    let above = Point {
+        x: pivot.x,
+        y: rect.y - reach * ROTATE_HANDLE_REACHES,
+    };
+    Some(rotate_point(above, pivot, rotation_of(shape)))
+}
+
+#[must_use]
 pub fn handles_with_extent(shape: &Shape, extent: Option<(f32, f32)>) -> Vec<(Handle, Point)> {
+    let found = unturned_handles(shape, extent);
+    if !is_turned(shape) {
+        return found;
+    }
+    let Some(pivot) = shape_pivot(shape, extent) else {
+        return found;
+    };
+    let angle = rotation_of(shape);
+    found
+        .into_iter()
+        .map(|(handle, at)| (handle, rotate_point(at, pivot, angle)))
+        .collect()
+}
+
+fn unturned_handles(shape: &Shape, extent: Option<(f32, f32)>) -> Vec<(Handle, Point)> {
     if shape.kind == "text" {
         return extent
             .and_then(|extent| text_visual_bounds(shape, extent))
@@ -428,7 +546,7 @@ fn resized_rect(rect: Rect, handle: Handle, to: Point) -> Option<Rect> {
         Handle::Bottom => bottom = to.y,
         Handle::BottomLeft => (left, bottom) = (to.x, to.y),
         Handle::Left => left = to.x,
-        Handle::Start | Handle::End | Handle::Curve => return None,
+        Handle::Start | Handle::End | Handle::Curve | Handle::Rotate => return None,
     }
     Some(rect_between(
         Point { x: left, y: top },
@@ -474,7 +592,9 @@ fn sides_of(handle: Handle) -> (bool, bool, bool, bool) {
         Handle::Bottom => (false, false, false, true),
         Handle::BottomLeft => (true, false, false, true),
         Handle::Left => (true, false, false, false),
-        Handle::Start | Handle::End | Handle::Curve => (false, false, false, false),
+        Handle::Start | Handle::End | Handle::Curve | Handle::Rotate => {
+            (false, false, false, false)
+        }
     }
 }
 
@@ -521,13 +641,41 @@ fn resized_text(shape: &Shape, handle: Handle, to: Point, extent: (f32, f32)) ->
         }))
 }
 
+fn resized_unturned(shape: &Shape, handle: Handle, to: Point, extent: Option<(f32, f32)>) -> Shape {
+    match extent {
+        Some(extent) if shape.kind == "text" => resized_text(shape, handle, to, extent),
+        _ => resized_geometry(shape, handle, to),
+    }
+}
+
+fn resized_turned(shape: &Shape, handle: Handle, to: Point, extent: Option<(f32, f32)>) -> Shape {
+    if !is_turned(shape) || (shape.kind == "text" && extent.is_none()) {
+        return resized_unturned(shape, handle, to, extent);
+    }
+    let Some(pivot) = shape_pivot(shape, extent) else {
+        return resized_unturned(shape, handle, to, extent);
+    };
+    let angle = rotation_of(shape);
+    let local = resized_unturned(shape, handle, rotate_point(to, pivot, -angle), extent);
+    let size = shape.number("font_size");
+    let new_extent = extent.map(|(width, height)| {
+        if shape.kind == "text" && size > 0.0 {
+            let factor = local.number("font_size") / size;
+            (width * factor, height * factor)
+        } else {
+            (width, height)
+        }
+    });
+    let Some(new_pivot) = shape_pivot(&local, new_extent) else {
+        return local;
+    };
+    let moved = rotate_point(new_pivot, pivot, angle);
+    translated(&local, moved.x - new_pivot.x, moved.y - new_pivot.y)
+}
+
 #[must_use]
 pub fn resized_with_extent(shape: &Shape, handle: Handle, to: Point, extent: (f32, f32)) -> Shape {
-    if shape.kind == "text" {
-        resized_text(shape, handle, to, extent)
-    } else {
-        resized(shape, handle, to)
-    }
+    resized_turned(shape, handle, to, Some(extent))
 }
 
 #[must_use]
@@ -537,6 +685,10 @@ pub fn rounded_spot_radius(bounds: Rect) -> f32 {
 
 #[must_use]
 pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
+    resized_turned(shape, handle, to, None)
+}
+
+fn resized_geometry(shape: &Shape, handle: Handle, to: Point) -> Shape {
     match &shape.geometry {
         Geometry::Box(rect) => resized_rect(*rect, handle, to).map_or_else(
             || shape.clone(),
@@ -561,7 +713,10 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
         }
         Geometry::Anchor(at) => {
             if scalable_bounds(shape).is_some()
-                && !matches!(handle, Handle::Start | Handle::End | Handle::Curve)
+                && !matches!(
+                    handle,
+                    Handle::Start | Handle::End | Handle::Curve | Handle::Rotate
+                )
             {
                 resized_badge(shape, *at, to)
             } else {
@@ -678,6 +833,17 @@ pub fn hit_with_extent(
 
 #[must_use]
 pub fn hit_in_mode(
+    shape: &Shape,
+    point: Point,
+    tolerance: f32,
+    extent: Option<(f32, f32)>,
+    mode: HitMode,
+) -> bool {
+    let point = turned_back(shape, point, extent);
+    hit_unturned(shape, point, tolerance, extent, mode)
+}
+
+fn hit_unturned(
     shape: &Shape,
     point: Point,
     tolerance: f32,

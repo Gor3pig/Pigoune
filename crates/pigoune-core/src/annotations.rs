@@ -18,9 +18,10 @@ pub use geometry::{
     ArrowHead, Handle, HitMode, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control,
     arrow_head, constrained_end, curve_control, curve_point, curve_polyline, dash_pattern,
     estimated_text_extent, handles, handles_with_extent, head_size_factor, hit, hit_in_mode,
-    hit_with_extent, next_stroke_point, rect_between, resized, resized_with_extent,
-    rounded_spot_radius, shape_bounds, shape_from_anchor, shape_from_drag, shape_from_points,
-    simplified, text_ink_margin, text_visual_bounds, translated,
+    hit_with_extent, next_stroke_point, rect_between, resized, resized_with_extent, rotate_point,
+    rotated_bounds, rotation_handle, rotation_of, rounded_spot_radius, shape_bounds,
+    shape_from_anchor, shape_from_drag, shape_from_points, shape_pivot, simplified,
+    text_ink_margin, text_visual_bounds, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use layers::{LayerEntry, layer_entries};
@@ -40,8 +41,8 @@ pub use tools::{
     DASH_CHOICES, DIMMING, ELLIPSE, FILL, FILL_OPACITY, FONT_FAMILY, FONT_FAMILY_CHOICES,
     FONT_SIZE, GeometryKind, HEAD, HEAD_CHOICES, HEAD_SIZE, HEAD_SIZE_CHOICES, HIGHLIGHT_COLOR,
     HIGHLIGHT_OPACITY, HIGHLIGHT_WIDTH, HIGHLIGHTER, ITALIC, LINE, OPACITY, Outline, PEN, PIXELATE,
-    RADIUS, RECTANGLE, ROUGHNESS, SEQUENCE, SEQUENCE_CHOICES, SHADOW, SHAFT, SHAFT_CHOICES, SMOOTH,
-    SPOT_SHAPE, SPOT_SHAPE_CHOICES, SPOTLIGHT, STEP, TEXT, TEXT_BACKGROUND,
+    RADIUS, RECTANGLE, ROTATION, ROUGHNESS, SEQUENCE, SEQUENCE_CHOICES, SHADOW, SHAFT,
+    SHAFT_CHOICES, SMOOTH, SPOT_SHAPE, SPOT_SHAPE_CHOICES, SPOTLIGHT, STEP, TEXT, TEXT_BACKGROUND,
     TEXT_BACKGROUND_CHOICES, TEXT_OUTLINE, ToolDefinition, WIDTH, definition, definitions,
 };
 
