@@ -176,13 +176,37 @@ fn a_step_can_be_selected_and_moved() {
 fn the_defaults_are_a_red_filled_badge() {
     let plain = Shape::new("step", Geometry::Anchor(point(0.0, 0.0)), Options::new());
 
-    assert!(same(plain.number("size"), 16.0));
+    assert!(same(plain.number("size"), 24.0));
     assert_eq!(plain.choice("style"), "filled");
     assert_eq!(plain.color("color").r, 0xe0);
     assert!(same(plain.number("opacity"), 1.0));
     let outlined = plain.with_option("style", json!("outlined"));
     assert_eq!(outlined.choice("style"), "outlined");
     assert_eq!(plain.choice("style"), "filled");
+}
+
+#[test]
+fn a_step_size_is_kept_up_to_one_hundred_and_twenty_and_no_further() {
+    let plain = Shape::new("step", Geometry::Anchor(point(0.0, 0.0)), Options::new());
+
+    assert!(same(
+        plain
+            .with_option("size", number_to_value(120.0))
+            .number("size"),
+        120.0
+    ));
+    assert!(same(
+        plain
+            .with_option("size", number_to_value(500.0))
+            .number("size"),
+        120.0
+    ));
+    assert!(same(
+        plain
+            .with_option("size", number_to_value(2.0))
+            .number("size"),
+        8.0
+    ));
 }
 
 #[test]
