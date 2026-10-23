@@ -212,7 +212,7 @@ pub const RADIUS: OptionSpec = OptionSpec {
     id: "radius",
     kind: OptionKind::Number {
         min: 1.0,
-        max: 60.0,
+        max: 150.0,
         step: 1.0,
     },
     default: DefaultValue::Number(12.0),
