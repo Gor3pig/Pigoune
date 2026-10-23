@@ -36,6 +36,7 @@ use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_look_dialog::PigouneCollectionLookDialog;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_places::SharedCollection;
+use crate::collection_skipping;
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::conversion_memory;
 use crate::conversion_report;
@@ -132,6 +133,7 @@ const TRASH_SELECTED_ACTION: &str = "win.trash-selected";
 const RESTORE_SELECTED_ACTION: &str = "win.restore-selected";
 const EMPTY_TRASH_ACTION: &str = "win.empty-trash";
 const EMPTY_TRASH_RESPONSE: &str = "empty";
+const SKIP_DUPLICATES_RESPONSE: &str = "skip-duplicates";
 const DELETE_TAG_ACTION: &str = "win.delete-tag";
 const NEW_SUB_TAG_ACTION: &str = "win.new-sub-tag";
 const MOVE_TAG_ACTION: &str = "win.move-tag";
@@ -6679,12 +6681,45 @@ impl PigouneWindow {
     }
 
     fn toggle_duplicate_skipping(&self, id: CollectionId) {
+        let Some((name, skipped)) = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.collection(id).ok().flatten())
+            .map(|collection| (collection.name, collection.skip_duplicates))
+        else {
+            return;
+        };
+        let leaving_out = !skipped;
+        let alert = adw::AlertDialog::new(
+            Some(&collection_skipping::confirmation_title(&name, leaving_out)),
+            Some(&collection_skipping::confirmation_body(leaving_out)),
+        );
+        alert.add_responses(&[
+            (CLOSE_RESPONSE, &gettext("_Cancel")),
+            (
+                SKIP_DUPLICATES_RESPONSE,
+                &collection_skipping::confirmation_button(leaving_out),
+            ),
+        ]);
+        alert.set_response_appearance(SKIP_DUPLICATES_RESPONSE, adw::ResponseAppearance::Suggested);
+        alert.set_default_response(Some(CLOSE_RESPONSE));
+        alert.set_close_response(CLOSE_RESPONSE);
+        alert.connect_response(
+            Some(SKIP_DUPLICATES_RESPONSE),
+            glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move |_, _| window.set_duplicate_skipping(id, leaving_out)
+            ),
+        );
+        alert.present(Some(self));
+    }
+
+    fn set_duplicate_skipping(&self, id: CollectionId, skip: bool) {
         let changed = self.change_library(|library| {
-            let skipped = library
-                .collection(id)?
-                .is_some_and(|collection| collection.skip_duplicates);
-            library
-                .apply_collection_command(&CollectionCommand::SkipDuplicates { id, skip: !skipped })
+            library.apply_collection_command(&CollectionCommand::SkipDuplicates { id, skip })
         });
         match changed {
             Some(Ok(_)) => self.refresh_sidebar(),

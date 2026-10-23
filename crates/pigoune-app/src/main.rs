@@ -25,6 +25,7 @@ mod collection_look_dialog;
 mod collection_looks;
 mod collection_name_dialog;
 mod collection_places;
+mod collection_skipping;
 mod collection_sort;
 mod color_chips;
 mod color_sampler;

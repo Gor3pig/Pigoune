@@ -4,6 +4,7 @@ use gtk::prelude::*;
 use gtk::{gio, glib};
 use pigoune_core::{AssetView, TagId};
 
+use crate::collection_skipping::DuplicateSkipping;
 use crate::sidebar_tag_cloud::{SharedCloudPlace, TagPill};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,7 +23,7 @@ pub struct SidebarItemData {
     pub color_class: Option<&'static str>,
     pub count: Option<usize>,
     pub folded: bool,
-    pub skips_duplicates: bool,
+    pub duplicate_skipping: DuplicateSkipping,
     pub tag_pills: Vec<TagPill>,
     pub selected_tag: Option<TagId>,
     pub cloud_place: Option<SharedCloudPlace>,
@@ -114,8 +115,8 @@ impl PigouneSidebarItem {
         self.data().folded
     }
 
-    pub fn skips_duplicates(&self) -> bool {
-        self.data().skips_duplicates
+    pub fn duplicate_skipping(&self) -> DuplicateSkipping {
+        self.data().duplicate_skipping.clone()
     }
 
     pub fn is_tag_cloud(&self) -> bool {
@@ -146,6 +147,7 @@ impl PigouneSidebarItem {
             && mine.color_class == theirs.color_class
             && mine.count == theirs.count
             && mine.folded == theirs.folded
+            && mine.duplicate_skipping == theirs.duplicate_skipping
             && mine.tag_pills == theirs.tag_pills
             && mine.selected_tag == theirs.selected_tag
             && same_children(mine.children.as_ref(), theirs.children.as_ref())
@@ -184,5 +186,43 @@ fn same_children(mine: Option<&gio::ListStore>, theirs: Option<&gio::ListStore>)
                 })
         }
         _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pigoune_core::{AssetView, CollectionId};
+
+    use super::*;
+
+    fn item(skipping: DuplicateSkipping) -> PigouneSidebarItem {
+        let id = CollectionId::parse("00000000-0000-7000-8000-000000000001").expect("valid id");
+        PigouneSidebarItem::new(SidebarItemData {
+            entry: SidebarEntry::View(AssetView::Collection(id)),
+            label: "Logos".to_owned(),
+            icon_name: "folder-symbolic",
+            color_class: None,
+            count: Some(3),
+            folded: false,
+            duplicate_skipping: skipping,
+            tag_pills: Vec::new(),
+            selected_tag: None,
+            cloud_place: None,
+            children: None,
+        })
+    }
+
+    #[test]
+    fn leaving_a_collection_out_of_the_duplicate_search_replaces_its_row() {
+        let included = item(DuplicateSkipping::Included);
+        assert!(included.same_as(&item(DuplicateSkipping::Included)));
+        assert!(!included.same_as(&item(DuplicateSkipping::Skipped)));
+    }
+
+    #[test]
+    fn a_row_skipped_through_another_parent_is_replaced_too() {
+        let by_logos = item(DuplicateSkipping::SkippedBy("Logos".to_owned()));
+        assert!(!by_logos.same_as(&item(DuplicateSkipping::SkippedBy("Icons".to_owned()))));
+        assert!(!by_logos.same_as(&item(DuplicateSkipping::Skipped)));
     }
 }

@@ -8342,8 +8342,6 @@ msgstr ""
 msgid "Left out of duplicate detection"
 msgstr ""
 
-msgid "Include in Duplicate Detection"
-msgstr ""
 
 msgid "Leave out of Duplicate Detection"
 msgstr ""
@@ -8353,3 +8351,31 @@ msgid "{count} collection is left out of the search."
 msgid_plural "{count} collections are left out of the search."
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "Restore Duplicate Detection"
+msgstr ""
+
+#, rust-format
+msgid "Restore Duplicate Detection from “{name}”"
+msgstr ""
+
+#, rust-format
+msgid "Left out of duplicate detection by “{name}”"
+msgstr ""
+
+#, rust-format
+msgid "Leave “{name}” out of Duplicate Detection?"
+msgstr ""
+
+#, rust-format
+msgid "Restore Duplicate Detection for “{name}”?"
+msgstr ""
+
+msgid "The assets of this collection and of its sub-collections will no longer be offered as possible duplicates, unless they also belong to a collection that is not left out. Nothing is changed or deleted, and you can undo this."
+msgstr ""
+
+msgid "The assets of this collection and of its sub-collections will be compared again when you look for possible duplicates."
+msgstr ""
+
+msgid "_Leave Out"
+msgstr ""

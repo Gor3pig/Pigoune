@@ -6,6 +6,7 @@ use pigoune_core::{AssetView, CollectionId};
 
 use crate::collection_drop::{self, CollectionDrop, DropZone};
 use crate::collection_look_dialog;
+use crate::collection_skipping::{self, DuplicateSkipping};
 use crate::drag_content::{DraggedAssets, DraggedCollection, DraggedSmartCollection};
 use crate::drop_action::{self, DropOffer};
 use crate::drop_places;
@@ -24,6 +25,7 @@ const FOLDED_ICON: &str = "pan-end-symbolic";
 const UNFOLDED_ICON: &str = "pan-down-symbolic";
 const MORE_ICON: &str = "view-more-symbolic";
 const SKIPPED_ICON: &str = "view-conceal-symbolic";
+const INHERITED_SKIPPING_ACTION: &str = "win.duplicate-skipping-inherited";
 const MODIFIER_WATCH_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
 
 mod imp {
@@ -137,7 +139,15 @@ impl PigouneSidebarRow {
         collection_look_dialog::show_icon(&icon, item.icon_name(), item.color_class());
         icon.set_visible(!is_header && !is_tag);
         part(&imp.hash).set_visible(is_tag);
-        part(&imp.skip_mark).set_visible(item.skips_duplicates());
+        let skipping = item.duplicate_skipping();
+        let mark = part(&imp.skip_mark);
+        mark.set_tooltip_text(collection_skipping::mark_tooltip(&skipping).as_deref());
+        mark.set_opacity(if matches!(skipping, DuplicateSkipping::SkippedBy(_)) {
+            0.5
+        } else {
+            1.0
+        });
+        mark.set_visible(skipping != DuplicateSkipping::Included);
         let label = part(&imp.label);
         label.set_label(item.label());
         if is_header {
@@ -179,7 +189,6 @@ impl PigouneSidebarRow {
         let skip_mark = gtk::Image::builder()
             .icon_name(SKIPPED_ICON)
             .css_classes(["dim-label"])
-            .tooltip_text(gettext("Left out of duplicate detection"))
             .visible(false)
             .build();
         let count = gtk::Label::builder()
@@ -630,12 +639,11 @@ impl PigouneSidebarRow {
         self.imp().item.borrow().as_ref()?.view()
     }
 
-    fn skips_duplicates(&self) -> bool {
-        self.imp()
-            .item
-            .borrow()
-            .as_ref()
-            .is_some_and(PigouneSidebarItem::skips_duplicates)
+    fn duplicate_skipping(&self) -> DuplicateSkipping {
+        self.imp().item.borrow().as_ref().map_or(
+            DuplicateSkipping::Included,
+            PigouneSidebarItem::duplicate_skipping,
+        )
     }
 
     fn fold_on_header_click(&self) {
@@ -715,7 +723,7 @@ impl PigouneSidebarRow {
     )]
     fn show_menu(&self, x: f64, y: f64) -> bool {
         let model = match self.view() {
-            Some(AssetView::Collection(id)) => collection_menu(id, self.skips_duplicates()),
+            Some(AssetView::Collection(id)) => collection_menu(id, &self.duplicate_skipping()),
             Some(AssetView::Tag(id)) => tag_menu(&id.to_string()),
             Some(AssetView::Smart(id)) => smart_collection_menu(&id.to_string()),
             Some(AssetView::Trash) => trash_menu(),
@@ -808,7 +816,7 @@ fn smart_collection_menu(collection: &str) -> gio::Menu {
     menu
 }
 
-fn collection_menu(collection: CollectionId, skips_duplicates: bool) -> gio::Menu {
+fn collection_menu(collection: CollectionId, skipping: &DuplicateSkipping) -> gio::Menu {
     let creating = gio::Menu::new();
     creating.append(
         Some(&gettext("New Sub-collection…")),
@@ -828,8 +836,13 @@ fn collection_menu(collection: CollectionId, skips_duplicates: bool) -> gio::Men
         Some(&format!("win.move-collection::{collection}")),
     );
     reorganizing.append(
-        Some(&duplicate_skipping_label(skips_duplicates)),
-        Some(&format!("win.toggle-duplicate-skipping::{collection}")),
+        Some(&collection_skipping::menu_label(skipping)),
+        Some(&match skipping {
+            DuplicateSkipping::SkippedBy(_) => INHERITED_SKIPPING_ACTION.to_owned(),
+            DuplicateSkipping::Included | DuplicateSkipping::Skipped => {
+                format!("win.toggle-duplicate-skipping::{collection}")
+            }
+        }),
     );
     let discarding = gio::Menu::new();
     discarding.append(
@@ -841,14 +854,6 @@ fn collection_menu(collection: CollectionId, skips_duplicates: bool) -> gio::Men
     menu.append_section(None, &reorganizing);
     menu.append_section(None, &discarding);
     menu
-}
-
-fn duplicate_skipping_label(skips_duplicates: bool) -> String {
-    if skips_duplicates {
-        gettext("Include in Duplicate Detection")
-    } else {
-        gettext("Leave out of Duplicate Detection")
-    }
 }
 
 fn collection_sort_menu() -> gio::Menu {
@@ -907,4 +912,56 @@ pub fn control_is_held(widget: &impl IsA<gtk::Widget>) -> bool {
                 .modifier_state()
                 .contains(gdk::ModifierType::CONTROL_MASK)
         })
+}
+
+#[cfg(test)]
+mod menu_tests {
+    use pigoune_core::CollectionId;
+
+    use super::*;
+
+    fn skipping_entry(skipping: &DuplicateSkipping) -> (String, String) {
+        let id = CollectionId::parse("00000000-0000-7000-8000-000000000001").expect("valid id");
+        let menu = collection_menu(id, skipping);
+        let label = collection_skipping::menu_label(skipping);
+        for section in 0..menu.n_items() {
+            let Some(link) = menu.item_link(section, "section") else {
+                continue;
+            };
+            for item in 0..link.n_items() {
+                let shown = link
+                    .item_attribute_value(item, "label", None)
+                    .and_then(|value| value.get::<String>());
+                if shown.as_deref() == Some(label.as_str()) {
+                    let action = link
+                        .item_attribute_value(item, "action", None)
+                        .and_then(|value| value.get::<String>())
+                        .expect("an action");
+                    return (label, action);
+                }
+            }
+        }
+        panic!("the menu has no entry for the duplicate detection");
+    }
+
+    #[test]
+    fn a_collection_in_the_search_offers_to_leave_it_out_with_the_toggle() {
+        let (label, action) = skipping_entry(&DuplicateSkipping::Included);
+        assert!(label.starts_with("Leave out"));
+        assert_eq!(action, "win.toggle-duplicate-skipping");
+    }
+
+    #[test]
+    fn a_collection_left_out_offers_to_restore_with_the_same_toggle() {
+        let (label, action) = skipping_entry(&DuplicateSkipping::Skipped);
+        assert!(label.starts_with("Restore"));
+        assert_eq!(action, "win.toggle-duplicate-skipping");
+    }
+
+    #[test]
+    fn a_sub_collection_left_out_by_its_parent_gets_an_inert_entry_naming_the_parent() {
+        let (label, action) = skipping_entry(&DuplicateSkipping::SkippedBy("Logos".to_owned()));
+        assert!(label.contains("“Logos”"));
+        assert_eq!(action, INHERITED_SKIPPING_ACTION);
+    }
 }
