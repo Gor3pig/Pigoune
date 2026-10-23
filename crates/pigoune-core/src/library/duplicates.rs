@@ -124,7 +124,7 @@ impl Library {
 
     pub fn duplicate_plan(&self) -> Result<DuplicatePlan, LibraryError> {
         Ok(DuplicatePlan {
-            fingerprints: self.fingerprints(true)?,
+            fingerprints: self.fingerprints_outside_skipped(true)?,
             ignored: self.ignored_sets()?,
         })
     }
@@ -134,7 +134,7 @@ impl Library {
         if awaiting.is_empty() {
             return Ok(Vec::new());
         }
-        let fingerprints = self.fingerprints(false)?;
+        let fingerprints = self.fingerprints_outside_skipped(false)?;
         let bands = DUPLICATE_DISTANCE + 1;
         let buckets = band_buckets(&fingerprints, bands);
         let found = fingerprints
@@ -194,6 +194,18 @@ impl Library {
             return Ok(None);
         }
         Ok(detail_kind(&first, &second))
+    }
+
+    fn fingerprints_outside_skipped(
+        &self,
+        with_detail: bool,
+    ) -> Result<Vec<Fingerprint>, LibraryError> {
+        let left_out = self.assets_in_skipped_collections()?;
+        let mut fingerprints = self.fingerprints(with_detail)?;
+        if !left_out.is_empty() {
+            fingerprints.retain(|fingerprint| !left_out.contains(&fingerprint.asset));
+        }
+        Ok(fingerprints)
     }
 
     fn fingerprints(&self, with_detail: bool) -> Result<Vec<Fingerprint>, LibraryError> {

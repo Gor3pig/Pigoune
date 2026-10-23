@@ -259,6 +259,7 @@ impl CollectionCommand {
             | Self::Delete { .. }
             | Self::Rename { .. }
             | Self::Restyle { .. }
+            | Self::SkipDuplicates { .. }
             | Self::Move { .. }
             | Self::Arrange { .. }
             | Self::Trash { .. } => false,

@@ -8776,3 +8776,32 @@ msgstr ""
 
 msgid "Layers, hand-drawn looks and panels that fold away"
 msgstr ""
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Duplicate detection setting of the collection “{name}” undone"
+msgstr "Instelling voor het opsporen van dubbelen van de verzameling ‘{name}’ ongedaan gemaakt"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Duplicate detection setting of the collection “{name}” redone"
+msgstr "Instelling voor het opsporen van dubbelen van de verzameling ‘{name}’ opnieuw uitgevoerd"
+
+#: crates/pigoune-app/src/sidebar_row.rs
+msgid "Left out of duplicate detection"
+msgstr "Uitgesloten van het opsporen van dubbelen"
+
+#: crates/pigoune-app/src/sidebar_row.rs
+msgid "Include in Duplicate Detection"
+msgstr "Opnemen in het opsporen van dubbelen"
+
+#: crates/pigoune-app/src/sidebar_row.rs
+msgid "Leave out of Duplicate Detection"
+msgstr "Uitsluiten van het opsporen van dubbelen"
+
+#: crates/pigoune-app/src/duplicates_page.rs
+#, rust-format
+msgid "{count} collection is left out of the search."
+msgid_plural "{count} collections are left out of the search."
+msgstr[0] "{count} verzameling is uitgesloten van de zoekopdracht."
+msgstr[1] "{count} verzamelingen zijn uitgesloten van de zoekopdracht."

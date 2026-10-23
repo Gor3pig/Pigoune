@@ -23,6 +23,7 @@ const SIDEBAR_ROW: &str = "sidebar-row";
 const FOLDED_ICON: &str = "pan-end-symbolic";
 const UNFOLDED_ICON: &str = "pan-down-symbolic";
 const MORE_ICON: &str = "view-more-symbolic";
+const SKIPPED_ICON: &str = "view-conceal-symbolic";
 const MODIFIER_WATCH_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
 
 mod imp {
@@ -40,6 +41,7 @@ mod imp {
         pub tag_cloud: OnceCell<crate::sidebar_tag_cloud::PigouneSidebarTagCloud>,
         pub icon: OnceCell<gtk::Image>,
         pub label: OnceCell<gtk::Label>,
+        pub skip_mark: OnceCell<gtk::Image>,
         pub count: OnceCell<gtk::Label>,
         pub header_buttons: OnceCell<gtk::Box>,
         pub smart_header_buttons: OnceCell<gtk::Box>,
@@ -110,6 +112,7 @@ impl PigouneSidebarRow {
         ] {
             part.set_visible(!is_cloud);
         }
+        part(&imp.skip_mark).set_visible(false);
         if is_cloud {
             part(&imp.hash).set_visible(false);
             part(&imp.header_buttons).set_visible(false);
@@ -134,6 +137,7 @@ impl PigouneSidebarRow {
         collection_look_dialog::show_icon(&icon, item.icon_name(), item.color_class());
         icon.set_visible(!is_header && !is_tag);
         part(&imp.hash).set_visible(is_tag);
+        part(&imp.skip_mark).set_visible(item.skips_duplicates());
         let label = part(&imp.label);
         label.set_label(item.label());
         if is_header {
@@ -171,6 +175,12 @@ impl PigouneSidebarRow {
             .xalign(0.0)
             .hexpand(true)
             .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        let skip_mark = gtk::Image::builder()
+            .icon_name(SKIPPED_ICON)
+            .css_classes(["dim-label"])
+            .tooltip_text(gettext("Left out of duplicate detection"))
+            .visible(false)
             .build();
         let count = gtk::Label::builder()
             .css_classes(["dim-label", "numeric", "caption"])
@@ -214,6 +224,7 @@ impl PigouneSidebarRow {
         self.append(&icon);
         self.append(&hash);
         self.append(&label);
+        self.append(&skip_mark);
         self.append(&count);
         self.append(&header_buttons);
         self.append(&smart_header_buttons);
@@ -222,6 +233,7 @@ impl PigouneSidebarRow {
         set_part(&imp.icon, icon);
         set_part(&imp.hash, hash);
         set_part(&imp.label, label);
+        set_part(&imp.skip_mark, skip_mark);
         set_part(&imp.count, count);
         set_part(&imp.header_buttons, header_buttons);
         set_part(&imp.smart_header_buttons, smart_header_buttons);
@@ -618,6 +630,14 @@ impl PigouneSidebarRow {
         self.imp().item.borrow().as_ref()?.view()
     }
 
+    fn skips_duplicates(&self) -> bool {
+        self.imp()
+            .item
+            .borrow()
+            .as_ref()
+            .is_some_and(PigouneSidebarItem::skips_duplicates)
+    }
+
     fn fold_on_header_click(&self) {
         let click = gtk::GestureClick::new();
         click.connect_pressed(glib::clone!(
@@ -695,7 +715,7 @@ impl PigouneSidebarRow {
     )]
     fn show_menu(&self, x: f64, y: f64) -> bool {
         let model = match self.view() {
-            Some(AssetView::Collection(id)) => collection_menu(id),
+            Some(AssetView::Collection(id)) => collection_menu(id, self.skips_duplicates()),
             Some(AssetView::Tag(id)) => tag_menu(&id.to_string()),
             Some(AssetView::Smart(id)) => smart_collection_menu(&id.to_string()),
             Some(AssetView::Trash) => trash_menu(),
@@ -788,7 +808,7 @@ fn smart_collection_menu(collection: &str) -> gio::Menu {
     menu
 }
 
-fn collection_menu(collection: CollectionId) -> gio::Menu {
+fn collection_menu(collection: CollectionId, skips_duplicates: bool) -> gio::Menu {
     let creating = gio::Menu::new();
     creating.append(
         Some(&gettext("New Sub-collection…")),
@@ -807,6 +827,10 @@ fn collection_menu(collection: CollectionId) -> gio::Menu {
         Some(&gettext("Move to…")),
         Some(&format!("win.move-collection::{collection}")),
     );
+    reorganizing.append(
+        Some(&duplicate_skipping_label(skips_duplicates)),
+        Some(&format!("win.toggle-duplicate-skipping::{collection}")),
+    );
     let discarding = gio::Menu::new();
     discarding.append(
         Some(&gettext("Delete…")),
@@ -817,6 +841,14 @@ fn collection_menu(collection: CollectionId) -> gio::Menu {
     menu.append_section(None, &reorganizing);
     menu.append_section(None, &discarding);
     menu
+}
+
+fn duplicate_skipping_label(skips_duplicates: bool) -> String {
+    if skips_duplicates {
+        gettext("Include in Duplicate Detection")
+    } else {
+        gettext("Leave out of Duplicate Detection")
+    }
 }
 
 fn collection_sort_menu() -> gio::Menu {

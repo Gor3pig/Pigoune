@@ -61,6 +61,7 @@ mod tests {
             position: 0,
             created_at_unix_ms: 0,
             look: CollectionLook::default(),
+            skip_duplicates: false,
         }
     }
 
