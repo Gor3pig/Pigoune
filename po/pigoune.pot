@@ -8330,3 +8330,26 @@ msgstr ""
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in
 msgid "Layers, hand-drawn looks and panels that fold away"
 msgstr ""
+
+#, rust-format
+msgid "Duplicate detection setting of the collection “{name}” undone"
+msgstr ""
+
+#, rust-format
+msgid "Duplicate detection setting of the collection “{name}” redone"
+msgstr ""
+
+msgid "Left out of duplicate detection"
+msgstr ""
+
+msgid "Include in Duplicate Detection"
+msgstr ""
+
+msgid "Leave out of Duplicate Detection"
+msgstr ""
+
+#, rust-format
+msgid "{count} collection is left out of the search."
+msgid_plural "{count} collections are left out of the search."
+msgstr[0] ""
+msgstr[1] ""

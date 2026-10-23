@@ -9110,3 +9110,32 @@ msgstr "Annotez une capture ou n’importe quelle image sans toucher à l’orig
 
 msgid "Layers, hand-drawn looks and panels that fold away"
 msgstr "Calques, tracés esquissés et panneaux repliables"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Duplicate detection setting of the collection “{name}” undone"
+msgstr "Réglage de la détection des doublons de la collection « {name} » annulé"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Duplicate detection setting of the collection “{name}” redone"
+msgstr "Réglage de la détection des doublons de la collection « {name} » rétabli"
+
+#: crates/pigoune-app/src/sidebar_row.rs
+msgid "Left out of duplicate detection"
+msgstr "Exclue de la détection des doublons"
+
+#: crates/pigoune-app/src/sidebar_row.rs
+msgid "Include in Duplicate Detection"
+msgstr "Inclure dans la détection des doublons"
+
+#: crates/pigoune-app/src/sidebar_row.rs
+msgid "Leave out of Duplicate Detection"
+msgstr "Exclure de la détection des doublons"
+
+#: crates/pigoune-app/src/duplicates_page.rs
+#, rust-format
+msgid "{count} collection is left out of the search."
+msgid_plural "{count} collections are left out of the search."
+msgstr[0] "{count} collection est exclue de la recherche."
+msgstr[1] "{count} collections sont exclues de la recherche."

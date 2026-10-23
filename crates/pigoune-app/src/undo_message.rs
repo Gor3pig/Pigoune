@@ -188,6 +188,17 @@ fn text_change(field: TextField, outcome: Outcome) -> String {
     }
 }
 
+fn skip_duplicates_message(id: CollectionId, names: &Names, outcome: Outcome) -> Option<String> {
+    Some(named(
+        &pick(
+            outcome,
+            || gettext("Duplicate detection setting of the collection “{name}” undone"),
+            || gettext("Duplicate detection setting of the collection “{name}” redone"),
+        ),
+        &names.collection(id)?,
+    ))
+}
+
 fn describe_collection(
     command: &CollectionCommand,
     names: &Names,
@@ -211,6 +222,9 @@ fn describe_collection(
             ),
             &names.collection(*id)?,
         ),
+        CollectionCommand::SkipDuplicates { id, .. } => {
+            skip_duplicates_message(*id, names, outcome)?
+        }
         CollectionCommand::Rename { id, .. } => named(
             &pick(
                 outcome,

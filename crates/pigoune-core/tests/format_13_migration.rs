@@ -302,7 +302,7 @@ fn a_format_12_library_keeps_every_element_file_and_value_when_it_becomes_format
         "every image is untouched"
     );
     let (version, columns, verdict) = schema_state(&fixture.root);
-    assert_eq!((version, verdict.as_str()), (13, "ok"));
+    assert_eq!((version, verdict.as_str()), (CURRENT_FORMAT_VERSION, "ok"));
     assert_eq!(columns, NEW_COLUMNS);
     let after = dump(&fixture.root);
     assert_nothing_lost(
@@ -407,14 +407,17 @@ fn expect_only_whole_states(root: &Path, expect_version: u32) {
     assert_eq!(version, expect_version);
     match version {
         12 => assert!(columns.is_empty(), "no half migrated table: {columns:?}"),
-        13 => assert_eq!(columns, NEW_COLUMNS),
+        13 | 14 => assert_eq!(columns, NEW_COLUMNS),
         other => panic!("unexpected version {other}"),
     }
 }
 
 #[test]
 fn an_abrupt_stop_during_the_migration_leaves_either_the_old_or_the_new_whole_state() {
-    for (stop, expect_before_reopening) in [("before-commit", 12), ("after-commit", 13)] {
+    for (stop, expect_before_reopening) in [
+        ("before-commit", 12),
+        ("after-commit", CURRENT_FORMAT_VERSION),
+    ] {
         let workspace = tempfile::tempdir().expect("workspace");
         let fixture = build_format_12(workspace.path());
         let rows_before = only_the_12_tables(&dump(&fixture.root));
@@ -440,7 +443,7 @@ fn an_abrupt_stop_during_the_migration_leaves_either_the_old_or_the_new_whole_st
             "{stop}"
         );
         drop(library);
-        expect_only_whole_states(&isolated, 13);
+        expect_only_whole_states(&isolated, CURRENT_FORMAT_VERSION);
         assert_nothing_lost(
             &corrected(&rows_before, fixture.turned),
             &only_the_12_tables(&dump(&isolated)),

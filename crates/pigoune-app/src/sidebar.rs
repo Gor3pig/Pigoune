@@ -870,6 +870,7 @@ fn header_item(entry: SidebarEntry, label: String, folded: Option<usize>) -> Pig
         color_class: None,
         count: folded,
         folded: folded.is_some(),
+        skips_duplicates: false,
         tag_pills: Vec::new(),
         selected_tag: None,
         cloud_place: None,
@@ -937,6 +938,7 @@ fn view_item(
         color_class: None,
         count: counts.map(|counts| counts.of(view)),
         folded: false,
+        skips_duplicates: false,
         tag_pills: Vec::new(),
         selected_tag: None,
         cloud_place: None,
@@ -968,6 +970,7 @@ fn collection_items(
                 color_class: collection_looks::color_class(&collection.look),
                 count: counts.map(|counts| counts.of(view)),
                 folded: false,
+                skips_duplicates: collection.skip_duplicates,
                 tag_pills: Vec::new(),
                 selected_tag: None,
                 cloud_place: None,
@@ -1055,6 +1058,7 @@ fn tag_cloud_item(
         color_class: None,
         count: None,
         folded: false,
+        skips_duplicates: false,
         tag_pills: tags
             .iter()
             .map(|tag| TagPill {

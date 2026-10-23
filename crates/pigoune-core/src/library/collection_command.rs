@@ -24,6 +24,10 @@ pub enum CollectionCommand {
         id: CollectionId,
         look: CollectionLook,
     },
+    SkipDuplicates {
+        id: CollectionId,
+        skip: bool,
+    },
     Move {
         id: CollectionId,
         parent: Option<CollectionId>,
@@ -192,6 +196,7 @@ fn apply(
         CollectionCommand::Delete { id } => delete(connection, *id),
         CollectionCommand::Rename { id, name } => rename(connection, *id, name),
         CollectionCommand::Restyle { id, look } => restyle(connection, *id, look),
+        CollectionCommand::SkipDuplicates { id, skip } => skip_duplicates(connection, *id, *skip),
         CollectionCommand::Move { id, parent } => move_into(connection, *id, *parent),
         CollectionCommand::Arrange { parent, order } => arrange(connection, *parent, order),
         CollectionCommand::Trash { id } => trash(connection, *id),
@@ -308,6 +313,24 @@ fn restyle(
         params![id, look.icon, look.color],
     )?;
     Ok(CollectionCommand::Restyle { id, look: previous })
+}
+
+fn skip_duplicates(
+    connection: &Connection,
+    id: CollectionId,
+    skip: bool,
+) -> Result<CollectionCommand, CollectionError> {
+    usable(connection, id)?;
+    let previous: bool = connection.query_row(
+        "SELECT skip_duplicates FROM collections WHERE id = ?1",
+        [id],
+        |row| row.get(0),
+    )?;
+    connection.execute(
+        "UPDATE collections SET skip_duplicates = ?2 WHERE id = ?1",
+        params![id, skip],
+    )?;
+    Ok(CollectionCommand::SkipDuplicates { id, skip: previous })
 }
 
 fn move_into(
@@ -555,6 +578,7 @@ fn changes_only_memberships(command: &CollectionCommand) -> bool {
         | CollectionCommand::Delete { .. }
         | CollectionCommand::Rename { .. }
         | CollectionCommand::Restyle { .. }
+        | CollectionCommand::SkipDuplicates { .. }
         | CollectionCommand::Move { .. }
         | CollectionCommand::Arrange { .. }
         | CollectionCommand::Trash { .. }

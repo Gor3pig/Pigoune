@@ -15,6 +15,7 @@ pub struct Collection {
     pub position: i64,
     pub created_at_unix_ms: i64,
     pub look: CollectionLook,
+    pub skip_duplicates: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -50,7 +51,7 @@ pub struct CollectionPath {
 }
 
 pub(super) const COLLECTION_COLUMNS: &str =
-    "id, name, parent_id, position, created_at_unix_ms, icon, color";
+    "id, name, parent_id, position, created_at_unix_ms, icon, color, skip_duplicates";
 
 impl Library {
     pub fn create_collection(
@@ -67,6 +68,7 @@ impl Library {
                 position: next_position(&self.connection, parent)?,
                 created_at_unix_ms: clock::now_unix_ms(),
                 look: CollectionLook::default(),
+                skip_duplicates: false,
             },
         })?;
         Ok(id)
@@ -210,6 +212,7 @@ pub fn insert_collection(
         position: next_position(connection, parent)?,
         created_at_unix_ms: clock::now_unix_ms(),
         look: CollectionLook::default(),
+        skip_duplicates: false,
     };
     insert(connection, &collection)?;
     Ok(collection.id)
@@ -217,8 +220,9 @@ pub fn insert_collection(
 
 pub fn insert(connection: &Connection, collection: &Collection) -> Result<(), LibraryError> {
     connection.execute(
-        "INSERT INTO collections (id, parent_id, name, position, created_at_unix_ms, icon, color)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        "INSERT INTO collections
+             (id, parent_id, name, position, created_at_unix_ms, icon, color, skip_duplicates)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         params![
             collection.id,
             collection.parent,
@@ -226,7 +230,8 @@ pub fn insert(connection: &Connection, collection: &Collection) -> Result<(), Li
             collection.position,
             collection.created_at_unix_ms,
             collection.look.icon,
-            collection.look.color
+            collection.look.color,
+            collection.skip_duplicates
         ],
     )?;
     Ok(())
@@ -278,6 +283,7 @@ pub(super) fn collection_from_row(row: &Row) -> rusqlite::Result<Collection> {
             icon: row.get("icon")?,
             color: row.get("color")?,
         },
+        skip_duplicates: row.get("skip_duplicates")?,
     })
 }
 

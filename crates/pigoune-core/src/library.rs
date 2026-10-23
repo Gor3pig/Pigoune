@@ -14,6 +14,7 @@ mod details_store;
 mod dimension_recheck;
 mod drag_out;
 mod duplicate_removal;
+mod duplicate_skipping;
 mod duplicates;
 mod error;
 mod export;

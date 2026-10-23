@@ -144,6 +144,7 @@ mod tests {
             position: 0,
             created_at_unix_ms: i64::from(number),
             look: CollectionLook::default(),
+            skip_duplicates: false,
         }
     }
 

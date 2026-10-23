@@ -22,6 +22,7 @@ pub struct SidebarItemData {
     pub color_class: Option<&'static str>,
     pub count: Option<usize>,
     pub folded: bool,
+    pub skips_duplicates: bool,
     pub tag_pills: Vec<TagPill>,
     pub selected_tag: Option<TagId>,
     pub cloud_place: Option<SharedCloudPlace>,
@@ -111,6 +112,10 @@ impl PigouneSidebarItem {
 
     pub fn folded(&self) -> bool {
         self.data().folded
+    }
+
+    pub fn skips_duplicates(&self) -> bool {
+        self.data().skips_duplicates
     }
 
     pub fn is_tag_cloud(&self) -> bool {

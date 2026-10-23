@@ -125,6 +125,7 @@ pub struct DuplicateActions {
     pub ignoring: IgnoringActions,
     pub compare: Box<dyn Fn(AssetId, AssetId) -> Option<DuplicateKind>>,
     pub trash_expires: Box<dyn Fn() -> bool>,
+    pub left_out_collections: Box<dyn Fn() -> usize>,
 }
 
 pub type Selection = (AssetId, Vec<AssetId>);
@@ -402,9 +403,13 @@ impl PigouneDuplicatesPage {
         let imp = self.imp();
         imp.message_page
             .set_title(&gettext("Look for Possible Duplicates"));
-        imp.message_page.set_description(Some(&gettext(
+        let mut description = gettext(
             "Pigoune compares the drawings of your assets and groups those that look alike, such as the same logo in two formats or sizes. Nothing is changed or deleted until you choose.",
-        )));
+        );
+        if let Some(left_out) = self.left_out_text() {
+            description = format!("{description} {left_out}");
+        }
+        imp.message_page.set_description(Some(&description));
         imp.search_button.set_label(&gettext("_Search"));
         imp.search_button.set_visible(true);
         imp.progress_box.set_visible(false);
@@ -552,11 +557,20 @@ impl PigouneDuplicatesPage {
 
     fn nothing_text(&self) -> String {
         let pending = self.imp().pending.get();
-        if pending == 0 {
+        let text = if pending == 0 {
             gettext("No assets look alike.")
         } else {
             Self::pending_text(pending)
+        };
+        match self.left_out_text() {
+            Some(left_out) => format!("{text} {left_out}"),
+            None => text,
         }
+    }
+
+    fn left_out_text(&self) -> Option<String> {
+        let actions = self.imp().actions.borrow().clone()?;
+        left_out_collections_text((actions.left_out_collections)())
     }
 
     fn caption_text(&self, total: usize) -> String {
@@ -580,6 +594,9 @@ impl PigouneDuplicatesPage {
         let pending = self.imp().pending.get();
         if pending > 0 {
             text = format!("{text} {}", Self::pending_text(pending));
+        }
+        if let Some(left_out) = self.left_out_text() {
+            text = format!("{text} {left_out}");
         }
         text
     }
@@ -1137,6 +1154,17 @@ impl PigouneDuplicatesPage {
     }
 }
 
+fn left_out_collections_text(count: usize) -> Option<String> {
+    (count > 0).then(|| {
+        ngettext(
+            "{count} collection is left out of the search.",
+            "{count} collections are left out of the search.",
+            u32::try_from(count).unwrap_or(u32::MAX),
+        )
+        .replace("{count}", &count.to_string())
+    })
+}
+
 fn kind_text(kind: Option<DuplicateKind>) -> String {
     match kind {
         Some(DuplicateKind::VisuallyIdentical) => gettext("Identical"),
@@ -1177,5 +1205,31 @@ fn attachments_text(attached: &Attachments) -> String {
         gettext("No collection, tag or note")
     } else {
         parts.join(" · ")
+    }
+}
+
+#[cfg(test)]
+mod left_out_tests {
+    use super::left_out_collections_text;
+
+    #[test]
+    fn no_collection_left_out_says_nothing() {
+        assert_eq!(left_out_collections_text(0), None);
+    }
+
+    #[test]
+    fn one_collection_left_out_is_named_in_the_singular() {
+        assert_eq!(
+            left_out_collections_text(1).as_deref(),
+            Some("1 collection is left out of the search.")
+        );
+    }
+
+    #[test]
+    fn several_collections_left_out_are_counted_in_the_plural() {
+        assert_eq!(
+            left_out_collections_text(3).as_deref(),
+            Some("3 collections are left out of the search.")
+        );
     }
 }

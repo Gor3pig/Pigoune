@@ -112,6 +112,7 @@ const NEW_COLLECTION_ACTION: &str = "win.new-collection";
 const NEW_SUBCOLLECTION_ACTION: &str = "win.new-subcollection";
 const RENAME_COLLECTION_ACTION: &str = "win.rename-collection";
 const CUSTOMIZE_COLLECTION_ACTION: &str = "win.customize-collection";
+const TOGGLE_DUPLICATE_SKIPPING_ACTION: &str = "win.toggle-duplicate-skipping";
 const MOVE_COLLECTION_ACTION: &str = "win.move-collection";
 const TOGGLE_FAVORITE_ACTION: &str = "win.toggle-favorite";
 const RENAME_TAG_ACTION: &str = "win.rename-tag";
@@ -167,7 +168,7 @@ const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PA
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
 const MOST_SIMILAR_SHOWN: usize = 50;
-const OPEN_LIBRARY_ACTIONS: [&str; 30] = [
+const OPEN_LIBRARY_ACTIONS: [&str; 31] = [
     PASTE_AND_ANNOTATE_ACTION,
     ANNOTATE_ACTION,
     VIEW_ORIGINAL_ACTION,
@@ -187,6 +188,7 @@ const OPEN_LIBRARY_ACTIONS: [&str; 30] = [
     NEW_SUBCOLLECTION_ACTION,
     RENAME_COLLECTION_ACTION,
     CUSTOMIZE_COLLECTION_ACTION,
+    TOGGLE_DUPLICATE_SKIPPING_ACTION,
     MOVE_COLLECTION_ACTION,
     DELETE_COLLECTION_ACTION,
     TOGGLE_FAVORITE_ACTION,
@@ -273,8 +275,9 @@ mod imp {
         REMOVE_FROM_ALL_COLLECTIONS_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
         RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
         SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION, ToastOffer, UNDO_ACTION,
-        VIEW_ORIGINAL_ACTION, collection_parameter, smart_collection_parameter, tag_parameter,
+        TOGGLE_DUPLICATE_SKIPPING_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
+        ToastOffer, UNDO_ACTION, VIEW_ORIGINAL_ACTION, collection_parameter,
+        smart_collection_parameter, tag_parameter,
     };
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -401,6 +404,15 @@ mod imp {
             |window, _, parameter| {
                 if let Some(id) = collection_parameter(parameter) {
                     window.ask_collection_look(id);
+                }
+            },
+        );
+        class.install_action(
+            TOGGLE_DUPLICATE_SKIPPING_ACTION,
+            Some(glib::VariantTy::STRING),
+            |window, _, parameter| {
+                if let Some(id) = collection_parameter(parameter) {
+                    window.toggle_duplicate_skipping(id);
                 }
             },
         );
@@ -1705,6 +1717,12 @@ impl PigouneWindow {
                 self,
                 #[upgrade_or_default]
                 move || window.settings().boolean(settings::AUTO_EMPTY_TRASH)
+            )),
+            left_out_collections: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_default]
+                move || window.left_out_collection_count()
             )),
         }
     }
@@ -6644,6 +6662,35 @@ impl PigouneWindow {
             ),
         );
         dialog.present(Some(self));
+    }
+
+    fn left_out_collection_count(&self) -> usize {
+        self.imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.visible_collections().ok())
+            .map_or(0, |collections| {
+                collections
+                    .iter()
+                    .filter(|collection| collection.skip_duplicates)
+                    .count()
+            })
+    }
+
+    fn toggle_duplicate_skipping(&self, id: CollectionId) {
+        let changed = self.change_library(|library| {
+            let skipped = library
+                .collection(id)?
+                .is_some_and(|collection| collection.skip_duplicates);
+            library
+                .apply_collection_command(&CollectionCommand::SkipDuplicates { id, skip: !skipped })
+        });
+        match changed {
+            Some(Ok(_)) => self.refresh_sidebar(),
+            Some(Err(error)) => self.show_toast(&error_messages::describe_collection(&error)),
+            None => {}
+        }
     }
 
     fn restyle_collection(&self, id: CollectionId, look: &CollectionLook) -> Result<(), String> {
