@@ -6,6 +6,8 @@ use gtk::prelude::*;
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::annotations::LayerMove;
 
+use crate::rename_click::{NameClick, starts_renaming};
+
 const HANDLE_ICON: &str = "list-drag-handle-symbolic";
 const IMAGE_ICON: &str = "image-x-generic-symbolic";
 const CROP_ICON: &str = "crop-symbolic";
@@ -80,6 +82,7 @@ pub struct LayersPanel {
     labels: RefCell<Vec<(u32, gtk::EditableLabel)>>,
     syncing: Cell<bool>,
     editing: Cell<bool>,
+    last_name_click: Cell<Option<NameClick>>,
 }
 
 pub fn menu_for(id: u32, state: RowState) -> gio::Menu {
@@ -130,6 +133,7 @@ impl LayersPanel {
             labels: RefCell::new(Vec::new()),
             syncing: Cell::new(false),
             editing: Cell::new(false),
+            last_name_click: Cell::new(None),
         });
         panel.connect_list();
         panel
@@ -331,6 +335,7 @@ impl LayersPanel {
         let label = gtk::EditableLabel::new(&layer.label);
         label.set_hexpand(true);
         label.set_halign(gtk::Align::Fill);
+        label.set_can_target(false);
         if layer.hidden {
             icon.set_opacity(0.4);
             label.set_opacity(0.4);
@@ -356,8 +361,14 @@ impl LayersPanel {
         self.labels.borrow_mut().push((layer.id, label.clone()));
         self.watch_renaming(&label, layer);
         self.attach_menu(&row, layer.id, layer.state());
+        self.watch_name_clicks(&content, &row, &label, layer.id);
         if movable {
-            Self::attach_drag(&row, &handle, layer.id);
+            Self::attach_drag(&row, &handle, layer.id, |_, _| true);
+            let name = label.clone();
+            let area = content.clone();
+            Self::attach_drag(&row, &content, layer.id, move |x, y| {
+                !name.is_editing() && over(&name, &area, x, y)
+            });
         }
         self.attach_drop(&row, layer.id);
         row
@@ -389,6 +400,7 @@ impl LayersPanel {
         let panel = Rc::downgrade(self);
         let (id, original) = (layer.id, layer.label.clone());
         label.connect_editing_notify(move |label| {
+            label.set_can_target(label.is_editing());
             let Some(panel) = panel.upgrade() else {
                 return;
             };
@@ -441,11 +453,71 @@ impl LayersPanel {
         row.add_controller(click);
     }
 
-    fn attach_drag(row: &gtk::ListBoxRow, handle: &gtk::Image, id: u32) {
+    fn watch_name_clicks(
+        self: &Rc<Self>,
+        content: &gtk::Box,
+        row: &gtk::ListBoxRow,
+        label: &gtk::EditableLabel,
+        id: u32,
+    ) {
+        let was_selected = Rc::new(Cell::new(false));
+        let click = gtk::GestureClick::new();
+        click.set_button(gdk::BUTTON_PRIMARY);
+        click.connect_pressed(glib::clone!(
+            #[weak]
+            row,
+            #[weak]
+            label,
+            #[weak]
+            content,
+            #[strong]
+            was_selected,
+            move |_, _, x, y| {
+                was_selected.set(row.is_selected() && over(&label, &content, x, y));
+            }
+        ));
+        click.connect_released(glib::clone!(
+            #[weak(rename_to = panel)]
+            self,
+            #[weak]
+            label,
+            #[weak]
+            content,
+            move |gesture, presses, x, y| {
+                if label.is_editing() || !over(&label, &content, x, y) {
+                    return;
+                }
+                let current = NameClick {
+                    layer: id,
+                    at_ms: gesture.current_event_time(),
+                };
+                let previous = panel.last_name_click.replace(Some(current));
+                if starts_renaming(
+                    was_selected.get(),
+                    presses,
+                    previous,
+                    current,
+                    double_click_time(),
+                ) {
+                    panel.last_name_click.set(None);
+                    label.start_editing();
+                }
+            }
+        ));
+        content.add_controller(click);
+    }
+
+    fn attach_drag(
+        row: &gtk::ListBoxRow,
+        origin: &impl IsA<gtk::Widget>,
+        id: u32,
+        starts_here: impl Fn(f64, f64) -> bool + 'static,
+    ) {
         let source = gtk::DragSource::new();
         source.set_actions(gdk::DragAction::MOVE);
-        source
-            .connect_prepare(move |_, _, _| Some(gdk::ContentProvider::for_value(&id.to_value())));
+        source.connect_prepare(move |_, x, y| {
+            starts_here(x, y).then(|| gdk::ContentProvider::for_value(&id.to_value()))
+        });
         source.connect_drag_begin(glib::clone!(
             #[weak]
             row,
@@ -454,7 +526,7 @@ impl LayersPanel {
                 source.set_icon(Some(&paintable), 12, 12);
             }
         ));
-        handle.add_controller(source);
+        origin.add_controller(source);
     }
 
     fn attach_drop(&self, row: &gtk::ListBoxRow, target: u32) {
@@ -511,6 +583,22 @@ fn whole_pixels(value: f64) -> i32 {
 )]
 fn single(value: f64) -> f32 {
     value as f32
+}
+
+fn over(label: &gtk::EditableLabel, area: &gtk::Box, x: f64, y: f64) -> bool {
+    label.compute_bounds(area).is_some_and(|bounds| {
+        let (x, y) = (single(x), single(y));
+        x >= bounds.x()
+            && x <= bounds.x() + bounds.width()
+            && y >= bounds.y()
+            && y <= bounds.y() + bounds.height()
+    })
+}
+
+fn double_click_time() -> u32 {
+    gtk::Settings::default()
+        .and_then(|settings| u32::try_from(settings.gtk_double_click_time()).ok())
+        .unwrap_or(400)
 }
 
 fn mark(row: &gtk::ListBoxRow, above: Option<bool>) {
