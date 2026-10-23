@@ -188,15 +188,26 @@ fn text_change(field: TextField, outcome: Outcome) -> String {
     }
 }
 
-fn skip_duplicates_message(id: CollectionId, names: &Names, outcome: Outcome) -> Option<String> {
-    Some(named(
-        &pick(
+fn skip_duplicates_message(
+    id: CollectionId,
+    skip: bool,
+    names: &Names,
+    outcome: Outcome,
+) -> Option<String> {
+    let text = if skip {
+        pick(
             outcome,
-            || gettext("Duplicate detection setting of the collection “{name}” undone"),
-            || gettext("Duplicate detection setting of the collection “{name}” redone"),
-        ),
-        &names.collection(id)?,
-    ))
+            || gettext("Leaving “{name}” out of the duplicate search undone"),
+            || gettext("Leaving “{name}” out of the duplicate search redone"),
+        )
+    } else {
+        pick(
+            outcome,
+            || gettext("Including “{name}” in the duplicate search undone"),
+            || gettext("Including “{name}” in the duplicate search redone"),
+        )
+    };
+    Some(named(&text, &names.collection(id)?))
 }
 
 fn describe_collection(
@@ -222,8 +233,8 @@ fn describe_collection(
             ),
             &names.collection(*id)?,
         ),
-        CollectionCommand::SkipDuplicates { id, .. } => {
-            skip_duplicates_message(*id, names, outcome)?
+        CollectionCommand::SkipDuplicates { id, skip } => {
+            skip_duplicates_message(*id, *skip, names, outcome)?
         }
         CollectionCommand::Rename { id, .. } => named(
             &pick(

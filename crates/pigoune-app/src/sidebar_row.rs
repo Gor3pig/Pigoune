@@ -947,14 +947,14 @@ mod menu_tests {
     #[test]
     fn a_collection_in_the_search_offers_to_leave_it_out_with_the_toggle() {
         let (label, action) = skipping_entry(&DuplicateSkipping::Included);
-        assert!(label.starts_with("Leave out"));
+        assert!(label.starts_with("Leave Out"));
         assert_eq!(action, "win.toggle-duplicate-skipping");
     }
 
     #[test]
     fn a_collection_left_out_offers_to_restore_with_the_same_toggle() {
         let (label, action) = skipping_entry(&DuplicateSkipping::Skipped);
-        assert!(label.starts_with("Restore"));
+        assert!(label.starts_with("Include"));
         assert_eq!(action, "win.toggle-duplicate-skipping");
     }
 
