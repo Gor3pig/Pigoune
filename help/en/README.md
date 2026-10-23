@@ -790,7 +790,7 @@ Because everything is inside this folder, a library is **portable**: copy it to 
 A library can only be open in one Pigoune window at a time. If you keep a library in a synced folder (Nextcloud, Syncthing…), close Pigoune on one computer before opening it on another.
 
 > [!NOTE]
-> A library that has been opened and upgraded with Pigoune 3.0 can no longer be opened with Pigoune 2.12 or older. **Manage Library** shows which versions can open it.
+> A library that has been opened and upgraded with Pigoune 3.1 can no longer be opened with Pigoune 3.0 or older. **Manage Library** shows which versions can open it.
 
 ### Manage Library
 

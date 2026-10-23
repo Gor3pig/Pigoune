@@ -101,8 +101,49 @@ fn points_of_version_3() -> Vec<Point> {
     ]
 }
 
+fn points_of_version_3_1() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "object-rotate-right-symbolic",
+            title: gettext("Turn Your Annotations"),
+            text: gettext(
+                "Turn rectangles, ellipses, texts, lines, arrows, strokes, blurs and pixelations with the round handle above them, or set an exact angle in the panel.",
+            ),
+        },
+        Point {
+            icon: "font-select-symbolic",
+            title: gettext("Resize a Text With Its Handles"),
+            text: gettext(
+                "Drag a handle of a selected text to make the letters bigger or smaller, like any other annotation.",
+            ),
+        },
+        Point {
+            icon: "view-conceal-symbolic",
+            title: gettext("Leave a Collection Out of Duplicates"),
+            text: gettext(
+                "Right-click a collection and choose Leave Out of Duplicate Search, for archives you do not want compared. Undo brings it back.",
+            ),
+        },
+        Point {
+            icon: "color-select-symbolic",
+            title: gettext("A Few More Choices"),
+            text: gettext(
+                "A rounded spotlight, bigger steps, a blur that goes up to a radius of 150, and layers renamed with a double click.",
+            ),
+        },
+        Point {
+            icon: "security-high-symbolic",
+            title: gettext("Safer and Quicker"),
+            text: gettext(
+                "A blur now hides everything up to the edge of the image, and files shared with other applications are cleaned up after a while. Big libraries open faster, the grid and the sidebar refresh only where something changed, and stored thumbnails appear sooner.",
+            ),
+        },
+    ]
+}
+
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.1.0" => points_of_version_3_1(),
         "3.0.0" => points_of_version_3(),
         "2.12.0" => vec![
             Point {
@@ -279,7 +320,7 @@ mod tests {
 
     #[test]
     fn the_news_of_the_current_major_version_are_between_three_and_five_complete_points() {
-        let points = points_of("3.0.0");
+        let points = points_of("3.1.0");
         assert!((3..=5).contains(&points.len()), "{} points", points.len());
         for point in &points {
             assert!(!point.icon.is_empty() && !point.title.is_empty() && !point.text.is_empty());
