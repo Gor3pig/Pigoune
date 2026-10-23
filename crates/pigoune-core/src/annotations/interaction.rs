@@ -3,6 +3,8 @@ use super::options::number_to_value;
 use super::session::EditSession;
 use super::snapping::{self, Guide, Snapping};
 use super::tools::{GeometryKind, ToolDefinition};
+
+const ROTATION_STEP: f32 = 15.0;
 use super::{Options, Point, Rect, Shape};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -38,6 +40,11 @@ enum State {
     Resizing {
         handle: Handle,
         original: Shape,
+    },
+    Rotating {
+        original: Shape,
+        pivot: Point,
+        grabbed: f32,
     },
 }
 
@@ -135,7 +142,11 @@ impl Interaction {
             if session.begin_change(id)
                 && let Some(original) = session.shape_of(id).cloned()
             {
-                self.state = State::Resizing { handle, original };
+                self.state = if handle == Handle::Rotate {
+                    rotating_from(session, original, point)
+                } else {
+                    State::Resizing { handle, original }
+                };
             }
             return true;
         }
@@ -197,6 +208,21 @@ impl Interaction {
                 self.guides = guides;
                 session.preview(moved);
             }
+            State::Rotating {
+                original,
+                pivot,
+                grabbed,
+            } => {
+                let turned = geometry::rotation_of(original) + angle_to(*pivot, point) - *grabbed;
+                let turned = if constrained {
+                    (turned / ROTATION_STEP).round() * ROTATION_STEP
+                } else {
+                    turned
+                };
+                session.preview(
+                    original.with_option("rotation", number_to_value(half_turn_range(turned))),
+                );
+            }
             State::Resizing { handle, original } => {
                 let extent = session.text_extent(original);
                 session.preview(geometry::resized_with_extent(
@@ -226,7 +252,7 @@ impl Interaction {
                     created = Some(session.add(shape));
                 }
             }
-            State::Moving { .. } | State::Resizing { .. } => {
+            State::Moving { .. } | State::Resizing { .. } | State::Rotating { .. } => {
                 session.end_change();
             }
         }
@@ -249,7 +275,10 @@ impl Interaction {
     }
 
     pub fn cancel(&mut self, session: &mut EditSession) {
-        if matches!(self.state, State::Moving { .. } | State::Resizing { .. }) {
+        if matches!(
+            self.state,
+            State::Moving { .. } | State::Resizing { .. } | State::Rotating { .. }
+        ) {
             session.cancel_change();
         }
         self.state = State::Idle;
@@ -281,6 +310,32 @@ impl Interaction {
     }
 }
 
+fn angle_to(pivot: Point, point: Point) -> f32 {
+    (point.y - pivot.y).atan2(point.x - pivot.x).to_degrees()
+}
+
+fn half_turn_range(degrees: f32) -> f32 {
+    let mut turned = degrees % 360.0;
+    if turned > 180.0 {
+        turned -= 360.0;
+    } else if turned <= -180.0 {
+        turned += 360.0;
+    }
+    turned
+}
+
+fn rotating_from(session: &EditSession, original: Shape, point: Point) -> State {
+    let extent = (original.kind == "text").then(|| session.text_extent(&original));
+    match geometry::shape_pivot(&original, extent) {
+        Some(pivot) => State::Rotating {
+            grabbed: angle_to(pivot, point),
+            original,
+            pivot,
+        },
+        None => State::Idle,
+    }
+}
+
 fn snapped(
     session: &EditSession,
     moving: u32,
@@ -290,12 +345,17 @@ fn snapped(
     let (Some(snapping), Some(bounds)) = (snapping, geometry::shape_bounds(&shape)) else {
         return (shape, Vec::new());
     };
+    if geometry::rotation_of(&shape).abs() > f32::EPSILON {
+        return (shape, Vec::new());
+    }
     let others: Vec<Rect> = session
         .document()
         .objects
         .iter()
         .filter(|object| object.id != moving)
-        .filter_map(|object| object.shape().and_then(geometry::shape_bounds))
+        .filter_map(|object| object.shape())
+        .filter(|shape| geometry::rotation_of(shape).abs() <= f32::EPSILON)
+        .filter_map(geometry::shape_bounds)
         .collect();
     let snap = snapping::snap_move(bounds, &others, snapping);
     (
@@ -311,7 +371,11 @@ fn handle_at(session: &EditSession, point: Point, reach: f32) -> Option<(u32, Ha
     }
     let shape = session.shape_of(id)?;
     let extent = (shape.kind == "text").then(|| session.text_extent(shape));
-    geometry::handles_with_extent(shape, extent)
+    let mut candidates = geometry::handles_with_extent(shape, extent);
+    if let Some(at) = geometry::rotation_handle(shape, extent, reach) {
+        candidates.push((Handle::Rotate, at));
+    }
+    candidates
         .into_iter()
         .map(|(handle, at)| (handle, (at.x - point.x).hypot(at.y - point.y)))
         .filter(|(_, distance)| *distance <= reach)

@@ -61,6 +61,7 @@ pub fn option_label(id: &str) -> Option<String> {
         "fill_opacity" => gettext("Fill Opacity"),
         "smooth" => gettext("Smooth Line"),
         "size" => gettext("Badge Size"),
+        "rotation" => gettext("Rotation"),
         "style" => gettext("Badge Style"),
         "font_size" => gettext("Font Size"),
         "bold" => gettext("Bold Text"),

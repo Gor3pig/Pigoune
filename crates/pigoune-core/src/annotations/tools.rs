@@ -103,6 +103,17 @@ pub const HEAD_SIZE: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const ROTATION: OptionSpec = OptionSpec {
+    id: "rotation",
+    kind: OptionKind::Number {
+        min: -180.0,
+        max: 180.0,
+        step: 1.0,
+    },
+    default: DefaultValue::Number(0.0),
+    shown_if: None,
+};
+
 pub const FILL: OptionSpec = OptionSpec {
     id: "fill",
     kind: OptionKind::Toggle,
@@ -149,6 +160,7 @@ pub const RECTANGLE: ToolDefinition = ToolDefinition {
         CORNER_RADIUS,
         FILL,
         FILL_OPACITY,
+        ROTATION,
         SHADOW,
     ],
 };
@@ -166,6 +178,7 @@ pub const ELLIPSE: ToolDefinition = ToolDefinition {
         ROUGHNESS,
         FILL,
         FILL_OPACITY,
+        ROTATION,
         SHADOW,
     ],
 };
@@ -439,6 +452,7 @@ pub const TEXT: ToolDefinition = ToolDefinition {
         FONT_FAMILY,
         TEXT_BACKGROUND,
         TEXT_OUTLINE,
+        ROTATION,
         SHADOW,
     ],
 };

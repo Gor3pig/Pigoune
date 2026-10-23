@@ -13,7 +13,7 @@ use pigoune_core::annotations::{
 };
 
 use crate::annotation_export;
-use crate::annotation_render;
+use crate::annotation_render::{self, HANDLE_REACH_PIXELS};
 use crate::asset_preview::zoom_text;
 use crate::capture_draft;
 use crate::color_sampler;
@@ -41,7 +41,6 @@ const TOOLS_PER_ROW: usize = 3;
 const COMPACT_TOOLS_PER_ROW: usize = 7;
 const COMPACT_SECTION_HEIGHT: i32 = 200;
 const LAYERS_MINIMUM_HEIGHT: i32 = 150;
-const HANDLE_REACH_PIXELS: f64 = 9.0;
 const SNAP_PIXELS: f64 = 6.0;
 const NUDGE_SMALL: f32 = 1.0;
 const NUDGE_LARGE: f32 = 10.0;
@@ -1067,7 +1066,7 @@ impl PigouneEditor {
 
     fn reach(&self) -> f32 {
         let zoom = self.imp().zoom_view.zoom().max(0.01);
-        point_to_f32(HANDLE_REACH_PIXELS / zoom)
+        point_to_f32(f64::from(HANDLE_REACH_PIXELS) / zoom)
     }
 
     fn connect_drawing(&self) {
@@ -2479,7 +2478,7 @@ fn cursor_name(kind: CursorKind) -> Option<&'static str> {
             Handle::Top | Handle::Bottom => "ns-resize",
             Handle::Left | Handle::Right => "ew-resize",
             Handle::Start | Handle::End => "crosshair",
-            Handle::Curve => "grab",
+            Handle::Curve | Handle::Rotate => "grab",
         }),
     }
 }
