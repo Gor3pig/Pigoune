@@ -604,6 +604,33 @@ fn a_turned_blur_on_the_image_edge_stays_opaque(rig: &Rig) {
     );
 }
 
+fn turned_points_draw_a_line_and_a_stroke_where_they_were_turned(rig: &Rig) {
+    let line = segment(
+        "line",
+        (60.0, 60.0),
+        (140.0, 60.0),
+        &[("width", number_to_value(8.0))],
+    );
+    let upright =
+        pigoune_core::annotations::turned_points(&line, Point { x: 100.0, y: 60.0 }, 90.0);
+    let flat = rig.export(&document(vec![line]));
+    assert!(
+        near(flat.at(65, 60), RED, 2),
+        "the flat line covers its left end"
+    );
+    assert_eq!(flat.at(100, 25), source(100, 25), "and not the top");
+    let turned = rig.export(&document(vec![upright]));
+    assert!(
+        near(turned.at(100, 25), RED, 2),
+        "the turned line reaches the top"
+    );
+    assert_eq!(
+        turned.at(65, 60),
+        source(65, 60),
+        "and leaves its old left end"
+    );
+}
+
 fn layers_follow_their_order(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let filled = [
@@ -1071,6 +1098,7 @@ fn rendering_suite() {
     a_turned_rectangle_is_drawn_turned_around_its_centre(&rig);
     a_turned_blur_and_a_turned_pixelation_cover_exactly_their_turned_area(&rig);
     a_turned_blur_on_the_image_edge_stays_opaque(&rig);
+    turned_points_draw_a_line_and_a_stroke_where_they_were_turned(&rig);
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);

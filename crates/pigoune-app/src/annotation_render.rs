@@ -1124,8 +1124,18 @@ fn append_rotation_handle(
         return;
     };
     let center = to_view(at);
-    if let Some((_, top)) = found.iter().find(|(handle, _)| *handle == Handle::Top) {
-        let top = to_view(*top);
+    let frame_top = found
+        .iter()
+        .find(|(handle, _)| *handle == Handle::Top)
+        .map(|(_, top)| *top)
+        .or_else(|| {
+            shape_bounds(shape).map(|bounds| Point {
+                x: bounds.x + bounds.width / 2.0,
+                y: bounds.y,
+            })
+        });
+    if let Some(top) = frame_top {
+        let top = to_view(top);
         let line = gsk::PathBuilder::new();
         line.move_to(top.x, top.y);
         line.line_to(center.x, center.y);

@@ -2,7 +2,7 @@ use pigoune_core::annotations::{
     AnnotationDocument, AnnotationObject, ELLIPSE, EditSession, Geometry, Handle, Interaction,
     Options, Point, RECTANGLE, ROTATION, Rect, Shape, TEXT, Tool, definition, handles_with_extent,
     hit, hit_with_extent, number_to_value, resized_with_extent, rotate_point, rotated_bounds,
-    rotation_handle, rotation_of, shape_pivot, translated,
+    rotation_handle, rotation_of, shape_pivot, translated, turned_points,
 };
 use serde_json::json;
 
@@ -131,7 +131,12 @@ fn the_pivot_is_the_centre_of_the_box_and_of_the_measured_text() {
         },
         Options::new(),
     );
-    assert!(shape_pivot(&line, None).is_none());
+    assert!(near(
+        shape_pivot(&line, None).expect("pivot"),
+        point(5.0, 5.0)
+    ));
+    let step = Shape::new("step", Geometry::Anchor(point(0.0, 0.0)), Options::new());
+    assert!(shape_pivot(&step, None).is_none());
 }
 
 #[test]
@@ -440,4 +445,200 @@ fn a_blur_and_a_pixelation_turn_and_are_hit_where_they_are_seen() {
         assert!(same(bounds.width, 20.0) && same(bounds.height, 60.0));
         assert!(rotation_handle(&shape, None, REACH).is_some());
     }
+}
+
+fn line() -> Shape {
+    Shape::new(
+        "line",
+        Geometry::TwoPoints {
+            from: point(100.0, 100.0),
+            to: point(200.0, 100.0),
+        },
+        Options::defaults(definition("line").expect("tool").options),
+    )
+}
+
+fn arrow(curve: f32) -> Shape {
+    Shape::new(
+        "arrow",
+        Geometry::TwoPoints {
+            from: point(100.0, 100.0),
+            to: point(200.0, 100.0),
+        },
+        Options::defaults(definition("arrow").expect("tool").options)
+            .with("curve", number_to_value(curve)),
+    )
+}
+
+fn stroke(kind: &str) -> Shape {
+    Shape::new(
+        kind,
+        Geometry::Polyline(vec![point(0.0, 0.0), point(100.0, 0.0), point(100.0, 50.0)]),
+        Options::defaults(definition(kind).expect("tool").options),
+    )
+}
+
+fn ends_of(shape: &Shape) -> (Point, Point) {
+    match shape.geometry {
+        Geometry::TwoPoints { from, to } => (from, to),
+        _ => panic!("two points"),
+    }
+}
+
+fn points_of(shape: &Shape) -> Vec<Point> {
+    match &shape.geometry {
+        Geometry::Polyline(points) => points.clone(),
+        _ => panic!("a polyline"),
+    }
+}
+
+fn selected(shape: Shape) -> (Interaction, EditSession, u32) {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let id = session.add(shape);
+    session.select(Some(id));
+    (Interaction::new(), session, id)
+}
+
+#[test]
+fn a_line_an_arrow_a_pen_and_a_highlighter_have_a_round_handle_but_a_step_does_not() {
+    for shape in [line(), arrow(0.0), stroke("pen"), stroke("highlighter")] {
+        assert!(
+            rotation_handle(&shape, None, REACH).is_some(),
+            "{} turns",
+            shape.kind
+        );
+    }
+    let step = Shape::new("step", Geometry::Anchor(point(0.0, 0.0)), Options::new());
+    assert!(rotation_handle(&step, None, REACH).is_none());
+    let spotlight = Shape::new(
+        "spotlight",
+        Geometry::Box(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 10.0,
+            height: 10.0,
+        }),
+        Options::new(),
+    );
+    assert!(rotation_handle(&spotlight, None, REACH).is_none());
+    let above = rotation_handle(&line(), None, REACH).expect("handle");
+    assert!(near(above, point(150.0, 100.0 - 3.0 * REACH)));
+}
+
+#[test]
+fn turning_the_points_moves_them_around_the_centre_without_storing_an_angle() {
+    let turned = turned_points(&line(), point(150.0, 100.0), 90.0);
+
+    let (from, to) = ends_of(&turned);
+    assert!(near(from, point(150.0, 50.0)) && near(to, point(150.0, 150.0)));
+    assert!(same(rotation_of(&turned), 0.0));
+    let flipped = turned_points(&stroke("pen"), point(50.0, 25.0), 180.0);
+    let points = points_of(&flipped);
+    assert!(near(points[0], point(100.0, 50.0)));
+    assert!(near(points[1], point(0.0, 50.0)));
+    assert!(near(points[2], point(0.0, 0.0)));
+}
+
+#[test]
+fn four_quarter_turns_bring_the_points_back_and_the_curve_is_kept() {
+    let mut shape = arrow(40.0);
+    let pivot = point(150.0, 100.0);
+    for _ in 0..4 {
+        shape = turned_points(&shape, pivot, 90.0);
+    }
+
+    let (from, to) = ends_of(&shape);
+    assert!(near(from, point(100.0, 100.0)) && near(to, point(200.0, 100.0)));
+    assert!(same(shape.number("curve"), 40.0));
+    let once = turned_points(&arrow(40.0), pivot, 30.0);
+    assert!(same(once.number("curve"), 40.0));
+}
+
+#[test]
+fn dragging_the_round_handle_turns_a_line_in_one_undoable_step() {
+    let (mut interaction, mut session, id) = selected(line());
+    let handle = rotation_handle(&line(), None, REACH).expect("handle");
+
+    turn(&mut interaction, &mut session, handle, point(232.0, 100.0));
+
+    let (from, to) = ends_of(session.shape_of(id).expect("line"));
+    assert!(near(from, point(150.0, 50.0)) && near(to, point(150.0, 150.0)));
+    assert!(session.undo());
+    let (from, to) = ends_of(session.shape_of(id).expect("line"));
+    assert!(near(from, point(100.0, 100.0)) && near(to, point(200.0, 100.0)));
+    assert!(session.redo());
+    let (from, _) = ends_of(session.shape_of(id).expect("line"));
+    assert!(near(from, point(150.0, 50.0)));
+}
+
+#[test]
+fn turning_a_line_again_starts_from_where_it_is_and_never_accumulates_error() {
+    let (mut interaction, mut session, id) = selected(line());
+    for _ in 0..4 {
+        let shape = session.shape_of(id).cloned().expect("line");
+        let handle = rotation_handle(&shape, None, REACH).expect("handle");
+        let pivot = shape_pivot(&shape, None).expect("pivot");
+        turn(
+            &mut interaction,
+            &mut session,
+            handle,
+            rotate_point(handle, pivot, 90.0),
+        );
+    }
+
+    let (from, to) = ends_of(session.shape_of(id).expect("line"));
+    assert!((from.x - 100.0).abs() < 0.5 && (from.y - 100.0).abs() < 0.5);
+    assert!((to.x - 200.0).abs() < 0.5 && (to.y - 100.0).abs() < 0.5);
+}
+
+#[test]
+fn holding_shift_turns_a_pen_stroke_by_steps_of_fifteen_degrees() {
+    let (mut interaction, mut session, id) = selected(stroke("pen"));
+    let shape = session.shape_of(id).cloned().expect("pen");
+    let handle = rotation_handle(&shape, None, REACH).expect("handle");
+    let pivot = shape_pivot(&shape, None).expect("pivot");
+    interaction.set_constrained(true);
+
+    turn(
+        &mut interaction,
+        &mut session,
+        handle,
+        rotate_point(handle, pivot, 37.0),
+    );
+
+    let expected = turned_points(&shape, pivot, 30.0);
+    let (got, want) = (
+        points_of(session.shape_of(id).expect("pen")),
+        points_of(&expected),
+    );
+    assert!(got.iter().zip(&want).all(|(a, b)| near(*a, *b)));
+}
+
+#[test]
+fn a_turned_line_is_picked_where_it_is_seen() {
+    let (mut interaction, mut session, id) = selected(line());
+    let handle = rotation_handle(&line(), None, REACH).expect("handle");
+    turn(&mut interaction, &mut session, handle, point(232.0, 100.0));
+    session.select(None);
+
+    assert_eq!(session.pick(point(150.0, 60.0), REACH), Some(id));
+    assert_eq!(session.pick(point(190.0, 100.0), REACH), None);
+}
+
+#[test]
+fn a_locked_line_and_an_unselected_stroke_are_not_turned() {
+    let (mut interaction, mut session, id) = selected(line());
+    assert!(session.set_locked(id, true));
+    let handle = rotation_handle(&line(), None, REACH).expect("handle");
+    turn(&mut interaction, &mut session, handle, point(232.0, 100.0));
+    let (from, _) = ends_of(session.shape_of(id).expect("line"));
+    assert!(near(from, point(100.0, 100.0)));
+
+    let (mut interaction, mut session, id) = selected(stroke("pen"));
+    session.select(None);
+    let shape = session.shape_of(id).cloned().expect("pen");
+    let handle = rotation_handle(&shape, None, REACH).expect("handle");
+    turn(&mut interaction, &mut session, handle, point(300.0, 25.0));
+    let points = points_of(session.shape_of(id).expect("pen"));
+    assert!(near(points[0], point(0.0, 0.0)));
 }
