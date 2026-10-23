@@ -11,7 +11,7 @@ use super::{
 };
 use crate::annotations::AnnotationDocument;
 
-pub const RENDER_VERSION: u32 = 2;
+pub const RENDER_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnnotationRender {
