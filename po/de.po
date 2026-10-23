@@ -8815,25 +8815,6 @@ msgstr ""
 msgid "Layers, hand-drawn looks and panels that fold away"
 msgstr ""
 
-#: crates/pigoune-app/src/undo_message.rs
-#, rust-format
-msgid "Duplicate detection setting of the collection “{name}” undone"
-msgstr "Einstellung der Duplikaterkennung der Sammlung „{name}“ rückgängig gemacht"
-
-#: crates/pigoune-app/src/undo_message.rs
-#, rust-format
-msgid "Duplicate detection setting of the collection “{name}” redone"
-msgstr "Einstellung der Duplikaterkennung der Sammlung „{name}“ wiederholt"
-
-#: crates/pigoune-app/src/sidebar_row.rs
-msgid "Left out of duplicate detection"
-msgstr "Von der Duplikaterkennung ausgenommen"
-
-
-#: crates/pigoune-app/src/sidebar_row.rs
-msgid "Leave out of Duplicate Detection"
-msgstr "Von der Duplikaterkennung ausnehmen"
-
 #: crates/pigoune-app/src/duplicates_page.rs
 #, rust-format
 msgid "{count} collection is left out of the search."
@@ -8842,37 +8823,69 @@ msgstr[0] "{count} Sammlung wird von der Suche ausgenommen."
 msgstr[1] "{count} Sammlungen werden von der Suche ausgenommen."
 
 #: crates/pigoune-app/src/collection_skipping.rs
-msgid "Restore Duplicate Detection"
-msgstr "Duplikaterkennung wiederherstellen"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-#, rust-format
-msgid "Restore Duplicate Detection from “{name}”"
-msgstr "Duplikaterkennung wiederherstellen von „{name}“"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-#, rust-format
-msgid "Left out of duplicate detection by “{name}”"
-msgstr "Von der Duplikaterkennung durch „{name}“ ausgenommen"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-#, rust-format
-msgid "Leave “{name}” out of Duplicate Detection?"
-msgstr "„{name}“ von der Duplikaterkennung ausnehmen?"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-#, rust-format
-msgid "Restore Duplicate Detection for “{name}”?"
-msgstr "Duplikaterkennung für „{name}“ wiederherstellen?"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-msgid "The assets of this collection and of its sub-collections will no longer be offered as possible duplicates, unless they also belong to a collection that is not left out. Nothing is changed or deleted, and you can undo this."
-msgstr "Die Elemente dieser Sammlung und ihrer Untersammlungen werden nicht mehr als mögliche Duplikate angeboten, es sei denn, sie gehören auch zu einer Sammlung, die nicht ausgenommen ist. Es wird nichts geändert oder gelöscht, und Sie können das rückgängig machen."
-
-#: crates/pigoune-app/src/collection_skipping.rs
-msgid "The assets of this collection and of its sub-collections will be compared again when you look for possible duplicates."
-msgstr "Die Elemente dieser Sammlung und ihrer Untersammlungen werden bei der Suche nach möglichen Duplikaten wieder verglichen."
-
-#: crates/pigoune-app/src/collection_skipping.rs
 msgid "_Leave Out"
 msgstr "_Ausnehmen"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "Leave Out of Duplicate Search"
+msgstr "Von der Duplikatsuche ausnehmen"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "Include in Duplicate Search"
+msgstr "In die Duplikatsuche aufnehmen"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Left Out Through “{name}”"
+msgstr "Ausgenommen durch „{name}“"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "Left out of the duplicate search"
+msgstr "Von der Duplikatsuche ausgenommen"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Left out of the duplicate search through “{name}”"
+msgstr "Von der Duplikatsuche ausgenommen durch „{name}“"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Leave “{name}” out of the duplicate search?"
+msgstr "„{name}“ von der Duplikatsuche ausnehmen?"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Include “{name}” in the duplicate search again?"
+msgstr "„{name}“ wieder in die Duplikatsuche aufnehmen?"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "This collection and its sub-collections will no longer be checked for duplicates. An asset that is also in another collection stays in the search. Nothing is deleted, and you can undo this."
+msgstr "Diese Sammlung und ihre Untersammlungen werden nicht mehr auf Duplikate geprüft. Ein Element, das auch in einer anderen Sammlung liegt, bleibt in der Suche. Es wird nichts gelöscht, und Sie können das rückgängig machen."
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "This collection and its sub-collections will be checked again the next time you look for duplicates."
+msgstr "Diese Sammlung und ihre Untersammlungen werden bei der nächsten Duplikatsuche wieder geprüft."
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "_Include"
+msgstr "_Aufnehmen"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Leaving “{name}” out of the duplicate search undone"
+msgstr "Ausnehmen von „{name}“ aus der Duplikatsuche rückgängig gemacht"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Leaving “{name}” out of the duplicate search redone"
+msgstr "Ausnehmen von „{name}“ aus der Duplikatsuche wiederholt"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Including “{name}” in the duplicate search undone"
+msgstr "Aufnehmen von „{name}“ in die Duplikatsuche rückgängig gemacht"
+
+#: crates/pigoune-app/src/undo_message.rs
+#, rust-format
+msgid "Including “{name}” in the duplicate search redone"
+msgstr "Aufnehmen von „{name}“ in die Duplikatsuche wiederholt"

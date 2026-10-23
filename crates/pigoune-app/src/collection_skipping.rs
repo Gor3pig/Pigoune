@@ -34,10 +34,10 @@ pub fn skipped_by_for_children(
 #[must_use]
 pub fn menu_label(state: &DuplicateSkipping) -> String {
     match state {
-        DuplicateSkipping::Included => gettext("Leave out of Duplicate Detection"),
-        DuplicateSkipping::Skipped => gettext("Restore Duplicate Detection"),
+        DuplicateSkipping::Included => gettext("Leave Out of Duplicate Search"),
+        DuplicateSkipping::Skipped => gettext("Include in Duplicate Search"),
         DuplicateSkipping::SkippedBy(parent) => {
-            gettext("Restore Duplicate Detection from “{name}”").replace("{name}", parent)
+            gettext("Left Out Through “{name}”").replace("{name}", parent)
         }
     }
 }
@@ -46,19 +46,19 @@ pub fn menu_label(state: &DuplicateSkipping) -> String {
 pub fn mark_tooltip(state: &DuplicateSkipping) -> Option<String> {
     match state {
         DuplicateSkipping::Included => None,
-        DuplicateSkipping::Skipped => Some(gettext("Left out of duplicate detection")),
-        DuplicateSkipping::SkippedBy(parent) => {
-            Some(gettext("Left out of duplicate detection by “{name}”").replace("{name}", parent))
-        }
+        DuplicateSkipping::Skipped => Some(gettext("Left out of the duplicate search")),
+        DuplicateSkipping::SkippedBy(parent) => Some(
+            gettext("Left out of the duplicate search through “{name}”").replace("{name}", parent),
+        ),
     }
 }
 
 #[must_use]
 pub fn confirmation_title(name: &str, leaving_out: bool) -> String {
     if leaving_out {
-        gettext("Leave “{name}” out of Duplicate Detection?")
+        gettext("Leave “{name}” out of the duplicate search?")
     } else {
-        gettext("Restore Duplicate Detection for “{name}”?")
+        gettext("Include “{name}” in the duplicate search again?")
     }
     .replace("{name}", name)
 }
@@ -67,11 +67,11 @@ pub fn confirmation_title(name: &str, leaving_out: bool) -> String {
 pub fn confirmation_body(leaving_out: bool) -> String {
     if leaving_out {
         gettext(
-            "The assets of this collection and of its sub-collections will no longer be offered as possible duplicates, unless they also belong to a collection that is not left out. Nothing is changed or deleted, and you can undo this.",
+            "This collection and its sub-collections will no longer be checked for duplicates. An asset that is also in another collection stays in the search. Nothing is deleted, and you can undo this.",
         )
     } else {
         gettext(
-            "The assets of this collection and of its sub-collections will be compared again when you look for possible duplicates.",
+            "This collection and its sub-collections will be checked again the next time you look for duplicates.",
         )
     }
 }
@@ -81,7 +81,7 @@ pub fn confirmation_button(leaving_out: bool) -> String {
     if leaving_out {
         gettext("_Leave Out")
     } else {
-        gettext("_Restore")
+        gettext("_Include")
     }
 }
 
@@ -160,10 +160,10 @@ mod tests {
 
     #[test]
     fn the_menu_offers_to_leave_out_then_to_restore_and_names_the_parent_when_inherited() {
-        assert!(menu_label(&DuplicateSkipping::Included).starts_with("Leave out"));
-        assert!(menu_label(&DuplicateSkipping::Skipped).starts_with("Restore"));
+        assert!(menu_label(&DuplicateSkipping::Included).starts_with("Leave Out"));
+        assert!(menu_label(&DuplicateSkipping::Skipped).starts_with("Include"));
         let inherited = menu_label(&DuplicateSkipping::SkippedBy("Logos".to_owned()));
-        assert!(inherited.starts_with("Restore") && inherited.contains("“Logos”"));
+        assert!(inherited.starts_with("Left Out Through") && inherited.contains("“Logos”"));
     }
 
     #[test]
@@ -183,8 +183,8 @@ mod tests {
             confirmation_title("Logos", false)
         );
         assert!(confirmation_body(true).contains("undo"));
-        assert!(confirmation_body(false).contains("compared again"));
+        assert!(confirmation_body(false).contains("checked again"));
         assert_eq!(confirmation_button(true), "_Leave Out");
-        assert_eq!(confirmation_button(false), "_Restore");
+        assert_eq!(confirmation_button(false), "_Include");
     }
 }
