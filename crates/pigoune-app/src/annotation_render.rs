@@ -6,12 +6,12 @@ use std::hash::{Hash, Hasher};
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
-    AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, PathStep, Point, Rect, Shape,
-    Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
-    curve_polyline, dash_pattern, guide_extent, handles_with_extent, head_size_factor,
-    rotation_handle, rotation_of, rounded_spot_radius, shape_bounds, shape_pivot, sketch_curve,
-    sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle, sketched_curve, step_label,
-    text_visual_bounds,
+    AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Outline, PathStep, Point, Rect,
+    Shape, Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head,
+    curve_point, curve_polyline, dash_pattern, guide_extent, handles_with_extent, head_size_factor,
+    rotate_point, rotated_bounds, rotation_handle, rotation_of, rounded_spot_radius, shape_bounds,
+    shape_pivot, sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle,
+    sketched_curve, step_label, text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -190,7 +190,7 @@ pub fn append_shape(
 
 fn turn_around_pivot(snapshot: &gtk::Snapshot, shape: &Shape, context: &pango::Context) -> bool {
     let angle = rotation_of(shape);
-    if angle.abs() <= f32::EPSILON {
+    if angle.abs() <= f32::EPSILON || covers_what_lies_below(shape) {
         return false;
     }
     let extent = (shape.kind == "text").then(|| measure_text(context, shape));
@@ -871,15 +871,64 @@ fn blur_reaches_outside(region: Rect, reach: f32, texture: &gdk::Texture) -> boo
         || region.y + region.height + reach > pixels(texture.height())
 }
 
+fn covers_what_lies_below(shape: &Shape) -> bool {
+    shape
+        .definition()
+        .is_some_and(|definition| definition.outline == Outline::Region)
+}
+
+fn turned_region_path(shape: &Shape, region: Rect) -> gsk::Path {
+    let angle = rotation_of(shape);
+    let pivot = shape_pivot(shape, None).unwrap_or(Point {
+        x: region.x + region.width / 2.0,
+        y: region.y + region.height / 2.0,
+    });
+    let corners = [
+        Point {
+            x: region.x,
+            y: region.y,
+        },
+        Point {
+            x: region.x + region.width,
+            y: region.y,
+        },
+        Point {
+            x: region.x + region.width,
+            y: region.y + region.height,
+        },
+        Point {
+            x: region.x,
+            y: region.y + region.height,
+        },
+    ]
+    .map(|corner| rotate_point(corner, pivot, angle));
+    let builder = gsk::PathBuilder::new();
+    builder.move_to(corners[0].x, corners[0].y);
+    for corner in &corners[1..] {
+        builder.line_to(corner.x, corner.y);
+    }
+    builder.close();
+    builder.to_path()
+}
+
+fn push_region_clip(snapshot: &gtk::Snapshot, shape: &Shape, region: Rect) {
+    if rotation_of(shape).abs() <= f32::EPSILON {
+        snapshot.push_clip(&graphene_rect(region));
+    } else {
+        snapshot.push_fill(&turned_region_path(shape, region), gsk::FillRule::Winding);
+    }
+}
+
 fn draw_blur(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     let (Some(scene), Some(region)) = (draw.scene, shape_bounds(shape)) else {
         return;
     };
     let radius = shape.number("radius");
     let reach = radius * BLUR_REACH_PER_RADIUS;
-    snapshot.push_clip(&graphene_rect(region));
+    let covered = rotated_bounds(shape, None).unwrap_or(region);
+    push_region_clip(snapshot, shape, region);
     snapshot.push_blur(f64::from(radius));
-    if blur_reaches_outside(region, reach, scene.backdrop.texture) {
+    if blur_reaches_outside(covered, reach, scene.backdrop.texture) {
         append_edge_extension(snapshot, scene.backdrop.texture, reach.ceil());
     }
     draw_below(snapshot, scene, gsk::ScalingFilter::Linear, draw.pango);
@@ -942,16 +991,17 @@ fn draw_pixelate(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
         return;
     };
     let cell = shape.number("cell").max(1.0);
-    let Some(tile) = cached_pixel_tile(scene, region, cell, draw.pango) else {
+    let seen = rotated_bounds(shape, None).unwrap_or(region);
+    let Some(tile) = cached_pixel_tile(scene, seen, cell, draw.pango) else {
         return;
     };
     let covered = graphene::Rect::new(
-        region.x,
-        region.y,
+        seen.x,
+        seen.y,
         pixels(tile.width()) * cell,
         pixels(tile.height()) * cell,
     );
-    snapshot.push_clip(&graphene_rect(region));
+    push_region_clip(snapshot, shape, region);
     snapshot.append_scaled_texture(&tile, gsk::ScalingFilter::Nearest, &covered);
     snapshot.pop();
 }
