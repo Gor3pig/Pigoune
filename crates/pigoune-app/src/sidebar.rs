@@ -11,6 +11,7 @@ use pigoune_core::{
 use crate::asset_grid::MENU_KEYS;
 use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_looks;
+use crate::collection_skipping::{self, DuplicateSkipping};
 use crate::collection_sort::CollectionTree;
 use crate::drop_action::DropOffer;
 use crate::dropped_content::Dropped;
@@ -289,7 +290,7 @@ impl PigouneSidebar {
             _ => None,
         };
         imp.chosen_tag.set(chosen_tag);
-        let collections = collection_items(&content.tree, None, counts);
+        let collections = collection_items(&content.tree, None, None, counts);
         root.push(header_item(
             SidebarEntry::CollectionsHeader,
             gettext("Collections"),
@@ -870,7 +871,7 @@ fn header_item(entry: SidebarEntry, label: String, folded: Option<usize>) -> Pig
         color_class: None,
         count: folded,
         folded: folded.is_some(),
-        skips_duplicates: false,
+        duplicate_skipping: DuplicateSkipping::Included,
         tag_pills: Vec::new(),
         selected_tag: None,
         cloud_place: None,
@@ -938,7 +939,7 @@ fn view_item(
         color_class: None,
         count: counts.map(|counts| counts.of(view)),
         folded: false,
-        skips_duplicates: false,
+        duplicate_skipping: DuplicateSkipping::Included,
         tag_pills: Vec::new(),
         selected_tag: None,
         cloud_place: None,
@@ -949,12 +950,15 @@ fn view_item(
 fn collection_items(
     tree: &CollectionTree,
     parent: Option<CollectionId>,
+    skipped_by: Option<&str>,
     counts: Option<&ViewCounts>,
 ) -> Vec<PigouneSidebarItem> {
     tree.children_of(parent)
         .iter()
         .map(|collection| {
-            let children = collection_items(tree, Some(collection.id), counts);
+            let for_children = collection_skipping::skipped_by_for_children(collection, skipped_by);
+            let children =
+                collection_items(tree, Some(collection.id), for_children.as_deref(), counts);
             let store = (!children.is_empty()).then(|| {
                 let store = gio::ListStore::new::<PigouneSidebarItem>();
                 for child in &children {
@@ -970,7 +974,7 @@ fn collection_items(
                 color_class: collection_looks::color_class(&collection.look),
                 count: counts.map(|counts| counts.of(view)),
                 folded: false,
-                skips_duplicates: collection.skip_duplicates,
+                duplicate_skipping: collection_skipping::state_of(collection, skipped_by),
                 tag_pills: Vec::new(),
                 selected_tag: None,
                 cloud_place: None,
@@ -1058,7 +1062,7 @@ fn tag_cloud_item(
         color_class: None,
         count: None,
         folded: false,
-        skips_duplicates: false,
+        duplicate_skipping: DuplicateSkipping::Included,
         tag_pills: tags
             .iter()
             .map(|tag| TagPill {

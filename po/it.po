@@ -8778,9 +8778,6 @@ msgstr "Impostazione del rilevamento dei duplicati della raccolta “{name}” r
 msgid "Left out of duplicate detection"
 msgstr "Esclusa dal rilevamento dei duplicati"
 
-#: crates/pigoune-app/src/sidebar_row.rs
-msgid "Include in Duplicate Detection"
-msgstr "Includi nel rilevamento dei duplicati"
 
 #: crates/pigoune-app/src/sidebar_row.rs
 msgid "Leave out of Duplicate Detection"
@@ -8792,3 +8789,39 @@ msgid "{count} collection is left out of the search."
 msgid_plural "{count} collections are left out of the search."
 msgstr[0] "{count} raccolta è esclusa dalla ricerca."
 msgstr[1] "{count} raccolte sono escluse dalla ricerca."
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "Restore Duplicate Detection"
+msgstr "Ripristina il rilevamento dei duplicati"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Restore Duplicate Detection from “{name}”"
+msgstr "Ripristina il rilevamento dei duplicati da “{name}”"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Left out of duplicate detection by “{name}”"
+msgstr "Esclusa dal rilevamento dei duplicati da “{name}”"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Leave “{name}” out of Duplicate Detection?"
+msgstr "Escludere “{name}” dal rilevamento dei duplicati?"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "Restore Duplicate Detection for “{name}”?"
+msgstr "Ripristinare il rilevamento dei duplicati per “{name}”?"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "The assets of this collection and of its sub-collections will no longer be offered as possible duplicates, unless they also belong to a collection that is not left out. Nothing is changed or deleted, and you can undo this."
+msgstr "Gli elementi di questa raccolta e delle sue sotto-raccolte non verranno più proposti come possibili duplicati, a meno che non appartengano anche a una raccolta non esclusa. Non viene modificato né eliminato nulla e puoi annullare."
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "The assets of this collection and of its sub-collections will be compared again when you look for possible duplicates."
+msgstr "Gli elementi di questa raccolta e delle sue sotto-raccolte verranno confrontati di nuovo quando cerchi possibili duplicati."
+
+#: crates/pigoune-app/src/collection_skipping.rs
+msgid "_Leave Out"
+msgstr "_Escludi"
