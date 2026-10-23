@@ -17,10 +17,10 @@ pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
     ArrowHead, Handle, HitMode, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control,
     arrow_head, constrained_end, curve_control, curve_point, curve_polyline, dash_pattern,
-    estimated_text_extent, handles, head_size_factor, hit, hit_in_mode, hit_with_extent,
-    next_stroke_point, rect_between, resized, rounded_spot_radius, shape_bounds, shape_from_anchor,
-    shape_from_drag, shape_from_points, simplified, text_ink_margin, text_visual_bounds,
-    translated,
+    estimated_text_extent, handles, handles_with_extent, head_size_factor, hit, hit_in_mode,
+    hit_with_extent, next_stroke_point, rect_between, resized, resized_with_extent,
+    rounded_spot_radius, shape_bounds, shape_from_anchor, shape_from_drag, shape_from_points,
+    simplified, text_ink_margin, text_visual_bounds, translated,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use layers::{LayerEntry, layer_entries};

@@ -375,11 +375,14 @@ pub const CONTENT: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const SMALLEST_FONT: f32 = 8.0;
+pub const LARGEST_FONT: f32 = 200.0;
+
 pub const FONT_SIZE: OptionSpec = OptionSpec {
     id: "font_size",
     kind: OptionKind::Number {
-        min: 8.0,
-        max: 200.0,
+        min: SMALLEST_FONT,
+        max: LARGEST_FONT,
         step: 1.0,
     },
     default: DefaultValue::Number(32.0),

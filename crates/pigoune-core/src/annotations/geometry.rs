@@ -1,6 +1,9 @@
 use super::options::number_to_value;
 use super::shape::{Geometry, Shape};
-use super::tools::{GeometryKind, LARGEST_BADGE, Outline, SMALLEST_BADGE, ToolDefinition};
+use super::tools::{
+    GeometryKind, LARGEST_BADGE, LARGEST_FONT, Outline, SMALLEST_BADGE, SMALLEST_FONT,
+    ToolDefinition,
+};
 use super::{Options, Point, Rect};
 
 const SMALLEST_DRAG: f32 = 3.0;
@@ -349,6 +352,16 @@ pub fn translated(shape: &Shape, dx: f32, dy: f32) -> Shape {
 
 #[must_use]
 pub fn handles(shape: &Shape) -> Vec<(Handle, Point)> {
+    handles_with_extent(shape, None)
+}
+
+#[must_use]
+pub fn handles_with_extent(shape: &Shape, extent: Option<(f32, f32)>) -> Vec<(Handle, Point)> {
+    if shape.kind == "text" {
+        return extent
+            .and_then(|extent| text_visual_bounds(shape, extent))
+            .map_or_else(Vec::new, box_handles);
+    }
     match &shape.geometry {
         Geometry::Box(rect) => {
             let rect = normalized(*rect);
@@ -449,6 +462,72 @@ fn resized_badge(shape: &Shape, at: Point, to: Point) -> Shape {
         .max((to.y - at.y).abs())
         .clamp(SMALLEST_BADGE, LARGEST_BADGE);
     shape.with_option("size", number_to_value(size))
+}
+
+fn sides_of(handle: Handle) -> (bool, bool, bool, bool) {
+    match handle {
+        Handle::TopLeft => (true, false, true, false),
+        Handle::Top => (false, false, true, false),
+        Handle::TopRight => (false, true, true, false),
+        Handle::Right => (false, true, false, false),
+        Handle::BottomRight => (false, true, false, true),
+        Handle::Bottom => (false, false, false, true),
+        Handle::BottomLeft => (true, false, false, true),
+        Handle::Left => (true, false, false, false),
+        Handle::Start | Handle::End | Handle::Curve => (false, false, false, false),
+    }
+}
+
+fn resized_text(shape: &Shape, handle: Handle, to: Point, extent: (f32, f32)) -> Shape {
+    let (Geometry::Anchor(at), Some(visual)) = (&shape.geometry, text_visual_bounds(shape, extent))
+    else {
+        return shape.clone();
+    };
+    let (left, right, top, bottom) = sides_of(handle);
+    let size = shape.number("font_size");
+    if !(left || right || top || bottom)
+        || visual.width <= 0.0
+        || visual.height <= 0.0
+        || size <= 0.0
+    {
+        return shape.clone();
+    }
+    let fixed = Point {
+        x: if left {
+            visual.x + visual.width
+        } else {
+            visual.x
+        },
+        y: if top {
+            visual.y + visual.height
+        } else {
+            visual.y
+        },
+    };
+    let along_x = if left { fixed.x - to.x } else { to.x - fixed.x } / visual.width;
+    let along_y = if top { fixed.y - to.y } else { to.y - fixed.y } / visual.height;
+    let scale = match (left || right, top || bottom) {
+        (true, true) => along_x.max(along_y),
+        (true, false) => along_x,
+        _ => along_y,
+    };
+    let new_size = (size * scale).clamp(SMALLEST_FONT, LARGEST_FONT);
+    let factor = new_size / size;
+    shape
+        .with_option("font_size", number_to_value(new_size))
+        .with_geometry(Geometry::Anchor(Point {
+            x: fixed.x + (at.x - fixed.x) * factor,
+            y: fixed.y + (at.y - fixed.y) * factor,
+        }))
+}
+
+#[must_use]
+pub fn resized_with_extent(shape: &Shape, handle: Handle, to: Point, extent: (f32, f32)) -> Shape {
+    if shape.kind == "text" {
+        resized_text(shape, handle, to, extent)
+    } else {
+        resized(shape, handle, to)
+    }
 }
 
 #[must_use]

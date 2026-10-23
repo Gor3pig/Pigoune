@@ -8,9 +8,9 @@ use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, PathStep, Point, Rect, Shape,
     Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
-    curve_polyline, dash_pattern, guide_extent, handles, head_size_factor, rounded_spot_radius,
-    shape_bounds, sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle,
-    sketched_curve, step_label, text_visual_bounds,
+    curve_polyline, dash_pattern, guide_extent, handles_with_extent, head_size_factor,
+    rounded_spot_radius, shape_bounds, sketch_curve, sketch_ellipse, sketch_line, sketch_outline,
+    sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -988,7 +988,8 @@ pub fn append_selection(
     if !with_handles {
         return;
     }
-    for (handle, point) in handles(shape) {
+    let extent = (shape.kind == "text").then(|| measure_text(context, shape));
+    for (handle, point) in handles_with_extent(shape, extent) {
         let center = to_view(point);
         if handle == Handle::Curve {
             let builder = gsk::PathBuilder::new();
