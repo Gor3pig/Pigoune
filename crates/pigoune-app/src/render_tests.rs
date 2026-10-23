@@ -599,7 +599,7 @@ fn a_blur_stays_opaque_near_the_edges_of_the_image(rig: &Rig) {
         (45, 30),
         (155, 90),
     );
-    for radius in [8.0, 60.0] {
+    for radius in [8.0, 60.0, 150.0] {
         let inside = rig.export(&document(vec![boxed(
             "blur",
             40.0,

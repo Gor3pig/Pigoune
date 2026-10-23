@@ -511,3 +511,25 @@ fn no_region_has_a_move_handle_and_the_body_moves_it_instead() {
         let _ = Handle::Left;
     }
 }
+
+#[test]
+fn a_blur_radius_is_kept_up_to_one_hundred_and_fifty_and_no_further() {
+    let blur = boxed("blur", 0.0, 0.0, 100.0, 100.0);
+
+    assert!(near(
+        blur.with_option("radius", number_to_value(150.0))
+            .number("radius"),
+        150.0
+    ));
+    assert!(near(
+        blur.with_option("radius", number_to_value(900.0))
+            .number("radius"),
+        150.0
+    ));
+    assert!(near(
+        blur.with_option("radius", number_to_value(0.0))
+            .number("radius"),
+        1.0
+    ));
+    assert!(near(blur.number("radius"), 12.0));
+}
