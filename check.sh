@@ -125,13 +125,20 @@ tests_with_a_virtual_display() {
         return
     fi
     local display=":$((200 + RANDOM % 700))"
-    gtk4-broadwayd "$display" >/dev/null 2>&1 &
+    local runtime="${XDG_RUNTIME_DIR:-}" own_runtime=""
+    if [[ -z "$runtime" ]]; then
+        own_runtime=$(mktemp -d)
+        chmod 700 "$own_runtime"
+        runtime="$own_runtime"
+    fi
+    XDG_RUNTIME_DIR="$runtime" gtk4-broadwayd "$display" >/dev/null 2>&1 &
     local server=$!
     sleep 1
-    GDK_BACKEND=broadway BROADWAY_DISPLAY="$display" PIGOUNE_REQUIRE_RENDER_TESTS=1 \
-        cargo test --workspace --quiet
+    XDG_RUNTIME_DIR="$runtime" GDK_BACKEND=broadway BROADWAY_DISPLAY="$display" \
+        PIGOUNE_REQUIRE_RENDER_TESTS=1 cargo test --workspace --quiet
     local status=$?
     kill "$server" 2>/dev/null
+    [[ -n "$own_runtime" ]] && rm -rf "$own_runtime"
     return $status
 }
 
