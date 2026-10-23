@@ -94,6 +94,7 @@ mod recent_libraries;
 mod relaunch;
 mod release_notes;
 mod removable_pill;
+mod rename_click;
 #[cfg(test)]
 mod render_tests;
 mod ring_chart;
