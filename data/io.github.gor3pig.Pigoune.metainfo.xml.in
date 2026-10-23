@@ -25,55 +25,55 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/01.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/02.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/03.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/03.png</image>
       <caption>Look closely at an asset and step through its animation</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/04.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/04.png</image>
       <caption>Convert assets to PNG, JPEG, WebP, AVIF or ICO</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/05.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/05.png</image>
       <caption>See what your library holds, in light or dark style</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/06.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/06.png</image>
       <caption>Combine words with “and” or “or” in one click</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/07.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/07.png</image>
       <caption>Save a search as a smart collection that fills itself</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/08.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/08.png</image>
       <caption>Find the images that fit your screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/09.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/09.png</image>
       <caption>Frame any image and set it as your wallpaper</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/10.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/10.png</image>
       <caption>Nest your tags and browse them level by level</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/11.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/11.png</image>
       <caption>Check that every file of your library is still there and intact</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/12.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/12.png</image>
       <caption>Annotate a screenshot or any image without touching the original</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/13.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.1/data/screenshots/13.png</image>
       <caption>Layers, hand-drawn looks and panels that fold away</caption>
     </screenshot>
   </screenshots>
@@ -109,6 +109,17 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.1" date="2026-10-23">
+      <description>
+        <p>Show the original of an annotated image in your file manager, and drag images out of a library opened with the folder chooser.</p>
+        <ul>
+          <li>Show Original replaces View Original: it opens your file manager on the untouched image stored in the library, instead of starting another application that could fail to launch.</li>
+          <li>For an annotated image, Show in Files now shows a copy of the annotated image. An image that is not annotated is shown as before.</li>
+          <li>Dragging an image out of Pigoune into the file manager works again for a library opened with the folder chooser. The file manager used to show a forbidden cursor.</li>
+          <li>A drag whose files cannot be prepared now says so.</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.1.0" date="2026-10-23">
       <description>
         <p>Turn your annotations, resize a text, and leave collections out of the duplicate search.</p>
