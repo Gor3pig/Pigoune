@@ -2813,8 +2813,8 @@ msgstr "Retirer de toutes les collections"
 #: crates/pigoune-app/src/window.rs:2921
 #: crates/pigoune-app/ui/asset-details.blp:310
 #: crates/pigoune-app/ui/asset-details.blp:321
-msgid "View Original"
-msgstr "Voir l’original"
+msgid "Show Original"
+msgstr "Afficher l’original"
 
 #: crates/pigoune-app/src/window.rs:2963
 msgid "Could Not Open the Annotations"
@@ -9273,3 +9273,7 @@ msgstr "Plus sûr et plus rapide"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "A blur now hides everything up to the edge of the image, and files shared with other applications are cleaned up after a while. Big libraries open faster, the grid and the sidebar refresh only where something changed, and stored thumbnails appear sooner."
 msgstr "Un flou cache désormais tout jusqu’au bord de l’image, et les fichiers partagés avec d’autres applications sont nettoyés au bout d’un moment. Les grandes bibliothèques s’ouvrent plus vite, la grille et la barre latérale ne se rafraîchissent que là où quelque chose a changé, et les vignettes déjà stockées apparaissent plus tôt."
+
+#: crates/pigoune-app/src/window.rs
+msgid "The original could not be shown in Files."
+msgstr "L’original n’a pas pu être affiché dans Fichiers."

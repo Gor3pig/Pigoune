@@ -161,6 +161,51 @@ mod tests {
         assert!(text.contains("free space"));
     }
 
+    fn body_of(source: &str, start_marker: &str, lines: usize) -> String {
+        let start = source.find(start_marker).expect("the function is there");
+        source[start..]
+            .lines()
+            .take(lines)
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    #[test]
+    fn show_original_has_its_own_action_and_the_old_name_is_gone() {
+        let window = include_str!("window.rs");
+        let details = include_str!("../ui/asset-details.blp");
+        assert!(window.contains("\"win.show-original\""));
+        assert!(details.contains("\"win.show-original\""));
+        assert!(!window.contains("win.view-original") && !details.contains("win.view-original"));
+        assert!(!window.contains("View Original") && !details.contains("View Original"));
+        assert!(details.contains("Show Original"));
+    }
+
+    #[test]
+    fn showing_the_original_reveals_the_stored_file_without_copying_or_launching_an_application() {
+        let window = include_str!("window.rs");
+        let body = body_of(window, "async fn show_selected_original(", 14);
+        assert!(body.contains("readable_source"));
+        assert!(body.contains("show_in_files"));
+        assert!(!body.contains("launch_future(") && !body.contains("fs::copy"));
+        let reveal = body_of(window, "async fn show_in_files(", 8);
+        assert!(reveal.contains("open_containing_folder_future"));
+        assert!(!reveal.contains(".launch_future("));
+    }
+
+    #[test]
+    fn showing_an_annotated_image_in_files_shows_its_clean_copy_without_the_mask_question() {
+        let window = include_str!("window.rs");
+        let body = body_of(window, "async fn show_selected_in_files(", 24);
+        assert!(body.contains("is_annotated"));
+        assert!(body.contains("annotated_copy_to_show"));
+        assert!(body.contains("readable_source"));
+        assert!(!body.contains("output_is_allowed"));
+        let copy = body_of(window, "async fn annotated_copy_to_show(", 16);
+        assert!(copy.contains("flat_files_for") && copy.contains("opening_copy_checking"));
+        assert!(!copy.contains("output_is_allowed"));
+    }
+
     #[test]
     fn dragging_out_never_offers_to_continue_with_a_hidden_mask() {
         let window = include_str!("window.rs");
