@@ -593,6 +593,42 @@ fn blur_covers_only_its_region_and_follows_it(rig: &Rig) {
     assert_unchanged(&moved, (192, 0), (WIDTH, HEIGHT), "right of the moved blur");
 }
 
+fn a_blur_stays_opaque_near_the_edges_of_the_image(rig: &Rig) {
+    let original = contrast(
+        &rig.export(&AnnotationDocument::default()),
+        (45, 30),
+        (155, 90),
+    );
+    for radius in [8.0, 60.0] {
+        let inside = rig.export(&document(vec![boxed(
+            "blur",
+            40.0,
+            20.0,
+            120.0,
+            80.0,
+            &[("radius", number_to_value(radius))],
+        )]));
+        let white = inside.at(100, 60)[2];
+        let black = inside.at(104, 60)[2];
+        assert!(
+            white.abs_diff(black) < 4,
+            "no sharp pixel shows through a blur of radius {radius} ({white} against {black})"
+        );
+        let on_the_edge = rig.export(&document(vec![boxed(
+            "blur",
+            0.0,
+            0.0,
+            80.0,
+            120.0,
+            &[("radius", number_to_value(radius))],
+        )]));
+        assert!(
+            contrast(&on_the_edge, (2, 4), (78, 116)) * 8 < original,
+            "a blur on the image edge is as soft as elsewhere (radius {radius})"
+        );
+    }
+}
+
 fn pixelation_makes_uniform_cells_and_follows_its_region(rig: &Rig) {
     let cell = number_to_value(10.0);
     let pixelate = boxed("pixelate", 40.0, 20.0, 120.0, 80.0, &[("cell", cell)]);
@@ -931,6 +967,7 @@ fn rendering_suite() {
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);
+    a_blur_stays_opaque_near_the_edges_of_the_image(&rig);
     pixelation_makes_uniform_cells_and_follows_its_region(&rig);
     an_annotation_after_a_mask_stays_sharp(&rig);
     the_precise_look_is_the_look_of_every_older_shape(&rig);

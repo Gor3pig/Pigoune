@@ -20,6 +20,7 @@ const SHADOW_REFERENCE_WIDTH: f32 = 1200.0;
 const SHADOW_LARGEST_SCALE: f32 = 4.0;
 const SELECTION_COLOR: (f32, f32, f32) = (0.21, 0.52, 0.89);
 const GUIDE_COLOR: (f32, f32, f32) = (0.93, 0.22, 0.55);
+const BLUR_REACH_PER_RADIUS: f32 = 2.0;
 const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
 pub const HANDLE_SIZE: f32 = 10.0;
@@ -801,12 +802,63 @@ fn draw_spotlight(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     );
 }
 
+fn edge_axis(index: i32, length: f32, reach: f32) -> (f32, f32, f32, f32) {
+    match index {
+        -1 => (-reach, reach * length, -reach, reach),
+        1 => (
+            length - (length - 1.0) * reach,
+            reach * length,
+            length,
+            reach,
+        ),
+        _ => (0.0, length, 0.0, length),
+    }
+}
+
+fn append_edge_extension(snapshot: &gtk::Snapshot, texture: &gdk::Texture, reach: f32) {
+    let width = pixels(texture.width());
+    let height = pixels(texture.height());
+    for row in -1..=1 {
+        for column in -1..=1 {
+            if row == 0 && column == 0 {
+                continue;
+            }
+            let (x, scaled_width, clip_x, clip_width) = edge_axis(column, width, reach);
+            let (y, scaled_height, clip_y, clip_height) = edge_axis(row, height, reach);
+            snapshot.push_clip(&graphene::Rect::new(
+                clip_x,
+                clip_y,
+                clip_width,
+                clip_height,
+            ));
+            snapshot.append_scaled_texture(
+                texture,
+                gsk::ScalingFilter::Nearest,
+                &graphene::Rect::new(x, y, scaled_width, scaled_height),
+            );
+            snapshot.pop();
+        }
+    }
+}
+
+fn blur_reaches_outside(region: Rect, reach: f32, texture: &gdk::Texture) -> bool {
+    region.x - reach < 0.0
+        || region.y - reach < 0.0
+        || region.x + region.width + reach > pixels(texture.width())
+        || region.y + region.height + reach > pixels(texture.height())
+}
+
 fn draw_blur(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     let (Some(scene), Some(region)) = (draw.scene, shape_bounds(shape)) else {
         return;
     };
+    let radius = shape.number("radius");
+    let reach = radius * BLUR_REACH_PER_RADIUS;
     snapshot.push_clip(&graphene_rect(region));
-    snapshot.push_blur(f64::from(shape.number("radius")));
+    snapshot.push_blur(f64::from(radius));
+    if blur_reaches_outside(region, reach, scene.backdrop.texture) {
+        append_edge_extension(snapshot, scene.backdrop.texture, reach.ceil());
+    }
     draw_below(snapshot, scene, gsk::ScalingFilter::Linear, draw.pango);
     snapshot.pop();
     snapshot.pop();
