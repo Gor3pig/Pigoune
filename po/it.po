@@ -8930,3 +8930,7 @@ msgstr "Una sfocatura ora nasconde tutto fino al bordo dell'immagine e i file co
 #: crates/pigoune-app/src/window.rs
 msgid "The original could not be shown in Files."
 msgstr "Impossibile mostrare l’originale in File."
+
+#: crates/pigoune-app/src/drag_export.rs
+msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
+msgstr "Impossibile preparare questi file da trascinare fuori da Pigoune. Il trascinamento all’interno di Pigoune continua a funzionare"

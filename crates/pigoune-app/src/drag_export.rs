@@ -59,6 +59,12 @@ pub fn storage_text() -> String {
     )
 }
 
+pub fn preparation_text() -> String {
+    gettext(
+        "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works",
+    )
+}
+
 pub fn volume_space(folder: &Path) -> Option<VolumeSpace> {
     let attributes = format!(
         "{},{}",
@@ -153,6 +159,31 @@ mod tests {
             .expect("the application is launched");
         assert!(question < copy && copy < launch);
         assert!(!body.contains(".opening_copy("));
+    }
+
+    #[test]
+    fn a_failed_preparation_of_the_drag_is_explained_and_says_the_internal_drag_still_works() {
+        let text = preparation_text();
+        assert!(text.contains("could not be prepared"));
+        assert!(text.contains("still works"));
+        assert_ne!(text, storage_text());
+    }
+
+    #[test]
+    fn no_failure_of_the_drag_preparation_is_swallowed_without_a_message() {
+        let window = include_str!("window.rs");
+        let body = body_of(window, "fn offer_export_copies(", 40);
+        assert!(!body.contains("Some(Err(_))"), "every error is reported");
+        assert!(body.contains("preparation_text"));
+        assert!(body.contains("g_debug!"));
+    }
+
+    #[test]
+    fn the_reason_why_a_drag_out_was_cancelled_is_traced() {
+        let grid = include_str!("asset_grid.rs");
+        let body = body_of(grid, "fn make_draggable(", 60);
+        assert!(body.contains("connect_drag_cancel"));
+        assert!(body.contains("g_debug!"));
     }
 
     #[test]

@@ -8943,3 +8943,7 @@ msgstr "Een vervaging verbergt nu alles tot aan de rand van de afbeelding, en be
 #: crates/pigoune-app/src/window.rs
 msgid "The original could not be shown in Files."
 msgstr "Het origineel kon niet worden getoond in Bestanden."
+
+#: crates/pigoune-app/src/drag_export.rs
+msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
+msgstr "Deze bestanden konden niet worden voorbereid om uit Pigoune te slepen. Slepen binnen Pigoune werkt nog steeds"

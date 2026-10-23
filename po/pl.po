@@ -9026,3 +9026,7 @@ msgstr "Rozmycie zakrywa teraz wszystko aż do krawędzi obrazu, a pliki udostę
 #: crates/pigoune-app/src/window.rs
 msgid "The original could not be shown in Files."
 msgstr "Nie udało się pokazać oryginału w Plikach."
+
+#: crates/pigoune-app/src/drag_export.rs
+msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
+msgstr "Nie udało się przygotować tych plików do przeciągnięcia poza Pigoune. Przeciąganie wewnątrz Pigoune nadal działa"
