@@ -8981,3 +8981,7 @@ msgstr "Eine Unschärfe verdeckt jetzt alles bis zum Bildrand, und Dateien für 
 #: crates/pigoune-app/src/window.rs
 msgid "The original could not be shown in Files."
 msgstr "Das Original konnte nicht in Dateien angezeigt werden."
+
+#: crates/pigoune-app/src/drag_export.rs
+msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
+msgstr "Diese Dateien konnten nicht zum Herausziehen aus Pigoune vorbereitet werden. Das Ziehen innerhalb von Pigoune funktioniert weiterhin"

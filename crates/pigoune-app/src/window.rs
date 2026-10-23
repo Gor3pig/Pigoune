@@ -1092,7 +1092,16 @@ impl PigouneWindow {
                         window.show_toast(&drag_export::storage_text());
                         Vec::new()
                     }
-                    Some(Err(_)) | None => Vec::new(),
+                    Some(Err(error)) => {
+                        glib::g_debug!(
+                            "pigoune",
+                            "the files to drag out could not be prepared: {}",
+                            error_messages::describe(&error)
+                        );
+                        window.show_toast(&drag_export::preparation_text());
+                        Vec::new()
+                    }
+                    None => Vec::new(),
                 }
             }
         ));

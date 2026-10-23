@@ -8896,3 +8896,7 @@ msgstr "Um desfoque agora oculta tudo até a borda da imagem, e arquivos compart
 #: crates/pigoune-app/src/window.rs
 msgid "The original could not be shown in Files."
 msgstr "Não foi possível mostrar o original em Arquivos."
+
+#: crates/pigoune-app/src/drag_export.rs
+msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
+msgstr "Não foi possível preparar estes arquivos para arrastar para fora do Pigoune. Arrastar dentro do Pigoune continua funcionando"

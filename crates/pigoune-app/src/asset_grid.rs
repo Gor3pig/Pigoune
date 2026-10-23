@@ -11,7 +11,7 @@ use pigoune_core::AssetId;
 use crate::asset_object::PigouneAssetObject;
 use crate::asset_sort::SortedAsset;
 use crate::asset_tile::{PigouneAssetTile, favorite_badge_size};
-use crate::drag_content::DraggedAssets;
+use crate::drag_content;
 use crate::drag_icon;
 use crate::found_flash;
 use crate::grid_columns;
@@ -891,6 +891,10 @@ impl PigouneAssetGrid {
                 grid.imp().drag_caption.take();
             }
         ));
+        source.connect_drag_cancel(|_, _, reason| {
+            glib::g_debug!("pigoune", "the drag out was cancelled: {reason:?}");
+            false
+        });
         tile.add_controller(source);
     }
 
@@ -904,19 +908,8 @@ impl PigouneAssetGrid {
 
     fn drag_content(&self, dragged: Vec<AssetId>) -> gdk::ContentProvider {
         let export = self.imp().export_copies.borrow().clone();
-        let copies: Vec<gio::File> = export
-            .map(|export| export(&dragged))
-            .unwrap_or_default()
-            .into_iter()
-            .map(gio::File::for_path)
-            .collect();
-        let inside = gdk::ContentProvider::for_value(&DraggedAssets(dragged).to_value());
-        if copies.is_empty() {
-            return inside;
-        }
-        let outside =
-            gdk::ContentProvider::for_value(&gdk::FileList::from_array(&copies).to_value());
-        gdk::ContentProvider::new_union(&[inside, outside])
+        let copies = export.map(|export| export(&dragged)).unwrap_or_default();
+        drag_content::drag_provider(dragged, &copies, &drag_content::documents_mount())
     }
 
     pub fn show_drag_caption(&self, markup: Option<&str>) {
