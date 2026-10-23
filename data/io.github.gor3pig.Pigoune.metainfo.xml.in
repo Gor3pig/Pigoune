@@ -25,55 +25,55 @@
 
   <screenshots>
     <screenshot type="default">
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/01.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/01.png</image>
       <caption>Browse your graphic assets in a thumbnail grid</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/02.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/02.png</image>
       <caption>Narrow down your library with search and filters</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/03.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/03.png</image>
       <caption>Look closely at an asset and step through its animation</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/04.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/04.png</image>
       <caption>Convert assets to PNG, JPEG, WebP, AVIF or ICO</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/05.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/05.png</image>
       <caption>See what your library holds, in light or dark style</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/06.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/06.png</image>
       <caption>Combine words with “and” or “or” in one click</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/07.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/07.png</image>
       <caption>Save a search as a smart collection that fills itself</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/08.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/08.png</image>
       <caption>Find the images that fit your screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/09.png</image>
+      <image type="source" width="2580" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/09.png</image>
       <caption>Frame any image and set it as your wallpaper</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/10.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/10.png</image>
       <caption>Nest your tags and browse them level by level</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/11.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/11.png</image>
       <caption>Check that every file of your library is still there and intact</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/12.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/12.png</image>
       <caption>Annotate a screenshot or any image without touching the original</caption>
     </screenshot>
     <screenshot>
-      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.0.0/data/screenshots/13.png</image>
+      <image type="source" width="2740" height="1540">https://raw.githubusercontent.com/Gor3pig/Pigoune/v3.1.0/data/screenshots/13.png</image>
       <caption>Layers, hand-drawn looks and panels that fold away</caption>
     </screenshot>
   </screenshots>
@@ -109,6 +109,22 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="3.1.0" date="2026-10-23">
+      <description>
+        <p>Turn your annotations, resize a text, and leave collections out of the duplicate search.</p>
+        <ul>
+          <li>Turn a rectangle, an ellipse, a text, a line, an arrow, a pen stroke, a highlighter, a blur or a pixelation with the round handle above it, by steps of 15 degrees while you hold Shift, or set an exact angle with the Rotation setting of the panel.</li>
+          <li>A selected text has handles like the other annotations: drag one to make the letters bigger or smaller.</li>
+          <li>The spotlight can leave a rounded rectangle lit, steps are bigger and can grow larger, and a blur can go up to a radius of 150.</li>
+          <li>A layer is renamed with a double click on its name, or with a second click once it is selected, and its name can be dragged to reorder the layers.</li>
+          <li>A collection can be left out of the duplicate search from its menu in the sidebar, and Undo brings it back.</li>
+          <li>A blur now hides everything up to the edges of the image. Before, a blur very close to an edge could let a faint trace of the sharp image show through. Images annotated earlier are drawn again without it.</li>
+          <li>Files that Pigoune hands to other applications, for an export, a copy or an opening, each get a folder of their own and are cleaned up after a while, and Pigoune refuses a library or a cache folder that is a link.</li>
+          <li>Pigoune is quicker with large libraries. The grid and the counts in the sidebar are no longer rebuilt after every import or background analysis, stored thumbnails appear before the original is checked, and dragging many assets out of Pigoune is smoother.</li>
+          <li>A library opened with this version can no longer be opened with Pigoune 3.0 or older.</li>
+        </ul>
+      </description>
+    </release>
     <release version="3.0.0" date="2026-10-17">
       <description>
         <p>Capture your screen and annotate it, right inside Pigoune.</p>

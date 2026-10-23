@@ -8942,3 +8942,83 @@ msgstr "Zaokrąglony"
 #: crates/pigoune-app/src/editor_options.rs
 msgid "Rotation"
 msgstr "Obrót"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Turn your annotations, resize a text, and leave collections out of the duplicate search."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Turn a rectangle, an ellipse, a text, a line, an arrow, a pen stroke, a highlighter, a blur or a pixelation with the round handle above it, by steps of 15 degrees while you hold Shift, or set an exact angle with the Rotation setting of the panel."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A selected text has handles like the other annotations: drag one to make the letters bigger or smaller."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "The spotlight can leave a rounded rectangle lit, steps are bigger and can grow larger, and a blur can go up to a radius of 150."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A layer is renamed with a double click on its name, or with a second click once it is selected, and its name can be dragged to reorder the layers."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A collection can be left out of the duplicate search from its menu in the sidebar, and Undo brings it back."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A blur now hides everything up to the edges of the image. Before, a blur very close to an edge could let a faint trace of the sharp image show through. Images annotated earlier are drawn again without it."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Files that Pigoune hands to other applications, for an export, a copy or an opening, each get a folder of their own and are cleaned up after a while, and Pigoune refuses a library or a cache folder that is a link."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Pigoune is quicker with large libraries. The grid and the counts in the sidebar are no longer rebuilt after every import or background analysis, stored thumbnails appear before the original is checked, and dragging many assets out of Pigoune is smoother."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A library opened with this version can no longer be opened with Pigoune 3.0 or older."
+msgstr ""
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Turn Your Annotations"
+msgstr "Obracaj adnotacje"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Turn rectangles, ellipses, texts, lines, arrows, strokes, blurs and pixelations with the round handle above them, or set an exact angle in the panel."
+msgstr "Obracaj prostokąty, elipsy, teksty, linie, strzałki, pociągnięcia, rozmycia i pikselizacje okrągłym uchwytem nad nimi albo ustaw dokładny kąt w panelu."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Resize a Text With Its Handles"
+msgstr "Zmieniaj rozmiar tekstu uchwytami"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Drag a handle of a selected text to make the letters bigger or smaller, like any other annotation."
+msgstr "Przeciągnij uchwyt zaznaczonego tekstu, aby powiększyć lub zmniejszyć litery, jak przy każdej innej adnotacji."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Leave a Collection Out of Duplicates"
+msgstr "Wyłącz kolekcję z wyszukiwania duplikatów"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Right-click a collection and choose Leave Out of Duplicate Search, for archives you do not want compared. Undo brings it back."
+msgstr "Kliknij kolekcję prawym przyciskiem i wybierz „Wyłącz z wyszukiwania duplikatów”, dla archiwów, których nie chcesz porównywać. Cofnij przywraca ją."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "A Few More Choices"
+msgstr "Kilka dodatkowych możliwości"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "A rounded spotlight, bigger steps, a blur that goes up to a radius of 150, and layers renamed with a double click."
+msgstr "Zaokrąglony reflektor, większe kroki, rozmycie o promieniu do 150 i warstwy, których nazwę zmieniasz dwukliknięciem."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Safer and Quicker"
+msgstr "Bezpieczniej i szybciej"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "A blur now hides everything up to the edge of the image, and files shared with other applications are cleaned up after a while. Big libraries open faster, the grid and the sidebar refresh only where something changed, and stored thumbnails appear sooner."
+msgstr "Rozmycie zakrywa teraz wszystko aż do krawędzi obrazu, a pliki udostępniane innym aplikacjom są po pewnym czasie sprzątane. Duże biblioteki otwierają się szybciej, siatka i panel boczny odświeżają się tylko tam, gdzie coś się zmieniło, a zapisane miniatury pojawiają się wcześniej."

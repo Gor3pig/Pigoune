@@ -790,7 +790,7 @@ Comme tout se trouve dans ce dossier, une bibliothèque est **portable** : copi
 Une bibliothèque ne peut être ouverte que dans une seule fenêtre de Pigoune à la fois. Si vous la gardez dans un dossier synchronisé (Nextcloud, Syncthing…), fermez Pigoune sur un ordinateur avant de l’ouvrir sur un autre.
 
 > [!NOTE]
-> Une bibliothèque ouverte et mise à niveau avec Pigoune 3.0 ne peut plus être ouverte avec Pigoune 2.12 ou plus ancien. **Gérer la bibliothèque** indique quelles versions peuvent l’ouvrir.
+> Une bibliothèque ouverte et mise à niveau avec Pigoune 3.1 ne peut plus être ouverte avec Pigoune 3.0 ou plus ancien. **Gérer la bibliothèque** indique quelles versions peuvent l’ouvrir.
 
 ### Gérer la bibliothèque
 
