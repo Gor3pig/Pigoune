@@ -1,6 +1,6 @@
 use pigoune_core::annotations::{
     AnnotationDocument, AnnotationObject, DIMMING, Geometry, Options, Point, Rect, SPOT_SHAPE,
-    SPOTLIGHT, Shape, definition, hit,
+    SPOTLIGHT, Shape, definition, hit, rounded_spot_radius,
 };
 use serde_json::json;
 
@@ -72,4 +72,36 @@ fn the_options_survive_a_trip_through_the_document() {
     let object = back.objects[0].shape().expect("known tool");
     assert_eq!(object.choice("spot"), "ellipse");
     assert!((object.number("dimming") - 0.25).abs() < 1e-3);
+}
+
+#[test]
+fn the_rounded_shape_is_known_and_rounds_a_quarter_of_the_shorter_side() {
+    assert!(SPOT_SHAPE.accepts(&json!("rounded")));
+    let kept = spotlight(Options::new().with("spot", json!("rounded")));
+    assert_eq!(kept.choice("spot"), "rounded");
+
+    let wide = Rect {
+        x: 0.0,
+        y: 0.0,
+        width: 400.0,
+        height: 80.0,
+    };
+    let tall = Rect {
+        x: 0.0,
+        y: 0.0,
+        width: 60.0,
+        height: 300.0,
+    };
+    assert!((rounded_spot_radius(wide) - 20.0).abs() < 1e-3);
+    assert!((rounded_spot_radius(tall) - 15.0).abs() < 1e-3);
+    assert!(
+        rounded_spot_radius(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 0.0,
+            height: 50.0
+        })
+        .abs()
+            < 1e-3
+    );
 }

@@ -82,6 +82,7 @@ pub fn choice_label(id: &str, choice: &str) -> Option<String> {
         ("shaft", "tapered") => gettext("Tapered Shaft"),
         ("spot", "rectangle") => gettext("Rectangular"),
         ("spot", "ellipse") => gettext("Oval"),
+        ("spot", "rounded") => gettext("Rounded"),
         ("roughness", "precise") => gettext("Precise"),
         ("roughness", "sketchy") => gettext("Sketchy"),
         ("roughness", "very_sketchy") => gettext("Very Sketchy"),

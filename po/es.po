@@ -8828,3 +8828,7 @@ msgstr "Se deshizo la inclusión de “{name}” en la búsqueda de duplicados"
 #, rust-format
 msgid "Including “{name}” in the duplicate search redone"
 msgstr "Se rehízo la inclusión de “{name}” en la búsqueda de duplicados"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded"
+msgstr "Redondeado"

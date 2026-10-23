@@ -8851,3 +8851,7 @@ msgstr "Opnemen van ‘{name}’ in het zoeken naar dubbelen ongedaan gemaakt"
 #, rust-format
 msgid "Including “{name}” in the duplicate search redone"
 msgstr "Opnemen van ‘{name}’ in het zoeken naar dubbelen opnieuw uitgevoerd"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded"
+msgstr "Afgerond"
