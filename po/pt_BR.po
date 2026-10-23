@@ -8900,3 +8900,23 @@ msgstr "Não foi possível mostrar o original em Arquivos."
 #: crates/pigoune-app/src/drag_export.rs
 msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
 msgstr "Não foi possível preparar estes arquivos para arrastar para fora do Pigoune. Arrastar dentro do Pigoune continua funcionando"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Show the original of an annotated image in your file manager, and drag images out of a library opened with the folder chooser."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Show Original replaces View Original: it opens your file manager on the untouched image stored in the library, instead of starting another application that could fail to launch."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "For an annotated image, Show in Files now shows a copy of the annotated image. An image that is not annotated is shown as before."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Dragging an image out of Pigoune into the file manager works again for a library opened with the folder chooser. The file manager used to show a forbidden cursor."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A drag whose files cannot be prepared now says so."
+msgstr ""

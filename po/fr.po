@@ -9281,3 +9281,23 @@ msgstr "L’original n’a pas pu être affiché dans Fichiers."
 #: crates/pigoune-app/src/drag_export.rs
 msgid "These files could not be prepared to drag out of Pigoune. Dragging inside Pigoune still works"
 msgstr "Ces fichiers n’ont pas pu être préparés pour être glissés hors de Pigoune. Le glisser-déposer dans Pigoune reste possible"
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Show the original of an annotated image in your file manager, and drag images out of a library opened with the folder chooser."
+msgstr "Affichez l’original d’une image annotée dans votre gestionnaire de fichiers, et glissez des images hors d’une bibliothèque ouverte avec le sélecteur de dossier."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Show Original replaces View Original: it opens your file manager on the untouched image stored in the library, instead of starting another application that could fail to launch."
+msgstr "Afficher l’original remplace Voir l’original : il ouvre votre gestionnaire de fichiers sur l’image intacte stockée dans la bibliothèque, au lieu de lancer une autre application qui pouvait échouer à démarrer."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "For an annotated image, Show in Files now shows a copy of the annotated image. An image that is not annotated is shown as before."
+msgstr "Pour une image annotée, Afficher dans Fichiers montre maintenant une copie de l’image annotée. Une image non annotée est montrée comme avant."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Dragging an image out of Pigoune into the file manager works again for a library opened with the folder chooser. The file manager used to show a forbidden cursor."
+msgstr "Glisser une image hors de Pigoune vers le gestionnaire de fichiers fonctionne de nouveau pour une bibliothèque ouverte avec le sélecteur de dossier. Le gestionnaire de fichiers affichait auparavant un curseur d’interdiction."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "A drag whose files cannot be prepared now says so."
+msgstr "Un glisser dont les fichiers n’ont pas pu être préparés le dit désormais."
