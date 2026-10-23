@@ -253,6 +253,14 @@ impl EditSession {
             && bounds.y + bounds.height >= top
     }
 
+    #[must_use]
+    pub fn text_extent(&self, shape: &Shape) -> (f32, f32) {
+        self.measurer.as_ref().map_or_else(
+            || geometry::estimated_text_extent(shape),
+            |measurer| (measurer.0)(shape),
+        )
+    }
+
     fn bounds_of(&self, shape: &Shape) -> Option<Rect> {
         if let Some(bounds) = geometry::shape_bounds(shape) {
             return Some(bounds);
@@ -260,11 +268,7 @@ impl EditSession {
         let Geometry::Anchor(_) = shape.geometry else {
             return None;
         };
-        let extent = self
-            .measurer
-            .as_ref()
-            .map_or_else(|| geometry::estimated_text_extent(shape), |m| (m.0)(shape));
-        geometry::text_visual_bounds(shape, extent)
+        geometry::text_visual_bounds(shape, self.text_extent(shape))
     }
 
     #[must_use]

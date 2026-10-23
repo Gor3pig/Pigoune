@@ -198,7 +198,10 @@ impl Interaction {
                 session.preview(moved);
             }
             State::Resizing { handle, original } => {
-                session.preview(geometry::resized(original, *handle, point));
+                let extent = session.text_extent(original);
+                session.preview(geometry::resized_with_extent(
+                    original, *handle, point, extent,
+                ));
             }
         }
     }
@@ -307,7 +310,8 @@ fn handle_at(session: &EditSession, point: Point, reach: f32) -> Option<(u32, Ha
         return None;
     }
     let shape = session.shape_of(id)?;
-    geometry::handles(shape)
+    let extent = (shape.kind == "text").then(|| session.text_extent(shape));
+    geometry::handles_with_extent(shape, extent)
         .into_iter()
         .map(|(handle, at)| (handle, (at.x - point.x).hypot(at.y - point.y)))
         .filter(|(_, distance)| *distance <= reach)
