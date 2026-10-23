@@ -638,7 +638,7 @@ Les outils sont dans le panneau de l’éditeur, à droite (dans une fenêtre é
 | Étapes | <kbd>N</kbd> | Pastilles numérotées (ou lettrées) qui se renumérotent seules |
 | Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés |
 | Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher une information privée : l’effet s’applique à tout ce qui est dessiné en dessous |
-| Projecteur | <kbd>S</kbd> | Assombrit tout sauf un rectangle ou un ovale |
+| Projecteur | <kbd>S</kbd> | Assombrit tout sauf un rectangle, un rectangle arrondi ou un ovale |
 
 <kbd>Suppr</kbd> supprime l’annotation sélectionnée. **Rogner** fonctionne avec des proportions libres ou fixes.
 
@@ -667,6 +667,14 @@ Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la red
 - Les flèches du clavier déplacent la sélection d’un pixel (dix avec <kbd>Maj</kbd>).
 - <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>D</kbd> la duplique.
 
+#### Redimensionner et faire pivoter
+
+- Un **texte** sélectionné a des poignées comme les autres annotations : en tirer une agrandit ou réduit les lettres, et le coin opposé reste en place.
+- La poignée ronde au-dessus du cadre d’une annotation sélectionnée la fait **pivoter**. Maintenez <kbd>Maj</kbd> pour pivoter par pas de 15 degrés. Une pastille d’étape ou un projecteur ne pivote pas.
+- Un rectangle, une ellipse, un texte, un flou et une pixelisation ont aussi un réglage **Rotation** dans le panneau, de -180 à 180 degrés, pour un angle exact.
+- Une ligne, une flèche, un trait de crayon ou de surligneur pivote autour du centre de son cadre, sans réglage d’angle.
+- Le cadre et les poignées pivotent avec l’annotation, et un clic la sélectionne là où vous la voyez.
+
 ### Calques
 
 Chaque annotation est un calque. Le panneau **Calques** les liste de l’avant vers l’arrière.
@@ -675,10 +683,11 @@ Chaque annotation est un calque. Le panneau **Calques** les liste de l’avant v
 
 | Pour… | Faites ceci |
 |---|---|
-| **Changer l’ordre** | Utilisez les boutons au-dessus de la liste, ou glissez une ligne. |
+| **Changer l’ordre** | Utilisez les boutons au-dessus de la liste, ou glissez une ligne par sa poignée ou par son nom. |
 | **Masquer ou afficher** | Cliquez sur l’œil d’une ligne. |
 | **Verrouiller** | Cliquez sur le cadenas, pour que l’annotation ne soit pas déplacée par erreur. |
-| **Renommer, dupliquer, supprimer** | Faites un clic droit sur une ligne. |
+| **Renommer** | Double-cliquez sur le nom, cliquez-y de nouveau après une pause sur le calque sélectionné, ou faites un clic droit sur la ligne. |
+| **Dupliquer, supprimer** | Faites un clic droit sur une ligne. |
 
 <kbd>Ctrl</kbd>+<kbd>]</kbd> et <kbd>Ctrl</kbd>+<kbd>[</kbd> changent aussi l’ordre, avec <kbd>Maj</kbd> pour les extrêmes.
 
@@ -876,6 +885,14 @@ Le bouton **Ignorés** reste là quand vous rouvrez **Gérer la bibliothèque**,
 Ignorer un groupe ne concerne que les éléments de ce groupe. Ils ne sont plus proposés ensemble, ni avec les autres éléments qui leur ressemblent, et ces autres éléments restent proposés dans leurs propres groupes. Une nouvelle image qui ressemble à l’un d’eux reste proposée avec celui-ci.
 
 </details>
+
+#### Exclure une collection
+
+- Faites un clic droit sur une collection dans la barre latérale et choisissez **Exclure de la recherche de doublons**, puis confirmez. Ses sous-collections suivent.
+- Une petite marque dans la barre latérale signale ce qui est exclu. **Inclure dans la recherche de doublons** remet la collection, et **Annuler** fonctionne aussi.
+- Une sous-collection exclue par son parent affiche une entrée grisée qui nomme ce parent.
+- Un élément n’est exclu que si **toutes** les collections auxquelles il appartient le sont. Un élément sans collection, ou dans une autre, est toujours comparé.
+- L’onglet Doublons indique combien de collections sont exclues. Les éléments similaires et les doublons repérés à l’import ne changent pas.
 
 ### Exporter toute la bibliothèque
 

@@ -638,7 +638,7 @@ The tools are in the editor panel, on the right (in a narrow window, in the pane
 | Steps | <kbd>N</kbd> | Numbered (or lettered) badges that renumber themselves |
 | Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Smoothed freehand strokes |
 | Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide private information: the effect applies to everything drawn below it |
-| Spotlight | <kbd>S</kbd> | Dims everything but a rectangle or an oval |
+| Spotlight | <kbd>S</kbd> | Dims everything but a rectangle, a rounded rectangle or an oval |
 
 <kbd>Delete</kbd> removes the selected annotation. **Crop** works with free or fixed proportions.
 
@@ -667,6 +667,14 @@ A new annotation stays selected: you can move it, resize it by its handles and c
 - The arrow keys nudge the selection by one pixel (ten with <kbd>Shift</kbd>).
 - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicates it.
 
+#### Resize and turn
+
+- A selected **text** has handles like the other annotations: dragging one scales the letters, and the opposite corner stays where it is.
+- The round handle above the frame of a selected annotation **turns** it. Hold <kbd>Shift</kbd> to turn by steps of 15 degrees. A step badge or a spotlight does not turn.
+- A rectangle, an ellipse, a text, a blur and a pixelation also have a **Rotation** setting in the panel, from -180 to 180 degrees, for an exact angle.
+- A line, an arrow, a pen stroke or a highlighter turns around the center of its frame, and has no angle setting.
+- The frame and the handles turn with the annotation, and a click selects it where you see it.
+
 ### Layers
 
 Every annotation is a layer. The **Layers** panel lists them from front to back.
@@ -675,10 +683,11 @@ Every annotation is a layer. The **Layers** panel lists them from front to back.
 
 | To… | Do this |
 |---|---|
-| **Change the order** | Use the buttons above the list, or drag a row. |
+| **Change the order** | Use the buttons above the list, or drag a row by its grip or its name. |
 | **Hide or show** | Click the eye of a row. |
 | **Lock** | Click the padlock, so it cannot be moved by mistake. |
-| **Rename, duplicate, delete** | Right-click a row. |
+| **Rename** | Double-click the name, click it again after a pause on the selected layer, or right-click the row. |
+| **Duplicate, delete** | Right-click a row. |
 
 <kbd>Ctrl</kbd>+<kbd>]</kbd> and <kbd>Ctrl</kbd>+<kbd>[</kbd> change the order too, with <kbd>Shift</kbd> for the extremes.
 
@@ -876,6 +885,14 @@ The **Ignored** button stays there when you reopen **Manage Library**, and **Und
 Ignoring a group only concerns the assets of that group. They are no longer offered with each other, nor with the other assets that look like them, and those other assets are still offered in their own groups. A new image that looks like one of them is still offered with that one.
 
 </details>
+
+#### Leave a collection out
+
+- Right-click a collection in the sidebar and choose **Leave Out of Duplicate Search**, then confirm. Its sub-collections follow.
+- A small mark in the sidebar shows what is left out. **Include in Duplicate Search** puts the collection back, and **Undo** works too.
+- A sub-collection left out through its parent shows a greyed-out entry that names the parent.
+- An asset is left out only when **every** collection it belongs to is left out. An asset in no collection, or in another one, is still compared.
+- The Duplicates tab says how many collections are left out. Similar assets and the duplicates spotted at import do not change.
 
 ### Export the whole library
 
