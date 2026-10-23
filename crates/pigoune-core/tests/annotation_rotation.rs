@@ -410,3 +410,34 @@ fn the_angle_survives_a_trip_through_the_document_and_an_old_document_reads_as_f
         0.0
     ));
 }
+
+#[test]
+fn a_blur_and_a_pixelation_turn_and_are_hit_where_they_are_seen() {
+    for kind in ["blur", "pixelate"] {
+        let sheet = definition(kind).expect("tool");
+        assert!(sheet.spec("rotation").is_some(), "{kind} turns");
+        let shape = Shape::new(
+            kind,
+            Geometry::Box(Rect {
+                x: 70.0,
+                y: 40.0,
+                width: 60.0,
+                height: 20.0,
+            }),
+            Options::defaults(sheet.options).with("rotation", number_to_value(90.0)),
+        );
+
+        assert!(
+            hit(&shape, point(100.0, 25.0), 0.0),
+            "{kind} is hit in its turned area"
+        );
+        assert!(
+            !hit(&shape, point(72.0, 50.0), 0.0),
+            "{kind} is not hit where it was"
+        );
+        let bounds = rotated_bounds(&shape, None).expect("bounds");
+        assert!(same(bounds.x, 90.0) && same(bounds.y, 20.0));
+        assert!(same(bounds.width, 20.0) && same(bounds.height, 60.0));
+        assert!(rotation_handle(&shape, None, REACH).is_some());
+    }
+}

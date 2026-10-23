@@ -539,6 +539,71 @@ fn a_turned_rectangle_is_drawn_turned_around_its_centre(rig: &Rig) {
     );
 }
 
+fn a_turned_blur_and_a_turned_pixelation_cover_exactly_their_turned_area(rig: &Rig) {
+    let region = |kind: &str, options: &[(&str, Value)]| {
+        let mut all = vec![("rotation", number_to_value(90.0))];
+        all.extend(options.iter().cloned());
+        rig.export(&document(vec![boxed(kind, 70.0, 40.0, 60.0, 20.0, &all)]))
+    };
+
+    let blur = region("blur", &[("radius", number_to_value(8.0))]);
+    let white = blur.at(100, 25)[2];
+    let black = blur.at(104, 25)[2];
+    assert!(
+        white.abs_diff(black) < 4,
+        "the turned area is blurred ({white} against {black})"
+    );
+    assert_eq!(
+        blur.at(72, 50),
+        source(72, 50),
+        "the old position is left alone"
+    );
+    assert_eq!(blur.at(5, 5), source(5, 5), "far from the blur");
+    assert_ne!(blur.at(100, 25), source(100, 25));
+    for channel in 0..2 {
+        assert!(
+            blur.at(100, 25)[channel].abs_diff(source(100, 25)[channel]) < 6,
+            "the blur shows the image under it, not a turned copy (channel {channel})"
+        );
+    }
+
+    let cells = region("pixelate", &[("cell", number_to_value(10.0))]);
+    assert_eq!(cells.at(91, 21), cells.at(98, 28), "one cell is uniform");
+    assert_ne!(cells.at(91, 21), source(91, 21), "and is not the source");
+    for channel in 0..2 {
+        assert!(
+            cells.at(95, 25)[channel].abs_diff(source(95, 25)[channel]) < 10,
+            "the cell shows the image under it (channel {channel})"
+        );
+    }
+    assert_eq!(
+        cells.at(72, 50),
+        source(72, 50),
+        "the old position is left alone"
+    );
+    assert_eq!(cells.at(5, 5), source(5, 5), "far from the pixelation");
+}
+
+fn a_turned_blur_on_the_image_edge_stays_opaque(rig: &Rig) {
+    let result = rig.export(&document(vec![boxed(
+        "blur",
+        0.0,
+        40.0,
+        120.0,
+        40.0,
+        &[
+            ("radius", number_to_value(60.0)),
+            ("rotation", number_to_value(90.0)),
+        ],
+    )]));
+    let white = result.at(60, 60)[2];
+    let black = result.at(64, 60)[2];
+    assert!(
+        white.abs_diff(black) < 4,
+        "no sharp pixel shows through a turned blur ({white} against {black})"
+    );
+}
+
 fn layers_follow_their_order(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let filled = [
@@ -1004,6 +1069,8 @@ fn rendering_suite() {
     the_spotlight_dims_everything_around_it(&rig);
     the_rounded_spotlight_dims_its_corners_only(&rig);
     a_turned_rectangle_is_drawn_turned_around_its_centre(&rig);
+    a_turned_blur_and_a_turned_pixelation_cover_exactly_their_turned_area(&rig);
+    a_turned_blur_on_the_image_edge_stays_opaque(&rig);
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);

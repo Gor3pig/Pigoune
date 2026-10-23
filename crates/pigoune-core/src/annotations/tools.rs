@@ -248,7 +248,7 @@ pub const BLUR: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::Box,
     outline: Outline::Region,
     hides_content: true,
-    options: &[RADIUS],
+    options: &[RADIUS, ROTATION],
 };
 
 pub const PIXELATE: ToolDefinition = ToolDefinition {
@@ -256,7 +256,7 @@ pub const PIXELATE: ToolDefinition = ToolDefinition {
     geometry: GeometryKind::Box,
     outline: Outline::Region,
     hides_content: true,
-    options: &[CELL],
+    options: &[CELL, ROTATION],
 };
 
 pub const SPOT_SHAPE_CHOICES: [&str; 3] = ["rectangle", "ellipse", "rounded"];
