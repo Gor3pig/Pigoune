@@ -2476,8 +2476,8 @@ msgstr "Uit alle verzamelingen verwijderen"
 #: crates/pigoune-app/src/window.rs:2921
 #: crates/pigoune-app/ui/asset-details.blp:310
 #: crates/pigoune-app/ui/asset-details.blp:321
-msgid "View Original"
-msgstr "Origineel bekijken"
+msgid "Show Original"
+msgstr "Origineel tonen"
 
 #: crates/pigoune-app/src/window.rs:2963
 msgid "Could Not Open the Annotations"
@@ -8939,3 +8939,7 @@ msgstr "Veiliger en sneller"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "A blur now hides everything up to the edge of the image, and files shared with other applications are cleaned up after a while. Big libraries open faster, the grid and the sidebar refresh only where something changed, and stored thumbnails appear sooner."
 msgstr "Een vervaging verbergt nu alles tot aan de rand van de afbeelding, en bestanden die met andere apps zijn gedeeld worden na een tijdje opgeruimd. Grote bibliotheken openen sneller, het raster en de zijbalk worden alleen bijgewerkt waar iets is veranderd, en opgeslagen miniaturen verschijnen eerder."
+
+#: crates/pigoune-app/src/window.rs
+msgid "The original could not be shown in Files."
+msgstr "Het origineel kon niet worden getoond in Bestanden."

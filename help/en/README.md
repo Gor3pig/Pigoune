@@ -492,12 +492,13 @@ With the padlock closed, each image keeps its proportions and fits inside the gi
 | To… | Do this |
 |---|---|
 | **Open** an asset in another application, such as an image editor | Choose **Open With…**. The application receives a copy. |
-| **Find the file on disk** | Choose **Show in Files**. Your file manager opens on the file stored in the library. |
+| **Find the file on disk** | Choose **Show in Files**. Your file manager opens on the file stored in the library. For an annotated image, it opens on a copy of the annotated image. |
+| **Find the untouched original** of an annotated image | Choose **Show Original**. Your file manager opens on the original stored in the library. |
 
 Your library stays untouched: save your changes under a new name and import them if you want to keep them.
 
 > [!WARNING]
-> The file shown by **Show in Files** is the real file. Do not move, rename or edit it from there: the check in the **Health** tab would point it out.
+> The file shown by **Show Original**, and by **Show in Files** for an image that is not annotated, is the real file. Do not move, rename or edit it from there: the check in the **Health** tab would point it out. The copy of an annotated image that **Show in Files** shows is only a copy: Pigoune does not use it.
 
 ### Find similar assets
 
@@ -713,6 +714,7 @@ Pigoune takes this into account:
 - If a blur or a pixelation is hidden (with the eye of its layer), some information may be visible again in the result. Pigoune warns you before you **copy**, **export** or **open with another application** an image that has one, and offers to show it first when you are in the editor.
 - Dragging such an image out of Pigoune is refused until you show the hidden effects again, with no option to continue anyway.
 - Exporting the whole library gives every original **and** a copy of each annotated image, so the originals may contain things that are no longer visible on the annotated copies. Pigoune asks whether you want the originals too before it exports.
+- **Show in Files** does not ask this question: it reveals a copy of the annotated image in your file manager, where it can then be opened or copied. Check the hidden effects first if that matters.
 
 ### Keep the result
 
@@ -722,7 +724,7 @@ Pigoune takes this into account:
 
 #### Reopen the annotations later
 
-Select an annotated asset and choose **Annotate…** (in the details panel or the context menu). Saving updates the same asset. **View Original** opens a copy of the untouched image in another application.
+Select an annotated asset and choose **Annotate…** (in the details panel or the context menu). Saving updates the same asset. **Show Original** opens your file manager on the untouched image stored in the library.
 
 The grid, the preview and the duplicates use the annotated image. Copying or exporting it gives a flattened PNG. The original stays next to it: it follows the annotated image to the trash and back, and counts in the storage of your library.
 

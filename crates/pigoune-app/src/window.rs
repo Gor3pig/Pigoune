@@ -165,7 +165,7 @@ const EXPORT_SELECTED_ACTION: &str = "win.export-selected";
 const EXPORT_SELECTED_AS_ACTION: &str = "win.export-selected-as";
 const SELECT_ALL_ACTION: &str = "win.select-all";
 const ANNOTATE_ACTION: &str = "win.annotate";
-const VIEW_ORIGINAL_ACTION: &str = "win.view-original";
+const SHOW_ORIGINAL_ACTION: &str = "win.show-original";
 const IMPORT_ACTIONS: [&str; 3] = [IMPORT_FILES_ACTION, IMPORT_FOLDER_ACTION, PASTE_ACTION];
 const SECONDS_PER_DAY: u64 = 24 * 60 * 60;
 const COLOR_BATCH: usize = 50;
@@ -173,7 +173,7 @@ const MOST_SIMILAR_SHOWN: usize = 50;
 const OPEN_LIBRARY_ACTIONS: [&str; 31] = [
     PASTE_AND_ANNOTATE_ACTION,
     ANNOTATE_ACTION,
-    VIEW_ORIGINAL_ACTION,
+    SHOW_ORIGINAL_ACTION,
     SET_WALLPAPER_ACTION,
     FIND_SIMILAR_ACTION,
     SEARCH_ACTION,
@@ -276,9 +276,9 @@ mod imp {
         PASTE_ACTION, PASTE_AND_ANNOTATE_ACTION, PREFERENCES_ACTION, REDO_ACTION,
         REMOVE_FROM_ALL_COLLECTIONS_ACTION, REMOVE_FROM_COLLECTION_ACTION, RENAME_ASSET_ACTION,
         RENAME_COLLECTION_ACTION, RENAME_TAG_ACTION, RESTORE_SELECTED_ACTION, SEARCH_ACTION,
-        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHRINK_THUMBNAILS_ACTION,
-        TOGGLE_DUPLICATE_SKIPPING_ACTION, TOGGLE_FAVORITE_ACTION, TRASH_SELECTED_ACTION,
-        ToastOffer, UNDO_ACTION, VIEW_ORIGINAL_ACTION, collection_parameter,
+        SELECT_ALL_ACTION, SET_WALLPAPER_ACTION, SHOW_IN_FILES_ACTION, SHOW_ORIGINAL_ACTION,
+        SHRINK_THUMBNAILS_ACTION, TOGGLE_DUPLICATE_SKIPPING_ACTION, TOGGLE_FAVORITE_ACTION,
+        TRASH_SELECTED_ACTION, ToastOffer, UNDO_ACTION, collection_parameter,
         smart_collection_parameter, tag_parameter,
     };
 
@@ -502,8 +502,8 @@ mod imp {
         class.install_action_async(ANNOTATE_ACTION, None, |window, _, _| async move {
             window.annotate_selected().await;
         });
-        class.install_action_async(VIEW_ORIGINAL_ACTION, None, |window, _, _| async move {
-            window.view_selected_original().await;
+        class.install_action_async(SHOW_ORIGINAL_ACTION, None, |window, _, _| async move {
+            window.show_selected_original().await;
         });
         class.install_action_async(SHOW_IN_FILES_ACTION, None, |window, _, _| async move {
             window.show_selected_in_files().await;
@@ -3117,8 +3117,8 @@ impl PigouneWindow {
         ));
         if self.is_annotated(asset.id()) {
             menu.append_item(&shortcuts::menu_item(
-                &gettext("View Original"),
-                VIEW_ORIGINAL_ACTION,
+                &gettext("Show Original"),
+                SHOW_ORIGINAL_ACTION,
             ));
         }
     }
@@ -3208,28 +3208,14 @@ impl PigouneWindow {
         alert.present(Some(self));
     }
 
-    async fn view_selected_original(&self) {
+    async fn show_selected_original(&self) {
         let Some(asset) = self.annotation_target() else {
             return;
         };
-        let Some(source) = asset.readable_source() else {
-            self.show_annotation_failure();
-            return;
-        };
-        let name = source
-            .file_name()
-            .map(|name| name.to_string_lossy().into_owned())
-            .unwrap_or_default();
-        let copy = std::env::temp_dir().join(format!("pigoune-original-{}-{name}", asset.id()));
-        if fs::copy(&source, &copy).is_err() {
-            self.show_annotation_failure();
-            return;
-        }
-        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(copy)));
-        if let Err(error) = launcher.launch_future(Some(self)).await
-            && !is_dismissed(&error)
-        {
-            self.show_open_with_error(error.message());
+        let failure = gettext("The original could not be shown in Files.");
+        match asset.readable_source() {
+            Some(source) => self.show_in_files(source, &failure).await,
+            None => self.show_toast(&failure),
         }
     }
 
@@ -4192,15 +4178,37 @@ impl PigouneWindow {
         let [asset] = targeted.as_slice() else {
             return;
         };
-        let Some(source) = asset.readable_source() else {
-            self.show_toast(&gettext("The file could not be shown in Files."));
-            return;
+        let failure = gettext("The file could not be shown in Files.");
+        let path = if self.is_annotated(asset.id()) {
+            self.annotated_copy_to_show(asset.id()).await
+        } else {
+            asset.readable_source().ok_or_else(|| failure.clone())
         };
-        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(source)));
+        match path {
+            Ok(path) => self.show_in_files(path, &failure).await,
+            Err(message) => self.show_toast(&message),
+        }
+    }
+
+    async fn annotated_copy_to_show(&self, id: AssetId) -> Result<PathBuf, String> {
+        let flats = self.flat_files_for(&[id]).await;
+        let prepared =
+            self.imp().library.borrow().as_ref().map(|library| {
+                library.opening_copy_checking(id, &flats, &drag_export::volume_space)
+            });
+        match prepared {
+            Some(Ok(Some(copy))) => Ok(copy),
+            Some(Err(error)) => Err(error_messages::describe(&error)),
+            Some(Ok(None)) | None => Err(gettext("The file could not be shown in Files.")),
+        }
+    }
+
+    async fn show_in_files(&self, path: PathBuf, failure: &str) {
+        let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(path)));
         if let Err(error) = launcher.open_containing_folder_future(Some(self)).await
             && !is_dismissed(&error)
         {
-            self.show_toast(&gettext("The file could not be shown in Files."));
+            self.show_toast(failure);
         }
     }
 

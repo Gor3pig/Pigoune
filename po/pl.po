@@ -2469,7 +2469,7 @@ msgstr "Usuń ze wszystkich kolekcji"
 #: crates/pigoune-app/src/window.rs:2921
 #: crates/pigoune-app/ui/asset-details.blp:310
 #: crates/pigoune-app/ui/asset-details.blp:321
-msgid "View Original"
+msgid "Show Original"
 msgstr "Pokaż oryginał"
 
 #: crates/pigoune-app/src/window.rs:2963
@@ -9022,3 +9022,7 @@ msgstr "Bezpieczniej i szybciej"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "A blur now hides everything up to the edge of the image, and files shared with other applications are cleaned up after a while. Big libraries open faster, the grid and the sidebar refresh only where something changed, and stored thumbnails appear sooner."
 msgstr "Rozmycie zakrywa teraz wszystko aż do krawędzi obrazu, a pliki udostępniane innym aplikacjom są po pewnym czasie sprzątane. Duże biblioteki otwierają się szybciej, siatka i panel boczny odświeżają się tylko tam, gdzie coś się zmieniło, a zapisane miniatury pojawiają się wcześniej."
+
+#: crates/pigoune-app/src/window.rs
+msgid "The original could not be shown in Files."
+msgstr "Nie udało się pokazać oryginału w Plikach."

@@ -492,12 +492,13 @@ Cadenas fermé, chaque image garde ses proportions et tient dans la largeur et l
 | Pour… | Faites ceci |
 |---|---|
 | **Ouvrir** un élément dans une autre application, un logiciel de retouche par exemple | Choisissez **Ouvrir avec…**. L’application reçoit une copie. |
-| **Retrouver le fichier sur le disque** | Choisissez **Afficher dans Fichiers**. Votre gestionnaire de fichiers s’ouvre sur le fichier stocké dans la bibliothèque. |
+| **Retrouver le fichier sur le disque** | Choisissez **Afficher dans Fichiers**. Votre gestionnaire de fichiers s’ouvre sur le fichier stocké dans la bibliothèque. Pour une image annotée, il s’ouvre sur une copie de l’image annotée. |
+| **Retrouver l’original intact** d’une image annotée | Choisissez **Afficher l’original**. Votre gestionnaire de fichiers s’ouvre sur l’original stocké dans la bibliothèque. |
 
 Votre bibliothèque reste intacte : enregistrez vos modifications sous un nouveau nom et importez-les si vous voulez les garder.
 
 > [!WARNING]
-> Le fichier montré par **Afficher dans Fichiers** est le vrai fichier. Ne le déplacez pas, ne le renommez pas et ne le modifiez pas depuis là : la vérification de l’onglet **Santé** le signalerait.
+> Le fichier montré par **Afficher l’original**, et par **Afficher dans Fichiers** pour une image non annotée, est le vrai fichier. Ne le déplacez pas, ne le renommez pas et ne le modifiez pas depuis là : la vérification de l’onglet **Santé** le signalerait. La copie d’une image annotée que montre **Afficher dans Fichiers** n’est qu’une copie : Pigoune ne l’utilise pas.
 
 ### Trouver des éléments similaires
 
@@ -713,6 +714,7 @@ Pigoune en tient compte :
 - Si un flou ou une pixelisation est masqué (avec l’œil de son calque), certaines informations peuvent redevenir visibles dans le résultat. Pigoune vous avertit avant de **copier**, d’**exporter** ou d’**ouvrir avec une autre application** une image qui en a un, et propose de l’afficher d’abord quand vous êtes dans l’éditeur.
 - Glisser une telle image hors de Pigoune est refusé tant que vous n’avez pas réaffiché les effets masqués, sans possibilité de continuer malgré tout.
 - L’export de toute la bibliothèque donne chaque original **et** une copie de chaque image annotée : les originaux peuvent donc contenir des choses qui ne sont plus visibles sur les copies annotées. Pigoune vous demande si vous voulez aussi les originaux avant d’exporter.
+- **Afficher dans Fichiers** ne pose pas cette question : il montre une copie de l’image annotée dans votre gestionnaire de fichiers, où elle peut ensuite être ouverte ou copiée. Vérifiez d’abord les effets masqués si cela compte pour vous.
 
 ### Garder le résultat
 
@@ -722,7 +724,7 @@ Pigoune en tient compte :
 
 #### Rouvrir les annotations plus tard
 
-Sélectionnez un élément annoté et choisissez **Annoter…** (dans le panneau de détails ou le menu contextuel). L’enregistrement met à jour le même élément. **Voir l’original** ouvre une copie de l’image intacte dans une autre application.
+Sélectionnez un élément annoté et choisissez **Annoter…** (dans le panneau de détails ou le menu contextuel). L’enregistrement met à jour le même élément. **Afficher l’original** ouvre votre gestionnaire de fichiers sur l’image intacte stockée dans la bibliothèque.
 
 La grille, l’aperçu et les doublons utilisent l’image annotée. La copier ou l’exporter donne un PNG aplati. L’original reste rangé à côté de l’image annotée : il suit celle-ci à la corbeille comme à la restauration, et compte dans l’espace utilisé par votre bibliothèque.
 
