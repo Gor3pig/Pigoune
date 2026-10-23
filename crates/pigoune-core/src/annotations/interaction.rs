@@ -213,15 +213,25 @@ impl Interaction {
                 pivot,
                 grabbed,
             } => {
-                let turned = geometry::rotation_of(original) + angle_to(*pivot, point) - *grabbed;
-                let turned = if constrained {
-                    (turned / ROTATION_STEP).round() * ROTATION_STEP
+                let change = angle_to(*pivot, point) - *grabbed;
+                if geometry::turns_by_option(original) {
+                    let turned = geometry::rotation_of(original) + change;
+                    let turned = if constrained {
+                        (turned / ROTATION_STEP).round() * ROTATION_STEP
+                    } else {
+                        turned
+                    };
+                    session.preview(
+                        original.with_option("rotation", number_to_value(half_turn_range(turned))),
+                    );
                 } else {
-                    turned
-                };
-                session.preview(
-                    original.with_option("rotation", number_to_value(half_turn_range(turned))),
-                );
+                    let change = if constrained {
+                        (change / ROTATION_STEP).round() * ROTATION_STEP
+                    } else {
+                        change
+                    };
+                    session.preview(geometry::turned_points(original, *pivot, change));
+                }
             }
             State::Resizing { handle, original } => {
                 let extent = session.text_extent(original);

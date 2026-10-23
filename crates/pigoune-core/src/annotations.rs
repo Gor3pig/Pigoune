@@ -21,7 +21,7 @@ pub use geometry::{
     hit_with_extent, next_stroke_point, rect_between, resized, resized_with_extent, rotate_point,
     rotated_bounds, rotation_handle, rotation_of, rounded_spot_radius, shape_bounds,
     shape_from_anchor, shape_from_drag, shape_from_points, shape_pivot, simplified,
-    text_ink_margin, text_visual_bounds, translated,
+    text_ink_margin, text_visual_bounds, translated, turned_points, turns_by_option,
 };
 pub use interaction::{CursorKind, Interaction, Tool};
 pub use layers::{LayerEntry, layer_entries};

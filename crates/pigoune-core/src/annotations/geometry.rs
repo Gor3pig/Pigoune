@@ -375,11 +375,12 @@ pub fn rotate_point(point: Point, pivot: Point, degrees: f32) -> Point {
 fn unturned_box(shape: &Shape, extent: Option<(f32, f32)>) -> Option<Rect> {
     match &shape.geometry {
         Geometry::Box(rect) => Some(normalized(*rect)),
+        Geometry::TwoPoints { .. } | Geometry::Polyline(_) => shape_bounds(shape),
         Geometry::Anchor(_) if shape.kind == "text" => text_visual_bounds(
             shape,
             extent.unwrap_or_else(|| estimated_text_extent(shape)),
         ),
-        _ => None,
+        Geometry::Anchor(_) => None,
     }
 }
 
@@ -447,8 +448,39 @@ pub fn rotated_bounds(shape: &Shape, extent: Option<(f32, f32)>) -> Option<Rect>
 }
 
 #[must_use]
+pub fn turns_by_option(shape: &Shape) -> bool {
+    shape
+        .definition()
+        .is_some_and(|definition| definition.spec("rotation").is_some())
+}
+
+#[must_use]
+pub fn turned_points(shape: &Shape, pivot: Point, degrees: f32) -> Shape {
+    match &shape.geometry {
+        Geometry::TwoPoints { from, to } => shape.with_geometry(Geometry::TwoPoints {
+            from: rotate_point(*from, pivot, degrees),
+            to: rotate_point(*to, pivot, degrees),
+        }),
+        Geometry::Polyline(points) => shape.with_geometry(Geometry::Polyline(
+            points
+                .iter()
+                .map(|point| rotate_point(*point, pivot, degrees))
+                .collect(),
+        )),
+        _ => shape.clone(),
+    }
+}
+
+#[must_use]
 pub fn rotation_handle(shape: &Shape, extent: Option<(f32, f32)>, reach: f32) -> Option<Point> {
-    shape.definition()?.spec("rotation")?;
+    if !turns_by_option(shape)
+        && !matches!(
+            shape.geometry,
+            Geometry::TwoPoints { .. } | Geometry::Polyline(_)
+        )
+    {
+        return None;
+    }
     let rect = unturned_box(shape, extent)?;
     let pivot = shape_pivot(shape, extent)?;
     let above = Point {
