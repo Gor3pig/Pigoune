@@ -327,14 +327,17 @@ pub const HIGHLIGHTER: ToolDefinition = ToolDefinition {
 
 pub const BADGE_STYLE_CHOICES: [&str; 2] = ["filled", "outlined"];
 
+pub const SMALLEST_BADGE: f32 = 8.0;
+pub const LARGEST_BADGE: f32 = 120.0;
+
 pub const BADGE_SIZE: OptionSpec = OptionSpec {
     id: "size",
     kind: OptionKind::Number {
-        min: 8.0,
-        max: 60.0,
+        min: SMALLEST_BADGE,
+        max: LARGEST_BADGE,
         step: 1.0,
     },
-    default: DefaultValue::Number(16.0),
+    default: DefaultValue::Number(24.0),
     shown_if: None,
 };
 

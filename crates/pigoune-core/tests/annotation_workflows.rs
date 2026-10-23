@@ -212,7 +212,7 @@ fn a_badge_is_resized_by_a_handle_within_its_limits() {
         &mut interaction,
         &mut session,
         Tool::Select,
-        point(116.0, 116.0),
+        point(124.0, 124.0),
         point(130.0, 130.0),
     );
     assert!(near(badge_size(&session, id), 30.0));
@@ -224,7 +224,7 @@ fn a_badge_is_resized_by_a_handle_within_its_limits() {
         point(130.0, 130.0),
         point(900.0, 900.0),
     );
-    assert!(near(badge_size(&session, id), 60.0));
+    assert!(near(badge_size(&session, id), 120.0));
 }
 
 #[test]

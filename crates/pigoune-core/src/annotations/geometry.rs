@@ -1,6 +1,6 @@
 use super::options::number_to_value;
 use super::shape::{Geometry, Shape};
-use super::tools::{GeometryKind, Outline, ToolDefinition};
+use super::tools::{GeometryKind, LARGEST_BADGE, Outline, SMALLEST_BADGE, ToolDefinition};
 use super::{Options, Point, Rect};
 
 const SMALLEST_DRAG: f32 = 3.0;
@@ -441,9 +441,6 @@ fn scaled_points(points: &[Point], from: Rect, to: Rect) -> Vec<Point> {
         })
         .collect()
 }
-
-const SMALLEST_BADGE: f32 = 8.0;
-const LARGEST_BADGE: f32 = 60.0;
 
 fn resized_badge(shape: &Shape, at: Point, to: Point) -> Shape {
     let size = (to.x - at.x)
