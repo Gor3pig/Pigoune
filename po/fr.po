@@ -9185,3 +9185,7 @@ msgstr "Inclusion de « {name} » dans la recherche de doublons annulée"
 #, rust-format
 msgid "Including “{name}” in the duplicate search redone"
 msgstr "Inclusion de « {name} » dans la recherche de doublons rétablie"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded"
+msgstr "Arrondi"

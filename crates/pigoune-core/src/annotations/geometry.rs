@@ -12,6 +12,7 @@ const LONGEST_HEAD_SHARE: f32 = 0.9;
 const DASH_LENGTH_PER_WIDTH: f32 = 3.0;
 const DASH_GAP_PER_WIDTH: f32 = 2.0;
 const DOT_LENGTH: f32 = 0.01;
+const ROUNDED_SPOT_SHARE: f32 = 0.25;
 pub const TEXT_BACKDROP_SHARE: f32 = 0.25;
 pub const TEXT_OUTLINE_SHARE: f32 = 0.06;
 
@@ -448,6 +449,11 @@ fn resized_badge(shape: &Shape, at: Point, to: Point) -> Shape {
         .max((to.y - at.y).abs())
         .clamp(SMALLEST_BADGE, LARGEST_BADGE);
     shape.with_option("size", number_to_value(size))
+}
+
+#[must_use]
+pub fn rounded_spot_radius(bounds: Rect) -> f32 {
+    bounds.width.min(bounds.height).max(0.0) * ROUNDED_SPOT_SHARE
 }
 
 #[must_use]

@@ -8,9 +8,9 @@ use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, PathStep, Point, Rect, Shape,
     Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head, curve_point,
-    curve_polyline, dash_pattern, guide_extent, handles, head_size_factor, shape_bounds,
-    sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle, sketched_curve,
-    step_label, text_visual_bounds,
+    curve_polyline, dash_pattern, guide_extent, handles, head_size_factor, rounded_spot_radius,
+    shape_bounds, sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle,
+    sketched_curve, step_label, text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -789,10 +789,10 @@ fn draw_spotlight(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     };
     let veil = gsk::PathBuilder::new();
     veil.add_rect(&whole_texture(scene.backdrop.texture));
-    if shape.choice("spot") == "ellipse" {
-        veil.add_path(&ellipse_path(region));
-    } else {
-        veil.add_rect(&graphene_rect(region));
+    match shape.choice("spot") {
+        "ellipse" => veil.add_path(&ellipse_path(region)),
+        "rounded" => veil.add_path(&rounded_rectangle_path(region, rounded_spot_radius(region))),
+        _ => veil.add_rect(&graphene_rect(region)),
     }
     snapshot.append_fill(
         &veil.to_path(),

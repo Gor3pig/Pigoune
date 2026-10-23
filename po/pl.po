@@ -8934,3 +8934,7 @@ msgstr "Cofnięto uwzględnienie „{name}” w wyszukiwaniu duplikatów"
 #, rust-format
 msgid "Including “{name}” in the duplicate search redone"
 msgstr "Ponowiono uwzględnienie „{name}” w wyszukiwaniu duplikatów"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded"
+msgstr "Zaokrąglony"

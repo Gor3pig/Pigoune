@@ -482,6 +482,24 @@ fn the_spotlight_dims_everything_around_it(rig: &Rig) {
     }
 }
 
+fn the_rounded_spotlight_dims_its_corners_only(rig: &Rig) {
+    let result = rig.export(&document(vec![boxed(
+        "spotlight",
+        60.0,
+        30.0,
+        80.0,
+        60.0,
+        &[("spot", Value::from("rounded"))],
+    )]));
+    assert_unchanged(&result, (90, 50), (110, 70), "inside the rounded spotlight");
+    assert_unchanged(&result, (100, 33), (101, 34), "the middle of the top edge");
+    let corner = result.at(61, 31);
+    assert!(
+        (0..3).any(|channel| corner[channel] < source(61, 31)[channel]),
+        "the corner is dimmed"
+    );
+}
+
 fn layers_follow_their_order(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let filled = [
@@ -909,6 +927,7 @@ fn rendering_suite() {
     text_steps_and_strokes_are_drawn(&rig);
     translucent_effects_blend_with_the_image(&rig);
     the_spotlight_dims_everything_around_it(&rig);
+    the_rounded_spotlight_dims_its_corners_only(&rig);
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);

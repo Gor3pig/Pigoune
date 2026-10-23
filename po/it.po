@@ -8838,3 +8838,7 @@ msgstr "Inclusione di “{name}” nella ricerca dei duplicati annullata"
 #, rust-format
 msgid "Including “{name}” in the duplicate search redone"
 msgstr "Inclusione di “{name}” nella ricerca dei duplicati ripristinata"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded"
+msgstr "Arrotondato"

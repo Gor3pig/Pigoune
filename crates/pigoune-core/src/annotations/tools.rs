@@ -246,7 +246,7 @@ pub const PIXELATE: ToolDefinition = ToolDefinition {
     options: &[CELL],
 };
 
-pub const SPOT_SHAPE_CHOICES: [&str; 2] = ["rectangle", "ellipse"];
+pub const SPOT_SHAPE_CHOICES: [&str; 3] = ["rectangle", "ellipse", "rounded"];
 
 pub const SPOT_SHAPE: OptionSpec = OptionSpec {
     id: "spot",
