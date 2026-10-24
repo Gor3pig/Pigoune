@@ -36,7 +36,7 @@ use crate::collection_drop::{self, CollectionDrop};
 use crate::collection_look_dialog::PigouneCollectionLookDialog;
 use crate::collection_name_dialog::PigouneCollectionNameDialog;
 use crate::collection_places::SharedCollection;
-use crate::collection_skipping;
+use crate::collection_skipping::{self, LeftOutEntry};
 use crate::collection_sort::{CollectionCriterion, CollectionOrder, CollectionTree};
 use crate::conversion_memory;
 use crate::conversion_report;
@@ -1729,11 +1729,18 @@ impl PigouneWindow {
                 #[upgrade_or_default]
                 move || window.settings().boolean(settings::AUTO_EMPTY_TRASH)
             )),
-            left_out_collections: Box::new(glib::clone!(
+            left_out: Box::new(glib::clone!(
                 #[weak(rename_to = window)]
                 self,
                 #[upgrade_or_default]
-                move || window.left_out_collection_count()
+                move || window.left_out_collection_entries()
+            )),
+            include_collection: Box::new(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                #[upgrade_or_else]
+                || Err(Refusal::default()),
+                move |id: CollectionId| window.include_in_duplicate_search(id)
             )),
         }
     }
@@ -6683,18 +6690,33 @@ impl PigouneWindow {
         dialog.present(Some(self));
     }
 
-    fn left_out_collection_count(&self) -> usize {
+    fn left_out_collection_entries(&self) -> Vec<LeftOutEntry> {
         self.imp()
             .library
             .borrow()
             .as_ref()
             .and_then(|library| library.visible_collections().ok())
-            .map_or(0, |collections| {
-                collections
-                    .iter()
-                    .filter(|collection| collection.skip_duplicates)
-                    .count()
+            .map_or_else(Vec::new, |collections| {
+                collection_skipping::left_out_entries(&collections)
             })
+    }
+
+    fn include_in_duplicate_search(&self, id: CollectionId) -> Result<ChangeStamp, Refusal> {
+        let changed = self.change_library(|library| {
+            library.apply_collection_command(&CollectionCommand::SkipDuplicates { id, skip: false })
+        });
+        match changed {
+            Some(Ok(_)) => {
+                self.refresh_sidebar();
+                self.imp().fresh_change.get().ok_or_else(Refusal::default)
+            }
+            Some(Err(error)) => Err(Refusal {
+                title: gettext("Unable to Include the Collection"),
+                body: error_messages::describe_collection(&error),
+                try_again: false,
+            }),
+            None => Err(Refusal::default()),
+        }
     }
 
     fn toggle_duplicate_skipping(&self, id: CollectionId) {

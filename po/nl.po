@@ -8797,18 +8797,45 @@ msgid "Include in Duplicate Search"
 msgstr "Opnemen in het zoeken naar dubbelen"
 
 #: crates/pigoune-app/src/collection_skipping.rs
+msgid "At the top level"
+msgstr "Op het hoogste niveau"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "{count} sub-collection is left out with it"
+msgid_plural "{count} sub-collections are left out with it"
+msgstr[0] "{count} subverzameling wordt mee uitgesloten"
+msgstr[1] "{count} subverzamelingen worden mee uitgesloten"
+
+#: crates/pigoune-app/src/duplicates_left_out.rs
+#, rust-format
+msgid "_Left Out ({count})"
+msgstr "_Uitgesloten ({count})"
+
+#: crates/pigoune-app/ui/duplicates-page.blp
+msgid "Collections Left Out"
+msgstr "Uitgesloten verzamelingen"
+
+#: crates/pigoune-app/src/duplicates_left_out.rs
+#, rust-format
+msgid "{count} collection is not checked for duplicates, with its sub-collections. An asset that is also in another collection stays in the search."
+msgid_plural "{count} collections are not checked for duplicates, with their sub-collections. An asset that is also in another collection stays in the search."
+msgstr[0] "{count} verzameling wordt niet gecontroleerd op dubbelen, samen met haar subverzamelingen. Een item dat ook in een andere verzameling zit, blijft in de zoekopdracht."
+msgstr[1] "{count} verzamelingen worden niet gecontroleerd op dubbelen, samen met hun subverzamelingen. Een item dat ook in een andere verzameling zit, blijft in de zoekopdracht."
+
+#: crates/pigoune-app/src/duplicates_left_out.rs
+#, rust-format
+msgid "“{name}” included in the duplicate search"
+msgstr "“{name}” opgenomen in het zoeken naar dubbelen"
+
+#: crates/pigoune-app/src/window.rs
+msgid "Unable to Include the Collection"
+msgstr "Verzameling opnemen mislukt"
+
+#: crates/pigoune-app/src/collection_skipping.rs
 #, rust-format
 msgid "Left Out Through “{name}”"
 msgstr "Uitgesloten via ‘{name}’"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-msgid "Left out of the duplicate search"
-msgstr "Uitgesloten van het zoeken naar dubbelen"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-#, rust-format
-msgid "Left out of the duplicate search through “{name}”"
-msgstr "Uitgesloten van het zoeken naar dubbelen via ‘{name}’"
 
 #: crates/pigoune-app/src/collection_skipping.rs
 #, rust-format

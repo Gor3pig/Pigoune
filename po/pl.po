@@ -8880,18 +8880,47 @@ msgid "Include in Duplicate Search"
 msgstr "Uwzględnij w wyszukiwaniu duplikatów"
 
 #: crates/pigoune-app/src/collection_skipping.rs
+msgid "At the top level"
+msgstr "Na najwyższym poziomie"
+
+#: crates/pigoune-app/src/collection_skipping.rs
+#, rust-format
+msgid "{count} sub-collection is left out with it"
+msgid_plural "{count} sub-collections are left out with it"
+msgstr[0] "{count} podkolekcja jest pominięta razem z nią"
+msgstr[1] "{count} podkolekcje są pominięte razem z nią"
+msgstr[2] "{count} podkolekcji jest pominiętych razem z nią"
+
+#: crates/pigoune-app/src/duplicates_left_out.rs
+#, rust-format
+msgid "_Left Out ({count})"
+msgstr "_Pominięte ({count})"
+
+#: crates/pigoune-app/ui/duplicates-page.blp
+msgid "Collections Left Out"
+msgstr "Pominięte kolekcje"
+
+#: crates/pigoune-app/src/duplicates_left_out.rs
+#, rust-format
+msgid "{count} collection is not checked for duplicates, with its sub-collections. An asset that is also in another collection stays in the search."
+msgid_plural "{count} collections are not checked for duplicates, with their sub-collections. An asset that is also in another collection stays in the search."
+msgstr[0] "{count} kolekcja nie jest sprawdzana pod kątem duplikatów, razem z podkolekcjami. Element, który należy też do innej kolekcji, zostaje w wyszukiwaniu."
+msgstr[1] "{count} kolekcje nie są sprawdzane pod kątem duplikatów, razem z podkolekcjami. Element, który należy też do innej kolekcji, zostaje w wyszukiwaniu."
+msgstr[2] "{count} kolekcji nie jest sprawdzanych pod kątem duplikatów, razem z podkolekcjami. Element, który należy też do innej kolekcji, zostaje w wyszukiwaniu."
+
+#: crates/pigoune-app/src/duplicates_left_out.rs
+#, rust-format
+msgid "“{name}” included in the duplicate search"
+msgstr "„{name}” uwzględniona w wyszukiwaniu duplikatów"
+
+#: crates/pigoune-app/src/window.rs
+msgid "Unable to Include the Collection"
+msgstr "Nie można uwzględnić kolekcji"
+
+#: crates/pigoune-app/src/collection_skipping.rs
 #, rust-format
 msgid "Left Out Through “{name}”"
 msgstr "Wyłączona przez „{name}”"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-msgid "Left out of the duplicate search"
-msgstr "Wyłączona z wyszukiwania duplikatów"
-
-#: crates/pigoune-app/src/collection_skipping.rs
-#, rust-format
-msgid "Left out of the duplicate search through “{name}”"
-msgstr "Wyłączona z wyszukiwania duplikatów przez „{name}”"
 
 #: crates/pigoune-app/src/collection_skipping.rs
 #, rust-format

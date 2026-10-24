@@ -891,10 +891,10 @@ Ignorer un groupe ne concerne que les éléments de ce groupe. Ils ne sont plus 
 #### Exclure une collection
 
 - Faites un clic droit sur une collection dans la barre latérale et choisissez **Exclure de la recherche de doublons**, puis confirmez. Ses sous-collections suivent.
-- Une petite marque dans la barre latérale signale ce qui est exclu. **Inclure dans la recherche de doublons** remet la collection, et **Annuler** fonctionne aussi.
-- Une sous-collection exclue par son parent affiche une entrée grisée qui nomme ce parent.
+- Le bouton **Exclues** de l’onglet Doublons liste les collections exclues, avec leur emplacement et le nombre de sous-collections qui les suivent. **Inclure** remet une collection, et **Annuler** fonctionne aussi.
+- **Inclure dans la recherche de doublons** dans le menu du clic droit fait la même chose depuis la barre latérale. Pour une sous-collection exclue par son parent, le menu nomme ce parent.
 - Un élément n’est exclu que si **toutes** les collections auxquelles il appartient le sont. Un élément sans collection, ou dans une autre, est toujours comparé.
-- L’onglet Doublons indique combien de collections sont exclues. Les éléments similaires et les doublons repérés à l’import ne changent pas.
+- L’onglet Doublons indique aussi combien de collections sont exclues. Les éléments similaires et les doublons repérés à l’import ne changent pas.
 
 ### Exporter toute la bibliothèque
 
