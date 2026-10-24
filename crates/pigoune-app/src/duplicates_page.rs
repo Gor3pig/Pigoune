@@ -13,11 +13,12 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gio, glib};
 use pigoune_core::{
-    AssetId, ChangeStamp, ConfirmedRemoval, DuplicateKind, DuplicatePlan, DuplicateProgress,
-    IgnoreId, IgnoreOutcome, IgnoredEntry,
+    AssetId, ChangeStamp, CollectionId, ConfirmedRemoval, DuplicateKind, DuplicatePlan,
+    DuplicateProgress, IgnoreId, IgnoreOutcome, IgnoredEntry,
 };
 
 use crate::chart_slices::ratio;
+use crate::collection_skipping::LeftOutEntry;
 use crate::group_name;
 use crate::health_page::{Refusal, Replaced};
 use crate::row_thumbnail;
@@ -125,7 +126,8 @@ pub struct DuplicateActions {
     pub ignoring: IgnoringActions,
     pub compare: Box<dyn Fn(AssetId, AssetId) -> Option<DuplicateKind>>,
     pub trash_expires: Box<dyn Fn() -> bool>,
-    pub left_out_collections: Box<dyn Fn() -> usize>,
+    pub left_out: Box<dyn Fn() -> Vec<LeftOutEntry>>,
+    pub include_collection: Box<dyn Fn(CollectionId) -> Ignored>,
 }
 
 pub type Selection = (AssetId, Vec<AssetId>);
@@ -167,6 +169,15 @@ mod imp {
         #[template_child]
         pub ignored_caption_label: TemplateChild<gtk::Label>,
         pub viewing_ignored: Cell<bool>,
+        pub viewing_left_out: Cell<bool>,
+        #[template_child]
+        pub message_left_out_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub left_out_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub left_out_caption_label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub left_out_list: TemplateChild<gtk::Box>,
         pub results_stale: Cell<bool>,
         #[template_child]
         pub progress_box: TemplateChild<gtk::Box>,
@@ -247,6 +258,16 @@ impl PigouneDuplicatesPage {
     }
 
     #[template_callback]
+    fn on_left_out_clicked(&self) {
+        self.show_left_out();
+    }
+
+    #[template_callback]
+    fn on_left_out_back_clicked(&self) {
+        self.leave_left_out_view();
+    }
+
+    #[template_callback]
     fn on_back_clicked(&self) {
         self.leave_ignored_view();
     }
@@ -269,6 +290,7 @@ impl PigouneDuplicatesPage {
         let canceled = Arc::new(AtomicBool::new(false));
         imp.cancel_requested.replace(Some(Arc::clone(&canceled)));
         imp.viewing_ignored.set(false);
+        imp.viewing_left_out.set(false);
         imp.results_stale.set(false);
         imp.last_snapshot.replace(None);
         self.show_running();
@@ -425,6 +447,7 @@ impl PigouneDuplicatesPage {
         )));
         imp.search_button.set_visible(false);
         imp.message_ignored_button.set_visible(false);
+        imp.message_left_out_button.set_visible(false);
         imp.progress_bar.set_fraction(0.0);
         imp.cancel_button.set_sensitive(true);
         imp.progress_box.set_visible(true);
@@ -570,7 +593,7 @@ impl PigouneDuplicatesPage {
 
     fn left_out_text(&self) -> Option<String> {
         let actions = self.imp().actions.borrow().clone()?;
-        left_out_collections_text((actions.left_out_collections)())
+        left_out_collections_text((actions.left_out)().len())
     }
 
     fn caption_text(&self, total: usize) -> String {

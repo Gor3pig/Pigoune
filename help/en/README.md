@@ -891,10 +891,10 @@ Ignoring a group only concerns the assets of that group. They are no longer offe
 #### Leave a collection out
 
 - Right-click a collection in the sidebar and choose **Leave Out of Duplicate Search**, then confirm. Its sub-collections follow.
-- A small mark in the sidebar shows what is left out. **Include in Duplicate Search** puts the collection back, and **Undo** works too.
-- A sub-collection left out through its parent shows a greyed-out entry that names the parent.
+- The **Left Out** button of the Duplicates tab lists the collections left out, with where each one sits and how many sub-collections go with it. **Include** puts a collection back, and **Undo** works too.
+- **Include in Duplicate Search** in the right-click menu does the same from the sidebar. For a sub-collection left out through its parent, the menu names that parent.
 - An asset is left out only when **every** collection it belongs to is left out. An asset in no collection, or in another one, is still compared.
-- The Duplicates tab says how many collections are left out. Similar assets and the duplicates spotted at import do not change.
+- The Duplicates tab also says how many collections are left out. Similar assets and the duplicates spotted at import do not change.
 
 ### Export the whole library
 

@@ -46,6 +46,7 @@ impl PigouneDuplicatesPage {
             .set_visible(!viewing && count > 0 && imp.cancel_requested.borrow().is_none());
         imp.results_bar.set_visible(!viewing);
         imp.ignored_bar.set_visible(viewing);
+        self.refresh_left_out_buttons();
     }
 
     pub(crate) fn more_menu(label: &str, entries: Vec<(String, Box<dyn Fn()>)>) -> gtk::MenuButton {
@@ -94,7 +95,10 @@ impl PigouneDuplicatesPage {
     pub(crate) fn history_changed(&self) {
         let imp = self.imp();
         imp.last_snapshot.replace(None);
-        if imp.viewing_ignored.get() {
+        if imp.viewing_left_out.get() {
+            imp.results_stale.set(true);
+            self.show_left_out();
+        } else if imp.viewing_ignored.get() {
             imp.results_stale.set(true);
             self.show_ignored();
         } else if imp.stack.visible_child_name().as_deref() == Some("results") {
@@ -118,6 +122,11 @@ impl PigouneDuplicatesPage {
 
     pub(crate) fn show_after_undo(&self, stamp: ChangeStamp) {
         let imp = self.imp();
+        if imp.viewing_left_out.get() {
+            imp.results_stale.set(true);
+            self.show_left_out();
+            return;
+        }
         if imp.viewing_ignored.get() {
             imp.results_stale.set(true);
             self.show_ignored();

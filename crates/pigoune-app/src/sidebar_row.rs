@@ -24,7 +24,6 @@ const SIDEBAR_ROW: &str = "sidebar-row";
 const FOLDED_ICON: &str = "pan-end-symbolic";
 const UNFOLDED_ICON: &str = "pan-down-symbolic";
 const MORE_ICON: &str = "view-more-symbolic";
-const SKIPPED_ICON: &str = "view-conceal-symbolic";
 const INHERITED_SKIPPING_ACTION: &str = "win.duplicate-skipping-inherited";
 const MODIFIER_WATCH_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
 
@@ -43,7 +42,6 @@ mod imp {
         pub tag_cloud: OnceCell<crate::sidebar_tag_cloud::PigouneSidebarTagCloud>,
         pub icon: OnceCell<gtk::Image>,
         pub label: OnceCell<gtk::Label>,
-        pub skip_mark: OnceCell<gtk::Image>,
         pub count: OnceCell<gtk::Label>,
         pub header_buttons: OnceCell<gtk::Box>,
         pub smart_header_buttons: OnceCell<gtk::Box>,
@@ -114,7 +112,6 @@ impl PigouneSidebarRow {
         ] {
             part.set_visible(!is_cloud);
         }
-        part(&imp.skip_mark).set_visible(false);
         if is_cloud {
             part(&imp.hash).set_visible(false);
             part(&imp.header_buttons).set_visible(false);
@@ -139,15 +136,6 @@ impl PigouneSidebarRow {
         collection_look_dialog::show_icon(&icon, item.icon_name(), item.color_class());
         icon.set_visible(!is_header && !is_tag);
         part(&imp.hash).set_visible(is_tag);
-        let skipping = item.duplicate_skipping();
-        let mark = part(&imp.skip_mark);
-        mark.set_tooltip_text(collection_skipping::mark_tooltip(&skipping).as_deref());
-        mark.set_opacity(if matches!(skipping, DuplicateSkipping::SkippedBy(_)) {
-            0.5
-        } else {
-            1.0
-        });
-        mark.set_visible(skipping != DuplicateSkipping::Included);
         let label = part(&imp.label);
         label.set_label(item.label());
         if is_header {
@@ -185,11 +173,6 @@ impl PigouneSidebarRow {
             .xalign(0.0)
             .hexpand(true)
             .ellipsize(gtk::pango::EllipsizeMode::End)
-            .build();
-        let skip_mark = gtk::Image::builder()
-            .icon_name(SKIPPED_ICON)
-            .css_classes(["dim-label"])
-            .visible(false)
             .build();
         let count = gtk::Label::builder()
             .css_classes(["dim-label", "numeric", "caption"])
@@ -233,7 +216,6 @@ impl PigouneSidebarRow {
         self.append(&icon);
         self.append(&hash);
         self.append(&label);
-        self.append(&skip_mark);
         self.append(&count);
         self.append(&header_buttons);
         self.append(&smart_header_buttons);
@@ -242,7 +224,6 @@ impl PigouneSidebarRow {
         set_part(&imp.icon, icon);
         set_part(&imp.hash, hash);
         set_part(&imp.label, label);
-        set_part(&imp.skip_mark, skip_mark);
         set_part(&imp.count, count);
         set_part(&imp.header_buttons, header_buttons);
         set_part(&imp.smart_header_buttons, smart_header_buttons);

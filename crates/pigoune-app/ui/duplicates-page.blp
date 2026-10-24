@@ -44,6 +44,12 @@ template $PigouneDuplicatesPage: Box {
             clicked => $on_ignored_clicked() swapped;
           }
 
+          Button message_left_out_button {
+            halign: center;
+            visible: false;
+            clicked => $on_left_out_clicked() swapped;
+          }
+
           Box progress_box {
             orientation: vertical;
             spacing: 12;
@@ -97,6 +103,12 @@ template $PigouneDuplicatesPage: Box {
                 styles [
                   "dim-label",
                 ]
+              }
+
+              Button left_out_button {
+                valign: center;
+                visible: false;
+                clicked => $on_left_out_clicked() swapped;
               }
 
               Button ignored_button {
@@ -161,6 +173,60 @@ template $PigouneDuplicatesPage: Box {
             Box groups_box {
               orientation: vertical;
               spacing: 18;
+            }
+          };
+        };
+      };
+    }
+
+    StackPage {
+      name: "left-out";
+
+      child: ScrolledWindow {
+        vexpand: true;
+        hscrollbar-policy: never;
+
+        child: Adw.Clamp {
+          maximum-size: 648;
+          tightening-threshold: 560;
+
+          child: Box {
+            orientation: vertical;
+            spacing: 12;
+            margin-top: 18;
+            margin-bottom: 24;
+            margin-start: 24;
+            margin-end: 24;
+
+            Button {
+              label: _("Back to _Results");
+              use-underline: true;
+              halign: start;
+              clicked => $on_left_out_back_clicked() swapped;
+            }
+
+            Label {
+              label: _("Collections Left Out");
+              xalign: 0;
+              margin-top: 6;
+
+              styles [
+                "title-3",
+              ]
+            }
+
+            Label left_out_caption_label {
+              xalign: 0;
+              wrap: true;
+
+              styles [
+                "dim-label",
+              ]
+            }
+
+            Box left_out_list {
+              orientation: vertical;
+              margin-top: 6;
             }
           };
         };

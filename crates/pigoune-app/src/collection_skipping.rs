@@ -1,5 +1,7 @@
-use gettextrs::gettext;
-use pigoune_core::Collection;
+use std::collections::HashMap;
+
+use gettextrs::{gettext, ngettext};
+use pigoune_core::{Collection, CollectionId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DuplicateSkipping {
@@ -42,15 +44,70 @@ pub fn menu_label(state: &DuplicateSkipping) -> String {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LeftOutEntry {
+    pub id: CollectionId,
+    pub name: String,
+    pub parent_name: Option<String>,
+    pub covered_below: usize,
+}
+
 #[must_use]
-pub fn mark_tooltip(state: &DuplicateSkipping) -> Option<String> {
-    match state {
-        DuplicateSkipping::Included => None,
-        DuplicateSkipping::Skipped => Some(gettext("Left out of the duplicate search")),
-        DuplicateSkipping::SkippedBy(parent) => Some(
-            gettext("Left out of the duplicate search through “{name}”").replace("{name}", parent),
-        ),
+pub fn left_out_entries(collections: &[Collection]) -> Vec<LeftOutEntry> {
+    let by_id: HashMap<CollectionId, &Collection> = collections
+        .iter()
+        .map(|collection| (collection.id, collection))
+        .collect();
+    collections
+        .iter()
+        .filter(|collection| collection.skip_duplicates)
+        .map(|collection| LeftOutEntry {
+            id: collection.id,
+            name: collection.name.clone(),
+            parent_name: collection
+                .parent
+                .and_then(|parent| by_id.get(&parent))
+                .map(|parent| parent.name.clone()),
+            covered_below: collections
+                .iter()
+                .filter(|other| !other.skip_duplicates)
+                .filter(|other| nearest_skipped_ancestor(other, &by_id) == Some(collection.id))
+                .count(),
+        })
+        .collect()
+}
+
+fn nearest_skipped_ancestor(
+    collection: &Collection,
+    by_id: &HashMap<CollectionId, &Collection>,
+) -> Option<CollectionId> {
+    let mut current = collection.parent;
+    while let Some(id) = current {
+        let ancestor = by_id.get(&id)?;
+        if ancestor.skip_duplicates {
+            return Some(id);
+        }
+        current = ancestor.parent;
     }
+    None
+}
+
+#[must_use]
+pub fn left_out_subtitle(entry: &LeftOutEntry) -> String {
+    let place = match &entry.parent_name {
+        Some(parent) => gettext("In “{name}”").replace("{name}", parent),
+        None => gettext("At the top level"),
+    };
+    if entry.covered_below == 0 {
+        return place;
+    }
+    let covered = ngettext(
+        "{count} sub-collection is left out with it",
+        "{count} sub-collections are left out with it",
+        u32::try_from(entry.covered_below).unwrap_or(u32::MAX),
+    )
+    .replace("{count}", &entry.covered_below.to_string());
+    format!("{place} · {covered}")
 }
 
 #[must_use]
@@ -101,6 +158,66 @@ mod tests {
             look: CollectionLook::default(),
             skip_duplicates: skip,
         }
+    }
+
+    fn node(number: u8, name: &str, parent: Option<u8>, skip: bool) -> Collection {
+        let id = |number: u8| {
+            CollectionId::parse(&format!("00000000-0000-7000-8000-0000000000{number:02}"))
+                .expect("valid id")
+        };
+        Collection {
+            id: id(number),
+            parent: parent.map(id),
+            ..collection(name, skip)
+        }
+    }
+
+    #[test]
+    fn only_the_collections_with_the_setting_are_listed_with_their_parent() {
+        let collections = [
+            node(1, "Photos", None, false),
+            node(2, "Drafts", Some(1), true),
+            node(3, "Archive", None, true),
+        ];
+        let entries = left_out_entries(&collections);
+        let names: Vec<_> = entries.iter().map(|entry| entry.name.as_str()).collect();
+        assert_eq!(names, ["Drafts", "Archive"]);
+        assert_eq!(entries[0].parent_name.as_deref(), Some("Photos"));
+        assert_eq!(entries[1].parent_name, None);
+    }
+
+    #[test]
+    fn sub_collections_are_counted_under_the_nearest_collection_left_out() {
+        let collections = [
+            node(1, "Logos", None, true),
+            node(2, "Old", Some(1), false),
+            node(3, "2020", Some(2), false),
+            node(4, "Icons", Some(1), true),
+            node(5, "Round", Some(4), false),
+        ];
+        let entries = left_out_entries(&collections);
+        assert_eq!(entries[0].covered_below, 2);
+        assert_eq!(entries[1].covered_below, 1);
+    }
+
+    #[test]
+    fn the_subtitle_names_the_place_and_the_sub_collections_left_out_with_it() {
+        let entry = |parent: Option<&str>, covered_below| LeftOutEntry {
+            id: node(1, "Logos", None, true).id,
+            name: "Logos".to_owned(),
+            parent_name: parent.map(str::to_owned),
+            covered_below,
+        };
+        assert_eq!(left_out_subtitle(&entry(None, 0)), "At the top level");
+        assert_eq!(left_out_subtitle(&entry(Some("Photos"), 0)), "In “Photos”");
+        assert_eq!(
+            left_out_subtitle(&entry(None, 1)),
+            "At the top level · 1 sub-collection is left out with it"
+        );
+        assert_eq!(
+            left_out_subtitle(&entry(Some("Photos"), 3)),
+            "In “Photos” · 3 sub-collections are left out with it"
+        );
     }
 
     #[test]
@@ -164,14 +281,6 @@ mod tests {
         assert!(menu_label(&DuplicateSkipping::Skipped).starts_with("Include"));
         let inherited = menu_label(&DuplicateSkipping::SkippedBy("Logos".to_owned()));
         assert!(inherited.starts_with("Left Out Through") && inherited.contains("“Logos”"));
-    }
-
-    #[test]
-    fn only_a_skipped_collection_has_a_mark_and_the_inherited_one_names_its_parent() {
-        assert_eq!(mark_tooltip(&DuplicateSkipping::Included), None);
-        assert!(mark_tooltip(&DuplicateSkipping::Skipped).is_some());
-        let inherited = mark_tooltip(&DuplicateSkipping::SkippedBy("Logos".to_owned()));
-        assert!(inherited.is_some_and(|text| text.contains("“Logos”")));
     }
 
     #[test]
