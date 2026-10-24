@@ -11,6 +11,7 @@ use crate::icon_theme;
 use crate::release_notes;
 use crate::settings;
 use crate::shortcuts;
+use crate::theme_selector;
 use crate::whats_new;
 use crate::window::PigouneWindow;
 
@@ -39,6 +40,9 @@ pub fn build() -> adw::Application {
     application.connect_handle_local_options(forward_capture_request);
     application.connect_startup(|_| icon_theme::keep_gnome_icons());
     application.connect_startup(install_actions);
+    application.connect_startup(|application| {
+        theme_selector::follow(application, &settings::load());
+    });
     application.connect_activate(|application| {
         if CAPTURE_REQUESTED.take() {
             request_capture(application);

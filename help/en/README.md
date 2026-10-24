@@ -971,7 +971,9 @@ Most of the shortcuts listed in [Keyboard shortcuts](#keyboard-shortcuts) can be
 
 ### Style and colors
 
-The style and the accent color are not set in Preferences: Pigoune follows the ones you choose in GNOME **Settings**, under **Appearance**. They cover the light or dark style, and the color of selections, switches and highlights.
+The three round buttons at the top of the main menu choose the style: **Follow the System** (the default), **Light Theme** or **Dark Theme**. The choice applies at once and is remembered. The welcome page has them too.
+
+The accent color is not set in Preferences: Pigoune follows the one you choose in GNOME **Settings**, under **Appearance**. It colors selections, switches and highlights.
 
 *See also: [Keyboard shortcuts](#keyboard-shortcuts), [Your library](#your-library).* · [Back to contents](#contents)
 

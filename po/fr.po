@@ -1258,6 +1258,14 @@ msgstr ""
 "Les raccourcis modifiés par l’utilisateur, sous forme de paires nom d’action "
 "et raccourci. Les actions absentes gardent leur raccourci par défaut."
 
+#: data/io.github.gor3pig.Pigoune.gschema.xml
+msgid "Color scheme"
+msgstr "Thème de l’interface"
+
+#: data/io.github.gor3pig.Pigoune.gschema.xml
+msgid "Whether Pigoune follows the light or dark style of the system, or always uses the light or the dark style."
+msgstr "Indique si Pigoune suit le style clair ou sombre du système, ou utilise toujours le style clair ou le style sombre."
+
 #: data/io.github.gor3pig.Pigoune.gschema.xml:61
 msgid "Interface language"
 msgstr "Langue de l’interface"
@@ -9329,3 +9337,15 @@ msgstr "Glisser une image hors de Pigoune vers le gestionnaire de fichiers fonct
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in
 msgid "A drag whose files cannot be prepared now says so."
 msgstr "Un glisser dont les fichiers n’ont pas pu être préparés le dit désormais."
+
+#: crates/pigoune-app/src/theme_selector.rs
+msgid "Follow the System"
+msgstr "Suivre le système"
+
+#: crates/pigoune-app/src/theme_selector.rs
+msgid "Light Theme"
+msgstr "Thème clair"
+
+#: crates/pigoune-app/src/theme_selector.rs
+msgid "Dark Theme"
+msgstr "Thème sombre"

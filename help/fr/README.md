@@ -971,7 +971,9 @@ La plupart des raccourcis listés dans [Raccourcis clavier](#raccourcis-clavier)
 
 ### Style et couleurs
 
-Le style et la couleur d’accentuation ne se règlent pas dans les Préférences : Pigoune suit ceux que vous choisissez dans les **Paramètres** de GNOME, rubrique **Apparence**. Ils couvrent le style clair ou sombre, et la couleur des sélections, des interrupteurs et des surlignages.
+Les trois boutons ronds en haut du menu principal choisissent le style : **Suivre le système** (par défaut), **Thème clair** ou **Thème sombre**. Le choix s’applique tout de suite et est retenu. La page d’accueil les propose aussi.
+
+La couleur d’accentuation ne se règle pas dans les Préférences : Pigoune suit celle que vous choisissez dans les **Paramètres** de GNOME, rubrique **Apparence**. Elle colore les sélections, les interrupteurs et les surlignages.
 
 *Voir aussi : [Raccourcis clavier](#raccourcis-clavier), [Votre bibliothèque](#votre-bibliothèque).* · [Retour au sommaire](#sommaire)
 

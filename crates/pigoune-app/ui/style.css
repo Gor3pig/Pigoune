@@ -909,3 +909,40 @@ textview.annotation-editor {
 .layers-list row.layer-drop-below {
   box-shadow: inset 0 -2px 0 0 @accent_bg_color;
 }
+
+.theme-selector .theme-swatch {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.theme-selector .theme-swatch.system {
+  background-image: linear-gradient(135deg, #ffffff 50%, #241f31 50%);
+  color: var(--accent-color);
+}
+
+.theme-selector .theme-swatch.light {
+  background-image: none;
+  background-color: #ffffff;
+  color: #241f31;
+}
+
+.theme-selector .theme-swatch.dark {
+  background-image: none;
+  background-color: #241f31;
+  color: #ffffff;
+}
+
+.theme-selector .theme-swatch image {
+  opacity: 0;
+}
+
+.theme-selector .theme-swatch:checked image {
+  opacity: 1;
+}
+
+.theme-selector .theme-swatch:checked {
+  box-shadow: inset 0 0 0 2px var(--accent-bg-color);
+}

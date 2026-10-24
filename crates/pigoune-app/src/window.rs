@@ -295,6 +295,8 @@ mod imp {
         #[template_child]
         pub library_menu_button: TemplateChild<gtk::MenuButton>,
         #[template_child]
+        pub welcome_menu_button: TemplateChild<gtk::MenuButton>,
+        #[template_child]
         pub welcome_recent_box: TemplateChild<gtk::Box>,
         #[template_child]
         pub welcome_recent_list: TemplateChild<gtk::ListBox>,
@@ -674,6 +676,7 @@ mod imp {
             self.obj().watch_for_updates();
             self.obj().follow_screen();
             self.obj().connect_history_buttons();
+            self.obj().install_theme_selectors();
         }
     }
 
