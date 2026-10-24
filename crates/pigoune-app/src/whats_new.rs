@@ -141,8 +141,35 @@ fn points_of_version_3_1() -> Vec<Point> {
     ]
 }
 
+fn points_of_version_3_2() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "weather-clear-night-symbolic",
+            title: gettext("Choose Your Theme"),
+            text: gettext(
+                "Three round buttons at the top of the main menu follow the system, or always use the light or the dark theme.",
+            ),
+        },
+        Point {
+            icon: "view-list-symbolic",
+            title: gettext("See What Is Left Out of Duplicates"),
+            text: gettext(
+                "The Left Out button of the Duplicates tab lists the collections left out of the search, and Include brings one back. The sidebar no longer shows a mark.",
+            ),
+        },
+        Point {
+            icon: "image-x-generic-symbolic",
+            title: gettext("Thumbnails Come Back by Themselves"),
+            text: gettext(
+                "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it.",
+            ),
+        },
+    ]
+}
+
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.2.0" => points_of_version_3_2(),
         "3.1.0" => points_of_version_3_1(),
         "3.0.0" => points_of_version_3(),
         "2.12.0" => vec![
@@ -320,7 +347,7 @@ mod tests {
 
     #[test]
     fn the_news_of_the_current_major_version_are_between_three_and_five_complete_points() {
-        let points = points_of("3.1.0");
+        let points = points_of("3.2.0");
         assert!((3..=5).contains(&points.len()), "{} points", points.len());
         for point in &points {
             assert!(!point.icon.is_empty() && !point.title.is_empty() && !point.text.is_empty());

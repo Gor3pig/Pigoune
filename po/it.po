@@ -8993,3 +8993,27 @@ msgstr "Tema chiaro"
 #: crates/pigoune-app/src/theme_selector.rs
 msgid "Dark Theme"
 msgstr "Tema scuro"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Choose Your Theme"
+msgstr "Scegli il tema"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Three round buttons at the top of the main menu follow the system, or always use the light or the dark theme."
+msgstr "Tre pulsanti rotondi in alto nel menu principale seguono il sistema oppure usano sempre il tema chiaro o scuro."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "See What Is Left Out of Duplicates"
+msgstr "Vedi cosa è escluso dai duplicati"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "The Left Out button of the Duplicates tab lists the collections left out of the search, and Include brings one back. The sidebar no longer shows a mark."
+msgstr "Il pulsante Escluse della scheda Duplicati elenca le raccolte escluse dalla ricerca, e Includi ne riporta una. La barra laterale non mostra più alcun segno."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Thumbnails Come Back by Themselves"
+msgstr "Le miniature tornano da sole"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
+msgstr "Dopo Svuota in Gestisci libreria, Pigoune ricrea le miniature in background, mentre non lo usi."

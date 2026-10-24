@@ -9349,3 +9349,43 @@ msgstr "Thème clair"
 #: crates/pigoune-app/src/theme_selector.rs
 msgid "Dark Theme"
 msgstr "Thème sombre"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Choose Your Theme"
+msgstr "Choisissez votre thème"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Three round buttons at the top of the main menu follow the system, or always use the light or the dark theme."
+msgstr "Trois boutons ronds en haut du menu principal suivent le système, ou utilisent toujours le thème clair ou le thème sombre."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "See What Is Left Out of Duplicates"
+msgstr "Voyez ce qui est exclu des doublons"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "The Left Out button of the Duplicates tab lists the collections left out of the search, and Include brings one back. The sidebar no longer shows a mark."
+msgstr "Le bouton Exclues de l’onglet Doublons liste les collections exclues de la recherche, et Inclure en remet une. La barre latérale n’affiche plus de marque."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Thumbnails Come Back by Themselves"
+msgstr "Les vignettes reviennent toutes seules"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
+msgstr "Après Vider dans Gérer la bibliothèque, Pigoune refait les vignettes en arrière-plan, quand vous ne l’utilisez pas."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Choose your theme, see which collections are left out of the duplicate search, and get your thumbnails back after clearing them."
+msgstr "Choisissez votre thème, voyez quelles collections sont exclues de la recherche de doublons, et retrouvez vos vignettes après les avoir vidées."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Three round buttons at the top of the main menu, and of the menu of the welcome page, follow the system or always use the light or the dark theme. The choice applies at once and is remembered."
+msgstr "Trois boutons ronds en haut du menu principal, et du menu de la page d’accueil, suivent le système ou utilisent toujours le thème clair ou le thème sombre. Le choix s’applique tout de suite et est retenu."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "The Left Out button of the Duplicates tab lists the collections left out of the duplicate search, with where each one sits and how many sub-collections go with it, and Include brings one back. The sidebar no longer shows a mark for them."
+msgstr "Le bouton Exclues de l’onglet Doublons liste les collections exclues de la recherche de doublons, avec leur emplacement et le nombre de sous-collections qui les suivent, et Inclure en remet une. La barre latérale n’affiche plus de marque pour elles."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "After Clear next to the thumbnails in Manage Library, Pigoune makes them again quietly in the background, while you are not using it."
+msgstr "Après Vider, à côté des vignettes dans Gérer la bibliothèque, Pigoune les refait discrètement en arrière-plan, quand vous ne l’utilisez pas."
