@@ -13,6 +13,7 @@ pub const THUMBNAIL_SIZE: &str = "thumbnail-size";
 pub const SHOW_DETAILS: &str = "show-details";
 pub const SORT_CRITERION: &str = "sort-criterion";
 pub const SORT_REVERSED: &str = "sort-reversed";
+pub const COLOR_SCHEME: &str = "color-scheme";
 pub const LANGUAGE: &str = "language";
 pub const SHORTCUTS: &str = "shortcuts";
 pub const LAST_SEEN_VERSION: &str = "last-seen-version";
