@@ -217,6 +217,17 @@ impl Library {
         layout::thumbnail_path(&self.root, id, pixels)
     }
 
+    pub fn asset_ids_for_thumbnails(&self) -> Result<Vec<AssetId>, LibraryError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id FROM assets WHERE trashed_at_unix_ms IS NULL
+             ORDER BY added_at_unix_ms DESC, id DESC",
+        )?;
+        let ids = statement
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(ids)
+    }
+
     pub fn assets_awaiting_colors(&self, limit: usize) -> Result<Vec<AssetId>, LibraryError> {
         let mut statement = self.connection.prepare(
             "SELECT id FROM assets WHERE colors IS NULL

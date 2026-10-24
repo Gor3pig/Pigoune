@@ -823,7 +823,7 @@ A single bar shows what the library takes on its disk, split between the assets,
 
 Below are the location of the library (with buttons to copy it or open its folder), whether that disk is removable, the space taken by the thumbnails, when the library was created and which versions of Pigoune can open it.
 
-**Clear** next to the thumbnails frees their space. They are made again when they are needed.
+**Clear** next to the thumbnails frees their space. Pigoune makes them again quietly in the background, while you are not using it.
 
 ### Check the health of your library
 

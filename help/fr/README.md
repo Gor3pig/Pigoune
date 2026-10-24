@@ -823,7 +823,7 @@ Une seule barre montre la place de la bibliothèque sur son disque, répartie en
 
 En dessous figurent l’emplacement de la bibliothèque (avec des boutons pour le copier ou ouvrir son dossier), l’indication d’un disque amovible, la place prise par les vignettes, la date de création de la bibliothèque et les versions de Pigoune capables de l’ouvrir.
 
-**Vider**, à côté des vignettes, libère leur place. Pigoune les recrée quand il en a besoin.
+**Vider**, à côté des vignettes, libère leur place. Pigoune les recrée ensuite discrètement en arrière-plan, quand vous ne l’utilisez pas.
 
 ### Vérifier la santé de la bibliothèque
 
