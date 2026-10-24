@@ -325,6 +325,7 @@ mod imp {
         pub update_banner: TemplateChild<adw::Banner>,
         pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
         pub analysing_colors: Cell<bool>,
+        pub rebuilding_thumbnails: Cell<Option<u32>>,
         pub activity: crate::analysis_pace::Activity,
         pub library_generation: Cell<u32>,
         pub library_actions_enabled: Cell<bool>,
@@ -1590,7 +1591,8 @@ impl PigouneWindow {
     }
 
     fn clear_thumbnails(&self) -> Result<(), String> {
-        self.imp()
+        let cleared = self
+            .imp()
             .library
             .borrow()
             .as_ref()
@@ -1598,7 +1600,60 @@ impl PigouneWindow {
                 library
                     .clear_thumbnail_cache()
                     .map_err(|error| error_messages::describe(&error))
-            })
+            });
+        if cleared.is_ok() {
+            glib::idle_add_local_once(glib::clone!(
+                #[weak(rename_to = window)]
+                self,
+                move || window.rebuild_thumbnails()
+            ));
+        }
+        cleared
+    }
+
+    fn rebuild_thumbnails(&self) {
+        let generation = self.imp().library_generation.get();
+        if self.imp().rebuilding_thumbnails.get() == Some(generation) {
+            return;
+        }
+        self.imp().rebuilding_thumbnails.set(Some(generation));
+        let window = self.clone();
+        glib::spawn_future_local(async move {
+            window.rebuild_missing_thumbnails(generation).await;
+            if window.imp().rebuilding_thumbnails.get() == Some(generation) {
+                window.imp().rebuilding_thumbnails.set(None);
+            }
+        });
+    }
+
+    async fn rebuild_missing_thumbnails(&self, generation: u32) {
+        let ids = self
+            .imp()
+            .library
+            .borrow()
+            .as_ref()
+            .and_then(|library| library.asset_ids_for_thumbnails().ok())
+            .unwrap_or_default();
+        for id in ids {
+            let Some((file, thumbnail_file)) = self.thumbnail_to_rebuild(id) else {
+                continue;
+            };
+            if !self.wait_for_calm_in(generation).await {
+                return;
+            }
+            thumbnails::thumbnail(&file, &thumbnail_file).await;
+        }
+    }
+
+    fn thumbnail_to_rebuild(&self, id: AssetId) -> Option<(PathBuf, PathBuf)> {
+        let library = self.imp().library.borrow();
+        let library = library.as_ref()?;
+        let thumbnail_file = library.thumbnail_file(id, THUMBNAIL_PIXELS);
+        if thumbnail_file.exists() {
+            return None;
+        }
+        let asset = library.asset(id).ok().flatten()?;
+        Some((readable_original(library, &asset)?, thumbnail_file))
     }
 
     fn health_actions(&self) -> HealthActions {
