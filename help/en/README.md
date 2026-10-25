@@ -680,7 +680,7 @@ A new annotation stays selected: you can move it, resize it by its handles and c
 
 Every annotation is a layer. The **Layers** panel lists them from front to back.
 
-<img src="../../data/screenshots/13.png" alt="The editor in dark style with the Tools section folded and the Layers panel listing a step, a text, an arrow, a rectangle and a blur" width="720">
+<img src="../../data/screenshots/13.png" alt="The editor in dark style with the Layers panel listing a step, a text, an arrow, a rectangle and a blur" width="720">
 
 | To… | Do this |
 |---|---|
@@ -696,11 +696,11 @@ A hidden layer disappears from the editor and from the result, but it is not del
 
 ### Your workspace
 
-**Tools**, **Properties** and **Layers** each fold and unfold with a click on their title.
+**Tools**, **Properties** and **Layers** share the panel on the right and are always shown, one under the other. The tools are a small grid of icons: hover one to see its name and its shortcut. Drag the handle between Properties and Layers to give one more height.
 
 The button next to **Redo** in the header, or <kbd>F9</kbd>, hides the whole editor panel to give the image more room. **Save** and the copy, export and capture buttons then move to the header.
 
-Pigoune remembers which sections are folded and whether the panel is hidden. None of this changes your annotations, the selected tool or the zoom.
+Pigoune remembers whether the panel is hidden. None of this changes your annotations, the selected tool or the zoom.
 
 ### Hide what is private
 

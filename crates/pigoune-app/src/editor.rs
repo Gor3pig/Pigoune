@@ -38,7 +38,7 @@ pub struct EditedCapture {
     pub document: AnnotationDocument,
 }
 
-const TOOLS_PER_ROW: usize = 3;
+const TOOLS_PER_ROW: usize = 6;
 const COMPACT_TOOLS_PER_ROW: usize = 7;
 const COMPACT_SECTION_HEIGHT: i32 = 200;
 const LAYERS_MINIMUM_HEIGHT: i32 = 150;
@@ -123,9 +123,7 @@ mod imp {
         #[template_child]
         pub layers_section: TemplateChild<gtk::Box>,
         #[template_child]
-        pub layers_toggle: TemplateChild<gtk::ToggleButton>,
-        #[template_child]
-        pub layers_arrow: TemplateChild<gtk::Image>,
+        pub layers_heading: TemplateChild<gtk::Label>,
         #[template_child]
         pub tools_toggle: TemplateChild<gtk::ToggleButton>,
         #[template_child]
@@ -134,10 +132,6 @@ mod imp {
         pub tools_arrow: TemplateChild<gtk::Image>,
         #[template_child]
         pub tools_hint: TemplateChild<gtk::Label>,
-        #[template_child]
-        pub properties_toggle: TemplateChild<gtk::ToggleButton>,
-        #[template_child]
-        pub properties_arrow: TemplateChild<gtk::Image>,
         #[template_child]
         pub properties_section: TemplateChild<gtk::Box>,
         #[template_child]
@@ -150,7 +144,6 @@ mod imp {
         pub canvas_menu: RefCell<Option<gtk::PopoverMenu>>,
         pub properties_position: Cell<i32>,
         pub sections_placed: Cell<bool>,
-        pub sections_open: Cell<(bool, bool)>,
         pub divider_dragged: Cell<bool>,
         pub layer_edit_buttons: RefCell<Vec<gtk::Button>>,
         #[template_child]
@@ -258,16 +251,6 @@ impl PigouneEditor {
             .build();
         settings
             .bind("editor-tools-expanded", &*imp.tools_toggle, "active")
-            .build();
-        settings
-            .bind(
-                "editor-properties-expanded",
-                &*imp.properties_toggle,
-                "active",
-            )
-            .build();
-        settings
-            .bind("editor-layers-expanded", &*imp.layers_toggle, "active")
             .build();
     }
 
@@ -473,10 +456,13 @@ impl PigouneEditor {
         for (index, tool) in EditorTool::ALL.into_iter().enumerate() {
             let button = gtk::ToggleButton::new();
             let content = gtk::Box::new(gtk::Orientation::Vertical, 4);
+            content.set_halign(gtk::Align::Center);
+            content.set_valign(gtk::Align::Center);
             content.append(&gtk::Image::from_icon_name(tool.icon_name()));
             let label = gtk::Label::new(Some(&tool.label()));
             label.set_ellipsize(pango::EllipsizeMode::End);
             label.add_css_class("caption");
+            label.set_visible(self.compact());
             content.append(&label);
             button.set_child(Some(&content));
             button.set_tooltip_text(Some(&format!(
@@ -794,17 +780,6 @@ impl PigouneEditor {
 
     fn setup_sections(&self) {
         let imp = self.imp();
-        imp.sections_open.set((true, true));
-        imp.properties_toggle.connect_toggled(glib::clone!(
-            #[weak(rename_to = editor)]
-            self,
-            move |_| editor.apply_sections()
-        ));
-        imp.layers_toggle.connect_toggled(glib::clone!(
-            #[weak(rename_to = editor)]
-            self,
-            move |_| editor.apply_sections()
-        ));
         imp.tools_toggle.connect_toggled(glib::clone!(
             #[weak(rename_to = editor)]
             self,
@@ -838,7 +813,7 @@ impl PigouneEditor {
             self,
             move |paned| {
                 let imp = editor.imp();
-                if imp.divider_dragged.get() && imp.sections_open.get() == (true, true) {
+                if imp.divider_dragged.get() {
                     imp.properties_position.set(paned.position());
                 }
             }
@@ -866,58 +841,26 @@ impl PigouneEditor {
         ));
     }
 
-    fn apply_sections(&self) {
-        let imp = self.imp();
-        let properties = imp.properties_toggle.is_active();
-        let layers = imp.layers_toggle.is_active();
-        let paned = imp.sections_paned.get();
-        imp.sections_open.set((properties, layers));
-        set_section_arrow(&imp.properties_arrow, properties);
-        set_section_arrow(&imp.layers_arrow, layers);
-        imp.properties_scroller.set_visible(properties);
-        imp.layers_scroller.set_visible(layers);
-        imp.layer_buttons.set_visible(layers);
-        paned.set_resize_start_child(properties);
-        paned.set_resize_end_child(layers || !properties);
-        self.place_paned();
-        glib::idle_add_local_once(glib::clone!(
-            #[weak(rename_to = editor)]
-            self,
-            move || editor.place_paned()
-        ));
-    }
-
     fn place_paned(&self) {
         let imp = self.imp();
         let paned = imp.sections_paned.get();
         if !imp.sections_placed.get() || paned.height() <= 0 {
             return;
         }
-        let header = |section: &gtk::Box| section.measure(gtk::Orientation::Vertical, -1).0;
-        let position = match imp.sections_open.get() {
-            (true, true) => {
-                let lowest = header(&imp.properties_section);
-                let highest = (paned.height() - LAYERS_MINIMUM_HEIGHT).max(lowest);
-                imp.properties_position.get().clamp(lowest, highest)
-            }
-            (false, _) => header(&imp.properties_section),
-            (true, false) => paned.height() - header(&imp.layers_section),
-        };
-        paned.set_position(position);
+        let lowest = imp
+            .properties_section
+            .measure(gtk::Orientation::Vertical, -1)
+            .0;
+        let highest = (paned.height() - LAYERS_MINIMUM_HEIGHT).max(lowest);
+        paned.set_position(imp.properties_position.get().clamp(lowest, highest));
     }
 
     fn show_tools(&self) {
         let imp = self.imp();
-        let shown = imp.tools_toggle.is_active();
-        set_section_arrow(&imp.tools_arrow, shown);
-        imp.tools_grid.set_visible(shown);
-        imp.tools_hint.set_visible(!shown);
-        self.place_paned();
-        glib::idle_add_local_once(glib::clone!(
-            #[weak(rename_to = editor)]
-            self,
-            move || editor.place_paned()
-        ));
+        let folded = self.compact() && !imp.tools_toggle.is_active();
+        set_section_arrow(&imp.tools_arrow, !folded);
+        imp.tools_grid.set_visible(!folded);
+        imp.tools_hint.set_visible(folded);
     }
 
     fn place_sections(&self, compact: bool) {
@@ -928,7 +871,6 @@ impl PigouneEditor {
             parent.is::<adw::ViewStack>()
                 || parent.parent().is_some_and(|p| p.is::<adw::ViewStack>())
         });
-        imp.layers_toggle.set_visible(!compact);
         imp.layer_buttons.set_halign(if compact {
             gtk::Align::End
         } else {
@@ -957,7 +899,12 @@ impl PigouneEditor {
             imp.sections_paned.set_end_child(Some(&layers));
             scroller.set_min_content_height(60);
             imp.layers_scroller.set_min_content_height(90);
-            self.apply_sections();
+            self.place_paned();
+            glib::idle_add_local_once(glib::clone!(
+                #[weak(rename_to = editor)]
+                self,
+                move || editor.place_paned()
+            ));
         }
     }
 
@@ -973,6 +920,9 @@ impl PigouneEditor {
             let column = i32::try_from(index % columns).unwrap_or(0);
             let row = i32::try_from(index / columns).unwrap_or(0);
             imp.tools_grid.attach(button, column, row, 1, 1);
+            if let Some(label) = button.child().and_then(|content| content.last_child()) {
+                label.set_visible(compact);
+            }
         }
     }
 
@@ -996,6 +946,7 @@ impl PigouneEditor {
         let panel = imp.panel.get();
         let compact = self.compact();
         self.place_sections(compact);
+        self.show_tools();
         self.arrange_tools(compact);
         if compact {
             imp.panel_view.set_content(gtk::Widget::NONE);

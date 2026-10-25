@@ -75,22 +75,13 @@ pub fn the_panels_only_change_what_is_visible() {
     let imp = editor.imp();
     let before = state(&editor);
 
-    imp.tools_toggle.set_active(false);
-    assert!(!imp.tools_grid.is_visible() && imp.tools_hint.is_visible());
-    assert_same(&before, &state(&editor), "tools folded");
-    imp.layers_toggle.set_active(false);
-    assert!(!imp.layers_scroller.is_visible() && !imp.layer_buttons.is_visible());
-    assert_same(&before, &state(&editor), "layers folded");
-    imp.properties_toggle.set_active(false);
-    assert!(!imp.properties_scroller.is_visible());
-    assert_same(&before, &state(&editor), "everything folded");
-
-    imp.properties_toggle.set_active(true);
-    imp.layers_toggle.set_active(true);
-    imp.tools_toggle.set_active(true);
     assert!(imp.tools_grid.is_visible() && !imp.tools_hint.is_visible());
     assert!(imp.layers_scroller.is_visible() && imp.properties_scroller.is_visible());
-    assert_same(&before, &state(&editor), "everything shown again");
+    assert!(
+        !imp.tools_toggle.is_visible(),
+        "no fold button in the wide layout"
+    );
+    assert_same(&before, &state(&editor), "everything shown");
 
     let header_of = |button: &gtk::Widget| {
         button
@@ -238,7 +229,7 @@ pub fn the_sidebar_button_stays_where_it_is() {
     window.close();
 }
 
-pub fn the_layers_can_always_be_reached_after_folding_and_unfolding_the_panels() {
+pub fn the_tools_the_options_and_the_layers_are_all_in_view_in_a_wide_window() {
     let _ = adw::init();
     let _ = gtk::gio::resources_register_include!("pigoune.gresource");
     let window = gtk::Window::new();
@@ -252,20 +243,33 @@ pub fn the_layers_can_always_be_reached_after_folding_and_unfolding_the_panels()
     window.present();
     settle(600);
     let imp = editor.imp();
+    assert!(imp.layers_scroller.height() > 40, "the layers show");
+    assert!(imp.properties_scroller.height() > 40, "the options show");
     assert!(
-        imp.layers_scroller.height() > 40,
-        "the layers show at first"
+        imp.tools_grid.is_visible() && imp.tools_grid.height() < 140,
+        "the tools are a small grid that stays in view"
     );
-    for round in 0..4 {
-        imp.tools_toggle.set_active(false);
-        imp.layers_toggle.set_active(false);
-        settle(300);
-        imp.layers_toggle.set_active(true);
-        imp.tools_toggle.set_active(true);
-        settle(1500);
+    for (tool, button) in imp.tool_buttons.borrow().iter() {
+        let icon = button
+            .child()
+            .and_then(|content| content.first_child())
+            .expect("icon");
+        let bounds = icon.compute_bounds(button).expect("bounds");
+        let off_x = (bounds.x() + bounds.width() / 2.0
+            - f32::from(i16::try_from(button.width()).unwrap_or(0)) / 2.0)
+            .abs();
+        let off_y = (bounds.y() + bounds.height() / 2.0
+            - f32::from(i16::try_from(button.height()).unwrap_or(0)) / 2.0)
+            .abs();
         assert!(
-            imp.layers_scroller.height() > 40 && imp.layers_toggle.height() > 10,
-            "round {round}: the layers are pushed out of the panel"
+            off_x < 1.0 && off_y < 1.0,
+            "{tool:?}: the icon is off centre by {off_x} and {off_y} in a {}x{} button",
+            button.width(),
+            button.height()
+        );
+        assert!(
+            button.tooltip_text().is_some_and(|text| text.contains('(')),
+            "each tool keeps its name and shortcut as a tooltip"
         );
     }
     window.close();
