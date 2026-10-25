@@ -9017,3 +9017,23 @@ msgstr "Le miniature tornano da sole"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
 msgstr "Dopo Svuota in Gestisci libreria, Pigoune ricrea le miniature in background, mentre non lo usi."
+
+#: crates/pigoune-app/src/editor_tool.rs
+msgid "Bubble"
+msgstr "Fumetto"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Shape"
+msgstr "Forma del fumetto"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Fill"
+msgstr "Riempimento del fumetto"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Oval Bubble"
+msgstr "Fumetto ovale"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded Bubble"
+msgstr "Fumetto arrotondato"

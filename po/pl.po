@@ -9115,3 +9115,23 @@ msgstr "Miniatury wracają same"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
 msgstr "Po użyciu Wyczyść w Zarządzaj biblioteką Pigoune odtwarza miniatury w tle, gdy z niego nie korzystasz."
+
+#: crates/pigoune-app/src/editor_tool.rs
+msgid "Bubble"
+msgstr "Dymek"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Shape"
+msgstr "Kształt dymka"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Fill"
+msgstr "Wypełnienie dymka"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Oval Bubble"
+msgstr "Owalny dymek"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded Bubble"
+msgstr "Zaokrąglony dymek"

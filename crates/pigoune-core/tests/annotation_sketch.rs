@@ -28,13 +28,16 @@ fn seed_of(session: &EditSession, id: u32) -> Option<Value> {
 }
 
 #[test]
-fn only_the_stroke_tools_offer_the_hand_drawn_look() {
+fn only_the_outline_tools_offer_the_hand_drawn_look() {
     let offering: Vec<&str> = definitions()
         .iter()
         .filter(|tool| tool.spec("roughness").is_some())
         .map(|tool| tool.kind)
         .collect();
-    assert_eq!(offering, ["rectangle", "ellipse", "line", "arrow"]);
+    assert_eq!(
+        offering,
+        ["rectangle", "ellipse", "line", "arrow", "bubble"]
+    );
 }
 
 #[test]

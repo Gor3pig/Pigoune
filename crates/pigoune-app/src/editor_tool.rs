@@ -1,7 +1,7 @@
 use gettextrs::gettext;
 use pigoune_core::annotations::{
-    ARROW, BLUR, ELLIPSE, HIGHLIGHTER, LINE, PEN, PIXELATE, RECTANGLE, SPOTLIGHT, STEP, TEXT,
-    ToolDefinition,
+    ARROW, BLUR, BUBBLE, ELLIPSE, HIGHLIGHTER, LINE, PEN, PIXELATE, RECTANGLE, SPOTLIGHT, STEP,
+    TEXT, ToolDefinition,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -20,10 +20,11 @@ pub enum EditorTool {
     Blur,
     Pixelate,
     Spotlight,
+    Bubble,
 }
 
 impl EditorTool {
-    pub const ALL: [Self; 13] = [
+    pub const ALL: [Self; 14] = [
         Self::Select,
         Self::Crop,
         Self::Rectangle,
@@ -37,6 +38,7 @@ impl EditorTool {
         Self::Blur,
         Self::Pixelate,
         Self::Spotlight,
+        Self::Bubble,
     ];
 
     pub fn creates(self) -> bool {
@@ -58,6 +60,7 @@ impl EditorTool {
             Self::Blur => 'b',
             Self::Pixelate => 'x',
             Self::Spotlight => 's',
+            Self::Bubble => 'u',
         }
     }
 
@@ -81,6 +84,7 @@ impl EditorTool {
             Self::Blur => "blur",
             Self::Pixelate => "pixelate",
             Self::Spotlight => "spotlight",
+            Self::Bubble => "bubble",
         }
     }
 
@@ -99,6 +103,7 @@ impl EditorTool {
             Self::Blur => "drop-symbolic",
             Self::Pixelate => "grid-four-symbolic",
             Self::Spotlight => "flashlight-symbolic",
+            Self::Bubble => "chat-circle-symbolic",
         }
     }
 
@@ -117,6 +122,7 @@ impl EditorTool {
             Self::Blur => gettext("Blur"),
             Self::Pixelate => gettext("Pixelate"),
             Self::Spotlight => gettext("Spotlight"),
+            Self::Bubble => gettext("Bubble"),
         }
     }
 
@@ -140,6 +146,7 @@ impl EditorTool {
             Self::Blur => Some(&BLUR),
             Self::Pixelate => Some(&PIXELATE),
             Self::Spotlight => Some(&SPOTLIGHT),
+            Self::Bubble => Some(&BUBBLE),
             _ => None,
         }
     }
@@ -157,6 +164,7 @@ impl EditorTool {
             "blur" => Some(Self::Blur),
             "pixelate" => Some(Self::Pixelate),
             "spotlight" => Some(Self::Spotlight),
+            "bubble" => Some(Self::Bubble),
             _ => None,
         }
     }

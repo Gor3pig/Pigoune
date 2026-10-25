@@ -9068,3 +9068,23 @@ msgstr "Vorschaubilder kommen von allein zurück"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
 msgstr "Nach „Leeren“ in „Bibliothek verwalten“ erstellt Pigoune die Vorschaubilder im Hintergrund neu, solange Sie es nicht benutzen."
+
+#: crates/pigoune-app/src/editor_tool.rs
+msgid "Bubble"
+msgstr "Sprechblase"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Shape"
+msgstr "Form der Sprechblase"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Fill"
+msgstr "Füllung der Sprechblase"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Oval Bubble"
+msgstr "Ovale Sprechblase"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded Bubble"
+msgstr "Abgerundete Sprechblase"

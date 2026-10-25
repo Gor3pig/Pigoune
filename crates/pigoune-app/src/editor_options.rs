@@ -5,7 +5,7 @@ use gettextrs::gettext;
 use gtk::{gdk, glib};
 use pigoune_core::annotations::{
     Color, DefaultValue, OptionKind, OptionSpec, Options, ToolDefinition, Value, color_to_value,
-    number_to_value, value_to_color,
+    is_set_by_handle, number_to_value, value_to_color,
 };
 
 use crate::editor_palette;
@@ -70,12 +70,16 @@ pub fn option_label(id: &str) -> Option<String> {
         "background" => gettext("Text Background"),
         "radius" => gettext("Blur Radius"),
         "cell" => gettext("Cell Size"),
+        "form" => gettext("Bubble Shape"),
+        "fill_color" => gettext("Bubble Fill"),
         _ => return None,
     })
 }
 
 pub fn choice_label(id: &str, choice: &str) -> Option<String> {
     Some(match (id, choice) {
+        ("form", "oval") => gettext("Oval Bubble"),
+        ("form", "rounded") => gettext("Rounded Bubble"),
         ("sequence", "numbers") => gettext("Numbers"),
         ("sequence", "letters") => gettext("Letters"),
         ("background", "bubble") => gettext("Bubble Background"),
@@ -113,7 +117,7 @@ pub fn build_rows(definition: &ToolDefinition, notify: &Notify) -> Vec<OptionRow
     definition
         .options
         .iter()
-        .filter(|spec| spec.kind != OptionKind::Text)
+        .filter(|spec| spec.kind != OptionKind::Text && !is_set_by_handle(spec.id))
         .map(|spec| build_row(spec, notify))
         .collect()
 }
@@ -346,7 +350,7 @@ fn narrow(value: f64) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use pigoune_core::annotations::{OptionKind, definitions};
+    use pigoune_core::annotations::{OptionKind, definitions, is_set_by_handle};
 
     use super::{choice_label, option_label};
 
@@ -354,7 +358,7 @@ mod tests {
     fn every_option_of_every_tool_has_a_label() {
         for definition in definitions() {
             for spec in definition.options {
-                if spec.kind == OptionKind::Text {
+                if spec.kind == OptionKind::Text || is_set_by_handle(spec.id) {
                     continue;
                 }
                 assert!(

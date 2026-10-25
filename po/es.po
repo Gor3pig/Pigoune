@@ -9007,3 +9007,23 @@ msgstr "Las miniaturas vuelven solas"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
 msgstr "Después de Vaciar en Gestionar biblioteca, Pigoune vuelve a crear las miniaturas en segundo plano, mientras no lo usa."
+
+#: crates/pigoune-app/src/editor_tool.rs
+msgid "Bubble"
+msgstr "Bocadillo"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Shape"
+msgstr "Forma del bocadillo"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Fill"
+msgstr "Relleno del bocadillo"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Oval Bubble"
+msgstr "Bocadillo ovalado"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded Bubble"
+msgstr "Bocadillo redondeado"
