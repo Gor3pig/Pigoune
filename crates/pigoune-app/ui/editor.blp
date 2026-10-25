@@ -181,8 +181,20 @@ template $PigouneEditor: Adw.Bin {
             orientation: vertical;
             spacing: 6;
 
+            Label {
+              label: _("Tools");
+              halign: start;
+              margin-start: 6;
+              visible: bind template.compact inverted;
+
+              styles [
+                "heading",
+              ]
+            }
+
             ToggleButton tools_toggle {
               active: true;
+              visible: bind template.compact;
               tooltip-text: _("Show or Hide the Tools");
 
               accessibility {
@@ -246,35 +258,14 @@ template $PigouneEditor: Adw.Bin {
                 orientation: vertical;
                 spacing: 6;
 
-                ToggleButton properties_toggle {
-                  active: true;
-                  tooltip-text: _("Show or Hide the Properties");
-
-                  accessibility {
-                    label: _("Properties");
-                  }
+                Label {
+                  label: _("Properties");
+                  halign: start;
+                  margin-start: 6;
 
                   styles [
-                    "flat",
+                    "heading",
                   ]
-
-                  child: Box {
-                    spacing: 6;
-
-                    Image properties_arrow {
-                      icon-name: "pan-down-symbolic";
-                    }
-
-                    Label {
-                      label: _("Properties");
-                      halign: start;
-                      hexpand: true;
-
-                      styles [
-                        "heading",
-                      ]
-                    }
-                  };
                 }
 
                 ScrolledWindow properties_scroller {
@@ -365,36 +356,16 @@ template $PigouneEditor: Adw.Bin {
                 Box {
                   spacing: 6;
 
-                  ToggleButton layers_toggle {
-                    active: true;
+                  Label layers_heading {
+                    label: _("Layers");
+                    halign: start;
                     hexpand: true;
-                    tooltip-text: _("Show or Hide the Layers");
-
-                    accessibility {
-                      label: _("Layers");
-                    }
+                    margin-start: 6;
+                    visible: bind template.compact inverted;
 
                     styles [
-                      "flat",
+                      "heading",
                     ]
-
-                    child: Box {
-                      spacing: 6;
-
-                      Image layers_arrow {
-                        icon-name: "pan-down-symbolic";
-                      }
-
-                      Label {
-                        label: _("Layers");
-                        halign: start;
-                        hexpand: true;
-
-                        styles [
-                          "heading",
-                        ]
-                      }
-                    };
                   }
 
                   Box layer_buttons {

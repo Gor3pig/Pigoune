@@ -680,7 +680,7 @@ Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la red
 
 Chaque annotation est un calque. Le panneau **Calques** les liste de l’avant vers l’arrière.
 
-<img src="../../data/screenshots/13.png" alt="L’éditeur en style sombre, avec la section Outils repliée et le panneau Calques qui liste une étape, un texte, une flèche, un rectangle et un flou" width="720">
+<img src="../../data/screenshots/13.png" alt="L’éditeur en style sombre, avec le panneau Calques qui liste une étape, un texte, une flèche, un rectangle et un flou" width="720">
 
 | Pour… | Faites ceci |
 |---|---|
@@ -696,11 +696,11 @@ Un calque masqué disparaît de l’éditeur et du résultat, mais n’est pas s
 
 ### Votre espace de travail
 
-**Outils**, **Propriétés** et **Calques** se replient et se déplient d’un clic sur leur titre.
+**Outils**, **Propriétés** et **Calques** se partagent le panneau de droite et sont toujours affichés, l’un sous l’autre. Les outils forment une petite grille d’icônes : survolez-en une pour voir son nom et son raccourci. Glissez la poignée entre Propriétés et Calques pour donner plus de hauteur à l’un.
 
 Le bouton à côté de **Rétablir** dans l’en-tête, ou <kbd>F9</kbd>, masque tout le panneau de l’éditeur pour laisser plus de place à l’image. **Enregistrer** et les boutons de copie, d’export et de capture passent alors dans l’en-tête.
 
-Pigoune retient les sections repliées et l’état du panneau. Rien de cela ne change vos annotations, l’outil choisi ou le zoom.
+Pigoune retient l’état du panneau. Rien de cela ne change vos annotations, l’outil choisi ou le zoom.
 
 ### Cacher ce qui est privé
 
