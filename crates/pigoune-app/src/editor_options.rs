@@ -73,6 +73,7 @@ pub fn option_label(id: &str) -> Option<String> {
         "form" => gettext("Bubble Shape"),
         "lettering" => gettext("Bubble Lettering"),
         "bumps" => gettext("Cloud Bumps"),
+        "shadow_style" => gettext("Shadow Style"),
         "fill_color" => gettext("Bubble Fill"),
         _ => return None,
     })
@@ -80,6 +81,8 @@ pub fn option_label(id: &str) -> Option<String> {
 
 pub fn choice_label(id: &str, choice: &str) -> Option<String> {
     Some(match (id, choice) {
+        ("shadow_style", "soft") => gettext("Soft Shadow"),
+        ("shadow_style", "hard") => gettext("Hard Shadow"),
         ("bumps", "small") => gettext("Small Bumps"),
         ("bumps", "medium") => gettext("Medium Bumps"),
         ("lettering", "cartoon") => gettext("Cartoon Lettering"),

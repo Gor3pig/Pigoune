@@ -194,7 +194,7 @@ pub fn append_shape(
         scene,
     };
     let turned = turn_around_pivot(snapshot, shape, context);
-    if shape.toggle("shadow") && shape.kind != "bubble" {
+    if shape.toggle("shadow") && shape.choice("shadow_style") != "hard" {
         snapshot.push_shadow(&[drop_shadow(scene)]);
         renderer(snapshot, shape, &draw);
         snapshot.pop();
@@ -354,7 +354,7 @@ fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     let Some(parts) = bubble_parts(shape) else {
         return;
     };
-    if shape.toggle("shadow") {
+    if shape.toggle("shadow") && shape.choice("shadow_style") == "hard" {
         draw_bubble_shadow(snapshot, shape, &parts, draw);
     }
     for (index, outline) in parts.iter().enumerate() {

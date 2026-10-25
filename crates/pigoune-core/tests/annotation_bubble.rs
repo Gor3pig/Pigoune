@@ -230,8 +230,8 @@ fn the_tail_cannot_be_dragged_further_than_the_stored_range() {
 
     let moved = resized(&shape, Handle::Tail, point(100_000.0, -100_000.0));
 
-    assert!(same(moved.number("tail_x"), 4.0));
-    assert!(same(moved.number("tail_y"), -3.0));
+    assert!(same(moved.number("tail_x"), 1.5));
+    assert!(same(moved.number("tail_y"), -1.5));
 }
 
 #[test]
@@ -511,4 +511,22 @@ fn the_cloud_ends_its_tail_in_three_circles_when_small_and_two_when_medium() {
     let medium = small.with_option("bumps", json!("medium"));
     assert_eq!(bubble_parts(&small).expect("parts").len(), 4);
     assert_eq!(bubble_parts(&medium).expect("parts").len(), 3);
+}
+
+#[test]
+fn a_stored_tail_beyond_the_range_is_brought_back_to_one_size_from_the_edge() {
+    let shape = bubble("oval", (10.0, -10.0), 0.0);
+    let tip = bubble_tail(&shape).expect("tip");
+    assert!(tip.x <= 500.5 && tip.y >= -49.5);
+}
+
+#[test]
+fn the_shadow_style_is_soft_by_default_and_only_offered_with_a_shadow() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+    assert_eq!(shape.choice("shadow_style"), "soft");
+    let spec = definition("bubble")
+        .expect("tool")
+        .spec("shadow_style")
+        .expect("spec");
+    assert_eq!(spec.shown_if, Some("shadow"));
 }
