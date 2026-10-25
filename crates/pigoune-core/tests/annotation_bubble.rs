@@ -460,3 +460,55 @@ fn a_bubble_speaks_in_cartoon_lettering_unless_told_otherwise() {
     assert!(spec.accepts(&json!("cartoon")) && spec.accepts(&json!("normal")));
     assert!(!spec.accepts(&json!("gothic")));
 }
+
+fn tail_width(form: &str, tail: (f32, f32)) -> f32 {
+    let shape = bubble(form, tail, 0.0);
+    let tip = bubble_tail(&shape).expect("tip");
+    let outline = bubble_outline(&shape).expect("outline");
+    let tip_index = outline
+        .iter()
+        .enumerate()
+        .min_by(|(_, left), (_, right)| {
+            let distance = |p: &&Point| (p.x - tip.x).hypot(p.y - tip.y);
+            distance(left).total_cmp(&distance(right))
+        })
+        .map(|(index, _)| index)
+        .expect("tip index");
+    let around = |offset: usize| outline[(tip_index + offset) % outline.len()];
+    let count = outline.len();
+    let first = around(count - 8);
+    let last = around(8);
+    (first.x - last.x).hypot(first.y - last.y)
+}
+
+#[test]
+fn the_tail_of_a_smooth_bubble_is_narrow_in_every_direction() {
+    for form in ["oval", "rounded"] {
+        for tail in [
+            (0.3, 0.8),
+            (-0.9, 0.0),
+            (0.9, 0.0),
+            (0.0, -0.9),
+            (-0.6, -0.8),
+        ] {
+            let width = tail_width(form, tail);
+            assert!(width < 30.0, "{form} {tail:?} base {width}");
+        }
+    }
+}
+
+#[test]
+fn the_cloud_has_more_bumps_when_they_are_small() {
+    let small = bubble_parts(&bubble("cloud", (0.0, 0.0), 0.0)).expect("parts");
+    let medium_shape = bubble("cloud", (0.0, 0.0), 0.0).with_option("bumps", json!("medium"));
+    let medium = bubble_parts(&medium_shape).expect("parts");
+    assert!(small[0].len() > medium[0].len());
+}
+
+#[test]
+fn the_cloud_ends_its_tail_in_three_circles_when_small_and_two_when_medium() {
+    let small = bubble("cloud", (0.3, 0.8), 0.0);
+    let medium = small.with_option("bumps", json!("medium"));
+    assert_eq!(bubble_parts(&small).expect("parts").len(), 4);
+    assert_eq!(bubble_parts(&medium).expect("parts").len(), 3);
+}

@@ -19,6 +19,7 @@ use crate::fonts::CARTOON_FAMILY;
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
 const SHADOW_BLUR: f32 = 6.0;
+const HARD_SHADOW_OFFSET: f32 = 4.0;
 const SHADOW_OPACITY: f32 = 0.45;
 const SHADOW_REFERENCE_WIDTH: f32 = 1200.0;
 const SHADOW_LARGEST_SCALE: f32 = 4.0;
@@ -193,7 +194,7 @@ pub fn append_shape(
         scene,
     };
     let turned = turn_around_pivot(snapshot, shape, context);
-    if shape.toggle("shadow") {
+    if shape.toggle("shadow") && shape.kind != "bubble" {
         snapshot.push_shadow(&[drop_shadow(scene)]);
         renderer(snapshot, shape, &draw);
         snapshot.pop();
@@ -221,11 +222,15 @@ fn turn_around_pivot(snapshot: &gtk::Snapshot, shape: &Shape, context: &pango::C
     true
 }
 
-fn drop_shadow(scene: Option<&Scene>) -> gsk::Shadow {
-    let scale = scene.map_or(1.0, |scene| {
+fn shadow_scale(scene: Option<&Scene>) -> f32 {
+    scene.map_or(1.0, |scene| {
         (pixels(scene.backdrop.texture.width()) / SHADOW_REFERENCE_WIDTH)
             .clamp(1.0, SHADOW_LARGEST_SCALE)
-    });
+    })
+}
+
+fn drop_shadow(scene: Option<&Scene>) -> gsk::Shadow {
+    let scale = shadow_scale(scene);
     gsk::Shadow::new(
         gdk::RGBA::new(0.0, 0.0, 0.0, SHADOW_OPACITY),
         SHADOW_OFFSET.0 * scale,
@@ -349,6 +354,9 @@ fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     let Some(parts) = bubble_parts(shape) else {
         return;
     };
+    if shape.toggle("shadow") {
+        draw_bubble_shadow(snapshot, shape, &parts, draw);
+    }
     for (index, outline) in parts.iter().enumerate() {
         let path = polygon_path(outline);
         snapshot.append_fill(
@@ -369,6 +377,24 @@ fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
         );
     }
     draw_bubble_text(snapshot, shape, draw);
+}
+
+fn draw_bubble_shadow(snapshot: &gtk::Snapshot, shape: &Shape, parts: &[Vec<Point>], draw: &Draw) {
+    let scale = shadow_scale(draw.scene);
+    let ink = gdk::RGBA::new(0.0, 0.0, 0.0, 1.0);
+    let stroke = stroke_of(shape, false);
+    stroke.set_dash(&[]);
+    snapshot.save();
+    snapshot.translate(&graphene::Point::new(
+        HARD_SHADOW_OFFSET * scale,
+        HARD_SHADOW_OFFSET * scale,
+    ));
+    for outline in parts {
+        let path = polygon_path(outline);
+        snapshot.append_fill(&path, gsk::FillRule::Winding, &ink);
+        snapshot.append_stroke(&path, &stroke, &ink);
+    }
+    snapshot.restore();
 }
 
 fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {

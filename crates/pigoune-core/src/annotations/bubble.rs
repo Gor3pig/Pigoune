@@ -8,19 +8,22 @@ const OVAL_STEPS: u16 = 128;
 const CORNER_STEPS: u16 = 12;
 const SIDE_STEPS: u16 = 8;
 const CORNER_SHARE: f32 = 0.3;
-const TAIL_BASE_SHARE: f32 = 0.14;
-const TAIL_BEND_SHARE: f32 = 0.12;
+const TAIL_BASE_SHARE: f32 = 0.038;
+const TAIL_BEND_SHARE: f32 = 0.2;
+const TAIL_FAR_SIDE_SHARE: f32 = 0.35;
 const TAIL_STEPS: u16 = 8;
 const OVAL_TEXT_SHARE: f32 = 0.68;
 const ROUNDED_TEXT_SHARE: f32 = 0.84;
 const CLOUD_TEXT_SHARE: f32 = 0.6;
-const BUMP_SHARE: f32 = 0.35;
-const BUMP_HEIGHT_SHARE: f32 = 0.4;
+const SMALL_BUMP_SHARE: f32 = 0.26;
+const MEDIUM_BUMP_SHARE: f32 = 0.33;
+const BUMP_PUFF: f32 = 0.62;
 const SMALLEST_BUMP_COUNT: u16 = 8;
 const LARGEST_BUMP_COUNT: u16 = 48;
 const BUMP_STEPS: u16 = 10;
 const BUBBLE_STEPS: u16 = 32;
-const THOUGHT_WEIGHTS: [f32; 3] = [1.0, 0.7, 0.45];
+const SMALL_THOUGHT_WEIGHTS: [f32; 3] = [1.0, 0.64, 0.36];
+const MEDIUM_THOUGHT_WEIGHTS: [f32; 2] = [1.0, 0.6];
 const THOUGHT_GAP_SHARE: f32 = 0.35;
 const LARGEST_THOUGHT_SHARE: f32 = 0.2;
 const SMALLEST_THOUGHT_REACH: f32 = 2.0;
@@ -61,12 +64,18 @@ pub fn bubble_parts(shape: &Shape) -> Option<Vec<Vec<Point>>> {
     let centre = centre_of(rect);
     Some(match shape.choice("form") {
         "cloud" => {
-            let body = cloud_body(rect);
-            let circles = thought_circles(&body, centre, tip);
+            let medium = shape.choice("bumps") == "medium";
+            let body = cloud_body(rect, medium);
+            let weights: &[f32] = if medium {
+                &MEDIUM_THOUGHT_WEIGHTS
+            } else {
+                &SMALL_THOUGHT_WEIGHTS
+            };
+            let circles = thought_circles(&body, centre, tip, weights);
             std::iter::once(body).chain(circles).collect()
         }
-        "rounded" => vec![with_tail(&rounded_body(rect), centre, tip)],
-        _ => vec![with_tail(&oval_body(rect), centre, tip)],
+        "rounded" => vec![with_tail(&rounded_body(rect), centre, tip, false)],
+        _ => vec![with_tail(&oval_body(rect), centre, tip, true)],
     })
 }
 
@@ -90,44 +99,65 @@ pub fn bubble_hit(shape: &Shape, point: Point, reach: f32) -> bool {
     })
 }
 
-fn cloud_body(rect: Rect) -> Vec<Point> {
+fn cloud_body(rect: Rect, medium: bool) -> Vec<Point> {
     let centre = centre_of(rect);
     let (half_width, half_height) = (rect.width / 2.0, rect.height / 2.0);
     let perimeter = PI
         * (3.0 * (half_width + half_height)
             - ((3.0 * half_width + half_height) * (half_width + 3.0 * half_height)).sqrt());
-    let wanted = (perimeter / (BUMP_SHARE * rect.width.min(rect.height))).round();
+    let share = if medium {
+        MEDIUM_BUMP_SHARE
+    } else {
+        SMALL_BUMP_SHARE
+    };
+    let wanted = (perimeter / (share * rect.width.min(rect.height))).round();
     let count = (0..=LARGEST_BUMP_COUNT)
         .rev()
         .find(|count| f32::from(*count) <= wanted)
         .unwrap_or(SMALLEST_BUMP_COUNT)
         .max(SMALLEST_BUMP_COUNT);
-    let height = perimeter / f32::from(count) * BUMP_HEIGHT_SHARE;
-    let base_width = (half_width - height).max(half_width / 2.0);
-    let base_height = (half_height - height).max(half_height / 2.0);
-    let base: Vec<Point> = (0..count)
-        .map(|index| {
-            let angle = step_ratio(index, count) * TAU;
-            Point {
-                x: centre.x + base_width * angle.cos(),
-                y: centre.y + base_height * angle.sin(),
-            }
-        })
-        .collect();
+    let sagitta = BUMP_PUFF - (BUMP_PUFF * BUMP_PUFF - 0.25).sqrt();
+    let base_with = |inset: f32| -> Vec<Point> {
+        let (base_width, base_height) = (
+            (half_width - inset).max(half_width / 2.0),
+            (half_height - inset).max(half_height / 2.0),
+        );
+        (0..count)
+            .map(|index| {
+                let angle = step_ratio(index, count) * TAU;
+                Point {
+                    x: centre.x + base_width * angle.cos(),
+                    y: centre.y + base_height * angle.sin(),
+                }
+            })
+            .collect()
+    };
+    let longest_chord = |base: &[Point]| {
+        (0..base.len())
+            .map(|index| {
+                let next = base[(index + 1) % base.len()];
+                (next.x - base[index].x).hypot(next.y - base[index].y)
+            })
+            .fold(0.0, f32::max)
+    };
+    let first_pass = base_with(perimeter / f32::from(count) * sagitta);
+    let base = base_with(longest_chord(&first_pass) * sagitta);
     let mut body = Vec::new();
     for (index, from) in base.iter().enumerate() {
         let to = base[(index + 1) % base.len()];
         let (chord_x, chord_y) = (to.x - from.x, to.y - from.y);
         let length = chord_x.hypot(chord_y).max(f32::EPSILON);
+        let radius = length * BUMP_PUFF;
+        let apothem = (radius * radius - length * length / 4.0).max(0.0).sqrt();
         let middle = lerp(*from, to, 0.5);
         let mut normal = (chord_y / length, -chord_x / length);
         if normal.0 * (middle.x - centre.x) + normal.1 * (middle.y - centre.y) < 0.0 {
             normal = (-normal.0, -normal.1);
         }
         body.extend((0..BUMP_STEPS).map(|step| {
-            let along = step_ratio(step, BUMP_STEPS);
-            let swell = (1.0 - (2.0 * along - 1.0) * (2.0 * along - 1.0)).sqrt() * height;
-            let on_chord = lerp(*from, to, along);
+            let offset = (step_ratio(step, BUMP_STEPS) - 0.5) * length;
+            let swell = (radius * radius - offset * offset).max(0.0).sqrt() - apothem;
+            let on_chord = lerp(*from, to, step_ratio(step, BUMP_STEPS));
             Point {
                 x: on_chord.x + normal.0 * swell,
                 y: on_chord.y + normal.1 * swell,
@@ -170,7 +200,7 @@ fn circle_points(centre: Point, radius: f32) -> Vec<Point> {
         .collect()
 }
 
-fn thought_circles(body: &[Point], centre: Point, tip: Point) -> Vec<Vec<Point>> {
+fn thought_circles(body: &[Point], centre: Point, tip: Point, weights: &[f32]) -> Vec<Vec<Point>> {
     if inside(body, tip) {
         return Vec::new();
     }
@@ -182,12 +212,12 @@ fn thought_circles(body: &[Point], centre: Point, tip: Point) -> Vec<Vec<Point>>
         return Vec::new();
     }
     let direction = ((tip.x - root.x) / reach, (tip.y - root.y) / reach);
-    let weights: f32 = THOUGHT_WEIGHTS.iter().sum::<f32>() * 2.0;
-    let widest = (reach / (weights + 2.0 * THOUGHT_GAP_SHARE))
+    let total_weight: f32 = weights.iter().sum::<f32>() * 2.0;
+    let widest = (reach / (total_weight + 2.0 * THOUGHT_GAP_SHARE))
         .min(centre_span(body, centre) * LARGEST_THOUGHT_SHARE);
-    let gap = (reach - widest * weights) / 2.0;
+    let gap = (reach - widest * total_weight) / 2.0;
     let mut travelled = 0.0;
-    THOUGHT_WEIGHTS
+    weights
         .iter()
         .map(|weight| {
             let radius = widest * weight;
@@ -338,7 +368,7 @@ fn quad_samples(from: Point, control: Point, to: Point) -> impl Iterator<Item = 
     })
 }
 
-fn with_tail(body: &[Point], centre: Point, tip: Point) -> Vec<Point> {
+fn with_tail(body: &[Point], centre: Point, tip: Point, curved: bool) -> Vec<Point> {
     if inside(body, tip) {
         return body.to_vec();
     }
@@ -361,18 +391,26 @@ fn with_tail(body: &[Point], centre: Point, tip: Point) -> Vec<Point> {
     kept.sort_by(|left, right| left.0.total_cmp(&right.0));
     let root = point_at(body, &lengths, attach);
     let (axis_x, axis_y) = (tip.x - root.x, tip.y - root.y);
-    let bend = axis_x.hypot(axis_y) * TAIL_BEND_SHARE;
+    let bend = if curved {
+        axis_x.hypot(axis_y) * TAIL_BEND_SHARE
+    } else {
+        0.0
+    };
     let length = axis_x.hypot(axis_y).max(f32::EPSILON);
     let sideways = (-axis_y / length * bend, axis_x / length * bend);
-    let control = |from: Point, to: Point| Point {
-        x: f32::midpoint(from.x, to.x) + sideways.0,
-        y: f32::midpoint(from.y, to.y) + sideways.1,
+    let control = |from: Point, to: Point, share: f32| Point {
+        x: f32::midpoint(from.x, to.x) + sideways.0 * share,
+        y: f32::midpoint(from.y, to.y) + sideways.1 * share,
     };
     let mut outline = vec![last];
     outline.extend(kept.into_iter().map(|(_, point)| point));
     outline.push(first);
-    outline.extend(quad_samples(first, control(first, tip), tip));
-    outline.extend(quad_samples(tip, control(tip, last), last));
+    outline.extend(quad_samples(first, control(first, tip, 1.0), tip));
+    outline.extend(quad_samples(
+        tip,
+        control(tip, last, TAIL_FAR_SIDE_SHARE),
+        last,
+    ));
     outline.pop();
     outline
 }

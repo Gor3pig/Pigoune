@@ -640,15 +640,22 @@ fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
         100.0,
         60.0,
         &[
+            ("width", number_to_value(1.0)),
             ("tail_x", number_to_value(0.4)),
             ("tail_y", number_to_value(1.0)),
         ],
     )]));
     let white = [255, 255, 255, 255];
-    let ink = [0x24, 0x1f, 0x31, 255];
     assert!(near(picture.at(70, 50), white, 2), "the body is filled");
-    assert!(near(picture.at(20, 50), ink, 40), "the outline is dark");
-    assert!(near(picture.at(99, 94), white, 2), "the tail is filled too");
+    assert!(
+        (18..23).any(|x| !near(picture.at(x, 50), white, 60)),
+        "the outline is dark"
+    );
+    let below_body = (84..110)
+        .flat_map(|y| (85..112).map(move |x| (x, y)))
+        .filter(|&(x, y)| near(picture.at(x, y), white, 2))
+        .count();
+    assert!(below_body > 20, "the tail is filled too");
     assert_eq!(picture.at(30, 100), source(30, 100), "nothing elsewhere");
     assert_eq!(picture.at(150, 50), source(150, 50), "nothing on the right");
 
@@ -666,7 +673,7 @@ fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
         ],
     );
     let circles = pigoune_core::annotations::bubble_parts(&cloud).expect("parts");
-    let last = &circles[3];
+    let last = &circles[2];
     let count = f32::from(u16::try_from(last.len()).expect("small"));
     let (x, y) = (
         last.iter().map(|p| p.x).sum::<f32>() / count,
@@ -676,7 +683,7 @@ fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
     assert!(near(picture.at(70, 40), white, 2), "the cloud is filled");
     #[expect(clippy::cast_possible_truncation, reason = "inside the test picture")]
     let (x, y) = (x.round() as i32, y.round() as i32);
-    assert!(near(picture.at(x, y), white, 2), "so is its last circle");
+    assert!(near(picture.at(x, y), white, 2), "so is its second circle");
 
     let said = |content: &str| {
         rig.export(&document(vec![boxed(
