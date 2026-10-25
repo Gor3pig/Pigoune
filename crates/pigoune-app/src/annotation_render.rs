@@ -9,7 +9,7 @@ use pigoune_core::annotations::Turning;
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Outline, PathStep, Point, Rect,
     Shape, Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head,
-    bubble_outline, curve_point, curve_polyline, dash_pattern, guide_extent, handles_with_extent,
+    bubble_parts, curve_point, curve_polyline, dash_pattern, guide_extent, handles_with_extent,
     head_size_factor, rotate_point, rotated_bounds, rotation_handle, rotation_of,
     rounded_spot_radius, shape_bounds, shape_pivot, sketch_curve, sketch_ellipse, sketch_line,
     sketch_outline, sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
@@ -285,25 +285,28 @@ fn polygon_path(points: &[Point]) -> gsk::Path {
 }
 
 fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
-    let Some(outline) = bubble_outline(shape) else {
+    let Some(parts) = bubble_parts(shape) else {
         return;
     };
-    let path = polygon_path(&outline);
-    snapshot.append_fill(
-        &path,
-        gsk::FillRule::Winding,
-        &rgba(shape.paint("fill_color")),
-    );
-    let stroked = if shape.roughness().is_precise() {
-        path
-    } else {
-        sketched_path(&sketch_outline(&outline, true, shape.hand(), 0))
-    };
-    snapshot.append_stroke(
-        &stroked,
-        &stroke_of(shape, false),
-        &rgba(shape.stroke_color()),
-    );
+    for (index, outline) in parts.iter().enumerate() {
+        let path = polygon_path(outline);
+        snapshot.append_fill(
+            &path,
+            gsk::FillRule::Winding,
+            &rgba(shape.paint("fill_color")),
+        );
+        let stroked = if shape.roughness().is_precise() {
+            path
+        } else {
+            let salt = u32::try_from(index).unwrap_or(0) * BUBBLE_PART_SALT;
+            sketched_path(&sketch_outline(outline, true, shape.hand(), salt))
+        };
+        snapshot.append_stroke(
+            &stroked,
+            &stroke_of(shape, false),
+            &rgba(shape.stroke_color()),
+        );
+    }
 }
 
 fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
@@ -328,6 +331,7 @@ fn head_path(tip: Point, left: Point, right: Point, closed: bool) -> gsk::Path {
     builder.to_path()
 }
 
+const BUBBLE_PART_SALT: u32 = 1000;
 const ARROW_SHAFT_SALT: u32 = 100;
 const ARROW_HEAD_SALT: u32 = 200;
 const TAPER_TAIL: f32 = 0.12;

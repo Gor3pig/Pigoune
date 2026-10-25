@@ -650,6 +650,32 @@ fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
     assert!(near(picture.at(99, 94), white, 2), "the tail is filled too");
     assert_eq!(picture.at(30, 100), source(30, 100), "nothing elsewhere");
     assert_eq!(picture.at(150, 50), source(150, 50), "nothing on the right");
+
+    let cloud = boxed(
+        "bubble",
+        20.0,
+        10.0,
+        100.0,
+        60.0,
+        &[
+            ("form", Value::from("cloud")),
+            ("width", number_to_value(1.0)),
+            ("tail_x", number_to_value(0.4)),
+            ("tail_y", number_to_value(0.9)),
+        ],
+    );
+    let circles = pigoune_core::annotations::bubble_parts(&cloud).expect("parts");
+    let last = &circles[3];
+    let count = f32::from(u16::try_from(last.len()).expect("small"));
+    let (x, y) = (
+        last.iter().map(|p| p.x).sum::<f32>() / count,
+        last.iter().map(|p| p.y).sum::<f32>() / count,
+    );
+    let picture = rig.export(&document(vec![cloud]));
+    assert!(near(picture.at(70, 40), white, 2), "the cloud is filled");
+    #[expect(clippy::cast_possible_truncation, reason = "inside the test picture")]
+    let (x, y) = (x.round() as i32, y.round() as i32);
+    assert!(near(picture.at(x, y), white, 2), "so is its last circle");
 }
 
 fn layers_follow_their_order(rig: &Rig) {

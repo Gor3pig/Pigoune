@@ -11,6 +11,16 @@ const CORNER_SHARE: f32 = 0.3;
 const TAIL_BASE_SHARE: f32 = 0.14;
 const TAIL_BEND_SHARE: f32 = 0.12;
 const TAIL_STEPS: u16 = 8;
+const BUMP_SHARE: f32 = 0.35;
+const BUMP_HEIGHT_SHARE: f32 = 0.4;
+const SMALLEST_BUMP_COUNT: u16 = 8;
+const LARGEST_BUMP_COUNT: u16 = 48;
+const BUMP_STEPS: u16 = 10;
+const BUBBLE_STEPS: u16 = 32;
+const THOUGHT_WEIGHTS: [f32; 3] = [1.0, 0.7, 0.45];
+const THOUGHT_GAP_SHARE: f32 = 0.35;
+const LARGEST_THOUGHT_SHARE: f32 = 0.2;
+const SMALLEST_THOUGHT_REACH: f32 = 2.0;
 
 #[must_use]
 pub fn bubble_tail(shape: &Shape) -> Option<Point> {
@@ -22,33 +32,162 @@ pub fn bubble_tail(shape: &Shape) -> Option<Point> {
 }
 
 #[must_use]
-pub fn bubble_outline(shape: &Shape) -> Option<Vec<Point>> {
+pub fn bubble_parts(shape: &Shape) -> Option<Vec<Vec<Point>>> {
     let rect = shape_bounds(shape)?;
     if rect.width <= 0.0 || rect.height <= 0.0 {
         return None;
     }
-    let body = if shape.choice("form") == "rounded" {
-        rounded_body(rect)
-    } else {
-        oval_body(rect)
-    };
     let tip = bubble_tail(shape)?;
-    Some(with_tail(&body, centre_of(rect), tip))
+    let centre = centre_of(rect);
+    Some(match shape.choice("form") {
+        "cloud" => {
+            let body = cloud_body(rect);
+            let circles = thought_circles(&body, centre, tip);
+            std::iter::once(body).chain(circles).collect()
+        }
+        "rounded" => vec![with_tail(&rounded_body(rect), centre, tip)],
+        _ => vec![with_tail(&oval_body(rect), centre, tip)],
+    })
+}
+
+#[must_use]
+pub fn bubble_outline(shape: &Shape) -> Option<Vec<Point>> {
+    bubble_parts(shape)?.into_iter().next()
 }
 
 #[must_use]
 pub fn bubble_hit(shape: &Shape, point: Point, reach: f32) -> bool {
-    let Some(outline) = bubble_outline(shape) else {
+    let Some(parts) = bubble_parts(shape) else {
         return false;
     };
-    if inside(&outline, point) {
-        return true;
-    }
     let reach = reach.max(0.0);
-    (0..outline.len()).any(|index| {
-        let next = outline[(index + 1) % outline.len()];
-        distance_to_segment(point, outline[index], next) <= reach
+    parts.iter().any(|outline| {
+        inside(outline, point)
+            || (0..outline.len()).any(|index| {
+                let next = outline[(index + 1) % outline.len()];
+                distance_to_segment(point, outline[index], next) <= reach
+            })
     })
+}
+
+fn cloud_body(rect: Rect) -> Vec<Point> {
+    let centre = centre_of(rect);
+    let (half_width, half_height) = (rect.width / 2.0, rect.height / 2.0);
+    let perimeter = PI
+        * (3.0 * (half_width + half_height)
+            - ((3.0 * half_width + half_height) * (half_width + 3.0 * half_height)).sqrt());
+    let wanted = (perimeter / (BUMP_SHARE * rect.width.min(rect.height))).round();
+    let count = (0..=LARGEST_BUMP_COUNT)
+        .rev()
+        .find(|count| f32::from(*count) <= wanted)
+        .unwrap_or(SMALLEST_BUMP_COUNT)
+        .max(SMALLEST_BUMP_COUNT);
+    let height = perimeter / f32::from(count) * BUMP_HEIGHT_SHARE;
+    let base_width = (half_width - height).max(half_width / 2.0);
+    let base_height = (half_height - height).max(half_height / 2.0);
+    let base: Vec<Point> = (0..count)
+        .map(|index| {
+            let angle = step_ratio(index, count) * TAU;
+            Point {
+                x: centre.x + base_width * angle.cos(),
+                y: centre.y + base_height * angle.sin(),
+            }
+        })
+        .collect();
+    let mut body = Vec::new();
+    for (index, from) in base.iter().enumerate() {
+        let to = base[(index + 1) % base.len()];
+        let (chord_x, chord_y) = (to.x - from.x, to.y - from.y);
+        let length = chord_x.hypot(chord_y).max(f32::EPSILON);
+        let middle = lerp(*from, to, 0.5);
+        let mut normal = (chord_y / length, -chord_x / length);
+        if normal.0 * (middle.x - centre.x) + normal.1 * (middle.y - centre.y) < 0.0 {
+            normal = (-normal.0, -normal.1);
+        }
+        body.extend((0..BUMP_STEPS).map(|step| {
+            let along = step_ratio(step, BUMP_STEPS);
+            let swell = (1.0 - (2.0 * along - 1.0) * (2.0 * along - 1.0)).sqrt() * height;
+            let on_chord = lerp(*from, to, along);
+            Point {
+                x: on_chord.x + normal.0 * swell,
+                y: on_chord.y + normal.1 * swell,
+            }
+        }));
+    }
+    body
+}
+
+fn farthest_crossing(body: &[Point], centre: Point, tip: Point) -> Option<Point> {
+    let direction = from_centre(centre, tip);
+    (0..body.len())
+        .filter_map(|index| {
+            let (from, to) = (body[index], body[(index + 1) % body.len()]);
+            let (before, after) = (
+                cross(direction, from_centre(centre, from)),
+                cross(direction, from_centre(centre, to)),
+            );
+            let ahead = direction.0 * (from.x + to.x - 2.0 * centre.x)
+                + direction.1 * (from.y + to.y - 2.0 * centre.y)
+                > 0.0;
+            (ahead && before <= 0.0 && after > 0.0)
+                .then(|| lerp(from, to, before / (before - after)))
+        })
+        .max_by(|left, right| {
+            let reach = |point: &Point| (point.x - centre.x).hypot(point.y - centre.y);
+            reach(left).total_cmp(&reach(right))
+        })
+}
+
+fn circle_points(centre: Point, radius: f32) -> Vec<Point> {
+    (0..BUBBLE_STEPS)
+        .map(|index| {
+            let angle = step_ratio(index, BUBBLE_STEPS) * TAU;
+            Point {
+                x: centre.x + radius * angle.cos(),
+                y: centre.y + radius * angle.sin(),
+            }
+        })
+        .collect()
+}
+
+fn thought_circles(body: &[Point], centre: Point, tip: Point) -> Vec<Vec<Point>> {
+    if inside(body, tip) {
+        return Vec::new();
+    }
+    let Some(root) = farthest_crossing(body, centre, tip) else {
+        return Vec::new();
+    };
+    let reach = (tip.x - root.x).hypot(tip.y - root.y);
+    if reach < SMALLEST_THOUGHT_REACH {
+        return Vec::new();
+    }
+    let direction = ((tip.x - root.x) / reach, (tip.y - root.y) / reach);
+    let weights: f32 = THOUGHT_WEIGHTS.iter().sum::<f32>() * 2.0;
+    let widest = (reach / (weights + 2.0 * THOUGHT_GAP_SHARE))
+        .min(centre_span(body, centre) * LARGEST_THOUGHT_SHARE);
+    let gap = (reach - widest * weights) / 2.0;
+    let mut travelled = 0.0;
+    THOUGHT_WEIGHTS
+        .iter()
+        .map(|weight| {
+            let radius = widest * weight;
+            let middle = travelled + radius;
+            travelled += 2.0 * radius + gap;
+            circle_points(
+                Point {
+                    x: root.x + direction.0 * middle,
+                    y: root.y + direction.1 * middle,
+                },
+                radius,
+            )
+        })
+        .collect()
+}
+
+fn centre_span(body: &[Point], centre: Point) -> f32 {
+    body.iter()
+        .map(|point| (point.x - centre.x).hypot(point.y - centre.y))
+        .fold(f32::INFINITY, f32::min)
 }
 
 fn centre_of(rect: Rect) -> Point {

@@ -80,6 +80,7 @@ pub fn choice_label(id: &str, choice: &str) -> Option<String> {
     Some(match (id, choice) {
         ("form", "oval") => gettext("Oval Bubble"),
         ("form", "rounded") => gettext("Rounded Bubble"),
+        ("form", "cloud") => gettext("Cloud Bubble"),
         ("sequence", "numbers") => gettext("Numbers"),
         ("sequence", "letters") => gettext("Letters"),
         ("background", "bubble") => gettext("Bubble Background"),
