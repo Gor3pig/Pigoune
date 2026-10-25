@@ -23,7 +23,7 @@ pub use geometry::{
     shape_from_anchor, shape_from_drag, shape_from_points, shape_pivot, simplified,
     text_ink_margin, text_visual_bounds, translated, turned_points, turns_by_option,
 };
-pub use interaction::{CursorKind, Interaction, Tool};
+pub use interaction::{CursorKind, Interaction, RigidFrame, Tool, Turning};
 pub use layers::{LayerEntry, layer_entries};
 pub use options::{
     DefaultValue, OptionKind, OptionSpec, Options, color_to_value, number_to_value, value_to_color,

@@ -1170,6 +1170,10 @@ impl PigouneEditor {
                 scale,
                 &context,
                 with_handles,
+                drawing
+                    .interaction
+                    .turning(annotation_render::HANDLE_REACH_PIXELS / scale)
+                    .as_ref(),
             );
         }
     }

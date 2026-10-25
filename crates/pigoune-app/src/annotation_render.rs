@@ -5,6 +5,7 @@ use std::hash::{Hash, Hasher};
 
 use gtk::prelude::*;
 use gtk::{gdk, graphene, gsk, pango};
+use pigoune_core::annotations::Turning;
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Outline, PathStep, Point, Rect,
     Shape, Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head,
@@ -24,6 +25,9 @@ const GUIDE_COLOR: (f32, f32, f32) = (0.93, 0.22, 0.55);
 const BLUR_REACH_PER_RADIUS: f32 = 2.0;
 const SELECTION_PADDING: f32 = 6.0;
 const SELECTION_DASH: [f32; 2] = [5.0, 4.0];
+const ANGLE_LABEL_SIZE: f64 = 12.0;
+const ANGLE_LABEL_GAP: f32 = 6.0;
+const ANGLE_LABEL_PADDING: f32 = 4.0;
 pub const HANDLE_SIZE: f32 = 10.0;
 pub const HANDLE_REACH_PIXELS: f32 = 9.0;
 
@@ -1034,6 +1038,7 @@ pub fn append_selection(
     zoom: f32,
     context: &pango::Context,
     with_handles: bool,
+    turning: Option<&Turning>,
 ) {
     let (red, green, blue) = SELECTION_COLOR;
     let accent = gdk::RGBA::new(red, green, blue, 1.0);
@@ -1042,7 +1047,14 @@ pub fn append_selection(
         x: bounds.x() + point.x * zoom,
         y: bounds.y() + point.y * zoom,
     };
-    if let Some(rect) = shape_bounds(shape).or_else(|| text_bounds(shape, context)) {
+    let rigid = turning.and_then(|turning| turning.rigid.map(|rigid| (turning, rigid)));
+    let framed = match rigid {
+        Some((turning, rigid)) => Some((rigid.bounds, Some(turning.pivot), turning.degrees)),
+        None => shape_bounds(shape)
+            .or_else(|| text_bounds(shape, context))
+            .map(|rect| (rect, shape_pivot(shape, text_extent), rotation_of(shape))),
+    };
+    if let Some((rect, pivot, angle)) = framed {
         let corner = to_view(Point {
             x: rect.x,
             y: rect.y,
@@ -1057,8 +1069,7 @@ pub fn append_selection(
         builder.add_rect(&frame);
         let dashed = gsk::Stroke::new(1.0);
         dashed.set_dash(&SELECTION_DASH);
-        let pivot = shape_pivot(shape, text_extent).map(to_view);
-        let angle = rotation_of(shape);
+        let pivot = pivot.map(to_view);
         if let (Some(pivot), true) = (pivot, angle.abs() > f32::EPSILON) {
             snapshot.save();
             snapshot.translate(&graphene::Point::new(pivot.x, pivot.y));
@@ -1074,7 +1085,20 @@ pub fn append_selection(
         return;
     }
     let found = handles_with_extent(shape, text_extent);
-    append_rotation_handle(
+    if let Some((turning, rigid)) = rigid {
+        let top = rotate_point(
+            Point {
+                x: rigid.bounds.x + rigid.bounds.width / 2.0,
+                y: rigid.bounds.y,
+            },
+            turning.pivot,
+            turning.degrees,
+        );
+        append_round_handle(snapshot, Some(to_view(top)), to_view(rigid.handle), &accent);
+        append_angle_label(snapshot, context, to_view(rigid.handle), turning.degrees);
+        return;
+    }
+    let handle_center = append_rotation_handle(
         snapshot,
         shape,
         text_extent,
@@ -1083,6 +1107,10 @@ pub fn append_selection(
         &to_view,
         &found,
     );
+    if let (Some(turning), Some(center)) = (turning, handle_center) {
+        append_angle_label(snapshot, context, center, turning.degrees);
+        return;
+    }
     for (handle, point) in found {
         let center = to_view(point);
         if handle == Handle::Curve {
@@ -1118,11 +1146,9 @@ fn append_rotation_handle(
     accent: &gdk::RGBA,
     to_view: &impl Fn(Point) -> Point,
     found: &[(Handle, Point)],
-) {
+) -> Option<Point> {
     let reach = HANDLE_REACH_PIXELS / zoom;
-    let Some(at) = rotation_handle(shape, extent, reach) else {
-        return;
-    };
+    let at = rotation_handle(shape, extent, reach)?;
     let center = to_view(at);
     let frame_top = found
         .iter()
@@ -1134,8 +1160,17 @@ fn append_rotation_handle(
                 y: bounds.y,
             })
         });
-    if let Some(top) = frame_top {
-        let top = to_view(top);
+    append_round_handle(snapshot, frame_top.map(to_view), center, accent);
+    Some(center)
+}
+
+fn append_round_handle(
+    snapshot: &gtk::Snapshot,
+    top: Option<Point>,
+    center: Point,
+    accent: &gdk::RGBA,
+) {
+    if let Some(top) = top {
         let line = gsk::PathBuilder::new();
         line.move_to(top.x, top.y);
         line.line_to(center.x, center.y);
@@ -1150,6 +1185,43 @@ fn append_rotation_handle(
         &gdk::RGBA::new(1.0, 1.0, 1.0, 1.0),
     );
     snapshot.append_stroke(&path, &gsk::Stroke::new(1.5), accent);
+}
+
+fn append_angle_label(
+    snapshot: &gtk::Snapshot,
+    context: &pango::Context,
+    near: Point,
+    degrees: f32,
+) {
+    let layout = pango::Layout::new(context);
+    layout.set_text(&format!("{:.0}\u{b0}", degrees + 0.0));
+    let mut font = pango::FontDescription::from_string("Sans Bold");
+    font.set_absolute_size(ANGLE_LABEL_SIZE * f64::from(pango::SCALE));
+    layout.set_font_description(Some(&font));
+    let (width, height) = layout.pixel_size();
+    let (width, height) = (pixels(width), pixels(height));
+    let origin = Point {
+        x: near.x + HANDLE_SIZE + ANGLE_LABEL_GAP,
+        y: near.y - height / 2.0,
+    };
+    let backdrop = rounded_rectangle_path(
+        Rect {
+            x: origin.x - ANGLE_LABEL_PADDING,
+            y: origin.y - ANGLE_LABEL_PADDING / 2.0,
+            width: width + 2.0 * ANGLE_LABEL_PADDING,
+            height: height + ANGLE_LABEL_PADDING,
+        },
+        ANGLE_LABEL_PADDING,
+    );
+    snapshot.append_fill(
+        &backdrop,
+        gsk::FillRule::Winding,
+        &gdk::RGBA::new(0.0, 0.0, 0.0, 0.75),
+    );
+    snapshot.save();
+    snapshot.translate(&graphene::Point::new(origin.x, origin.y));
+    snapshot.append_layout(&layout, &gdk::RGBA::new(1.0, 1.0, 1.0, 1.0));
+    snapshot.restore();
 }
 
 pub fn append_crop(
