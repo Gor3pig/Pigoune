@@ -64,6 +64,7 @@ mod filter_choices;
 mod filter_popover;
 mod first_launch;
 mod flatpak_updates;
+mod fonts;
 mod found_flash;
 mod frame_cache;
 mod grid_columns;

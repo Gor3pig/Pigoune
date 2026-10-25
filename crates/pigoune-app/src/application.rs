@@ -6,6 +6,7 @@ use gtk::{gio, glib};
 
 use crate::config::{APP_ID, RESOURCE_BASE_PATH, VERSION};
 use crate::first_launch;
+use crate::fonts;
 use crate::help_url;
 use crate::icon_theme;
 use crate::release_notes;
@@ -39,6 +40,7 @@ pub fn build() -> adw::Application {
     );
     application.connect_handle_local_options(forward_capture_request);
     application.connect_startup(|_| icon_theme::keep_gnome_icons());
+    application.connect_startup(|_| fonts::register());
     application.connect_startup(install_actions);
     application.connect_startup(|application| {
         theme_selector::follow(application, &settings::load());

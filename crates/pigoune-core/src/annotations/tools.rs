@@ -481,6 +481,15 @@ const PAPER: Color = Color {
     a: 255,
 };
 
+pub const LETTERING_CHOICES: [&str; 2] = ["cartoon", "normal"];
+
+pub const LETTERING: OptionSpec = OptionSpec {
+    id: "lettering",
+    kind: OptionKind::Choice(&LETTERING_CHOICES),
+    default: DefaultValue::Choice("cartoon"),
+    shown_if: None,
+};
+
 pub const BUBBLE_COLOR: OptionSpec = OptionSpec {
     id: "color",
     kind: OptionKind::Color,
@@ -537,6 +546,7 @@ pub const BUBBLE: ToolDefinition = ToolDefinition {
         BUBBLE_FORM,
         BUBBLE_FILL,
         CONTENT,
+        LETTERING,
         FONT_SIZE,
         BOLD,
         ITALIC,

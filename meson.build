@@ -29,6 +29,7 @@ custom_target(
   install_dir: get_option('bindir'),
   env: {
     'PIGOUNE_LOCALEDIR': get_option('prefix') / get_option('localedir'),
+    'PIGOUNE_FONTDIR': get_option('prefix') / get_option('datadir') / 'fonts' / 'comic-neue',
   },
   command: [
     cargo, 'build',

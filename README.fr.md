@@ -121,3 +121,6 @@ Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure
 Les icônes des collections viennent de [Phosphor Icons](https://phosphoricons.com), distribuées
 sous [licence MIT](crates/pigoune-app/icons/LICENSE-phosphor).
 
+La police de BD des bulles vient de [Comic Neue](https://github.com/crozynski/comicneue),
+distribuée sous [licence SIL Open Font](data/fonts/LICENSE-comic-neue).
+

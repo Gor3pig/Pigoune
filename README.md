@@ -118,3 +118,6 @@ Pigoune is free software released under the [GNU GPL v3 or later](COPYING).
 
 The collection icons are from [Phosphor Icons](https://phosphoricons.com), released under the
 [MIT license](crates/pigoune-app/icons/LICENSE-phosphor).
+
+The cartoon lettering of the speech bubbles is [Comic Neue](https://github.com/crozynski/comicneue),
+released under the [SIL Open Font License](data/fonts/LICENSE-comic-neue).

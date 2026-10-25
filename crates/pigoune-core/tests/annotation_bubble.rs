@@ -448,3 +448,15 @@ fn the_text_options_of_a_bubble_default_to_the_ones_of_the_text_tool() {
     assert!(!shape.toggle("bold") && !shape.toggle("italic"));
     assert_eq!(shape.text("content"), "");
 }
+
+#[test]
+fn a_bubble_speaks_in_cartoon_lettering_unless_told_otherwise() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+    assert_eq!(shape.choice("lettering"), "cartoon");
+    let plain = shape.with_option("lettering", json!("normal"));
+    assert_eq!(plain.choice("lettering"), "normal");
+    let sheet = definition("bubble").expect("tool");
+    let spec = sheet.spec("lettering").expect("lettering");
+    assert!(spec.accepts(&json!("cartoon")) && spec.accepts(&json!("normal")));
+    assert!(!spec.accepts(&json!("gothic")));
+}

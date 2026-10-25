@@ -15,6 +15,8 @@ use pigoune_core::annotations::{
     sketch_line, sketch_outline, sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
 };
 
+use crate::fonts::CARTOON_FAMILY;
+
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
 const SHADOW_BLUR: f32 = 6.0;
 const SHADOW_OPACITY: f32 = 0.45;
@@ -725,6 +727,9 @@ fn draw_step(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
 }
 
 fn text_family(shape: &Shape) -> &'static str {
+    if shape.kind == "bubble" && shape.choice("lettering") != "normal" {
+        return CARTOON_FAMILY;
+    }
     match shape.choice("family") {
         "serif" => "Serif",
         "mono" => "Monospace",
