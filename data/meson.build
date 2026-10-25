@@ -26,6 +26,15 @@ foreach size : ['16', '32', '48', '64', '128', '256', '512']
 endforeach
 
 install_data(
+  'fonts' / 'ComicNeue-Regular.ttf',
+  'fonts' / 'ComicNeue-Bold.ttf',
+  'fonts' / 'ComicNeue-Italic.ttf',
+  'fonts' / 'ComicNeue-BoldItalic.ttf',
+  'fonts' / 'LICENSE-comic-neue',
+  install_dir: get_option('datadir') / 'fonts' / 'comic-neue',
+)
+
+install_data(
   app_id + '.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
 )

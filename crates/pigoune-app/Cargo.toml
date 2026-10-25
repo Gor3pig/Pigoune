@@ -19,6 +19,7 @@ async-channel = "2.5.0"
 gettext-rs = { version = "0.8.0", features = ["gettext-system"] }
 glycin = { version = "4.0.0", features = ["gdk4"] }
 gtk = { version = "0.11.5", package = "gtk4", features = ["v4_22"] }
+pango = { version = "0.22.9", features = ["v1_56"] }
 pigoune-core = { path = "../pigoune-core" }
 
 [build-dependencies]

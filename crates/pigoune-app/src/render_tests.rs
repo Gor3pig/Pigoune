@@ -76,6 +76,7 @@ fn rig() -> Option<Rig> {
         );
         return None;
     }
+    crate::fonts::register();
     let renderer = gsk::CairoRenderer::new();
     renderer
         .realize_for_display(&gdk::Display::default().expect("display"))
@@ -713,6 +714,57 @@ fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
     );
 }
 
+fn the_cartoon_lettering_is_really_another_font(rig: &Rig) {
+    let measured = |lettering: &str| {
+        let bubble = boxed(
+            "bubble",
+            0.0,
+            0.0,
+            100.0,
+            60.0,
+            &[
+                ("content", Value::from("Hello world")),
+                ("lettering", Value::from(lettering)),
+                ("font_size", number_to_value(24.0)),
+            ],
+        );
+        annotation_render::bubble_text_height(&rig.context, &bubble, "Hello world")
+    };
+    let family = |lettering: &str| {
+        annotation_render::text_view_css(
+            &boxed(
+                "bubble",
+                0.0,
+                0.0,
+                100.0,
+                60.0,
+                &[("lettering", Value::from(lettering))],
+            ),
+            1.0,
+        )
+    };
+    assert!(family("cartoon").contains(crate::fonts::CARTOON_FAMILY));
+    assert!(!family("normal").contains(crate::fonts::CARTOON_FAMILY));
+    let layout = pango::Layout::new(&rig.context);
+    layout.set_text("Hello world");
+    let mut font = pango::FontDescription::new();
+    font.set_family(crate::fonts::CARTOON_FAMILY);
+    font.set_absolute_size(24.0 * f64::from(pango::SCALE));
+    layout.set_font_description(Some(&font));
+    let mut plain = pango::FontDescription::new();
+    plain.set_family("Sans");
+    plain.set_absolute_size(24.0 * f64::from(pango::SCALE));
+    let other = pango::Layout::new(&rig.context);
+    other.set_text("Hello world");
+    other.set_font_description(Some(&plain));
+    assert_ne!(
+        layout.pixel_size().0,
+        other.pixel_size().0,
+        "the cartoon family is registered and differs from the system one"
+    );
+    assert!(measured("cartoon") > 0.0 && measured("normal") > 0.0);
+}
+
 fn layers_follow_their_order(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let filled = [
@@ -1182,6 +1234,7 @@ fn rendering_suite() {
     a_turned_blur_on_the_image_edge_stays_opaque(&rig);
     turned_points_draw_a_line_and_a_stroke_where_they_were_turned(&rig);
     a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(&rig);
+    the_cartoon_lettering_is_really_another_font(&rig);
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);

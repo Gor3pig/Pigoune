@@ -6,4 +6,8 @@ pub const LOCALEDIR: &str = match option_env!("PIGOUNE_LOCALEDIR") {
     Some(installed_locale_dir) => installed_locale_dir,
     None => concat!(env!("OUT_DIR"), "/locale"),
 };
+pub const FONT_DIR: &str = match option_env!("PIGOUNE_FONTDIR") {
+    Some(installed_font_dir) => installed_font_dir,
+    None => concat!(env!("CARGO_MANIFEST_DIR"), "/../../data/fonts"),
+};
 pub const DEVELOPMENT_SCHEMAS_DIR: &str = concat!(env!("OUT_DIR"), "/schemas");
