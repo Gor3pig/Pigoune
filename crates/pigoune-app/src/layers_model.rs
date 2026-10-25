@@ -8,7 +8,7 @@ pub fn row_label(
     if let Some(name) = &entry.name {
         return name.clone();
     }
-    if entry.kind == "text" && !entry.summary.is_empty() {
+    if matches!(entry.kind.as_str(), "text" | "bubble") && !entry.summary.is_empty() {
         return with_text(kind_label, &entry.summary);
     }
     format!("{kind_label} {}", entry.ordinal)

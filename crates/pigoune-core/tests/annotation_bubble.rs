@@ -1,7 +1,8 @@
 use pigoune_core::annotations::{
-    BUBBLE, Geometry, Handle, Options, Point, Rect, Shape, bubble_hit, bubble_outline,
-    bubble_parts, bubble_tail, definition, handles_with_extent, hit, is_set_by_handle,
-    number_to_value, resized, rotate_point, shape_from_drag, shape_pivot,
+    AnnotationDocument, BUBBLE, EditSession, Geometry, Handle, Options, Point, Rect, Shape,
+    bubble_hit, bubble_outline, bubble_parts, bubble_tail, bubble_text_box, definition,
+    handles_with_extent, hit, is_set_by_handle, layer_entries, number_to_value, resized,
+    rotate_point, shape_from_drag, shape_pivot,
 };
 use serde_json::json;
 
@@ -361,4 +362,89 @@ fn a_turned_cloud_bubble_is_hit_where_its_circles_are_seen() {
 
     assert!(hit(&shape, rotate_point(last, centre(), 90.0), 2.0));
     assert!(!hit(&shape, last, 2.0));
+}
+
+fn corners(frame: Rect) -> [Point; 4] {
+    [
+        point(frame.x, frame.y),
+        point(frame.x + frame.width, frame.y),
+        point(frame.x, frame.y + frame.height),
+        point(frame.x + frame.width, frame.y + frame.height),
+    ]
+}
+
+#[test]
+fn the_text_box_is_centred_and_its_corners_stay_inside_the_body_of_every_form() {
+    for form in ["oval", "rounded", "cloud"] {
+        let shape = bubble(form, (0.0, 0.0), 0.0);
+        let frame = bubble_text_box(&shape).expect("text box");
+        assert!(same(frame.x + frame.width / 2.0, 200.0), "{form}");
+        assert!(same(frame.y + frame.height / 2.0, 150.0), "{form}");
+        assert!(frame.width > 100.0 && frame.height > 40.0, "{form}");
+        for corner in corners(frame) {
+            assert!(bubble_hit(&shape, corner, 0.0), "{form}");
+        }
+    }
+}
+
+#[test]
+fn the_text_box_follows_the_box_of_the_bubble_when_it_is_resized() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+    let wider = resized(&shape, Handle::Right, point(500.0, 150.0));
+
+    let (before, after) = (
+        bubble_text_box(&shape).expect("box"),
+        bubble_text_box(&wider).expect("box"),
+    );
+
+    assert!(after.width > before.width * 1.9);
+    assert!(same(after.height, before.height));
+}
+
+#[test]
+fn a_double_click_finds_the_text_of_a_bubble_and_not_the_one_of_a_rectangle() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    let id = session.add(bubble("oval", (0.3, 0.8), 0.0));
+    let plain = session.add(Shape::new(
+        "rectangle",
+        Geometry::Box(Rect {
+            x: 400.0,
+            y: 100.0,
+            width: 100.0,
+            height: 50.0,
+        }),
+        Options::defaults(definition("rectangle").expect("tool").options),
+    ));
+
+    assert_eq!(session.text_at(centre(), 4.0), Some(id));
+    assert_eq!(session.text_at(point(260.0, 229.0), 4.0), Some(id));
+    assert_eq!(session.text_at(point(450.0, 125.0), 4.0), None);
+    assert!(session.shape_of(plain).is_some());
+}
+
+#[test]
+fn the_layer_of_a_bubble_summarises_what_it_says() {
+    let mut session = EditSession::new(AnnotationDocument::default());
+    session.add(
+        bubble("oval", (0.3, 0.8), 0.0).with_option("content", json!("Hello there\nsecond line")),
+    );
+    session.add(bubble("cloud", (0.3, 0.8), 0.0));
+
+    let entries = layer_entries(session.document());
+
+    assert_eq!(entries[1].summary, "Hello there");
+    assert_eq!(entries[0].summary, "");
+}
+
+#[test]
+fn the_text_options_of_a_bubble_default_to_the_ones_of_the_text_tool() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+    let text = Shape::new(
+        "text",
+        Geometry::Anchor(point(0.0, 0.0)),
+        Options::defaults(definition("text").expect("tool").options),
+    );
+    assert!(same(shape.number("font_size"), text.number("font_size")));
+    assert!(!shape.toggle("bold") && !shape.toggle("italic"));
+    assert_eq!(shape.text("content"), "");
 }

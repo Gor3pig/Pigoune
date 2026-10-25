@@ -221,8 +221,10 @@ impl EditSession {
 
     #[must_use]
     pub fn text_at(&self, point: Point, tolerance: f32) -> Option<u32> {
-        self.pick(point, tolerance)
-            .filter(|id| self.shape_of(*id).is_some_and(|shape| shape.kind == "text"))
+        self.pick(point, tolerance).filter(|id| {
+            self.shape_of(*id)
+                .is_some_and(|shape| matches!(shape.kind.as_str(), "text" | "bubble"))
+        })
     }
 
     #[must_use]

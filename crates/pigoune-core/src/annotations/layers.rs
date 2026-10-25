@@ -35,7 +35,7 @@ pub fn layer_entries(document: &AnnotationDocument) -> Vec<LayerEntry> {
 }
 
 fn summary_of(kind: &str, content: &str) -> String {
-    if kind != "text" {
+    if !matches!(kind, "text" | "bubble") {
         return String::new();
     }
     let first_line = content.lines().next().unwrap_or("").trim();

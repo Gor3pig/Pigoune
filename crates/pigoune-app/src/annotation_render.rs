@@ -8,11 +8,11 @@ use gtk::{gdk, graphene, gsk, pango};
 use pigoune_core::annotations::Turning;
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Outline, PathStep, Point, Rect,
-    Shape, Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head,
-    bubble_parts, curve_point, curve_polyline, dash_pattern, guide_extent, handles_with_extent,
-    head_size_factor, rotate_point, rotated_bounds, rotation_handle, rotation_of,
-    rounded_spot_radius, shape_bounds, shape_pivot, sketch_curve, sketch_ellipse, sketch_line,
-    sketch_outline, sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
+    Shape, Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, Value, arrow_curve_control, arrow_head,
+    bubble_parts, bubble_text_box, curve_point, curve_polyline, dash_pattern, guide_extent,
+    handles_with_extent, head_size_factor, rotate_point, rotated_bounds, rotation_handle,
+    rotation_of, rounded_spot_radius, shape_bounds, shape_pivot, sketch_curve, sketch_ellipse,
+    sketch_line, sketch_outline, sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -150,10 +150,20 @@ pub fn append_document(
     skipped: Option<u32>,
 ) {
     for (index, object) in document.objects.iter().enumerate() {
-        if Some(object.id) == skipped || !object.is_rendered() {
+        if !object.is_rendered() {
             continue;
         }
         if let Some(shape) = object.shape() {
+            let emptied;
+            let shape = if Some(object.id) == skipped {
+                if shape.kind != "bubble" {
+                    continue;
+                }
+                emptied = shape.with_option("content", Value::from(""));
+                &emptied
+            } else {
+                shape
+            };
             let ordinal = document.ordinal(object.id).unwrap_or(1);
             let scene = backdrop.map(|backdrop| Scene {
                 backdrop,
@@ -284,7 +294,56 @@ fn polygon_path(points: &[Point]) -> gsk::Path {
     builder.to_path()
 }
 
-fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
+fn bubble_layout(context: &pango::Context, shape: &Shape, width: f32) -> pango::Layout {
+    let layout = text_layout(context, shape);
+    layout.set_width(pango_units(width));
+    layout.set_wrap(pango::WrapMode::WordChar);
+    layout.set_alignment(pango::Alignment::Center);
+    layout
+}
+
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "a width in pixels fits easily in Pango units"
+)]
+fn pango_units(pixels: f32) -> i32 {
+    (f64::from(pixels.max(1.0)) * f64::from(pango::SCALE)).round() as i32
+}
+
+pub fn bubble_text_height(context: &pango::Context, shape: &Shape, typed: &str) -> f32 {
+    let Some(frame) = bubble_text_box(shape) else {
+        return 0.0;
+    };
+    let shown = shape.with_option("content", Value::from(typed));
+    pixels(bubble_layout(context, &shown, frame.width).pixel_size().1)
+}
+
+fn bubble_ink(shape: &Shape) -> Color {
+    Color {
+        a: shape.paint("fill_color").a,
+        ..text_color_over(shape.color("fill_color"))
+    }
+}
+
+fn draw_bubble_text(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
+    let Some(frame) = bubble_text_box(shape) else {
+        return;
+    };
+    if shape.text("content").is_empty() {
+        return;
+    }
+    let layout = bubble_layout(draw.pango, shape, frame.width);
+    let height = pixels(layout.pixel_size().1);
+    snapshot.save();
+    snapshot.translate(&graphene::Point::new(
+        frame.x,
+        frame.y + (frame.height - height) / 2.0,
+    ));
+    snapshot.append_layout(&layout, &rgba(bubble_ink(shape)));
+    snapshot.restore();
+}
+
+fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, draw: &Draw) {
     let Some(parts) = bubble_parts(shape) else {
         return;
     };
@@ -307,6 +366,7 @@ fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
             &rgba(shape.stroke_color()),
         );
     }
+    draw_bubble_text(snapshot, shape, draw);
 }
 
 fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
@@ -776,7 +836,9 @@ fn draw_text_outline(
 pub fn text_view_css(shape: &Shape, zoom: f32) -> String {
     let ink = shape.stroke_color();
     let bubble = shape.choice("background") == "bubble";
-    let color = if bubble {
+    let color = if shape.kind == "bubble" {
+        bubble_ink(shape)
+    } else if bubble {
         Color {
             a: ink.a,
             ..text_color_over(ink)

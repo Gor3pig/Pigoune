@@ -14,7 +14,7 @@ use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Map;
 
-pub use bubble::{bubble_hit, bubble_outline, bubble_parts, bubble_tail};
+pub use bubble::{bubble_hit, bubble_outline, bubble_parts, bubble_tail, bubble_text_box};
 pub use crop::{CropEditor, CropRatio, SMALLEST_SIDE};
 pub use geometry::{
     ArrowHead, Handle, HitMode, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control,
