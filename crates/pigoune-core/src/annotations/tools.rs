@@ -467,6 +467,15 @@ pub const BUBBLE_FORM: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const BUBBLE_SHADOW_STYLE_CHOICES: [&str; 2] = ["soft", "hard"];
+
+pub const BUBBLE_SHADOW_STYLE: OptionSpec = OptionSpec {
+    id: "shadow_style",
+    kind: OptionKind::Choice(&BUBBLE_SHADOW_STYLE_CHOICES),
+    default: DefaultValue::Choice("soft"),
+    shown_if: Some("shadow"),
+};
+
 pub const BUBBLE_BUMPS_CHOICES: [&str; 2] = ["small", "medium"];
 
 pub const BUBBLE_BUMPS: OptionSpec = OptionSpec {
@@ -513,8 +522,8 @@ pub const BUBBLE_FILL: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
-pub const SMALLEST_TAIL: f32 = -3.0;
-pub const LARGEST_TAIL: f32 = 4.0;
+pub const SMALLEST_TAIL: f32 = -1.5;
+pub const LARGEST_TAIL: f32 = 1.5;
 
 pub const TAIL_X: OptionSpec = OptionSpec {
     id: "tail_x",
@@ -564,6 +573,7 @@ pub const BUBBLE: ToolDefinition = ToolDefinition {
         ROUGHNESS,
         ROTATION,
         SHADOW,
+        BUBBLE_SHADOW_STYLE,
         TAIL_X,
         TAIL_Y,
     ],
