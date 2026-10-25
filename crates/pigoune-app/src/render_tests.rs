@@ -676,6 +676,41 @@ fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
     #[expect(clippy::cast_possible_truncation, reason = "inside the test picture")]
     let (x, y) = (x.round() as i32, y.round() as i32);
     assert!(near(picture.at(x, y), white, 2), "so is its last circle");
+
+    let said = |content: &str| {
+        rig.export(&document(vec![boxed(
+            "bubble",
+            20.0,
+            10.0,
+            100.0,
+            60.0,
+            &[
+                ("content", Value::from(content)),
+                ("font_size", number_to_value(24.0)),
+                ("width", number_to_value(1.0)),
+            ],
+        )]))
+    };
+    let dark_in = |picture: &Picture, from: i32, to: i32| {
+        (from..to)
+            .flat_map(|x| (22..58).map(move |y| (x, y)))
+            .filter(|(x, y)| picture.at(*x, *y)[0] < 120)
+            .count()
+    };
+    assert_eq!(
+        dark_in(&said(""), 36, 104),
+        0,
+        "an empty bubble has no letters"
+    );
+    let words = said("HH");
+    assert!(
+        dark_in(&words, 36, 104) > 30,
+        "the letters are drawn in dark ink"
+    );
+    assert!(
+        dark_in(&words, 36, 70) > 0 && dark_in(&words, 70, 104) > 0,
+        "and centred on the bubble"
+    );
 }
 
 fn layers_follow_their_order(rig: &Rig) {

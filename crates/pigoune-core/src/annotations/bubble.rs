@@ -11,6 +11,9 @@ const CORNER_SHARE: f32 = 0.3;
 const TAIL_BASE_SHARE: f32 = 0.14;
 const TAIL_BEND_SHARE: f32 = 0.12;
 const TAIL_STEPS: u16 = 8;
+const OVAL_TEXT_SHARE: f32 = 0.68;
+const ROUNDED_TEXT_SHARE: f32 = 0.84;
+const CLOUD_TEXT_SHARE: f32 = 0.6;
 const BUMP_SHARE: f32 = 0.35;
 const BUMP_HEIGHT_SHARE: f32 = 0.4;
 const SMALLEST_BUMP_COUNT: u16 = 8;
@@ -28,6 +31,23 @@ pub fn bubble_tail(shape: &Shape) -> Option<Point> {
     Some(Point {
         x: rect.x + rect.width / 2.0 + shape.number("tail_x") * rect.width,
         y: rect.y + rect.height / 2.0 + shape.number("tail_y") * rect.height,
+    })
+}
+
+#[must_use]
+pub fn bubble_text_box(shape: &Shape) -> Option<Rect> {
+    let rect = shape_bounds(shape)?;
+    let fraction = match shape.choice("form") {
+        "cloud" => CLOUD_TEXT_SHARE,
+        "rounded" => ROUNDED_TEXT_SHARE,
+        _ => OVAL_TEXT_SHARE,
+    };
+    let (width, height) = (rect.width * fraction, rect.height * fraction);
+    Some(Rect {
+        x: rect.x + (rect.width - width) / 2.0,
+        y: rect.y + (rect.height - height) / 2.0,
+        width,
+        height,
     })
 }
 

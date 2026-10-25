@@ -9,7 +9,8 @@ use gtk::{gdk, gio, glib, graphene, pango};
 use pigoune_core::AssetId;
 use pigoune_core::annotations::{
     AnnotationDocument, Crop, CropEditor, CropRatio, CursorKind, EditSession, Geometry, Handle,
-    LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value, layer_entries,
+    LayerMove, Options, Point, Rect, Shape, Snapping, Tool, ToolDefinition, Value, bubble_text_box,
+    layer_entries,
 };
 
 use crate::annotation_export;
@@ -1314,6 +1315,7 @@ impl PigouneEditor {
         }
         if created {
             self.finish_creation();
+            self.edit_new_bubble();
         }
         claimed
     }
@@ -1410,6 +1412,10 @@ impl PigouneEditor {
                 .shape_of(id)
                 .and_then(|shape| match shape.geometry {
                     Geometry::Anchor(at) => Some(at),
+                    Geometry::Box(_) => bubble_text_box(shape).map(|frame| Point {
+                        x: frame.x,
+                        y: frame.y,
+                    }),
                     _ => None,
                 })
         };
@@ -1428,6 +1434,17 @@ impl PigouneEditor {
                 .map(|shape| shape.text("content").to_owned())
                 .unwrap_or_default()
         };
+        let in_bubble = self.is_bubble(id);
+        imp.text_view.set_wrap_mode(if in_bubble {
+            gtk::WrapMode::WordChar
+        } else {
+            gtk::WrapMode::None
+        });
+        imp.text_view.set_justification(if in_bubble {
+            gtk::Justification::Center
+        } else {
+            gtk::Justification::Left
+        });
         let buffer = imp.text_view.buffer();
         buffer.set_text(&content);
         imp.text_edit.set(Some(TextEdit { id, anchor }));
@@ -1437,6 +1454,32 @@ impl PigouneEditor {
         imp.text_view.grab_focus();
         buffer.select_range(&buffer.start_iter(), &buffer.end_iter());
         self.after_edit();
+    }
+
+    fn is_bubble(&self, id: Option<u32>) -> bool {
+        id.is_some_and(|id| {
+            self.imp()
+                .drawing
+                .borrow()
+                .session
+                .shape_of(id)
+                .is_some_and(|shape| shape.kind == "bubble")
+        })
+    }
+
+    fn edit_new_bubble(&self) {
+        let id = {
+            let drawing = self.imp().drawing.borrow();
+            drawing.session.selected().filter(|id| {
+                drawing
+                    .session
+                    .shape_of(*id)
+                    .is_some_and(|shape| shape.kind == "bubble")
+            })
+        };
+        if let Some(id) = id {
+            self.edit_text(id);
+        }
     }
 
     fn typed_text(&self) -> String {
@@ -1453,6 +1496,7 @@ impl PigouneEditor {
         };
         let text = self.typed_text();
         imp.text_view.set_visible(false);
+        let in_bubble = self.is_bubble(edit.id);
         let mut created = false;
         {
             let mut guard = imp.drawing.borrow_mut();
@@ -1461,7 +1505,7 @@ impl PigouneEditor {
             match edit.id {
                 Some(id) => {
                     drawing.session.select(Some(id));
-                    if empty {
+                    if empty && !in_bubble {
                         drawing.session.remove_selected();
                     } else if drawing
                         .session
@@ -1536,6 +1580,10 @@ impl PigouneEditor {
             return;
         };
         let [left, top, zoom] = imp.text_view_origin.get().map(f32::from_bits);
+        if shape.kind == "bubble" {
+            self.sync_bubble_text_view(&shape, [left, top, zoom]);
+            return;
+        }
         let x = left + edit.anchor.x * zoom - TEXT_VIEW_OFFSET.0;
         let y = top + edit.anchor.y * zoom - TEXT_VIEW_OFFSET.1;
         imp.text_view.set_margin_start(rounded_margin(x));
@@ -1551,6 +1599,26 @@ impl PigouneEditor {
             .set_height_request(rounded_margin(height * zoom + 2.0 * TEXT_VIEW_OFFSET.1));
     }
 
+    fn sync_bubble_text_view(&self, shape: &Shape, [left, top, zoom]: [f32; 3]) {
+        let imp = self.imp();
+        let Some(frame) = bubble_text_box(shape) else {
+            return;
+        };
+        imp.text_provider
+            .load_from_string(&annotation_render::text_view_css(shape, zoom));
+        let height =
+            annotation_render::bubble_text_height(&self.pango_context(), shape, &self.typed_text());
+        let x = left + frame.x * zoom - TEXT_VIEW_OFFSET.0;
+        let y = top + (frame.y + (frame.height - height) / 2.0) * zoom - TEXT_VIEW_OFFSET.1;
+        imp.text_view.set_margin_start(rounded_margin(x));
+        imp.text_view.set_margin_top(rounded_margin(y));
+        imp.text_view.set_width_request(rounded_margin(
+            frame.width * zoom + 2.0 * TEXT_VIEW_OFFSET.0,
+        ));
+        imp.text_view
+            .set_height_request(rounded_margin(height * zoom + 2.0 * TEXT_VIEW_OFFSET.1));
+    }
+
     fn edit_selected_text(&self) -> bool {
         let id = {
             let drawing = self.imp().drawing.borrow();
@@ -1558,7 +1626,7 @@ impl PigouneEditor {
                 drawing
                     .session
                     .shape_of(*id)
-                    .is_some_and(|s| s.kind == "text")
+                    .is_some_and(|s| matches!(s.kind.as_str(), "text" | "bubble"))
             })
         };
         id.is_some_and(|id| {
