@@ -458,7 +458,7 @@ pub const TEXT: ToolDefinition = ToolDefinition {
     ],
 };
 
-pub const BUBBLE_FORM_CHOICES: [&str; 2] = ["oval", "rounded"];
+pub const BUBBLE_FORM_CHOICES: [&str; 3] = ["oval", "rounded", "cloud"];
 
 pub const BUBBLE_FORM: OptionSpec = OptionSpec {
     id: "form",

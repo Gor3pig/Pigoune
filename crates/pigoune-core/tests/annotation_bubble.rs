@@ -1,7 +1,7 @@
 use pigoune_core::annotations::{
-    BUBBLE, Geometry, Handle, Options, Point, Rect, Shape, bubble_hit, bubble_outline, bubble_tail,
-    definition, handles_with_extent, hit, is_set_by_handle, number_to_value, resized, rotate_point,
-    shape_from_drag, shape_pivot,
+    BUBBLE, Geometry, Handle, Options, Point, Rect, Shape, bubble_hit, bubble_outline,
+    bubble_parts, bubble_tail, definition, handles_with_extent, hit, is_set_by_handle,
+    number_to_value, resized, rotate_point, shape_from_drag, shape_pivot,
 };
 use serde_json::json;
 
@@ -258,4 +258,107 @@ fn an_empty_box_has_no_outline_and_is_never_hit() {
     );
     assert!(bubble_outline(&flat).is_none());
     assert!(!bubble_hit(&flat, point(10.0, 20.0), 5.0));
+}
+
+fn middle_of(part: &[Point]) -> Point {
+    let count = f32::from(u16::try_from(part.len()).expect("small"));
+    point(
+        part.iter().map(|p| p.x).sum::<f32>() / count,
+        part.iter().map(|p| p.y).sum::<f32>() / count,
+    )
+}
+
+fn width_of(part: &[Point]) -> f32 {
+    let left = part.iter().map(|p| p.x).fold(f32::INFINITY, f32::min);
+    let right = part.iter().map(|p| p.x).fold(f32::NEG_INFINITY, f32::max);
+    right - left
+}
+
+#[test]
+fn a_cloud_bubble_is_made_of_bumps_that_stay_inside_its_box() {
+    let parts = bubble_parts(&bubble("cloud", (0.0, 0.0), 0.0)).expect("parts");
+    assert_eq!(parts.len(), 1);
+    let body = &parts[0];
+    assert!(body.len() >= 80);
+    assert!(
+        body.iter()
+            .all(|p| p.x >= 99.5 && p.x <= 300.5 && p.y >= 99.5 && p.y <= 200.5)
+    );
+    let reach = |p: &Point| ((p.x - 200.0) / 100.0).hypot((p.y - 150.0) / 50.0);
+    let nearest = body.iter().map(reach).fold(f32::INFINITY, f32::min);
+    let farthest = body.iter().map(reach).fold(f32::NEG_INFINITY, f32::max);
+    assert!(farthest - nearest > 0.1, "bumps, not a plain oval");
+    assert!(farthest > 0.95);
+}
+
+#[test]
+fn a_cloud_bubble_ends_its_tail_in_three_shrinking_circles_that_reach_the_tip() {
+    let shape = bubble("cloud", (0.3, 0.8), 0.0);
+    let tip = bubble_tail(&shape).expect("tip");
+
+    let parts = bubble_parts(&shape).expect("parts");
+
+    assert_eq!(parts.len(), 4);
+    let circles = &parts[1..];
+    assert!(width_of(&circles[0]) > width_of(&circles[1]));
+    assert!(width_of(&circles[1]) > width_of(&circles[2]));
+    assert!(
+        circles[2]
+            .iter()
+            .any(|p| (p.x - tip.x).hypot(p.y - tip.y) < 3.0)
+    );
+    let reach = |part: &Vec<Point>| {
+        let middle = middle_of(part);
+        (middle.x - 200.0).hypot(middle.y - 150.0)
+    };
+    assert!(reach(&circles[0]) < reach(&circles[1]) && reach(&circles[1]) < reach(&circles[2]));
+}
+
+#[test]
+fn the_circles_of_a_cloud_tail_do_not_overlap_the_body_nor_each_other() {
+    for tail in [(0.3, 0.8), (-0.9, -0.9), (1.0, 0.0), (0.0, -1.2)] {
+        let parts = bubble_parts(&bubble("cloud", tail, 0.0)).expect("parts");
+        assert_eq!(parts.len(), 4, "{tail:?}");
+        for circle in &parts[1..] {
+            for vertex in circle {
+                let scaled = ((vertex.x - 200.0) / 100.0).hypot((vertex.y - 150.0) / 50.0);
+                assert!(scaled > 0.8, "{tail:?}");
+            }
+        }
+        for pair in parts[1..].windows(2) {
+            let (first, second) = (middle_of(&pair[0]), middle_of(&pair[1]));
+            let radii = f32::midpoint(width_of(&pair[0]), width_of(&pair[1]));
+            assert!(
+                (first.x - second.x).hypot(first.y - second.y) > radii,
+                "{tail:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_cloud_bubble_with_its_tip_inside_has_no_circles() {
+    let parts = bubble_parts(&bubble("cloud", (0.1, 0.1), 0.0)).expect("parts");
+    assert_eq!(parts.len(), 1);
+}
+
+#[test]
+fn the_outline_of_a_cloud_bubble_is_its_body_and_the_circles_are_hit_too() {
+    let shape = bubble("cloud", (0.3, 0.8), 0.0);
+    let parts = bubble_parts(&shape).expect("parts");
+    assert_eq!(bubble_outline(&shape).as_ref(), parts.first());
+
+    assert!(hit(&shape, centre(), 4.0));
+    assert!(hit(&shape, middle_of(&parts[1]), 2.0));
+    assert!(hit(&shape, middle_of(&parts[3]), 2.0));
+    assert!(!hit(&shape, point(400.0, 150.0), 4.0));
+}
+
+#[test]
+fn a_turned_cloud_bubble_is_hit_where_its_circles_are_seen() {
+    let shape = bubble("cloud", (0.3, 0.8), 90.0);
+    let last = middle_of(&bubble_parts(&bubble("cloud", (0.3, 0.8), 0.0)).expect("parts")[3]);
+
+    assert!(hit(&shape, rotate_point(last, centre(), 90.0), 2.0));
+    assert!(!hit(&shape, last, 2.0));
 }
