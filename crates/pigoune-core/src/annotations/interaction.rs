@@ -45,7 +45,21 @@ enum State {
         original: Shape,
         pivot: Point,
         grabbed: f32,
+        applied: f32,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RigidFrame {
+    pub bounds: Rect,
+    pub handle: Point,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Turning {
+    pub pivot: Point,
+    pub degrees: f32,
+    pub rigid: Option<RigidFrame>,
 }
 
 #[derive(Debug, Clone)]
@@ -102,6 +116,34 @@ impl Interaction {
     #[must_use]
     pub fn pending(&self) -> Option<&Shape> {
         self.pending.as_ref()
+    }
+
+    #[must_use]
+    pub fn turning(&self, reach: f32) -> Option<Turning> {
+        let State::Rotating {
+            original,
+            pivot,
+            applied,
+            ..
+        } = &self.state
+        else {
+            return None;
+        };
+        let rigid = if geometry::turns_by_option(original) {
+            None
+        } else {
+            geometry::shape_bounds(original)
+                .zip(geometry::rotation_handle(original, None, reach))
+                .map(|(bounds, handle)| RigidFrame {
+                    bounds,
+                    handle: geometry::rotate_point(handle, *pivot, *applied),
+                })
+        };
+        Some(Turning {
+            pivot: *pivot,
+            degrees: *applied,
+            rigid,
+        })
     }
 
     #[must_use]
@@ -212,6 +254,7 @@ impl Interaction {
                 original,
                 pivot,
                 grabbed,
+                applied,
             } => {
                 let change = angle_to(*pivot, point) - *grabbed;
                 if geometry::turns_by_option(original) {
@@ -221,15 +264,15 @@ impl Interaction {
                     } else {
                         turned
                     };
-                    session.preview(
-                        original.with_option("rotation", number_to_value(half_turn_range(turned))),
-                    );
+                    *applied = half_turn_range(turned);
+                    session.preview(original.with_option("rotation", number_to_value(*applied)));
                 } else {
                     let change = if constrained {
                         (change / ROTATION_STEP).round() * ROTATION_STEP
                     } else {
                         change
                     };
+                    *applied = half_turn_range(change);
                     session.preview(geometry::turned_points(original, *pivot, change));
                 }
             }
@@ -339,6 +382,7 @@ fn rotating_from(session: &EditSession, original: Shape, point: Point) -> State 
     match geometry::shape_pivot(&original, extent) {
         Some(pivot) => State::Rotating {
             grabbed: angle_to(pivot, point),
+            applied: geometry::rotation_of(&original),
             original,
             pivot,
         },
