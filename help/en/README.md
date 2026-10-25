@@ -636,6 +636,7 @@ The tools are in the editor panel, on the right (in a narrow window, in the pane
 | Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Outlines, filled or with rounded corners |
 | Line, Arrow | <kbd>L</kbd>, <kbd>A</kbd> | Straight or curved, with several heads |
 | Text | <kbd>T</kbd> | Add text: click, type, then click elsewhere or press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to finish |
+| Bubble | <kbd>U</kbd> | A comic speech or thought bubble with a movable tail and centered text |
 | Steps | <kbd>N</kbd> | Numbered (or lettered) badges that renumber themselves |
 | Pen, Highlighter | <kbd>P</kbd>, <kbd>H</kbd> | Smoothed freehand strokes |
 | Blur, Pixelate | <kbd>B</kbd>, <kbd>X</kbd> | Hide private information: the effect applies to everything drawn below it |
@@ -652,6 +653,14 @@ Every tool remembers its last settings until Pigoune is closed: color (with an e
 - A shape keeps the same look every time you open it, and a copy looks exactly like the original.
 - Arrows can be even or tapered.
 
+#### Speech bubbles
+
+- Drag to draw the bubble, then type: the text is centered and wraps by itself. Double-click a bubble to edit its text.
+- **Bubble Shape** chooses an oval, a rounded rectangle or a cloud for a thought, and **Cloud Bumps** sets the size of the cloud's bumps.
+- Drag the round handle at the tip of the tail to aim it anywhere. It stops one bubble size away from the edge.
+- **Bubble Lettering** chooses a comic font or the normal font, and **Bubble Fill** the color inside.
+- Turn on **Shadow** and pick a soft or a hard one with **Shadow Style**. A dashed **Line Type** makes a whisper.
+
 #### Draw precisely
 
 - Hold <kbd>Shift</kbd> while drawing for straight lines at multiples of 45 degrees, and for perfect squares or circles.
@@ -664,6 +673,7 @@ A new annotation stays selected: you can move it, resize it by its handles and c
 
 - With a drawing tool, click the outline of an annotation to select it, or anywhere else, even inside another annotation, to draw. The **Select** tool selects an annotation by its inside too.
 - A selected arrow has a round handle in the middle: drag it to bend the arrow, double-click it to straighten the arrow.
+- A selected bubble has a round handle at the tip of its tail.
 - A selected blur, pixelation or spotlight has a round handle in its center: drag it to move the area with any tool.
 - The arrow keys nudge the selection by one pixel (ten with <kbd>Shift</kbd>).
 - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> duplicates it.
@@ -672,7 +682,7 @@ A new annotation stays selected: you can move it, resize it by its handles and c
 
 - A selected **text** has handles like the other annotations: dragging one scales the letters, and the opposite corner stays where it is.
 - The round handle above the frame of a selected annotation **turns** it. Hold <kbd>Shift</kbd> to turn by steps of 15 degrees. A step badge or a spotlight does not turn.
-- A rectangle, an ellipse, a text, a blur and a pixelation also have a **Rotation** setting in the panel, from -180 to 180 degrees, for an exact angle.
+- A rectangle, an ellipse, a bubble, a text, a blur and a pixelation also have a **Rotation** setting in the panel, from -180 to 180 degrees, for an exact angle.
 - A line, an arrow, a pen stroke or a highlighter turns around the center of its frame, and has no angle setting.
 - The frame and the handles turn with the annotation, and a click selects it where you see it.
 

@@ -57,7 +57,7 @@ Your original files are never touched.
 </td>
 <td width="33%" valign="top">
 
-**Annotate**<br>Arrows, text and blur; the original is never touched.
+**Annotate**<br>Arrows, text, speech bubbles and blur; the original is never touched.
 
 </td>
 <td width="33%" valign="top">

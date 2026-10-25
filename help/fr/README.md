@@ -636,6 +636,7 @@ Les outils sont dans le panneau de l’éditeur, à droite (dans une fenêtre é
 | Rectangle, Ellipse | <kbd>R</kbd>, <kbd>O</kbd> | Contours, remplis ou à coins arrondis |
 | Ligne, Flèche | <kbd>L</kbd>, <kbd>A</kbd> | Droites ou courbes, avec plusieurs pointes |
 | Texte | <kbd>T</kbd> | Ajouter du texte : cliquez, tapez, puis cliquez ailleurs ou appuyez sur <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> pour terminer |
+| Bulle | <kbd>U</kbd> | Une bulle de BD, de parole ou de pensée, avec une pointe déplaçable et un texte centré |
 | Étapes | <kbd>N</kbd> | Pastilles numérotées (ou lettrées) qui se renumérotent seules |
 | Crayon, Surligneur | <kbd>P</kbd>, <kbd>H</kbd> | Traits à main levée, lissés |
 | Flou, Pixelisation | <kbd>B</kbd>, <kbd>X</kbd> | Cacher une information privée : l’effet s’applique à tout ce qui est dessiné en dessous |
@@ -652,6 +653,14 @@ Chaque outil retient ses derniers réglages jusqu’à la fermeture de Pigoune 
 - Une forme garde le même tracé à chaque ouverture, et sa copie est identique à l’original.
 - Les flèches peuvent être régulières ou effilées.
 
+#### Les bulles de BD
+
+- Glissez pour dessiner la bulle, puis tapez : le texte est centré et passe à la ligne tout seul. Double-cliquez sur une bulle pour modifier son texte.
+- **Forme de la bulle** choisit un ovale, un rectangle arrondi ou un nuage pour une pensée, et **Bosses du nuage** règle la taille des bosses du nuage.
+- Glissez la poignée ronde au bout de la pointe pour la diriger où vous voulez. Elle s’arrête à une taille de bulle du bord.
+- **Police de la bulle** choisit une police de BD ou la police normale, et **Fond de la bulle** la couleur de l’intérieur.
+- Activez **Ombre** et choisissez-la douce ou dure avec **Style d’ombre**. Un **Type de trait** en tirets fait un murmure.
+
 #### Dessiner avec précision
 
 - Maintenez <kbd>Maj</kbd> en dessinant pour des lignes droites à des multiples de 45 degrés, et des carrés et des cercles parfaits.
@@ -664,6 +673,7 @@ Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la red
 
 - Avec un outil de dessin, cliquez sur le contour d’une annotation pour la sélectionner, ou n’importe où ailleurs, même à l’intérieur d’une autre annotation, pour dessiner. L’outil **Sélection** sélectionne aussi une annotation par son intérieur.
 - Une flèche sélectionnée a une poignée ronde au milieu : tirez-la pour courber la flèche, double-cliquez dessus pour la redresser.
+- Une bulle sélectionnée a une poignée ronde au bout de sa pointe.
 - Un flou, une pixelisation ou un projecteur sélectionné a une poignée ronde au centre : tirez-la pour déplacer la zone avec n’importe quel outil.
 - Les flèches du clavier déplacent la sélection d’un pixel (dix avec <kbd>Maj</kbd>).
 - <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>D</kbd> la duplique.
@@ -672,7 +682,7 @@ Une nouvelle annotation reste sélectionnée : vous pouvez la déplacer, la red
 
 - Un **texte** sélectionné a des poignées comme les autres annotations : en tirer une agrandit ou réduit les lettres, et le coin opposé reste en place.
 - La poignée ronde au-dessus du cadre d’une annotation sélectionnée la fait **pivoter**. Maintenez <kbd>Maj</kbd> pour pivoter par pas de 15 degrés. Une pastille d’étape ou un projecteur ne pivote pas.
-- Un rectangle, une ellipse, un texte, un flou et une pixelisation ont aussi un réglage **Rotation** dans le panneau, de -180 à 180 degrés, pour un angle exact.
+- Un rectangle, une ellipse, une bulle, un texte, un flou et une pixelisation ont aussi un réglage **Rotation** dans le panneau, de -180 à 180 degrés, pour un angle exact.
 - Une ligne, une flèche, un trait de crayon ou de surligneur pivote autour du centre de son cadre, sans réglage d’angle.
 - Le cadre et les poignées pivotent avec l’annotation, et un clic la sélectionne là où vous la voyez.
 

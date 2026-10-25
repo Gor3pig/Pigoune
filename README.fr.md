@@ -57,7 +57,7 @@ rangée et agréable à parcourir. Vos fichiers d’origine ne sont jamais touch
 </td>
 <td width="33%" valign="top">
 
-**Annoter**<br>Flèches, texte et flou ; l’original n’est jamais touché.
+**Annoter**<br>Flèches, texte, bulles de BD et flou ; l’original n’est jamais touché.
 
 </td>
 <td width="33%" valign="top">
