@@ -2482,7 +2482,7 @@ fn cursor_name(kind: CursorKind) -> Option<&'static str> {
             Handle::Top | Handle::Bottom => "ns-resize",
             Handle::Left | Handle::Right => "ew-resize",
             Handle::Start | Handle::End => "crosshair",
-            Handle::Curve | Handle::Rotate => "grab",
+            Handle::Curve | Handle::Tail | Handle::Rotate => "grab",
         }),
     }
 }

@@ -9389,3 +9389,23 @@ msgstr "Le bouton Exclues de l’onglet Doublons liste les collections exclues d
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in
 msgid "After Clear next to the thumbnails in Manage Library, Pigoune makes them again quietly in the background, while you are not using it."
 msgstr "Après Vider, à côté des vignettes dans Gérer la bibliothèque, Pigoune les refait discrètement en arrière-plan, quand vous ne l’utilisez pas."
+
+#: crates/pigoune-app/src/editor_tool.rs
+msgid "Bubble"
+msgstr "Bulle"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Shape"
+msgstr "Forme de la bulle"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Fill"
+msgstr "Fond de la bulle"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Oval Bubble"
+msgstr "Bulle ovale"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded Bubble"
+msgstr "Bulle aux coins arrondis"

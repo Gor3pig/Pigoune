@@ -9030,3 +9030,23 @@ msgstr "Miniaturen komen vanzelf terug"
 #: crates/pigoune-app/src/whats_new.rs
 msgid "After Clear in Manage Library, Pigoune makes the thumbnails again in the background, while you are not using it."
 msgstr "Na Wissen in Bibliotheek beheren maakt Pigoune de miniaturen op de achtergrond opnieuw, terwijl u het niet gebruikt."
+
+#: crates/pigoune-app/src/editor_tool.rs
+msgid "Bubble"
+msgstr "Tekstballon"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Shape"
+msgstr "Vorm van de tekstballon"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Bubble Fill"
+msgstr "Vulling van de tekstballon"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Oval Bubble"
+msgstr "Ovale tekstballon"
+
+#: crates/pigoune-app/src/editor_options.rs
+msgid "Rounded Bubble"
+msgstr "Afgeronde tekstballon"

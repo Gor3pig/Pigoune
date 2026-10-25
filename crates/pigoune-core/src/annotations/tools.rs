@@ -19,6 +19,7 @@ pub enum Outline {
     Stroke,
     Disc,
     TextBox,
+    Bubble,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -457,7 +458,93 @@ pub const TEXT: ToolDefinition = ToolDefinition {
     ],
 };
 
-pub const DEFINITIONS: [&ToolDefinition; 11] = [
+pub const BUBBLE_FORM_CHOICES: [&str; 2] = ["oval", "rounded"];
+
+pub const BUBBLE_FORM: OptionSpec = OptionSpec {
+    id: "form",
+    kind: OptionKind::Choice(&BUBBLE_FORM_CHOICES),
+    default: DefaultValue::Choice("oval"),
+    shown_if: None,
+};
+
+const INK: Color = Color {
+    r: 0x24,
+    g: 0x1f,
+    b: 0x31,
+    a: 255,
+};
+
+const PAPER: Color = Color {
+    r: 255,
+    g: 255,
+    b: 255,
+    a: 255,
+};
+
+pub const BUBBLE_COLOR: OptionSpec = OptionSpec {
+    id: "color",
+    kind: OptionKind::Color,
+    default: DefaultValue::Color(INK),
+    shown_if: None,
+};
+
+pub const BUBBLE_FILL: OptionSpec = OptionSpec {
+    id: "fill_color",
+    kind: OptionKind::Color,
+    default: DefaultValue::Color(PAPER),
+    shown_if: None,
+};
+
+pub const SMALLEST_TAIL: f32 = -3.0;
+pub const LARGEST_TAIL: f32 = 4.0;
+
+pub const TAIL_X: OptionSpec = OptionSpec {
+    id: "tail_x",
+    kind: OptionKind::Number {
+        min: SMALLEST_TAIL,
+        max: LARGEST_TAIL,
+        step: 0.01,
+    },
+    default: DefaultValue::Number(0.3),
+    shown_if: None,
+};
+
+pub const TAIL_Y: OptionSpec = OptionSpec {
+    id: "tail_y",
+    kind: OptionKind::Number {
+        min: SMALLEST_TAIL,
+        max: LARGEST_TAIL,
+        step: 0.01,
+    },
+    default: DefaultValue::Number(0.8),
+    shown_if: None,
+};
+
+#[must_use]
+pub fn is_set_by_handle(id: &str) -> bool {
+    matches!(id, "tail_x" | "tail_y")
+}
+
+pub const BUBBLE: ToolDefinition = ToolDefinition {
+    kind: "bubble",
+    geometry: GeometryKind::Box,
+    outline: Outline::Bubble,
+    hides_content: false,
+    options: &[
+        BUBBLE_COLOR,
+        OPACITY,
+        WIDTH,
+        BUBBLE_FORM,
+        BUBBLE_FILL,
+        ROUGHNESS,
+        ROTATION,
+        SHADOW,
+        TAIL_X,
+        TAIL_Y,
+    ],
+};
+
+pub const DEFINITIONS: [&ToolDefinition; 12] = [
     &RECTANGLE,
     &ELLIPSE,
     &LINE,
@@ -469,6 +556,7 @@ pub const DEFINITIONS: [&ToolDefinition; 11] = [
     &BLUR,
     &PIXELATE,
     &SPOTLIGHT,
+    &BUBBLE,
 ];
 
 #[must_use]

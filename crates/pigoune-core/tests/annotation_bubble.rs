@@ -1,0 +1,261 @@
+use pigoune_core::annotations::{
+    BUBBLE, Geometry, Handle, Options, Point, Rect, Shape, bubble_hit, bubble_outline, bubble_tail,
+    definition, handles_with_extent, hit, is_set_by_handle, number_to_value, resized, rotate_point,
+    shape_from_drag, shape_pivot,
+};
+use serde_json::json;
+
+fn point(x: f32, y: f32) -> Point {
+    Point { x, y }
+}
+
+fn same(left: f32, right: f32) -> bool {
+    (left - right).abs() < 1e-2
+}
+
+fn near(left: Point, right: Point) -> bool {
+    same(left.x, right.x) && same(left.y, right.y)
+}
+
+fn bubble(form: &str, tail: (f32, f32), rotation: f32) -> Shape {
+    Shape::new(
+        "bubble",
+        Geometry::Box(Rect {
+            x: 100.0,
+            y: 100.0,
+            width: 200.0,
+            height: 100.0,
+        }),
+        Options::defaults(BUBBLE.options)
+            .with("form", json!(form))
+            .with("tail_x", number_to_value(tail.0))
+            .with("tail_y", number_to_value(tail.1))
+            .with("rotation", number_to_value(rotation)),
+    )
+}
+
+fn centre() -> Point {
+    point(200.0, 150.0)
+}
+
+#[test]
+fn the_bubble_is_a_registered_box_tool_with_a_black_outline_and_a_white_fill() {
+    let sheet = definition("bubble").expect("tool");
+    assert_eq!(sheet.options.len(), BUBBLE.options.len());
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+    assert_eq!(shape.color("color").r, 0x24);
+    assert_eq!(
+        (
+            shape.color("fill_color").r,
+            shape.color("fill_color").g,
+            shape.color("fill_color").b
+        ),
+        (255, 255, 255)
+    );
+    assert_eq!(shape.choice("form"), "oval");
+    assert!(sheet.spec("rotation").is_some());
+}
+
+#[test]
+fn only_the_two_tail_numbers_are_driven_by_the_round_handle() {
+    assert!(is_set_by_handle("tail_x") && is_set_by_handle("tail_y"));
+    for id in ["color", "fill_color", "width", "form", "rotation", "curve"] {
+        assert!(!is_set_by_handle(id));
+    }
+}
+
+#[test]
+fn the_tail_tip_is_placed_relative_to_the_size_of_the_bubble() {
+    let tip = bubble_tail(&bubble("oval", (0.3, 0.8), 0.0)).expect("tip");
+    assert!(near(tip, point(260.0, 230.0)));
+    let tip = bubble_tail(&bubble("oval", (-0.75, -0.75), 0.0)).expect("tip");
+    assert!(near(tip, point(50.0, 75.0)));
+}
+
+#[test]
+fn a_drag_makes_a_bubble_with_the_default_tail() {
+    let shape = shape_from_drag(
+        &BUBBLE,
+        point(10.0, 10.0),
+        point(210.0, 110.0),
+        &Options::defaults(BUBBLE.options),
+    )
+    .expect("bubble");
+    assert_eq!(shape.kind, "bubble");
+    let tip = bubble_tail(&shape).expect("tip");
+    assert!(near(tip, point(110.0 + 60.0, 60.0 + 80.0)));
+}
+
+#[test]
+fn the_outline_reaches_the_tip_for_a_tail_in_every_direction() {
+    for form in ["oval", "rounded"] {
+        for tail in [
+            (0.0, 1.0),
+            (0.0, -1.0),
+            (1.0, 0.0),
+            (-1.0, 0.0),
+            (0.9, 0.9),
+            (-0.9, -0.9),
+            (0.3, 0.8),
+        ] {
+            let shape = bubble(form, tail, 0.0);
+            let tip = bubble_tail(&shape).expect("tip");
+            let outline = bubble_outline(&shape).expect("outline");
+            assert!(
+                outline.iter().any(|vertex| near(*vertex, tip)),
+                "{form} {tail:?}"
+            );
+            assert!(outline.len() > 60);
+            assert!(outline.iter().all(|p| p.x.is_finite() && p.y.is_finite()));
+        }
+    }
+}
+
+#[test]
+fn a_tail_inside_the_body_leaves_a_plain_oval() {
+    let plain = bubble_outline(&bubble("oval", (0.0, 0.0), 0.0)).expect("outline");
+    assert_eq!(plain.len(), 128);
+    for vertex in &plain {
+        let scaled = ((vertex.x - 200.0) / 100.0).hypot((vertex.y - 150.0) / 50.0);
+        assert!(same(scaled, 1.0));
+    }
+}
+
+#[test]
+fn the_body_stays_inside_its_box_and_the_tail_is_the_only_thing_that_leaves_it() {
+    for form in ["oval", "rounded"] {
+        let outline = bubble_outline(&bubble(form, (0.2, 1.2), 0.0)).expect("outline");
+        let tip = point(240.0, 270.0);
+        let outside: Vec<&Point> = outline
+            .iter()
+            .filter(|p| p.x < 99.9 || p.x > 300.1 || p.y < 99.9 || p.y > 200.1)
+            .collect();
+        assert!(!outside.is_empty(), "{form}");
+        assert!(outside.iter().all(|p| p.y > 200.0 && p.y <= tip.y + 0.01));
+    }
+}
+
+#[test]
+fn a_rounded_bubble_cuts_its_corners_and_an_oval_does_not_fill_them() {
+    for form in ["oval", "rounded"] {
+        let shape = bubble(form, (0.0, 0.0), 0.0);
+        assert!(bubble_hit(&shape, centre(), 0.0));
+        assert!(!bubble_hit(&shape, point(101.0, 101.0), 0.0), "{form}");
+    }
+    let rounded = bubble("rounded", (0.0, 0.0), 0.0);
+    assert!(bubble_hit(&rounded, point(110.0, 150.0), 0.0));
+    assert!(bubble_hit(&rounded, point(200.0, 101.0), 0.0));
+}
+
+#[test]
+fn the_bubble_is_hit_on_its_body_on_its_tail_and_near_its_outline_only() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+    assert!(hit(&shape, centre(), 4.0));
+    assert!(hit(&shape, point(255.0, 222.0), 2.0));
+    assert!(hit(&shape, point(260.0, 229.0), 2.0));
+    assert!(!hit(&shape, point(400.0, 150.0), 4.0));
+    assert!(!hit(&shape, point(120.0, 230.0), 4.0));
+    assert!(hit(&shape, point(302.0, 150.0), 4.0));
+}
+
+#[test]
+fn the_round_tail_handle_sits_on_the_tip_and_turns_with_the_bubble() {
+    let flat = bubble("oval", (0.3, 0.8), 0.0);
+    let found = handles_with_extent(&flat, None);
+    let tail = found
+        .iter()
+        .find(|(handle, _)| *handle == Handle::Tail)
+        .expect("tail handle")
+        .1;
+    assert!(near(tail, point(260.0, 230.0)));
+    assert_eq!(found.len(), 9);
+
+    let turned = bubble("oval", (0.3, 0.8), 90.0);
+    let tail = handles_with_extent(&turned, None)
+        .into_iter()
+        .find(|(handle, _)| *handle == Handle::Tail)
+        .expect("tail handle")
+        .1;
+    assert!(near(
+        tail,
+        rotate_point(point(260.0, 230.0), centre(), 90.0)
+    ));
+}
+
+#[test]
+fn only_a_bubble_has_a_tail_handle() {
+    let rectangle = Shape::new(
+        "rectangle",
+        Geometry::Box(Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 50.0,
+            height: 50.0,
+        }),
+        Options::defaults(definition("rectangle").expect("tool").options),
+    );
+    assert!(
+        handles_with_extent(&rectangle, None)
+            .iter()
+            .all(|(handle, _)| *handle != Handle::Tail)
+    );
+}
+
+#[test]
+fn dragging_the_tail_handle_moves_the_tip_and_leaves_the_box_alone() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+
+    let moved = resized(&shape, Handle::Tail, point(40.0, 20.0));
+
+    assert!(near(bubble_tail(&moved).expect("tip"), point(40.0, 20.0)));
+    assert_eq!(moved.geometry, shape.geometry);
+}
+
+#[test]
+fn dragging_the_tail_handle_of_a_turned_bubble_follows_the_turned_axes() {
+    let shape = bubble("oval", (0.3, 0.8), 90.0);
+    let wanted = rotate_point(point(150.0, 260.0), centre(), 90.0);
+
+    let moved = resized(&shape, Handle::Tail, wanted);
+
+    assert!(near(bubble_tail(&moved).expect("tip"), point(150.0, 260.0)));
+    assert!(same(moved.number("rotation"), 90.0));
+    assert!(near(shape_pivot(&moved, None).expect("pivot"), centre()));
+}
+
+#[test]
+fn the_tail_cannot_be_dragged_further_than_the_stored_range() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+
+    let moved = resized(&shape, Handle::Tail, point(100_000.0, -100_000.0));
+
+    assert!(same(moved.number("tail_x"), 4.0));
+    assert!(same(moved.number("tail_y"), -3.0));
+}
+
+#[test]
+fn resizing_the_box_keeps_the_tail_at_the_same_place_in_the_bubble() {
+    let shape = bubble("oval", (0.3, 0.8), 0.0);
+
+    let wider = resized(&shape, Handle::Right, point(500.0, 150.0));
+
+    assert!(same(wider.number("tail_x"), 0.3) && same(wider.number("tail_y"), 0.8));
+    let tip = bubble_tail(&wider).expect("tip");
+    assert!(near(tip, point(300.0 + 0.3 * 400.0, 150.0 + 0.8 * 100.0)));
+}
+
+#[test]
+fn an_empty_box_has_no_outline_and_is_never_hit() {
+    let flat = Shape::new(
+        "bubble",
+        Geometry::Box(Rect {
+            x: 10.0,
+            y: 10.0,
+            width: 0.0,
+            height: 30.0,
+        }),
+        Options::defaults(BUBBLE.options),
+    );
+    assert!(bubble_outline(&flat).is_none());
+    assert!(!bubble_hit(&flat, point(10.0, 20.0), 5.0));
+}

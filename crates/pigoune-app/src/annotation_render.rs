@@ -9,10 +9,10 @@ use pigoune_core::annotations::Turning;
 use pigoune_core::annotations::{
     AnnotationDocument, Color, CropEditor, Geometry, Guide, Handle, Outline, PathStep, Point, Rect,
     Shape, Stroke, TEXT_BACKDROP_SHARE, TEXT_OUTLINE_SHARE, arrow_curve_control, arrow_head,
-    curve_point, curve_polyline, dash_pattern, guide_extent, handles_with_extent, head_size_factor,
-    rotate_point, rotated_bounds, rotation_handle, rotation_of, rounded_spot_radius, shape_bounds,
-    shape_pivot, sketch_curve, sketch_ellipse, sketch_line, sketch_outline, sketch_rectangle,
-    sketched_curve, step_label, text_visual_bounds,
+    bubble_outline, curve_point, curve_polyline, dash_pattern, guide_extent, handles_with_extent,
+    head_size_factor, rotate_point, rotated_bounds, rotation_handle, rotation_of,
+    rounded_spot_radius, shape_bounds, shape_pivot, sketch_curve, sketch_ellipse, sketch_line,
+    sketch_outline, sketch_rectangle, sketched_curve, step_label, text_visual_bounds,
 };
 
 const SHADOW_OFFSET: (f32, f32) = (2.0, 3.0);
@@ -55,7 +55,7 @@ pub struct Draw<'a> {
 
 type Renderer = fn(&gtk::Snapshot, &Shape, &Draw);
 
-const RENDERERS: [(&str, Renderer); 11] = [
+const RENDERERS: [(&str, Renderer); 12] = [
     ("rectangle", draw_rectangle),
     ("ellipse", draw_ellipse),
     ("line", draw_line),
@@ -67,6 +67,7 @@ const RENDERERS: [(&str, Renderer); 11] = [
     ("blur", draw_blur),
     ("pixelate", draw_pixelate),
     ("spotlight", draw_spotlight),
+    ("bubble", draw_bubble),
 ];
 
 #[cfg(test)]
@@ -269,6 +270,40 @@ fn draw_ellipse(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
             draw_closed(snapshot, shape, &path, &sketched_path(&strokes));
         }
     }
+}
+
+fn polygon_path(points: &[Point]) -> gsk::Path {
+    let builder = gsk::PathBuilder::new();
+    if let Some((first, rest)) = points.split_first() {
+        builder.move_to(first.x, first.y);
+        for point in rest {
+            builder.line_to(point.x, point.y);
+        }
+        builder.close();
+    }
+    builder.to_path()
+}
+
+fn draw_bubble(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
+    let Some(outline) = bubble_outline(shape) else {
+        return;
+    };
+    let path = polygon_path(&outline);
+    snapshot.append_fill(
+        &path,
+        gsk::FillRule::Winding,
+        &rgba(shape.paint("fill_color")),
+    );
+    let stroked = if shape.roughness().is_precise() {
+        path
+    } else {
+        sketched_path(&sketch_outline(&outline, true, shape.hand(), 0))
+    };
+    snapshot.append_stroke(
+        &stroked,
+        &stroke_of(shape, false),
+        &rgba(shape.stroke_color()),
+    );
 }
 
 fn draw_line(snapshot: &gtk::Snapshot, shape: &Shape, _draw: &Draw) {
@@ -1113,7 +1148,7 @@ pub fn append_selection(
     }
     for (handle, point) in found {
         let center = to_view(point);
-        if handle == Handle::Curve {
+        if matches!(handle, Handle::Curve | Handle::Tail) {
             let builder = gsk::PathBuilder::new();
             builder.add_circle(&graphene::Point::new(center.x, center.y), HANDLE_SIZE / 2.0);
             let path = builder.to_path();

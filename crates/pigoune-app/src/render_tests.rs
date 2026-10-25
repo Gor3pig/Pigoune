@@ -631,6 +631,27 @@ fn turned_points_draw_a_line_and_a_stroke_where_they_were_turned(rig: &Rig) {
     );
 }
 
+fn a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(rig: &Rig) {
+    let picture = rig.export(&document(vec![boxed(
+        "bubble",
+        20.0,
+        20.0,
+        100.0,
+        60.0,
+        &[
+            ("tail_x", number_to_value(0.4)),
+            ("tail_y", number_to_value(1.0)),
+        ],
+    )]));
+    let white = [255, 255, 255, 255];
+    let ink = [0x24, 0x1f, 0x31, 255];
+    assert!(near(picture.at(70, 50), white, 2), "the body is filled");
+    assert!(near(picture.at(20, 50), ink, 40), "the outline is dark");
+    assert!(near(picture.at(99, 94), white, 2), "the tail is filled too");
+    assert_eq!(picture.at(30, 100), source(30, 100), "nothing elsewhere");
+    assert_eq!(picture.at(150, 50), source(150, 50), "nothing on the right");
+}
+
 fn layers_follow_their_order(rig: &Rig) {
     let mut session = EditSession::new(AnnotationDocument::default());
     let filled = [
@@ -1099,6 +1120,7 @@ fn rendering_suite() {
     a_turned_blur_and_a_turned_pixelation_cover_exactly_their_turned_area(&rig);
     a_turned_blur_on_the_image_edge_stays_opaque(&rig);
     turned_points_draw_a_line_and_a_stroke_where_they_were_turned(&rig);
+    a_bubble_is_drawn_with_a_filled_body_an_outline_and_a_tail(&rig);
     layers_follow_their_order(&rig);
     a_crop_keeps_the_region_and_its_coordinates(&rig);
     blur_covers_only_its_region_and_follows_it(&rig);

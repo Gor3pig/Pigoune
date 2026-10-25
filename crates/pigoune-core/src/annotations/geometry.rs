@@ -1,8 +1,9 @@
+use super::bubble::{bubble_hit, bubble_tail};
 use super::options::number_to_value;
 use super::shape::{Geometry, Shape};
 use super::tools::{
-    GeometryKind, LARGEST_BADGE, LARGEST_FONT, Outline, SMALLEST_BADGE, SMALLEST_FONT,
-    ToolDefinition,
+    GeometryKind, LARGEST_BADGE, LARGEST_FONT, LARGEST_TAIL, Outline, SMALLEST_BADGE,
+    SMALLEST_FONT, SMALLEST_TAIL, ToolDefinition,
 };
 use super::{Options, Point, Rect};
 
@@ -33,6 +34,7 @@ pub enum Handle {
     Start,
     End,
     Curve,
+    Tail,
     Rotate,
 }
 
@@ -514,8 +516,13 @@ fn unturned_handles(shape: &Shape, extent: Option<(f32, f32)>) -> Vec<(Handle, P
     }
     match &shape.geometry {
         Geometry::Box(rect) => {
-            let rect = normalized(*rect);
-            box_handles(rect)
+            let mut found = box_handles(normalized(*rect));
+            if shape.kind == "bubble"
+                && let Some(tip) = bubble_tail(shape)
+            {
+                found.push((Handle::Tail, tip));
+            }
+            found
         }
         Geometry::TwoPoints { from, to } => {
             let mut found = vec![(Handle::Start, *from), (Handle::End, *to)];
@@ -578,7 +585,9 @@ fn resized_rect(rect: Rect, handle: Handle, to: Point) -> Option<Rect> {
         Handle::Bottom => bottom = to.y,
         Handle::BottomLeft => (left, bottom) = (to.x, to.y),
         Handle::Left => left = to.x,
-        Handle::Start | Handle::End | Handle::Curve | Handle::Rotate => return None,
+        Handle::Start | Handle::End | Handle::Curve | Handle::Tail | Handle::Rotate => {
+            return None;
+        }
     }
     Some(rect_between(
         Point { x: left, y: top },
@@ -624,7 +633,7 @@ fn sides_of(handle: Handle) -> (bool, bool, bool, bool) {
         Handle::Bottom => (false, false, false, true),
         Handle::BottomLeft => (true, false, false, true),
         Handle::Left => (true, false, false, false),
-        Handle::Start | Handle::End | Handle::Curve | Handle::Rotate => {
+        Handle::Start | Handle::End | Handle::Curve | Handle::Tail | Handle::Rotate => {
             (false, false, false, false)
         }
     }
@@ -722,6 +731,7 @@ pub fn resized(shape: &Shape, handle: Handle, to: Point) -> Shape {
 
 fn resized_geometry(shape: &Shape, handle: Handle, to: Point) -> Shape {
     match &shape.geometry {
+        Geometry::Box(rect) if handle == Handle::Tail => moved_tail(shape, *rect, to),
         Geometry::Box(rect) => resized_rect(*rect, handle, to).map_or_else(
             || shape.clone(),
             |bounds| shape.with_geometry(Geometry::Box(bounds)),
@@ -747,7 +757,7 @@ fn resized_geometry(shape: &Shape, handle: Handle, to: Point) -> Shape {
             if scalable_bounds(shape).is_some()
                 && !matches!(
                     handle,
-                    Handle::Start | Handle::End | Handle::Curve | Handle::Rotate
+                    Handle::Start | Handle::End | Handle::Curve | Handle::Tail | Handle::Rotate
                 )
             {
                 resized_badge(shape, *at, to)
@@ -756,6 +766,23 @@ fn resized_geometry(shape: &Shape, handle: Handle, to: Point) -> Shape {
             }
         }
     }
+}
+
+fn moved_tail(shape: &Shape, rect: Rect, to: Point) -> Shape {
+    let rect = normalized(rect);
+    if shape.kind != "bubble" || rect.width <= 0.0 || rect.height <= 0.0 {
+        return shape.clone();
+    }
+    let ratio = |offset: f32, size: f32| (offset / size).clamp(SMALLEST_TAIL, LARGEST_TAIL);
+    shape
+        .with_option(
+            "tail_x",
+            number_to_value(ratio(to.x - rect.x - rect.width / 2.0, rect.width)),
+        )
+        .with_option(
+            "tail_y",
+            number_to_value(ratio(to.y - rect.y - rect.height / 2.0, rect.height)),
+        )
 }
 
 fn arrow_middle(shape: &Shape, from: Point, to: Point) -> Point {
@@ -916,6 +943,7 @@ fn hit_unturned(
             };
             on_shaft || on_arrow_head(shape, *from, *to, point, tolerance)
         }
+        (Geometry::Box(_), Outline::Bubble) => bubble_hit(shape, point, reach),
         (Geometry::Box(bounds), Outline::Region) => {
             let rect = normalized(*bounds);
             contains(expanded(rect, tolerance), point)

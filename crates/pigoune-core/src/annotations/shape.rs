@@ -121,6 +121,11 @@ impl Shape {
     }
 
     #[must_use]
+    pub fn paint(&self, id: &str) -> Color {
+        faded(self.color(id), self.number("opacity"))
+    }
+
+    #[must_use]
     pub fn with_option(&self, id: &str, value: Value) -> Self {
         let mut shape = self.clone();
         shape.options.set(id, value);
