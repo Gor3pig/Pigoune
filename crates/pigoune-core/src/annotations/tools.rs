@@ -467,6 +467,15 @@ pub const BUBBLE_FORM: OptionSpec = OptionSpec {
     shown_if: None,
 };
 
+pub const BUBBLE_BUMPS_CHOICES: [&str; 2] = ["small", "medium"];
+
+pub const BUBBLE_BUMPS: OptionSpec = OptionSpec {
+    id: "bumps",
+    kind: OptionKind::Choice(&BUBBLE_BUMPS_CHOICES),
+    default: DefaultValue::Choice("small"),
+    shown_if: None,
+};
+
 const INK: Color = Color {
     r: 0x24,
     g: 0x1f,
@@ -543,7 +552,9 @@ pub const BUBBLE: ToolDefinition = ToolDefinition {
         BUBBLE_COLOR,
         OPACITY,
         WIDTH,
+        DASH,
         BUBBLE_FORM,
+        BUBBLE_BUMPS,
         BUBBLE_FILL,
         CONTENT,
         LETTERING,
