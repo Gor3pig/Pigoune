@@ -167,27 +167,65 @@ fn points_of_version_3_2() -> Vec<Point> {
     ]
 }
 
+fn points_of_version_3_3() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "chat-message-new-symbolic",
+            title: gettext("Comic Speech Bubbles"),
+            text: gettext(
+                "Add an oval, rounded or cloud bubble to an image, aim its tail anywhere and type centered text.",
+            ),
+        },
+        Point {
+            icon: "font-select-symbolic",
+            title: gettext("Comic Lettering"),
+            text: gettext(
+                "Choose a comic font or the normal font for a bubble, with a soft or a hard shadow, a hand-drawn look or a dashed outline.",
+            ),
+        },
+        Point {
+            icon: "object-rotate-right-symbolic",
+            title: gettext("A Steadier Turn"),
+            text: gettext(
+                "When you turn an arrow, a line or a pen stroke, its frame no longer changes shape, and the angle shows next to the handle.",
+            ),
+        },
+        Point {
+            icon: "sidebar-show-right-symbolic",
+            title: gettext("Everything in View"),
+            text: gettext(
+                "Tools, Properties and Layers are always shown in the panel, with no folding. Hover a tool to see its name and shortcut.",
+            ),
+        },
+    ]
+}
+
+fn points_of_version_2_12() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "view-conceal-symbolic",
+            title: gettext("Ignore What Is Not a Duplicate"),
+            text: gettext(
+                "Ignore a whole group, or a single asset, when look-alikes are not duplicates. The Ignored button lists them and brings them back, and Undo works too.",
+            ),
+        },
+        Point {
+            icon: "view-list-symbolic",
+            title: gettext("A Lighter Duplicates Tab"),
+            text: gettext(
+                "The trash button only appears once you tick something, and the detailed analysis is kept in its own file so the library stays small.",
+            ),
+        },
+    ]
+}
+
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.3.0" => points_of_version_3_3(),
         "3.2.0" => points_of_version_3_2(),
         "3.1.0" => points_of_version_3_1(),
         "3.0.0" => points_of_version_3(),
-        "2.12.0" => vec![
-            Point {
-                icon: "view-conceal-symbolic",
-                title: gettext("Ignore What Is Not a Duplicate"),
-                text: gettext(
-                    "Ignore a whole group, or a single asset, when look-alikes are not duplicates. The Ignored button lists them and brings them back, and Undo works too.",
-                ),
-            },
-            Point {
-                icon: "view-list-symbolic",
-                title: gettext("A Lighter Duplicates Tab"),
-                text: gettext(
-                    "The trash button only appears once you tick something, and the detailed analysis is kept in its own file so the library stays small.",
-                ),
-            },
-        ],
+        "2.12.0" => points_of_version_2_12(),
         "2.11.0" => vec![
             Point {
                 icon: "user-trash-symbolic",

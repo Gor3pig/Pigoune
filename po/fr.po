@@ -9449,3 +9449,59 @@ msgstr "Ombre douce"
 #: crates/pigoune-app/src/editor_options.rs
 msgid "Hard Shadow"
 msgstr "Ombre dure"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Comic Speech Bubbles"
+msgstr "Bulles de BD"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Add an oval, rounded or cloud bubble to an image, aim its tail anywhere and type centered text."
+msgstr "Ajoutez à une image une bulle ovale, arrondie ou en nuage, dirigez sa pointe où vous voulez et tapez un texte centré."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Comic Lettering"
+msgstr "Police de BD"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Choose a comic font or the normal font for a bubble, with a soft or a hard shadow, a hand-drawn look or a dashed outline."
+msgstr "Choisissez une police de BD ou la police normale pour une bulle, avec une ombre douce ou dure, un trait esquissé ou un contour en tirets."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "A Steadier Turn"
+msgstr "Une rotation plus stable"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "When you turn an arrow, a line or a pen stroke, its frame no longer changes shape, and the angle shows next to the handle."
+msgstr "Quand vous faites pivoter une flèche, une ligne ou un trait de crayon, son cadre ne change plus de forme et l’angle s’affiche près de la poignée."
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Everything in View"
+msgstr "Tout sous les yeux"
+
+#: crates/pigoune-app/src/whats_new.rs
+msgid "Tools, Properties and Layers are always shown in the panel, with no folding. Hover a tool to see its name and shortcut."
+msgstr "Outils, Propriétés et Calques sont toujours affichés dans le panneau, sans repli. Survolez un outil pour voir son nom et son raccourci."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Add comic speech bubbles to your annotated images, and keep the tools, properties and layers always in view."
+msgstr "Ajoutez des bulles de BD à vos images annotées et gardez les outils, les propriétés et les calques toujours sous les yeux."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "The new Bubble tool draws a comic bubble: an oval, a rounded rectangle or a thought cloud, with a tail you can aim anywhere by dragging its round handle (it stops one bubble size from the edge) and text centered inside."
+msgstr "Le nouvel outil Bulle dessine une bulle de BD : ovale, rectangle arrondi ou nuage de pensée, avec une pointe que vous dirigez où vous voulez en tirant sa poignée ronde (elle s’arrête à une taille de bulle du bord) et un texte centré."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Type in a comic font (Comic Neue, included with Pigoune) or in the normal font, in bold or italic. Turn on a soft or a hard shadow, a hand-drawn look, or a dashed outline for a whisper."
+msgstr "Tapez dans une police de BD (Comic Neue, fournie avec Pigoune) ou dans la police normale, en gras ou en italique. Activez une ombre douce ou dure, un trait esquissé ou un contour en tirets pour un murmure."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "While you turn an arrow, a line or a pen stroke, its frame keeps its shape and the angle is shown next to the handle."
+msgstr "Quand vous faites pivoter une flèche, une ligne ou un trait de crayon, son cadre garde sa forme et l’angle s’affiche près de la poignée."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "The tools are a small grid of icons, and Properties and Layers are always shown below, with a handle to share their height. Hover a tool to see its name and shortcut. F9 still hides the panel."
+msgstr "Les outils forment une petite grille d’icônes, et Propriétés et Calques restent toujours affichés dessous, avec une poignée pour partager leur hauteur. Survolez un outil pour voir son nom et son raccourci. F9 masque toujours le panneau."
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in
+msgid "Older versions of Pigoune keep your bubbles when they open an annotated image, but do not draw them."
+msgstr "Les versions précédentes de Pigoune conservent vos bulles quand elles ouvrent une image annotée, mais ne les dessinent pas."
