@@ -28,8 +28,8 @@ pub use library::{
     thumbnail_cache_bytes_in, write_render_file, write_thumbnail_file,
 };
 pub use media::{
-    AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, Rgb,
+    AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, PsdError, Rgb,
     VisualAnalysis, VisualDetail, VisualHash, animation_timing, dominant_colors, icon_from_pngs,
-    single_size_icon, visual_analysis, visual_detail, visual_hash,
+    read_merged_image, single_size_icon, visual_analysis, visual_detail, visual_hash,
 };
 pub use raster::{RgbaImage, fitted_within};
