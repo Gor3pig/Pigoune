@@ -428,7 +428,7 @@ mod tests {
     #[test]
     fn an_old_macos_icon_without_a_modern_image_gives_no_picture() {
         let drawn =
-            glib::MainContext::new().block_on(render(&layered_fixture("legacy-only.icns"), 256));
+            glib::MainContext::new().block_on(render(&layered_fixture("broken-legacy.icns"), 256));
 
         assert!(drawn.is_none());
     }
@@ -450,6 +450,15 @@ mod tests {
             let drawn = drawn.expect(name);
             assert_eq!((drawn.width(), drawn.height()), (8, 4), "{name}");
         }
+    }
+
+    #[test]
+    fn an_old_style_macos_icon_is_decoded_and_drawn() {
+        let drawn =
+            glib::MainContext::new().block_on(render(&layered_fixture("legacy-rgb.icns"), 64));
+
+        let drawn = drawn.expect("the icon is drawn");
+        assert_eq!((drawn.width(), drawn.height()), (64, 64));
     }
 
     #[test]
