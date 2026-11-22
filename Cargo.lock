@@ -1808,6 +1808,7 @@ version = "3.4.0"
 dependencies = [
  "blake3",
  "imagesize",
+ "miniz_oxide 0.9.1",
  "pigoune-core",
  "roxmltree",
  "rusqlite",
