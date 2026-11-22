@@ -317,6 +317,15 @@ Les couleurs s’ajoutent aux types et aux favoris : rouge et SVG montrent les 
 > [!TIP]
 > **Paysage** et **Adapté à mon écran** ensemble trouvent de bons fonds d’écran.
 
+### Chercher depuis GNOME
+
+Tapez dans la recherche de GNOME, la vue d’ensemble ouverte avec la touche <kbd>Super</kbd>, et Pigoune propose les éléments qui correspondent, avec un petit aperçu de chacun. Il cherche les mêmes choses que le champ de recherche de Pigoune.
+
+- Cliquez sur un résultat : Pigoune s’ouvre sur **Tout** avec cet élément sélectionné.
+- Cliquez sur le nom **Pigoune** au-dessus des résultats : Pigoune s’ouvre avec vos mots déjà saisis dans le champ de recherche.
+
+Pigoune n’a pas besoin d’être ouvert. Il cherche dans la bibliothèque qu’il ouvre au démarrage, la dernière utilisée, et ne montre que les éléments hors de la corbeille. Pour désactiver cette recherche, ouvrez **Paramètres**, puis **Recherche**, dans GNOME.
+
 ### Savoir où est rangé un élément
 
 Regardez **Collections** dans le groupe **Organisation** du panneau de détails. Un clic sur une collection l’ouvre dans la barre latérale et met l’élément en évidence. Un clic sur un tag fonctionne de la même façon.

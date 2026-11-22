@@ -61,6 +61,13 @@ to change it.
   the Filters popover and by the smart collection window. A new filter is added there, to
   `AssetFilter` in the core, and to the `smart_collections` table, so that smart collections
   can always save every filter.
+- **GNOME search.** `search_provider.rs` answers the shell's `org.gnome.Shell.SearchProvider2`
+  calls on the application's own D-Bus connection, with the library search of the core. With a
+  window open it reuses the window's library, because a library is locked by one opener at a
+  time; otherwise it opens the last library for the length of one call and releases it, and the
+  service quits after a short idle time. Results carry a small thumbnail as image data, since
+  the shell cannot read files inside the Flatpak sandbox. `data/` installs the provider
+  description, the D-Bus service file and a `DBusActivatable` desktop entry.
 - **Search pills.** `query_pills.rs` shows a query as words joined by "and" or "or", under the
   search field and in the smart collection window. It relies on `query_groups` and
   `query_text` from the core, which also drive the search, so both always agree.
