@@ -1,3 +1,7 @@
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
+
 use crate::raster::RgbaImage;
 
 const SIGNATURE: &[u8; 4] = b"8BPS";
@@ -112,6 +116,21 @@ impl<'a> Reader<'a> {
         let length = usize::try_from(self.u32()?).map_err(|_| PsdError::Unreadable)?;
         self.take(length)
     }
+}
+
+#[must_use]
+pub fn is_photoshop_file(path: &Path) -> bool {
+    let mut signature = [0_u8; SIGNATURE.len()];
+    File::open(path)
+        .and_then(|mut file| file.read_exact(&mut signature))
+        .is_ok()
+        && signature == *SIGNATURE
+}
+
+#[must_use]
+pub fn photoshop_file_is_intact(path: &Path) -> bool {
+    std::fs::read(path)
+        .is_ok_and(|bytes| !matches!(read_merged_image(&bytes), Err(PsdError::Unreadable)))
 }
 
 pub fn read_merged_image(bytes: &[u8]) -> Result<RgbaImage, PsdError> {
@@ -484,6 +503,26 @@ mod tests {
         let bytes = raw(RGB, 8, 3, 20_000, 20_000, &[]);
 
         assert_eq!(read_merged_image(&bytes), Err(PsdError::TooLarge));
+    }
+
+    #[test]
+    fn tells_photoshop_files_apart_by_their_signature() {
+        let folder = std::env::temp_dir().join(format!("pigoune-psd-{}", std::process::id()));
+        std::fs::create_dir_all(&folder).expect("folder is created");
+        let psd = folder.join("a.psd");
+        let other = folder.join("b.psd");
+        std::fs::write(&psd, raw(RGB, 8, 3, 1, 1, &[1, 2, 3])).expect("file is written");
+        std::fs::write(&other, b"GIF89a").expect("file is written");
+
+        assert!(super::is_photoshop_file(&psd));
+        assert!(!super::is_photoshop_file(&other));
+        assert!(!super::is_photoshop_file(&folder.join("missing.psd")));
+        assert!(super::photoshop_file_is_intact(&psd));
+        assert!(!super::photoshop_file_is_intact(&other));
+        let thirty_two_bit = folder.join("c.psd");
+        std::fs::write(&thirty_two_bit, raw(RGB, 32, 3, 1, 1, &[0; 12])).expect("file is written");
+        assert!(super::photoshop_file_is_intact(&thirty_two_bit));
+        std::fs::remove_dir_all(&folder).expect("folder is removed");
     }
 
     #[test]

@@ -145,6 +145,9 @@ pub fn loader_for(file: &Path) -> glycin::Loader {
 }
 
 pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
+    if pigoune_core::is_photoshop_file(file) {
+        return photoshop_texture(file, Some(pixels)).await;
+    }
     let mut image = loader_for(file).load().await.ok()?;
     let details = image.details();
     let (width, height) = if image.mime_type().as_str() == SVG_MIME_TYPE {
@@ -171,6 +174,15 @@ pub struct DetailedImage {
 }
 
 pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedImage> {
+    if pigoune_core::is_photoshop_file(file) {
+        let texture = photoshop_texture(file, None).await?;
+        return Some(DetailedImage {
+            width: u32::try_from(texture.width()).ok()?,
+            height: u32::try_from(texture.height()).ok()?,
+            texture,
+            is_vector: false,
+        });
+    }
     let mut image = loader_for(file).load().await.ok()?;
     let details = image.details();
     let (width, height) = (details.width(), details.height());
@@ -226,22 +238,44 @@ fn shrink(texture: &gdk::Texture, width: u32, height: u32) -> Option<gdk::Textur
         u32::try_from(texture.height()).ok()?,
         asset_colors::rgba_pixels(texture),
     )?;
-    let shrunk = image.shrunk_to(width, height);
-    let stride = usize::try_from(shrunk.width()).ok()? * RGBA_CHANNELS;
+    texture_of(image.shrunk_to(width, height))
+}
+
+fn texture_of(image: RgbaImage) -> Option<gdk::Texture> {
+    let stride = usize::try_from(image.width()).ok()? * RGBA_CHANNELS;
     let (width, height) = (
-        i32::try_from(shrunk.width()).ok()?,
-        i32::try_from(shrunk.height()).ok()?,
+        i32::try_from(image.width()).ok()?,
+        i32::try_from(image.height()).ok()?,
     );
     Some(
         gdk::MemoryTexture::new(
             width,
             height,
             gdk::MemoryFormat::R8g8b8a8,
-            &glib::Bytes::from_owned(shrunk.into_pixels()),
+            &glib::Bytes::from_owned(image.into_pixels()),
             stride,
         )
         .upcast(),
     )
+}
+
+async fn photoshop_texture(file: &Path, longest_side: Option<u32>) -> Option<gdk::Texture> {
+    let file = file.to_path_buf();
+    gio::spawn_blocking(move || {
+        let bytes = std::fs::read(file).ok()?;
+        let image = pigoune_core::read_merged_image(&bytes).ok()?;
+        let image = match longest_side {
+            Some(longest) if image.width().max(image.height()) > longest => {
+                let (width, height) = fit_within(image.width(), image.height(), longest);
+                image.shrunk_to(width, height)
+            }
+            _ => image,
+        };
+        texture_of(image)
+    })
+    .await
+    .ok()
+    .flatten()
 }
 
 fn fit_within(width: u32, height: u32, pixels: u32) -> (u32, u32) {
@@ -274,8 +308,8 @@ mod tests {
     use pigoune_core::AssetId;
 
     use super::{
-        REMEMBERED_THUMBNAILS, ThumbnailCache, fit_within, load_stored, scaled_to, shrink,
-        thumbnail_of,
+        REMEMBERED_THUMBNAILS, ThumbnailCache, fit_within, load_detailed, load_stored, render,
+        scaled_to, shrink, thumbnail_of,
     };
     use crate::asset_colors;
 
@@ -311,6 +345,35 @@ mod tests {
                 .remembered(asset_id(REMEMBERED_THUMBNAILS + 1))
                 .is_some()
         );
+    }
+
+    fn photoshop_fixture() -> std::path::PathBuf {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../pigoune-core/tests/fixtures/rle-gradient.psd")
+    }
+
+    #[test]
+    fn a_photoshop_image_is_drawn_from_its_merged_image() {
+        let context = glib::MainContext::new();
+
+        let thumbnail = context.block_on(render(&photoshop_fixture(), 8));
+        let detailed = context.block_on(load_detailed(&photoshop_fixture(), 2048));
+
+        let thumbnail = thumbnail.expect("the thumbnail is drawn");
+        assert_eq!((thumbnail.width(), thumbnail.height()), (8, 4));
+        let detailed = detailed.expect("the full image is drawn");
+        assert_eq!((detailed.width, detailed.height), (16, 8));
+        assert!(!detailed.is_vector);
+    }
+
+    #[test]
+    fn a_photoshop_image_that_cannot_be_read_gives_no_picture() {
+        let zipped = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../pigoune-core/tests/fixtures/zip-layers-gradient.psd");
+
+        let drawn = glib::MainContext::new().block_on(render(&zipped, 256));
+
+        assert!(drawn.is_none());
     }
 
     #[test]

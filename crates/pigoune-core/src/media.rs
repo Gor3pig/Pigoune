@@ -27,7 +27,7 @@ pub use color::{
 pub use dimensions::Dimensions;
 pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};
-pub use psd::{PsdError, read_merged_image};
+pub use psd::{PsdError, is_photoshop_file, photoshop_file_is_intact, read_merged_image};
 pub use rgb::Rgb;
 pub use shape::{AssetShape, shapes_from_text, shapes_text};
 pub use visual_detail::{VisualAnalysis, VisualDetail, visual_analysis, visual_detail};

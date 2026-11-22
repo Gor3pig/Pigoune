@@ -34,6 +34,9 @@ impl ImageCheck {
     }
 
     pub fn is_intact(&self, path: &Path) -> bool {
+        if pigoune_core::is_photoshop_file(path) {
+            return pigoune_core::photoshop_file_is_intact(path);
+        }
         if !self.decoder_works {
             return true;
         }
