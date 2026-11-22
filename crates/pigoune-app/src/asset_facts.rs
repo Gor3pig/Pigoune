@@ -31,6 +31,8 @@ pub fn format_name(format: AssetFormat) -> &'static str {
         AssetFormat::Bmp => "BMP",
         AssetFormat::Ico => "ICO",
         AssetFormat::Psd => "PSD",
+        AssetFormat::Kra => "KRA",
+        AssetFormat::Ora => "ORA",
     }
 }
 

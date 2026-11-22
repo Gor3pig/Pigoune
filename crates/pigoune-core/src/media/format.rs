@@ -6,6 +6,11 @@ const TIFF_SIGNATURES: [&[u8]; 4] = [b"II*\0", b"MM\0*", b"II+\0", b"MM\0+"];
 const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
 const PSD_SIGNATURE: &[u8] = b"8BPS";
+const ZIP_LOCAL_SIGNATURE: &[u8] = b"PK\x03\x04";
+const ZIP_LOCAL_FIXED_LENGTH: usize = 30;
+const ZIP_MIMETYPE_ENTRY: &[u8] = b"mimetype";
+const KRITA_MIMETYPE: &[u8] = b"application/x-krita";
+const OPENRASTER_MIMETYPE: &[u8] = b"image/openraster";
 const BMP_INFO_HEADER_SIZES: [u32; 7] = [12, 40, 52, 56, 64, 108, 124];
 const AVIF_BRANDS: [&[u8]; 2] = [b"avif", b"avis"];
 const HEIC_BRANDS: [&[u8]; 8] = [
@@ -28,10 +33,12 @@ pub enum AssetFormat {
     Bmp,
     Ico,
     Psd,
+    Kra,
+    Ora,
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 14] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
@@ -44,6 +51,8 @@ impl AssetFormat {
         Self::Bmp,
         Self::Ico,
         Self::Psd,
+        Self::Kra,
+        Self::Ora,
     ];
 
     #[must_use]
@@ -61,6 +70,8 @@ impl AssetFormat {
             Self::Bmp => "bmp",
             Self::Ico => "ico",
             Self::Psd => "psd",
+            Self::Kra => "kra",
+            Self::Ora => "ora",
         }
     }
 
@@ -103,13 +114,37 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
     } else if header.starts_with(PSD_SIGNATURE) {
         Some(AssetFormat::Psd)
     } else {
-        None
+        layered_format(header)
     }
 }
 
 pub fn looks_like_markup(header: &[u8]) -> bool {
     let content = header.strip_prefix(UTF8_BYTE_ORDER_MARK).unwrap_or(header);
     content.iter().find(|byte| !byte.is_ascii_whitespace()) == Some(&b'<')
+}
+
+fn layered_format(header: &[u8]) -> Option<AssetFormat> {
+    let fixed = header.get(..ZIP_LOCAL_FIXED_LENGTH)?;
+    if !fixed.starts_with(ZIP_LOCAL_SIGNATURE) {
+        return None;
+    }
+    let method = u16::from_le_bytes([fixed[8], fixed[9]]);
+    let size = usize::try_from(u32::from_le_bytes([
+        fixed[22], fixed[23], fixed[24], fixed[25],
+    ]))
+    .ok()?;
+    let name_length = usize::from(u16::from_le_bytes([fixed[26], fixed[27]]));
+    let extra_length = usize::from(u16::from_le_bytes([fixed[28], fixed[29]]));
+    let name_end = ZIP_LOCAL_FIXED_LENGTH + name_length;
+    if method != 0 || header.get(ZIP_LOCAL_FIXED_LENGTH..name_end)? != ZIP_MIMETYPE_ENTRY {
+        return None;
+    }
+    let start = name_end + extra_length;
+    match header.get(start..start.checked_add(size)?)? {
+        KRITA_MIMETYPE => Some(AssetFormat::Kra),
+        OPENRASTER_MIMETYPE => Some(AssetFormat::Ora),
+        _ => None,
+    }
 }
 
 fn is_webp(header: &[u8]) -> bool {
@@ -162,7 +197,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 21] = [
+        let cases: [(&[u8], AssetFormat); 23] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -193,10 +228,33 @@ mod tests {
                 AssetFormat::Bmp,
             ),
             (b"8BPS\0\x01\0\0\0\0\0\0", AssetFormat::Psd),
+            (&zip_with_mimetype(b"application/x-krita"), AssetFormat::Kra),
+            (&zip_with_mimetype(b"image/openraster"), AssetFormat::Ora),
         ];
         for (header, expected) in cases {
             assert_eq!(detect_binary(header), Some(expected));
         }
+    }
+
+    fn zip_with_mimetype(content: &[u8]) -> Vec<u8> {
+        let mut bytes = b"PK\x03\x04".to_vec();
+        bytes.extend_from_slice(&[20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        bytes.extend_from_slice(&u32::try_from(content.len()).unwrap().to_le_bytes());
+        bytes.extend_from_slice(&8_u16.to_le_bytes());
+        bytes.extend_from_slice(&0_u16.to_le_bytes());
+        bytes.extend_from_slice(b"mimetype");
+        bytes.extend_from_slice(content);
+        bytes
+    }
+
+    #[test]
+    fn other_archives_are_not_images() {
+        assert_eq!(detect_binary(&zip_with_mimetype(b"application/zip")), None);
+        assert_eq!(detect_binary(&zip_with_mimetype(b"image/openrastex")), None);
+        assert_eq!(detect_binary(b"PK\x03\x04 not a real header"), None);
+        let mut deflated = zip_with_mimetype(b"image/openraster");
+        deflated[8] = 8;
+        assert_eq!(detect_binary(&deflated), None);
     }
 
     #[test]

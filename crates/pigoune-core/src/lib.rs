@@ -30,8 +30,9 @@ pub use library::{
 pub use media::{
     AnimationTiming, Archive, ArchiveEntry, ArchiveError, AssetColor, AssetFormat, AssetShape,
     Dimensions, DominantColor, PsdError, Rgb, VisualAnalysis, VisualDetail, VisualHash,
-    animation_timing, dominant_colors, first_stored_text, icon_from_pngs, is_photoshop_file,
-    photoshop_file_is_intact, photoshop_problem, read_merged_image, read_merged_image_file,
-    read_merged_image_from, single_size_icon, visual_analysis, visual_detail, visual_hash,
+    animation_timing, dominant_colors, first_stored_text, icon_from_pngs, is_layered_file,
+    is_photoshop_file, layered_format_of, layered_preview_png, photoshop_file_is_intact,
+    photoshop_problem, read_merged_image, read_merged_image_file, read_merged_image_from,
+    single_size_icon, visual_analysis, visual_detail, visual_hash,
 };
 pub use raster::{RgbaImage, fitted_within};

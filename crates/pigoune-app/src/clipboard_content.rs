@@ -40,6 +40,10 @@ fn picture_of(copy: &Path) -> Option<gdk::Texture> {
     if pigoune_core::is_photoshop_file(copy) {
         return thumbnails::photoshop_picture(copy, None);
     }
+    if pigoune_core::is_layered_file(copy) {
+        let png = pigoune_core::layered_preview_png(copy)?;
+        return gdk::Texture::from_bytes(&glib::Bytes::from_owned(png)).ok();
+    }
     gdk::Texture::from_filename(copy).ok()
 }
 
@@ -62,6 +66,15 @@ mod tests {
         let picture = picture_of(&fixture("rle-gradient.psd")).expect("the picture is read");
 
         assert_eq!((picture.width(), picture.height()), (16, 8));
+    }
+
+    #[test]
+    fn a_krita_or_openraster_image_is_copied_as_a_picture() {
+        for name in ["gradient.kra", "gradient.ora"] {
+            let picture = picture_of(&fixture(name)).expect(name);
+
+            assert_eq!((picture.width(), picture.height()), (16, 8), "{name}");
+        }
     }
 
     #[test]

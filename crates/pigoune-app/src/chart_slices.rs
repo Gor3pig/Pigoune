@@ -92,6 +92,8 @@ pub fn color_of(format: AssetFormat) -> &'static str {
         AssetFormat::Bmp => "#865e3c",
         AssetFormat::Ico => "#6f8396",
         AssetFormat::Psd => "#1a5fb4",
+        AssetFormat::Kra => "#a51d2d",
+        AssetFormat::Ora => "#33b3a6",
     }
 }
 
