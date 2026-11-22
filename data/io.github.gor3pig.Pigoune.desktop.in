@@ -5,11 +5,12 @@ Comment=Organize, find and reuse your icons, logos and illustrations
 Exec=pigoune
 Icon=io.github.gor3pig.Pigoune
 Terminal=false
+DBusActivatable=true
 StartupNotify=true
 Categories=Graphics;2DGraphics;
 Keywords=icons;logos;svg;assets;library;graphics;
-Actions=Capture;
+Actions=capture;
 
-[Desktop Action Capture]
+[Desktop Action capture]
 Name=Take a Screenshot
 Exec=pigoune --capture
