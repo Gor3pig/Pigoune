@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=io.github.gor3pig.Pigoune
+Exec=@bindir@/pigoune --gapplication-service

@@ -2,17 +2,21 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use adw::prelude::*;
-use gtk::{gio, glib};
-use pigoune_core::{Asset, AssetFilter, AssetView, Library};
+use gtk::{gdk, gio, glib};
+use pigoune_core::{Asset, AssetFilter, AssetId, AssetView, Library, OriginalFile, RgbaImage};
 
 use crate::config::APP_ID;
 use crate::settings;
+use crate::thumbnails;
 use crate::window::PigouneWindow;
 
 const OBJECT_PATH: &str = "/io/github/gor3pig/Pigoune/SearchProvider";
 const INTERFACE_NAME: &str = "org.gnome.Shell.SearchProvider2";
 const RESULT_LIMIT: usize = 20;
 const INACTIVITY_TIMEOUT_MS: u32 = 30_000;
+const RESULT_ICON_PIXELS: u32 = 96;
+const BITS_PER_SAMPLE: i32 = 8;
+const RGBA_CHANNELS: i32 = 4;
 const INTERFACE_XML: &str = r#"
 <node>
   <interface name="org.gnome.Shell.SearchProvider2">
@@ -53,7 +57,6 @@ pub fn install(application: &adw::Application) {
     let registration = connection
         .register_object(OBJECT_PATH, &interface)
         .method_call(move |_, _, _, _, method, parameters, invocation| {
-            let _hold = application.hold();
             answer(&application, method, &parameters, invocation);
         })
         .build();
@@ -87,7 +90,12 @@ fn answer(
         }
         "GetResultMetas" => {
             let (identifiers,) = parameters.get::<(Vec<String>,)>().unwrap_or_default();
-            invocation.return_value(Some(&(result_metas(&identifiers),).to_variant()));
+            let hold = application.hold();
+            glib::spawn_future_local(async move {
+                let metas = result_metas(&identifiers).await;
+                invocation.return_value(Some(&(metas,).to_variant()));
+                drop(hold);
+            });
         }
         _ => {
             application.activate();
@@ -105,33 +113,88 @@ fn reply_with_identifiers(invocation: gio::DBusMethodInvocation, terms: &[String
     invocation.return_value(Some(&(identifiers,).to_variant()));
 }
 
-fn result_metas(identifiers: &[String]) -> Vec<HashMap<String, glib::Variant>> {
-    let names = names_by_identifier(identifiers);
-    identifiers
-        .iter()
-        .map(|identifier| {
-            let name = names.get(identifier).cloned().unwrap_or_default();
-            HashMap::from([
-                ("id".to_owned(), identifier.to_variant()),
-                ("name".to_owned(), name.to_variant()),
-                ("gicon".to_owned(), APP_ID.to_variant()),
-            ])
-        })
-        .collect()
+struct ResultFacts {
+    identifier: String,
+    name: String,
+    original: Option<OriginalFile>,
+    thumbnail_file: PathBuf,
 }
 
-fn names_by_identifier(identifiers: &[String]) -> HashMap<String, String> {
+async fn result_metas(identifiers: &[String]) -> Vec<HashMap<String, glib::Variant>> {
+    let mut metas = Vec::new();
+    for facts in result_facts(identifiers) {
+        metas.push(meta_of(facts).await);
+    }
+    metas
+}
+
+async fn meta_of(facts: ResultFacts) -> HashMap<String, glib::Variant> {
+    let mut meta = HashMap::from([
+        ("id".to_owned(), facts.identifier.to_variant()),
+        ("name".to_owned(), facts.name.to_variant()),
+    ]);
+    let texture = thumbnails::thumbnail_of(facts.original.as_ref(), &facts.thumbnail_file).await;
+    match texture.and_then(|texture| icon_data(&texture)) {
+        Some(icon) => meta.insert("icon-data".to_owned(), icon),
+        None => meta.insert("gicon".to_owned(), APP_ID.to_variant()),
+    };
+    meta
+}
+
+fn icon_data(texture: &gdk::Texture) -> Option<glib::Variant> {
+    let mut downloader = gdk::TextureDownloader::new(texture);
+    downloader.set_format(gdk::MemoryFormat::R8g8b8a8);
+    let (bytes, stride) = downloader.download_bytes();
+    let (width, height) = (texture.width(), texture.height());
+    let row_length = usize::try_from(width).ok()? * usize::try_from(RGBA_CHANNELS).ok()?;
+    let tight = bytes
+        .chunks(stride)
+        .flat_map(|row| &row[..row_length])
+        .copied()
+        .collect();
+    let image = RgbaImage::new(
+        u32::try_from(width).ok()?,
+        u32::try_from(height).ok()?,
+        tight,
+    )?
+    .shrunk_to(RESULT_ICON_PIXELS, RESULT_ICON_PIXELS);
+    let (width, height) = (
+        i32::try_from(image.width()).ok()?,
+        i32::try_from(image.height()).ok()?,
+    );
+    Some(
+        (
+            width,
+            height,
+            width * RGBA_CHANNELS,
+            true,
+            BITS_PER_SAMPLE,
+            RGBA_CHANNELS,
+            image.into_pixels(),
+        )
+            .to_variant(),
+    )
+}
+
+fn result_facts(identifiers: &[String]) -> Vec<ResultFacts> {
     with_library(|library| {
         identifiers
             .iter()
-            .filter_map(|identifier| {
-                let id = pigoune_core::AssetId::parse(identifier)?;
-                let asset = library.asset(id).ok()??;
-                Some((identifier.clone(), asset.display_name))
-            })
+            .filter_map(|identifier| facts_of(library, identifier))
             .collect()
     })
     .unwrap_or_default()
+}
+
+fn facts_of(library: &Library, identifier: &str) -> Option<ResultFacts> {
+    let id = AssetId::parse(identifier)?;
+    let asset = library.asset(id).ok()??;
+    Some(ResultFacts {
+        identifier: identifier.to_owned(),
+        original: library.original_of(&asset).ok(),
+        thumbnail_file: library.thumbnail_file(id, thumbnails::THUMBNAIL_PIXELS),
+        name: asset.display_name,
+    })
 }
 
 fn found_assets(terms: &[String]) -> Vec<Asset> {

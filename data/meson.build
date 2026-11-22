@@ -38,3 +38,17 @@ install_data(
   app_id + '.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
 )
+
+install_data(
+  app_id + '.search-provider.ini',
+  install_dir: get_option('datadir') / 'gnome-shell' / 'search-providers',
+)
+
+service_data = configuration_data()
+service_data.set('bindir', get_option('prefix') / get_option('bindir'))
+configure_file(
+  input: app_id + '.service.in',
+  output: app_id + '.service',
+  configuration: service_data,
+  install_dir: get_option('datadir') / 'dbus-1' / 'services',
+)
