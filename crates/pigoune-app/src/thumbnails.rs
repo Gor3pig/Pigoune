@@ -267,9 +267,20 @@ async fn photoshop_texture(file: &Path, longest_side: Option<u32>) -> Option<gdk
         .flatten()
 }
 
+pub async fn photoshop_problem(file: &Path) -> Option<pigoune_core::PsdError> {
+    let file = file.to_path_buf();
+    gio::spawn_blocking(move || {
+        pigoune_core::is_photoshop_file(&file)
+            .then(|| pigoune_core::photoshop_problem(&file))
+            .flatten()
+    })
+    .await
+    .ok()
+    .flatten()
+}
+
 pub fn photoshop_picture(file: &Path, longest_side: Option<u32>) -> Option<gdk::Texture> {
-    let bytes = std::fs::read(file).ok()?;
-    let image = pigoune_core::read_merged_image(&bytes).ok()?;
+    let image = pigoune_core::read_merged_image_file(file).ok()?;
     let image = match longest_side {
         Some(longest) if image.width().max(image.height()) > longest => {
             let (width, height) = fit_within(image.width(), image.height(), longest);
@@ -371,7 +382,7 @@ mod tests {
     #[test]
     fn a_photoshop_image_that_cannot_be_read_gives_no_picture() {
         let zipped = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../pigoune-core/tests/fixtures/zip-layers-gradient.psd");
+            .join("../pigoune-core/tests/fixtures/no-preview.psd");
 
         let drawn = glib::MainContext::new().block_on(render(&zipped, 256));
 
