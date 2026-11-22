@@ -60,7 +60,7 @@ Pour nettoyer la liste, retirez une bibliothèque avec sa croix sur la page d’
 
 ### Importer des éléments
 
-Il y a quatre façons de faire entrer des éléments.
+Il y a cinq façons de faire entrer des éléments.
 
 | Façon | Comment |
 |---|---|
@@ -68,8 +68,11 @@ Il y a quatre façons de faire entrer des éléments.
 | **Glisser-déposer** | Glissez des fichiers ou des dossiers depuis Fichiers sur la fenêtre, ou sur **Tout**, **Non classés** ou une collection de la barre latérale. |
 | **Copier-coller** | Copiez des fichiers dans Fichiers, ou une image (une capture d’écran, une image d’une page web), puis appuyez sur <kbd>Ctrl</kbd>+<kbd>V</kbd>. |
 | **Depuis une page web** | Glissez une image d’une page web sur la fenêtre, ou sur une collection de la barre latérale. |
+| **Ouvrir avec** | Dans Fichiers, faites un clic droit sur une ou plusieurs images, puis choisissez **Ouvrir avec Pigoune**. Elles entrent dans la bibliothèque, hors de toute collection, dans **Non classés**. |
 
 Une image collée s’appelle **Image collée** suivie de la date et de l’heure ; vous pouvez la renommer ensuite.
+
+Avec **Ouvrir avec**, Pigoune s’ouvre si besoin et affiche le rapport d’importation habituel. Si aucune bibliothèque n’est ouverte, les images attendent que vous en ouvriez ou en créiez une. Pigoune n’apparaît dans **Ouvrir avec** que pour les types de fichiers qu’il importe, et ne devient jamais l’application par défaut sauf si vous le choisissez.
 
 <details>
 <summary>Ce que fournit le navigateur</summary>
@@ -82,12 +85,14 @@ Pigoune garde ce que le navigateur lui fournit : le fichier d’origine avec Ch
 
 | Sujet | Règle |
 |---|---|
-| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP et ICO. |
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO et PSD. |
 | **Contrôles** | Chaque image est vérifiée avant d’être importée. Un fichier endommagé, ou qui ne peut pas être affiché, est signalé et refusé. |
 | **Doublons** | Un fichier déjà présent n’est jamais copié deux fois. S’il est à la corbeille, l’importer le sort de la corbeille. |
 | **Dossiers** | Quand vous importez un dossier, ses sous-dossiers deviennent des collections. |
 
 Les photos HEIC s’affichent si le système sait les décoder, ce qui est le cas avec le paquet Flatpak.
+
+Les fichiers Photoshop (PSD) s’affichent à partir de l’image fusionnée que Photoshop y enregistre : les calques ne sont pas montrés et le fichier lui-même reste intact. Pigoune lit les cas courants, en RVB, niveaux de gris, CMJN ou couleurs indexées, avec 8 ou 16 bits par couleur. Le CMJN est converti de façon simple, donc les couleurs peuvent différer un peu de celles de Photoshop. Un PSD que Pigoune ne sait pas dessiner, par exemple en 32 bits, est quand même importé et montre l’image de remplacement habituelle ; un PSD abîmé est refusé. Une copie, un export ou un fond d’écran utilise l’image fusionnée, et glisser le fichier vers une autre application donne le PSD lui-même.
 
 Si vous importez dans une collection un fichier déjà présent, l’élément existant est ajouté à cette collection et reste dans les autres. S’il était à la corbeille, il est restauré et n’appartient alors qu’à cette collection.
 

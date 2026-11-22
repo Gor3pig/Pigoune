@@ -60,7 +60,7 @@ To clean the list, remove a library with its cross on the welcome page, or choos
 
 ### Import assets
 
-There are four ways to bring assets in.
+There are five ways to bring assets in.
 
 | Way | How |
 |---|---|
@@ -68,8 +68,11 @@ There are four ways to bring assets in.
 | **Drag and drop** | Drag files or folders from Files onto the window, or onto **All**, **Unclassified** or a collection in the sidebar. |
 | **Copy and paste** | Copy files in Files, or an image (a screenshot, an image from a web page), then press <kbd>Ctrl</kbd>+<kbd>V</kbd>. |
 | **From a web page** | Drag an image from a web page onto the window, or onto a collection of the sidebar. |
+| **Open With** | In Files, right-click one or more images, then choose **Open With Pigoune**. They join the library, outside any collection, in **Unclassified**. |
 
 A pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.
+
+With **Open With**, Pigoune opens if needed and shows the usual import report. If no library is open yet, the images wait until you open or create one. Pigoune only appears in **Open With** for the kinds of files it imports, and never becomes the default application unless you choose it.
 
 <details>
 <summary>What the browser hands over</summary>
@@ -82,12 +85,14 @@ Pigoune keeps what the browser gives it: the original file with Chrome or Brave,
 
 | Topic | Rule |
 |---|---|
-| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP and ICO. |
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO and PSD. |
 | **Checks** | Every image is checked before it is imported. A damaged file, or one that cannot be shown, is listed and refused. |
 | **Duplicates** | A file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash. |
 | **Folders** | When you import a folder, its subfolders become collections. |
 
 HEIC photos are shown when the system can decode them, which the Flatpak package does.
+
+Photoshop files (PSD) are shown from the merged image that Photoshop saves in them: the layers are not shown, and the file itself is kept untouched. Pigoune reads the usual kinds, in RGB, gray, CMYK or indexed colors, with 8 or 16 bits per color. CMYK colors are converted in a simple way, so they can look a little different from Photoshop. A PSD that Pigoune cannot draw, such as a 32-bit one, is still imported and shows the usual placeholder; a damaged one is refused. A copy, an export or a wallpaper uses the merged image, and dragging the file out gives the PSD itself.
 
 When you import a file that is already there into a collection, the existing asset is added to that collection and stays in the others. If it was in the trash, it is restored and then belongs to that collection only.
 

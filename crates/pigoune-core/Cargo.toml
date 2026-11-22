@@ -13,7 +13,7 @@ workspace = true
 blake3 = "1.8.7"
 imagesize = { version = "0.15.0", default-features = false, features = ["bmp", "gif", "heif", "jpeg", "jxl", "png", "psd", "tiff", "webp"] }
 roxmltree = "0.21.1"
-rusqlite = { version = "0.40.2", features = ["bundled", "fallible_uint"] }
+rusqlite = { version = "0.41.1", features = ["bundled", "fallible_uint"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0.21"

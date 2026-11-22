@@ -35,7 +35,7 @@ rangée et agréable à parcourir. Vos fichiers d’origine ne sont jamais touch
 <tr>
 <td width="33%" valign="top">
 
-**Déposer**<br>Fichiers et dossiers, tous les formats courants, doublons repérés.
+**Déposer**<br>Fichiers et dossiers, tous les formats courants, doublons repérés, ou « Ouvrir avec » depuis Fichiers.
 
 </td>
 <td width="33%" valign="top">
