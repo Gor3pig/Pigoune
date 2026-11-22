@@ -2,13 +2,14 @@
 Type=Application
 Name=Pigoune
 Comment=Organize, find and reuse your icons, logos and illustrations
-Exec=pigoune
+Exec=pigoune %F
 Icon=io.github.gor3pig.Pigoune
 Terminal=false
 DBusActivatable=true
 StartupNotify=true
 Categories=Graphics;2DGraphics;
 Keywords=icons;logos;svg;assets;library;graphics;
+MimeType=image/svg+xml;image/png;image/jpeg;image/webp;image/avif;image/heic;image/jxl;image/gif;image/tiff;image/bmp;image/vnd.microsoft.icon;image/vnd.adobe.photoshop;
 Actions=capture;
 
 [Desktop Action capture]
