@@ -361,7 +361,7 @@ const fn crc_table() -> [u32; 256] {
     table
 }
 
-fn crc32(data: &[u8]) -> u32 {
+pub(super) fn crc32(data: &[u8]) -> u32 {
     !data.iter().fold(u32::MAX, |crc, &byte| {
         CRC_TABLE[((crc ^ u32::from(byte)) & 0xFF) as usize] ^ (crc >> 8)
     })

@@ -7,7 +7,7 @@ use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene};
 
 use pigoune_core::annotations::AnnotationDocument;
-use pigoune_core::{Asset, AssetFormat, Dimensions, PsdError};
+use pigoune_core::{Asset, Dimensions, PsdError};
 
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
@@ -1082,7 +1082,7 @@ impl PigouneAssetPreview {
             .as_ref()
             .and_then(|thumbnails| thumbnails.remembered(asset.id()));
         let (width, height) = placeholder_size(&asset, remembered.as_ref());
-        let is_vector = asset.asset().format == AssetFormat::Svg;
+        let is_vector = asset.asset().format.is_vector();
         imp.zoom_view
             .show_image(remembered.as_ref(), width, height, is_vector);
         imp.showing.replace(Some(asset.clone()));
@@ -1483,7 +1483,7 @@ impl PigouneAssetPreview {
         let Some(asset) = imp.showing.borrow().clone() else {
             return;
         };
-        if asset.asset().format != AssetFormat::Svg {
+        if !asset.asset().format.is_vector() {
             return;
         }
         let wanted = vector_pixels_for(asset.asset().dimensions, zoom, self.scale_factor());

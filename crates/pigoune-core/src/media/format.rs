@@ -1,3 +1,5 @@
+use super::svgz;
+
 const PNG_SIGNATURE: &[u8] = b"\x89PNG\r\n\x1a\n";
 const JPEG_SIGNATURE: &[u8] = &[0xFF, 0xD8, 0xFF];
 const GIF_SIGNATURES: [&[u8]; 2] = [b"GIF87a", b"GIF89a"];
@@ -6,6 +8,7 @@ const TIFF_SIGNATURES: [&[u8]; 4] = [b"II*\0", b"MM\0*", b"II+\0", b"MM\0+"];
 const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
 const PSD_SIGNATURE: &[u8] = b"8BPS";
+const ICNS_SIGNATURE: &[u8] = b"icns";
 const ZIP_LOCAL_SIGNATURE: &[u8] = b"PK\x03\x04";
 const ZIP_LOCAL_FIXED_LENGTH: usize = 30;
 const ZIP_MIMETYPE_ENTRY: &[u8] = b"mimetype";
@@ -35,10 +38,12 @@ pub enum AssetFormat {
     Psd,
     Kra,
     Ora,
+    Icns,
+    Svgz,
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 14] = [
+    pub const ALL: [Self; 16] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
@@ -53,6 +58,8 @@ impl AssetFormat {
         Self::Psd,
         Self::Kra,
         Self::Ora,
+        Self::Icns,
+        Self::Svgz,
     ];
 
     #[must_use]
@@ -72,7 +79,14 @@ impl AssetFormat {
             Self::Psd => "psd",
             Self::Kra => "kra",
             Self::Ora => "ora",
+            Self::Icns => "icns",
+            Self::Svgz => "svgz",
         }
+    }
+
+    #[must_use]
+    pub fn is_vector(self) -> bool {
+        matches!(self, Self::Svg | Self::Svgz)
     }
 
     #[must_use]
@@ -113,6 +127,10 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
         Some(AssetFormat::Bmp)
     } else if header.starts_with(PSD_SIGNATURE) {
         Some(AssetFormat::Psd)
+    } else if header.starts_with(ICNS_SIGNATURE) {
+        Some(AssetFormat::Icns)
+    } else if svgz::is_compressed_svg(header) {
+        Some(AssetFormat::Svgz)
     } else {
         layered_format(header)
     }
@@ -197,7 +215,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 23] = [
+        let cases: [(&[u8], AssetFormat); 24] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -230,6 +248,7 @@ mod tests {
             (b"8BPS\0\x01\0\0\0\0\0\0", AssetFormat::Psd),
             (&zip_with_mimetype(b"application/x-krita"), AssetFormat::Kra),
             (&zip_with_mimetype(b"image/openraster"), AssetFormat::Ora),
+            (b"icns\0\0\0\x10ic07\0\0\0\x08", AssetFormat::Icns),
         ];
         for (header, expected) in cases {
             assert_eq!(detect_binary(header), Some(expected));
