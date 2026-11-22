@@ -167,6 +167,25 @@ fn points_of_version_3_2() -> Vec<Point> {
     ]
 }
 
+fn points_of_version_3_5() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "folder-pictures-symbolic",
+            title: gettext("More File Formats"),
+            text: gettext(
+                "Krita, OpenRaster, macOS icons, compressed SVG and texture files such as TGA, DDS, QOI, EXR and HDR now join your library.",
+            ),
+        },
+        Point {
+            icon: "applications-graphics-symbolic",
+            title: gettext("A Better Photoshop Preview"),
+            text: gettext(
+                "Photoshop files load faster, keep their transparency, and the preview tells you why when one cannot be shown.",
+            ),
+        },
+    ]
+}
+
 fn points_of_version_3_4() -> Vec<Point> {
     vec![
         Point {
@@ -247,6 +266,7 @@ fn points_of_version_2_12() -> Vec<Point> {
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.5.0" => points_of_version_3_5(),
         "3.4.0" => points_of_version_3_4(),
         "3.3.0" => points_of_version_3_3(),
         "3.2.0" => points_of_version_3_2(),
