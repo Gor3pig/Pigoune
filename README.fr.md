@@ -45,7 +45,7 @@ rangée et agréable à parcourir. Vos fichiers d’origine ne sont jamais touch
 </td>
 <td width="33%" valign="top">
 
-**Retrouver**<br>Recherche et filtres instantanés, même parmi des milliers.
+**Retrouver**<br>Recherche et filtres instantanés, même parmi des milliers, y compris depuis la recherche de GNOME.
 
 </td>
 </tr>

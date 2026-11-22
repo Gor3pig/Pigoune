@@ -45,7 +45,7 @@ Your original files are never touched.
 </td>
 <td width="33%" valign="top">
 
-**Find**<br>Instant search and filters, even among thousands.
+**Find**<br>Instant search and filters, even among thousands, also from the GNOME search.
 
 </td>
 </tr>
