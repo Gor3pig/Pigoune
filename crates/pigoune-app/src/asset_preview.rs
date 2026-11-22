@@ -7,7 +7,7 @@ use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene};
 
 use pigoune_core::annotations::AnnotationDocument;
-use pigoune_core::{Asset, AssetFormat, Dimensions};
+use pigoune_core::{Asset, AssetFormat, Dimensions, PsdError};
 
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
@@ -1154,13 +1154,18 @@ impl PigouneAssetPreview {
             #[weak(rename_to = preview)]
             self,
             async move {
-                let detailed = match shown.display_file(&preview).await {
-                    Some(file) => thumbnails::load_detailed(&file, vector_pixels).await,
+                let file = shown.display_file(&preview).await;
+                let detailed = match &file {
+                    Some(file) => thumbnails::load_detailed(file, vector_pixels).await,
                     None => None,
                 };
                 let Some(detailed) = detailed else {
                     if first_view {
-                        preview.show_load_failure(has_thumbnail);
+                        let problem = match &file {
+                            Some(file) => thumbnails::photoshop_problem(file).await,
+                            None => None,
+                        };
+                        preview.show_load_failure(has_thumbnail, problem);
                     }
                     return;
                 };
@@ -1439,12 +1444,20 @@ impl PigouneAssetPreview {
             .set_visible_child_name(if comparison.waiting() { "busy" } else { "icon" });
     }
 
-    fn show_load_failure(&self, has_thumbnail: bool) {
+    fn show_load_failure(&self, has_thumbnail: bool, problem: Option<PsdError>) {
         let banner = &self.imp().load_banner;
-        banner.set_title(&if has_thumbnail {
-            gettext("The full-size image could not be loaded: showing its thumbnail")
-        } else {
-            gettext("This image could not be loaded: its file may be missing or damaged")
+        banner.set_title(&match problem {
+            Some(PsdError::Unsupported) => {
+                gettext("Pigoune cannot show this kind of Photoshop file, a 32-bit one for example")
+            }
+            Some(PsdError::TooLarge) => gettext("This Photoshop image is too large to be shown"),
+            Some(PsdError::NoMergedImage) => gettext(
+                "This Photoshop file was saved without a preview: turn on Maximize Compatibility in Photoshop",
+            ),
+            _ if has_thumbnail => {
+                gettext("The full-size image could not be loaded: showing its thumbnail")
+            }
+            _ => gettext("This image could not be loaded: its file may be missing or damaged"),
         });
         banner.set_revealed(true);
     }

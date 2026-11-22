@@ -92,7 +92,7 @@ Pigoune keeps what the browser gives it: the original file with Chrome or Brave,
 
 HEIC photos are shown when the system can decode them, which the Flatpak package does.
 
-Photoshop files (PSD) are shown from the merged image that Photoshop saves in them: the layers are not shown, and the file itself is kept untouched. Pigoune reads the usual kinds, in RGB, gray, CMYK or indexed colors, with 8 or 16 bits per color. CMYK colors are converted in a simple way, so they can look a little different from Photoshop. A PSD that Pigoune cannot draw, such as a 32-bit one, is still imported and shows the usual placeholder; a damaged one is refused. A copy, an export or a wallpaper uses the merged image, and dragging the file out gives the PSD itself.
+Photoshop files (PSD) are shown from the merged image that Photoshop saves in them: the layers are not shown, and the file itself is kept untouched. Pigoune reads the usual kinds, in RGB, gray, CMYK or indexed colors, with 8 or 16 bits per color. CMYK colors are converted in a simple way, so they can look a little different from Photoshop. Transparent areas stay transparent. A PSD that Pigoune cannot draw, such as a 32-bit one, or one saved without **Maximize Compatibility** in Photoshop (it then holds no merged image), is still imported: it shows the usual placeholder and the preview says why. A damaged one is refused. A copy, an export or a wallpaper uses the merged image, and dragging the file out gives the PSD itself.
 
 When you import a file that is already there into a collection, the existing asset is added to that collection and stays in the others. If it was in the trash, it is restored and then belongs to that collection only.
 

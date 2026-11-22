@@ -66,6 +66,6 @@ mod tests {
 
     #[test]
     fn an_unreadable_photoshop_image_gives_no_picture() {
-        assert!(picture_of(&fixture("zip-layers-gradient.psd")).is_none());
+        assert!(picture_of(&fixture("no-preview.psd")).is_none());
     }
 }
