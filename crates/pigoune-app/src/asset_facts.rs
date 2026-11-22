@@ -35,6 +35,11 @@ pub fn format_name(format: AssetFormat) -> &'static str {
         AssetFormat::Ora => "ORA",
         AssetFormat::Icns => "ICNS",
         AssetFormat::Svgz => "SVGZ",
+        AssetFormat::Tga => "TGA",
+        AssetFormat::Dds => "DDS",
+        AssetFormat::Qoi => "QOI",
+        AssetFormat::Exr => "EXR",
+        AssetFormat::Hdr => "HDR",
     }
 }
 

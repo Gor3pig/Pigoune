@@ -96,6 +96,11 @@ pub fn color_of(format: AssetFormat) -> &'static str {
         AssetFormat::Ora => "#33b3a6",
         AssetFormat::Icns => "#5e5c64",
         AssetFormat::Svgz => "#99c1f1",
+        AssetFormat::Tga => "#cd9777",
+        AssetFormat::Dds => "#63452c",
+        AssetFormat::Qoi => "#8ff0a4",
+        AssetFormat::Exr => "#f66151",
+        AssetFormat::Hdr => "#ffbe6f",
     }
 }
 

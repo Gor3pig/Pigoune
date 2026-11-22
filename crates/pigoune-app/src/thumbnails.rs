@@ -434,6 +434,25 @@ mod tests {
     }
 
     #[test]
+    fn texture_and_render_files_are_drawn() {
+        let context = glib::MainContext::new();
+        for name in [
+            "texture-uncompressed.tga",
+            "texture-rle.tga",
+            "texture-gray.tga",
+            "texture-dxt5.dds",
+            "texture.qoi",
+            "texture.exr",
+            "texture.hdr",
+        ] {
+            let drawn = context.block_on(render(&layered_fixture(name), 8));
+
+            let drawn = drawn.expect(name);
+            assert_eq!((drawn.width(), drawn.height()), (8, 4), "{name}");
+        }
+    }
+
+    #[test]
     fn a_compressed_svg_is_drawn_as_a_vector() {
         let context = glib::MainContext::new();
 

@@ -85,7 +85,7 @@ Pigoune keeps what the browser gives it: the original file with Chrome or Brave,
 
 | Topic | Rule |
 |---|---|
-| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), macOS icons (ICNS) and compressed SVG (SVGZ). |
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), macOS icons (ICNS), compressed SVG (SVGZ), TGA, DDS, QOI, OpenEXR (EXR) and Radiance (HDR). |
 | **Checks** | Every image is checked before it is imported. A damaged file, or one that cannot be shown, is listed and refused. |
 | **Duplicates** | A file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash. |
 | **Folders** | When you import a folder, its subfolders become collections. |
@@ -95,6 +95,8 @@ HEIC photos are shown when the system can decode them, which the Flatpak package
 Photoshop files (PSD) are shown from the merged image that Photoshop saves in them: the layers are not shown, and the file itself is kept untouched. Pigoune reads the usual kinds, in RGB, gray, CMYK or indexed colors, with 8 or 16 bits per color. CMYK colors are converted in a simple way, so they can look a little different from Photoshop. Krita (KRA) and OpenRaster (ORA) files are shown from the merged image they carry, or from their small preview when they have none: the layers are not shown and the file stays untouched. A copy, an export or a wallpaper uses that image, and dragging the file out gives the file itself.
 
 A macOS icon (ICNS) is shown from its largest image, and the sizes it holds are listed; an old one that only holds the legacy images of old systems is kept and shows the usual placeholder. A compressed SVG (SVGZ) is drawn as a vector like an SVG.
+
+Texture and render files (TGA, DDS, QOI, EXR and HDR) are drawn by the system. A TGA file has no reliable signature, so Pigoune only accepts it when its header is plausible and its name ends in `.tga`. A DDS file must use the common compressed kinds (DXT). EXR and HDR images can be brighter than a screen: their highlights are clipped. A file the system cannot draw is refused like any image that cannot be shown.
 
 Transparent areas of a PSD stay transparent. A PSD that Pigoune cannot draw, such as a 32-bit one, or one saved without **Maximize Compatibility** in Photoshop (it then holds no merged image), is still imported: it shows the usual placeholder and the preview says why. A damaged one is refused. A copy, an export or a wallpaper uses the merged image, and dragging the file out gives the PSD itself.
 
