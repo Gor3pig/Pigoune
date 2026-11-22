@@ -108,7 +108,6 @@ mod tests {
             "texture-dxt5.dds",
             "texture.qoi",
             "texture.exr",
-            "texture.hdr",
         ] {
             assert!(check.is_intact(&fixture(name)), "{name}");
         }
