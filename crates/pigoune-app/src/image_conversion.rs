@@ -599,6 +599,14 @@ mod tests {
     }
 
     #[test]
+    fn a_photoshop_image_converts_from_its_merged_image() {
+        let converted =
+            converted("rle-gradient.psd", (16, 8), settings(TargetFormat::Png)).expect("converted");
+
+        assert_eq!(png_size(&converted.bytes), (16, 8));
+    }
+
+    #[test]
     fn the_original_size_keeps_the_plain_name() {
         let converted =
             converted("red-dot.png", (3, 2), settings(TargetFormat::Png)).expect("converted");

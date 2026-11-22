@@ -261,21 +261,23 @@ fn texture_of(image: RgbaImage) -> Option<gdk::Texture> {
 
 async fn photoshop_texture(file: &Path, longest_side: Option<u32>) -> Option<gdk::Texture> {
     let file = file.to_path_buf();
-    gio::spawn_blocking(move || {
-        let bytes = std::fs::read(file).ok()?;
-        let image = pigoune_core::read_merged_image(&bytes).ok()?;
-        let image = match longest_side {
-            Some(longest) if image.width().max(image.height()) > longest => {
-                let (width, height) = fit_within(image.width(), image.height(), longest);
-                image.shrunk_to(width, height)
-            }
-            _ => image,
-        };
-        texture_of(image)
-    })
-    .await
-    .ok()
-    .flatten()
+    gio::spawn_blocking(move || photoshop_picture(&file, longest_side))
+        .await
+        .ok()
+        .flatten()
+}
+
+pub fn photoshop_picture(file: &Path, longest_side: Option<u32>) -> Option<gdk::Texture> {
+    let bytes = std::fs::read(file).ok()?;
+    let image = pigoune_core::read_merged_image(&bytes).ok()?;
+    let image = match longest_side {
+        Some(longest) if image.width().max(image.height()) > longest => {
+            let (width, height) = fit_within(image.width(), image.height(), longest);
+            image.shrunk_to(width, height)
+        }
+        _ => image,
+    };
+    texture_of(image)
 }
 
 fn fit_within(width: u32, height: u32, pixels: u32) -> (u32, u32) {
