@@ -1133,6 +1133,10 @@ impl PigouneWindow {
         self.schedule_counts_refresh();
     }
 
+    pub fn with_open_library<T>(&self, work: impl FnOnce(&Library) -> T) -> Option<T> {
+        self.imp().library.borrow().as_ref().map(work)
+    }
+
     fn search(&self, query: &str) {
         let imp = self.imp();
         if *imp.search_query.borrow() == query {
