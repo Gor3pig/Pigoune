@@ -1398,6 +1398,15 @@ mod tests {
     }
 
     #[test]
+    fn a_file_written_by_gimp_keeps_its_half_transparent_pixels() {
+        let image = super::read_merged_image_file(&fixture("gimp-real.psd")).expect("the image");
+
+        assert_eq!((image.width(), image.height()), (64, 40));
+        assert_eq!(pixel_at(&image, 10, 10), [255, 0, 0, 255]);
+        assert_eq!(pixel_at(&image, 50, 10), [0, 0, 255, 128]);
+    }
+
+    #[test]
     fn a_real_file_saved_without_a_merged_image_is_named() {
         let path = fixture("no-preview.psd");
 

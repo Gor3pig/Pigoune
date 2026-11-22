@@ -412,6 +412,33 @@ mod tests {
     }
 
     #[test]
+    fn files_written_by_krita_and_gimp_are_drawn() {
+        let context = glib::MainContext::new();
+        for name in [
+            "krita-real.kra",
+            "krita-real.ora",
+            "gimp-real.ora",
+            "gimp-real.psd",
+            "gimp-real.tga",
+            "gimp-real.qoi",
+        ] {
+            let drawn = context.block_on(render(&layered_fixture(name), 256));
+
+            let drawn = drawn.expect(name);
+            assert_eq!((drawn.width(), drawn.height()), (64, 40), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_real_krita_file_without_a_merged_image_is_drawn_from_its_preview() {
+        let drawn = glib::MainContext::new()
+            .block_on(render(&layered_fixture("krita-real-no-merged.kra"), 256));
+
+        let drawn = drawn.expect("the preview is drawn");
+        assert_eq!((drawn.width(), drawn.height()), (256, 160));
+    }
+
+    #[test]
     fn a_macos_icon_is_drawn_from_its_largest_image() {
         let context = glib::MainContext::new();
 
