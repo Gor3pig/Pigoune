@@ -104,6 +104,7 @@ mod ring_chart;
 mod row_thumbnail;
 mod screen_size;
 mod screenshot;
+mod search_provider;
 mod search_space;
 mod search_width;
 mod selection_loss;
