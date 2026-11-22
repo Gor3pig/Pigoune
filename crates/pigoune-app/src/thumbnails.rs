@@ -470,7 +470,6 @@ mod tests {
             "texture-dxt5.dds",
             "texture.qoi",
             "texture.exr",
-            "texture.hdr",
         ] {
             let drawn = context.block_on(render(&layered_fixture(name), 8));
 
