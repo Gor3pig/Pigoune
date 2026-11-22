@@ -167,6 +167,32 @@ fn points_of_version_3_2() -> Vec<Point> {
     ]
 }
 
+fn points_of_version_3_4() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "system-search-symbolic",
+            title: gettext("Search from GNOME"),
+            text: gettext(
+                "Type in the GNOME search to find your assets, with a preview of each. Turn Pigoune on in the Search settings.",
+            ),
+        },
+        Point {
+            icon: "image-x-generic-symbolic",
+            title: gettext("Photoshop Files"),
+            text: gettext(
+                "PSD files can now join your library, with previews, and be copied, exported or used as a wallpaper.",
+            ),
+        },
+        Point {
+            icon: "document-open-symbolic",
+            title: gettext("Open With Pigoune"),
+            text: gettext(
+                "In Files, right-click images and choose Open With Pigoune to add them to your library.",
+            ),
+        },
+    ]
+}
+
 fn points_of_version_3_3() -> Vec<Point> {
     vec![
         Point {
@@ -221,6 +247,7 @@ fn points_of_version_2_12() -> Vec<Point> {
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.4.0" => points_of_version_3_4(),
         "3.3.0" => points_of_version_3_3(),
         "3.2.0" => points_of_version_3_2(),
         "3.1.0" => points_of_version_3_1(),

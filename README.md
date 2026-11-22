@@ -35,7 +35,7 @@ Your original files are never touched.
 <tr>
 <td width="33%" valign="top">
 
-**Drop**<br>Files and folders, any common format, duplicates spotted.
+**Drop**<br>Files and folders, any common format, duplicates spotted, or Open With from Files.
 
 </td>
 <td width="33%" valign="top">
