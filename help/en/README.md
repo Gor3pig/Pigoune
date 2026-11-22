@@ -321,10 +321,12 @@ Colors add up with types and favorites: red and SVG show the red SVG files.
 
 Type in the GNOME search, the overview opened with the <kbd>Super</kbd> key, and Pigoune offers the matching assets with a small preview of each. It searches the same things as the search field in Pigoune.
 
+Pigoune is not in the GNOME search at first: open **Settings**, then **Search**, and turn on **Pigoune**.
+
 - Click a result: Pigoune opens on **All** with that asset selected.
 - Click the name **Pigoune** above the results: Pigoune opens with your words already typed in the search field.
 
-Pigoune does not need to be open. It searches the library it opens at startup, the last one you used, and only shows assets that are not in the trash. To turn this off, use **Settings**, then **Search**, in GNOME.
+Pigoune does not need to be open. It searches the library it opens at startup, the last one you used, and only shows assets that are not in the trash. To turn it off again, use the same switch in **Settings**, then **Search**.
 
 ### Find where an asset is stored
 

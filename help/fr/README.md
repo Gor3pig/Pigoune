@@ -321,10 +321,12 @@ Les couleurs s’ajoutent aux types et aux favoris : rouge et SVG montrent les 
 
 Tapez dans la recherche de GNOME, la vue d’ensemble ouverte avec la touche <kbd>Super</kbd>, et Pigoune propose les éléments qui correspondent, avec un petit aperçu de chacun. Il cherche les mêmes choses que le champ de recherche de Pigoune.
 
+Au départ, Pigoune n’est pas dans la recherche de GNOME : ouvrez **Paramètres**, puis **Recherche**, et activez **Pigoune**.
+
 - Cliquez sur un résultat : Pigoune s’ouvre sur **Tout** avec cet élément sélectionné.
 - Cliquez sur le nom **Pigoune** au-dessus des résultats : Pigoune s’ouvre avec vos mots déjà saisis dans le champ de recherche.
 
-Pigoune n’a pas besoin d’être ouvert. Il cherche dans la bibliothèque qu’il ouvre au démarrage, la dernière utilisée, et ne montre que les éléments hors de la corbeille. Pour désactiver cette recherche, ouvrez **Paramètres**, puis **Recherche**, dans GNOME.
+Pigoune n’a pas besoin d’être ouvert. Il cherche dans la bibliothèque qu’il ouvre au démarrage, la dernière utilisée, et ne montre que les éléments hors de la corbeille. Pour la désactiver, utilisez le même interrupteur dans **Paramètres**, puis **Recherche**.
 
 ### Savoir où est rangé un élément
 

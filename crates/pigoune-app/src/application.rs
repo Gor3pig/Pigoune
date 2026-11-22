@@ -31,6 +31,7 @@ pub fn build() -> adw::Application {
         .flags(gio::ApplicationFlags::ALLOW_REPLACEMENT)
         .build();
 
+    search_provider::install(&application);
     application.add_main_option(
         CAPTURE_OPTION,
         glib::Char::from(0),
@@ -43,7 +44,6 @@ pub fn build() -> adw::Application {
     application.connect_startup(|_| icon_theme::keep_gnome_icons());
     application.connect_startup(|_| fonts::register());
     application.connect_startup(install_actions);
-    application.connect_startup(search_provider::install);
     application.connect_startup(|application| {
         theme_selector::follow(application, &settings::load());
     });
