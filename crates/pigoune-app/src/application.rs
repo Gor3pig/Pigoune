@@ -213,6 +213,11 @@ mod tests {
             AssetFormat::Ora => "image/openraster",
             AssetFormat::Icns => "image/icns",
             AssetFormat::Svgz => "image/svg+xml-compressed",
+            AssetFormat::Tga => "image/x-tga",
+            AssetFormat::Dds => "image/vnd.ms-dds",
+            AssetFormat::Qoi => "image/qoi",
+            AssetFormat::Exr => "image/x-exr",
+            AssetFormat::Hdr => "image/vnd.radiance",
         }
     }
 

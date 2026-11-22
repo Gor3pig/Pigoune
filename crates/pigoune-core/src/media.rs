@@ -15,6 +15,7 @@ mod rgb;
 mod shape;
 mod svg;
 mod svgz;
+mod tga;
 mod visual_detail;
 mod visual_hash;
 mod webp;
@@ -86,6 +87,9 @@ pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
     }
     if format::looks_like_markup(&header) {
         return svg::inspect(path);
+    }
+    if tga::is_tga_file(path, &header) {
+        return tga::inspect(path);
     }
     Err(InspectError::Unsupported)
 }

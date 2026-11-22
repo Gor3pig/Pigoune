@@ -85,7 +85,7 @@ Pigoune garde ce que le navigateur lui fournit : le fichier d’origine avec Ch
 
 | Sujet | Règle |
 |---|---|
-| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), icônes macOS (ICNS) et SVG compressé (SVGZ). |
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), icônes macOS (ICNS), SVG compressé (SVGZ), TGA, DDS, QOI, OpenEXR (EXR) et Radiance (HDR). |
 | **Contrôles** | Chaque image est vérifiée avant d’être importée. Un fichier endommagé, ou qui ne peut pas être affiché, est signalé et refusé. |
 | **Doublons** | Un fichier déjà présent n’est jamais copié deux fois. S’il est à la corbeille, l’importer le sort de la corbeille. |
 | **Dossiers** | Quand vous importez un dossier, ses sous-dossiers deviennent des collections. |
@@ -95,6 +95,8 @@ Les photos HEIC s’affichent si le système sait les décoder, ce qui est le ca
 Les fichiers Photoshop (PSD) s’affichent à partir de l’image fusionnée que Photoshop y enregistre : les calques ne sont pas montrés et le fichier lui-même reste intact. Pigoune lit les cas courants, en RVB, niveaux de gris, CMJN ou couleurs indexées, avec 8 ou 16 bits par couleur. Le CMJN est converti de façon simple, donc les couleurs peuvent différer un peu de celles de Photoshop. Les fichiers Krita (KRA) et OpenRaster (ORA) s’affichent à partir de l’image fusionnée qu’ils contiennent, ou de leur petit aperçu quand ils n’en ont pas : les calques ne sont pas montrés et le fichier reste intact. Une copie, un export ou un fond d’écran utilise cette image, et glisser le fichier vers une autre application donne le fichier lui-même.
 
 Une icône macOS (ICNS) s’affiche à partir de sa plus grande image, et les tailles qu’elle contient sont listées ; une ancienne icône qui ne contient que les images des vieux systèmes est gardée et montre l’image de remplacement habituelle. Un SVG compressé (SVGZ) est dessiné comme un vecteur, comme un SVG.
+
+Les fichiers de textures et de rendus (TGA, DDS, QOI, EXR et HDR) sont dessinés par le système. Un fichier TGA n’a pas de signature fiable : Pigoune ne l’accepte que si son en-tête est plausible et si son nom se termine par `.tga`. Un fichier DDS doit être d’un des types compressés courants (DXT). Les images EXR et HDR peuvent être plus lumineuses qu’un écran : leurs hautes lumières sont écrêtées. Un fichier que le système ne sait pas dessiner est refusé comme toute image qui ne peut pas être affichée.
 
 Les zones transparentes d’un PSD restent transparentes. Un PSD que Pigoune ne sait pas dessiner, par exemple en 32 bits, ou enregistré sans **Maximiser la compatibilité** dans Photoshop (il ne contient alors aucune image fusionnée), est quand même importé : il montre l’image de remplacement habituelle et l’aperçu en donne la raison. Un PSD abîmé est refusé. Une copie, un export ou un fond d’écran utilise l’image fusionnée, et glisser le fichier vers une autre application donne le PSD lui-même.
 

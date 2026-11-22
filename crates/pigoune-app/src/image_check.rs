@@ -98,6 +98,29 @@ mod tests {
     }
 
     #[test]
+    fn texture_and_render_files_are_intact() {
+        let check = ImageCheck::start();
+        for name in [
+            "texture-uncompressed.tga",
+            "texture-rle.tga",
+            "texture-gray.tga",
+            "texture-dxt5.dds",
+            "texture.qoi",
+            "texture.exr",
+            "texture.hdr",
+        ] {
+            assert!(check.is_intact(&fixture(name)), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_texture_the_decoder_cannot_read_is_refused_like_any_image_that_cannot_be_shown() {
+        let check = ImageCheck::start();
+
+        assert!(!check.is_intact(&fixture("texture-raw.dds")));
+    }
+
+    #[test]
     fn complete_images_are_intact() {
         let check = ImageCheck::start();
         for name in [

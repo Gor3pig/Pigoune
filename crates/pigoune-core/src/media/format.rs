@@ -9,6 +9,12 @@ const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
 const PSD_SIGNATURE: &[u8] = b"8BPS";
 const ICNS_SIGNATURE: &[u8] = b"icns";
+const DDS_SIGNATURE: &[u8] = b"DDS ";
+const DDS_HEADER_SIZE: [u8; 4] = [124, 0, 0, 0];
+const QOI_SIGNATURE: &[u8] = b"qoif";
+const QOI_HEADER_LENGTH: usize = 14;
+const EXR_SIGNATURE: &[u8] = &[0x76, 0x2F, 0x31, 0x01];
+const HDR_SIGNATURES: [&[u8]; 2] = [b"#?RADIANCE", b"#?RGBE"];
 const ZIP_LOCAL_SIGNATURE: &[u8] = b"PK\x03\x04";
 const ZIP_LOCAL_FIXED_LENGTH: usize = 30;
 const ZIP_MIMETYPE_ENTRY: &[u8] = b"mimetype";
@@ -40,10 +46,15 @@ pub enum AssetFormat {
     Ora,
     Icns,
     Svgz,
+    Tga,
+    Dds,
+    Qoi,
+    Exr,
+    Hdr,
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 16] = [
+    pub const ALL: [Self; 21] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
@@ -60,6 +71,11 @@ impl AssetFormat {
         Self::Ora,
         Self::Icns,
         Self::Svgz,
+        Self::Tga,
+        Self::Dds,
+        Self::Qoi,
+        Self::Exr,
+        Self::Hdr,
     ];
 
     #[must_use]
@@ -81,6 +97,11 @@ impl AssetFormat {
             Self::Ora => "ora",
             Self::Icns => "icns",
             Self::Svgz => "svgz",
+            Self::Tga => "tga",
+            Self::Dds => "dds",
+            Self::Qoi => "qoi",
+            Self::Exr => "exr",
+            Self::Hdr => "hdr",
         }
     }
 
@@ -129,6 +150,17 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
         Some(AssetFormat::Psd)
     } else if header.starts_with(ICNS_SIGNATURE) {
         Some(AssetFormat::Icns)
+    } else if is_dds(header) {
+        Some(AssetFormat::Dds)
+    } else if is_qoi(header) {
+        Some(AssetFormat::Qoi)
+    } else if header.starts_with(EXR_SIGNATURE) {
+        Some(AssetFormat::Exr)
+    } else if HDR_SIGNATURES
+        .iter()
+        .any(|signature| header.starts_with(signature))
+    {
+        Some(AssetFormat::Hdr)
     } else if svgz::is_compressed_svg(header) {
         Some(AssetFormat::Svgz)
     } else {
@@ -139,6 +171,29 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
 pub fn looks_like_markup(header: &[u8]) -> bool {
     let content = header.strip_prefix(UTF8_BYTE_ORDER_MARK).unwrap_or(header);
     content.iter().find(|byte| !byte.is_ascii_whitespace()) == Some(&b'<')
+}
+
+fn is_dds(header: &[u8]) -> bool {
+    header.starts_with(DDS_SIGNATURE) && header.get(4..8) == Some(DDS_HEADER_SIZE.as_slice())
+}
+
+fn is_qoi(header: &[u8]) -> bool {
+    let Some(fields) = header.get(..QOI_HEADER_LENGTH) else {
+        return false;
+    };
+    let side = |start: usize| {
+        u32::from_be_bytes([
+            fields[start],
+            fields[start + 1],
+            fields[start + 2],
+            fields[start + 3],
+        ])
+    };
+    fields.starts_with(QOI_SIGNATURE)
+        && side(4) > 0
+        && side(8) > 0
+        && matches!(fields[12], 3 | 4)
+        && fields[13] <= 1
 }
 
 fn layered_format(header: &[u8]) -> Option<AssetFormat> {
@@ -215,7 +270,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 24] = [
+        let cases: [(&[u8], AssetFormat); 28] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -249,6 +304,10 @@ mod tests {
             (&zip_with_mimetype(b"application/x-krita"), AssetFormat::Kra),
             (&zip_with_mimetype(b"image/openraster"), AssetFormat::Ora),
             (b"icns\0\0\0\x10ic07\0\0\0\x08", AssetFormat::Icns),
+            (b"DDS \x7c\0\0\0\x07\x10\x08\0", AssetFormat::Dds),
+            (b"qoif\0\0\0\x10\0\0\0\x08\x04\x00", AssetFormat::Qoi),
+            (&[0x76, 0x2F, 0x31, 0x01, 2, 0, 0, 0], AssetFormat::Exr),
+            (b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe", AssetFormat::Hdr),
         ];
         for (header, expected) in cases {
             assert_eq!(detect_binary(header), Some(expected));
@@ -264,6 +323,16 @@ mod tests {
         bytes.extend_from_slice(b"mimetype");
         bytes.extend_from_slice(content);
         bytes
+    }
+
+    #[test]
+    fn texture_signatures_must_be_complete_and_sensible() {
+        assert_eq!(detect_binary(b"DDS \x01\0\0\0"), None);
+        assert_eq!(detect_binary(b"DDS "), None);
+        assert_eq!(detect_binary(b"qoif\0\0\0\0\0\0\0\x08\x04\x00"), None);
+        assert_eq!(detect_binary(b"qoif\0\0\0\x10\0\0\0\x08\x05\x00"), None);
+        assert_eq!(detect_binary(b"qoif\0\0\0\x10\0\0\0\x08\x04"), None);
+        assert_eq!(detect_binary(b"#?RADIAN"), None);
     }
 
     #[test]
