@@ -28,7 +28,7 @@ pub fn build() -> adw::Application {
     let application = adw::Application::builder()
         .application_id(APP_ID)
         .resource_base_path(RESOURCE_BASE_PATH)
-        .flags(gio::ApplicationFlags::ALLOW_REPLACEMENT)
+        .flags(gio::ApplicationFlags::ALLOW_REPLACEMENT | gio::ApplicationFlags::HANDLES_OPEN)
         .build();
 
     search_provider::install(&application);
@@ -54,7 +54,16 @@ pub fn build() -> adw::Application {
             present_main_window(application, true);
         }
     });
+    application.connect_open(|application, files, _| open_files(application, files));
     application
+}
+
+fn open_files(application: &adw::Application, files: &[gio::File]) {
+    present_main_window(application, true);
+    let Some(window) = application.active_window().and_downcast::<PigouneWindow>() else {
+        return;
+    };
+    window.import_from_outside(files.iter().filter_map(gio::File::path).collect());
 }
 
 fn forward_capture_request(
@@ -179,5 +188,50 @@ fn show_release_notes_in_french_or_english(dialog: &adw::AboutDialog) {
     if let Some(notes) = release_notes::release_notes(metainfo, VERSION, french) {
         dialog.set_release_notes(&notes);
         dialog.set_release_notes_version(VERSION);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pigoune_core::AssetFormat;
+
+    fn mime_type(format: AssetFormat) -> &'static str {
+        match format {
+            AssetFormat::Svg => "image/svg+xml",
+            AssetFormat::Png => "image/png",
+            AssetFormat::Jpeg => "image/jpeg",
+            AssetFormat::Webp => "image/webp",
+            AssetFormat::Avif => "image/avif",
+            AssetFormat::Heic => "image/heic",
+            AssetFormat::Jxl => "image/jxl",
+            AssetFormat::Gif => "image/gif",
+            AssetFormat::Tiff => "image/tiff",
+            AssetFormat::Bmp => "image/bmp",
+            AssetFormat::Ico => "image/vnd.microsoft.icon",
+            AssetFormat::Psd => "image/vnd.adobe.photoshop",
+        }
+    }
+
+    #[test]
+    fn the_launcher_offers_exactly_the_formats_the_library_accepts() {
+        let entry = include_str!("../../../data/io.github.gor3pig.Pigoune.desktop.in");
+        let line = entry
+            .lines()
+            .find_map(|line| line.strip_prefix("MimeType="))
+            .expect("the launcher lists the types it opens");
+
+        let offered: Vec<&str> = line.split(';').filter(|kind| !kind.is_empty()).collect();
+
+        for format in AssetFormat::ALL {
+            assert!(offered.contains(&mime_type(format)), "{format:?}");
+        }
+        assert_eq!(offered.len(), AssetFormat::ALL.len());
+    }
+
+    #[test]
+    fn the_launcher_passes_the_chosen_files_to_the_application() {
+        let entry = include_str!("../../../data/io.github.gor3pig.Pigoune.desktop.in");
+
+        assert!(entry.lines().any(|line| line == "Exec=pigoune %F"));
     }
 }

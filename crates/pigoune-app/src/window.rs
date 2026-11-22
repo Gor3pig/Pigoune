@@ -328,6 +328,7 @@ mod imp {
         pub update_banner: TemplateChild<adw::Banner>,
         pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
         pub pending_reveal: RefCell<Option<crate::search_provider::Reveal>>,
+        pub pending_import: RefCell<Vec<std::path::PathBuf>>,
         pub analysing_colors: Cell<bool>,
         pub rebuilding_thumbnails: Cell<Option<u32>>,
         pub activity: crate::analysis_pace::Activity,
@@ -1542,11 +1543,16 @@ impl PigouneWindow {
         }
     }
 
-    pub fn reopen_last_library(&self) {
+    fn library_to_reopen(&self) -> Option<glib::GString> {
         let last_library_path = self.settings().string(settings::LAST_LIBRARY_PATH);
-        if last_library_path.is_empty() || !self.settings().boolean(settings::REOPEN_LAST_LIBRARY) {
+        (!last_library_path.is_empty() && self.settings().boolean(settings::REOPEN_LAST_LIBRARY))
+            .then_some(last_library_path)
+    }
+
+    pub fn reopen_last_library(&self) {
+        let Some(last_library_path) = self.library_to_reopen() else {
             return;
-        }
+        };
         let window = self.clone();
         glib::spawn_future_local(async move {
             window
@@ -2278,6 +2284,10 @@ impl PigouneWindow {
         self.offer_draft();
         if let Some(reveal) = imp.pending_reveal.take() {
             self.apply_reveal(reveal);
+        }
+        let waiting = imp.pending_import.take();
+        if !waiting.is_empty() {
+            self.import_from_outside(waiting);
         }
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
@@ -4843,6 +4853,43 @@ impl PigouneWindow {
             ),
         };
         Some((asset.display_name, outcome))
+    }
+
+    pub fn import_from_outside(&self, paths: Vec<PathBuf>) {
+        let imp = self.imp();
+        if paths.is_empty() {
+            return;
+        }
+        if imp.importing.get() {
+            self.show_toast(&gettext(
+                "An import is already in progress. Wait for it to finish, then try again.",
+            ));
+            return;
+        }
+        if imp.library.borrow().is_none() {
+            imp.pending_import.borrow_mut().extend(paths);
+            if self.library_to_reopen().is_none() {
+                self.show_toast(&gettext(
+                    "Open or create a library, and the images will be imported.",
+                ));
+            }
+            return;
+        }
+        if self.is_editing() {
+            self.show_toast(&gettext("Close the editor to import"));
+            return;
+        }
+        imp.asset_preview.close();
+        if !drop_places::accepts_files(imp.current_view.get()) {
+            self.go_to_view(AssetView::All, Vec::new());
+        }
+        let Some(guard) = self.begin_import_or_explain() else {
+            return;
+        };
+        let window = self.clone();
+        glib::spawn_future_local(async move {
+            window.import_paths_into(&guard, paths, None).await;
+        });
     }
 
     pub fn reveal(&self, reveal: Reveal) {
