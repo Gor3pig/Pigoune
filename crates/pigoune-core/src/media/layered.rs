@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use roxmltree::Document;
+use roxmltree::{Document, ParsingOptions};
 
 use super::{Archive, AssetFormat, Dimensions, InspectError, LARGEST_SIDE, MediaInfo, format};
 
@@ -14,6 +14,7 @@ const OPENRASTER_DOCUMENT: &str = "stack.xml";
 const MOST_IMAGE_BYTES: u64 = 256 * 1024 * 1024;
 const MOST_DOCUMENT_BYTES: u64 = 16 * 1024 * 1024;
 const HEADER_LENGTH: u64 = 4096;
+const ENTITY_DECLARATION: &str = "<!ENTITY";
 
 #[must_use]
 pub fn layered_format_of(path: &Path) -> Option<AssetFormat> {
@@ -65,8 +66,18 @@ fn document_dimensions(archive: &mut Archive<File>, format: AssetFormat) -> Opti
         (OPENRASTER_DOCUMENT, "image", "w", "h")
     };
     let bytes = archive.read_named(document, MOST_DOCUMENT_BYTES).ok()?;
-    let text = std::str::from_utf8(&bytes).ok()?;
-    let document = Document::parse(text).ok()?;
+    dimensions_in(std::str::from_utf8(&bytes).ok()?, element, width, height)
+}
+
+fn dimensions_in(text: &str, element: &str, width: &str, height: &str) -> Option<Dimensions> {
+    if text.contains(ENTITY_DECLARATION) {
+        return None;
+    }
+    let options = ParsingOptions {
+        allow_dtd: true,
+        ..ParsingOptions::default()
+    };
+    let document = Document::parse_with_options(text, options).ok()?;
     let node = document
         .descendants()
         .find(|node| node.is_element() && node.tag_name().name() == element)?;
@@ -99,7 +110,7 @@ fn checked_dimensions(width: f64, height: f64) -> Option<Dimensions> {
 mod tests {
     use std::path::{Path, PathBuf};
 
-    use super::{inspect, is_layered_file, layered_format_of, layered_preview_png};
+    use super::{dimensions_in, inspect, is_layered_file, layered_format_of, layered_preview_png};
     use crate::media::{AssetFormat, Dimensions, InspectError};
 
     fn fixture(name: &str) -> PathBuf {
@@ -145,6 +156,38 @@ mod tests {
             assert_eq!(info.dimensions, size(16, 8), "{name}");
             assert!(!info.is_animated, "{name}");
         }
+    }
+
+    #[test]
+    fn reads_files_written_by_krita_and_gimp() {
+        for (name, format) in [
+            ("krita-real.kra", AssetFormat::Kra),
+            ("krita-real.ora", AssetFormat::Ora),
+            ("gimp-real.ora", AssetFormat::Ora),
+            ("krita-real-no-merged.kra", AssetFormat::Kra),
+        ] {
+            assert_eq!(layered_format_of(&fixture(name)), Some(format), "{name}");
+            let info = inspect(&fixture(name), format).expect(name);
+
+            assert_eq!(info.dimensions, size(64, 40), "{name}");
+            assert!(layered_preview_png(&fixture(name)).is_some(), "{name}");
+        }
+    }
+
+    #[test]
+    fn the_size_is_read_from_a_document_with_a_doctype_but_not_with_entities() {
+        let krita = r#"<?xml version="1.0"?><!DOCTYPE DOC PUBLIC '-//KDE//DTD krita 2.0//EN' 'http://www.calligra.org/DTD/krita-2.0.dtd'><DOC><IMAGE height="40" width="64"/></DOC>"#;
+        let hostile =
+            r#"<?xml version="1.0"?><!DOCTYPE image [<!ENTITY w "99">]><image w="&w;" h="9"/>"#;
+        let huge = r#"<image w="999999" h="9"/>"#;
+
+        assert_eq!(
+            dimensions_in(krita, "IMAGE", "width", "height"),
+            size(64, 40)
+        );
+        assert_eq!(dimensions_in(hostile, "image", "w", "h"), None);
+        assert_eq!(dimensions_in(huge, "image", "w", "h"), None);
+        assert_eq!(dimensions_in("not xml", "image", "w", "h"), None);
     }
 
     #[test]
