@@ -5,6 +5,7 @@ const ICO_SIGNATURE: &[u8] = &[0, 0, 1, 0];
 const TIFF_SIGNATURES: [&[u8]; 4] = [b"II*\0", b"MM\0*", b"II+\0", b"MM\0+"];
 const JXL_SIGNATURES: [&[u8]; 2] = [&[0xFF, 0x0A], b"\0\0\0\x0cJXL \r\n\x87\n"];
 const BMP_SIGNATURE: &[u8] = b"BM";
+const PSD_SIGNATURE: &[u8] = b"8BPS";
 const BMP_INFO_HEADER_SIZES: [u32; 7] = [12, 40, 52, 56, 64, 108, 124];
 const AVIF_BRANDS: [&[u8]; 2] = [b"avif", b"avis"];
 const HEIC_BRANDS: [&[u8]; 8] = [
@@ -26,10 +27,11 @@ pub enum AssetFormat {
     Tiff,
     Bmp,
     Ico,
+    Psd,
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 12] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
@@ -41,6 +43,7 @@ impl AssetFormat {
         Self::Tiff,
         Self::Bmp,
         Self::Ico,
+        Self::Psd,
     ];
 
     #[must_use]
@@ -57,6 +60,7 @@ impl AssetFormat {
             Self::Tiff => "tiff",
             Self::Bmp => "bmp",
             Self::Ico => "ico",
+            Self::Psd => "psd",
         }
     }
 
@@ -96,6 +100,8 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
         Some(AssetFormat::Tiff)
     } else if is_bmp(header) {
         Some(AssetFormat::Bmp)
+    } else if header.starts_with(PSD_SIGNATURE) {
+        Some(AssetFormat::Psd)
     } else {
         None
     }
@@ -156,7 +162,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 20] = [
+        let cases: [(&[u8], AssetFormat); 21] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -186,6 +192,7 @@ mod tests {
                 b"BM\xf6\0\0\0\0\0\0\0\x36\0\0\0\x28\0\0\0",
                 AssetFormat::Bmp,
             ),
+            (b"8BPS\0\x01\0\0\0\0\0\0", AssetFormat::Psd),
         ];
         for (header, expected) in cases {
             assert_eq!(detect_binary(header), Some(expected));
@@ -225,6 +232,6 @@ mod tests {
         for format in AssetFormat::ALL {
             assert_eq!(AssetFormat::from_code(format.code()), Some(format));
         }
-        assert_eq!(AssetFormat::from_code("psd"), None);
+        assert_eq!(AssetFormat::from_code("xcf"), None);
     }
 }

@@ -187,6 +187,12 @@ fn every_raster_format_reports_its_dimensions() {
         ("purple-strip.jxl", AssetFormat::Jxl, dimensions(7, 3)),
         ("teal-column.tiff", AssetFormat::Tiff, dimensions(2, 6)),
         ("navy-tile.bmp", AssetFormat::Bmp, dimensions(8, 8)),
+        ("rle-gradient.psd", AssetFormat::Psd, dimensions(16, 8)),
+        (
+            "zip-layers-gradient.psd",
+            AssetFormat::Psd,
+            dimensions(16, 8),
+        ),
     ];
     let mut fixture = Fixture::new();
 
