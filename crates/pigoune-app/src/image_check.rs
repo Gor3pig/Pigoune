@@ -91,7 +91,8 @@ mod tests {
             "lightweight.kra",
             "old-without-merged.ora",
             "modern.icns",
-            "legacy-only.icns",
+            "broken-legacy.icns",
+            "legacy-rgb.icns",
         ] {
             assert!(check.is_intact(&fixture(name)), "{name}");
         }
