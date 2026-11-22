@@ -28,9 +28,10 @@ pub use library::{
     thumbnail_cache_bytes_in, write_render_file, write_thumbnail_file,
 };
 pub use media::{
-    AnimationTiming, AssetColor, AssetFormat, AssetShape, Dimensions, DominantColor, PsdError, Rgb,
-    VisualAnalysis, VisualDetail, VisualHash, animation_timing, dominant_colors, icon_from_pngs,
-    is_photoshop_file, photoshop_file_is_intact, read_merged_image, single_size_icon,
-    visual_analysis, visual_detail, visual_hash,
+    AnimationTiming, Archive, ArchiveEntry, ArchiveError, AssetColor, AssetFormat, AssetShape,
+    Dimensions, DominantColor, PsdError, Rgb, VisualAnalysis, VisualDetail, VisualHash,
+    animation_timing, dominant_colors, first_stored_text, icon_from_pngs, is_photoshop_file,
+    photoshop_file_is_intact, read_merged_image, single_size_icon, visual_analysis, visual_detail,
+    visual_hash,
 };
 pub use raster::{RgbaImage, fitted_within};

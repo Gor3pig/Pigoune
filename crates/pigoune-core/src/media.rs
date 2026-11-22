@@ -1,3 +1,4 @@
+mod archive;
 mod bmp;
 mod color;
 mod dimensions;
@@ -20,6 +21,7 @@ use std::io::Read;
 use std::path::Path;
 use std::time::Duration;
 
+pub use archive::{Archive, ArchiveEntry, ArchiveError, first_stored_text};
 pub use color::{
     AssetColor, DominantColor, dominant_colors, dominant_from_text, dominant_text,
     families_from_text, families_text,
