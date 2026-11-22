@@ -62,7 +62,10 @@ to change it.
   `AssetFilter` in the core, and to the `smart_collections` table, so that smart collections
   can always save every filter.
 - **GNOME search.** `search_provider.rs` answers the shell's `org.gnome.Shell.SearchProvider2`
-  calls on the application's own D-Bus connection, with the library search of the core. With a
+  calls with the library search of the core. It registers its object on the shared session
+  connection and then owns its own bus name, `<app id>.SearchProvider`, so the object always
+  exists before the shell's first call (the application's main name is taken on another
+  connection, too late to answer a cold start). With a
   window open it reuses the window's library, because a library is locked by one opener at a
   time; otherwise it opens the last library for the length of one call and releases it, and the
   service quits after a short idle time. Results carry a small thumbnail as image data, since

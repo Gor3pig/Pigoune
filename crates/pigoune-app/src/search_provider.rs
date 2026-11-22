@@ -10,7 +10,7 @@ use crate::settings;
 use crate::thumbnails;
 use crate::window::PigouneWindow;
 
-const OBJECT_PATH: &str = "/io/github/gor3pig/Pigoune/SearchProvider";
+const BUS_NAME_SUFFIX: &str = "SearchProvider";
 const INTERFACE_NAME: &str = "org.gnome.Shell.SearchProvider2";
 const RESULT_LIMIT: usize = 20;
 const INACTIVITY_TIMEOUT_MS: u32 = 30_000;
@@ -47,22 +47,38 @@ const INTERFACE_XML: &str = r#"
 
 pub fn install(application: &adw::Application) {
     application.set_inactivity_timeout(INACTIVITY_TIMEOUT_MS);
-    let Some(connection) = application.dbus_connection() else {
+    let Ok(connection) = gio::bus_get_sync(gio::BusType::Session, gio::Cancellable::NONE) else {
         return;
     };
     let Some(interface) = interface_info() else {
         return;
     };
     let application = application.clone();
+    let object_path = object_path();
     let registration = connection
-        .register_object(OBJECT_PATH, &interface)
+        .register_object(&object_path, &interface)
         .method_call(move |_, _, _, _, method, parameters, invocation| {
             answer(&application, method, &parameters, invocation);
         })
         .build();
-    if let Err(error) = registration {
-        glib::g_warning!(APP_ID, "Search provider not registered: {error}");
+    match registration {
+        Ok(_) => own_bus_name(&connection),
+        Err(error) => glib::g_warning!(APP_ID, "Search provider not registered: {error}"),
     }
+}
+
+fn own_bus_name(connection: &gio::DBusConnection) {
+    gio::bus_own_name_on_connection(
+        connection,
+        &format!("{APP_ID}.{BUS_NAME_SUFFIX}"),
+        gio::BusNameOwnerFlags::NONE,
+        |_, _| {},
+        |_, _| {},
+    );
+}
+
+fn object_path() -> String {
+    format!("/{}/{BUS_NAME_SUFFIX}", APP_ID.replace('.', "/"))
 }
 
 fn interface_info() -> Option<gio::DBusInterfaceInfo> {
