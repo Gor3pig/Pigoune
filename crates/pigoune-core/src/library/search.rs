@@ -67,7 +67,7 @@ impl AssetFilter {
         let Some(screen) = self.screen.filter(|_| self.fits_screen) else {
             return true;
         };
-        asset.format != AssetFormat::Svg
+        !asset.format.is_vector()
             && asset.dimensions.is_some_and(|size| {
                 size.width() >= screen.width() && size.height() >= screen.height()
             })

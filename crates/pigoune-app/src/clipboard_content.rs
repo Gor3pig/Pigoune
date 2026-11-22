@@ -40,9 +40,9 @@ fn picture_of(copy: &Path) -> Option<gdk::Texture> {
     if pigoune_core::is_photoshop_file(copy) {
         return thumbnails::photoshop_picture(copy, None);
     }
-    if pigoune_core::is_layered_file(copy) {
-        let png = pigoune_core::layered_preview_png(copy)?;
-        return gdk::Texture::from_bytes(&glib::Bytes::from_owned(png)).ok();
+    if pigoune_core::container_format_of(copy).is_some() {
+        let image = pigoune_core::container_preview(copy)?;
+        return gdk::Texture::from_bytes(&glib::Bytes::from_owned(image)).ok();
     }
     gdk::Texture::from_filename(copy).ok()
 }
@@ -75,6 +75,13 @@ mod tests {
 
             assert_eq!((picture.width(), picture.height()), (16, 8), "{name}");
         }
+    }
+
+    #[test]
+    fn a_macos_icon_is_copied_as_its_largest_picture() {
+        let picture = picture_of(&fixture("modern.icns")).expect("the picture is read");
+
+        assert_eq!((picture.width(), picture.height()), (256, 256));
     }
 
     #[test]

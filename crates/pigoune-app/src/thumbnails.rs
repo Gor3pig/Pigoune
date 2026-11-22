@@ -12,7 +12,7 @@ use crate::load_slots::LoadSlots;
 pub const THUMBNAIL_PIXELS: u32 = 256;
 const REMEMBERED_THUMBNAILS: usize = 600;
 const MOST_CONCURRENT_LOADS: usize = 4;
-const SVG_MIME_TYPE: &str = "image/svg+xml";
+const VECTOR_MIME_TYPES: [&str; 2] = ["image/svg+xml", "image/svg+xml-compressed"];
 const RGBA_CHANNELS: usize = 4;
 
 thread_local! {
@@ -139,15 +139,15 @@ fn store(texture: &gdk::Texture, thumbnail_file: &Path) {
 }
 
 async fn source_loader(file: &Path) -> Option<glycin::Loader> {
-    if !pigoune_core::is_layered_file(file) {
+    if pigoune_core::container_format_of(file).is_none() {
         return Some(loader_for(file));
     }
     let file = file.to_path_buf();
-    let png = gio::spawn_blocking(move || pigoune_core::layered_preview_png(&file))
+    let image = gio::spawn_blocking(move || pigoune_core::container_preview(&file))
         .await
         .ok()
         .flatten()?;
-    Some(glycin::Loader::new_vec(png))
+    Some(glycin::Loader::new_vec(image))
 }
 
 pub fn loader_for(file: &Path) -> glycin::Loader {
@@ -162,7 +162,7 @@ pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
     }
     let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
-    let (width, height) = if image.mime_type().as_str() == SVG_MIME_TYPE {
+    let (width, height) = if VECTOR_MIME_TYPES.contains(&image.mime_type().as_str()) {
         scaled_to(details.width(), details.height(), pixels)
     } else {
         fit_within(details.width(), details.height(), pixels)
@@ -198,7 +198,7 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
     let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
     let (width, height) = (details.width(), details.height());
-    let is_vector = image.mime_type().as_str() == SVG_MIME_TYPE;
+    let is_vector = VECTOR_MIME_TYPES.contains(&image.mime_type().as_str());
     let request = if is_vector {
         let (scaled_width, scaled_height) = scaled_to(width, height, vector_pixels);
         glycin::FrameRequest::new().scale(scaled_width, scaled_height)
@@ -409,6 +409,42 @@ mod tests {
             let detailed = detailed.expect(name);
             assert_eq!((detailed.width, detailed.height), (16, 8), "{name}");
         }
+    }
+
+    #[test]
+    fn a_macos_icon_is_drawn_from_its_largest_image() {
+        let context = glib::MainContext::new();
+
+        let thumbnail = context.block_on(render(&layered_fixture("modern.icns"), 128));
+        let detailed = context.block_on(load_detailed(&layered_fixture("modern.icns"), 2048));
+
+        let thumbnail = thumbnail.expect("the thumbnail is drawn");
+        assert_eq!((thumbnail.width(), thumbnail.height()), (128, 128));
+        let detailed = detailed.expect("the full image is drawn");
+        assert_eq!((detailed.width, detailed.height), (256, 256));
+        assert!(!detailed.is_vector);
+    }
+
+    #[test]
+    fn an_old_macos_icon_without_a_modern_image_gives_no_picture() {
+        let drawn =
+            glib::MainContext::new().block_on(render(&layered_fixture("legacy-only.icns"), 256));
+
+        assert!(drawn.is_none());
+    }
+
+    #[test]
+    fn a_compressed_svg_is_drawn_as_a_vector() {
+        let context = glib::MainContext::new();
+
+        let thumbnail = context.block_on(render(&layered_fixture("plain.svgz"), 24));
+        let detailed = context.block_on(load_detailed(&layered_fixture("plain.svgz"), 480));
+
+        let thumbnail = thumbnail.expect("the thumbnail is drawn");
+        assert_eq!((thumbnail.width(), thumbnail.height()), (24, 12));
+        let detailed = detailed.expect("the full image is drawn");
+        assert!(detailed.is_vector);
+        assert_eq!((detailed.width, detailed.height), (48, 24));
     }
 
     #[test]

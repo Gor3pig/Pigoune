@@ -211,6 +211,8 @@ mod tests {
             AssetFormat::Psd => "image/vnd.adobe.photoshop",
             AssetFormat::Kra => "application/x-krita",
             AssetFormat::Ora => "image/openraster",
+            AssetFormat::Icns => "image/icns",
+            AssetFormat::Svgz => "image/svg+xml-compressed",
         }
     }
 

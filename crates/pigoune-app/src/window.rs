@@ -11,14 +11,14 @@ use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib, graphene};
 use pigoune_core::{
-    AdoptError, AnnotatedError, AnnotationRender, AssetCommand, AssetError, AssetFilter,
-    AssetFormat, AssetId, AssetView, ChangeStamp, CollectionCommand, CollectionId, CollectionLook,
-    CollectionPath, CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind,
-    FlatFiles, HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library,
-    LibraryError, LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch,
-    SmartCollection, SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand,
-    TagError, TagId, TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors,
-    library_display_name, visual_analysis,
+    AdoptError, AnnotatedError, AnnotationRender, AssetCommand, AssetError, AssetFilter, AssetId,
+    AssetView, ChangeStamp, CollectionCommand, CollectionId, CollectionLook, CollectionPath,
+    CollectionRemoval, ConfirmedRemoval, Dimensions, DuplicateError, DuplicateKind, FlatFiles,
+    HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError,
+    LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
+    SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
+    TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors, library_display_name,
+    visual_analysis,
 };
 
 use crate::analysis_pace;
@@ -1035,7 +1035,7 @@ impl PigouneWindow {
         let Some(render) = asset.annotation() else {
             return Ok((
                 source,
-                asset.asset().format == AssetFormat::Svg,
+                asset.asset().format.is_vector(),
                 natural_size(asset),
             ));
         };

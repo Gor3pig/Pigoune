@@ -5,6 +5,7 @@ mod dimensions;
 mod format;
 mod frame_timing;
 mod gif;
+mod icns;
 mod ico;
 mod layered;
 mod orientation;
@@ -13,6 +14,7 @@ mod psd;
 mod rgb;
 mod shape;
 mod svg;
+mod svgz;
 mod visual_detail;
 mod visual_hash;
 mod webp;
@@ -31,6 +33,20 @@ pub use dimensions::Dimensions;
 pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};
 pub use layered::{is_layered_file, layered_format_of, layered_preview_png};
+
+#[must_use]
+pub fn container_format_of(path: &Path) -> Option<AssetFormat> {
+    layered::layered_format_of(path)
+        .or_else(|| icns::is_icns_file(path).then_some(AssetFormat::Icns))
+}
+
+#[must_use]
+pub fn container_preview(path: &Path) -> Option<Vec<u8>> {
+    match container_format_of(path)? {
+        AssetFormat::Icns => icns::largest_image(path),
+        _ => layered::layered_preview_png(path),
+    }
+}
 pub use psd::{
     PsdError, is_photoshop_file, photoshop_file_is_intact, photoshop_problem, read_merged_image,
     read_merged_image_file, read_merged_image_from,
@@ -94,8 +110,19 @@ fn read_header(path: &Path) -> Result<Vec<u8>, InspectError> {
 }
 
 fn inspect_binary(path: &Path, format: AssetFormat) -> Result<MediaInfo, InspectError> {
-    if matches!(format, AssetFormat::Kra | AssetFormat::Ora) {
-        return layered::inspect(path, format);
+    match format {
+        AssetFormat::Kra | AssetFormat::Ora => return layered::inspect(path, format),
+        AssetFormat::Svgz => return svgz::inspect(path),
+        AssetFormat::Icns => {
+            let embedded_sizes = icns::embedded_sizes(path)?;
+            return Ok(MediaInfo {
+                format,
+                dimensions: embedded_sizes.last().copied(),
+                is_animated: false,
+                embedded_sizes,
+            });
+        }
+        _ => {}
     }
     if format == AssetFormat::Ico {
         let embedded_sizes = ico::embedded_sizes(path)?;

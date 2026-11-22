@@ -34,7 +34,7 @@ impl ImageCheck {
     }
 
     fn preview_is_intact(&self, path: &Path) -> bool {
-        match pigoune_core::layered_preview_png(path) {
+        match pigoune_core::container_preview(path) {
             Some(png) if self.decoder_works => {
                 match self.context.block_on(decode(glycin::Loader::new_vec(png))) {
                     Ok(()) => true,
@@ -49,7 +49,7 @@ impl ImageCheck {
         if pigoune_core::is_photoshop_file(path) {
             return pigoune_core::photoshop_file_is_intact(path);
         }
-        if pigoune_core::is_layered_file(path) {
+        if pigoune_core::container_format_of(path).is_some() {
             return self.preview_is_intact(path);
         }
         if !self.decoder_works {
@@ -83,13 +83,15 @@ mod tests {
     }
 
     #[test]
-    fn krita_and_openraster_files_are_intact() {
+    fn container_and_compressed_files_are_intact() {
         let check = ImageCheck::start();
         for name in [
             "gradient.kra",
             "gradient.ora",
             "lightweight.kra",
             "old-without-merged.ora",
+            "modern.icns",
+            "legacy-only.icns",
         ] {
             assert!(check.is_intact(&fixture(name)), "{name}");
         }

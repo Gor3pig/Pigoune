@@ -19,9 +19,13 @@ pub fn inspect(path: &Path) -> Result<MediaInfo, InspectError> {
     if bytes.len() as u64 > LARGEST_FILE {
         return Err(InspectError::Unreadable);
     }
-    let text = std::str::from_utf8(&bytes).map_err(|_| InspectError::Unsupported)?;
+    inspect_bytes(&bytes, AssetFormat::Svg)
+}
+
+pub fn inspect_bytes(bytes: &[u8], format: AssetFormat) -> Result<MediaInfo, InspectError> {
+    let text = std::str::from_utf8(bytes).map_err(|_| InspectError::Unsupported)?;
     Ok(MediaInfo {
-        format: AssetFormat::Svg,
+        format,
         dimensions: read_dimensions(text)?,
         is_animated: false,
         embedded_sizes: Vec::new(),
