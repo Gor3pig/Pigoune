@@ -33,9 +33,24 @@ impl ImageCheck {
         }
     }
 
+    fn preview_is_intact(&self, path: &Path) -> bool {
+        match pigoune_core::layered_preview_png(path) {
+            Some(png) if self.decoder_works => {
+                match self.context.block_on(decode(glycin::Loader::new_vec(png))) {
+                    Ok(()) => true,
+                    Err(error) => error.is_out_of_memory() || error.is_timeout(),
+                }
+            }
+            _ => true,
+        }
+    }
+
     pub fn is_intact(&self, path: &Path) -> bool {
         if pigoune_core::is_photoshop_file(path) {
             return pigoune_core::photoshop_file_is_intact(path);
+        }
+        if pigoune_core::is_layered_file(path) {
+            return self.preview_is_intact(path);
         }
         if !self.decoder_works {
             return true;
@@ -65,6 +80,19 @@ mod tests {
         Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../pigoune-core/tests/fixtures")
             .join(name)
+    }
+
+    #[test]
+    fn krita_and_openraster_files_are_intact() {
+        let check = ImageCheck::start();
+        for name in [
+            "gradient.kra",
+            "gradient.ora",
+            "lightweight.kra",
+            "old-without-merged.ora",
+        ] {
+            assert!(check.is_intact(&fixture(name)), "{name}");
+        }
     }
 
     #[test]

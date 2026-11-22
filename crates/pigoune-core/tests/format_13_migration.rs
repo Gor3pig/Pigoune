@@ -407,7 +407,7 @@ fn expect_only_whole_states(root: &Path, expect_version: u32) {
     assert_eq!(version, expect_version);
     match version {
         12 => assert!(columns.is_empty(), "no half migrated table: {columns:?}"),
-        13..=15 => assert_eq!(columns, NEW_COLUMNS),
+        13..=16 => assert_eq!(columns, NEW_COLUMNS),
         other => panic!("unexpected version {other}"),
     }
 }

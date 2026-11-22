@@ -209,6 +209,8 @@ mod tests {
             AssetFormat::Bmp => "image/bmp",
             AssetFormat::Ico => "image/vnd.microsoft.icon",
             AssetFormat::Psd => "image/vnd.adobe.photoshop",
+            AssetFormat::Kra => "application/x-krita",
+            AssetFormat::Ora => "image/openraster",
         }
     }
 

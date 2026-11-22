@@ -138,6 +138,18 @@ fn store(texture: &gdk::Texture, thumbnail_file: &Path) {
     }));
 }
 
+async fn source_loader(file: &Path) -> Option<glycin::Loader> {
+    if !pigoune_core::is_layered_file(file) {
+        return Some(loader_for(file));
+    }
+    let file = file.to_path_buf();
+    let png = gio::spawn_blocking(move || pigoune_core::layered_preview_png(&file))
+        .await
+        .ok()
+        .flatten()?;
+    Some(glycin::Loader::new_vec(png))
+}
+
 pub fn loader_for(file: &Path) -> glycin::Loader {
     let mut loader = glycin::Loader::new(gio::File::for_path(file));
     loader.use_expose_base_dir(false);
@@ -148,7 +160,7 @@ pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
     if pigoune_core::is_photoshop_file(file) {
         return photoshop_texture(file, Some(pixels)).await;
     }
-    let mut image = loader_for(file).load().await.ok()?;
+    let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
     let (width, height) = if image.mime_type().as_str() == SVG_MIME_TYPE {
         scaled_to(details.width(), details.height(), pixels)
@@ -183,7 +195,7 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
             is_vector: false,
         });
     }
-    let mut image = loader_for(file).load().await.ok()?;
+    let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
     let (width, height) = (details.width(), details.height());
     let is_vector = image.mime_type().as_str() == SVG_MIME_TYPE;
@@ -377,6 +389,35 @@ mod tests {
         let detailed = detailed.expect("the full image is drawn");
         assert_eq!((detailed.width, detailed.height), (16, 8));
         assert!(!detailed.is_vector);
+    }
+
+    fn layered_fixture(name: &str) -> std::path::PathBuf {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../pigoune-core/tests/fixtures")
+            .join(name)
+    }
+
+    #[test]
+    fn a_krita_or_openraster_image_is_drawn_from_its_merged_image() {
+        let context = glib::MainContext::new();
+        for name in ["gradient.kra", "gradient.ora"] {
+            let thumbnail = context.block_on(render(&layered_fixture(name), 8));
+            let detailed = context.block_on(load_detailed(&layered_fixture(name), 2048));
+
+            let thumbnail = thumbnail.expect(name);
+            assert_eq!((thumbnail.width(), thumbnail.height()), (8, 4), "{name}");
+            let detailed = detailed.expect(name);
+            assert_eq!((detailed.width, detailed.height), (16, 8), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_krita_image_without_a_merged_image_is_drawn_from_its_preview() {
+        let drawn =
+            glib::MainContext::new().block_on(render(&layered_fixture("lightweight.kra"), 256));
+
+        let drawn = drawn.expect("the preview is drawn");
+        assert_eq!((drawn.width(), drawn.height()), (8, 4));
     }
 
     #[test]
