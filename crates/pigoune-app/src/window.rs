@@ -69,6 +69,7 @@ use crate::preview_flight::Flight;
 use crate::recent_libraries;
 use crate::screen_size::{self, ScreenChoice};
 use crate::screenshot::{self, ScreenshotOutcome};
+use crate::search_provider::Reveal;
 use crate::settings;
 use crate::shortcuts;
 use crate::sidebar::{FoldedSections, HoveredDrop, SidebarContent};
@@ -326,6 +327,7 @@ mod imp {
         #[template_child]
         pub update_banner: TemplateChild<adw::Banner>,
         pub flatpak_updates: RefCell<Option<Rc<FlatpakUpdates>>>,
+        pub pending_reveal: RefCell<Option<crate::search_provider::Reveal>>,
         pub analysing_colors: Cell<bool>,
         pub rebuilding_thumbnails: Cell<Option<u32>>,
         pub activity: crate::analysis_pace::Activity,
@@ -2274,6 +2276,9 @@ impl PigouneWindow {
         self.refresh_history_buttons();
         self.set_library_actions_enabled(true);
         self.offer_draft();
+        if let Some(reveal) = imp.pending_reveal.take() {
+            self.apply_reveal(reveal);
+        }
         glib::idle_add_local_once(glib::clone!(
             #[weak(rename_to = window)]
             self,
@@ -4838,6 +4843,31 @@ impl PigouneWindow {
             ),
         };
         Some((asset.display_name, outcome))
+    }
+
+    pub fn reveal(&self, reveal: Reveal) {
+        if self.imp().library.borrow().is_some() {
+            self.apply_reveal(reveal);
+        } else {
+            self.imp().pending_reveal.replace(Some(reveal));
+        }
+    }
+
+    fn apply_reveal(&self, reveal: Reveal) {
+        match reveal {
+            Reveal::Asset(id) => self.show_in_all(id),
+            Reveal::Search(text) => {
+                let imp = self.imp();
+                self.reset_search();
+                imp.current_view.set(AssetView::All);
+                self.remember_view(AssetView::All);
+                self.refresh_grid();
+                imp.sidebar.point_out(AssetView::All);
+                imp.grid_header.focus_search();
+                imp.grid_header.search_entry().set_text(&text);
+                imp.grid_header.search_entry().set_position(-1);
+            }
+        }
     }
 
     fn show_in_all(&self, id: AssetId) {

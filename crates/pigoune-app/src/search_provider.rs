@@ -97,10 +97,26 @@ fn answer(
                 drop(hold);
             });
         }
-        _ => {
-            application.activate();
+        "ActivateResult" => {
+            let (identifier, _, _) = parameters
+                .get::<(String, Vec<String>, u32)>()
+                .unwrap_or_default();
+            reveal_in_window(application, AssetId::parse(&identifier).map(Reveal::Asset));
             invocation.return_value(None);
         }
+        _ => {
+            let (terms, _) = parameters.get::<(Vec<String>, u32)>().unwrap_or_default();
+            reveal_in_window(application, Some(Reveal::Search(terms.join(" "))));
+            invocation.return_value(None);
+        }
+    }
+}
+
+fn reveal_in_window(application: &adw::Application, reveal: Option<Reveal>) {
+    application.activate();
+    let window = application.active_window().and_downcast::<PigouneWindow>();
+    if let (Some(window), Some(reveal)) = (window, reveal) {
+        window.reveal(reveal);
     }
 }
 
@@ -111,6 +127,12 @@ fn reply_with_identifiers(invocation: gio::DBusMethodInvocation, terms: &[String
         .map(|asset| asset.id.to_string())
         .collect();
     invocation.return_value(Some(&(identifiers,).to_variant()));
+}
+
+#[derive(Debug)]
+pub enum Reveal {
+    Asset(AssetId),
+    Search(String),
 }
 
 struct ResultFacts {
