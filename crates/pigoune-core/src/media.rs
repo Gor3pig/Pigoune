@@ -20,6 +20,8 @@ mod visual_detail;
 mod visual_hash;
 mod webp;
 mod xcf;
+mod xcf_blend;
+mod xcf_composite;
 
 use std::fs::File;
 use std::io::Read;
@@ -39,6 +41,7 @@ pub use xcf::{
     BaseType, LayerInfo, LayerKind, LayerRole, Precision, SampleFormat, SampleGrid, Samples,
     XcfDocument, XcfError, XcfReader, gimp_dimensions, is_gimp_file,
 };
+pub use xcf_composite::{GimpRender, compose_image};
 
 #[must_use]
 pub fn container_format_of(path: &Path) -> Option<AssetFormat> {
