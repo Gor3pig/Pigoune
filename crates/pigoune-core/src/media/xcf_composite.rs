@@ -1,5 +1,6 @@
 use std::io::{Read, Seek};
 use std::ops::Range;
+use std::path::Path;
 
 use crate::raster::RgbaImage;
 
@@ -106,6 +107,20 @@ struct Painter<'a, R> {
     transfer: Transfer,
     approximate: bool,
     visits: usize,
+}
+
+pub fn render_gimp_file(path: &Path) -> Result<GimpRender, XcfError> {
+    compose_image(&mut XcfReader::open(path)?)
+}
+
+#[must_use]
+pub fn gimp_file_is_intact(path: &Path) -> bool {
+    !matches!(render_gimp_file(path), Err(XcfError::Unreadable))
+}
+
+#[must_use]
+pub fn gimp_problem(path: &Path) -> Option<XcfError> {
+    render_gimp_file(path).err()
 }
 
 pub fn compose_image<R: Read + Seek>(reader: &mut XcfReader<R>) -> Result<GimpRender, XcfError> {

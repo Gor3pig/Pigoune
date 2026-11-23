@@ -41,7 +41,9 @@ pub use xcf::{
     BaseType, LayerInfo, LayerKind, LayerRole, Precision, SampleFormat, SampleGrid, Samples,
     XcfDocument, XcfError, XcfReader, gimp_dimensions, is_gimp_file,
 };
-pub use xcf_composite::{GimpRender, compose_image};
+pub use xcf_composite::{
+    GimpRender, compose_image, gimp_file_is_intact, gimp_problem, render_gimp_file,
+};
 
 #[must_use]
 pub fn container_format_of(path: &Path) -> Option<AssetFormat> {
@@ -125,6 +127,14 @@ fn inspect_binary(path: &Path, format: AssetFormat) -> Result<MediaInfo, Inspect
     match format {
         AssetFormat::Kra | AssetFormat::Ora => return layered::inspect(path, format),
         AssetFormat::Svgz => return svgz::inspect(path),
+        AssetFormat::Xcf => {
+            return Ok(MediaInfo {
+                format,
+                dimensions: Some(probe_dimensions(path, format)?),
+                is_animated: false,
+                embedded_sizes: Vec::new(),
+            });
+        }
         AssetFormat::Icns => {
             let embedded_sizes = icns::embedded_sizes(path)?;
             return Ok(MediaInfo {
@@ -161,6 +171,8 @@ pub fn dimensions_of(path: &Path, format: AssetFormat) -> Option<Dimensions> {
 fn probe_dimensions(path: &Path, format: AssetFormat) -> Result<Dimensions, InspectError> {
     let dimensions = if format == AssetFormat::Bmp {
         bmp::size(path)?
+    } else if format == AssetFormat::Xcf {
+        xcf::gimp_file_dimensions(path).ok_or(InspectError::Unreadable)?
     } else {
         let size = imagesize::size(path).map_err(|_| InspectError::Unreadable)?;
         let width = u32::try_from(size.width).map_err(|_| InspectError::Unreadable)?;

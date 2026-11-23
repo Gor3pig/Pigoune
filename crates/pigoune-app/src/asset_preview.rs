@@ -7,7 +7,7 @@ use gettextrs::gettext;
 use gtk::{gdk, gio, glib, graphene};
 
 use pigoune_core::annotations::AnnotationDocument;
-use pigoune_core::{Asset, Dimensions, PsdError};
+use pigoune_core::{Asset, Dimensions, PsdError, XcfError};
 
 use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
@@ -15,7 +15,7 @@ use crate::asset_object::PigouneAssetObject;
 use crate::compare_hold::{Comparison, Original, PressOutcome, region_of};
 use crate::shortcuts;
 use crate::swipe_steps;
-use crate::thumbnails::{self, ThumbnailCache};
+use crate::thumbnails::{self, PreviewProblem, ThumbnailCache};
 
 const BACKGROUNDS: [&str; 5] = ["transparent", "white", "grey", "black", "checkerboard"];
 const SMALLEST_RENDER_PIXELS: u32 = 256;
@@ -1162,7 +1162,7 @@ impl PigouneAssetPreview {
                 let Some(detailed) = detailed else {
                     if first_view {
                         let problem = match &file {
-                            Some(file) => thumbnails::photoshop_problem(file).await,
+                            Some(file) => thumbnails::preview_problem(file).await,
                             None => None,
                         };
                         preview.show_load_failure(has_thumbnail, problem);
@@ -1174,6 +1174,9 @@ impl PigouneAssetPreview {
                 }
                 let imp = preview.imp();
                 imp.vector_pixels.set(vector_pixels);
+                if first_view && detailed.approximate {
+                    preview.show_approximation();
+                }
                 if first_view {
                     imp.zoom_view.show_image(
                         Some(&detailed.texture),
@@ -1444,14 +1447,28 @@ impl PigouneAssetPreview {
             .set_visible_child_name(if comparison.waiting() { "busy" } else { "icon" });
     }
 
-    fn show_load_failure(&self, has_thumbnail: bool, problem: Option<PsdError>) {
+    fn show_approximation(&self) {
+        let banner = &self.imp().load_banner;
+        banner.set_title(&gettext(
+            "This GIMP image uses features Pigoune cannot draw exactly: the preview is approximate",
+        ));
+        banner.set_revealed(true);
+    }
+
+    fn show_load_failure(&self, has_thumbnail: bool, problem: Option<PreviewProblem>) {
         let banner = &self.imp().load_banner;
         banner.set_title(&match problem {
-            Some(PsdError::Unsupported) => {
+            Some(PreviewProblem::Gimp(XcfError::Unsupported)) => {
+                gettext("Pigoune cannot show this kind of GIMP file")
+            }
+            Some(PreviewProblem::Gimp(XcfError::TooLarge)) => {
+                gettext("This GIMP image is too large to be shown")
+            }
+            Some(PreviewProblem::Photoshop(PsdError::Unsupported)) => {
                 gettext("Pigoune cannot show this kind of Photoshop file, a 32-bit one for example")
             }
-            Some(PsdError::TooLarge) => gettext("This Photoshop image is too large to be shown"),
-            Some(PsdError::NoMergedImage) => gettext(
+            Some(PreviewProblem::Photoshop(PsdError::TooLarge)) => gettext("This Photoshop image is too large to be shown"),
+            Some(PreviewProblem::Photoshop(PsdError::NoMergedImage)) => gettext(
                 "This Photoshop file was saved without a preview: turn on Maximize Compatibility in Photoshop",
             ),
             _ if has_thumbnail => {

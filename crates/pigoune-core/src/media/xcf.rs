@@ -3,9 +3,12 @@ use std::io::{BufReader, Cursor, Read, Seek, SeekFrom};
 use std::ops::Range;
 use std::path::Path;
 
+use super::Dimensions;
+
 const SIGNATURE: &[u8; 9] = b"gimp xcf ";
 const VERSION_ZERO_TAG: &[u8; 5] = b"file\0";
 const HEADER_TAG_LENGTH: usize = 14;
+const IMAGE_HEADER_LENGTH: usize = 22;
 const FIRST_PRECISION_VERSION: u32 = 4;
 const FIRST_CURRENT_PRECISION_VERSION: u32 = 7;
 const FIRST_LONG_POINTER_VERSION: u32 = 11;
@@ -391,6 +394,22 @@ pub fn gimp_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
     let width = u32::from_be_bytes(bytes.get(14..18)?.try_into().ok()?);
     let height = u32::from_be_bytes(bytes.get(18..22)?.try_into().ok()?);
     (width > 0 && height > 0).then_some((width, height))
+}
+
+pub(super) fn gimp_file_dimensions(path: &Path) -> Option<Dimensions> {
+    let mut header = [0_u8; IMAGE_HEADER_LENGTH];
+    File::open(path)
+        .and_then(|mut file| file.read_exact(&mut header))
+        .ok()?;
+    let (width, height) = gimp_dimensions(&header)?;
+    Dimensions::new(width, height)
+}
+
+pub(super) fn has_gimp_header(header: &[u8]) -> bool {
+    header
+        .get(..HEADER_TAG_LENGTH)
+        .and_then(tag_version)
+        .is_some()
 }
 
 fn tag_version(tag: &[u8]) -> Option<u32> {
@@ -1206,6 +1225,14 @@ mod tests {
         assert_eq!(gimp_dimensions(b"gimp xcf v011"), None);
         assert_eq!(gimp_dimensions(b"gimp xcf v0x1\0\0\0\0\0\0\0\0\0\0"), None);
         assert_eq!(gimp_dimensions(b"not a gimp image at all"), None);
+    }
+
+    #[test]
+    fn reads_the_size_of_a_gimp_file_from_its_path() {
+        let dimensions = super::gimp_file_dimensions(&fixture("gimp-tiles.xcf")).unwrap();
+        assert_eq!((dimensions.width(), dimensions.height()), (300, 200));
+        assert!(super::gimp_file_dimensions(&fixture("gimp-real.psd")).is_none());
+        assert!(super::gimp_file_dimensions(Path::new("/nonexistent/none.xcf")).is_none());
     }
 
     #[test]

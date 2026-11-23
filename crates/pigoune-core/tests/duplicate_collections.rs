@@ -436,8 +436,8 @@ fn a_format_13_library_gains_the_setting_switched_off() {
 }
 
 #[test]
-fn the_current_format_is_16() {
-    assert_eq!(CURRENT_FORMAT_VERSION, 16);
+fn the_current_format_is_17() {
+    assert_eq!(CURRENT_FORMAT_VERSION, 17);
 }
 
 #[test]
