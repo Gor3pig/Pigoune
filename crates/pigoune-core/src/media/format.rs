@@ -1,4 +1,5 @@
 use super::svgz;
+use super::xcf::has_gimp_header;
 
 const PNG_SIGNATURE: &[u8] = b"\x89PNG\r\n\x1a\n";
 const JPEG_SIGNATURE: &[u8] = &[0xFF, 0xD8, 0xFF];
@@ -51,10 +52,11 @@ pub enum AssetFormat {
     Qoi,
     Exr,
     Hdr,
+    Xcf,
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 21] = [
+    pub const ALL: [Self; 22] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
@@ -76,6 +78,7 @@ impl AssetFormat {
         Self::Qoi,
         Self::Exr,
         Self::Hdr,
+        Self::Xcf,
     ];
 
     #[must_use]
@@ -102,6 +105,7 @@ impl AssetFormat {
             Self::Qoi => "qoi",
             Self::Exr => "exr",
             Self::Hdr => "hdr",
+            Self::Xcf => "xcf",
         }
     }
 
@@ -148,6 +152,8 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
         Some(AssetFormat::Bmp)
     } else if header.starts_with(PSD_SIGNATURE) {
         Some(AssetFormat::Psd)
+    } else if has_gimp_header(header) {
+        Some(AssetFormat::Xcf)
     } else if header.starts_with(ICNS_SIGNATURE) {
         Some(AssetFormat::Icns)
     } else if is_dds(header) {
@@ -270,7 +276,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 28] = [
+        let cases: [(&[u8], AssetFormat); 30] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -308,6 +314,8 @@ mod tests {
             (b"qoif\0\0\0\x10\0\0\0\x08\x04\x00", AssetFormat::Qoi),
             (&[0x76, 0x2F, 0x31, 0x01, 2, 0, 0, 0], AssetFormat::Exr),
             (b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe", AssetFormat::Hdr),
+            (b"gimp xcf v011\0\0\0\0\xc8\0\0\0\x96", AssetFormat::Xcf),
+            (b"gimp xcf file\0\0\0\0\x10", AssetFormat::Xcf),
         ];
         for (header, expected) in cases {
             assert_eq!(detect_binary(header), Some(expected));
@@ -378,6 +386,6 @@ mod tests {
         for format in AssetFormat::ALL {
             assert_eq!(AssetFormat::from_code(format.code()), Some(format));
         }
-        assert_eq!(AssetFormat::from_code("xcf"), None);
+        assert_eq!(AssetFormat::from_code("cdr"), None);
     }
 }

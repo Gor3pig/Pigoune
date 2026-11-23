@@ -40,6 +40,9 @@ fn picture_of(copy: &Path) -> Option<gdk::Texture> {
     if pigoune_core::is_photoshop_file(copy) {
         return thumbnails::photoshop_picture(copy, None);
     }
+    if pigoune_core::is_gimp_file(copy) {
+        return thumbnails::gimp_picture(copy, None).map(|(texture, _)| texture);
+    }
     if pigoune_core::container_format_of(copy).is_some() {
         let image = pigoune_core::container_preview(copy)?;
         return gdk::Texture::from_bytes(&glib::Bytes::from_owned(image)).ok();
@@ -75,6 +78,13 @@ mod tests {
 
             assert_eq!((picture.width(), picture.height()), (16, 8), "{name}");
         }
+    }
+
+    #[test]
+    fn a_gimp_image_is_copied_as_its_composed_picture() {
+        let picture = picture_of(&fixture("gimp-basic.xcf")).expect("the picture is read");
+
+        assert_eq!((picture.width(), picture.height()), (200, 150));
     }
 
     #[test]

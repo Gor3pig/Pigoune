@@ -49,6 +49,9 @@ impl ImageCheck {
         if pigoune_core::is_photoshop_file(path) {
             return pigoune_core::photoshop_file_is_intact(path);
         }
+        if pigoune_core::is_gimp_file(path) {
+            return pigoune_core::gimp_file_is_intact(path);
+        }
         if pigoune_core::container_format_of(path).is_some() {
             return self.preview_is_intact(path);
         }

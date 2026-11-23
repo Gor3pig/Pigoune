@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-22 19:45+0100\n"
+"POT-Creation-Date: 2026-11-22 20:57+0100\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: Dutch\n"
@@ -2868,7 +2868,7 @@ msgid "Date Added"
 msgstr "Datum toegevoegd"
 
 #: crates/pigoune-app/src/window.rs:1034
-#: crates/pigoune-app/src/asset_preview.rs:1439
+#: crates/pigoune-app/src/asset_preview.rs:1442
 msgid "The original image is not available"
 msgstr "De originele afbeelding is niet beschikbaar"
 
@@ -2975,12 +2975,12 @@ msgstr "Voorbeeld openen"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:269
-#: crates/pigoune-app/src/asset_preview.rs:1576
+#: crates/pigoune-app/src/asset_preview.rs:1593
 msgid "Open With…"
 msgstr "Openen met…"
 
 #: crates/pigoune-app/src/window.rs:3059
-#: crates/pigoune-app/src/asset_preview.rs:1580
+#: crates/pigoune-app/src/asset_preview.rs:1597
 #: crates/pigoune-app/src/shortcuts.rs:310
 msgid "Show in Files"
 msgstr "Tonen in Bestanden"
@@ -2993,24 +2993,24 @@ msgstr "Vergelijkbare zoeken…"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:276
-#: crates/pigoune-app/src/asset_preview.rs:1584
+#: crates/pigoune-app/src/asset_preview.rs:1601
 msgid "Copy"
 msgstr "Kopiëren"
 
 #: crates/pigoune-app/src/window.rs:3078
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:283
-#: crates/pigoune-app/src/asset_preview.rs:1586
+#: crates/pigoune-app/src/asset_preview.rs:1603
 msgid "Export To…"
 msgstr "Exporteren naar…"
 
 #: crates/pigoune-app/src/window.rs:3082
-#: crates/pigoune-app/src/asset_preview.rs:1590
+#: crates/pigoune-app/src/asset_preview.rs:1607
 msgid "Convert and Export…"
 msgstr "Converteren en exporteren…"
 
 #: crates/pigoune-app/src/window.rs:3087
-#: crates/pigoune-app/src/asset_preview.rs:1595
+#: crates/pigoune-app/src/asset_preview.rs:1612
 msgid "Frame and Set as Wallpaper…"
 msgstr "Uitsnijden en als achtergrond instellen…"
 
@@ -3027,7 +3027,7 @@ msgstr "Hernoemen…"
 
 #: crates/pigoune-app/src/window.rs:3112
 #: crates/pigoune-app/src/asset_preview.rs:631
-#: crates/pigoune-app/src/asset_preview.rs:1605
+#: crates/pigoune-app/src/asset_preview.rs:1622
 #: crates/pigoune-app/src/asset_details.rs:516
 #: crates/pigoune-app/src/asset_details.rs:592
 msgid "Remove from Favorites"
@@ -3035,7 +3035,7 @@ msgstr "Uit favorieten verwijderen"
 
 #: crates/pigoune-app/src/window.rs:3114
 #: crates/pigoune-app/src/asset_preview.rs:635
-#: crates/pigoune-app/src/asset_preview.rs:1607
+#: crates/pigoune-app/src/asset_preview.rs:1624
 #: crates/pigoune-app/src/asset_details.rs:518
 #: crates/pigoune-app/src/asset_details.rs:594
 msgid "Add to Favorites"
@@ -3052,7 +3052,7 @@ msgstr "Aan een verzameling toevoegen…"
 
 #: crates/pigoune-app/src/window.rs:3134
 #: crates/pigoune-app/ui/asset-details.blp:105
-#: crates/pigoune-app/src/asset_preview.rs:1611
+#: crates/pigoune-app/src/asset_preview.rs:1628
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:98
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:225
 #: crates/pigoune-app/src/duplicates_page.rs:816
@@ -4382,44 +4382,44 @@ msgstr "Staand"
 msgid "Square"
 msgstr "Vierkant"
 
-#: crates/pigoune-app/src/asset_facts.rs:48
+#: crates/pigoune-app/src/asset_facts.rs:49
 msgid "Unknown dimensions"
 msgstr "Onbekend"
 
-#: crates/pigoune-app/src/asset_facts.rs:50
+#: crates/pigoune-app/src/asset_facts.rs:51
 #, rust-format
 msgid "{width} × {height} pixels"
 msgstr "{width} × {height} pixels"
 
-#: crates/pigoune-app/src/asset_facts.rs:89
+#: crates/pigoune-app/src/asset_facts.rs:90
 #, rust-format
 msgid "{size} in total"
 msgstr "{size} in totaal"
 
-#: crates/pigoune-app/src/asset_facts.rs:115
+#: crates/pigoune-app/src/asset_facts.rs:116
 #, rust-format
 msgid "Animated {format}"
 msgstr "Geanimeerde {format}"
 
-#: crates/pigoune-app/src/asset_facts.rs:134
+#: crates/pigoune-app/src/asset_facts.rs:135
 #, rust-format
 msgid "{count} frame"
 msgid_plural "{count} frames"
 msgstr[0] "{count} beeld"
 msgstr[1] "{count} beelden"
 
-#: crates/pigoune-app/src/asset_facts.rs:143
+#: crates/pigoune-app/src/asset_facts.rs:144
 #, rust-format
 msgid "{seconds}.{tenths} s"
 msgstr "{seconds},{tenths} s"
 
-#: crates/pigoune-app/src/asset_facts.rs:155
+#: crates/pigoune-app/src/asset_facts.rs:156
 #: crates/pigoune-app/src/library_info_dialog.rs:915
 #: crates/pigoune-app/src/library_info_dialog.rs:921
 msgid "Unknown date"
 msgstr "Onbekend"
 
-#: crates/pigoune-app/src/asset_facts.rs:159
+#: crates/pigoune-app/src/asset_facts.rs:160
 msgid "%B %-d, %Y at %H:%M"
 msgstr "%-d %B %Y om %H:%M"
 
@@ -4539,7 +4539,7 @@ msgid "Next Asset"
 msgstr "Volgend item"
 
 #: crates/pigoune-app/ui/asset-preview.blp:451
-#: crates/pigoune-app/src/asset_preview.rs:1441
+#: crates/pigoune-app/src/asset_preview.rs:1444
 msgid "Hold to See the Original Image"
 msgstr "Ingedrukt houden om de originele afbeelding te zien"
 
@@ -4551,18 +4551,32 @@ msgstr "Originele afbeelding"
 msgid "Play"
 msgstr "Afspelen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1451
+#: crates/pigoune-app/src/asset_preview.rs:1453
+msgid ""
+"This GIMP image uses features Pigoune cannot draw exactly: the preview is "
+"approximate"
+msgstr "Deze GIMP-afbeelding gebruikt functies die Pigoune niet exact kan tekenen: het voorbeeld is bij benadering"
+
+#: crates/pigoune-app/src/asset_preview.rs:1462
+msgid "Pigoune cannot show this kind of GIMP file"
+msgstr "Pigoune kan dit soort GIMP-bestand niet tonen"
+
+#: crates/pigoune-app/src/asset_preview.rs:1465
+msgid "This GIMP image is too large to be shown"
+msgstr "Deze GIMP-afbeelding is te groot om te worden getoond"
+
+#: crates/pigoune-app/src/asset_preview.rs:1468
 msgid ""
 "Pigoune cannot show this kind of Photoshop file, a 32-bit one for example"
 msgstr ""
 "Pigoune kan dit soort Photoshop-bestand niet tonen, bijvoorbeeld een 32-bits "
 "bestand"
 
-#: crates/pigoune-app/src/asset_preview.rs:1453
+#: crates/pigoune-app/src/asset_preview.rs:1470
 msgid "This Photoshop image is too large to be shown"
 msgstr "Deze Photoshop-afbeelding is te groot om te tonen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1455
+#: crates/pigoune-app/src/asset_preview.rs:1472
 msgid ""
 "This Photoshop file was saved without a preview: turn on Maximize "
 "Compatibility in Photoshop"
@@ -4570,25 +4584,25 @@ msgstr ""
 "Dit Photoshop-bestand is zonder voorbeeld opgeslagen: schakel "
 "Compatibiliteit maximaliseren in Photoshop in"
 
-#: crates/pigoune-app/src/asset_preview.rs:1458
+#: crates/pigoune-app/src/asset_preview.rs:1475
 msgid "The full-size image could not be loaded: showing its thumbnail"
 msgstr ""
 "De afbeelding op volledige grootte kon niet worden geladen: de miniatuur "
 "wordt getoond"
 
-#: crates/pigoune-app/src/asset_preview.rs:1460
+#: crates/pigoune-app/src/asset_preview.rs:1477
 msgid "This image could not be loaded: its file may be missing or damaged"
 msgstr ""
 "Deze afbeelding kon niet worden geladen: het bestand ontbreekt of is "
 "beschadigd"
 
-#: crates/pigoune-app/src/asset_preview.rs:1560
+#: crates/pigoune-app/src/asset_preview.rs:1577
 #: crates/pigoune-app/src/wallpaper_dialog.rs:690
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent}%"
 
-#: crates/pigoune-app/src/asset_preview.rs:1644
+#: crates/pigoune-app/src/asset_preview.rs:1661
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} van {count}"

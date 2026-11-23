@@ -4,7 +4,7 @@ use rusqlite::{Connection, ErrorCode};
 
 use super::{LibraryError, animation_recheck, buckets, details_store, dimension_recheck};
 
-pub const CURRENT_FORMAT_VERSION: u32 = 16;
+pub const CURRENT_FORMAT_VERSION: u32 = 17;
 pub const FORMAT_MOVING_VISUAL_DETAILS: u32 = 12;
 pub const PIGOUNE_APPLICATION_ID: i32 = 0x5049_4755;
 const PAGE_CACHE_KIB: i64 = 65_536;
@@ -24,11 +24,12 @@ enum Migration {
     AddDuplicateSkipping,
     AcceptPhotoshop,
     AcceptLayeredFormats,
+    AcceptGimpAndPageFormats,
 }
 
 const FIRST_READING_VERSIONS: [&str; CURRENT_FORMAT_VERSION as usize] = [
     "1.0", "1.4", "1.5", "1.6", "2.0", "2.0", "2.0", "2.2", "2.5", "2.10", "2.11", "2.12", "3.0",
-    "3.1", "3.4", "3.5",
+    "3.1", "3.4", "3.5", "3.6",
 ];
 
 #[must_use]
@@ -54,6 +55,7 @@ const MIGRATIONS: [Migration; CURRENT_FORMAT_VERSION as usize] = [
     Migration::AddDuplicateSkipping,
     Migration::AcceptPhotoshop,
     Migration::AcceptLayeredFormats,
+    Migration::AcceptGimpAndPageFormats,
 ];
 
 pub fn configure_connection(connection: &Connection) -> Result<(), LibraryError> {
@@ -161,7 +163,9 @@ fn apply(connection: &Connection, migration: &Migration, root: &Path) -> Result<
             dimension_recheck::correct_oriented_dimensions(connection, root)
         }
         Migration::AddDuplicateSkipping => add_duplicate_skipping(connection),
-        Migration::AcceptPhotoshop | Migration::AcceptLayeredFormats => Ok(()),
+        Migration::AcceptPhotoshop
+        | Migration::AcceptLayeredFormats
+        | Migration::AcceptGimpAndPageFormats => Ok(()),
         Migration::MoveVisualDetails => {
             connection.execute_batch(include_str!("migrations/v12.sql"))?;
             details_store::move_out_of_assets(connection, root)

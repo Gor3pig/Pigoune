@@ -40,6 +40,7 @@ pub fn format_name(format: AssetFormat) -> &'static str {
         AssetFormat::Qoi => "QOI",
         AssetFormat::Exr => "EXR",
         AssetFormat::Hdr => "HDR",
+        AssetFormat::Xcf => "GIMP",
     }
 }
 

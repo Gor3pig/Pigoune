@@ -9,7 +9,7 @@ DBusActivatable=true
 StartupNotify=true
 Categories=Graphics;2DGraphics;
 Keywords=icons;logos;svg;assets;library;graphics;
-MimeType=image/svg+xml;image/png;image/jpeg;image/webp;image/avif;image/heic;image/jxl;image/gif;image/tiff;image/bmp;image/vnd.microsoft.icon;image/vnd.adobe.photoshop;application/x-krita;image/openraster;image/icns;image/svg+xml-compressed;image/x-tga;image/vnd.ms-dds;image/qoi;image/x-exr;image/vnd.radiance;
+MimeType=image/svg+xml;image/png;image/jpeg;image/webp;image/avif;image/heic;image/jxl;image/gif;image/tiff;image/bmp;image/vnd.microsoft.icon;image/vnd.adobe.photoshop;application/x-krita;image/openraster;image/icns;image/svg+xml-compressed;image/x-tga;image/vnd.ms-dds;image/qoi;image/x-exr;image/vnd.radiance;image/x-xcf;
 Actions=capture;
 
 [Desktop Action capture]

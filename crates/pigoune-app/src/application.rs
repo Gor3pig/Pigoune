@@ -218,6 +218,7 @@ mod tests {
             AssetFormat::Qoi => "image/qoi",
             AssetFormat::Exr => "image/x-exr",
             AssetFormat::Hdr => "image/vnd.radiance",
+            AssetFormat::Xcf => "image/x-xcf",
         }
     }
 

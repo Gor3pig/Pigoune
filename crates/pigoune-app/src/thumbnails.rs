@@ -160,6 +160,11 @@ pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
     if pigoune_core::is_photoshop_file(file) {
         return photoshop_texture(file, Some(pixels)).await;
     }
+    if pigoune_core::is_gimp_file(file) {
+        return gimp_texture(file, Some(pixels))
+            .await
+            .map(|(texture, _)| texture);
+    }
     let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
     let (width, height) = if VECTOR_MIME_TYPES.contains(&image.mime_type().as_str()) {
@@ -183,6 +188,7 @@ pub struct DetailedImage {
     pub width: u32,
     pub height: u32,
     pub is_vector: bool,
+    pub approximate: bool,
 }
 
 pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedImage> {
@@ -193,6 +199,17 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
             height: u32::try_from(texture.height()).ok()?,
             texture,
             is_vector: false,
+            approximate: false,
+        });
+    }
+    if pigoune_core::is_gimp_file(file) {
+        let (texture, approximate) = gimp_texture(file, None).await?;
+        return Some(DetailedImage {
+            width: u32::try_from(texture.width()).ok()?,
+            height: u32::try_from(texture.height()).ok()?,
+            texture,
+            is_vector: false,
+            approximate,
         });
     }
     let mut image = source_loader(file).await?.load().await.ok()?;
@@ -211,6 +228,7 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
         width,
         height,
         is_vector,
+        approximate: false,
     })
 }
 
@@ -227,6 +245,7 @@ pub async fn load_icon_size(file: &Path, size: Dimensions) -> Option<DetailedIma
         width: size.width(),
         height: size.height(),
         is_vector: false,
+        approximate: false,
     })
 }
 
@@ -279,16 +298,48 @@ async fn photoshop_texture(file: &Path, longest_side: Option<u32>) -> Option<gdk
         .flatten()
 }
 
-pub async fn photoshop_problem(file: &Path) -> Option<pigoune_core::PsdError> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PreviewProblem {
+    Photoshop(pigoune_core::PsdError),
+    Gimp(pigoune_core::XcfError),
+}
+
+pub async fn preview_problem(file: &Path) -> Option<PreviewProblem> {
     let file = file.to_path_buf();
     gio::spawn_blocking(move || {
-        pigoune_core::is_photoshop_file(&file)
-            .then(|| pigoune_core::photoshop_problem(&file))
-            .flatten()
+        if pigoune_core::is_photoshop_file(&file) {
+            return pigoune_core::photoshop_problem(&file).map(PreviewProblem::Photoshop);
+        }
+        if pigoune_core::is_gimp_file(&file) {
+            return pigoune_core::gimp_problem(&file).map(PreviewProblem::Gimp);
+        }
+        None
     })
     .await
     .ok()
     .flatten()
+}
+
+async fn gimp_texture(file: &Path, longest_side: Option<u32>) -> Option<(gdk::Texture, bool)> {
+    let file = file.to_path_buf();
+    gio::spawn_blocking(move || gimp_picture(&file, longest_side))
+        .await
+        .ok()
+        .flatten()
+}
+
+pub fn gimp_picture(file: &Path, longest_side: Option<u32>) -> Option<(gdk::Texture, bool)> {
+    let render = pigoune_core::render_gimp_file(file).ok()?;
+    let approximate = render.approximate;
+    let image = render.image;
+    let image = match longest_side {
+        Some(longest) if image.width().max(image.height()) > longest => {
+            let (width, height) = fit_within(image.width(), image.height(), longest);
+            image.shrunk_to(width, height)
+        }
+        _ => image,
+    };
+    texture_of(image).map(|texture| (texture, approximate))
 }
 
 pub fn photoshop_picture(file: &Path, longest_side: Option<u32>) -> Option<gdk::Texture> {
@@ -389,6 +440,46 @@ mod tests {
         let detailed = detailed.expect("the full image is drawn");
         assert_eq!((detailed.width, detailed.height), (16, 8));
         assert!(!detailed.is_vector);
+    }
+
+    #[test]
+    fn a_gimp_image_is_drawn_from_its_layers() {
+        let context = glib::MainContext::new();
+        let file = layered_fixture("gimp-basic.xcf");
+
+        let thumbnail = context.block_on(render(&file, 20));
+        let detailed = context.block_on(load_detailed(&file, 2048));
+
+        let thumbnail = thumbnail.expect("the thumbnail is drawn");
+        assert_eq!((thumbnail.width(), thumbnail.height()), (20, 15));
+        let detailed = detailed.expect("the full image is drawn");
+        assert_eq!((detailed.width, detailed.height), (200, 150));
+        assert!(!detailed.is_vector);
+        assert!(!detailed.approximate);
+    }
+
+    #[test]
+    fn a_gimp_image_using_an_unreproduced_mode_is_flagged_as_approximate() {
+        let context = glib::MainContext::new();
+        let file = layered_fixture("gimp-composed/mode_color_erase.xcf");
+
+        let detailed = context.block_on(load_detailed(&file, 2048));
+
+        assert!(detailed.expect("the image is drawn").approximate);
+    }
+
+    #[test]
+    fn a_damaged_gimp_image_gives_no_picture_and_a_problem() {
+        let context = glib::MainContext::new();
+        let file = layered_fixture("gimp-cut.xcf");
+
+        assert!(context.block_on(render(&file, 20)).is_none());
+        assert_eq!(
+            context.block_on(super::preview_problem(&file)),
+            Some(super::PreviewProblem::Gimp(
+                pigoune_core::XcfError::Unreadable
+            ))
+        );
     }
 
     fn layered_fixture(name: &str) -> std::path::PathBuf {
