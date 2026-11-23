@@ -121,6 +121,12 @@ Pigoune est un logiciel libre distribué sous licence [GNU GPL v3 ou ultérieure
 Les icônes des collections viennent de [Phosphor Icons](https://phosphoricons.com), distribuées
 sous [licence MIT](crates/pigoune-app/icons/LICENSE-phosphor).
 
+Le paquet Flatpak contient aussi [Ghostscript](https://ghostscript.com), distribué sous
+[licence GNU AGPL v3](https://www.gnu.org/licenses/agpl-3.0.fr.html), que Pigoune lance comme
+programme séparé pour dessiner les fichiers PDF, EPS et AI. Il est compilé à partir de l'archive
+officielle des sources, dont la somme de contrôle est figée dans
+`build-aux/io.github.gor3pig.Pigoune.json`.
+
 La police de BD des bulles vient de [Comic Neue](https://github.com/crozynski/comicneue),
 distribuée sous [licence SIL Open Font](data/fonts/LICENSE-comic-neue).
 

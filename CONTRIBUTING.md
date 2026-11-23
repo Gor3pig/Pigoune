@@ -36,6 +36,9 @@ flatpak-builder --user --install-deps-from=flathub --install --force-clean \
 flatpak run io.github.gor3pig.Pigoune
 ```
 
+The first build also compiles Ghostscript from its official source archive (the download is
+checked against the `sha256` in the manifest), which adds a few minutes.
+
 If you change `Cargo.lock`, regenerate the offline sources used by the Flatpak build:
 
 ```sh

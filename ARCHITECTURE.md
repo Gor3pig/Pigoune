@@ -139,6 +139,10 @@ to change it.
   and the settings schema, so that `cargo run` works without installing anything. It also
   merges the translations into the metainfo, which the About window reads to show what is new.
 
+## Bundled programs
+
+The Flatpak manifest builds Ghostscript from the official source archive (version and `sha256` pinned in `build-aux/io.github.gor3pig.Pigoune.json`) before the application. It is configured without CUPS, GTK, D-Bus, X11, libpaper, Tesseract and libidn, and with only the drivers Pigoune needs (`png16m`, `pngalpha`, `bbox`, plus `pdfwrite`, which the PDF interpreter needs to link). Its fonts and resources are compiled into the single `gs` program in `/app/bin`; the helper scripts it installs are removed. Pigoune never links it: PDF, EPS and AI files are drawn by running it as a separate process (always with `-dSAFER`, a time limit and a bounded output), so a damaged or hostile file can neither crash the application nor read or write files. Ghostscript is released under the GNU AGPL v3 and stays a separate program next to the GPL code.
+
 ## The library format
 
 A library is a self-contained folder that can be moved or copied to another computer:
