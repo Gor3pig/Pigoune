@@ -19,6 +19,7 @@ mod tga;
 mod visual_detail;
 mod visual_hash;
 mod webp;
+mod xcf;
 
 use std::fs::File;
 use std::io::Read;
@@ -34,6 +35,10 @@ pub use dimensions::Dimensions;
 pub use format::AssetFormat;
 pub use ico::{icon_from_pngs, single_size_icon};
 pub use layered::{is_layered_file, layered_format_of, layered_preview_png};
+pub use xcf::{
+    BaseType, LayerInfo, LayerKind, LayerRole, Precision, SampleFormat, SampleGrid, Samples,
+    XcfDocument, XcfError, XcfReader, gimp_dimensions, is_gimp_file,
+};
 
 #[must_use]
 pub fn container_format_of(path: &Path) -> Option<AssetFormat> {
