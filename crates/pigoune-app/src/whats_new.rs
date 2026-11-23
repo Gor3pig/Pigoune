@@ -167,6 +167,25 @@ fn points_of_version_3_2() -> Vec<Point> {
     ]
 }
 
+fn points_of_version_3_6() -> Vec<Point> {
+    vec![
+        Point {
+            icon: "applications-graphics-symbolic",
+            title: gettext("GIMP Files"),
+            text: gettext(
+                "GIMP files now join your library: Pigoune draws them from their layers, the way GIMP does.",
+            ),
+        },
+        Point {
+            icon: "x-office-document-symbolic",
+            title: gettext("PDF, EPS and Illustrator"),
+            text: gettext(
+                "PDF, EPS and Adobe Illustrator files now join your library, with their first page drawn sharp at every zoom.",
+            ),
+        },
+    ]
+}
+
 fn points_of_version_3_5() -> Vec<Point> {
     vec![
         Point {
@@ -266,6 +285,7 @@ fn points_of_version_2_12() -> Vec<Point> {
 
 fn points_of(version: &str) -> Vec<Point> {
     match version {
+        "3.6.0" => points_of_version_3_6(),
         "3.5.0" => points_of_version_3_5(),
         "3.4.0" => points_of_version_3_4(),
         "3.3.0" => points_of_version_3_3(),
