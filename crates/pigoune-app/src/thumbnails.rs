@@ -8,12 +8,14 @@ use pigoune_core::{AssetId, Dimensions, RgbaImage};
 
 use crate::asset_colors;
 use crate::load_slots::LoadSlots;
+use crate::page_renderer::{self, PageProblem};
 
 pub const THUMBNAIL_PIXELS: u32 = 256;
 const REMEMBERED_THUMBNAILS: usize = 600;
 const MOST_CONCURRENT_LOADS: usize = 4;
 const VECTOR_MIME_TYPES: [&str; 2] = ["image/svg+xml", "image/svg+xml-compressed"];
 const RGBA_CHANNELS: usize = 4;
+const SMALLEST_PROBE_PIXELS: u32 = 64;
 
 thread_local! {
     static LOAD_SLOTS: LoadSlots = LoadSlots::new(MOST_CONCURRENT_LOADS);
@@ -165,6 +167,9 @@ pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
             .await
             .map(|(texture, _)| texture);
     }
+    if pigoune_core::page_file(file).is_some() {
+        return pages_texture(file, pixels).await.ok();
+    }
     let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
     let (width, height) = if VECTOR_MIME_TYPES.contains(&image.mime_type().as_str()) {
@@ -199,6 +204,25 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
             height: u32::try_from(texture.height()).ok()?,
             texture,
             is_vector: false,
+            approximate: false,
+        });
+    }
+    if let Some(page) = pigoune_core::page_file(file) {
+        let texture = pages_texture(file, vector_pixels).await.ok()?;
+        let natural = page
+            .dimensions
+            .map(|size| (size.width(), size.height()))
+            .or_else(|| {
+                Some((
+                    u32::try_from(texture.width()).ok()?,
+                    u32::try_from(texture.height()).ok()?,
+                ))
+            })?;
+        return Some(DetailedImage {
+            width: natural.0,
+            height: natural.1,
+            texture,
+            is_vector: true,
             approximate: false,
         });
     }
@@ -302,6 +326,7 @@ async fn photoshop_texture(file: &Path, longest_side: Option<u32>) -> Option<gdk
 pub enum PreviewProblem {
     Photoshop(pigoune_core::PsdError),
     Gimp(pigoune_core::XcfError),
+    Pages(PageProblem),
 }
 
 pub async fn preview_problem(file: &Path) -> Option<PreviewProblem> {
@@ -313,11 +338,27 @@ pub async fn preview_problem(file: &Path) -> Option<PreviewProblem> {
         if pigoune_core::is_gimp_file(&file) {
             return pigoune_core::gimp_problem(&file).map(PreviewProblem::Gimp);
         }
-        None
+        let page = pigoune_core::page_file(&file)?;
+        page_renderer::render_first_page(&file, &page, SMALLEST_PROBE_PIXELS)
+            .err()
+            .map(PreviewProblem::Pages)
     })
     .await
     .ok()
     .flatten()
+}
+
+async fn pages_texture(file: &Path, longest_side: u32) -> Result<gdk::Texture, PageProblem> {
+    let file = file.to_path_buf();
+    gio::spawn_blocking(move || pages_picture(&file, longest_side))
+        .await
+        .map_err(|_| PageProblem::Damaged)?
+}
+
+pub fn pages_picture(file: &Path, longest_side: u32) -> Result<gdk::Texture, PageProblem> {
+    let page = pigoune_core::page_file(file).ok_or(PageProblem::Damaged)?;
+    let png = page_renderer::render_first_page(file, &page, longest_side)?;
+    gdk::Texture::from_bytes(&glib::Bytes::from_owned(png)).map_err(|_| PageProblem::Damaged)
 }
 
 async fn gimp_texture(file: &Path, longest_side: Option<u32>) -> Option<(gdk::Texture, bool)> {
@@ -440,6 +481,74 @@ mod tests {
         let detailed = detailed.expect("the full image is drawn");
         assert_eq!((detailed.width, detailed.height), (16, 8));
         assert!(!detailed.is_vector);
+    }
+
+    fn ghostscript_is_installed() -> bool {
+        std::process::Command::new("gs")
+            .arg("--version")
+            .output()
+            .is_ok_and(|output| output.status.success())
+    }
+
+    #[test]
+    fn a_pdf_page_is_drawn_sharp_at_the_requested_size() {
+        if !ghostscript_is_installed() {
+            return;
+        }
+        let context = glib::MainContext::new();
+        let file = layered_fixture("pages-cairo.pdf");
+
+        let thumbnail = context.block_on(render(&file, 100));
+        let detailed = context.block_on(load_detailed(&file, 2048));
+
+        let thumbnail = thumbnail.expect("the thumbnail is drawn");
+        assert_eq!((thumbnail.width(), thumbnail.height()), (100, 71));
+        let detailed = detailed.expect("the page is drawn");
+        assert_eq!((detailed.width, detailed.height), (842, 595));
+        assert!(detailed.is_vector);
+        assert_eq!(detailed.texture.width(), 2048);
+    }
+
+    #[test]
+    fn a_postscript_drawing_is_drawn_with_a_transparent_background() {
+        if !ghostscript_is_installed() {
+            return;
+        }
+        let context = glib::MainContext::new();
+        let file = layered_fixture("pages-old-illustrator.ai");
+
+        let detailed = context.block_on(load_detailed(&file, 640));
+
+        let detailed = detailed.expect("the drawing is drawn");
+        assert_eq!((detailed.width, detailed.height), (320, 200));
+        assert!(detailed.is_vector);
+        assert_eq!(detailed.texture.width(), 640);
+    }
+
+    #[test]
+    fn a_protected_or_damaged_page_file_gives_no_picture_and_its_problem() {
+        if !ghostscript_is_installed() {
+            return;
+        }
+        let context = glib::MainContext::new();
+        for (name, expected) in [
+            (
+                "pages-locked.pdf",
+                crate::page_renderer::PageProblem::Protected,
+            ),
+            (
+                "pages-damaged.pdf",
+                crate::page_renderer::PageProblem::Damaged,
+            ),
+        ] {
+            let file = layered_fixture(name);
+            assert!(context.block_on(render(&file, 64)).is_none(), "{name}");
+            assert_eq!(
+                context.block_on(super::preview_problem(&file)),
+                Some(super::PreviewProblem::Pages(expected)),
+                "{name}"
+            );
+        }
     }
 
     #[test]

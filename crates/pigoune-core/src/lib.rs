@@ -29,13 +29,13 @@ pub use library::{
 };
 pub use media::{
     AnimationTiming, Archive, ArchiveEntry, ArchiveError, AssetColor, AssetFormat, AssetShape,
-    BaseType, Dimensions, DominantColor, GimpRender, LayerInfo, LayerKind, LayerRole, Precision,
-    PsdError, Rgb, SampleFormat, SampleGrid, Samples, VisualAnalysis, VisualDetail, VisualHash,
-    XcfDocument, XcfError, XcfReader, animation_timing, compose_image, container_format_of,
-    container_preview, dominant_colors, first_stored_text, gimp_dimensions, gimp_file_is_intact,
-    gimp_problem, icon_from_pngs, is_gimp_file, is_layered_file, is_photoshop_file,
-    layered_format_of, layered_preview_png, photoshop_file_is_intact, photoshop_problem,
-    read_merged_image, read_merged_image_file, read_merged_image_from, render_gimp_file,
-    single_size_icon, visual_analysis, visual_detail, visual_hash,
+    BaseType, Dimensions, DominantColor, GimpRender, LayerInfo, LayerKind, LayerRole, PageFile,
+    Precision, PsdError, Rgb, SampleFormat, SampleGrid, Samples, VisualAnalysis, VisualDetail,
+    VisualHash, XcfDocument, XcfError, XcfReader, animation_timing, compose_image,
+    container_format_of, container_preview, dominant_colors, first_stored_text, gimp_dimensions,
+    gimp_file_is_intact, gimp_problem, icon_from_pngs, is_gimp_file, is_layered_file,
+    is_photoshop_file, layered_format_of, layered_preview_png, page_file, photoshop_file_is_intact,
+    photoshop_problem, read_merged_image, read_merged_image_file, read_merged_image_from,
+    render_gimp_file, single_size_icon, visual_analysis, visual_detail, visual_hash,
 };
 pub use raster::{RgbaImage, fitted_within};

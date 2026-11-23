@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-22 20:57+0100\n"
+"POT-Creation-Date: 2026-11-23 22:17+0100\n"
 "PO-Revision-Date: 2026-10-06 10:06+0200\n"
 "Last-Translator: Gor3pig\n"
 "Language-Team: German\n"
@@ -2881,7 +2881,7 @@ msgid "Date Added"
 msgstr "Hinzugefügt am"
 
 #: crates/pigoune-app/src/window.rs:1034
-#: crates/pigoune-app/src/asset_preview.rs:1442
+#: crates/pigoune-app/src/asset_preview.rs:1443
 msgid "The original image is not available"
 msgstr "Das Originalbild ist nicht verfügbar"
 
@@ -2988,12 +2988,12 @@ msgstr "Vorschau öffnen"
 #: crates/pigoune-app/ui/asset-details.blp:212
 #: crates/pigoune-app/ui/asset-details.blp:223
 #: crates/pigoune-app/ui/asset-preview.blp:269
-#: crates/pigoune-app/src/asset_preview.rs:1593
+#: crates/pigoune-app/src/asset_preview.rs:1600
 msgid "Open With…"
 msgstr "Öffnen mit …"
 
 #: crates/pigoune-app/src/window.rs:3059
-#: crates/pigoune-app/src/asset_preview.rs:1597
+#: crates/pigoune-app/src/asset_preview.rs:1604
 #: crates/pigoune-app/src/shortcuts.rs:310
 msgid "Show in Files"
 msgstr "In Dateien anzeigen"
@@ -3006,24 +3006,24 @@ msgstr "Ähnliche finden …"
 #: crates/pigoune-app/ui/asset-details.blp:235
 #: crates/pigoune-app/ui/asset-details.blp:246
 #: crates/pigoune-app/ui/asset-preview.blp:276
-#: crates/pigoune-app/src/asset_preview.rs:1601
+#: crates/pigoune-app/src/asset_preview.rs:1608
 msgid "Copy"
 msgstr "Kopieren"
 
 #: crates/pigoune-app/src/window.rs:3078
 #: crates/pigoune-app/ui/asset-details.blp:258
 #: crates/pigoune-app/ui/asset-preview.blp:283
-#: crates/pigoune-app/src/asset_preview.rs:1603
+#: crates/pigoune-app/src/asset_preview.rs:1610
 msgid "Export To…"
 msgstr "Exportieren nach …"
 
 #: crates/pigoune-app/src/window.rs:3082
-#: crates/pigoune-app/src/asset_preview.rs:1607
+#: crates/pigoune-app/src/asset_preview.rs:1614
 msgid "Convert and Export…"
 msgstr "Konvertieren und exportieren …"
 
 #: crates/pigoune-app/src/window.rs:3087
-#: crates/pigoune-app/src/asset_preview.rs:1612
+#: crates/pigoune-app/src/asset_preview.rs:1619
 msgid "Frame and Set as Wallpaper…"
 msgstr "Zuschneiden und als Hintergrundbild festlegen …"
 
@@ -3039,16 +3039,16 @@ msgid "Rename…"
 msgstr "Umbenennen …"
 
 #: crates/pigoune-app/src/window.rs:3112
-#: crates/pigoune-app/src/asset_preview.rs:631
-#: crates/pigoune-app/src/asset_preview.rs:1622
+#: crates/pigoune-app/src/asset_preview.rs:632
+#: crates/pigoune-app/src/asset_preview.rs:1629
 #: crates/pigoune-app/src/asset_details.rs:516
 #: crates/pigoune-app/src/asset_details.rs:592
 msgid "Remove from Favorites"
 msgstr "Aus Favoriten entfernen"
 
 #: crates/pigoune-app/src/window.rs:3114
-#: crates/pigoune-app/src/asset_preview.rs:635
-#: crates/pigoune-app/src/asset_preview.rs:1624
+#: crates/pigoune-app/src/asset_preview.rs:636
+#: crates/pigoune-app/src/asset_preview.rs:1631
 #: crates/pigoune-app/src/asset_details.rs:518
 #: crates/pigoune-app/src/asset_details.rs:594
 msgid "Add to Favorites"
@@ -3065,7 +3065,7 @@ msgstr "Zu einer Sammlung hinzufügen …"
 
 #: crates/pigoune-app/src/window.rs:3134
 #: crates/pigoune-app/ui/asset-details.blp:105
-#: crates/pigoune-app/src/asset_preview.rs:1628
+#: crates/pigoune-app/src/asset_preview.rs:1635
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:98
 #: crates/pigoune-app/ui/shortcuts-dialog.blp:225
 #: crates/pigoune-app/src/duplicates_page.rs:816
@@ -3092,7 +3092,7 @@ msgstr "Aus allen Sammlungen entfernen"
 #: crates/pigoune-app/ui/asset-details.blp:287
 #: crates/pigoune-app/ui/asset-details.blp:298
 #: crates/pigoune-app/ui/asset-preview.blp:109
-#: crates/pigoune-app/src/asset_preview.rs:1077
+#: crates/pigoune-app/src/asset_preview.rs:1078
 #: crates/pigoune-app/src/asset_details.rs:542
 msgid "Annotate…"
 msgstr "Anmerken…"
@@ -3104,7 +3104,7 @@ msgid "Show Original"
 msgstr "Original anzeigen"
 
 #: crates/pigoune-app/src/window.rs:3241
-#: crates/pigoune-app/src/asset_preview.rs:1075
+#: crates/pigoune-app/src/asset_preview.rs:1076
 msgid "Animated images cannot be annotated yet"
 msgstr "Animierte Bilder können noch nicht mit Anmerkungen versehen werden"
 
@@ -4418,44 +4418,44 @@ msgstr "Hochformat"
 msgid "Square"
 msgstr "Quadratisch"
 
-#: crates/pigoune-app/src/asset_facts.rs:49
+#: crates/pigoune-app/src/asset_facts.rs:52
 msgid "Unknown dimensions"
 msgstr "Unbekannt"
 
-#: crates/pigoune-app/src/asset_facts.rs:51
+#: crates/pigoune-app/src/asset_facts.rs:54
 #, rust-format
 msgid "{width} × {height} pixels"
 msgstr "{width} × {height} Pixel"
 
-#: crates/pigoune-app/src/asset_facts.rs:90
+#: crates/pigoune-app/src/asset_facts.rs:93
 #, rust-format
 msgid "{size} in total"
 msgstr "{size} insgesamt"
 
-#: crates/pigoune-app/src/asset_facts.rs:116
+#: crates/pigoune-app/src/asset_facts.rs:119
 #, rust-format
 msgid "Animated {format}"
 msgstr "Animiertes {format}"
 
-#: crates/pigoune-app/src/asset_facts.rs:135
+#: crates/pigoune-app/src/asset_facts.rs:138
 #, rust-format
 msgid "{count} frame"
 msgid_plural "{count} frames"
 msgstr[0] "{count} Bild"
 msgstr[1] "{count} Bilder"
 
-#: crates/pigoune-app/src/asset_facts.rs:144
+#: crates/pigoune-app/src/asset_facts.rs:147
 #, rust-format
 msgid "{seconds}.{tenths} s"
 msgstr "{seconds},{tenths} s"
 
-#: crates/pigoune-app/src/asset_facts.rs:156
+#: crates/pigoune-app/src/asset_facts.rs:159
 #: crates/pigoune-app/src/library_info_dialog.rs:915
 #: crates/pigoune-app/src/library_info_dialog.rs:921
 msgid "Unknown date"
 msgstr "Unbekannt"
 
-#: crates/pigoune-app/src/asset_facts.rs:160
+#: crates/pigoune-app/src/asset_facts.rs:163
 msgid "%B %-d, %Y at %H:%M"
 msgstr "%-d. %B %Y um %H:%M"
 
@@ -4555,7 +4555,7 @@ msgid "Previous Frame"
 msgstr "Vorheriges Bild"
 
 #: crates/pigoune-app/ui/asset-preview.blp:371
-#: crates/pigoune-app/src/asset_preview.rs:1126
+#: crates/pigoune-app/src/asset_preview.rs:1127
 msgid "Pause"
 msgstr "Pause"
 
@@ -4575,7 +4575,7 @@ msgid "Next Asset"
 msgstr "Nächstes Element"
 
 #: crates/pigoune-app/ui/asset-preview.blp:451
-#: crates/pigoune-app/src/asset_preview.rs:1444
+#: crates/pigoune-app/src/asset_preview.rs:1445
 msgid "Hold to See the Original Image"
 msgstr "Gedrückt halten, um das Originalbild zu sehen"
 
@@ -4583,36 +4583,46 @@ msgstr "Gedrückt halten, um das Originalbild zu sehen"
 msgid "Original Image"
 msgstr "Originalbild"
 
-#: crates/pigoune-app/src/asset_preview.rs:1128
+#: crates/pigoune-app/src/asset_preview.rs:1129
 msgid "Play"
 msgstr "Abspielen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1453
+#: crates/pigoune-app/src/asset_preview.rs:1454
 msgid ""
 "This GIMP image uses features Pigoune cannot draw exactly: the preview is "
 "approximate"
-msgstr "Dieses GIMP-Bild verwendet Funktionen, die Pigoune nicht exakt darstellen kann: Die Vorschau ist nur angenähert"
+msgstr ""
+"Dieses GIMP-Bild verwendet Funktionen, die Pigoune nicht exakt darstellen "
+"kann: Die Vorschau ist nur angenähert"
 
-#: crates/pigoune-app/src/asset_preview.rs:1462
+#: crates/pigoune-app/src/asset_preview.rs:1463
+msgid "This file is protected by a password: Pigoune cannot show it"
+msgstr "Diese Datei ist passwortgeschützt: Pigoune kann sie nicht anzeigen"
+
+#: crates/pigoune-app/src/asset_preview.rs:1466
+msgid "The program that draws this kind of file is not available"
+msgstr "Das Programm, das diese Art von Datei zeichnet, ist nicht verfügbar"
+
+#: crates/pigoune-app/src/asset_preview.rs:1469
 msgid "Pigoune cannot show this kind of GIMP file"
 msgstr "Pigoune kann diese Art von GIMP-Datei nicht anzeigen"
 
-#: crates/pigoune-app/src/asset_preview.rs:1465
+#: crates/pigoune-app/src/asset_preview.rs:1472
 msgid "This GIMP image is too large to be shown"
 msgstr "Dieses GIMP-Bild ist zu groß, um angezeigt zu werden"
 
-#: crates/pigoune-app/src/asset_preview.rs:1468
+#: crates/pigoune-app/src/asset_preview.rs:1475
 msgid ""
 "Pigoune cannot show this kind of Photoshop file, a 32-bit one for example"
 msgstr ""
 "Pigoune kann diese Art von Photoshop-Datei nicht anzeigen, zum Beispiel eine "
 "32-Bit-Datei"
 
-#: crates/pigoune-app/src/asset_preview.rs:1470
+#: crates/pigoune-app/src/asset_preview.rs:1477
 msgid "This Photoshop image is too large to be shown"
 msgstr "Dieses Photoshop-Bild ist zu groß, um angezeigt zu werden"
 
-#: crates/pigoune-app/src/asset_preview.rs:1472
+#: crates/pigoune-app/src/asset_preview.rs:1479
 msgid ""
 "This Photoshop file was saved without a preview: turn on Maximize "
 "Compatibility in Photoshop"
@@ -4620,24 +4630,24 @@ msgstr ""
 "Diese Photoshop-Datei wurde ohne Vorschau gespeichert: Schalten Sie in "
 "Photoshop „Kompatibilität maximieren“ ein"
 
-#: crates/pigoune-app/src/asset_preview.rs:1475
+#: crates/pigoune-app/src/asset_preview.rs:1482
 msgid "The full-size image could not be loaded: showing its thumbnail"
 msgstr ""
 "Das Bild in voller Größe konnte nicht geladen werden: Es wird die Vorschau "
 "angezeigt"
 
-#: crates/pigoune-app/src/asset_preview.rs:1477
+#: crates/pigoune-app/src/asset_preview.rs:1484
 msgid "This image could not be loaded: its file may be missing or damaged"
 msgstr ""
 "Dieses Bild konnte nicht geladen werden: Die Datei fehlt oder ist beschädigt"
 
-#: crates/pigoune-app/src/asset_preview.rs:1577
+#: crates/pigoune-app/src/asset_preview.rs:1584
 #: crates/pigoune-app/src/wallpaper_dialog.rs:690
 #, rust-format
 msgid "{percent}%"
 msgstr "{percent} %"
 
-#: crates/pigoune-app/src/asset_preview.rs:1661
+#: crates/pigoune-app/src/asset_preview.rs:1668
 #, rust-format
 msgid "{position} of {count}"
 msgstr "{position} von {count}"

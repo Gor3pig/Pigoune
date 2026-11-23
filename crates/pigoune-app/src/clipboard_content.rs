@@ -6,6 +6,7 @@ use gtk::{gdk, gio, glib};
 
 use crate::thumbnails;
 
+const PAGE_PICTURE_PIXELS: u32 = 2048;
 const SVG_MIME_TYPE: &str = "image/svg+xml";
 
 pub fn provider(copies: &[PathBuf]) -> gdk::ContentProvider {
@@ -39,6 +40,9 @@ fn image_providers(copy: &PathBuf) -> Vec<gdk::ContentProvider> {
 fn picture_of(copy: &Path) -> Option<gdk::Texture> {
     if pigoune_core::is_photoshop_file(copy) {
         return thumbnails::photoshop_picture(copy, None);
+    }
+    if pigoune_core::page_file(copy).is_some() {
+        return thumbnails::pages_picture(copy, PAGE_PICTURE_PIXELS).ok();
     }
     if pigoune_core::is_gimp_file(copy) {
         return thumbnails::gimp_picture(copy, None).map(|(texture, _)| texture);
@@ -78,6 +82,20 @@ mod tests {
 
             assert_eq!((picture.width(), picture.height()), (16, 8), "{name}");
         }
+    }
+
+    #[test]
+    fn a_pdf_page_is_copied_as_a_large_picture() {
+        let installed = std::process::Command::new("gs")
+            .arg("--version")
+            .output()
+            .is_ok_and(|output| output.status.success());
+        if !installed {
+            return;
+        }
+        let picture = picture_of(&fixture("pages-cairo.pdf")).expect("the picture is drawn");
+
+        assert_eq!((picture.width(), picture.height()), (2048, 1447));
     }
 
     #[test]

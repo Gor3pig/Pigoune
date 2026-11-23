@@ -13,6 +13,7 @@ use crate::animation_player::{AnimationPlayer, PlaybackState};
 use crate::asset_facts;
 use crate::asset_object::PigouneAssetObject;
 use crate::compare_hold::{Comparison, Original, PressOutcome, region_of};
+use crate::page_renderer::PageProblem;
 use crate::shortcuts;
 use crate::swipe_steps;
 use crate::thumbnails::{self, PreviewProblem, ThumbnailCache};
@@ -1458,6 +1459,12 @@ impl PigouneAssetPreview {
     fn show_load_failure(&self, has_thumbnail: bool, problem: Option<PreviewProblem>) {
         let banner = &self.imp().load_banner;
         banner.set_title(&match problem {
+            Some(PreviewProblem::Pages(PageProblem::Protected)) => {
+                gettext("This file is protected by a password: Pigoune cannot show it")
+            }
+            Some(PreviewProblem::Pages(PageProblem::Unavailable)) => {
+                gettext("The program that draws this kind of file is not available")
+            }
             Some(PreviewProblem::Gimp(XcfError::Unsupported)) => {
                 gettext("Pigoune cannot show this kind of GIMP file")
             }
