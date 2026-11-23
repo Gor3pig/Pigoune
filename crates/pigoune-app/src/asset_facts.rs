@@ -41,6 +41,9 @@ pub fn format_name(format: AssetFormat) -> &'static str {
         AssetFormat::Exr => "EXR",
         AssetFormat::Hdr => "HDR",
         AssetFormat::Xcf => "GIMP",
+        AssetFormat::Pdf => "PDF",
+        AssetFormat::Eps => "EPS",
+        AssetFormat::Ai => "AI",
     }
 }
 
