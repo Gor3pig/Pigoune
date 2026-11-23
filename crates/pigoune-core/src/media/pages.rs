@@ -4,6 +4,7 @@ use std::path::Path;
 
 use super::{AssetFormat, Dimensions, InspectError, LARGEST_SIDE, MediaInfo};
 
+const HEADER_LENGTH: u64 = 4096;
 const PDF_SIGNATURE: &[u8] = b"%PDF-";
 const PDF_SIGNATURE_WINDOW: usize = 1024;
 const POSTSCRIPT_SIGNATURE: &[u8] = b"%!PS-Adobe-";
@@ -26,6 +27,25 @@ const MOST_INFLATED_BYTES: usize = 16 * 1024 * 1024;
 const MOST_DICTIONARY_BYTES: usize = 16 * 1024;
 const MOST_DICTIONARY_DEPTH: usize = 64;
 const LINE_END: [u8; 2] = *b"\r\n";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PageFile {
+    pub format: AssetFormat,
+    pub dimensions: Option<Dimensions>,
+    pub is_pdf: bool,
+}
+
+#[must_use]
+pub fn page_file(path: &Path) -> Option<PageFile> {
+    let head = read_window(path, 0, HEADER_LENGTH).ok()?;
+    let detected = detect(&head)?;
+    let info = inspect(path, detected).ok()?;
+    Some(PageFile {
+        format: info.format,
+        dimensions: info.dimensions,
+        is_pdf: is_pdf(&head),
+    })
+}
 
 #[must_use]
 pub(super) fn detect(header: &[u8]) -> Option<AssetFormat> {

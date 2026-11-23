@@ -2,6 +2,7 @@ use std::path::Path;
 
 use gtk::{gio, glib};
 
+const PROBE_PIXELS: u32 = 64;
 const SAMPLE_PNG: [u8; 70] = [
     0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
     0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
@@ -48,6 +49,12 @@ impl ImageCheck {
     pub fn is_intact(&self, path: &Path) -> bool {
         if pigoune_core::is_photoshop_file(path) {
             return pigoune_core::photoshop_file_is_intact(path);
+        }
+        if pigoune_core::page_file(path).is_some() {
+            return !matches!(
+                crate::thumbnails::pages_picture(path, PROBE_PIXELS),
+                Err(crate::page_renderer::PageProblem::Damaged)
+            );
         }
         if pigoune_core::is_gimp_file(path) {
             return pigoune_core::gimp_file_is_intact(path);

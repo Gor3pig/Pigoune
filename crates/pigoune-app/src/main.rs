@@ -88,6 +88,7 @@ mod list_diff;
 mod load_slots;
 mod mask_alert;
 mod new_library_dialog;
+mod page_renderer;
 mod pasted_content;
 mod preferences_dialog;
 mod preview_flight;
