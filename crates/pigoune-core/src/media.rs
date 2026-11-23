@@ -9,6 +9,7 @@ mod icns;
 mod ico;
 mod layered;
 mod orientation;
+mod pages;
 mod png;
 mod psd;
 mod rgb;
@@ -127,6 +128,9 @@ fn inspect_binary(path: &Path, format: AssetFormat) -> Result<MediaInfo, Inspect
     match format {
         AssetFormat::Kra | AssetFormat::Ora => return layered::inspect(path, format),
         AssetFormat::Svgz => return svgz::inspect(path),
+        AssetFormat::Pdf | AssetFormat::Eps | AssetFormat::Ai => {
+            return pages::inspect(path, format);
+        }
         AssetFormat::Xcf => {
             return Ok(MediaInfo {
                 format,
@@ -171,6 +175,11 @@ pub fn dimensions_of(path: &Path, format: AssetFormat) -> Option<Dimensions> {
 fn probe_dimensions(path: &Path, format: AssetFormat) -> Result<Dimensions, InspectError> {
     let dimensions = if format == AssetFormat::Bmp {
         bmp::size(path)?
+    } else if matches!(
+        format,
+        AssetFormat::Pdf | AssetFormat::Eps | AssetFormat::Ai
+    ) {
+        pages::dimensions_of(path, format).ok_or(InspectError::Unreadable)?
     } else if format == AssetFormat::Xcf {
         xcf::gimp_file_dimensions(path).ok_or(InspectError::Unreadable)?
     } else {

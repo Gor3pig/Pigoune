@@ -1,3 +1,4 @@
+use super::pages;
 use super::svgz;
 use super::xcf::has_gimp_header;
 
@@ -53,10 +54,13 @@ pub enum AssetFormat {
     Exr,
     Hdr,
     Xcf,
+    Pdf,
+    Eps,
+    Ai,
 }
 
 impl AssetFormat {
-    pub const ALL: [Self; 22] = [
+    pub const ALL: [Self; 25] = [
         Self::Svg,
         Self::Png,
         Self::Jpeg,
@@ -79,6 +83,9 @@ impl AssetFormat {
         Self::Exr,
         Self::Hdr,
         Self::Xcf,
+        Self::Pdf,
+        Self::Eps,
+        Self::Ai,
     ];
 
     #[must_use]
@@ -106,6 +113,9 @@ impl AssetFormat {
             Self::Exr => "exr",
             Self::Hdr => "hdr",
             Self::Xcf => "xcf",
+            Self::Pdf => "pdf",
+            Self::Eps => "eps",
+            Self::Ai => "ai",
         }
     }
 
@@ -170,7 +180,7 @@ pub fn detect_binary(header: &[u8]) -> Option<AssetFormat> {
     } else if svgz::is_compressed_svg(header) {
         Some(AssetFormat::Svgz)
     } else {
-        layered_format(header)
+        layered_format(header).or_else(|| pages::detect(header))
     }
 }
 
@@ -276,7 +286,7 @@ mod tests {
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
-        let cases: [(&[u8], AssetFormat); 30] = [
+        let cases: [(&[u8], AssetFormat); 33] = [
             (b"\x89PNG\r\n\x1a\nrest", AssetFormat::Png),
             (&[0xFF, 0xD8, 0xFF, 0xE0], AssetFormat::Jpeg),
             (b"GIF87a....", AssetFormat::Gif),
@@ -316,6 +326,15 @@ mod tests {
             (b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe", AssetFormat::Hdr),
             (b"gimp xcf v011\0\0\0\0\xc8\0\0\0\x96", AssetFormat::Xcf),
             (b"gimp xcf file\0\0\0\0\x10", AssetFormat::Xcf),
+            (b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n", AssetFormat::Pdf),
+            (
+                b"%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 9 9\n",
+                AssetFormat::Eps,
+            ),
+            (
+                b"%!PS-Adobe-3.0 EPSF-3.0\n%%Creator: Adobe Illustrator(R) 8.0\n",
+                AssetFormat::Ai,
+            ),
         ];
         for (header, expected) in cases {
             assert_eq!(detect_binary(header), Some(expected));
@@ -355,13 +374,12 @@ mod tests {
 
     #[test]
     fn other_content_is_not_a_binary_image() {
-        let cases: [&[u8]; 10] = [
+        let cases: [&[u8]; 9] = [
             b"",
             b"hello world",
             b"RIFF\x10\0\0\0WAVEfmt ",
             &[0, 0, 1, 0, 0, 0],
             &[0, 0, 2, 0, 1, 0],
-            b"%PDF-1.7",
             b"\0\0\0\x18ftypmif1\0\0\0\0mif1miaf",
             b"\0\0\0\x10ftypisom\0\0\0\0avif",
             b"\0\0\0\x18ftypmp42\0\0\0\0isomavc1",

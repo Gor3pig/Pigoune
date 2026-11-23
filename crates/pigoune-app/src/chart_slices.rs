@@ -102,6 +102,9 @@ pub fn color_of(format: AssetFormat) -> &'static str {
         AssetFormat::Exr => "#f66151",
         AssetFormat::Hdr => "#ffbe6f",
         AssetFormat::Xcf => "#c64600",
+        AssetFormat::Pdf => "#ed333b",
+        AssetFormat::Eps => "#613583",
+        AssetFormat::Ai => "#e5a50a",
     }
 }
 

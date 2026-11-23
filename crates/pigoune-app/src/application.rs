@@ -219,6 +219,9 @@ mod tests {
             AssetFormat::Exr => "image/x-exr",
             AssetFormat::Hdr => "image/vnd.radiance",
             AssetFormat::Xcf => "image/x-xcf",
+            AssetFormat::Pdf => "application/pdf",
+            AssetFormat::Eps => "image/x-eps",
+            AssetFormat::Ai => "application/illustrator",
         }
     }
 
