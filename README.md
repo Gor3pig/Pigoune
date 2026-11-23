@@ -119,5 +119,10 @@ Pigoune is free software released under the [GNU GPL v3 or later](COPYING).
 The collection icons are from [Phosphor Icons](https://phosphoricons.com), released under the
 [MIT license](crates/pigoune-app/icons/LICENSE-phosphor).
 
+The Flatpak package also contains [Ghostscript](https://ghostscript.com), released under the
+[GNU AGPL v3](https://www.gnu.org/licenses/agpl-3.0.html), which Pigoune runs as a separate
+program to draw PDF, EPS and AI files. It is compiled from the official source archive, whose
+checksum is pinned in `build-aux/io.github.gor3pig.Pigoune.json`.
+
 The cartoon lettering of the speech bubbles is [Comic Neue](https://github.com/crozynski/comicneue),
 released under the [SIL Open Font License](data/fonts/LICENSE-comic-neue).
