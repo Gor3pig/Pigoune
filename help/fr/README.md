@@ -85,7 +85,7 @@ Pigoune garde ce que le navigateur lui fournit : le fichier d’origine avec Ch
 
 | Sujet | Règle |
 |---|---|
-| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), icônes macOS (ICNS), SVG compressé (SVGZ), TGA, DDS, QOI, OpenEXR (EXR) et Radiance (HDR). |
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), icônes macOS (ICNS), SVG compressé (SVGZ), TGA, DDS, QOI, OpenEXR (EXR), Radiance (HDR), GIMP (XCF), PDF, EPS et Adobe Illustrator (AI). |
 | **Contrôles** | Chaque image est vérifiée avant d’être importée. Un fichier endommagé, ou qui ne peut pas être affiché, est signalé et refusé. |
 | **Doublons** | Un fichier déjà présent n’est jamais copié deux fois. S’il est à la corbeille, l’importer le sort de la corbeille. |
 | **Dossiers** | Quand vous importez un dossier, ses sous-dossiers deviennent des collections. |
@@ -97,6 +97,10 @@ Les fichiers Photoshop (PSD) s’affichent à partir de l’image fusionnée que
 Une icône macOS (ICNS) s’affiche à partir de sa plus grande image, et les tailles qu’elle contient sont listées ; une ancienne icône qui ne contient que les images des vieux systèmes (RVB avec masque, jusqu’à 128 pixels) est dessinée à partir de la plus grande, et un fichier sans aucun des types connus est gardé et montre l’image de remplacement habituelle. Un SVG compressé (SVGZ) est dessiné comme un vecteur, comme un SVG.
 
 Les fichiers de textures et de rendus (TGA, DDS, QOI, EXR et HDR) sont dessinés par le système. Un fichier TGA n’a pas de signature fiable : Pigoune ne l’accepte que si son en-tête est plausible et si son nom se termine par `.tga`. Un fichier DDS doit être d’un des types compressés courants (DXT). Les images EXR et HDR peuvent être plus lumineuses qu’un écran : leurs hautes lumières sont écrêtées. Un fichier que le système ne sait pas dessiner est refusé comme toute image qui ne peut pas être affichée.
+
+Les fichiers GIMP (XCF) ne contiennent aucune image fusionnée : Pigoune les dessine lui-même à partir de leurs calques, groupes et masques, avec les modes de fusion de GIMP (Multiplier, Écran, Superposition et les autres). Quelques fonctions rares ne sont pas reproduites, comme les modes Effacement de couleur et Dissolution ou les filtres non destructifs de GIMP 3 : l’aperçu indique alors qu’il est approché. Le fichier reste intact, et une copie, un export ou un fond d’écran utilise l’image dessinée.
+
+Les fichiers PDF, EPS et Adobe Illustrator (AI) sont dessinés par Ghostscript, un programme fourni avec Pigoune, qui travaille seul et ne peut ni lire ni écrire vos fichiers. Seule la première page est montrée (le nombre de pages figure dans les détails), et elle reste nette à tous les zooms, comme un SVG : une page de PDF a un fond blanc, un dessin EPS ou AI un fond transparent. Un PDF protégé par un mot de passe est importé mais ne peut pas être affiché, et l’aperçu le dit. Un fichier abîmé est refusé.
 
 Les zones transparentes d’un PSD restent transparentes. Un PSD que Pigoune ne sait pas dessiner, par exemple en 32 bits, ou enregistré sans **Maximiser la compatibilité** dans Photoshop (il ne contient alors aucune image fusionnée), est quand même importé : il montre l’image de remplacement habituelle et l’aperçu en donne la raison. Un PSD abîmé est refusé. Une copie, un export ou un fond d’écran utilise l’image fusionnée, et glisser le fichier vers une autre application donne le PSD lui-même.
 
