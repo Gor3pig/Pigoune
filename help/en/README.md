@@ -85,7 +85,7 @@ Pigoune keeps what the browser gives it: the original file with Chrome or Brave,
 
 | Topic | Rule |
 |---|---|
-| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), macOS icons (ICNS), compressed SVG (SVGZ), TGA, DDS, QOI, OpenEXR (EXR) and Radiance (HDR). |
+| **Formats** | SVG, PNG, JPEG, WebP, AVIF, HEIC, JPEG XL, GIF, TIFF, BMP, ICO, PSD, Krita (KRA), OpenRaster (ORA), macOS icons (ICNS), compressed SVG (SVGZ), TGA, DDS, QOI, OpenEXR (EXR), Radiance (HDR), GIMP (XCF), PDF, EPS and Adobe Illustrator (AI). |
 | **Checks** | Every image is checked before it is imported. A damaged file, or one that cannot be shown, is listed and refused. |
 | **Duplicates** | A file already in the library is never copied twice. If it is in the trash, importing it takes it out of the trash. |
 | **Folders** | When you import a folder, its subfolders become collections. |
@@ -97,6 +97,10 @@ Photoshop files (PSD) are shown from the merged image that Photoshop saves in th
 A macOS icon (ICNS) is shown from its largest image, and the sizes it holds are listed; an old one that only holds the images of old systems (RGB with a mask, up to 128 pixels) is drawn from the largest of them, and a file with none of the known kinds is kept and shows the usual placeholder. A compressed SVG (SVGZ) is drawn as a vector like an SVG.
 
 Texture and render files (TGA, DDS, QOI, EXR and HDR) are drawn by the system. A TGA file has no reliable signature, so Pigoune only accepts it when its header is plausible and its name ends in `.tga`. A DDS file must use the common compressed kinds (DXT). EXR and HDR images can be brighter than a screen: their highlights are clipped. A file the system cannot draw is refused like any image that cannot be shown.
+
+GIMP files (XCF) hold no merged image, so Pigoune draws them itself from their layers, groups and masks, with the blend modes GIMP uses (Multiply, Screen, Overlay and the others). A few rare features are not reproduced, such as the Color Erase and Dissolve modes and the non-destructive filters of GIMP 3: the preview then tells you it is approximate. The file stays untouched, and a copy, an export or a wallpaper uses the drawn image.
+
+PDF, EPS and Adobe Illustrator (AI) files are drawn by Ghostscript, a program that comes with Pigoune, runs on its own and cannot read or write your files. Only the first page is shown (the number of pages is in the details), and it stays sharp at every zoom, like an SVG: a PDF page has a white background, an EPS or AI drawing a transparent one. A PDF protected by a password is imported but cannot be shown, and the preview says so. A damaged file is refused.
 
 Transparent areas of a PSD stay transparent. A PSD that Pigoune cannot draw, such as a 32-bit one, or one saved without **Maximize Compatibility** in Photoshop (it then holds no merged image), is still imported: it shows the usual placeholder and the preview says why. A damaged one is refused. A copy, an export or a wallpaper uses the merged image, and dragging the file out gives the PSD itself.
 
