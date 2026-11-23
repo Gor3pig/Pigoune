@@ -78,12 +78,25 @@ pub fn animation_badge_text(format: AssetFormat) -> &'static str {
 }
 
 pub fn summary_text(asset: &Asset, timing: Option<AnimationTiming>) -> String {
+    summary_text_with_pages(asset, timing, None)
+}
+
+pub fn summary_text_with_pages(
+    asset: &Asset,
+    timing: Option<AnimationTiming>,
+    pages: Option<u32>,
+) -> String {
     let mut parts = timing.map_or_else(
         || still_parts(asset),
         |timing| animation_parts(asset.format, timing),
     );
+    parts.extend(pages.map(pages_text));
     parts.push(byte_size_text(asset.byte_size));
     parts.join(SUMMARY_SEPARATOR)
+}
+
+fn pages_text(count: u32) -> String {
+    ngettext("{count} page", "{count} pages", count).replace("{count}", &count.to_string())
 }
 
 pub fn group_summary_text(assets: &[&Asset]) -> String {
@@ -175,7 +188,7 @@ mod tests {
 
     use super::{
         animation_badge_text, date_pattern, duration_text, embedded_sizes_text, formats_text,
-        frames_text,
+        frames_text, pages_text,
     };
 
     #[test]
@@ -210,6 +223,12 @@ mod tests {
     fn the_number_of_frames_agrees_with_its_count() {
         assert_eq!(frames_text(1), "1 frame");
         assert_eq!(frames_text(24), "24 frames");
+    }
+
+    #[test]
+    fn the_number_of_pages_agrees_with_its_count() {
+        assert_eq!(pages_text(1), "1 page");
+        assert_eq!(pages_text(24), "24 pages");
     }
 
     #[test]

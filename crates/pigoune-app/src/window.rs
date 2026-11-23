@@ -3187,6 +3187,12 @@ impl PigouneWindow {
                     .as_ref()
                     .and_then(|library| library.animation_timing(single.asset()));
                 imp.asset_details.show_animation_timing(timing);
+                let pages = imp
+                    .library
+                    .borrow()
+                    .as_ref()
+                    .and_then(|library| library.page_count(single.asset()));
+                imp.asset_details.show_page_count(pages);
             }
             several => imp.asset_details.show_group(several, &thumbnails),
         }
