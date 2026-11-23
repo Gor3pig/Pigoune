@@ -91,6 +91,7 @@ mod imp {
         #[template_child]
         pub author_row: TemplateChild<adw::EntryRow>,
         pub showing: RefCell<Option<PigouneAssetObject>>,
+        pub page_count: Cell<Option<u32>>,
         pub on_renamed: RefCell<Option<RenamedCallback>>,
         pub on_text_changed: RefCell<Option<TextChangedCallback>>,
         #[template_child]
@@ -552,6 +553,7 @@ impl PigouneAssetDetails {
         }
         self.save_edits();
         imp.showing.replace(selected.cloned());
+        imp.page_count.set(None);
         if let Some(asset) = selected {
             self.show_texts(asset);
             self.describe(asset);
@@ -613,6 +615,15 @@ impl PigouneAssetDetails {
             .set_visible(imp.color_chips.show_colors(&asset.colors));
     }
 
+    pub fn show_page_count(&self, pages: Option<u32>) {
+        let imp = self.imp();
+        imp.page_count.set(pages);
+        let showing = imp.showing.borrow().clone();
+        if let Some(object) = showing {
+            self.show_animation(object.asset(), None);
+        }
+    }
+
     pub fn show_animation_timing(&self, timing: Option<AnimationTiming>) {
         let showing = self.imp().showing.borrow().clone();
         if let Some(object) = showing {
@@ -623,7 +634,11 @@ impl PigouneAssetDetails {
     fn show_animation(&self, asset: &Asset, timing: Option<AnimationTiming>) {
         let imp = self.imp();
         imp.summary_label
-            .set_label(&asset_facts::summary_text(asset, timing));
+            .set_label(&asset_facts::summary_text_with_pages(
+                asset,
+                timing,
+                imp.page_count.get(),
+            ));
         imp.animation_value
             .set_label(&asset_facts::animation_text(asset.format, timing));
     }

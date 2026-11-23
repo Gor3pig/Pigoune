@@ -16,6 +16,7 @@ const BOUNDING_BOX: &[u8] = b"%%BoundingBox:";
 const HIRES_BOUNDING_BOX: &[u8] = b"%%HiResBoundingBox:";
 const DEFERRED_BOX: &[u8] = b"(atend)";
 const MEDIA_BOX: &[u8] = b"/MediaBox";
+const PAGE_COUNT: &[u8] = b"/Count";
 const ROTATE: &[u8] = b"/Rotate";
 const OBJECT_STREAM: &[u8] = b"/ObjStm";
 const STREAM_KEYWORD: &[u8] = b"stream";
@@ -161,6 +162,76 @@ fn pdf_facts(
         .iter()
         .find_map(|window| first_page_size(window));
     Ok((detected, dimensions))
+}
+
+#[must_use]
+pub fn page_count(path: &Path) -> Option<u32> {
+    if !is_pdf_file(path) {
+        return None;
+    }
+    let length = file_length(path).ok()?;
+    let head = read_window(path, 0, PDF_WINDOW).ok()?;
+    let tail = if length > PDF_WINDOW {
+        read_window(
+            path,
+            length.saturating_sub(PDF_WINDOW).max(PDF_WINDOW),
+            PDF_WINDOW,
+        )
+        .ok()?
+    } else {
+        Vec::new()
+    };
+    [&head, &tail]
+        .iter()
+        .find_map(|window| root_page_count(window))
+}
+
+fn root_page_count(window: &[u8]) -> Option<u32> {
+    for source in sources_to_scan(window) {
+        let source = source.as_slice();
+        let mut from = 0;
+        while let Some(at) = find(&source[from..], PAGE_COUNT).map(|offset| from + offset) {
+            from = at + PAGE_COUNT.len();
+            let dictionary = enclosing_dictionary(source, at)?;
+            if is_pages_root(dictionary)
+                && let Some(count) = integer_after(&source[from..])
+            {
+                return Some(count);
+            }
+        }
+    }
+    None
+}
+
+fn is_pages_root(dictionary: &[u8]) -> bool {
+    find(dictionary, b"/Parent").is_none() && is_pages_dictionary(dictionary)
+}
+
+fn is_pages_dictionary(dictionary: &[u8]) -> bool {
+    let mut from = 0;
+    while let Some(at) = find(&dictionary[from..], b"/Type").map(|offset| from + offset) {
+        from = at + b"/Type".len();
+        let rest = dictionary[from..]
+            .iter()
+            .skip_while(|byte| byte.is_ascii_whitespace())
+            .copied()
+            .take(b"/Pages".len())
+            .collect::<Vec<u8>>();
+        if rest == b"/Pages" {
+            return true;
+        }
+    }
+    false
+}
+
+fn integer_after(bytes: &[u8]) -> Option<u32> {
+    let digits: Vec<u8> = bytes
+        .iter()
+        .skip_while(|byte| byte.is_ascii_whitespace())
+        .take_while(|byte| byte.is_ascii_digit())
+        .copied()
+        .collect();
+    std::str::from_utf8(&digits).ok()?.parse().ok()
 }
 
 fn first_page_size(window: &[u8]) -> Option<Dimensions> {
@@ -421,7 +492,7 @@ fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
 mod tests {
     use std::path::{Path, PathBuf};
 
-    use super::{detect, dimensions_of, inspect};
+    use super::{detect, dimensions_of, inspect, page_count};
     use crate::media::{AssetFormat, Dimensions};
 
     fn fixture(name: &str) -> PathBuf {
@@ -679,5 +750,49 @@ mod tests {
         bytes.extend_from_slice(&bomb);
         bytes.extend_from_slice(b"\nendstream\nendobj\n");
         assert_eq!(facts("bomb.pdf", &bytes), (AssetFormat::Pdf, None));
+    }
+
+    #[test]
+    fn counts_the_pages_of_real_pdf_files() {
+        for (name, expected) in [
+            ("pages-cairo.pdf", Some(2)),
+            ("pages-small.pdf", Some(1)),
+            ("pages-cups.pdf", Some(1)),
+            ("pages-locked.pdf", Some(1)),
+            ("pages-small.eps", None),
+            ("pages-old-illustrator.ai", None),
+        ] {
+            assert_eq!(page_count(&fixture(name)), expected, "{name}");
+        }
+    }
+
+    #[test]
+    fn counts_the_pages_of_the_root_of_a_nested_tree() {
+        let bytes = b"%PDF-1.4\n1 0 obj\n<< /Type /Pages /Kids [2 0 R 3 0 R] /Count 5 >>\nendobj\n2 0 obj\n<< /Type /Pages /Parent 1 0 R /Kids [4 0 R] /Count 3 >>\nendobj\n3 0 obj\n<< /Type /Pages /Parent 1 0 R /Count 2 >>\nendobj\n";
+        let (_directory, path) = written("tree.pdf", bytes);
+        assert_eq!(page_count(&path), Some(5));
+        let reversed = b"%PDF-1.4\n2 0 obj\n<< /Type /Pages /Parent 1 0 R /Count 3 >>\nendobj\n1 0 obj\n<< /Kids [2 0 R] /Type /Pages /Count 3 >>\nendobj\n";
+        let (_other, path) = written("reversed.pdf", reversed);
+        assert_eq!(page_count(&path), Some(3));
+    }
+
+    #[test]
+    fn counts_the_pages_of_a_tree_stored_in_an_object_stream() {
+        let objects = b"1 0 << /Type /Pages /Kids [2 0 R] /Count 12 >>";
+        let packed = miniz_oxide::deflate::compress_to_vec_zlib(objects, 6);
+        let mut bytes = b"%PDF-1.5\n5 0 obj\n<< /Type /ObjStm /N 1 >>\nstream\n".to_vec();
+        bytes.extend_from_slice(&packed);
+        bytes.extend_from_slice(b"\nendstream\nendobj\n");
+        let (_directory, path) = written("packed.pdf", &bytes);
+        assert_eq!(page_count(&path), Some(12));
+    }
+
+    #[test]
+    fn no_count_is_given_when_the_file_does_not_say() {
+        let (_directory, path) = written("none.pdf", b"%PDF-1.4\nnothing useful\n");
+        assert_eq!(page_count(&path), None);
+        let (_other, path) = written("words.pdf", b"%PDF-1.4\n<< /Type /Pages /Count many >>\n");
+        assert_eq!(page_count(&path), None);
+        assert_eq!(page_count(Path::new("/nonexistent/none.pdf")), None);
     }
 }

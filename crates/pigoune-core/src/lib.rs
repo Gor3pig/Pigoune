@@ -34,8 +34,9 @@ pub use media::{
     VisualHash, XcfDocument, XcfError, XcfReader, animation_timing, compose_image,
     container_format_of, container_preview, dominant_colors, first_stored_text, gimp_dimensions,
     gimp_file_is_intact, gimp_problem, icon_from_pngs, is_gimp_file, is_layered_file,
-    is_photoshop_file, layered_format_of, layered_preview_png, page_file, photoshop_file_is_intact,
-    photoshop_problem, read_merged_image, read_merged_image_file, read_merged_image_from,
-    render_gimp_file, single_size_icon, visual_analysis, visual_detail, visual_hash,
+    is_photoshop_file, layered_format_of, layered_preview_png, page_count, page_file,
+    photoshop_file_is_intact, photoshop_problem, read_merged_image, read_merged_image_file,
+    read_merged_image_from, render_gimp_file, single_size_icon, visual_analysis, visual_detail,
+    visual_hash,
 };
 pub use raster::{RgbaImage, fitted_within};
