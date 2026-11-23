@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufReader, Cursor, Read, Seek, SeekFrom};
+use std::ops::Range;
 use std::path::Path;
 
 const SIGNATURE: &[u8; 9] = b"gimp xcf ";
@@ -8,7 +9,7 @@ const HEADER_TAG_LENGTH: usize = 14;
 const FIRST_PRECISION_VERSION: u32 = 4;
 const FIRST_CURRENT_PRECISION_VERSION: u32 = 7;
 const FIRST_LONG_POINTER_VERSION: u32 = 11;
-const NEWEST_KNOWN_VERSION: u32 = 13;
+const NEWEST_KNOWN_VERSION: u32 = 23;
 const LARGEST_SIDE: u32 = 30_000;
 const MOST_PIXELS: usize = 64_000_000;
 const MOST_SAMPLE_BYTES: usize = 1 << 30;
@@ -435,11 +436,12 @@ impl<R: Read + Seek> XcfReader<R> {
     }
 
     pub fn layer_pixels(&mut self, index: usize) -> Result<SampleGrid, XcfError> {
-        let layer = self
-            .document
-            .layers
-            .get(index)
-            .ok_or(XcfError::Unreadable)?;
+        let height = self.layer_at(index)?.height;
+        self.layer_rows(index, 0..height)
+    }
+
+    pub fn layer_rows(&mut self, index: usize, rows: Range<usize>) -> Result<SampleGrid, XcfError> {
+        let layer = self.layer_at(index)?;
         let (width, height, kind, offset) = (
             layer.width,
             layer.height,
@@ -454,6 +456,7 @@ impl<R: Read + Seek> XcfReader<R> {
                 offset,
                 width,
                 height,
+                rows,
                 channels: kind.channels(),
                 format,
                 compression,
@@ -462,11 +465,16 @@ impl<R: Read + Seek> XcfReader<R> {
     }
 
     pub fn mask_pixels(&mut self, index: usize) -> Result<Option<SampleGrid>, XcfError> {
-        let layer = self
-            .document
-            .layers
-            .get(index)
-            .ok_or(XcfError::Unreadable)?;
+        let height = self.layer_at(index)?.height;
+        self.mask_rows(index, 0..height)
+    }
+
+    pub fn mask_rows(
+        &mut self,
+        index: usize,
+        rows: Range<usize>,
+    ) -> Result<Option<SampleGrid>, XcfError> {
+        let layer = self.layer_at(index)?;
         if layer.mask_offset == 0 {
             return Ok(None);
         }
@@ -480,12 +488,17 @@ impl<R: Read + Seek> XcfReader<R> {
                 offset: hierarchy_offset,
                 width,
                 height,
+                rows,
                 channels: 1,
                 format,
                 compression,
             },
         )
         .map(Some)
+    }
+
+    fn layer_at(&self, index: usize) -> Result<&LayerInfo, XcfError> {
+        self.document.layers.get(index).ok_or(XcfError::Unreadable)
     }
 }
 
@@ -767,6 +780,7 @@ struct GridRequest {
     offset: u64,
     width: usize,
     height: usize,
+    rows: Range<usize>,
     channels: usize,
     format: SampleFormat,
     compression: u8,
@@ -783,15 +797,18 @@ fn read_grid<R: Read + Seek>(
     stream: &mut Stream<R>,
     request: &GridRequest,
 ) -> Result<SampleGrid, XcfError> {
+    if request.rows.start >= request.rows.end || request.rows.end > request.height {
+        return Err(XcfError::Unreadable);
+    }
     let bytes_per_pixel = request.channels * request.format.bytes();
     let level = read_level_offset(stream, request, bytes_per_pixel)?;
     let tile_offsets = read_tile_offsets(stream, level, request)?;
-    let sample_count = request.width * request.height * request.channels;
+    let row_count = request.rows.len();
     let mut grid = SampleGrid {
         width: request.width,
-        height: request.height,
+        height: row_count,
         channels: request.channels,
-        samples: empty_samples(request.format, sample_count),
+        samples: empty_samples(request.format, request.width * row_count * request.channels),
     };
     let columns = request.width.div_ceil(TILE_SIDE);
     for (index, offset) in tile_offsets.into_iter().enumerate() {
@@ -803,11 +820,14 @@ fn read_grid<R: Read + Seek>(
             width: TILE_SIDE.min(request.width - x),
             height: TILE_SIDE.min(request.height - y),
         };
+        if spot.y + spot.height <= request.rows.start || spot.y >= request.rows.end {
+            continue;
+        }
         let pixels = spot.width * spot.height;
         stream.seek_to(offset)?;
         let packed = stream.take_at_most(pixels * bytes_per_pixel * 2 + COMPRESSED_SLACK)?;
         let tile = unpack_tile(&packed, request.compression, pixels, bytes_per_pixel)?;
-        copy_tile(&mut grid, request.format, &spot, &tile);
+        copy_tile(&mut grid, request.format, &spot, &request.rows, &tile);
     }
     Ok(grid)
 }
@@ -932,12 +952,20 @@ fn unpack_run_length(
     Ok(tile)
 }
 
-fn copy_tile(grid: &mut SampleGrid, format: SampleFormat, spot: &TileSpot, tile: &[u8]) {
+fn copy_tile(
+    grid: &mut SampleGrid,
+    format: SampleFormat,
+    spot: &TileSpot,
+    window: &Range<usize>,
+    tile: &[u8],
+) {
     let channels = grid.channels;
     let per_row = spot.width * channels;
     let sample_bytes = format.bytes();
-    for row in 0..spot.height {
-        let target = ((spot.y + row) * grid.width + spot.x) * channels;
+    let first = window.start.max(spot.y) - spot.y;
+    let last = window.end.min(spot.y + spot.height) - spot.y;
+    for row in first..last {
+        let target = ((spot.y + row - window.start) * grid.width + spot.x) * channels;
         let source = row * per_row * sample_bytes;
         let bytes = &tile[source..source + per_row * sample_bytes];
         match &mut grid.samples {
