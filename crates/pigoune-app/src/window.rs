@@ -335,6 +335,7 @@ mod imp {
         pub library_generation: Cell<u32>,
         pub library_actions_enabled: Cell<bool>,
         pub importing: Cell<bool>,
+        pub capturing: Cell<bool>,
         pub import_cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
         pub leave_confirmed: Cell<bool>,
         pub update_news: RefCell<Option<UpdateNews>>,
@@ -721,6 +722,16 @@ enum ImageOrigin {
 struct LibraryToken {
     root: PathBuf,
     generation: u32,
+}
+
+struct CaptureGuard {
+    window: PigouneWindow,
+}
+
+impl Drop for CaptureGuard {
+    fn drop(&mut self) {
+        self.window.imp().capturing.set(false);
+    }
 }
 
 struct ImportGuard {
@@ -3821,6 +3832,12 @@ impl PigouneWindow {
     }
 
     pub async fn capture_screenshot(&self) {
+        if self.imp().capturing.replace(true) {
+            return;
+        }
+        let _capture = CaptureGuard {
+            window: self.clone(),
+        };
         if self.refuse_library_switch() {
             return;
         }
