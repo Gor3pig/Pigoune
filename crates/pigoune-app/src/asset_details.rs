@@ -4,7 +4,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gettextrs::{gettext, ngettext};
 use gtk::{gdk, gio, glib};
-use pigoune_core::{AnimationTiming, Asset, CollectionId, Tag, TextField};
+use pigoune_core::{AnimationTiming, Asset, AssetId, CollectionId, Tag, TextField};
 
 use crate::animation;
 use crate::asset_facts;
@@ -615,11 +615,11 @@ impl PigouneAssetDetails {
             .set_visible(imp.color_chips.show_colors(&asset.colors));
     }
 
-    pub fn show_page_count(&self, pages: Option<u32>) {
+    pub fn show_page_count(&self, id: AssetId, pages: Option<u32>) {
         let imp = self.imp();
-        imp.page_count.set(pages);
         let showing = imp.showing.borrow().clone();
-        if let Some(object) = showing {
+        if let Some(object) = showing.filter(|object| object.id() == id) {
+            imp.page_count.set(pages);
             self.show_animation(object.asset(), None);
         }
     }
