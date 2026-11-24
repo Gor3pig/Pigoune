@@ -26,9 +26,9 @@ pub async fn run(
     library: Library,
     paths: Vec<PathBuf>,
     target: Option<CollectionId>,
+    cancel_requested: Arc<AtomicBool>,
 ) -> Option<FinishedImport> {
     let (progress_sender, progress_receiver) = async_channel::unbounded();
-    let cancel_requested = Arc::new(AtomicBool::new(false));
 
     let worker_cancel_requested = Arc::clone(&cancel_requested);
     let work = gio::spawn_blocking(move || {

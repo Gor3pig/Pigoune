@@ -1933,6 +1933,12 @@ impl PigouneEditor {
         self.notice(&gettext("Image copied to the clipboard"));
     }
 
+    pub fn has_unsaved_item_changes(&self) -> bool {
+        self.commit_text();
+        let imp = self.imp();
+        imp.replaced_asset.get().is_some() && imp.drawing.borrow().session.is_modified()
+    }
+
     pub fn needs_saving(&self) -> bool {
         let imp = self.imp();
         imp.zoom_view.texture().is_some()
