@@ -89,6 +89,7 @@ use crate::update_banner;
 use crate::update_news::UpdateNews;
 use crate::view_setting;
 use crate::wallpaper::{self, WallpaperResponse};
+use crate::wallpaper_cache;
 use crate::wallpaper_dialog::{PigouneWallpaperDialog, WallpaperChoice, WallpaperSource};
 use crate::wallpaper_progress_dialog::PigouneWallpaperProgressDialog;
 use crate::zoom_math::Size;
@@ -700,9 +701,7 @@ mod imp {
                 });
                 return glib::Propagation::Stop;
             }
-            if self.obj().is_editing() {
-                self.editor.flush_draft();
-            }
+            self.obj().keep_draft();
             self.obj().save_window_state();
             self.parent_close_request()
         }
@@ -4499,7 +4498,7 @@ impl PigouneWindow {
         )
         .await
         .map_err(|error| format!("{error:?}"))?;
-        let folder = wallpaper_folder()?.join(asset.id().to_string());
+        let folder = wallpaper_cache::folder()?.join(asset.id().to_string());
         std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
         let file = folder.join(format!(
             "{}-{}x{}.png",
@@ -6365,8 +6364,12 @@ impl PigouneWindow {
         if self.is_editing() {
             return;
         }
+        capture_draft::Draft::previous_location().clear();
         let draft = capture_draft::Draft::standard();
         let Some((original, document)) = draft.load() else {
+            if draft.has_content() {
+                self.show_toast(&gettext("An unsaved capture could not be recovered"));
+            }
             draft.clear();
             return;
         };
@@ -6440,10 +6443,17 @@ impl PigouneWindow {
         if self.imp().importing.get() && !self.confirm_stopping_import().await {
             return false;
         }
-        if self.has_unsaved_item_changes() {
-            return self.confirm_leaving_editor().await;
+        if self.has_unsaved_item_changes() && !self.confirm_leaving_editor().await {
+            return false;
         }
+        self.keep_draft();
         true
+    }
+
+    fn keep_draft(&self) {
+        if self.is_editing() {
+            self.imp().editor.finish_draft();
+        }
     }
 
     async fn confirm_stopping_import(&self) -> bool {
@@ -7857,12 +7867,6 @@ fn welcome_recent_row(label: &str, root: &Path) -> adw::ActionRow {
     }
     row.add_prefix(&gtk::Image::from_icon_name("folder-pictures-symbolic"));
     row
-}
-
-fn wallpaper_folder() -> Result<PathBuf, String> {
-    let folder = glib::user_cache_dir().join("pigoune").join("wallpapers");
-    std::fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
-    Ok(folder)
 }
 
 fn output_natural_size(asset: &PigouneAssetObject) -> (u32, u32) {

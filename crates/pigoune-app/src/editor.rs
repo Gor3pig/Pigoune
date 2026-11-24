@@ -193,6 +193,8 @@ mod imp {
         pub on_notice: RefCell<Option<NoticeCallback>>,
         pub on_save: RefCell<Option<SaveCallback>>,
         pub draft_pending: Cell<bool>,
+        pub draft_generation: Cell<u64>,
+        pub original_in_draft: Cell<bool>,
         pub replaced_asset: Cell<Option<AssetId>>,
         pub picking_color: Cell<Option<&'static str>>,
         pub picking_pressed: Cell<bool>,
@@ -268,6 +270,9 @@ impl PigouneEditor {
 
     pub fn resume(&self, image: &Path, document: AnnotationDocument) -> Result<(), glib::Error> {
         let texture = gdk::Texture::from_filename(image)?;
+        let imp = self.imp();
+        imp.draft_generation.set(imp.draft_generation.get() + 1);
+        imp.original_in_draft.set(true);
         self.show_texture(&texture, Some(EditSession::restored(document)), None);
         Ok(())
     }
@@ -287,18 +292,52 @@ impl PigouneEditor {
         }
     }
 
+    pub fn finish_draft(&self) {
+        let imp = self.imp();
+        if imp.replaced_asset.get().is_none()
+            && !imp.original_in_draft.get()
+            && imp.drawing.borrow().session.is_modified()
+            && let Some(texture) = imp.zoom_view.texture()
+        {
+            let png = texture.save_to_png_bytes();
+            if capture_draft::Draft::standard()
+                .store_original(&png)
+                .is_ok()
+            {
+                imp.original_in_draft.set(true);
+            }
+        }
+        self.flush_draft();
+    }
+
     fn keep_original_in_draft(&self) {
-        if self.imp().replaced_asset.get().is_some() {
+        let imp = self.imp();
+        if imp.replaced_asset.get().is_some() {
             return;
         }
-        let Some(texture) = self.imp().zoom_view.texture() else {
+        let Some(texture) = imp.zoom_view.texture() else {
             return;
         };
-        glib::spawn_future_local(async move {
-            if let Ok(png) = image_conversion::png_bytes(&texture).await {
-                let _ = capture_draft::Draft::standard().store_original(&png);
+        let generation = imp.draft_generation.get();
+        glib::spawn_future_local(glib::clone!(
+            #[weak(rename_to = editor)]
+            self,
+            async move {
+                let Ok(png) = image_conversion::png_bytes(&texture).await else {
+                    return;
+                };
+                let imp = editor.imp();
+                if imp.draft_generation.get() != generation || imp.original_in_draft.get() {
+                    return;
+                }
+                if capture_draft::Draft::standard()
+                    .store_original(&png)
+                    .is_ok()
+                {
+                    imp.original_in_draft.set(true);
+                }
             }
-        });
+        ));
     }
 
     fn schedule_draft(&self) {
@@ -320,6 +359,9 @@ impl PigouneEditor {
     }
 
     pub fn open_texture(&self, texture: &gdk::Texture) {
+        let imp = self.imp();
+        imp.draft_generation.set(imp.draft_generation.get() + 1);
+        imp.original_in_draft.set(false);
         capture_draft::Draft::standard().clear();
         self.show_texture(texture, None, None);
         self.keep_original_in_draft();

@@ -20,7 +20,15 @@ pub struct Draft {
 
 impl Draft {
     pub fn standard() -> Self {
+        Self::at(glib::user_data_dir().join("pigoune").join(FOLDER_NAME))
+    }
+
+    pub fn previous_location() -> Self {
         Self::at(glib::user_cache_dir().join("pigoune").join(FOLDER_NAME))
+    }
+
+    pub fn has_content(&self) -> bool {
+        fs::read_dir(&self.folder).is_ok_and(|mut entries| entries.next().is_some())
     }
 
     pub fn at(folder: PathBuf) -> Self {
@@ -133,6 +141,16 @@ mod tests {
         std::fs::write(draft.folder().join("document.json"), "not json").unwrap();
         assert!(draft.load().is_none());
         draft.clear();
+    }
+
+    #[test]
+    fn a_draft_folder_has_content_only_once_something_was_stored() {
+        let draft = fresh();
+        assert!(!draft.has_content());
+        draft.store_document(&document()).unwrap();
+        assert!(draft.has_content());
+        draft.clear();
+        assert!(!draft.has_content());
     }
 
     #[test]
