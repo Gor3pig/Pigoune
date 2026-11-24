@@ -103,7 +103,9 @@ pub fn move_out_of_assets(connection: &Connection, root: &Path) -> Result<(), Li
     if !has_column {
         return Ok(());
     }
-    let _ = copy_to_details_file(connection, root);
+    if copy_to_details_file(connection, root).is_err() {
+        return Ok(());
+    }
     connection.execute_batch("ALTER TABLE assets DROP COLUMN visual_detail")?;
     Ok(())
 }

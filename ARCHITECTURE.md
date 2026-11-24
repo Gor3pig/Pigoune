@@ -224,7 +224,9 @@ My logos.pigoune/
 4. The file is copied into a hidden `files/.<uuid>.partial/` folder and fingerprinted again.
 5. Records are written in batches of about one second. Each batch moves its copies to their
    final folder and commits in one go. Leftover `.partial` folders are removed when a library
-   is opened, so an interrupted import never leaves orphan files.
+   is opened. A power cut at the very moment a batch is committed can leave a finished copy
+   without a record: it is never deleted automatically, it is listed under "Unregistered Files"
+   in the library health check, where it can be added back.
 
 Importing a folder recreates its tree as nested collections.
 

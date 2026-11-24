@@ -117,7 +117,8 @@ fn only_resources_trashed_for_more_than_thirty_days_are_deleted() {
     let removed = fixture
         .library
         .empty_expired_trash()
-        .expect("expired trash is emptied");
+        .expect("expired trash is emptied")
+        .removed;
 
     assert_eq!(removed, 1);
     assert!(fixture.library.asset(old).expect("asset is read").is_none());
@@ -169,7 +170,8 @@ fn nothing_expired_keeps_the_undo_history() {
     let removed = fixture
         .library
         .empty_expired_trash()
-        .expect("expired trash is emptied");
+        .expect("expired trash is emptied")
+        .removed;
 
     assert_eq!(removed, 0);
     assert_eq!(fixture.shown(AssetView::Trash), [recent]);

@@ -10,17 +10,23 @@ use super::{
 
 pub const TRASH_RETENTION: Duration = Duration::from_hours(30 * 24);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TrashEmptied {
+    pub removed: usize,
+    pub left_behind: usize,
+}
+
 impl Library {
-    pub fn empty_trash(&mut self) -> Result<usize, LibraryError> {
+    pub fn empty_trash(&mut self) -> Result<TrashEmptied, LibraryError> {
         self.empty_trash_before(i64::MAX)
     }
 
-    pub fn empty_expired_trash(&mut self) -> Result<usize, LibraryError> {
+    pub fn empty_expired_trash(&mut self) -> Result<TrashEmptied, LibraryError> {
         let retention = i64::try_from(TRASH_RETENTION.as_millis()).unwrap_or(i64::MAX);
         self.empty_trash_before(clock::now_unix_ms().saturating_sub(retention))
     }
 
-    fn empty_trash_before(&mut self, limit_unix_ms: i64) -> Result<usize, LibraryError> {
+    fn empty_trash_before(&mut self, limit_unix_ms: i64) -> Result<TrashEmptied, LibraryError> {
         let transaction = self.connection.transaction()?;
         let removed: Vec<AssetId> = {
             let mut statement = transaction.prepare(
@@ -46,16 +52,21 @@ impl Library {
         if !removed.is_empty() || removed_collections > 0 {
             self.history.clear();
         }
-        for asset in &removed {
-            forget_files(&self.root, *asset);
-        }
-        Ok(removed.len())
+        let left_behind = removed
+            .iter()
+            .filter(|asset| !forget_files(&self.root, **asset))
+            .count();
+        Ok(TrashEmptied {
+            removed: removed.len(),
+            left_behind,
+        })
     }
 }
 
-fn forget_files(root: &Path, asset: AssetId) {
-    let _ = super::storage_guard::remove_asset_folder(root, asset);
+fn forget_files(root: &Path, asset: AssetId) -> bool {
+    let removed = super::storage_guard::remove_asset_folder(root, asset).is_ok();
     forget_thumbnails(root, asset);
+    removed
 }
 
 pub(super) fn forget_thumbnails(root: &Path, asset: AssetId) {
