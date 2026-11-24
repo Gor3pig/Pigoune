@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
-use pigoune_core::{AssetId, Dimensions, RgbaImage};
+use pigoune_core::{AssetId, Dimensions, PageFile, RgbaImage};
 
 use crate::asset_colors;
 use crate::load_slots::LoadSlots;
@@ -167,8 +167,8 @@ pub async fn render(file: &Path, pixels: u32) -> Option<gdk::Texture> {
             .await
             .map(|(texture, _)| texture);
     }
-    if pigoune_core::page_file(file).is_some() {
-        return pages_texture(file, pixels).await.ok();
+    if let Some(page) = page_file_of(file).await {
+        return pages_texture(file, page, pixels).await.ok();
     }
     let mut image = source_loader(file).await?.load().await.ok()?;
     let details = image.details();
@@ -207,8 +207,8 @@ pub async fn load_detailed(file: &Path, vector_pixels: u32) -> Option<DetailedIm
             approximate: false,
         });
     }
-    if let Some(page) = pigoune_core::page_file(file) {
-        let texture = pages_texture(file, vector_pixels).await.ok()?;
+    if let Some(page) = page_file_of(file).await {
+        let texture = pages_texture(file, page, vector_pixels).await.ok()?;
         let natural = page
             .dimensions
             .map(|size| (size.width(), size.height()))
@@ -348,16 +348,36 @@ pub async fn preview_problem(file: &Path) -> Option<PreviewProblem> {
     .flatten()
 }
 
-async fn pages_texture(file: &Path, longest_side: u32) -> Result<gdk::Texture, PageProblem> {
+async fn page_file_of(file: &Path) -> Option<PageFile> {
     let file = file.to_path_buf();
-    gio::spawn_blocking(move || pages_picture(&file, longest_side))
+    gio::spawn_blocking(move || pigoune_core::page_file(&file))
+        .await
+        .ok()
+        .flatten()
+}
+
+async fn pages_texture(
+    file: &Path,
+    page: PageFile,
+    longest_side: u32,
+) -> Result<gdk::Texture, PageProblem> {
+    let file = file.to_path_buf();
+    gio::spawn_blocking(move || drawn_page(&file, &page, longest_side))
         .await
         .map_err(|_| PageProblem::Damaged)?
 }
 
 pub fn pages_picture(file: &Path, longest_side: u32) -> Result<gdk::Texture, PageProblem> {
     let page = pigoune_core::page_file(file).ok_or(PageProblem::Damaged)?;
-    let png = page_renderer::render_first_page(file, &page, longest_side)?;
+    drawn_page(file, &page, longest_side)
+}
+
+fn drawn_page(
+    file: &Path,
+    page: &PageFile,
+    longest_side: u32,
+) -> Result<gdk::Texture, PageProblem> {
+    let png = page_renderer::render_first_page(file, page, longest_side)?;
     gdk::Texture::from_bytes(&glib::Bytes::from_owned(png)).map_err(|_| PageProblem::Damaged)
 }
 

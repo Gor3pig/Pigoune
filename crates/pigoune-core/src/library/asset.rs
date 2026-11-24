@@ -214,13 +214,18 @@ impl Library {
     }
 
     #[must_use]
-    pub fn page_count(&self, asset: &Asset) -> Option<u32> {
+    pub fn page_count_file(&self, asset: &Asset) -> Option<PathBuf> {
         if !matches!(asset.format, AssetFormat::Pdf | AssetFormat::Ai) {
             return None;
         }
         let original = self.original_of(asset).ok()?;
         original.check().ok()?;
-        media::page_count(original.path())
+        Some(original.path().to_path_buf())
+    }
+
+    #[must_use]
+    pub fn page_count(&self, asset: &Asset) -> Option<u32> {
+        media::page_count(&self.page_count_file(asset)?)
     }
 
     pub fn thumbnail_file(&self, id: AssetId, pixels: u32) -> PathBuf {

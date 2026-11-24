@@ -3187,12 +3187,22 @@ impl PigouneWindow {
                     .as_ref()
                     .and_then(|library| library.animation_timing(single.asset()));
                 imp.asset_details.show_animation_timing(timing);
-                let pages = imp
+                let file = imp
                     .library
                     .borrow()
                     .as_ref()
-                    .and_then(|library| library.page_count(single.asset()));
-                imp.asset_details.show_page_count(pages);
+                    .and_then(|library| library.page_count_file(single.asset()));
+                if let Some(file) = file {
+                    let window = self.clone();
+                    let id = single.id();
+                    glib::spawn_future_local(async move {
+                        let pages = gio::spawn_blocking(move || pigoune_core::page_count(&file))
+                            .await
+                            .ok()
+                            .flatten();
+                        window.imp().asset_details.show_page_count(id, pages);
+                    });
+                }
             }
             several => imp.asset_details.show_group(several, &thumbnails),
         }
