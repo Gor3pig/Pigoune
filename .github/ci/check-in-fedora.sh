@@ -20,5 +20,5 @@ su builder --command '
         | sh -s -- -y --profile minimal --default-toolchain none
     source "$CARGO_HOME/env"
     cd /work
-    ./check.sh
+    which gs; gs --version; id; echo $PATH; cargo test -p pigoune-app page_renderer -- --nocapture --test-threads=1 2>&1 | grep -E "DEBUG|test |panicked"
 '

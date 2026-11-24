@@ -110,6 +110,13 @@ pub fn render_first_page(
     if outcome.mentions_password {
         return Err(PageProblem::Protected);
     }
+    eprintln!(
+        "DEBUG ok={} png={} err={} out={}",
+        outcome.succeeded,
+        png.len(),
+        String::from_utf8_lossy(&outcome.errors),
+        String::from_utf8_lossy(&outcome.output)
+    );
     if !outcome.succeeded || !png.starts_with(PNG_SIGNATURE) {
         return Err(PageProblem::Damaged);
     }
