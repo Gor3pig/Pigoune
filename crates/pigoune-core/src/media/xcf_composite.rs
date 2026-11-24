@@ -10,6 +10,8 @@ use super::xcf::{
 use super::xcf_blend::{Blend, Composite, Rgb, Space, from_linear, to_linear, to_linear_from};
 
 const BAND_ROWS: usize = 128;
+const MOST_BAND_PIXELS: usize = 1 << 20;
+const MOST_GROUP_DEPTH: usize = 16;
 const CHANNELS: usize = 4;
 const LEGACY_MODES_END: u32 = 23;
 const BYTE_MAX: f32 = 255.0;
@@ -139,10 +141,11 @@ pub fn compose_image<R: Read + Seek>(reader: &mut XcfReader<R>) -> Result<GimpRe
         reader,
     };
     let mut pixels = vec![0_u8; width * height * CHANNELS];
+    let band_rows = (MOST_BAND_PIXELS / width.max(1)).clamp(1, BAND_ROWS);
     let mut first = 0;
     while first < height {
         let band = Band {
-            rows: first..(first + BAND_ROWS).min(height),
+            rows: first..(first + band_rows).min(height),
         };
         let mut canvas = Buffer::transparent(width, band.rows.len());
         painter.render_nodes(&tree, &band, &mut canvas)?;
@@ -185,6 +188,9 @@ fn children_of(
     paths: &[Vec<u32>],
     parent: &[u32],
 ) -> Result<Vec<Node>, XcfError> {
+    if parent.len() > MOST_GROUP_DEPTH {
+        return Err(XcfError::TooLarge);
+    }
     let mut members: Vec<(u32, usize)> = paths
         .iter()
         .enumerate()
@@ -192,6 +198,7 @@ fn children_of(
         .map(|(index, path)| (path[path.len() - 1], index))
         .collect();
     members.sort_unstable();
+    members.dedup_by_key(|member| member.0);
     members
         .into_iter()
         .map(|(_, index)| {
@@ -310,6 +317,10 @@ impl<R: Read + Seek> Painter<'_, R> {
         else {
             return Ok(None);
         };
+        self.visits += layer.width.saturating_sub(columns.len()) * layer_rows.len();
+        if self.visits > MOST_PIXEL_VISITS {
+            return Err(XcfError::TooLarge);
+        }
         let grid = self.reader.layer_rows(index, layer_rows.clone())?;
         let mut buffer = Buffer::transparent(self.width, band.rows.len());
         let first_x =
@@ -683,6 +694,50 @@ mod tests {
             .collect();
         names.sort();
         names
+    }
+
+    fn node_count(nodes: &[super::Node]) -> usize {
+        nodes
+            .iter()
+            .map(|node| 1 + node_count(&node.children))
+            .sum()
+    }
+
+    fn nested_groups(levels: usize, copies: usize) -> Vec<super::LayerInfo> {
+        let bytes = std::fs::read(fixtures().join("gimp-group.xcf")).unwrap();
+        let reader = XcfReader::from_bytes(&bytes).unwrap();
+        let group = reader
+            .document()
+            .layers
+            .iter()
+            .find(|layer| layer.role == super::LayerRole::Group)
+            .expect("a group")
+            .clone();
+        let mut layers = Vec::new();
+        for level in 0..levels {
+            for _ in 0..copies {
+                let mut copy = group.clone();
+                copy.path = vec![0; level + 1];
+                layers.push(copy);
+            }
+        }
+        layers
+    }
+
+    #[test]
+    fn groups_sharing_one_path_cannot_multiply_the_tree() {
+        let layers = nested_groups(15, 3);
+        let tree = super::build_tree(&layers).expect("a tree");
+        assert!(node_count(&tree) <= layers.len());
+    }
+
+    #[test]
+    fn groups_nested_absurdly_deep_are_refused() {
+        let layers = nested_groups(40, 1);
+        assert!(matches!(
+            super::build_tree(&layers),
+            Err(super::XcfError::TooLarge)
+        ));
     }
 
     #[test]
