@@ -20,5 +20,11 @@ su builder --command '
         | sh -s -- -y --profile minimal --default-toolchain none
     source "$CARGO_HOME/env"
     cd /work
-    command -v gs; gs --version; id; echo $PATH; cargo test -p pigoune-app page_renderer -- --nocapture --test-threads=1 2>&1 | grep -E "DEBUG|test |panicked|Permission" || true
+    command -v gs; gs --version; id; echo $PATH; F=/work/crates/pigoune-core/tests/fixtures/pages-cairo.pdf
+    ls -ld /work /work/crates /work/crates/pigoune-core/tests/fixtures $F
+    echo A; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/a.png $F; echo rcA=$?
+    echo B; gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/b.png $F; echo rcB=$?
+    cp $F /tmp/c.pdf; echo C; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/c.png /tmp/c.pdf; echo rcC=$?
+    echo D; cd /work/crates/pigoune-core/tests/fixtures && gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/d.png ./pages-cairo.pdf; echo rcD=$?
+    echo E; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/e.png -dFirstPage=1 -dLastPage=1 -dPDFFitPage -g100x100 $F; echo rcE=$?
 '
