@@ -72,7 +72,7 @@ There are five ways to bring assets in.
 
 A pasted image is named **Pasted image** followed by the date and time; you can rename it afterwards.
 
-With **Open With**, Pigoune opens if needed and shows the usual import report. If no library is open yet, the images wait until you open or create one. Pigoune only appears in **Open With** for the kinds of files it imports, and never becomes the default application unless you choose it.
+With **Open With**, Pigoune opens if needed and shows the usual import report. If no library is open yet, the images wait until you open or create one. Pigoune only appears in **Open With** for the kinds of files it imports, except PDF (drag PDF files in instead, so that Pigoune is never offered as a PDF reader), and never becomes the default application unless you choose it.
 
 <details>
 <summary>What the browser hands over</summary>

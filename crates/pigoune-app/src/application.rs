@@ -197,8 +197,8 @@ fn show_release_notes_in_french_or_english(dialog: &adw::AboutDialog) {
 mod tests {
     use pigoune_core::AssetFormat;
 
-    fn mime_type(format: AssetFormat) -> &'static str {
-        match format {
+    fn mime_type(format: AssetFormat) -> Option<&'static str> {
+        Some(match format {
             AssetFormat::Svg => "image/svg+xml",
             AssetFormat::Png => "image/png",
             AssetFormat::Jpeg => "image/jpeg",
@@ -221,14 +221,14 @@ mod tests {
             AssetFormat::Exr => "image/x-exr",
             AssetFormat::Hdr => "image/vnd.radiance",
             AssetFormat::Xcf => "image/x-xcf",
-            AssetFormat::Pdf => "application/pdf",
+            AssetFormat::Pdf => return None,
             AssetFormat::Eps => "image/x-eps",
             AssetFormat::Ai => "application/illustrator",
-        }
+        })
     }
 
     #[test]
-    fn the_launcher_offers_exactly_the_formats_the_library_accepts() {
+    fn the_launcher_offers_the_formats_the_library_accepts_except_pdf() {
         let entry = include_str!("../../../data/io.github.gor3pig.Pigoune.desktop.in");
         let line = entry
             .lines()
@@ -238,9 +238,12 @@ mod tests {
         let offered: Vec<&str> = line.split(';').filter(|kind| !kind.is_empty()).collect();
 
         for format in AssetFormat::ALL {
-            assert!(offered.contains(&mime_type(format)), "{format:?}");
+            if let Some(kind) = mime_type(format) {
+                assert!(offered.contains(&kind), "{format:?}");
+            }
         }
-        assert_eq!(offered.len(), AssetFormat::ALL.len());
+        assert!(!offered.contains(&"application/pdf"));
+        assert_eq!(offered.len(), AssetFormat::ALL.len() - 1);
     }
 
     #[test]
