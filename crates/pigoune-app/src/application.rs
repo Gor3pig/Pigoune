@@ -14,6 +14,7 @@ use crate::search_provider;
 use crate::settings;
 use crate::shortcuts;
 use crate::theme_selector;
+use crate::wallpaper_cache;
 use crate::whats_new;
 use crate::window::PigouneWindow;
 
@@ -43,6 +44,7 @@ pub fn build() -> adw::Application {
     application.connect_handle_local_options(forward_capture_request);
     application.connect_startup(|_| icon_theme::keep_gnome_icons());
     application.connect_startup(|_| fonts::register());
+    application.connect_startup(|_| wallpaper_cache::forget_old_files());
     application.connect_startup(install_actions);
     application.connect_startup(|application| {
         theme_selector::follow(application, &settings::load());

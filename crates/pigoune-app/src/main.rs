@@ -140,6 +140,7 @@ mod update_banner;
 mod update_news;
 mod view_setting;
 mod wallpaper;
+mod wallpaper_cache;
 mod wallpaper_dialog;
 mod wallpaper_framing;
 mod wallpaper_progress_dialog;
