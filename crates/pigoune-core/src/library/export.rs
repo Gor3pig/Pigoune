@@ -274,12 +274,19 @@ impl Library {
                     continue;
                 }
             };
-            let (mut file, copy) = create_free_file(
+            let (mut file, copy) = match create_free_file(
                 folder,
                 &base_name_of(&asset),
                 extension.as_deref(),
                 &mut taken,
-            )?;
+            ) {
+                Ok(created) => created,
+                Err(error) if copies.is_empty() && failures.is_empty() => return Err(error.into()),
+                Err(error) => {
+                    failures.push(failure_of(&asset, error));
+                    continue;
+                }
+            };
             match io::copy(&mut source, &mut file) {
                 Ok(_) => copies.push(copy),
                 Err(error) => {
@@ -503,10 +510,12 @@ pub(super) fn export_base_name(display_name: &str, extension: Option<&str>) -> O
 
 fn strip_extension<'a>(name: &'a str, extension: &str) -> &'a str {
     let suffix = format!(".{}", extension.to_lowercase());
-    if name.to_lowercase().ends_with(&suffix) && name.len() > suffix.len() {
-        &name[..name.len() - suffix.len()]
-    } else {
-        name
+    let Some(cut) = name.len().checked_sub(suffix.len()).filter(|cut| *cut > 0) else {
+        return name;
+    };
+    match (name.get(..cut), name.get(cut..)) {
+        (Some(stem), Some(tail)) if tail.to_lowercase() == suffix => stem,
+        _ => name,
     }
 }
 
@@ -543,7 +552,24 @@ pub(super) fn free_name(
 mod tests {
     use std::collections::HashSet;
 
-    use super::{export_base_name, free_name};
+    use super::{export_base_name, free_name, strip_extension};
+
+    #[test]
+    fn an_extension_is_removed_only_where_the_name_really_ends_with_it() {
+        assert_eq!(strip_extension("logo.SVG", "svg"), "logo");
+        assert_eq!(strip_extension(".svg", "svg"), ".svg");
+        assert_eq!(strip_extension("logo.png", "svg"), "logo.png");
+        assert_eq!(strip_extension("caf\u{e9}.png", "png"), "caf\u{e9}");
+    }
+
+    #[test]
+    fn a_letter_whose_lowercase_is_shorter_does_not_break_the_extension_cut() {
+        assert_eq!(strip_extension("x.\u{212A}", "k"), "x.\u{212A}");
+        assert_eq!(
+            strip_extension("\u{212A}\u{212A}\u{212A}.png", "png"),
+            "\u{212A}\u{212A}\u{212A}"
+        );
+    }
 
     #[test]
     fn the_display_name_becomes_a_safe_file_name() {

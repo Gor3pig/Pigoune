@@ -300,6 +300,36 @@ fn an_image_already_in_the_library_is_refused_and_names_the_existing_resource() 
 }
 
 #[test]
+fn a_capture_whose_annotations_cannot_be_saved_is_not_left_in_the_library() {
+    let mut fixture = Fixture::new();
+    let capture = fixture.png("capture.png", 3);
+    let connection = Connection::open(fixture.library.root().join("library.db")).expect("opens");
+    connection
+        .execute_batch(
+            "CREATE TRIGGER refuse_annotations BEFORE INSERT ON asset_annotations
+             BEGIN SELECT RAISE(ABORT, 'refused'); END;",
+        )
+        .expect("trigger");
+
+    let refused = fixture
+        .library
+        .import_with_annotations(&capture, &document_with_a_blur(1.0));
+
+    assert!(refused.is_err());
+    assert_eq!(fixture.asset_count(), 0);
+    assert!(fixture.files_on_disk().is_empty());
+    connection
+        .execute_batch("DROP TRIGGER refuse_annotations")
+        .expect("trigger dropped");
+    drop(connection);
+    fixture
+        .library
+        .import_with_annotations(&capture, &document_with_a_blur(1.0))
+        .expect("a second try is accepted");
+    assert_eq!(fixture.asset_count(), 1);
+}
+
+#[test]
 fn a_document_that_cannot_be_written_is_refused_without_a_trace() {
     let mut fixture = Fixture::new();
     let capture = fixture.png("capture.png", 1);
