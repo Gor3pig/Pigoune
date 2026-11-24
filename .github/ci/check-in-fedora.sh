@@ -20,5 +20,5 @@ su builder --command '
         | sh -s -- -y --profile minimal --default-toolchain none
     source "$CARGO_HOME/env"
     cd /work
-    command -v gs; gs --version; id; echo $PATH; cargo test -p pigoune-app page_renderer::tests::draws_a_pdf -- --nocapture --test-threads=1 2>&1 | tail -30; ls -la /work/crates/pigoune-core/tests/fixtures | head -5; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/x.png /work/crates/pigoune-core/tests/fixtures/pages-cairo.pdf; echo rc=$?; gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/y.png /work/crates/pigoune-core/tests/fixtures/pages-cairo.pdf; echo rc2=$?
+    command -v gs; gs --version; id; echo $PATH; cargo test -p pigoune-app page_renderer -- --nocapture --test-threads=1 2>&1 | grep -E "DEBUG|test |panicked|Permission" || true
 '

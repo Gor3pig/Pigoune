@@ -190,6 +190,9 @@ fn common_arguments() -> Vec<OsString> {
 }
 
 fn path_argument(path: &Path) -> OsString {
+    if let Ok(resolved) = std::fs::canonicalize(path) {
+        return resolved.into_os_string();
+    }
     if path.is_absolute() {
         path.into()
     } else {
