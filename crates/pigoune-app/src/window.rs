@@ -17,8 +17,8 @@ use pigoune_core::{
     HealthPlan, IgnoreId, IgnoredEntry, ImportError, ImportSummary, Library, LibraryError,
     LibraryExportReport, RemovalError, RgbaImage, SIMILAR_DISTANCE, SimilarSearch, SmartCollection,
     SmartCollectionCommand, SmartCollectionId, TRASH_RETENTION, Tag, TagCommand, TagError, TagId,
-    TextField, UndoError, VisualAnalysis, VisualDetail, dominant_colors, library_display_name,
-    visual_analysis,
+    TextField, TrashEmptied, UndoError, VisualAnalysis, VisualDetail, dominant_colors,
+    library_display_name, visual_analysis,
 };
 
 use crate::analysis_pace;
@@ -3446,11 +3446,26 @@ impl PigouneWindow {
     }
 
     fn empty_trash(&self) {
-        let emptied = self.change_library(Library::empty_trash);
-        if let Some(Err(error)) = emptied {
-            self.show_library_error(&error);
+        match self.change_library(Library::empty_trash) {
+            Some(Err(error)) => self.show_library_error(&error),
+            Some(Ok(emptied)) => self.warn_about_files_left_behind(emptied.left_behind),
+            None => {}
         }
         self.refresh_assets();
+    }
+
+    fn warn_about_files_left_behind(&self, count: usize) {
+        if count == 0 {
+            return;
+        }
+        self.show_toast(
+            &ngettext(
+                "{count} file could not be deleted and was left in the library folder. Check the “Unregistered Files” section in the Health tab of the library information.",
+                "{count} files could not be deleted and were left in the library folder. Check the “Unregistered Files” section in the Health tab of the library information.",
+                u32::try_from(count).unwrap_or(u32::MAX),
+            )
+            .replace("{count}", &count.to_string()),
+        );
     }
 
     fn change_library<R>(&self, change: impl FnOnce(&mut Library) -> R) -> Option<R> {
@@ -3589,19 +3604,24 @@ impl PigouneWindow {
             return;
         }
         match self.change_library(Library::empty_expired_trash) {
-            Some(Ok(0)) | None => {}
-            Some(Ok(count)) => {
+            Some(Ok(TrashEmptied {
+                removed: 0,
+                left_behind: 0,
+            }))
+            | None => {}
+            Some(Ok(emptied)) => {
                 self.refresh_assets();
                 let days = TRASH_RETENTION.as_secs() / SECONDS_PER_DAY;
                 self.show_toast(
                     &ngettext(
                         "{count} asset older than {days} days deleted from the trash for good",
                         "{count} assets older than {days} days deleted from the trash for good",
-                        u32::try_from(count).unwrap_or(u32::MAX),
+                        u32::try_from(emptied.removed).unwrap_or(u32::MAX),
                     )
-                    .replace("{count}", &count.to_string())
+                    .replace("{count}", &emptied.removed.to_string())
                     .replace("{days}", &days.to_string()),
                 );
+                self.warn_about_files_left_behind(emptied.left_behind);
             }
             Some(Err(error)) => self.show_library_error(&error),
         }

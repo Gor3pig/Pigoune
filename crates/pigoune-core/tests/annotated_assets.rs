@@ -346,7 +346,7 @@ fn trashing_and_restoring_keeps_the_annotations_and_deleting_for_good_removes_th
             trashed: true,
         })
         .expect("trashed");
-    assert_eq!(fixture.library.empty_trash().expect("emptied"), 1);
+    assert_eq!(fixture.library.empty_trash().expect("emptied").removed, 1);
 
     assert!(fixture.files_on_disk().is_empty());
     let rows: i64 = fixture

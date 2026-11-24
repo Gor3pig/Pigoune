@@ -760,6 +760,49 @@ fn a_format_11_library_moves_its_visual_details_out_of_the_assets_table() {
 }
 
 #[test]
+fn a_format_11_library_keeps_its_visual_details_when_they_cannot_be_copied() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let workspace = tempfile::tempdir().expect("temporary directory");
+    let mut library = Library::create(workspace.path(), "Avant").expect("library is created");
+    import(&mut library, "red-dot.png");
+    let root = library.root().to_path_buf();
+    drop(library);
+    let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+    connection
+        .execute_batch(
+            "ALTER TABLE assets ADD COLUMN visual_detail BLOB;
+             UPDATE assets SET visual_hash = x'0000000000000001', visual_detail = randomblob(1024);
+             PRAGMA user_version = 11;",
+        )
+        .expect("format 11 simulated");
+    drop(connection);
+    drop(Connection::open(details_file(&root)).expect("details file created"));
+    let locked = fs::Permissions::from_mode(0o444);
+    fs::set_permissions(details_file(&root), locked).expect("details file locked");
+    let enforced = Connection::open(details_file(&root))
+        .and_then(|details| details.execute_batch("CREATE TABLE probe (x)"))
+        .is_err();
+
+    let library = Library::open(&root).expect("library opens");
+
+    drop(library);
+    fs::set_permissions(details_file(&root), fs::Permissions::from_mode(0o644))
+        .expect("details file unlocked");
+    if enforced {
+        let connection = Connection::open(root.join(DATABASE_FILE_NAME)).expect("database opens");
+        let kept: i64 = connection
+            .query_row(
+                "SELECT count(*) FROM assets WHERE length(visual_detail) = 1024",
+                [],
+                |row| row.get(0),
+            )
+            .expect("details counted");
+        assert_eq!(kept, 1);
+    }
+}
+
+#[test]
 fn losing_the_details_file_only_makes_the_details_wait_again() {
     let workspace = tempfile::tempdir().expect("temporary directory");
     let mut library = Library::create(workspace.path(), "Avant").expect("library is created");

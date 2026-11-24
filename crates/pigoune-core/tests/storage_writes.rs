@@ -190,7 +190,7 @@ fn deleting_for_good_removes_the_plain_files_of_the_resource_and_keeps_a_link_in
     symlink(&outside, folder.join("escape")).expect("link");
     let before = snapshot(&outside);
 
-    let removed = library.empty_trash().expect("emptied");
+    let removed = library.empty_trash().expect("emptied").removed;
 
     assert_eq!(removed, 1);
     assert!(folder.join("escape").is_symlink());
@@ -204,7 +204,7 @@ fn deleting_for_good_an_ordinary_resource_removes_its_whole_folder_as_before() {
     let mut library = trap.open();
     trash(&mut library, trap.photo);
 
-    let removed = library.empty_trash().expect("emptied");
+    let removed = library.empty_trash().expect("emptied").removed;
 
     assert_eq!(removed, 1);
     assert!(!trap.folder_of(trap.photo).exists());

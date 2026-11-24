@@ -111,7 +111,7 @@ pub use storage_guard::OriginalFile;
 pub use tag::{Tag, same_tag_name};
 pub use tag_command::{LONGEST_TAG_NAME, TagCommand, TagError};
 pub use thumbnail_cache::thumbnail_cache_bytes_in;
-pub use trash::TRASH_RETENTION;
+pub use trash::{TRASH_RETENTION, TrashEmptied};
 pub use view::{AssetView, ViewCounts};
 
 #[derive(Debug)]

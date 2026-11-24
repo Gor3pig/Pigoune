@@ -217,7 +217,7 @@ fn a_plain_cache_works_as_before() {
             trashed: true,
         })
         .expect("trashed");
-    assert_eq!(library.empty_trash().expect("emptied"), 1);
+    assert_eq!(library.empty_trash().expect("emptied").removed, 1);
     drop(library);
     assert!(open(&root).is_ok());
 }
@@ -669,7 +669,7 @@ fn deleting_an_asset_for_good_removes_its_plain_cache_files_and_never_a_link() {
         })
         .expect("trashed");
 
-    assert_eq!(library.empty_trash().expect("emptied"), 2);
+    assert_eq!(library.empty_trash().expect("emptied").removed, 2);
 
     assert!(!thumbnail.exists());
     assert!(!render.exists());

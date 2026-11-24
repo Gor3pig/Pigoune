@@ -219,7 +219,11 @@ fn emptying_the_trash_deletes_files_thumbnails_and_records_for_good() {
         .apply_collection_command(&CollectionCommand::Trash { id: gone })
         .expect("collection is trashed");
 
-    let removed = fixture.library.empty_trash().expect("trash is emptied");
+    let removed = fixture
+        .library
+        .empty_trash()
+        .expect("trash is emptied")
+        .removed;
 
     assert_eq!(removed, 1);
     assert!(fixture.shown(AssetView::Trash).is_empty());
@@ -274,10 +278,43 @@ fn a_file_that_cannot_be_deleted_neither_keeps_its_record_nor_stops_the_others()
 
     fs::set_permissions(&folder, fs::Permissions::from_mode(0o755)).expect("permissions change");
     if enforced {
-        assert_eq!(result.expect("trash is emptied"), 2);
+        let emptied = result.expect("trash is emptied");
+        assert_eq!(emptied.removed, 2);
+        assert_eq!(emptied.left_behind, 1);
         assert!(fixture.library.asset(stuck).expect("read").is_none());
         assert!(fixture.library.asset(other).expect("read").is_none());
         assert!(!other_file.exists());
         assert!(stuck_file.exists());
     }
+}
+
+#[test]
+fn emptying_the_trash_reports_no_file_left_behind_when_everything_goes() {
+    let mut fixture = Fixture::new();
+    let first = fixture.import("red-dot.png", None);
+    let second = fixture.import("dark-circle.svg", None);
+    fixture.trash(&[first, second]);
+
+    let emptied = fixture.library.empty_trash().expect("trash is emptied");
+
+    assert_eq!(emptied.removed, 2);
+    assert_eq!(emptied.left_behind, 0);
+}
+
+#[test]
+fn emptying_the_trash_does_not_count_a_folder_that_is_already_gone() {
+    let mut fixture = Fixture::new();
+    let id = fixture.import("red-dot.png", None);
+    let folder = fixture
+        .stored_file(id)
+        .parent()
+        .expect("asset folder")
+        .to_path_buf();
+    fixture.trash(&[id]);
+    fs::remove_dir_all(&folder).expect("folder removed by hand");
+
+    let emptied = fixture.library.empty_trash().expect("trash is emptied");
+
+    assert_eq!(emptied.removed, 1);
+    assert_eq!(emptied.left_behind, 0);
 }

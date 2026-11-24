@@ -115,7 +115,7 @@ fn emptying_the_trash_works_when_the_details_file_is_damaged_meanwhile() {
     trash(&mut library, &[1, 2, 3]);
     damage_data_pages(&root);
 
-    let removed = library.empty_trash().expect("the trash is emptied");
+    let removed = library.empty_trash().expect("the trash is emptied").removed;
 
     assert_eq!(removed, 3);
     assert!(library.asset(id(1)).expect("read").is_none());
