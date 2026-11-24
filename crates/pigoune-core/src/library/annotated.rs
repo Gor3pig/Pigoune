@@ -114,13 +114,28 @@ impl Library {
     ) -> Result<AssetId, AnnotatedError> {
         document.to_json()?;
         match self.import_file(source, None)? {
-            ImportOutcome::Imported(id) => {
-                self.save_annotations(id, document)?;
-                Ok(id)
-            }
+            ImportOutcome::Imported(id) => match self.save_annotations(id, document) {
+                Ok(()) => Ok(id),
+                Err(error) => {
+                    self.forget_imported(id);
+                    Err(error)
+                }
+            },
             ImportOutcome::AlreadyPresent(id)
             | ImportOutcome::AddedToCollection(id)
             | ImportOutcome::RestoredFromTrash(id) => Err(AnnotatedError::AlreadyPresent(id)),
+        }
+    }
+
+    fn forget_imported(&mut self, id: AssetId) {
+        let deleted = self
+            .connection
+            .execute("DELETE FROM assets WHERE id = ?1", [id])
+            .is_ok();
+        if deleted {
+            details_store::forget(&mut self.connection, &[id]);
+            let _ = super::storage_guard::remove_asset_folder(&self.root, id);
+            forget_thumbnails(&self.root, id);
         }
     }
 
