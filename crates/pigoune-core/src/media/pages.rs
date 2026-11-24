@@ -24,6 +24,11 @@ const END_STREAM_KEYWORD: &[u8] = b"endstream";
 const POSTSCRIPT_WINDOW: u64 = 64 * 1024;
 const PDF_WINDOW: u64 = 8 * 1024 * 1024;
 const MOST_OBJECT_STREAMS: usize = 256;
+const MOST_STREAM_ATTEMPTS: usize = 512;
+const MOST_STREAM_BYTES: usize = 4 * 1024 * 1024;
+const MOST_STREAM_SEARCH_BYTES: usize = 32 * 1024 * 1024;
+const MOST_BOX_CANDIDATES: usize = 1024;
+const MOST_INFLATE_FAILURES: usize = 8;
 const MOST_INFLATED_BYTES: usize = 16 * 1024 * 1024;
 const MOST_DICTIONARY_BYTES: usize = 16 * 1024;
 const MOST_DICTIONARY_DEPTH: usize = 64;
@@ -64,9 +69,11 @@ pub(super) fn detect(header: &[u8]) -> Option<AssetFormat> {
 fn is_pdf(header: &[u8]) -> bool {
     let window = &header[..header.len().min(PDF_SIGNATURE_WINDOW)];
     find(window, PDF_SIGNATURE).is_some_and(|at| {
-        window
-            .get(at + PDF_SIGNATURE.len())
-            .is_some_and(u8::is_ascii_digit)
+        let starts_a_line = at == 0 || matches!(window[at - 1], b'\n' | b'\r');
+        starts_a_line
+            && window
+                .get(at + PDF_SIGNATURE.len())
+                .is_some_and(u8::is_ascii_digit)
     })
 }
 
@@ -181,18 +188,25 @@ pub fn page_count(path: &Path) -> Option<u32> {
     } else {
         Vec::new()
     };
-    [&head, &tail]
+    [&tail, &head]
         .iter()
         .find_map(|window| root_page_count(window))
 }
 
 fn root_page_count(window: &[u8]) -> Option<u32> {
+    let mut candidates = 0;
     for source in sources_to_scan(window) {
         let source = source.as_slice();
         let mut from = 0;
         while let Some(at) = find(&source[from..], PAGE_COUNT).map(|offset| from + offset) {
             from = at + PAGE_COUNT.len();
-            let dictionary = enclosing_dictionary(source, at)?;
+            candidates += 1;
+            if candidates > MOST_BOX_CANDIDATES {
+                return None;
+            }
+            let Some(dictionary) = enclosing_dictionary(source, at) else {
+                continue;
+            };
             if is_pages_root(dictionary)
                 && let Some(count) = integer_after(&source[from..])
             {
@@ -236,11 +250,16 @@ fn integer_after(bytes: &[u8]) -> Option<u32> {
 
 fn first_page_size(window: &[u8]) -> Option<Dimensions> {
     let mut fallback = None;
+    let mut candidates = 0;
     for source in sources_to_scan(window) {
         let source = source.as_slice();
         let mut from = 0;
         while let Some(at) = find(&source[from..], MEDIA_BOX).map(|offset| from + offset) {
             from = at + MEDIA_BOX.len();
+            candidates += 1;
+            if candidates > MOST_BOX_CANDIDATES {
+                return fallback.and_then(|size| page_dimensions(size, false));
+            }
             let Some(size) = box_after(&source[from..]) else {
                 continue;
             };
@@ -261,12 +280,19 @@ fn sources_to_scan(window: &[u8]) -> Vec<Vec<u8>> {
     let mut sources = vec![window.to_vec()];
     let mut from = 0;
     let mut inflated = 0;
-    while sources.len() <= MOST_OBJECT_STREAMS {
+    let mut attempts = 0;
+    let mut searched = 0;
+    let mut failures = 0;
+    while sources.len() <= MOST_OBJECT_STREAMS && attempts < MOST_STREAM_ATTEMPTS {
         let Some(at) = find(&window[from..], OBJECT_STREAM).map(|offset| from + offset) else {
             break;
         };
         from = at + OBJECT_STREAM.len();
-        let Some(data) = stream_data_after(window, at) else {
+        attempts += 1;
+        let Some(data) = stream_data_after(window, at, &mut searched) else {
+            if searched >= MOST_STREAM_SEARCH_BYTES {
+                break;
+            }
             continue;
         };
         let remaining = MOST_INFLATED_BYTES.saturating_sub(inflated);
@@ -276,13 +302,20 @@ fn sources_to_scan(window: &[u8]) -> Vec<Vec<u8>> {
         if let Some(text) = inflate(data, remaining) {
             inflated += text.len();
             sources.push(text);
+        } else {
+            failures += 1;
+            if failures >= MOST_INFLATE_FAILURES {
+                break;
+            }
         }
     }
     sources
 }
 
-fn stream_data_after(window: &[u8], from: usize) -> Option<&[u8]> {
-    let dictionary_end = find(&window[from..], STREAM_KEYWORD)? + from;
+fn stream_data_after<'a>(window: &'a [u8], from: usize, searched: &mut usize) -> Option<&'a [u8]> {
+    let dictionary = window.get(from..)?;
+    let dictionary = &dictionary[..dictionary.len().min(MOST_DICTIONARY_BYTES)];
+    let dictionary_end = find(dictionary, STREAM_KEYWORD)? + from;
     let mut start = dictionary_end + STREAM_KEYWORD.len();
     if window.get(start) == Some(&b'\r') {
         start += 1;
@@ -290,7 +323,10 @@ fn stream_data_after(window: &[u8], from: usize) -> Option<&[u8]> {
     if window.get(start) == Some(&b'\n') {
         start += 1;
     }
-    let end = find(&window[start..], END_STREAM_KEYWORD)? + start;
+    let body = window.get(start..)?;
+    let body = &body[..body.len().min(MOST_STREAM_BYTES)];
+    *searched += body.len();
+    let end = find(body, END_STREAM_KEYWORD)? + start;
     window.get(start..end)
 }
 
@@ -483,9 +519,16 @@ fn box_in_comment(bytes: &[u8], key: &[u8]) -> Option<[f64; 4]> {
 }
 
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
-    haystack
-        .windows(needle.len())
-        .position(|window| window == needle)
+    let (first, rest) = needle.split_first()?;
+    let mut from = 0;
+    while let Some(offset) = haystack.get(from..)?.iter().position(|byte| byte == first) {
+        let at = from + offset;
+        if haystack.get(at + 1..at + needle.len()) == Some(rest) {
+            return Some(at);
+        }
+        from = at + 1;
+    }
+    None
 }
 
 #[cfg(test)]
@@ -676,6 +719,61 @@ mod tests {
         assert_eq!(info.format, AssetFormat::Ai);
         let info = inspect(&path, AssetFormat::Pdf).unwrap();
         assert_eq!(info.format, AssetFormat::Pdf);
+    }
+
+    fn finishes_quickly(bytes: &[u8]) {
+        let (_directory, path) = written("hostile.pdf", bytes);
+        let started = std::time::Instant::now();
+        let _ = inspect(&path, AssetFormat::Pdf);
+        let _ = page_count(&path);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "took {:?}",
+            started.elapsed()
+        );
+    }
+
+    #[test]
+    fn endless_object_streams_without_an_end_do_not_stall_the_scan() {
+        let mut bytes = b"%PDF-1.5\n".to_vec();
+        while bytes.len() < 8 * 1024 * 1024 {
+            bytes.extend_from_slice(b"/ObjStm stream\n");
+        }
+        finishes_quickly(&bytes);
+    }
+
+    #[test]
+    fn a_flood_of_unreadable_object_streams_does_not_stall_the_scan() {
+        let mut bytes = b"%PDF-1.5\n".to_vec();
+        while bytes.len() < 8 * 1024 * 1024 {
+            bytes.extend_from_slice(b"/ObjStm stream\nnot zlib data endstream\n");
+        }
+        finishes_quickly(&bytes);
+    }
+
+    #[test]
+    fn a_flood_of_boxes_and_counts_does_not_stall_the_scan() {
+        let mut bytes = b"%PDF-1.5\n".to_vec();
+        while bytes.len() < 8 * 1024 * 1024 {
+            bytes.extend_from_slice(b"/MediaBox [0 0 1 1] /Count 3 ");
+        }
+        finishes_quickly(&bytes);
+    }
+
+    #[test]
+    fn text_quoting_a_pdf_header_in_the_middle_of_a_line_is_not_a_pdf() {
+        assert_eq!(detect(b"see the %PDF-1.4 header"), None);
+        assert_eq!(detect(b"notes\n%PDF-1.4\n"), Some(AssetFormat::Pdf));
+    }
+
+    #[test]
+    fn one_unreadable_page_count_does_not_hide_the_real_one() {
+        let mut bytes = b"%PDF-1.4\n<< /Count 7 \n".to_vec();
+        bytes.extend_from_slice(
+            &pdf_with_page("<< /Type /Page /MediaBox [0 0 10 10] >>")["%PDF-1.4\n".len()..],
+        );
+        let (_directory, path) = written("odd.pdf", &bytes);
+        assert_eq!(page_count(&path), Some(1));
     }
 
     #[test]
