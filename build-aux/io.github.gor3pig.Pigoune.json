@@ -51,6 +51,8 @@
         }
       ],
       "cleanup": [
+        "/share/ghostscript/*/doc",
+        "/share/ghostscript/*/examples",
         "/bin/dvipdf",
         "/bin/eps2eps",
         "/bin/gsbj",
