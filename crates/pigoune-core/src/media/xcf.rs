@@ -21,6 +21,7 @@ const MOST_NAME_BYTES: usize = 4096;
 const MOST_PALETTE_COLORS: usize = 256;
 const MOST_PROPERTY_BYTES: u32 = 1 << 20;
 const MOST_PATH_DEPTH: usize = 64;
+const MOST_PROPERTIES: usize = 1024;
 const TILE_SIDE: usize = 64;
 const EIGHT_BITS: usize = 255;
 const RUN_LENGTH_LONG: usize = 128;
@@ -615,7 +616,7 @@ fn read_image_properties<R: Read + Seek>(
 ) -> Result<(Vec<[u8; 3]>, u8), XcfError> {
     let mut palette = Vec::new();
     let mut compression = COMPRESSION_RUN_LENGTH;
-    loop {
+    for _ in 0..MOST_PROPERTIES {
         let (code, length) = stream.property_header()?;
         match code {
             PROP_END => return Ok((palette, compression)),
@@ -630,6 +631,7 @@ fn read_image_properties<R: Read + Seek>(
             _ => stream.skip(u64::from(length))?,
         }
     }
+    Err(XcfError::Unreadable)
 }
 
 fn read_palette(payload: &[u8]) -> Result<Vec<[u8; 3]>, XcfError> {
@@ -655,6 +657,9 @@ fn read_pointer_list<R: Read + Seek>(stream: &mut Stream<R>) -> Result<Vec<u64>,
         }
         if pointers.len() == MOST_LAYERS {
             return Err(XcfError::TooLarge);
+        }
+        if pointers.contains(&pointer) {
+            return Err(XcfError::Unreadable);
         }
         pointers.push(pointer);
     }
@@ -687,9 +692,11 @@ fn read_layer<R: Read + Seek>(stream: &mut Stream<R>, offset: u64) -> Result<Lay
         mask_offset: 0,
     };
     let mut has_float_opacity = false;
-    loop {
+    let mut ended = false;
+    for _ in 0..MOST_PROPERTIES {
         let (code, length) = stream.property_header()?;
         if code == PROP_END {
+            ended = true;
             break;
         }
         if !is_layer_property(code) {
@@ -699,6 +706,9 @@ fn read_layer<R: Read + Seek>(stream: &mut Stream<R>, offset: u64) -> Result<Lay
         let payload = stream.property_payload(length)?;
         has_float_opacity |= code == PROP_FLOAT_OPACITY;
         apply_layer_property(&mut layer, code, &Payload(&payload), has_float_opacity);
+    }
+    if !ended {
+        return Err(XcfError::Unreadable);
     }
     layer.hierarchy_offset = stream.pointer()?;
     layer.mask_offset = stream.pointer()?;
@@ -1125,6 +1135,16 @@ mod tests {
     }
 
     fn rgba_file(compression: u8, width: usize, height: usize, pixels: &[u8]) -> Vec<u8> {
+        rgba_file_with(compression, width, height, pixels, &[])
+    }
+
+    fn rgba_file_with(
+        compression: u8,
+        width: usize,
+        height: usize,
+        pixels: &[u8],
+        extra_properties: &[u8],
+    ) -> Vec<u8> {
         let columns = width.div_ceil(64);
         let rows = height.div_ceil(64);
         let mut tiles = Vec::new();
@@ -1141,7 +1161,7 @@ mod tests {
             }
         }
         let layer_at = 14 + 16 + 9 + 8 + 24;
-        let hierarchy_at = layer_at + 12 + 6 + 8 + 16;
+        let hierarchy_at = layer_at + 12 + 6 + 8 + 16 + extra_properties.len();
         let level_at = hierarchy_at + 12 + 16;
         let mut next = level_at + 8 + 8 * tiles.len() + 8;
         let mut file = b"gimp xcf v011\0".to_vec();
@@ -1168,6 +1188,7 @@ mod tests {
             put32(&mut file, value);
         }
         file.extend_from_slice(b"a\0");
+        file.extend_from_slice(extra_properties);
         put32(&mut file, 0);
         put32(&mut file, 0);
         put64(&mut file, hierarchy_at);
@@ -1214,6 +1235,37 @@ mod tests {
 
     fn flat(width: usize, height: usize) -> Vec<u8> {
         [12, 200, 90, 255].repeat(width * height)
+    }
+
+    #[test]
+    fn a_layer_listed_twice_is_refused() {
+        let mut bytes = rgba_file(1, 8, 8, &flat(8, 8));
+        let layer_at = 14 + 16 + 9 + 8 + 24;
+        let first_pointer = layer_at - 24;
+        let layer = u64::try_from(layer_at).unwrap().to_be_bytes();
+        assert_eq!(&bytes[first_pointer..first_pointer + 8], &layer);
+        bytes[first_pointer + 8..first_pointer + 16].copy_from_slice(&layer);
+        assert_eq!(
+            XcfReader::from_bytes(&bytes).err(),
+            Some(XcfError::Unreadable)
+        );
+    }
+
+    #[test]
+    fn an_endless_property_list_is_refused() {
+        let mut properties = Vec::new();
+        for _ in 0..4000 {
+            put32(&mut properties, 9999);
+            put32(&mut properties, 0);
+        }
+        let bytes = rgba_file_with(1, 8, 8, &flat(8, 8), &properties);
+        assert_eq!(
+            XcfReader::from_bytes(&bytes).err(),
+            Some(XcfError::Unreadable)
+        );
+        let few = &properties[..8 * 100];
+        let bytes = rgba_file_with(1, 8, 8, &flat(8, 8), few);
+        assert!(XcfReader::from_bytes(&bytes).is_ok());
     }
 
     #[test]
