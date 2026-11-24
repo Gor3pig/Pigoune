@@ -1,15 +1,12 @@
-use std::cell::RefCell;
 use std::fs::File;
 use std::path::Path;
-use std::rc::Rc;
 
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
-const PORTAL_NAME: &str = "org.freedesktop.portal.Desktop";
-const PORTAL_PATH: &str = "/org/freedesktop/portal/desktop";
+use crate::portal_request::{Listener, PORTAL_NAME, PORTAL_PATH};
+
 const WALLPAPER_INTERFACE: &str = "org.freedesktop.portal.Wallpaper";
-const REQUEST_INTERFACE: &str = "org.freedesktop.portal.Request";
 const SET_ON_BOTH: &str = "both";
 const RESPONSE_APPLIED: u32 = 0;
 const RESPONSE_CANCELLED: u32 = 1;
@@ -33,54 +30,53 @@ pub async fn set_wallpaper(
     let connection = gio::bus_get_future(gio::BusType::Session)
         .await
         .map_err(|error| error.to_string())?;
-    let (reply, _) = connection
+    let listener = Listener::start(&connection, move |parameters| {
+        on_response(match response_code(parameters) {
+            Some(RESPONSE_APPLIED) => WallpaperResponse::Applied,
+            Some(RESPONSE_CANCELLED) => WallpaperResponse::Cancelled,
+            _ => WallpaperResponse::Failed,
+        });
+    })
+    .ok_or_else(|| "no connection name".to_owned())?;
+    let called = connection
         .call_with_unix_fd_list_future(
             Some(PORTAL_NAME),
             PORTAL_PATH,
             WALLPAPER_INTERFACE,
             "SetWallpaperFile",
-            Some(&wallpaper_arguments(index)),
+            Some(&wallpaper_arguments(index, listener.token())),
             Some(glib::VariantTy::new("(o)").map_err(|error| error.to_string())?),
             gio::DBusCallFlags::NONE,
             -1,
             Some(&descriptors),
         )
-        .await
-        .map_err(|error| error.to_string())?;
-    let request = reply
-        .child_value(0)
-        .str()
-        .map(ToOwned::to_owned)
-        .ok_or_else(|| "no request".to_owned())?;
-    let holder: Rc<RefCell<Option<gio::SignalSubscription>>> = Rc::default();
-    let held = Rc::clone(&holder);
-    let subscription = connection.subscribe_to_signal(
-        Some(PORTAL_NAME),
-        Some(REQUEST_INTERFACE),
-        Some("Response"),
-        Some(&request),
-        None,
-        gio::DBusSignalFlags::NO_MATCH_RULE,
-        move |signal| {
-            on_response(match response_code(signal.parameters) {
-                Some(RESPONSE_APPLIED) => WallpaperResponse::Applied,
-                Some(RESPONSE_CANCELLED) => WallpaperResponse::Cancelled,
-                _ => WallpaperResponse::Failed,
-            });
-            let held = Rc::clone(&held);
-            glib::idle_add_local_once(move || {
-                held.take();
-            });
-        },
-    );
-    holder.replace(Some(subscription));
-    Ok(())
+        .await;
+    let request = called
+        .map_err(|error| error.to_string())
+        .and_then(|(reply, _)| {
+            reply
+                .child_value(0)
+                .str()
+                .map(ToOwned::to_owned)
+                .ok_or_else(|| "no request".to_owned())
+        });
+    match request {
+        Ok(handle) => {
+            listener.follow_returned(&handle);
+            Ok(())
+        }
+        Err(error) => {
+            listener.close();
+            Err(error)
+        }
+    }
 }
 
-fn wallpaper_arguments(descriptor: i32) -> glib::Variant {
+fn wallpaper_arguments(descriptor: i32, token: &str) -> glib::Variant {
     let options = glib::VariantDict::new(None);
     options.insert("show-preview", true);
     options.insert("set-on", SET_ON_BOTH);
+    options.insert("handle_token", token);
     glib::Variant::tuple_from_iter([
         "".to_variant(),
         glib::variant::Handle(descriptor).to_variant(),
@@ -98,6 +94,9 @@ mod tests {
 
     #[test]
     fn the_wallpaper_request_matches_the_portal() {
-        assert_eq!(wallpaper_arguments(0).type_().as_str(), "(sha{sv})");
+        assert_eq!(
+            wallpaper_arguments(0, "token").type_().as_str(),
+            "(sha{sv})"
+        );
     }
 }

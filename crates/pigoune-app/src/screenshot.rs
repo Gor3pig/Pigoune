@@ -1,14 +1,13 @@
-use std::cell::RefCell;
 use std::path::PathBuf;
-use std::rc::Rc;
+use std::time::Duration;
 
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
-const PORTAL_NAME: &str = "org.freedesktop.portal.Desktop";
-const PORTAL_PATH: &str = "/org/freedesktop/portal/desktop";
+use crate::portal_request::{self, Listener, PORTAL_NAME, PORTAL_PATH};
+
 const SCREENSHOT_INTERFACE: &str = "org.freedesktop.portal.Screenshot";
-const REQUEST_INTERFACE: &str = "org.freedesktop.portal.Request";
+const RESPONSE_TIMEOUT: Duration = Duration::from_secs(300);
 const RESPONSE_TAKEN: u32 = 0;
 const RESPONSE_CANCELLED: u32 = 1;
 
@@ -21,64 +20,53 @@ pub enum ScreenshotOutcome {
 
 pub async fn take() -> ScreenshotOutcome {
     let (sender, receiver) = async_channel::bounded(1);
-    if request(move |outcome| {
-        let _ = sender.try_send(outcome);
-    })
-    .await
-    .is_err()
-    {
+    let Ok(connection) = gio::bus_get_future(gio::BusType::Session).await else {
         return ScreenshotOutcome::Failed;
+    };
+    let Some(listener) = Listener::start(&connection, move |parameters| {
+        let _ = sender.try_send(outcome_of(parameters));
+    }) else {
+        return ScreenshotOutcome::Failed;
+    };
+    let Ok(handle) = request(&connection, listener.token()).await else {
+        listener.close();
+        return ScreenshotOutcome::Failed;
+    };
+    listener.follow_returned(&handle);
+    if let Some(outcome) = portal_request::first(&receiver, RESPONSE_TIMEOUT).await {
+        return outcome;
     }
-    receiver.recv().await.unwrap_or(ScreenshotOutcome::Failed)
+    portal_request::cancel_request(&connection, &handle);
+    listener.close();
+    ScreenshotOutcome::Failed
 }
 
-async fn request(on_response: impl Fn(ScreenshotOutcome) + 'static) -> Result<(), String> {
-    let connection = gio::bus_get_future(gio::BusType::Session)
-        .await
-        .map_err(|error| error.to_string())?;
+async fn request(connection: &gio::DBusConnection, token: &str) -> Result<String, String> {
     let reply = connection
         .call_future(
             Some(PORTAL_NAME),
             PORTAL_PATH,
             SCREENSHOT_INTERFACE,
             "Screenshot",
-            Some(&screenshot_arguments()),
+            Some(&screenshot_arguments(token)),
             Some(glib::VariantTy::new("(o)").map_err(|error| error.to_string())?),
             gio::DBusCallFlags::NONE,
             -1,
         )
         .await
         .map_err(|error| error.to_string())?;
-    let handle = reply
+    reply
         .child_value(0)
         .str()
         .map(ToOwned::to_owned)
-        .ok_or_else(|| "no request".to_owned())?;
-    let holder: Rc<RefCell<Option<gio::SignalSubscription>>> = Rc::default();
-    let held = Rc::clone(&holder);
-    let subscription = connection.subscribe_to_signal(
-        Some(PORTAL_NAME),
-        Some(REQUEST_INTERFACE),
-        Some("Response"),
-        Some(&handle),
-        None,
-        gio::DBusSignalFlags::NO_MATCH_RULE,
-        move |signal| {
-            on_response(outcome_of(signal.parameters));
-            let held = Rc::clone(&held);
-            glib::idle_add_local_once(move || {
-                held.take();
-            });
-        },
-    );
-    holder.replace(Some(subscription));
-    Ok(())
+        .ok_or_else(|| "no request".to_owned())
 }
 
-fn screenshot_arguments() -> glib::Variant {
+fn screenshot_arguments(token: &str) -> glib::Variant {
     let options = glib::VariantDict::new(None);
     options.insert("interactive", true);
     options.insert("modal", true);
+    options.insert("handle_token", token);
     glib::Variant::tuple_from_iter(["".to_variant(), options.end()])
 }
 
@@ -118,7 +106,7 @@ mod tests {
 
     #[test]
     fn the_request_matches_the_portal() {
-        assert_eq!(screenshot_arguments().type_().as_str(), "(sa{sv})");
+        assert_eq!(screenshot_arguments("token").type_().as_str(), "(sa{sv})");
     }
 
     #[test]
