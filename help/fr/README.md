@@ -72,7 +72,7 @@ Il y a cinq façons de faire entrer des éléments.
 
 Une image collée s’appelle **Image collée** suivie de la date et de l’heure ; vous pouvez la renommer ensuite.
 
-Avec **Ouvrir avec**, Pigoune s’ouvre si besoin et affiche le rapport d’importation habituel. Si aucune bibliothèque n’est ouverte, les images attendent que vous en ouvriez ou en créiez une. Pigoune n’apparaît dans **Ouvrir avec** que pour les types de fichiers qu’il importe, et ne devient jamais l’application par défaut sauf si vous le choisissez.
+Avec **Ouvrir avec**, Pigoune s’ouvre si besoin et affiche le rapport d’importation habituel. Si aucune bibliothèque n’est ouverte, les images attendent que vous en ouvriez ou en créiez une. Pigoune n’apparaît dans **Ouvrir avec** que pour les types de fichiers qu’il importe, sauf le PDF (glissez-les plutôt dans la fenêtre, pour que Pigoune ne soit jamais proposé comme lecteur de PDF), et ne devient jamais l’application par défaut sauf si vous le choisissez.
 
 <details>
 <summary>Ce que fournit le navigateur</summary>
