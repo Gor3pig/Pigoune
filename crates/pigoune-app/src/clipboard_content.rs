@@ -63,9 +63,15 @@ mod tests {
     use super::picture_of;
 
     fn fixture(name: &str) -> std::path::PathBuf {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
+        let source = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../pigoune-core/tests/fixtures")
-            .join(name)
+            .join(name);
+        let directory =
+            std::env::temp_dir().join(format!("pigoune-fixtures-{}", std::process::id()));
+        let copy = directory.join(name);
+        std::fs::create_dir_all(copy.parent().expect("a folder")).expect("a scratch folder");
+        std::fs::copy(&source, &copy).expect("a copy of the fixture");
+        copy
     }
 
     #[test]
