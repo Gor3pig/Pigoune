@@ -166,7 +166,9 @@ fn main() -> glib::ExitCode {
     gio::resources_register_include!("pigoune.gresource")
         .expect("compiled resources are embedded in the binary");
 
-    application::build().run()
+    let application = application::build();
+    application.connect_shutdown(|_| page_renderer::stop_all());
+    application.run()
 }
 
 fn setup_translations() {

@@ -9,7 +9,6 @@ use crate::first_launch;
 use crate::fonts;
 use crate::help_url;
 use crate::icon_theme;
-use crate::page_renderer;
 use crate::release_notes;
 use crate::search_provider;
 use crate::settings;
@@ -56,7 +55,6 @@ pub fn build() -> adw::Application {
         }
     });
     application.connect_open(|application, files, _| open_files(application, files));
-    application.connect_shutdown(|_| page_renderer::stop_all());
     application
 }
 
