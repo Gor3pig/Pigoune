@@ -92,9 +92,16 @@ fn request_capture(application: &adw::Application) {
     glib::spawn_future_local(async move { window.capture_screenshot().await });
 }
 
+fn quit(application: &adw::Application) {
+    match application.active_window().and_downcast::<PigouneWindow>() {
+        Some(window) => window.confirm_then_quit(),
+        None => application.quit(),
+    }
+}
+
 fn install_actions(application: &adw::Application) {
     let quit = gio::ActionEntry::builder("quit")
-        .activate(|application: &adw::Application, _, _| application.quit())
+        .activate(|application: &adw::Application, _, _| quit(application))
         .build();
     let about = gio::ActionEntry::builder("about")
         .activate(|application: &adw::Application, _, _| show_about_dialog(application))

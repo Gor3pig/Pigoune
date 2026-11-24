@@ -335,6 +335,8 @@ mod imp {
         pub library_generation: Cell<u32>,
         pub library_actions_enabled: Cell<bool>,
         pub importing: Cell<bool>,
+        pub import_cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
+        pub leave_confirmed: Cell<bool>,
         pub update_news: RefCell<Option<UpdateNews>>,
         #[template_child]
         pub asset_grid: TemplateChild<PigouneAssetGrid>,
@@ -687,6 +689,16 @@ mod imp {
 
     impl WindowImpl for PigouneWindow {
         fn close_request(&self) -> glib::Propagation {
+            if !self.leave_confirmed.get() && self.obj().needs_leave_confirmation() {
+                let window = self.obj().clone();
+                glib::spawn_future_local(async move {
+                    if window.confirm_leaving().await {
+                        window.imp().leave_confirmed.set(true);
+                        window.close();
+                    }
+                });
+                return glib::Propagation::Stop;
+            }
             if self.obj().is_editing() {
                 self.editor.flush_draft();
             }
@@ -6368,6 +6380,78 @@ impl PigouneWindow {
         imp.asset_grid.focus_selected_later();
     }
 
+    fn needs_leave_confirmation(&self) -> bool {
+        self.imp().importing.get() || self.has_unsaved_item_changes()
+    }
+
+    fn has_unsaved_item_changes(&self) -> bool {
+        self.is_editing() && self.imp().editor.has_unsaved_item_changes()
+    }
+
+    pub fn confirm_then_quit(&self) {
+        let window = self.clone();
+        glib::spawn_future_local(async move {
+            if window.confirm_leaving().await
+                && let Some(application) = window.application()
+            {
+                application.quit();
+            }
+        });
+    }
+
+    pub async fn confirm_leaving(&self) -> bool {
+        if self.imp().importing.get() && !self.confirm_stopping_import().await {
+            return false;
+        }
+        if self.has_unsaved_item_changes() {
+            return self.confirm_leaving_editor().await;
+        }
+        true
+    }
+
+    async fn confirm_stopping_import(&self) -> bool {
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Stop the Import and Quit?")),
+            Some(&gettext(
+                "An import is still running. The files not yet imported will not be added to the library.",
+            )),
+        );
+        dialog.add_response("keep", &gettext("_Keep Importing"));
+        dialog.add_response("stop", &gettext("_Stop Import and Quit"));
+        dialog.set_response_appearance("stop", adw::ResponseAppearance::Destructive);
+        dialog.set_default_response(Some("keep"));
+        dialog.set_close_response("keep");
+        if dialog.choose_future(Some(self)).await != "stop" {
+            return false;
+        }
+        self.imp().import_cancel.store(true, Ordering::Relaxed);
+        while self.imp().importing.get() {
+            glib::timeout_future(std::time::Duration::from_millis(100)).await;
+        }
+        true
+    }
+
+    async fn confirm_leaving_editor(&self) -> bool {
+        let dialog = adw::AlertDialog::new(
+            Some(&gettext("Save the Annotations?")),
+            Some(&gettext(
+                "The annotations changed on this image have not been saved.",
+            )),
+        );
+        dialog.add_response("cancel", &gettext("_Cancel"));
+        dialog.add_response("discard", &gettext("_Discard"));
+        dialog.add_response("save", &gettext("_Save"));
+        dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+        dialog.set_response_appearance("save", adw::ResponseAppearance::Suggested);
+        dialog.set_default_response(Some("save"));
+        dialog.set_close_response("cancel");
+        match dialog.choose_future(Some(self)).await.as_str() {
+            "save" => self.imp().editor.request_save().await,
+            "discard" => true,
+            _ => false,
+        }
+    }
+
     fn is_editing(&self) -> bool {
         self.imp().window_stack.visible_child_name().as_deref() == Some(EDITOR_PAGE)
     }
@@ -7596,7 +7680,10 @@ impl PigouneWindow {
             return;
         };
 
-        let finished = background_import::run(self, library, paths.clone(), collection).await;
+        let cancel = Arc::clone(&self.imp().import_cancel);
+        cancel.store(false, Ordering::Relaxed);
+        let finished =
+            background_import::run(self, library, paths.clone(), collection, cancel).await;
 
         if let Some(FinishedImport { library, result }) = finished {
             if self.restore_after_import(guard, library) {
