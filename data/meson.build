@@ -35,6 +35,11 @@ install_data(
 )
 
 install_data(
+  '..' / 'crates' / 'pigoune-app' / 'icons' / 'LICENSE-phosphor',
+  install_dir: get_option('datadir') / 'licenses' / app_id,
+)
+
+install_data(
   app_id + '.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
 )
