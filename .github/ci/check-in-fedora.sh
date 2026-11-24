@@ -20,7 +20,7 @@ su builder --command '
         | sh -s -- -y --profile minimal --default-toolchain none
     source "$CARGO_HOME/env"
     cd /work
-    command -v gs; gs --version; id; echo $PATH; F=/work/crates/pigoune-core/tests/fixtures/pages-cairo.pdf
+    set +e; command -v gs; gs --version; id; echo $PATH; F=/work/crates/pigoune-core/tests/fixtures/pages-cairo.pdf
     ls -ld /work /work/crates /work/crates/pigoune-core/tests/fixtures $F
     echo A; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/a.png $F; echo rcA=$?
     echo B; gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/b.png $F; echo rcB=$?
