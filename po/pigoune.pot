@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pigoune\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 16:37+0100\n"
+"POT-Creation-Date: 2026-11-24 21:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -130,17 +130,41 @@ msgid "Layers, hand-drawn looks and panels that fold away"
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:114
-msgid "Keep GIMP, PDF, EPS and Illustrator files in your library."
+msgid ""
+"A reliability update: fewer ways to lose work, and a library that opens more "
+"reliably."
 msgstr ""
 
 #: data/io.github.gor3pig.Pigoune.metainfo.xml.in:116
+msgid ""
+"Pigoune asks before quitting while annotations are unsaved or an import is "
+"running, and an unsaved capture is kept whole for the next start."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:117
+msgid ""
+"A library opens even when its cache file cannot be used, and emptying the "
+"trash tells you about files that could not be deleted."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:118
+msgid ""
+"Taking a screenshot no longer gets stuck when the system answers quickly, "
+"and gives up after five minutes."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:124
+msgid "Keep GIMP, PDF, EPS and Illustrator files in your library."
+msgstr ""
+
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:126
 msgid ""
 "GIMP (XCF) files are drawn from their layers, groups and masks with the "
 "blend modes GIMP uses, checked pixel by pixel against GIMP itself. The few "
 "features that cannot be reproduced are flagged in the preview."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:117
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:127
 msgid ""
 "PDF, EPS and Adobe Illustrator (AI) files are drawn from their first page by "
 "Ghostscript, now bundled in the package. They stay sharp at every zoom and a "
@@ -148,19 +172,19 @@ msgid ""
 "preview says why it cannot be shown."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:118
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:128
 msgid ""
 "The library format moves to 17. Older versions of Pigoune cannot open a "
 "library after this version has opened it, and say so."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:124
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:134
 msgid ""
 "Keep more kinds of files in your library, and see Photoshop files more "
 "faithfully."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:126
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:136
 msgid ""
 "New formats: Krita (KRA) and OpenRaster (ORA) files, shown from the merged "
 "image they hold; macOS icons (ICNS), old ones included; compressed SVG "
@@ -168,104 +192,104 @@ msgid ""
 "OpenEXR and Radiance HDR)."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:127
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:137
 msgid ""
 "Photoshop files are read faster and with less memory, even large layered "
 "ones. Transparent areas stay transparent, files saved without a merged image "
 "are recognized, and the preview says why a file cannot be shown."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:128
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:138
 msgid ""
 "The library format moves to 16. Older versions of Pigoune cannot open a "
 "library after this version has opened it, and say so."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:134
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:144
 msgid ""
 "Find your assets from the GNOME search, and keep Photoshop files in your "
 "library."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:136
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:146
 msgid ""
 "Type in the GNOME search and Pigoune offers the matching assets with a "
 "preview. Click one to see it in the library, or click Pigoune to continue "
 "the search there. Turn it on in the Search settings of GNOME."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:137
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:147
 msgid ""
 "PSD files are imported, found and shown from their merged image, and can be "
 "copied, exported or used as a wallpaper. Layers are not shown and the file "
 "stays untouched."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:138
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:148
 msgid ""
 "In Files, right-click images and choose Open With Pigoune to add them to the "
 "library, in Unclassified."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:139
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:149
 msgid ""
 "The library format moves to 15. Older versions of Pigoune cannot open a "
 "library after this version has opened it, and say so."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:145
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:155
 msgid ""
 "Add comic speech bubbles to your annotated images, and keep the tools, "
 "properties and layers always in view."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:147
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:157
 msgid ""
 "The new Bubble tool draws a comic bubble: an oval, a rounded rectangle or a "
 "thought cloud, with a tail you can aim anywhere by dragging its round handle "
 "(it stops one bubble size from the edge) and text centered inside."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:148
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:158
 msgid ""
 "Type in a comic font (Comic Neue, included with Pigoune) or in the normal "
 "font, in bold or italic. Turn on a soft or a hard shadow, a hand-drawn look, "
 "or a dashed outline for a whisper."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:149
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:159
 msgid ""
 "While you turn an arrow, a line or a pen stroke, its frame keeps its shape "
 "and the angle is shown next to the handle."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:150
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:160
 msgid ""
 "The tools are a small grid of icons, and Properties and Layers are always "
 "shown below, with a handle to share their height. Hover a tool to see its "
 "name and shortcut. F9 still hides the panel."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:151
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:161
 msgid ""
 "Older versions of Pigoune keep your bubbles when they open an annotated "
 "image, but do not draw them."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:157
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:167
 msgid ""
 "Choose your theme, see which collections are left out of the duplicate "
 "search, and get your thumbnails back after clearing them."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:159
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:169
 msgid ""
 "Three round buttons at the top of the main menu, and of the menu of the "
 "welcome page, follow the system or always use the light or the dark theme. "
 "The choice applies at once and is remembered."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:160
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:170
 msgid ""
 "The Left Out button of the Duplicates tab lists the collections left out of "
 "the duplicate search, with where each one sits and how many sub-collections "
@@ -273,49 +297,49 @@ msgid ""
 "for them."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:161
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:171
 msgid ""
 "After Clear next to the thumbnails in Manage Library, Pigoune makes them "
 "again quietly in the background, while you are not using it."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:167
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:177
 msgid ""
 "Show the original of an annotated image in your file manager, and drag "
 "images out of a library opened with the folder chooser."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:169
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:179
 msgid ""
 "Show Original replaces View Original: it opens your file manager on the "
 "untouched image stored in the library, instead of starting another "
 "application that could fail to launch."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:170
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:180
 msgid ""
 "For an annotated image, Show in Files now shows a copy of the annotated "
 "image. An image that is not annotated is shown as before."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:171
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:181
 msgid ""
 "Dragging an image out of Pigoune into the file manager works again for a "
 "library opened with the folder chooser. The file manager used to show a "
 "forbidden cursor."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:172
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:182
 msgid "A drag whose files cannot be prepared now says so."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:178
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:188
 msgid ""
 "Turn your annotations, resize a text, and leave collections out of the "
 "duplicate search."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:180
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:190
 msgid ""
 "Turn a rectangle, an ellipse, a text, a line, an arrow, a pen stroke, a "
 "highlighter, a blur or a pixelation with the round handle above it, by steps "
@@ -323,45 +347,45 @@ msgid ""
 "setting of the panel."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:181
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:191
 msgid ""
 "A selected text has handles like the other annotations: drag one to make the "
 "letters bigger or smaller."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:182
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:192
 msgid ""
 "The spotlight can leave a rounded rectangle lit, steps are bigger and can "
 "grow larger, and a blur can go up to a radius of 150."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:183
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:193
 msgid ""
 "A layer is renamed with a double click on its name, or with a second click "
 "once it is selected, and its name can be dragged to reorder the layers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:184
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:194
 msgid ""
 "A collection can be left out of the duplicate search from its menu in the "
 "sidebar, and Undo brings it back."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:185
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:195
 msgid ""
 "A blur now hides everything up to the edges of the image. Before, a blur "
 "very close to an edge could let a faint trace of the sharp image show "
 "through. Images annotated earlier are drawn again without it."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:186
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:196
 msgid ""
 "Files that Pigoune hands to other applications, for an export, a copy or an "
 "opening, each get a folder of their own and are cleaned up after a while, "
 "and Pigoune refuses a library or a cache folder that is a link."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:187
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:197
 msgid ""
 "Pigoune is quicker with large libraries. The grid and the counts in the "
 "sidebar are no longer rebuilt after every import or background analysis, "
@@ -369,17 +393,17 @@ msgid ""
 "assets out of Pigoune is smoother."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:188
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:198
 msgid ""
 "A library opened with this version can no longer be opened with Pigoune 3.0 "
 "or older."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:194
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:204
 msgid "Capture your screen and annotate it, right inside Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:196
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:206
 msgid ""
 "Take a screenshot with Take a Screenshot (Ctrl+Shift+S, the import menu, the "
 "launcher icon, or the pigoune --capture command that your desktop can bind "
@@ -387,7 +411,7 @@ msgid ""
 "The image opens in an editor inside the window of your library."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:197
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:207
 msgid ""
 "Annotate with rectangles, ellipses, lines, curved or tapered arrows, a pen, "
 "a highlighter, numbered or lettered steps, texts with a bubble or an "
@@ -397,55 +421,55 @@ msgid ""
 "guides align what you move."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:198
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:208
 msgid ""
 "Draw shapes, lines and arrows with a solid, dashed or dotted stroke, and "
 "give them a precise, sketchy or very sketchy hand-drawn look."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:199
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:209
 msgid ""
 "Annotations stay editable: the untouched capture is kept next to the "
 "annotated image, which is the one shown and exported. Annotate reopens it "
 "and View Original shows the capture as it was."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:200
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:210
 msgid ""
 "Layers let you reorder, hide and lock annotations, and the panels of the "
 "editor fold away, or hide altogether with F9, to leave room for the image."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:201
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:211
 msgid ""
 "In the detailed preview, hold a button on an annotated image to see the "
 "original for as long as you press it."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:202
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:212
 msgid ""
 "Pigoune warns you before you copy, export or open with another application "
 "an image whose blur or pixelation is hidden, and refuses to drag it out."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:203
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:213
 msgid ""
 "Copy or export the annotated image as a PNG, or save it in the library, "
 "where it receives the capture tag. A capture being edited is kept as a draft "
 "if Pigoune closes."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:204
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:214
 msgid ""
 "A library opened with this version can no longer be opened with Pigoune 2.12 "
 "or older."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:210
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:220
 msgid "When look-alikes are not duplicates, you can now tell Pigoune so."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:212
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:222
 msgid ""
 "Ignore Group, in the “⋯” menu of a group, and Not a Duplicate, in the menu "
 "of a row, stop Pigoune from offering those assets together. Ignored (N) "
@@ -453,77 +477,77 @@ msgid ""
 "back, and Undo works for each."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:213
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:223
 msgid ""
 "The Duplicates tab is lighter: the trash button only appears once something "
 "is ticked, and each group has a clearer title."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:214
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:224
 msgid ""
 "The fine details used to find duplicates now live in their own file in the "
 "cache folder, which keeps the database small. If that file is lost or "
 "damaged, Pigoune makes it again."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:215
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:225
 msgid ""
 "A library opened with this version can no longer be opened with Pigoune 2.11 "
 "or older."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:221
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:231
 msgid "Pigoune is fast again after the update to 2.11.0."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:223
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:233
 msgid ""
 "Opening a library and Manage Library are quick again, above all for a "
 "library stored where files are read through a sandbox portal."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:224
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:234
 msgid ""
 "The background analysis of your assets starts a moment after a library "
 "opens, waits while you are using Pigoune, and stops when you open another "
 "library. Manage Library shows how far it has got."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:225
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:235
 msgid ""
 "The fine details used to find duplicates are now computed when you first "
 "search for duplicates, for the assets that could be duplicates only, with a "
 "progress bar."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:231
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:241
 msgid ""
 "The Duplicates tab is rebuilt so that nothing can go to the trash by "
 "accident."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:233
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:243
 msgid ""
 "Nothing is ticked for you any more: choose the asset to keep, then tick, one "
 "by one, the assets to move to the trash. A confirmation lists exactly what "
 "will move, and Pigoune checks every asset again just before moving it."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:234
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:244
 msgid ""
 "Groups only gather assets that all look alike, each marked Identical or "
 "Probable, instead of chaining assets that merely resemble a neighbor. "
 "Pigoune now compares colors and details too."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:235
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:245
 msgid ""
 "Pigoune analyzes your assets again in the background to learn these details. "
 "A library opened with this version can no longer be opened with Pigoune 2.10 "
 "or older."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:236
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:246
 msgid ""
 "Earlier versions could offer unrelated assets as duplicates, and Keep This "
 "One could send them all to the trash. They stay in the trash until it is "
@@ -531,103 +555,103 @@ msgid ""
 "the ones you want."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:242
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:252
 msgid ""
 "Searching for look-alikes is more accurate, and the Duplicates tab is much "
 "faster."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:244
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:254
 msgid ""
 "Find Similar no longer offers assets of a very different shape or color, "
 "such as a tall wallpaper for a small logo, and puts the assets with the "
 "closest colors first."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:245
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:255
 msgid ""
 "The Duplicates tab shows its list at once, loads thumbnails as you scroll, "
 "shows a progress bar while searching, and keeps large groups short with a "
 "Show More button."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:251
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:261
 msgid ""
 "Pigoune can now find assets that look alike, even in another format or size."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:253
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:263
 msgid ""
 "Right-click an asset and choose Find Similar to list the assets that "
 "resemble it, closest first."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:254
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:264
 msgid ""
 "A new Duplicates tab in Manage Library groups assets that look alike, such "
 "as the same logo as a PNG and an SVG. Keep the one you want: the others go "
 "to the trash, and Undo brings them back."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:255
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:265
 msgid ""
 "Pigoune analyzes your assets in the background after a library opens. A "
 "library opened with this version can no longer be opened with Pigoune 2.9 or "
 "older."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:256
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:266
 msgid ""
 "A message no longer loses its text when a name contains an ampersand or an "
 "angle bracket."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:262
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:272
 msgid ""
 "Asset names can be turned into plain text, and a click next to a thumbnail "
 "no longer selects it."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:264
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:274
 msgid ""
 "A new option in Preferences, under Display, makes asset names plain text. A "
 "name that is not clickable counts as empty space: a selection rectangle can "
 "start from it, and nothing is selected, opened or dragged from it."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:265
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:275
 msgid ""
 "Clicking just outside a thumbnail no longer selects it: the clickable area "
 "is now exactly the thumbnail and its name."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:271
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:281
 msgid ""
 "Undo and Redo get their own buttons, the keyboard shortcuts can be changed, "
 "and moving assets is clearer."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:273
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:283
 msgid ""
 "Two buttons at the top of the sidebar undo and redo your changes. The "
 "message after an undo offers to redo it, and the message after a redo offers "
 "to undo it again."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:274
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:284
 msgid ""
 "The keyboard shortcuts can be changed in Preferences, on the new Shortcuts "
 "page. Standard ones such as copy, paste and undo are locked, and actions "
 "like exporting or importing a folder can be given a key."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:275
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:285
 msgid ""
 "New shortcuts: Ctrl+K adds the selection to a collection, Ctrl+M moves it, "
 "Ctrl+T adds a tag, Ctrl+Shift+Z redoes and Ctrl+W closes the window."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:276
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:286
 msgid ""
 "Dragging assets from All or Unclassified into a collection now moves them, "
 "and holding Ctrl adds them without removing them from their other "
@@ -635,542 +659,542 @@ msgid ""
 "collections."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:277
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:287
 msgid ""
 "Adding, removing, favoriting, tagging and moving assets, collections and "
 "tags now show a message with Undo, whether you use a drag, a menu or a key. "
 "Refused drops explain why."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:278
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:288
 msgid ""
 "Manage Library opens at once instead of waiting for the disk, which was slow "
 "for libraries kept behind the Flatpak document portal."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:284
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:294
 msgid ""
 "Choose from 294 icons for your collections, sorted by theme, and enjoy a "
 "faster, steadier Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:286
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:296
 msgid ""
 "Collections now offer 294 icons in 13 themes, with a search field to find "
 "one quickly. Collections you already customized keep their look."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:287
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:297
 msgid ""
 "Searching, filtering and the sidebar counts are several times faster on "
 "large libraries."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:288
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:298
 msgid ""
 "Marking a favorite, adding a tag or renaming an asset no longer rebuilds the "
 "grid: your scroll position and selection stay put."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:289
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:299
 msgid "The records in Manage Library now show their thumbnails at once."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:290
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:300
 msgid ""
 "The collection icons come from Phosphor Icons, credited in the About dialog."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:291
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:301
 msgid ""
 "Libraries stay compatible with older versions, but a collection with one of "
 "the new icons shows a gray folder in Pigoune 2.6.1 and earlier."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:297
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:307
 msgid "A fix for a crash when dragging assets over the tags."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:299
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:309
 msgid ""
 "Pigoune no longer closes when you hold dragged assets over a tag with sub-"
 "tags, then move the pointer out of the tag list."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:305
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:315
 msgid ""
 "A finishing release: simpler tag navigation, accurate counts, wider image "
 "support and much faster deletion of large selections."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:307
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:317
 msgid ""
 "Clicking a tag now shows it and opens its sub-tags at once, and holding "
 "dragged assets over a tag with sub-tags for a second opens that level so you "
 "can drop them deeper."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:308
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:318
 msgid ""
 "The numbers beside tags and collections follow the search and the filters, "
 "and tags with no match are dimmed."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:309
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:319
 msgid ""
 "HEIC photos can be imported when your system can decode them, and unusual "
 "ICO, BMP, AVIF and SVG files are recognized more reliably."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:310
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:320
 msgid ""
 "Deleting a large selection is much faster, and SVG files built to exhaust "
 "memory are refused."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:311
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:321
 msgid ""
 "Show in Files and Move to for collections join menus that are now ordered "
 "the same way everywhere."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:312
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:322
 msgid ""
 "Keyboard and screen reader access to the preview and the tags is better, and "
 "a failed export says what went wrong."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:318
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:328
 msgid ""
 "Tags can now be nested, the library can check its own health, and the "
 "interface uses one consistent vocabulary."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:320
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:330
 msgid ""
 "Nest tags like Subject › Animals › goat: type a path with a slash, browse "
 "the tags level by level in the sidebar, and move, merge or delete a tag "
 "together with its sub-tags."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:321
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:331
 msgid ""
 "The new Health tab of Manage Library finds missing, damaged and unrecorded "
 "files, and lets you add, replace, remove or trash them."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:322
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:332
 msgid ""
 "Export the whole library as folders, and import images dragged straight from "
 "a web browser."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:323
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:333
 msgid ""
 "The search field shows where it searches, and a magnifier opens the search "
 "in narrow windows."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:324
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:334
 msgid ""
 "The French interface now says “élément” instead of “ressource”, with the "
 "same wording in the other languages, and Manage Library is laid out in a "
 "centered column."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:325
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:335
 msgid ""
 "Libraries opened with Pigoune 2.5 can no longer be opened with older "
 "versions."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:331
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:341
 msgid ""
 "A short window now tells you what is new after each update, and clearing the "
 "thumbnails moves to the library information."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:333
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:343
 msgid ""
 "A short window sums up the main news the first time a new version starts. "
 "You can turn it off in the Preferences."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:334
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:344
 msgid ""
 "Clearing the thumbnails is now done in the Storage tab of the library "
 "information, next to the space they take, instead of in the Preferences."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:340
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:350
 msgid ""
 "Much faster on large libraries, a clearer wallpaper window and shorter, "
 "simpler tags."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:342
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:352
 msgid ""
 "Opening a library and searching are several times faster, and scrolling "
 "through thousands of thumbnails stays smooth, even before they have been "
 "created."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:343
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:353
 msgid ""
 "A tag is now a single word of up to 20 characters: a space ends the tag you "
 "are typing and a hyphen joins several words. Existing tags are left as they "
 "are."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:344
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:354
 msgid ""
 "The wallpaper framing window is rearranged around the virtual screen, with a "
 "discreet note when the image will look blurry."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:345
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:355
 msgid ""
 "Long names are shortened instead of stretching the panels, and the windows "
 "fit the narrowest size even with larger text."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:346
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:356
 msgid ""
 "The search finds œ and æ when you type oe and ae, and exporting can no "
 "longer ask for a size that would crash Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:347
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:357
 msgid ""
 "Pigoune now tells you when an image cannot be loaded and when links were "
 "ignored while importing a folder."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:353
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:363
 msgid "Turn your images into wallpapers, framed exactly the way you want."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:355
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:365
 msgid ""
 "Frame an image on a virtual copy of your screen, under the bars of your "
 "desktop, and set it as your wallpaper."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:356
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:366
 msgid ""
 "Fill the empty space with a color of the image, a gradient, a blur or a "
 "mosaic, and darken or mirror the image if you wish."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:357
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:367
 msgid ""
 "Filter assets by shape and keep only the images that fit your screen, also "
 "in smart collections."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:358
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:368
 msgid ""
 "Libraries opened with Pigoune 2.2 can no longer be opened with older "
 "versions."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:364
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:374
 msgid "Pigoune speaks more languages and looks the same everywhere."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:366
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:376
 msgid ""
 "The interface is now available in German, Spanish, Brazilian Portuguese, "
 "Italian, Dutch and Polish."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:367
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:377
 msgid ""
 "Choose the language of Pigoune in the preferences, or keep the one of your "
 "system."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:368
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:378
 msgid "The icons of Pigoune are the same on every distribution."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:374
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:384
 msgid ""
 "A fresh look for the sidebar, the details and the preview, collections with "
 "their own icon and color, and a search by color."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:376
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:386
 msgid "Each collection can have its own icon and color."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:377
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:387
 msgid "Filter assets by their main colors, or by any color you pick."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:378
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:388
 msgid "The sidebar folds its sections and shows tags as pills."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:379
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:389
 msgid ""
 "The details panel is organized in foldable sections, with quick actions and "
 "the detected colors."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:380
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:390
 msgid ""
 "The preview zooms in from the thumbnail, shows a strip of thumbnails and can "
 "show the details panel next to the asset."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:381
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:391
 msgid "The library information and the preferences are organized in tabs."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:382
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:392
 msgid ""
 "Libraries opened with Pigoune 2.0 can no longer be opened with older "
 "versions."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:388
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:398
 msgid "Update notices and smoother organizing."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:390
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:400
 msgid ""
 "Pigoune tells you when a new version is available and installs it in one "
 "click."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:391
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:401
 msgid "Creating a collection can now be undone."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:392
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:402
 msgid ""
 "A rename in the details panel is confirmed by clicking anywhere else, and "
 "the full name appears when it is shortened."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:393
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:403
 msgid ""
 "The shortcuts window lists the keys of the sidebar, and a few preferences "
 "are worded more clearly."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:399
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:409
 msgid "Smart collections, richer searches and more preferences."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:401
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:411
 msgid ""
 "Create smart collections that fill themselves with the assets matching your "
 "words, types and favorites."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:402
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:412
 msgid ""
 "Search several words at once: words joined by “and” must all be found, words "
 "joined by “or” are alternatives."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:403
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:413
 msgid "The search shows where it looks and how many assets it found."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:404
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:414
 msgid ""
 "New preferences: thumbnail background, format badges, double-click to open, "
 "search the whole library, and showing or hiding tags and smart collections "
 "in the sidebar."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:405
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:415
 msgid "The details panel keeps the same width whatever the selected asset."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:406
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:416
 msgid ""
 "Libraries opened with Pigoune 1.6 can no longer be opened with an older "
 "version, so update Pigoune on all your computers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:412
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:422
 msgid "Pigoune now has its own website and updates itself."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:414
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:424
 msgid "The About window links to the new website of Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:415
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:425
 msgid "Pigoune installed from its website updates itself through Software."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:421
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:431
 msgid "Libraries ready to grow, and their real location shown in Flatpak."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:423
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:433
 msgid ""
 "Assets are now sorted into small subfolders inside a library, so very large "
 "libraries stay easy to handle for file managers, backups, sync tools and USB "
 "drives."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:424
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:434
 msgid ""
 "The welcome page, the recent libraries and the library information show the "
 "real folder of a library instead of a technical path."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:425
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:435
 msgid ""
 "Libraries opened with Pigoune 1.5 can no longer be opened with an older "
 "version, so update Pigoune on all your computers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:431
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:441
 msgid ""
 "A big update, with new formats, conversion and a closer look at your "
 "libraries."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:433
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:443
 msgid ""
 "Import AVIF, JPEG XL, TIFF and BMP images, and play animated PNG and WebP "
 "images."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:434
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:444
 msgid "Pause an animation in the preview and step through it frame by frame."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:435
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:445
 msgid ""
 "Export assets converted to PNG, JPEG, WebP, AVIF or ICO, with size, quality, "
 "background and multi-size icons."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:436
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:446
 msgid ""
 "See the key figures of a library, a chart of the space used by each format, "
 "its disk space and its records."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:437
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:447
 msgid "Reopen recent libraries from the main menu or the welcome page."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:438
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:448
 msgid ""
 "Choose whether to reopen the last library, play animations on hover and how "
 "many recent libraries to keep, and clear the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:439
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:449
 msgid ""
 "Libraries opened with Pigoune 1.4 can no longer be opened with an older "
 "version, so update Pigoune on all your computers."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:445
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:455
 msgid "Take a much closer look at your assets in the detailed preview."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:447
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:457
 msgid ""
 "Move between assets with on-screen arrows, a two-finger swipe, Home and End."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:448
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:458
 msgid "See the format, dimensions and size of the shown asset."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:449
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:459
 msgid ""
 "Drag the image freely, zoom with new buttons, and fill the screen with F11."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:450
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:460
 msgid "Spot the real edges of an image and, from 800%, every single pixel."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:451
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:461
 msgid "Star, copy, export or open the shown asset without leaving the preview."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:452
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:462
 msgid "Switch between the sizes stored in an ICO file."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:453
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:463
 msgid "Open any asset in another application with Open With."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:454
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:464
 msgid "Grab the window more easily by the middle of the library header."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:460
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:470
 msgid "Stop the thumbnail grid from flickering while the window is resized."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:465
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:475
 msgid "Give the thumbnail grid a cleaner look."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:467
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:477
 msgid "Thumbnails sit in square frames, evenly spaced across the whole width."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:468
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:478
 msgid "Favorites show a larger yellow star that grows with the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:469
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:479
 msgid "A new preference hides the names under the thumbnails."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:470
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:480
 msgid ""
 "Small images stay sharp, and the lasso shows the selection while it is drawn."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:476
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:486
 msgid "Add a user guide, available from the main menu or with F1."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:481
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:491
 msgid "The first public version of Pigoune."
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:483
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:493
 msgid ""
 "Import SVG, PNG, JPEG, WebP, GIF and ICO files, or whole folders, with "
 "duplicate detection"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:484
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:494
 msgid ""
 "Organize assets with nested collections, tags, favorites, notes and credits"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:485
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:495
 msgid "Find any asset instantly with search and filters"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:486
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:496
 msgid "Preview assets up close, animated GIFs included"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:487
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:497
 msgid "Reuse assets by dragging, copying or exporting them"
 msgstr ""
 
-#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:488
+#: data/io.github.gor3pig.Pigoune.metainfo.xml.in:498
 msgid "Undo changes and restore assets from the trash"
 msgstr ""
 
