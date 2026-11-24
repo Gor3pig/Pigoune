@@ -197,7 +197,7 @@ fn details_left_behind_by_deleted_assets_are_forgotten_on_opening() {
 }
 
 #[test]
-fn a_details_file_that_cannot_be_opened_is_not_thrown_away() {
+fn a_details_file_that_cannot_be_opened_is_not_thrown_away_and_the_library_still_opens() {
     use std::os::unix::fs::PermissionsExt;
 
     let (_workspace, library) = library_of(50);
@@ -210,7 +210,7 @@ fn a_details_file_that_cannot_be_opened_is_not_thrown_away() {
     let opened = Library::open(&root);
 
     fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).expect("unlocked");
-    assert!(opened.is_err());
+    assert!(opened.is_ok());
     assert_eq!(fs::metadata(&path).expect("still there").len(), size);
     drop(opened);
     let library = Library::open(&root).expect("opens again");
@@ -235,4 +235,28 @@ fn a_library_under_a_path_that_is_not_valid_text_still_opens() {
     drop(library);
     assert!(rows(&root).is_empty());
     assert!(details_file(&root).is_file());
+}
+
+#[test]
+fn a_library_opens_and_keeps_details_for_the_session_when_the_details_file_cannot_be_made() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let (_workspace, library) = library_of(2);
+    let root = library.root().to_path_buf();
+    drop(library);
+    fs::remove_file(details_file(&root)).expect("details file removed");
+    let cache = root.join("cache");
+    fs::set_permissions(&cache, fs::Permissions::from_mode(0o555)).expect("cache locked");
+    let enforced = fs::write(cache.join("probe"), b"x").is_err();
+
+    let opened = Library::open(&root);
+
+    if enforced {
+        let mut library = opened.expect("the library opens without its details file");
+        library
+            .record_visual_details_batch(&[(id(1), None)])
+            .expect("details are accepted for the session");
+        assert!(!details_file(&root).exists());
+    }
+    fs::set_permissions(&cache, fs::Permissions::from_mode(0o755)).expect("cache unlocked");
 }

@@ -22,14 +22,23 @@ pub fn attach(connection: &Connection, root: &Path) -> Result<(), LibraryError> 
             return Ok(());
         }
         Err(error) if is_damage(&error) => {}
-        Err(error) => return Err(error.into()),
+        Err(_) => return keep_in_memory(connection),
     }
     let _ = connection.execute_batch("DETACH DATABASE details");
     let _ = fs::remove_file(&path);
     let mut journal = path.clone().into_os_string();
     journal.push("-journal");
     let _ = fs::remove_file(journal);
-    open_attached(connection, &path)?;
+    if open_attached(connection, &path).is_err() {
+        return keep_in_memory(connection);
+    }
+    Ok(())
+}
+
+fn keep_in_memory(connection: &Connection) -> Result<(), LibraryError> {
+    let _ = connection.execute_batch("DETACH DATABASE details");
+    connection.execute("ATTACH DATABASE ':memory:' AS details", [])?;
+    connection.execute_batch(SCHEMA)?;
     Ok(())
 }
 
