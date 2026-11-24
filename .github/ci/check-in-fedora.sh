@@ -4,7 +4,7 @@ set -euo pipefail
 dnf install -y --setopt=install_weak_deps=False \
     git gcc pkgconf-pkg-config gtk4-devel libadwaita-devel libseccomp-devel \
     lcms2-devel fontconfig-devel blueprint-compiler gettext glib2-devel \
-    desktop-file-utils appstream glycin-loaders bubblewrap dejavu-sans-fonts ghostscript
+    desktop-file-utils appstream glycin-loaders bubblewrap dejavu-sans-fonts ghostscript strace
 
 git config --system --add safe.directory '*'
 git clone --quiet /src /work
@@ -22,9 +22,7 @@ su builder --command '
     cd /work
     set +e; command -v gs; gs --version; id; echo $PATH; F=/work/crates/pigoune-core/tests/fixtures/pages-cairo.pdf
     ls -ld /work /work/crates /work/crates/pigoune-core/tests/fixtures $F
-    echo A; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/a.png $F; echo rcA=$?
-    echo B; gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/b.png $F; echo rcB=$?
-    cp $F /tmp/c.pdf; echo C; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/c.png /tmp/c.pdf; echo rcC=$?
-    echo D; cd /work/crates/pigoune-core/tests/fixtures && gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/d.png ./pages-cairo.pdf; echo rcD=$?
-    echo E; gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/e.png -dFirstPage=1 -dLastPage=1 -dPDFFitPage -g100x100 $F; echo rcE=$?
+    for d in /home/builder /work /opt /var/tmp /tmp; do cp $F $d/z.pdf; echo "LOC $d"; gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/z.png $d/z.pdf; echo rc=$?; done
+    cat /proc/self/mountinfo | grep -E " / | /work| /tmp" | head; df /work /tmp /home/builder; stat $F; lsattr $F; cat /proc/self/status | grep -i -E "seccomp|NoNewPrivs|Cap(Eff|Bnd)"
+    strace -f -e trace=openat,open,access,stat,newfstatat gs -q -dBATCH -dNOPAUSE -sDEVICE=png16m -sOutputFile=/tmp/s.png $F 2>&1 | grep -E "EACCES|EPERM" | head
 '
