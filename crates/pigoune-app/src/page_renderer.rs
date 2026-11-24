@@ -549,12 +549,14 @@ mod tests {
         if !ghostscript_is_installed() {
             return;
         }
-        let target = PathBuf::from("/tmp/pigoune-hostile-eps-test");
+        let target = PathBuf::from("/var/tmp/pigoune-hostile-eps-test");
         let _ = std::fs::remove_file(&target);
         let path = fixture("pages-hostile.eps");
         let file = page_file(&path).expect("a page file");
-        let outcome = render_first_page(&path, &file, 128);
-        assert!(outcome.is_ok() || outcome == Err(PageProblem::Damaged));
+        assert_eq!(
+            render_first_page(&path, &file, 128),
+            Err(PageProblem::Damaged)
+        );
         assert!(!target.exists());
     }
 }
