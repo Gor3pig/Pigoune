@@ -121,7 +121,10 @@ impl AssetFormat {
 
     #[must_use]
     pub fn is_vector(self) -> bool {
-        matches!(self, Self::Svg | Self::Svgz)
+        matches!(
+            self,
+            Self::Svg | Self::Svgz | Self::Pdf | Self::Eps | Self::Ai
+        )
     }
 
     #[must_use]
@@ -283,6 +286,24 @@ fn is_bmp(header: &[u8]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{AssetFormat, detect_binary, looks_like_markup};
+
+    #[test]
+    fn drawings_and_pages_are_redrawn_at_any_size() {
+        let drawn: Vec<AssetFormat> = AssetFormat::ALL
+            .into_iter()
+            .filter(|format| format.is_vector())
+            .collect();
+        assert_eq!(
+            drawn,
+            [
+                AssetFormat::Svg,
+                AssetFormat::Svgz,
+                AssetFormat::Pdf,
+                AssetFormat::Eps,
+                AssetFormat::Ai
+            ]
+        );
+    }
 
     #[test]
     fn binary_formats_are_recognized_by_their_signature() {
