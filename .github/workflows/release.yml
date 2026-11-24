@@ -9,18 +9,19 @@ on:
         description: Existing tag to rebuild the Flatpak package for, such as v1.1.0
         required: true
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   flatpak:
     name: Flatpak package
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - name: Check out the tag
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.TAG }}
           persist-credentials: false
